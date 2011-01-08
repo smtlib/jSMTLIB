@@ -1,0 +1,221 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+<HEAD>
+<TITLE>SMT Eclipse plug-in</TITLE>
+</HEAD>
+<BODY>
+
+<CENTER><H1>SMT Eclipse Plugin</H1></CENTER>
+<CENTER>Author: David Cok</CENTER>
+<CENTER> Version alpha, 6 December 2010</CENTER>
+<CENTER>THIS DOCUMENT IS IN DRAFT FORM AND NOT YET COMPLETE</CENTER>
+<CENTER><A href="mailto:davidcok@users.sourceforge.net">Feedback</A></CENTER>
+<P>
+This plugin provides an interface to SMT-LIB functionality integrated with the Eclipse UI.
+There is an associated command-line tool that provides SMT-LIB type-checking and an interface to various SMT solvers.
+The tools use the SMT-LIB v.2 language.
+</P>
+<P>
+
+<H2><A NAME="Overview">Overview</A></H2>
+<P>
+This plug-in provides 
+<A HREF="http://www.smt-lib.org">SMT-LIB</A>
+functionality as an Eclipse plug-in.
+The SMT-LIB plug-in
+in particular provides functionality for checking, editing and executing files in SMT-LIB
+version 2 format with a variety of SMT solvers. 
+<P>
+The plug-in adds the following functionality to Eclipse:
+<UL>
+<LI>An editor for SMT-LIBv.2 files, with associated syntax coloring and automatic type-checking.
+<LI>A menubar item labeled 'SMT' with a number of submenu items that
+invoke various tools and manage the environment. Through these menu actions
+the underlying SMT-LIB command-line tool can be invoked.
+<LI>A toolbar item labeled 'SMT' that invokes an SMT solver.
+<LI>Context menu items in various views 
+that replicate some
+of the above menu items for Projects, 
+folders, and SMT-LIB files.
+<LI>An icon (blue disk with a 'S') that identifies SMT-LIB files and editors
+<LI>Problem markers: a red disk with a 'S' on it indicating problems with SMT-LIB files.
+These must be enabled in the Filters menu of the Problems view (they may be
+disabled by default).  There is a corresponding new Problem type.
+<LI>A console page to which output from the SMT operations is sent.
+<LI>A SMT preferences page
+(under Window &gt;&gt; Preferences) in which various options can be set.
+<LI>A new category of commands in the Workbench &gt;&gt; Keys page of the Eclipse
+preferences.  The category is named 'SMT' and allows key bindings to be 
+defined for the various new menu actions. 
+<LI>A Help document describing the SMT plug-in functionality available
+through the Help &gt;&gt; HelpContents menu (this document).
+</UL>
+
+
+<H2><A name="Installation">Installation</A></H2>
+<P> 
+The plug-in has been developed for Eclipse 3.6.0.
+[TBD: Note 32 vs 64 bit ?? ]
+</P>
+<P>
+The plug-in is installed from a standard Eclipse update site as follows.
+    <ul>
+     <li> Start Eclipse.
+     <li> Open the dialog at Help &gt;&gt; Install New Software
+     <li> Insert the SMT-LIB Eclipse plug-in site address in the "Work with" field:
+     TBD
+     <li> Push the "Add" button and give the address a name (e.g. "SMT-LIB").
+
+     <li> TBD
+
+    </ul>
+    <p>
+</p>
+<P>
+To update everything installed: Open an Eclipse workspace and choose Help &gt;&gt; Check for Updates.
+If you simply want to update a previous installation of the SMT-LIB plug-in,
+then do the following:
+<UL>
+
+     <LI> Choose Help &gt;&gt; Install New Software"
+     <LI> Use the drop-down menu on the "Work with" field to select the SMT-LIB URL
+     <LI> When the information about the plug-in has updated, then if there is an
+            update, select it and press Next.
+     <LI> TBD
+</UL>
+<P>In order to uninstall the plugin, do the following:
+<UL>
+<LI> TBD
+</UL>
+
+
+<H2><A name="Functionality">Plug-in Functionality</A></H2>
+
+<H3><A NAME="#Editor">Customized Text Editor for SMT-LIB scripts</H3>
+
+The plug-in provides a text editor customized to SMT-LIBv2 files.
+The editor is the default editor for files with a '.smt2' suffix.
+It behaves like a regular text editor, with the usual functionality
+such as undo, cut&paste, search&replace, and word completion, and these embellisments:
+<UL>
+<LI>The editor is customized to highlight SMT-LIBv2 tokens with
+syntax coloring.
+
+<LI>The editor also runs the SMT-LIB type-checker whenever the file is
+edited or saved.
+</UL>
+
+<P>
+For the future:
+<UL>
+<LI>Customizing the syntax coloring and font
+<LI>Customized word completion
+<LI>Be able to turn auto-checking off, or do it in the background, for large files.
+</UL>
+
+
+<H3>Menu actions</H3>
+
+Menu actions are available from these places; they all invoke the same functionality:
+<UL>
+<LI>The submenu items of the 'SMT' item on the menubar.  These actions apply to items selected in a View
+(such as the Package Navigator or Outline View) or to the selected editor.
+<LI>The blue disk with 'S', which invokes the 'Run default solver' action
+<LI>Context menus on Projects, Folders, and SMT-LIB files.  The menu actions apply to the (one or more) items
+selected.
+</UL>
+If container items are selected (Projects or Folders), 
+the menu action applies to all SMT-LIB files within the container.
+
+When type-checking or a solver runs on a script file, errors in the file are identified by problem markers
+(red disks with 'S' on them) and listed in the Eclipse Problem View. Output is also written to the Console View
+(the amount of output depends on various preferences).
+
+<UL>
+<LI>Run default solver: 
+This action runs a specific solver chosen in the preferences on the selected SMT-LIB script files.
+
+<LI>[a solver name] (Run a specific named solver):
+This action runs the specifically named solver on the selected SMT-LIB script files.
+
+<LI>'check': Runs just the type-checking on the selected script files.
+
+<LI>'All' (Run all solvers):
+This action runs all the installed solvers on the selected SMT-LIB script files.
+
+<LI>Delete SMT markers</H4>
+Deletes all the SMT markers (in case some do not delete as they should when a file is rechecked).
+
+<LI>View Logic</H4>
+In a new text editor, shows the content of a logic or theory file whose name has been selected in a text or SMT editor.
+
+</UL>
+
+
+<H3><A NAME="#Markers"></A>SMT Problem Markers</H3>
+<P>
+The plug-in defines a new type of Problem marker that is used to indicate
+syntax or runtime errors
+that the SMT tools find.  The marker icon is a 
+white 'S' superimposed on a red dot.  The icon is shown in the ruler along the
+left edge of SMT editors at the line where a problem is identified.  Tooltip
+information, shown when the mouse pointer remains steady over the icon for a short
+period of time, gives details of the problem. [TBD - not working]
+</P><P>
+By default, problems are identified in the text with a red squiggly underscore.
+Using preferences (Window->Preferences) in the General->Editors->Text Editors->Annotations
+group, one can change the presentation of an SMT Problem.  Select SMT Problem in
+the list of Annotations, and then set as desired whether the problem is shown in the vertical ruler
+(on the left), in the Overview ruler (on the right), the color used in the text itself,
+and whether the problem is shown in the text as a squiggly underscore, as highlighted, or
+neither.
+</P><P>
+The same icon is used to identify SMT-LIB editors and 
+to identify (in the Project Explorer or Navigator) files with the SMT-LIB suffix.
+</P><P>
+The 
+details of the problem are also shown in the Problems View.  Note that the Problems 
+View has a filter that chooses which types of problems are to be shown. 
+</P>
+
+
+<H3><A NAME="#Preferences">Preferences</H3>
+The plug-in provides a new preference page named 'SMT' at the 
+top level under Window&gt;&gt;Preferences.
+All the items in the SMT preferences page are global to all 
+SMT-LIB files and operations.  
+
+TBD - explain all the options
+
+
+<H3><A NAME="#Console"></A>SMT Console</H3>
+The Eclipse Console View is available to plug-ins to show textual output from
+plug-in tools.  The Console has a number of panes.  The SMT plug-in adds
+a new pane, called 'SMT Console', to which output from the SMT plug-in or
+tools is sent.  The Console view generally automatically switches to the pane
+with recent output, but on some occasions the user may have to choose the
+pane manually to see the SMT output.
+
+FOr the future:
+<UL>
+<LI>Allow different consoles for different background jobs
+</UL>
+
+<H3><A NAME="#Commands"></A>SMT Key Bindings</H3>
+The 'Keys' page of the General Workbench preferences allows the user to 
+associate key bindings with any 
+command.  There is a SMT category of commands.  
+No key bindings are defined by default, but the
+user may choose to add some.  Make sure they are enabled for 'Windows'
+or 'Dialogs and Windows'.
+
+<H3><A NAME="#Help"></A>SMT Help</H3>
+Help information (this document) is available through the Help menu.
+Select the Help menu item on the menubar and the 'Help Contents'
+sub-menu item.  One of the help topics shown is 'SMT'.   Selecting
+that topic will bring up this SMT Help document.
+
+
+</BODY>
+</HTML>

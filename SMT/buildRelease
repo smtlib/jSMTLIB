@@ -1,0 +1,16 @@
+#! /bin/bash
+
+rm -rf temp
+mkdir temp
+echo "Manifest-Version: 1.0" > temp/manifest
+echo "Main-Class: org.smtlib.SMT" >> temp/manifest
+cd bin
+rm jsmtlib.properties
+jar -cfm ../jSMTLIB.jar ../temp/manifest .
+cp ../jsmtlib.properties .
+cd ..
+cp ../../texstuff/papers/SMTLIBUserGuide/SMTLIBUserGuide.pdf jSMTLIBUserGuide.pdf
+tar cf jSMTLIB.tar jSMTLIB.jar LICENSE jSMTLIBUserGuide.pdf jsmtlib.properties-template
+rm jSMTLIBUserGuide.pdf
+tar tvf jSMTLIB.tar
+echo Build complete

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?NLS TYPE="org.eclipse.help.toc"?>
+
+<toc label="SMT"  topic="html/SMTHelp.html">
+    <topic label="SMT Plugin User Guide" href="html/SMTHelp.html">
+      <topic label="Overview" href="html/SMTHelp.html#Overview"/>
+      <topic label="Installation" href="html/SMTHelp.html#Installation"/>
+      <topic label="General comments" href="html/SMTHelp.html#General_comments"/>
+      <topic label="Menu and toolbar items" href="html/SMTHelp.html#Menus">
+          <topic label="Running Solvers" href="html/SMTHelp.html#Checks"/>
+          <topic label="Deleting SMT Markers" href="html/SMTHelp.html#Clear"/>
+        </topic>
+      <topic label="SMT Preferences" href="html/SMTHelp.html#Preferences">
+          <topic label="Options for SMT-Eclipse" href="html/SMTHelp.html#EclipseOptions"/>
+          <topic label="Options related to SMT" href="html/SMTHelp.html#smtConfig"/>
+        </topic>
+      <topic label="Other Features" href="html/SMTHelp.html#Features">
+          <topic label="SMT Problem Markers" href="html/SMTHelp.html#Markers"/>
+          <topic label="SMT Console" href="html/SMTHelp.html#Console"/>
+          <topic label="Context Menus" href="html/SMTHelp.html#Context"/>
+          <topic label="SMT Key Bindings" href="html/SMTHelp.html#Commands"/>
+          <topic label="SMT Help" href="html/SMTHelp.html#Help"/>
+        </topic>
+      <topic label="Version History" href="html/SMTHelp.html#Versions"/>
+      <topic label="Getting Started Tutorial" href="html/SMTHelp.html#Tutorial"/>
+      <topic label="Notes for Developers" href="html/SMTHelp.html#DevNotes"/>
+      <topic label="Problems to fix and features to add" href="html/SMTHelp.html#TODO"/>
+    </topic>   	
+
+</toc>
