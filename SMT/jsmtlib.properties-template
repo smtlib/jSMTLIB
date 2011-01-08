@@ -1,0 +1,17 @@
+# This file is a template - it lists all the properties that the jSMTLIB
+# application pays attention to.  You should customize the values for your
+# own system. The application looks for jsmtlib.properties in the working
+# directory first and then anywhere on the classpath.
+
+# The directcory in which logic and theory definitions are found
+# (if not set, the files from the official distribution as distributed in
+#  the .jar file are used - there should be only a rare need to set this)
+# This value can also be set on the command-line by the --logics option.
+org.smtlib.logic_path=
+
+# The absolute path to the executable for each solver. This value is overridden
+# by any value specified on the command-line (--exec option)
+org.smtlib.solver_yices=
+org.smtlib.solver_cvc=
+org.smtlib.solver_z3=
+org.smtlib.solver_simplify=

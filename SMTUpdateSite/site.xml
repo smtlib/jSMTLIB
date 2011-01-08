@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <description name="jSMTLIB">
+      A plug-in that wraps the jSMTLIB library and command-line tool
+   </description>
+   <feature url="features/org.smtlib.SMTFeature_0.7.0.jar" id="org.smtlib.SMTFeature" version="0.7">
+      <category name="org.smtlib.SMT"/>
+   </feature>
+   <feature url="features/org.smtlib.SMTFeature_0.7.1.jar" id="org.smtlib.SMTFeature" version="0.7.1">
+      <category name="org.smtlib.SMT"/>
+   </feature>
+   <category-def name="org.smtlib.SMT" label="jSMTLIB"/>
+</site>
