@@ -25,6 +25,7 @@ public class FileTests  extends LogicTests {
     		if (ff.getName().endsWith(".tst")) {
     			data.add(new String[]{"test",ff.getName()}); 
     			data.add(new String[]{"simplify",ff.getName()}); 
+    			data.add(new String[]{"z3",ff.getName()}); 
     			//data.add(new String[]{"yices",ff.getName()}); // FIXME - add other solvers - add them from array
     		}
     	}
@@ -61,9 +62,9 @@ public class FileTests  extends LogicTests {
     
 	@Test
 	public void checkFile() {
-		if ("ok_printSuccess.tst".equals(testfile)) return; // FIXME - skip this
-		if ("ok_regularOutput.tst".equals(testfile)) return; // FIXME - skip this
-		if ("ok_setRequiredOptions.tst".equals(testfile)) return; // FIXME - skip this
+//		ifXME - skip this
+//		if ("ok_regularOutput.tst".equals(testfile)) return; // FIXME - skip this
+		if ("err_getValueMalformed.tst".equals(testfile)) return; //  ("ok_printSuccess.tst".equals(testfile)) return; // FIFIXME - skip this
 		String script = readFile("tests/" + testfile);
 		String outname = "tests/" + testfile + ".out";
 		String altname = outname + "." + solvername;

@@ -5,7 +5,9 @@
  */
 package org.smtlib.solvers;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.StringWriter;
 import java.util.*;
 
@@ -36,6 +38,7 @@ import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.impl.Pos;
+import org.smtlib.impl.TypeChecker;
 
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into Z3 commands */
 public class Solver_z3 extends AbstractSolver implements ISolver {
@@ -116,8 +119,8 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 	/** Translates an S-expression into Z3 syntax */
 	protected String translate(IAccept sexpr) throws IVisitor.VisitorException {
 		// The z3 solver uses the standard S-expression concrete syntax
-		//return translateSMT(sexpr);
-		return sexpr.accept(new Translator());
+		return translateSMT(sexpr);
+		//return sexpr.accept(new Translator());
 	}
 	
 	/** Translates an S-expression into SMT-LIBv2 syntax */
@@ -161,6 +164,13 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 	
 	@Override
 	public IResponse get_assertions() {
+		if (!logicSet) {
+			return smtConfig.responseFactory.error("The logic must be set before a get-assertions command is issued");
+		}
+		// FIXME - do we really want to call get-option here? it involves going to the solver?
+		if (!smtConfig.relax && !Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.INTERACTIVE_MODE,null)))) {
+			return smtConfig.responseFactory.error("The get-assertions command is only valid if :interactive-mode has been enabled");
+		}
 		try {
 			StringBuilder sb = new StringBuilder();
 			String s;
@@ -173,9 +183,27 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 				while (( p = s.indexOf(')',p+1)) != -1) parens--;
 				sb.append(s.replace('\n',' ').replace("\r",""));
 			} while (parens > 0);
-			return smtConfig.responseFactory.stringLiteral(sb.toString()); 
+			s = sb.toString();
+			org.smtlib.sexpr.Parser p = new org.smtlib.sexpr.Parser(smtConfig,new org.smtlib.impl.Pos.Source(s,null));
+			List<IExpr> exprs = new LinkedList<IExpr>();
+			try {
+				if (p.isLP()) {
+					p.parseLP();
+					while (!p.isRP() && !p.isEOD()) {
+						IExpr e = p.parseExpr();
+						exprs.add(e);
+					}
+					if (p.isRP()) {
+						p.parseRP();
+						if (p.isEOD()) return smtConfig.responseFactory.get_assertions_response(exprs); 
+					}
+				}
+			} catch (Exception e ) {
+				// continue
+			}
+			return smtConfig.responseFactory.error("Unexpected output from the Z3 solver: " + s);
 		} catch (IOException e) {
-			return smtConfig.responseFactory.error("get-assertions command failed: " + e );
+			return smtConfig.responseFactory.error("IOException while reading Z3 reponse");
 		}
 	}
 	
@@ -203,6 +231,10 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 
 	@Override
 	public IResponse pop(int number) {
+		if (!logicSet) {
+			return smtConfig.responseFactory.error("The logic must be set before a pop command is issued");
+		}
+		if (number < 0) throw new SMT.InternalException("Internal bug: A pop command called with a negative argument: " + number);
 		if (number > pushesStack.size()) return smtConfig.responseFactory.error("The argument to a pop command is larger than the number of assertion sets on the assertion set stack: " + number + " > " + pushesStack.size());
 		if (number == 0) return smtConfig.responseFactory.success();
 		try {
@@ -218,6 +250,10 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 
 	@Override
 	public IResponse push(int number) {
+		if (!logicSet) {
+			return smtConfig.responseFactory.error("The logic must be set before a push command is issued");
+		}
+		if (number < 0) throw new SMT.InternalException("Internal bug: A push command called with a negative argument: " + number);
 		checkSatStatus = null;
 		if (number == 0) return smtConfig.responseFactory.success();
 		try {
@@ -258,15 +294,62 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 			if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
 				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
 			}
-			// We don't turn :print-=success off in the solver, because then we get no prompt back
-			// assuring us that the solver is listening for the next command
-		} else {
+		}
+		if (logicSet && Utils.INTERACTIVE_MODE.equals(option)) {
+			return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
+		}
+		if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 
+				Utils.PRODUCE_MODELS.equals(option) || 
+				Utils.PRODUCE_PROOFS.equals(option) ||
+				Utils.PRODUCE_UNSAT_CORES.equals(option)) {
+			if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
+			return smtConfig.responseFactory.unsupported();
+		}
+		if (Utils.VERBOSITY.equals(option)) {
+			IAttributeValue v = options.get(option);
+			smtConfig.verbose = (v instanceof INumeral) ? ((INumeral)v).intValue() : 0;
+		} else if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
+			// Actually, v should never be anything but IStringLiteral - that should
+			// be checked during parsing
+			String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : "stderr";
+			if (name.equals("stdout")) {
+				smtConfig.log.diag = System.out;
+			} else if (name.equals("stderr")) {
+				smtConfig.log.diag = System.err;
+			} else {
+				try {
+					FileOutputStream f = new FileOutputStream(name,true); // append
+					smtConfig.log.diag = new PrintStream(f);
+				} catch (java.io.IOException e) {
+					return smtConfig.responseFactory.error("Failed to open or write to the diagnostic output " + e.getMessage(),value.pos());
+				}
+			}
+		} else if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
+			// Actually, v should never be anything but IStringLiteral - that should
+			// be checked during parsing
+			String name = (value instanceof IStringLiteral)?((IStringLiteral)value).value() : "stdout";
+			if (name.equals("stdout")) {
+				smtConfig.log.out = System.out;
+			} else if (name.equals("stderr")) {
+				smtConfig.log.out = System.err;
+			} else {
+				try {
+					FileOutputStream f = new FileOutputStream(name,true); // append
+					smtConfig.log.out = new PrintStream(f);
+				} catch (java.io.IOException e) {
+					return smtConfig.responseFactory.error("Failed to open or write to the regular output " + e.getMessage(),value.pos());
+				}
+			}
+		}
+		if (!Utils.PRINT_SUCCESS.equals(option)) {
 			try {
 				solverProcess.sendAndListen("(set-option ",option," ",value.toString(),")\n");// FIXME - detect errors
 			} catch (IOException e) {
 				return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
 			}
 		}
+		
+
 		// Save the options on our side as well
 		options.put(option,value);
 		return smtConfig.responseFactory.success();
@@ -283,12 +366,34 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 	@Override
 	public IResponse get_info(IKeyword key) { // FIXME - use the solver? what types of results?
 		String option = key.value();
-		try {
-			String s = solverProcess.sendAndListen("(get-info ",option,")\n");// FIXME - detect errors
-			return smtConfig.responseFactory.stringLiteral(s);
-		} catch (IOException e) {
-			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+		IAttributeValue lit;
+		if (Utils.ERROR_BEHAVIOR.equals(option)) {
+			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION,null);
+		} else if (Utils.NAME.equals(option)) {
+			lit = smtConfig.exprFactory.unquotedString(org.smtlib.Utils.TEST_SOLVER,null);
+		} else if (Utils.AUTHORS.equals(option)) {
+			lit = smtConfig.exprFactory.unquotedString(Utils.AUTHORS_VALUE,null);
+		} else if (Utils.VERSION.equals(option)) {
+			lit = smtConfig.exprFactory.unquotedString(Utils.VERSION_VALUE,null);
+			
+		} else if (Utils.REASON_UNKNOWN.equals(option)) {
+			return smtConfig.responseFactory.unsupported();
+		} else if (Utils.ALL_STATISTICS.equals(option)) {
+			return smtConfig.responseFactory.unsupported();
+			
+//		} else if ((value = Utils.stringInfo.get(option)) != null) {
+//			lit = smtConfig.exprFactory.unquotedString(value,null);
+		} else {
+			return smtConfig.responseFactory.unsupported();
 		}
+		IAttribute<?> attr = smtConfig.exprFactory.attribute(key,lit,null);
+		return smtConfig.responseFactory.get_info_response(attr);
+//		try {
+//			String s = solverProcess.sendAndListen("(get-info ",option,")\n");// FIXME - detect errors
+//			return smtConfig.responseFactory.stringLiteral(s);
+//		} catch (IOException e) {
+//			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+//		}
 
 //		if (":error-behavior".equals(option)) {
 //			return IResponse.CONTINUED_EXECUTION; // FIXME - is this true?
@@ -308,6 +413,18 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 //			return smtConfig.responseFactory.unsupported();
 //		}
 	}
+	
+	@Override
+	public IResponse set_info(IKeyword key, IAttributeValue value) {
+		String option = key.value();
+		if (Utils.infoKeywords.contains(option)) {
+			return smtConfig.responseFactory.error("Setting the value of a pre-defined keyword is not permitted: "+ 
+					smtConfig.defaultPrinter.toString(key),key.pos());
+		}
+		options.put(option,value);
+		return smtConfig.responseFactory.success();
+	}
+
 
 	@Override
 	public IResponse declare_fun(Ideclare_fun cmd) {
@@ -372,8 +489,11 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 	
 	@Override 
 	public IResponse get_proof() {
-		if (!smtConfig.responseFactory.unsat().equals(checkSatStatus)) {
-			return smtConfig.responseFactory.error("The checkSatStatus must be unsat for a get-proof command");
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_PROOFS,null)))) {
+			return smtConfig.responseFactory.error("The get-proof command is only valid if :produce-proofs has been enabled");
+		}
+		if (checkSatStatus != smtConfig.responseFactory.unsat()) {
+			return smtConfig.responseFactory.error("The get-proof command is only valid immediately after check-sat returned unsat");
 		}
 		try {
 			return parseResponse(solverProcess.sendAndListen("(get-proof)\n"));
@@ -384,8 +504,11 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 
 	@Override 
 	public IResponse get_unsat_core() {
-		if (!smtConfig.responseFactory.unsat().equals(checkSatStatus)) {
-			return smtConfig.responseFactory.error("The checkSatStatus must be unsat for a get-unsat-core command");
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_UNSAT_CORES,null)))) {
+			return smtConfig.responseFactory.error("The get-unsat-core command is only valid if :produce-unsat-cores has been enabled");
+		}
+		if (checkSatStatus != smtConfig.responseFactory.unsat()) {
+			return smtConfig.responseFactory.error("The get-unsat-core command is only valid immediately after check-sat returned unsat");
 		}
 		try {
 			return parseResponse(solverProcess.sendAndListen("(get-unsat-core)\n"));
@@ -396,8 +519,12 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 
 	@Override 
 	public IResponse get_assignment() {
-		if (!smtConfig.responseFactory.sat().equals(checkSatStatus)) {
-			return smtConfig.responseFactory.error("The checkSatStatus must be sat for a get-assignment command");
+		// FIXME - do we really want to call get-option here? it involves going to the solver?
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSIGNMENTS,null)))) {
+			return smtConfig.responseFactory.error("The get-assignment command is only valid if :produce-assignments has been enabled");
+		}
+		if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
+			return smtConfig.responseFactory.error("The get-assignment command is only valid immediately after check-sat returned sat or unknown");
 		}
 		try {
 			return parseResponse(solverProcess.sendAndListen("(get-assignment)\n"));
@@ -408,15 +535,24 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 
 	@Override 
 	public IResponse get_value(IExpr... terms) {
+		// FIXME - do we really want to call get-option here? it involves going to the solver?
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS,null)))) {
+			return smtConfig.responseFactory.error("The get-value command is only valid if :produce-models has been enabled");
+		}
+		if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
+			return smtConfig.responseFactory.error("The get-value command is only valid immediately after check-sat returned sat or unknown");
+		}
 		if (!smtConfig.responseFactory.sat().equals(checkSatStatus) || smtConfig.responseFactory.unknown().equals(checkSatStatus)) {
 			return smtConfig.responseFactory.error("The checkSatStatus must be sat or unknown for a get-value command");
 		}
 		try {
-			solverProcess.sendNoListen("(get-value");
+			solverProcess.sendNoListen("(get-value (");
 			for (IExpr e: terms) {
+				solverProcess.sendNoListen("(");
 				solverProcess.sendNoListen(" ",translate(e));
+				solverProcess.sendNoListen(")");
 			}
-			return parseResponse(solverProcess.sendAndListen("\n"));
+			return parseResponse(solverProcess.sendAndListen("))\n"));
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
 		} catch (IVisitor.VisitorException e) {
