@@ -1,0 +1,29 @@
+
+syntax: regexp
+^SMT/bin$
+syntax: regexp
+^SMTPlugin/bin$
+syntax: regexp
+^SMT/temp$
+syntax: regexp
+^SMT/reports$
+syntax: regexp
+^SMT/results$
+syntax: regexp
+^SMT/logicsNew$
+syntax: regexp
+^SMT/copyToWeb$
+syntax: regexp
+^SMT/errout$
+syntax: regexp
+^SMT/jSMTLIB\.jar$
+syntax: regexp
+^SMT/jsmtlib\.properties$
+syntax: regexp
+^SMT/jSMTLIB\.tar$
+syntax: glob
+solver.out.*
+syntax: regexp
+^SMT/tempout$
+syntax: regexp
+^SMT/xx$
