@@ -5,6 +5,11 @@
  */
 package org.smtlib.solvers;
 
+// Items not implemented:
+//   attributed expressions
+//   get-values get-assignment get-proof get-unsat-core
+//   some error detection and handling
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -38,10 +43,13 @@ import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.impl.Pos;
-import org.smtlib.impl.TypeChecker;
 
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into Z3 commands */
 public class Solver_z3 extends AbstractSolver implements ISolver {
+	
+	protected String NAME_VALUE = "z3";
+	protected String AUTHORS_VALUE = "Leonardo de Moura and Nikolaj Bjorner";
+	protected String VERSION_VALUE = "2.11-0.0";
 	
 	/** A reference to the SMT configuration */
 	protected SMT.Configuration smtConfig;
@@ -50,10 +58,13 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 	public SMT.Configuration smt() { return smtConfig; }
 	
 	/** The command-line arguments for launching the Z3 solver */
-	String cmds[] = new String[]{ "", "/smt2","/in"}; 
+	String cmds[] = new String[]{ "", "/smt2","/in","MODEL=true"}; 
 
 	/** The object that interacts with external processes */
 	private SolverProcess solverProcess;
+	
+	/** The parser that parses responses from the solver */
+	protected org.smtlib.sexpr.Parser responseParser;
 	
 	/** Set to true once a set-logic command has been executed */
 	private boolean logicSet = false;
@@ -65,7 +76,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 	public /*@Nullable*/IResponse checkSatStatus() { return checkSatStatus; }
 
 	/** The number of assertions on the top assertion stack */
-	private int pushes = 0;
+	private int pushes = 0; // FIXME - not needed
 	
 	/** A stack storing the numbers of assertions in previous assertion sets */
 	private List<Integer> pushesStack = new LinkedList<Integer>();
@@ -118,20 +129,18 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 
 	/** Translates an S-expression into Z3 syntax */
 	protected String translate(IAccept sexpr) throws IVisitor.VisitorException {
-		// The z3 solver uses the standard S-expression concrete syntax
-		return translateSMT(sexpr);
-		//return sexpr.accept(new Translator());
+		// The z3 solver uses the standard S-expression concrete syntax, but not quite
+		// so we have to use our own translator
+		return sexpr.accept(new Translator());
 	}
 	
-	/** Translates an S-expression into SMT-LIBv2 syntax */
+	/** Translates an S-expression into standard SMT syntax */
 	protected String translateSMT(IAccept sexpr) throws IVisitor.VisitorException {
-		// The z3 solver uses the standard S-expression concrete syntax
+		// The z3 solver uses the standard S-expression concrete syntax, but not quite
 		StringWriter sw = new StringWriter();
 		org.smtlib.sexpr.Printer.write(sw,sexpr);
 		return sw.toString();
 	}
-	
-	org.smtlib.sexpr.Parser responseParser;
 	
 	protected IResponse parseResponse(String response) {
 		try {
@@ -154,9 +163,9 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 			if (s.contains("error")) return smtConfig.responseFactory.error(s);  // FIXME - doubly nested error
 			pushes++; // FIXME
 			checkSatStatus = null;
-		} catch (IOException e) {
-			return smtConfig.responseFactory.error("Failed to assert expression: " + e + " " + sexpr);
 		} catch (IVisitor.VisitorException e) {
+			return smtConfig.responseFactory.error("Failed to assert expression: " + e + " " + sexpr);
+		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Failed to assert expression: " + e + " " + sexpr);
 		}
 		return smtConfig.responseFactory.success();
@@ -176,7 +185,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 			String s;
 			int parens = 0;
 			do {
-				s = solverProcess.sendAndListen("(get-assertions)\n");  // FIXME - only gets one line worth
+				s = solverProcess.sendAndListen("(get-assertions)\n");
 				int p = -1;
 				while (( p = s.indexOf('(',p+1)) != -1) parens++;
 				p = -1;
@@ -199,7 +208,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 					}
 				}
 			} catch (Exception e ) {
-				// continue
+				// continue - fall through
 			}
 			return smtConfig.responseFactory.error("Unexpected output from the Z3 solver: " + s);
 		} catch (IOException e) {
@@ -235,7 +244,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 			return smtConfig.responseFactory.error("The logic must be set before a pop command is issued");
 		}
 		if (number < 0) throw new SMT.InternalException("Internal bug: A pop command called with a negative argument: " + number);
-		if (number > pushesStack.size()) return smtConfig.responseFactory.error("The argument to a pop command is larger than the number of assertion sets on the assertion set stack: " + number + " > " + pushesStack.size());
+		if (number >= pushesStack.size()) return smtConfig.responseFactory.error("The argument to a pop command is too large: " + number + " vs. a maximum of " + (pushesStack.size()-1));
 		if (number == 0) return smtConfig.responseFactory.success();
 		try {
 			checkSatStatus = null;
@@ -275,7 +284,6 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#set-logic " + logicName);
 		if (logicSet) {
 			if (!smtConfig.relax) return smtConfig.responseFactory.error("Logic is already set");
-			//symTable.clear();
 			pop(pushesStack.size());
 			push(1);
 		}
@@ -318,7 +326,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 				smtConfig.log.diag = System.err;
 			} else {
 				try {
-					FileOutputStream f = new FileOutputStream(name,true); // append
+					FileOutputStream f = new FileOutputStream(name,true); // true -> append
 					smtConfig.log.diag = new PrintStream(f);
 				} catch (java.io.IOException e) {
 					return smtConfig.responseFactory.error("Failed to open or write to the diagnostic output " + e.getMessage(),value.pos());
@@ -370,19 +378,16 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 		if (Utils.ERROR_BEHAVIOR.equals(option)) {
 			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION,null);
 		} else if (Utils.NAME.equals(option)) {
-			lit = smtConfig.exprFactory.unquotedString(org.smtlib.Utils.TEST_SOLVER,null);
+			lit = smtConfig.exprFactory.unquotedString(NAME_VALUE,null);
 		} else if (Utils.AUTHORS.equals(option)) {
-			lit = smtConfig.exprFactory.unquotedString(Utils.AUTHORS_VALUE,null);
+			lit = smtConfig.exprFactory.unquotedString(AUTHORS_VALUE,null);
 		} else if (Utils.VERSION.equals(option)) {
-			lit = smtConfig.exprFactory.unquotedString(Utils.VERSION_VALUE,null);
+			lit = smtConfig.exprFactory.unquotedString(VERSION_VALUE,null);
 			
 		} else if (Utils.REASON_UNKNOWN.equals(option)) {
 			return smtConfig.responseFactory.unsupported();
 		} else if (Utils.ALL_STATISTICS.equals(option)) {
 			return smtConfig.responseFactory.unsupported();
-			
-//		} else if ((value = Utils.stringInfo.get(option)) != null) {
-//			lit = smtConfig.exprFactory.unquotedString(value,null);
 		} else {
 			return smtConfig.responseFactory.unsupported();
 		}
@@ -433,7 +438,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 		}
 		try {
 			checkSatStatus = null;
-			return parseResponse(solverProcess.sendAndListen(translateSMT(cmd),"\n"));
+			return parseResponse(solverProcess.sendAndListen(translate(cmd),"\n"));
 			
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
@@ -464,7 +469,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 		}
 		try {
 			checkSatStatus = null;
-			return parseResponse(solverProcess.sendAndListen(translateSMT(cmd),"\n"));
+			return parseResponse(solverProcess.sendAndListen(translate(cmd),"\n"));
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
 		} catch (IVisitor.VisitorException e) {
@@ -479,7 +484,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 		}
 		try {
 			checkSatStatus = null;
-			return parseResponse(solverProcess.sendAndListen(translateSMT(cmd),"\n"));
+			return parseResponse(solverProcess.sendAndListen(translate(cmd),"\n"));
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
 		} catch (IVisitor.VisitorException e) {
@@ -548,7 +553,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 		try {
 			solverProcess.sendNoListen("(get-value (");
 			for (IExpr e: terms) {
-				solverProcess.sendNoListen("(");
+				solverProcess.sendNoListen("("); // FIXME - too many parentheses?
 				solverProcess.sendNoListen(" ",translate(e));
 				solverProcess.sendNoListen(")");
 			}
@@ -566,12 +571,12 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 
 		@Override
 		public String visit(IDecimal e) throws IVisitor.VisitorException {
-			throw new VisitorException("The yices solver cannot handle decimal literals",e.pos());
+			return translateSMT(e);
 		}
 
 		@Override
 		public String visit(IStringLiteral e) throws IVisitor.VisitorException {
-			throw new VisitorException("The yices solver cannot handle string literals",e.pos());
+			throw new VisitorException("The Z3 solver cannot handle string literals",e.pos());
 		}
 
 		@Override
@@ -581,12 +586,12 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 
 		@Override
 		public String visit(IBinaryLiteral e) throws IVisitor.VisitorException {
-			throw new VisitorException("Did not expect a Binary literal in an expression to be translated",e.pos());
+			return "#b" + e.value();
 		}
 
 		@Override
 		public String visit(IHexLiteral e) throws IVisitor.VisitorException {
-			throw new VisitorException("Did not expect a Hex literal in an expression to be translated",e.pos());
+			return "#x" + e.value();
 		}
 
 		@Override
@@ -790,7 +795,12 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 			throw new UnsupportedOperationException("visit-ISort.IParameter");
 		}
 		
-		
+		public String visit(ICommand command) throws IVisitor.VisitorException {
+			if (command instanceof ICommand.Iassert) {
+				return "(assert " + ((ICommand.Iassert)command).expr().accept(this) + ")";
+			} else {
+				return translateSMT(command);
+			}
+		}
 	}
-
 }

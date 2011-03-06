@@ -8,7 +8,6 @@ package org.smtlib;
 // TODO can we arrange Utils to be extensible?
 // FIXME - needs more separation of concrete syntax
 
-import java.io.File;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -269,7 +268,8 @@ public class Utils {
 	}
 	
 	/** Converts a quoted string (which has enclosing double quotes)
-	 * to a raw sequence of ASCII characters, undoing any escape sequences */
+	 * to a raw sequence of ASCII characters, undoing any escape sequences,
+	 * and without the enclosing quotes */
 	public static String unescape(String msg) {
 		StringBuilder sb = new StringBuilder();
 		int k = 1;
@@ -282,9 +282,14 @@ public class Utils {
 			} else {
 				if (k < kk) sb.append(msg.substring(k,kk));
 				char c = msg.charAt(kk+1);
-				// In SMT-LIB v2, the only characters c may be are \ and "
-				// but we don't bother to check (TODO)
-				sb.append(c);
+				// In SMT-LIB v2, \\ is \ , \" is "
+				// and \x for some other x is \x (the \ is not special)
+				if (c == '\\' || c == '"') {
+					sb.append(c);
+				} else {
+					sb.append('\\');
+					sb.append(c);
+				}
 				k = kk+2;
 				
 				// Use something like the following if we need to undo C-like escapes
@@ -329,7 +334,6 @@ public class Utils {
 	 * @return either an ISexpr that holds a logic definition or a IResponse containing an error
 	 */
 	public /*@Nullable*/ILogic findLogic(String name, /*@Nullable*/String path, /*@Nullable*/IPos pos) throws Utils.SMTLIBException {
-		File f = null;
 		IPos.ISource source;
 		InputStream input = null;
 		try {
@@ -342,15 +346,21 @@ public class Utils {
 			IParser p = config.smtFactory.createParser(config,source);
 			return p.parseLogic();
 		} catch (IParser.ParserException e) {
-			throw new Utils.SMTLIBException(smtConfig.responseFactory.error("Failed to parse the logic file " + f.getPath() + ": " + e,e.pos()));
+			throw new Utils.SMTLIBException(smtConfig.responseFactory.error("Failed to parse the logic file for " + name + " in " + path + " : " + e,e.pos()));
 		} catch (Utils.SMTLIBException e) {
 			throw e;
 		} catch (Exception e) {
-			throw new Utils.SMTLIBException(smtConfig.responseFactory.error("Failed to read the logic file for " + name + ": " + e,null));
+			throw new Utils.SMTLIBException(smtConfig.responseFactory.error("Failed to read the logic file for " + name + " in " + path + " : " + e,null));
 		} finally {
-			// FIXME - need to close files, streams?
+			try {
+				if (input != null) input.close();
+			} catch (java.io.IOException e) {
+				throw new Utils.SMTLIBException(smtConfig.responseFactory.error("Failed to close a stream while parsing " + name + " in " + path + " : " + e,null));
+			}
 		}
 	}
+	
+	// FIXME - use the log or exceptions in findLogic and findTheory - why the difference
 	
 	/** Reads a theory file, returning the S-expression that it holds.
 	 * @param name the name of the theory
@@ -358,36 +368,25 @@ public class Utils {
 	 * @return either an ISexpr that holds a theory definition or an IResponse containing an error
 	 */
 	public /*@Nullable*/ITheory findTheory(String name, /*@Nullable*/String path) {
-		File f = null;
 		IPos.ISource source;
+		InputStream input = null;
 		try {
 			SMT.Configuration config = smtConfig.clone();
 			config.interactive = false;
-			InputStream input = SMT.logicFinder.find(smtConfig,name,null);
-//			if (path == null) {
-//				URL url = ClassLoader.getSystemResource(name + ".smt2");
-//				if (url == null) {
-//					smtConfig.log.logError(smtConfig.responseFactory.error("No theory file found for " + name, null));
-//					return null;
-//				}
-//				source = config.smtFactory.createSource(config,url.openStream(),url.getPath());
-//			} else {
-//				f = new File(path + File.separator + name + ".smt2");
-//				if (!f.isFile()) {
-//					smtConfig.log.logError(smtConfig.responseFactory.error("No theory file found for " + name + " as " + f.getPath(), null));
-//					return null;
-//				}
-//				source = config.smtFactory.createSource(config,f);
-//			}
+			input = SMT.logicFinder.find(smtConfig,name,null);
 			source = config.smtFactory.createSource(config,input,null);
 			IParser p = config.smtFactory.createParser(config, source);
 			return p.parseTheory();
 		} catch (IParser.ParserException e) {
-			smtConfig.log.logError(smtConfig.responseFactory.error("Failed to parse the theory file " + f.getPath() + ": " + e,e.pos()));
+			smtConfig.log.logError(smtConfig.responseFactory.error("Failed to parse the theory file " + name + " in " + path + ": " + e,e.pos()));
 		} catch (Exception e) {
-			smtConfig.log.logError(smtConfig.responseFactory.error("Failed to read the theory file " + f.getPath() + ": " + e,null));
+			smtConfig.log.logError(smtConfig.responseFactory.error("Failed to read the theory file " + name + " in " + path + ": " + e,null));
 		} finally {
-			// FIXME - need to close files, streams?
+			try {
+				if (input != null) input.close();
+			} catch (java.io.IOException e) {
+				smtConfig.log.logError(smtConfig.responseFactory.error("Failed to close a stream while parsing " + name + " in " + path + " : " + e,null));
+			}
 		}
 		return null;
 	}
@@ -403,12 +402,12 @@ public class Utils {
 		ILogic sx = null; // = findLogic(logicName, smtConfig.logicPath, pos);
 		{
 			String name = logicName;
-			File f = null;
 			IPos.ISource source;
+			InputStream input = null;
 			try {
 				SMT.Configuration config = smtConfig.clone();
 				config.interactive = false;
-				InputStream input = SMT.logicFinder.find(smtConfig,name,pos);
+				input = SMT.logicFinder.find(smtConfig,name,pos);
 				if (input== null) return smtConfig.responseFactory.error("No logic loaded " + name, pos);
 					// The above error should not happen, because an exception
 					// ought to be thrown for any problems in find().
@@ -416,13 +415,17 @@ public class Utils {
 				IParser p = config.smtFactory.createParser(config,source);
 				sx = p.parseLogic();
 			} catch (IParser.ParserException e) {
-				return smtConfig.responseFactory.error("Failed to parse the logic file " + f.getPath() + ": " + e,e.pos());
+				return smtConfig.responseFactory.error("Failed to parse the logic file " + name + ": " + e,e.pos());
 			} catch (Utils.SMTLIBException e) {
 				return e.errorResponse;
 			} catch (Exception e) {
 				return smtConfig.responseFactory.error("Failed to read the logic file for " + name + ": " + e,null);
 			} finally {
-				// FIXME - need to close files, streams?
+				try {
+					if (input != null) input.close();
+				} catch (java.io.IOException e) {
+					return smtConfig.responseFactory.error("Failed to close a stream while parsing " + name + " : " + e,null);
+				}
 			}
 		}
 		if (sx == null) {

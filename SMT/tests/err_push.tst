@@ -1,0 +1,11 @@
+; tests that the argument to a push is a number
+( set-logic QF_UF)
+( push 0.0 )
+( push "asd")
+( push #b1 )
+( push #x0 )
+( push a )
+( push |A| )
+( push 1 2 3 )
+( push -1 )
+(push)

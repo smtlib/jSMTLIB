@@ -1,0 +1,16 @@
+success
+(declare-fun x Bool)
+               ^^^^
+(error "Expected a left parenthesis here, instead of a symbol")
+(declare-fun x () A)
+                  ^
+(error "No such sort symbol declared: A")
+(declare-fun x (y z) Bool)
+                ^
+(error "No such sort symbol declared: y")
+(declare-fun x ((y Bool)(y Bool)) Bool)
+                 ^
+(error "No such sort symbol declared: y")
+(declare-fun x () A A)
+                    ^
+(error "Too many arguments or extraneous material after the command or missing right parenthesis")

@@ -1,0 +1,10 @@
+unsupported
+success
+success
+success
+success
+success
+sat
+(get-value (x y (and x y) ))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "The get-value command is only valid if :produce-models has been enabled")

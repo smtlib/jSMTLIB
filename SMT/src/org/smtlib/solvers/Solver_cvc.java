@@ -6,12 +6,15 @@
 package org.smtlib.solvers;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
+import java.math.BigDecimal;
 import java.util.*;
 
-import org.smtlib.ICommand.Ideclare_fun;
 import org.smtlib.*;
+import org.smtlib.ICommand.*;
+import org.smtlib.ICommand.Idefine_fun;
+import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IAttributeValue;
+import org.smtlib.IExpr.IAttributedExpr;
 import org.smtlib.IExpr.IBinaryLiteral;
 import org.smtlib.IExpr.IBinding;
 import org.smtlib.IExpr.IDecimal;
@@ -21,24 +24,31 @@ import org.smtlib.IExpr.IExists;
 import org.smtlib.IExpr.IFcnExpr;
 import org.smtlib.IExpr.IForall;
 import org.smtlib.IExpr.IHexLiteral;
+import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.ILet;
 import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.IParameterizedIdentifier;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
+import org.smtlib.ISort.IExpression;
 import org.smtlib.IVisitor.VisitorException;
 
-// FIXME - document
-
+/** This class implements the adapter of SMTv2 to old CVC commands. */ 
 public class Solver_cvc extends Solver_test implements ISolver {
-	// FIXME - use  -lang smtlib   or -lang smt2  ???
+	/** Holds the options for the command-line that invokes the solver;
+	 * cmds[0] is filled in with the local file-system path to the executable
+	 */
 	String cmds[] = new String[]{ "", "+int" }; 
-	private IResponse status;
+	
+	//private IResponse status;
+
+	/** The external process driver, initialized in start() */
 	private SolverProcess solverProcess;
 	
 	final private String errorIndication = "rror";
 	
+	/** Creates a solver object (which is not yet started)*/
 	public Solver_cvc(SMT.Configuration smtConfig, String executable) {
 		super(smtConfig,"");
 		cmds[0] = executable;
@@ -50,10 +60,14 @@ public class Solver_cvc extends Solver_test implements ISolver {
 		super.start();
 		try {
 			solverProcess.start();
+//			String response = solverProcess.sendAndListen("DATATYPE T$$PBOOL = _$TRUE | _$FALSE END;\n");
+//			if (response.contains(errorIndication)) {
+//				return smtConfig.responseFactory.error(response);
+//			}
 			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Started cvc " );
-			return status=smtConfig.responseFactory.success();
+			return smtConfig.responseFactory.success();
 		} catch (Exception e) {
-			return status=smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
+			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
 		}
 	}
 	
@@ -62,7 +76,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 		super.exit();
 		solverProcess.exit();
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("Ended CVC ");
-		return status = smtConfig.responseFactory.success_exit();
+		return smtConfig.responseFactory.success_exit();
 	}
 
 
@@ -70,7 +84,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 	@Override
 	public IResponse assertExpr(IExpr sexpr) {
 		try {
-			status = super.assertExpr(sexpr);
+			IResponse status = super.assertExpr(sexpr);
 			if (!status.isOK()) return status;
 			String response = solverProcess.sendAndListen("ASSERT " + translate(sexpr) + " ;\n");
 			if (response.contains(errorIndication)) {
@@ -78,16 +92,16 @@ public class Solver_cvc extends Solver_test implements ISolver {
 			}
 			return status;
 		} catch (IOException e) {
-			return status=smtConfig.responseFactory.error("Failed to assert expression: " + e + " " + sexpr, sexpr.pos());
+			return smtConfig.responseFactory.error("Failed to assert expression: " + e + " " + sexpr, sexpr.pos());
 		} catch (VisitorException e) {
-			return status=smtConfig.responseFactory.error(e.getMessage(),null); // FIXME location
+			return smtConfig.responseFactory.error(e.getMessage(),e.pos());
 		}
 	}
 
 	@Override
 	public IResponse check_sat() {
 		IResponse res;
-		status = super.check_sat();
+		IResponse status = super.check_sat();
 		if (status.isError()) return status;
 		try {
 			String s = solverProcess.sendAndListen("CHECKSAT;\r\n");
@@ -114,9 +128,9 @@ public class Solver_cvc extends Solver_test implements ISolver {
 	@Override
 	public IResponse pop(int number) {
 		try {
-			status = super.pop(number);
+			IResponse status = super.pop(number);
 			if (!status.isOK()) return status;
-			if (number == 0) return status=smtConfig.responseFactory.success();
+			if (number == 0) return smtConfig.responseFactory.success();
 			while (number-- > 0) {
 				String response = solverProcess.sendAndListen("POP;\n");
 				if (response.contains(errorIndication)) {
@@ -125,61 +139,41 @@ public class Solver_cvc extends Solver_test implements ISolver {
 			}
 			return status;
 		} catch (IOException e) {
-			return status=smtConfig.responseFactory.error("Failed to execute pop: " + e);
+			return smtConfig.responseFactory.error("Failed to execute pop: " + e);
 		}
 	}
 
 	@Override
 	public IResponse push(int number) {
 		try {
-			status = super.push(number);
+			IResponse status = super.push(number);
 			if (!status.isOK()) return status;
-			if (number == 0) return status=smtConfig.responseFactory.success();
+			if (number == 0) return smtConfig.responseFactory.success();
 			while (number-- > 0) {
 				String response = solverProcess.sendAndListen("PUSH;\n");
 				if (response.contains(errorIndication)) {
 					return smtConfig.responseFactory.error(response);
 				}
 			}
-			return status=smtConfig.responseFactory.success();
+			return smtConfig.responseFactory.success();
 		} catch (IOException e) {
-			return status=smtConfig.responseFactory.error("Failed to execute push: " + e);
+			return smtConfig.responseFactory.error("Failed to execute push: " + e);
 		}
 	}
 
 	@Override
 	public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
-		
-//		try {
-			boolean lSet = logicSet;
-			status = super.set_logic(logicName,pos);
-			if (!status.isOK()) return status;
-			// FIXME - discrimninate among logics
-			if (lSet) {
-				return status=smtConfig.responseFactory.error("Logic is already set");
-//				String response = solverProcess.sendAndListen("POPTO 0;\n");
-//				if (response.contains(errorIndication)) {
-//					return smtConfig.responseFactory.error(response);
-//				}
-//				push(1); // FIXME - should this be here? check for errors?
-			}
-			return status;
-//		} catch (IOException e) {
-//			return status=smtConfig.responseFactory.error("Failed to execute set_logic: " + e);
-//		}
-
+		return super.set_logic(logicName,pos);
 	}
 
 	@Override
 	public IResponse set_option(IKeyword key, IAttributeValue value) {
-		status = super.set_option(key,value);
-		return status;
+		return super.set_option(key,value);
 	}
 
 	@Override
 	public IResponse get_option(IKeyword key) {
-		status = super.get_option(key);
-		return status;
+		return super.get_option(key);
 	}
 
 	@Override
@@ -194,9 +188,9 @@ public class Solver_cvc extends Solver_test implements ISolver {
 		} else if (":reason-unknown".equals(option)) {
 			return smtConfig.responseFactory.unsupported(); // FIXME
 		} else if (":authors".equals(option)) {
-			return smtConfig.responseFactory.stringLiteral("Unspecified"); // FIXME
+			return smtConfig.responseFactory.stringLiteral("Clark Barrett, Cesare Tinelli, and others");
 		} else if (":version".equals(option)) {
-			return smtConfig.responseFactory.stringLiteral(Utils.VERSION_VALUE); // FIXME
+			return smtConfig.responseFactory.stringLiteral("2.2"); // FIXME
 		} else if (":name".equals(option)) {
 			return smtConfig.responseFactory.stringLiteral("CVC3");
 		} else {
@@ -208,11 +202,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 	@Override
 	public IResponse declare_fun(Ideclare_fun cmd){
 		try {
-			// FIXME - not allowed to have Boolean types
-			if (!logicSet) {
-				return status=smtConfig.responseFactory.error("The logic must be set before a declare-fun command is issued");
-			}
-			status = super.declare_fun(cmd);
+			IResponse status = super.declare_fun(cmd);
 			if (!status.isOK()) return status;
 			String encodedName = translate(cmd.symbol());
 			String msg = encodedName + ":";
@@ -238,11 +228,157 @@ public class Solver_cvc extends Solver_test implements ISolver {
 			}
 			return smtConfig.responseFactory.success();
 		} catch (IOException e) {
-			return status=smtConfig.responseFactory.error("Failed to execute set_logic: " + e);
+			return smtConfig.responseFactory.error("Failed to execute set_logic: " + e);
 		} catch (IVisitor.VisitorException e) {
-			return status=smtConfig.responseFactory.error("Failed to execute set_logic: " + e);
+			return smtConfig.responseFactory.error("Failed to execute set_logic: " + e, e.pos());
 		}
 		
+	}
+	
+	public String encodeSort(IIdentifier id) throws VisitorException {
+		if (id instanceof ISymbol) {
+			String nm = org.smtlib.sexpr.Printer.write(id);
+			if ("Bool".equals(nm)) return "BOOLEAN";
+			if ("Int".equals(nm)) return "INT";
+			if ("Real".equals(nm)) return "REAL";
+			if ("Array".equals(nm)) {
+				if (!symTable.arrayTheorySet) {
+					throw new VisitorException("Array logic not enabled",id.pos());
+				}
+				return "ARRAY";
+			}
+			return "T$" + nm;
+		} else if (id instanceof IParameterizedIdentifier){
+			IParameterizedIdentifier pid = (IParameterizedIdentifier)id;
+			ISymbol head = pid.headSymbol();
+			String nm = org.smtlib.sexpr.Printer.write(head);
+			if ("BitVec".equals(nm)) {
+				return "BITVECTOR(" + pid.numerals().get(0) + ")";
+			}
+			nm = "T$" + nm;
+			for (INumeral n: pid.numerals()) {
+				nm = nm + "$_" + org.smtlib.sexpr.Printer.write(n);
+			}
+			return nm;
+		} else {
+			throw new VisitorException("Unexpected kind of identifier: " + id.getClass(),id.pos());
+		}
+	}
+	
+	@Override
+	public IResponse declare_sort(Ideclare_sort cmd) {
+		IResponse res = super.declare_sort(cmd);
+		if (!res.isOK()) return res;
+		try {
+			if (cmd.arity().value().intValue() == 0) {
+				String msg = encodeSort(cmd.sortSymbol()) + ": TYPE;\n";
+				String response = solverProcess.sendAndListen(msg);
+				if (response.contains(errorIndication)) {
+					return smtConfig.responseFactory.error(response);
+				}
+				return res;
+			} else {
+				return smtConfig.responseFactory.error("CVC adapter does not implement parameterized user-defined sorts",cmd instanceof IPos.IPosable ? ((IPos.IPosable)cmd).pos() : null);
+			}
+		} catch (IOException e) {
+			return smtConfig.responseFactory.error("Failed to execute declare_sort: " + e);
+		} catch (VisitorException e) {
+			return smtConfig.responseFactory.error("Failed to execute declare_sort: " + e, e.pos());
+		}
+	}
+
+	@Override
+	public IResponse define_fun(Idefine_fun cmd) {
+		IResponse res = super.define_fun(cmd);
+		if (!res.isOK()) return res;
+		try {
+			if (cmd.parameters().size() == 0) {
+				String name = encode(cmd.symbol());
+				String resultSort = translate(cmd.resultSort());
+				String def = cmd.expression() == null ? null : translate(cmd.expression());
+				def = name + ": " + resultSort + 
+					( def == null ? "" : (" = " + def )) + 
+					";\n";
+				String response = solverProcess.sendAndListen(def);
+				if (response.contains(errorIndication)) {
+					return smtConfig.responseFactory.error(response);
+				}
+				return res;
+			} else {
+				String name = encode(cmd.symbol());
+				StringBuilder def = new StringBuilder();
+				def.append(name);
+				def.append(" : ");
+				if (cmd.parameters().size() == 1) {
+					def.append(translate(cmd.parameters().get(0).sort()));
+				} else {
+					def.append("(");
+					Iterator<IDeclaration> iter = cmd.parameters().iterator();
+					def.append(translate(iter.next().sort()));
+					while (iter.hasNext()) {
+						def.append(",");
+						def.append(translate(iter.next().sort()));
+					}
+				}
+				def.append(")->");
+				def.append(translate(cmd.resultSort()));
+				def.append(" = LAMBDA(");
+				Iterator<IDeclaration> iter = cmd.parameters().iterator();
+				IDeclaration d = iter.next();
+				if (cmd.parameters().size() == 1) {
+					def.append(translate(d.parameter()));
+					def.append(":");
+					def.append(translate(d.sort()));
+				} else {
+					def.append(translate(d.parameter()));
+					def.append(":");
+					def.append(translate(d.sort()));
+					while (iter.hasNext()) {
+						def.append(",");
+						d = iter.next();
+						def.append(translate(d.parameter()));
+						def.append(":");
+						def.append(translate(d.sort()));
+					}
+				}
+				def.append("): ");
+				def.append(translate(cmd.expression()));
+				def.append(";\n");
+				String response = solverProcess.sendAndListen(def.toString());
+				if (response.contains(errorIndication)) {
+					return smtConfig.responseFactory.error(response);
+				}
+				return res;
+			}
+		} catch (IOException e) {
+			return smtConfig.responseFactory.error("Failed to execute define_fun: " + e);
+		} catch (VisitorException e) {
+			return smtConfig.responseFactory.error("Failed to execute define_fun: " + e, e.pos());
+		}
+	}
+
+	@Override
+	public IResponse define_sort(Idefine_sort cmd) {
+		IResponse res = super.define_sort(cmd);
+		if (!res.isOK()) return res;
+		try {
+			if (cmd.parameters().size() == 0) {
+				String def = translate(cmd.expression());
+				String head = encodeSort(cmd.sortSymbol());
+				def = head + ": TYPE = " + def + ";\n";
+				String response = solverProcess.sendAndListen(def);
+				if (response.contains(errorIndication)) {
+					return smtConfig.responseFactory.error(response);
+				}
+				return res;
+			} else {
+				return smtConfig.responseFactory.error("Parameterized sort definitions not implemented"); // FIXME
+			}
+		} catch (IOException e) {
+			return smtConfig.responseFactory.error("Failed to execute define_sort: " + e);
+		} catch (VisitorException e) {
+			return smtConfig.responseFactory.error("Failed to execute define_sort: " + e, e.pos());
+		}
 	}
 
 	public String translate(IExpr expr) throws IVisitor.VisitorException {
@@ -261,14 +397,14 @@ public class Solver_cvc extends Solver_test implements ISolver {
 	static Set<String> logicNames = new HashSet<String>();
 	static {
 		/* SMTLIB			CVC
-		 * (or p q r ...)	(p OR q)  // FIXME > 2 args
-		 * (and p q r ...)	(p AND q) // FIXME > 2 args
+		 * (or p q r ...)	(p OR q OR r ...)
+		 * (and p q r ...)	(p AND q AND r ...)
 		 * (not p)			(NOT p)
-		 * (=> p q r ...)	(p => q) // FIXME > 2 args
-		 * (xor p q r ...)	(p XOR q) // FIXME > 2 args
-		 * (= p q r ...)	(p <=> q)   - formulas // FIXME > 2 args
-		 * (= p q r ...)	(p = q)   - terms // FIXME - more than 2 args
-		 * (distinct p q r)	????   - formulas FIXME 
+		 * (=> p q r ...)	(p => (q => r)) 
+		 * (xor p q r ...)	((p XOR q) XOR r)
+		 * (= p q r ...)	((p <=> q) AND ( q <=> r) ... )   - formulas
+		 * (= p q r ...)	((p = q) AND (q == r) ... )   - terms
+		 * (distinct p q r)	(NOT (p == q))   - formulas (error if more than 2 arguments) 
 		 * (distinct p q r)	(DISTINCT p q r ... )   - terms  
 		 * true				TRUE
 		 * false			FALSE
@@ -276,35 +412,50 @@ public class Solver_cvc extends Solver_test implements ISolver {
 		 * 
 		 */
 		
-		fcnNames.put("or","OR");				// >2 arguments ?? for cvc (left-assoc)
-		fcnNames.put("and","AND");				// >2 arguments ?? for cvc (left-assoc)
-		fcnNames.put("not","NOT");
-		fcnNames.put("=>","=>");				// >2 arguments ?? for cvc (right-assoc)
-		fcnNames.put("xor","XOR");				// >2 arguments ?? for cvc (left-assoc)
-		fcnNames.put("=","="); // <=> for formula 	// >2 arguments ?? for cvc (chainable)
-		fcnNames.put("distinct","DISTINCT"); // XOR for formula// >2 arguments ?? for cvc (pairwise)
+		fcnNames.put("or","|");				// infix for cvc (left-assoc)
+		fcnNames.put("and","&");				// infix for cvc (left-assoc)
+		fcnNames.put("not","~");				// prefix
+		fcnNames.put("=>","=>");				// infix for cvc (right-assoc)
+		fcnNames.put("xor","XOR");				// infix for cvc (left-assoc)
+		fcnNames.put("=","="); // <=> for formula 	// infix for cvc (chainable)
+		fcnNames.put("distinct","DISTINCT"); // XOR for formula// >2 arguments OK for cvc (pairwise)
 		fcnNames.put("true","TRUE");
 		fcnNames.put("false","FALSE");
 		fcnNames.put("ite","IF");			// special in cvc  IF ... THEN ... ELSE ... FI
-		fcnNames.put("+","+");				// >2 arguments ?? for cvc (left-assoc)
-		fcnNames.put("-","-");				// >2 arguments ?? for cvc (left-assoc)
-		fcnNames.put("*","*");				// >2 arguments ?? for cvc (left-assoc)
-		fcnNames.put(">",">");				// >2 arguments ?? for cvc (left-assoc)		
-		fcnNames.put(">=",">=");			// >2 arguments ?? for cvc (chainable)
-		fcnNames.put("<","<");				// >2 arguments ?? for cvc (chainable)
-		fcnNames.put("<=","<=");			// >2 arguments ?? for cvc (chainable)
+		fcnNames.put("+","+");				// infix for cvc (left-assoc)
+		fcnNames.put("-","-");				// infix for cvc (left-assoc)
+		fcnNames.put("*","*");				// infix for cvc (left-assoc)
+		fcnNames.put(">",">");				// infix for cvc (left-assoc)		
+		fcnNames.put(">=",">=");			// infix for cvc (chainable)
+		fcnNames.put("<","<");				// infix for cvc (chainable)
+		fcnNames.put("<=","<=");			// infix for cvc (chainable)
 		
 		fcnNames.put("forall","FORALL");
 		fcnNames.put("exists","EXISTS");
 		fcnNames.put("let","LET");
+		
+		fcnNames.put("bvadd","BVPLUS"); // needs a first argument of the number of bits
+		fcnNames.put("bvmul","BVMULT"); // needs a first argument of the number of bits
+		fcnNames.put("bvneg","BVUMINUS");
+		fcnNames.put("bvnot","~");
+		fcnNames.put("bvand","&"); // infix
+		fcnNames.put("bvor","|"); // infix
+		fcnNames.put("bvudiv","&"); // FIXME
+		fcnNames.put("bvurem","&"); // FIXME
+		fcnNames.put("bvshl","<<"); // infix// FIXME
+		fcnNames.put("bvlshr",">>"); // infix// FIXME
+		fcnNames.put("concat","@"); // infix
+		fcnNames.put("bvult","BVLT");
+		fcnNames.put("extract","extract");
+		
+		logicNames.add("or");
+		logicNames.add("and");
+		logicNames.add("not");
+		logicNames.add("=>");
 	}
 	
-
-	/* Yices ids:
-	 * 		FIXME - not  defined what Yices ids can be made of
-	 */
 	
-	static public class Translator extends IVisitor.NullVisitor<String> {
+	public class Translator extends IVisitor.NullVisitor<String> {
 		boolean isFormula = true;
 		final private Map<IExpr,ISort> typemap;
 		final private SMT.Configuration smtConfig;
@@ -313,32 +464,88 @@ public class Solver_cvc extends Solver_test implements ISolver {
 			this.typemap = typemap;
 			this.smtConfig = smtConfig;
 		}
+		
+		public /*@Nullable*/ IPos pos(Object e) {
+			return e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null;
+		}
+		
+		public String encode(IAttributeValue id) throws VisitorException {
+			if (id instanceof ISymbol) {
+				return org.smtlib.sexpr.Printer.write(id);
+			} else if (id instanceof IParameterizedIdentifier){
+				IParameterizedIdentifier pid = (IParameterizedIdentifier)id;
+				ISymbol head = pid.headSymbol();
+				String nm = org.smtlib.sexpr.Printer.write(head);
+				for (INumeral n: pid.numerals()) {
+					nm = nm + "$_" + org.smtlib.sexpr.Printer.write(n);
+				}
+				return nm;
+			} else {
+				throw new VisitorException("Unexpected kind of identifier: " + id.getClass(),id.pos());
+			}
+		}
+		
+		public String encodeSort(IIdentifier id) throws VisitorException {
+			return Solver_cvc.this.encodeSort(id);
+		}
+		
+		@Override
+		public String visit(IAttributedExpr e) throws IVisitor.VisitorException {
+			IExpr expr = e.expr();
+			IAttribute<?> attr = e.attributes().get(0);
+			if (attr.keyword().toString().equals(":named")) {
+				String name = encode(attr.attrValue());
+				String ex = expr.accept(this);
+				String def = name + " : " + "BOOLEAN" + " = " + ex + ";\n";
+				try {
+					String response = solverProcess.sendAndListen(def);
+					if (response.contains(errorIndication)) {
+						throw new VisitorException(response,e.pos());
+					}
+				} catch (IOException exc) {
+					throw new VisitorException("Failed to define attributed expression: " + exc, e.pos());
+				}
+				return ex;
+			} else {
+				throw new VisitorException("Unexpected kind of keyword: " + smtConfig.defaultPrinter.toString(attr.keyword()),attr.pos());
+			}
+		}
 
 		@Override
 		public String visit(IDecimal e) throws IVisitor.VisitorException {
-			throw new VisitorException("The CVC solver cannot handle decimal literals", (IPos)e);
+			// CVC has rationals for decimal numbers
+			BigDecimal v = e.value();
+			int scale = v.scale();
+			if (scale >= 0) {
+				BigDecimal num = v.scaleByPowerOfTen(scale);
+				BigDecimal den = BigDecimal.ONE.scaleByPowerOfTen(scale);
+				return "(" + num.toBigInteger() + "/" + den.toBigInteger() + ")";
+			} else {
+				BigDecimal num = v.scaleByPowerOfTen(-scale);
+				return "(" + num.toBigInteger() + ")";
+			}
 		}
 
 		@Override
 		public String visit(IStringLiteral e) throws IVisitor.VisitorException {
-			throw new VisitorException("The CVC solver cannot handle string literals", (IPos)e);
+			throw new VisitorException("The CVC solver cannot handle string literals", pos(e));
 		}
 
 		@Override
 		public String visit(INumeral e) throws IVisitor.VisitorException {
-			return e.value().toString();
+			return org.smtlib.sexpr.Printer.write(e);
 		}
 
 		@Override
 		public String visit(IBinaryLiteral e) throws IVisitor.VisitorException {
 			// CVC prefix is 0bin - LSB is on right, MSB on left
-			throw new VisitorException("Did not expect a Binary literal in an expression to be translated", (IPos)e);
+			return "0bin" + e.value();
 		}
 
 		@Override
 		public String visit(IHexLiteral e) throws IVisitor.VisitorException {
 			// CVC prefix is 0hex - LSB is on right, MSB on left
-			throw new VisitorException("Did not expect a Hex literal in an expression to be translated", (IPos)e);
+			return "0hex" + e.value();
 		}
 		
 		//@ requires iter.hasNext();
@@ -410,7 +617,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 
 		Set<String> infix = new HashSet<String>();
 		{
-			infix.addAll(Arrays.asList(new String[]{"OR","AND","+","*"}));
+			infix.addAll(Arrays.asList(new String[]{"OR","AND","+","*","XOR"}));
 		}
 
 		@Override
@@ -418,16 +625,20 @@ public class Solver_cvc extends Solver_test implements ISolver {
 			boolean resultIsFormula = this.isFormula;
 			Iterator<IExpr> iter = e.args().iterator();
 			if (!iter.hasNext()) throw new VisitorException("Did not expect an empty argument list", (IPos)e);
-			String oldName = e.head().toString();
-			String newName = e.head().accept(this);
+			String oldName = e.head().headSymbol().toString();
+			String newName = e.head().headSymbol().accept(this);
 			int length = e.args().size();
 			StringBuilder sb = new StringBuilder();
 			try {
 				// Determine if the arguments are formulas or terms
 				if (resultIsFormula) {
-					if (newName != null && logicNames.contains(newName)) {
+					if (newName != null && logicNames.contains(oldName)) {
 						// Propositional boolean item
 						this.isFormula = true;
+						if (oldName.equals("or")) newName = "OR";
+						if (oldName.equals("and")) newName = "AND";
+						if (oldName.equals("not")) newName = "NOT";
+						if (oldName.equals("=>")) newName = "=>";
 					} else {
 						IExpr arg = e.args().get(e.args().size() <= 1 ? 0 : 1); // Use argument 1 for ite's sake
 						ISort sort = typemap.get(arg);
@@ -436,9 +647,18 @@ public class Solver_cvc extends Solver_test implements ISolver {
 						}
 						if (sort.isBool()) {
 							// Some functions can take both bool and non-bool arguments:
-							//   EQ NEQ DISTINCT ite
+							//   = /= DISTINCT ite
 							this.isFormula = resultIsFormula;
-							if ("EQ".equals(newName)) newName = "IFF";
+							if ("=".equals(newName)) newName = "<=>";
+							else if ("DISTINCT".equals(newName)) {
+								if (e.args().size() > 2) {
+									return "FALSE";
+								} else {
+									String a1 = iter.next().accept(this);
+									String a2 = iter.next().accept(this);
+									return "((" + a1 + ")XOR(" + a2 + "))"; 
+								}
+							} // FIXME - what about ite?
 						} else {
 							// Arguments must be terms
 							this.isFormula = false;
@@ -446,7 +666,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 					}
 				} else {
 					this.isFormula = false;
-				}
+				} // FIXME - implies, equality, non-equality, 
 
 				if (infix.contains(newName) || (length >= 2 && newName.equals("-"))) {
 					// infix
@@ -461,12 +681,39 @@ public class Solver_cvc extends Solver_test implements ISolver {
 					sb.append(")");
 				} else if (newName.equals("=>")) {
 					sb.append(rightassoc(newName,iter));
-				} else if (newName.equals("=")) {
-					newName = isFormula ? "<=>" : "=";
-					sb.append(remove_chainable(newName,length,iter));
-				} else if (newName.equals("XOR")) {
-					sb.append(remove_leftassoc(newName,length,iter));
-				} else if (newName.equals("NOT")) {
+				} else if (newName.equals("BVXOR")) {
+					sb.append(newName);
+					sb.append(iter.next().accept(this));
+					while (iter.hasNext()) {
+						sb.append(",");
+						sb.append(iter.next().accept(this));
+					}
+					sb.append(")");
+				} else if (oldName.equals("=")) {
+					boolean argsAreBool = typemap.get(e.args().get(0)).isBool();
+					boolean needsAnd = length > 2;
+					if (needsAnd) sb.append("(");
+					String right = iter.next().accept(this);
+					while (iter.hasNext()) {
+						String left = right;
+						right = iter.next().accept(this);
+						if (resultIsFormula) {
+							sb.append("((");
+							sb.append(left);
+							sb.append(")");
+							sb.append(newName);
+							sb.append("(");
+							sb.append(right);
+							sb.append("))");
+						} else {
+							throw new VisitorException("CVC does not permit = in terms",e.pos());
+						}
+						if (needsAnd) {
+							if (!iter.hasNext()) sb.append(")");
+							else sb.append(" AND ");
+						}
+					}
+				} else if (newName.equals("~") || newName.equals("NOT")) {
 					sb.append("(");
 					sb.append(newName);
 					sb.append(" ");
@@ -507,8 +754,24 @@ public class Solver_cvc extends Solver_test implements ISolver {
 						}
 						sb.append(")");
 					}
+				} else if (symTable.arrayTheorySet && oldName.equals("select")) {
+					sb.append(iter.next().accept(this));
+					sb.append("[");
+					sb.append(iter.next().accept(this));
+					sb.append("]");
+				} else if (symTable.arrayTheorySet && oldName.equals("store")) {
+					sb.append("(");
+					sb.append(iter.next().accept(this));
+					sb.append(" WITH [");
+					sb.append(iter.next().accept(this));
+					sb.append("] := ");
+					sb.append(iter.next().accept(this));
+					sb.append(")");
 				} else if (oldName.equals("ite")) {
-					// FIXME - terms only
+					if (!resultIsFormula) {
+						throw new VisitorException("CVC only allows ite constructs at the formula level",e.pos());
+					}
+					// FIXME - formula only
 					sb.append("(IF ");
 					sb.append(iter.next().accept(this));
 					sb.append(" THEN ");
@@ -524,9 +787,45 @@ public class Solver_cvc extends Solver_test implements ISolver {
 					sb.append(" ");
 					sb.append(iter.next().accept(this));
 					sb.append(")");
+				} else if (symTable.bitVectorTheorySet && oldName.equals("extract")) {
+					IParameterizedIdentifier pid = (IParameterizedIdentifier)e.head();
+					sb.append(iter.next().accept(this));
+					sb.append("[");
+					sb.append(org.smtlib.sexpr.Printer.write(pid.numerals().get(1)));
+					sb.append(":");
+					sb.append(org.smtlib.sexpr.Printer.write(pid.numerals().get(0)));
+					sb.append("]");
+				} else if (symTable.bitVectorTheorySet && (oldName.equals("bvudiv") || oldName.equals("bvurem") || oldName.equals("bvshl") || oldName.equals("bvlshr"))) {
+					throw new VisitorException("SMT BitVector function " + oldName + " is not implemented in cvc",e.pos());
+				} else if (symTable.bitVectorTheorySet && ("@".equals(newName) || (oldName.startsWith("bv") && newName != null && newName.charAt(0) != 'B'))) {
+					// infix
+					sb.append("((");
+					sb.append(iter.next().accept(this));
+					sb.append(")");
+					sb.append(newName);
+					sb.append("(");
+					sb.append(iter.next().accept(this));
+					sb.append("))");
+				} else if (symTable.bitVectorTheorySet && (newName.equals("BVPLUS") || newName.equals("BVMULT"))) {
+					ISort sort = typemap.get(e);
+					int k = 1;
+					if (sort instanceof IExpression) {
+						IIdentifier id = ((IExpression)sort).family();
+						if (id instanceof IParameterizedIdentifier) {
+							k = ((IParameterizedIdentifier)id).numerals().get(0).intValue();
+						}
+					}
+					sb.append(newName);
+					sb.append("(");
+					sb.append(k);
+					sb.append(",");
+					sb.append(iter.next().accept(this));
+					sb.append(",");
+					sb.append(iter.next().accept(this));
+					sb.append(")");
 				} else {
 					// usual functional notation
-					sb.append(oldName);
+					sb.append(newName == null ? oldName : newName);
 					if (!iter.hasNext()) {
 						sb.append("()"); // FIXME - should this have no parens at all?
 					} else {
@@ -547,8 +846,12 @@ public class Solver_cvc extends Solver_test implements ISolver {
 
 		@Override
 		public String visit(ISymbol e) throws IVisitor.VisitorException {
-			// FIXME - need to check what acharacters are allowed in a CVC name
+			// FIXME - need to check what characters are allowed in a CVC name
 			String oldName = e.value();
+			if (!isFormula) {
+				if ("true".equals(oldName)) return "$_TRUE";
+				if ("false".equals(oldName)) return "$_FALSE";
+			}
 			String newName = fcnNames.get(oldName);
 			if (newName != null) {
 				// There is a direct translation of a pre-defined SMT-LIB name
@@ -562,18 +865,17 @@ public class Solver_cvc extends Solver_test implements ISolver {
 
 		@Override
 		public String visit(IKeyword e) throws IVisitor.VisitorException {
-			throw new VisitorException("Did not expect a Keyword in an expression to be translated",(IPos)e);
+			throw new VisitorException("Did not expect a Keyword in an expression to be translated",pos(e));
 		}
 
 		@Override
 		public String visit(IError e) throws IVisitor.VisitorException {
-			throw new VisitorException("Did not expect a Error token in an expression to be translated",(IPos)e);
+			throw new VisitorException("Did not expect a Error token in an expression to be translated",pos(e));
 }
 
 		@Override
 		public String visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
-			// TODO Auto-generated method stub
-			return null;
+			throw new VisitorException("Did not expect a IParameterizedIdentifier token in an expression to be translated",pos(e));
 		}
 
 		@Override
@@ -641,24 +943,30 @@ public class Solver_cvc extends Solver_test implements ISolver {
 		public String visit(ISort.IExpression s) throws IVisitor.VisitorException {
 			if (s.isBool()) return "BOOLEAN";
 			if (s.parameters().size() == 0) {
-				String sort = s.family().accept(this);
+				String sort = encodeSort(s.family());
 				if ("Int".equals(sort)) return "INT";
 				if ("Real".equals(sort)) return "REAL";
-				return sort; // FIXME
-				//throw new UnsupportedOperationException("CVC visit-ISort.IExpression");
+				return sort; // FIXME - Array, BitVector
+			} else if (s.parameters().size() == 2) {
+				String sort = encodeSort(s.family());
+				if ("ARRAY".equals(sort)) {
+					List<ISort> args = s.parameters();
+					return "(ARRAY " + args.get(0).accept(this) + " OF " + args.get(1).accept(this) +")";
+				} else {
+					return "UNKNOWN";
+				}
+				
 			} else {
 				return "UNKNOWN"; // FIXME
 				//throw new UnsupportedOperationException("CVC visit-ISort.IExpression");
 			}
 		}
+		
 		public String visit(ISort.IFcnSort s) {
 			throw new UnsupportedOperationException("CVC visit-ISort.IFcnSort");
 		}
 		public String visit(ISort.IParameter s) {
 			throw new UnsupportedOperationException("CVC visit-ISort.IParameter");
 		}
-		
-
 	}
-
 }

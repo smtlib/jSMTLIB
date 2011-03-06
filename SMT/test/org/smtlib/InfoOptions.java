@@ -119,9 +119,9 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceProofs() {
-		doCommand("(set-option :produce-proofs true)", "success");
-		doCommand("(get-option :produce-proofs)", "true");
-		doCommand("(set-option :produce-proofs false)", "success");
+		doCommand("(set-option :produce-proofs true)", "unsupported");
+		doCommand("(get-option :produce-proofs)", "false");
+		doCommand("(set-option :produce-proofs false)", "unsupported");
 		doCommand("(get-option :produce-proofs)", "false");
 	}
 	
@@ -134,9 +134,9 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceModels() {
-		doCommand("(set-option :produce-models true)", "success");
-		doCommand("(get-option :produce-models)", "true");
-		doCommand("(set-option :produce-models false)", "success");
+		doCommand("(set-option :produce-models true)", "unsupported");
+		doCommand("(get-option :produce-models)", "false");
+		doCommand("(set-option :produce-models false)", "unsupported");
 		doCommand("(get-option :produce-models)", "false");
 	}
 	
@@ -149,9 +149,9 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceAssignments() {
-		doCommand("(set-option :produce-assignments true)", "success");
-		doCommand("(get-option :produce-assignments)", "true");
-		doCommand("(set-option :produce-assignments false)", "success");
+		doCommand("(set-option :produce-assignments true)", "unsupported");
+		doCommand("(get-option :produce-assignments)", "false");
+		doCommand("(set-option :produce-assignments false)", "unsupported");
 		doCommand("(get-option :produce-assignments)", "false");
 	}
 	
@@ -164,9 +164,9 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceUnsatCores() {
-		doCommand("(set-option :produce-unsat-cores true)", "success");
-		doCommand("(get-option :produce-unsat-cores)", "true");
-		doCommand("(set-option :produce-unsat-cores false)", "success");
+		doCommand("(set-option :produce-unsat-cores true)", "unsupported");
+		doCommand("(get-option :produce-unsat-cores)", "false");
+		doCommand("(set-option :produce-unsat-cores false)", "unsupported");
 		doCommand("(get-option :produce-unsat-cores)", "false");
 	}
 	

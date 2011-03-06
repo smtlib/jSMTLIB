@@ -129,13 +129,23 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(IBinaryLiteral e) throws IVisitor.VisitorException { // FIXME - need binary representation from anywhere
-		try { w.append(e.value().toString()); } catch (IOException ex) { throw new IVisitor.VisitorException(ex); }
+		try { 
+			w.append("#b");
+			w.append(e.value()); 
+		} catch (IOException ex) { 
+			throw new IVisitor.VisitorException(ex); 
+		}
 		return null;
 	}
 
 	@Override
 	public Void visit(IHexLiteral e) throws IVisitor.VisitorException { // FIXME - need hex representation from anywhere
-		try { w.append(e.value().toString()); } catch (IOException ex) { throw new IVisitor.VisitorException(ex); }
+		try { 
+			w.append("#x");
+			w.append(e.value());
+		} catch (IOException ex) { 
+			throw new IVisitor.VisitorException(ex); 
+		}
 		return null;
 	}
 
@@ -169,7 +179,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	public Void visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
 		try {
 			w.append("(" + Utils.UNDERSCORE + " ");
-			e.head().accept(this);
+			e.headSymbol().accept(this);
 			for (INumeral n: e.numerals()) {
 				w.append(" ");
 				w.append(n.value().toString());

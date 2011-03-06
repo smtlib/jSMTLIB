@@ -393,6 +393,9 @@ public class Solver_simplify extends Solver_test implements ISolver {
 		fcnNames.put("true","TRUE");
 		fcnNames.put("false","FALSE");
 		fcnNames.put("ite",ite_term);
+		
+		fcnNames.put("select","select");
+		fcnNames.put("store","store");
 
 		nonchainables.addAll(Arrays.asList(new String[]{ "EQ", ">", "<", ">=", "<=", "IFF" }));
 		
@@ -412,7 +415,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 		   { "OR","AND","IMPLIES","EXPLIES","XOR","IFF","NOT","FORALL","EXISTS"}));
 	}
 	
-	static public class Translator implements IVisitor {
+	static public class Translator implements IVisitor<String> {
 		boolean isFormula = true;
 		final private Map<IExpr,ISort> typemap;
 		final private SMT.Configuration smtConfig;
@@ -666,9 +669,9 @@ public class Solver_simplify extends Solver_test implements ISolver {
 			// Since there is no overloading, the head will be a new symbol
 			// and we don't need to worry that it collides with a pre- or user-defined
 			// function name
-			String v = e.head().accept(this); // This will come back with bars
+			String v = e.headSymbol().accept(this); // This will come back with bars
 			if (v.charAt(0) != '|') {
-				throw new VisitorException("INTERNAL ERROR: Do not expect to ever have a pre-defined name within a parameterized identifier",e.head().pos());
+				throw new VisitorException("INTERNAL ERROR: Do not expect to ever have a pre-defined name within a parameterized identifier",e.headSymbol().pos());
 			}
 			v = v.substring(0,v.length()-1);
 			for (INumeral n: e.numerals()) {
@@ -741,124 +744,128 @@ public class Solver_simplify extends Solver_test implements ISolver {
 		}
 
 		@Override
-		public Object visit(IAttribute e) throws VisitorException {
+		public String visit(IAttribute e) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public Object visit(IAttributedExpr e) throws VisitorException {
-			// FIXME - ignoring the name
+		public String visit(IAttributedExpr e) throws VisitorException {
+			// FIXME - ignoring the name - should use a LBL expression
 			StringBuilder sb = new StringBuilder();
+			sb.append("(LBL ");
+			sb.append(e.attributes().get(0).attrValue().toString()); // Use the standard printer FIXME
+			sb.append(" ");
 			sb.append(e.expr().accept(this));
+			sb.append(")");
 			return sb.toString();
 		}
 
 		@Override
-		public Object visit(org.smtlib.IResponse.IError e)
+		public String visit(org.smtlib.IResponse.IError e)
 				throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public Object visit(IAsIdentifier e) throws VisitorException {
+		public String visit(IAsIdentifier e) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public Object visit(IScript e) throws VisitorException {
+		public String visit(IScript e) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public Object visit(ICommand e) throws VisitorException {
+		public String visit(ICommand e) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public Object visit(IFamily s) throws VisitorException {
+		public String visit(IFamily s) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public Object visit(IAbbreviation s) throws VisitorException {
+		public String visit(IAbbreviation s) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public Object visit(IExpression s) throws VisitorException {
+		public String visit(IExpression s) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public Object visit(IFcnSort s) throws VisitorException {
+		public String visit(IFcnSort s) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public Object visit(IParameter s) throws VisitorException {
+		public String visit(IParameter s) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public Object visit(ILogic s) throws VisitorException {
+		public String visit(ILogic s) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public Object visit(ITheory s) throws VisitorException {
+		public String visit(ITheory s) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public Object visit(IResponse e) throws VisitorException {
+		public String visit(IResponse e) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public Object visit(IAssertionsResponse e) throws VisitorException {
+		public String visit(IAssertionsResponse e) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public Object visit(IAssignmentResponse e) throws VisitorException {
+		public String visit(IAssignmentResponse e) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public Object visit(IProofResponse e) throws VisitorException {
+		public String visit(IProofResponse e) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public Object visit(IValueResponse e) throws VisitorException {
+		public String visit(IValueResponse e) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public Object visit(IUnsatCoreResponse e) throws VisitorException {
+		public String visit(IUnsatCoreResponse e) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
-		public Object visit(IAttributeList e) throws VisitorException {
+		public String visit(IAttributeList e) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}

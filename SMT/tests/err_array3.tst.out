@@ -1,0 +1,13 @@
+success
+(declare-sort Bool 0)
+              ^^^^
+(error "The identifier is already declared to be a sort: Bool")
+(declare-sort Array 1)
+              ^^^^^
+(error "The identifier is already declared to be a sort: Array")
+(declare-fun select () Bool)
+             ^^^^^^
+(error "Symbol select is already defined")
+(declare-fun store () Bool)
+             ^^^^^
+(error "Symbol store is already defined")

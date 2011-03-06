@@ -1,0 +1,9 @@
+(get-info zzz)
+          ^^^
+(error "Expected a keyword (beginning with a colon) here, instead of a symbol")
+(get-info)
+         ^
+(error "Expected a keyword (beginning with a colon) here, instead of a )")
+(get-info :zzz :www)
+               ^^^^
+(error "Too many arguments or extraneous material after the command or missing right parenthesis")

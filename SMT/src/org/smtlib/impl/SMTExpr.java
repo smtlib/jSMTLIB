@@ -157,7 +157,7 @@ public abstract class SMTExpr implements IExpr {
 		}
 		
 		@Override
-		public ISymbol head() { return head; }
+		public ISymbol headSymbol() { return head; }
 		
 		@Override
 		public List<INumeral> numerals() { return numerals; }
@@ -167,7 +167,7 @@ public abstract class SMTExpr implements IExpr {
 			if (this == o) return true;
 			if (!(o instanceof ParameterizedIdentifier)) return false;
 			ParameterizedIdentifier p = (ParameterizedIdentifier)o;
-			if (!this.head().equals(p.head())) return false;
+			if (!this.headSymbol().equals(p.headSymbol())) return false;
 			if (this.numerals().size() != p.numerals().size()) return false;
 			Iterator<INumeral> iter1 = this.numerals().iterator();
 			Iterator<INumeral> iter2 = p.numerals().iterator();
@@ -179,7 +179,7 @@ public abstract class SMTExpr implements IExpr {
 		
 		@Override
 		public int hashCode() {
-			int hash = head().hashCode();
+			int hash = headSymbol().hashCode();
 			Iterator<INumeral> iter = this.numerals().iterator();
 			while (iter.hasNext()) {
 				hash = (hash<<1) + iter.next().hashCode();
@@ -209,6 +209,9 @@ public abstract class SMTExpr implements IExpr {
 		
 		@Override
 		public IIdentifier head() { return head; }
+		
+		@Override
+		public ISymbol headSymbol() { return head.headSymbol(); }
 		
 		@Override
 		public ISort qualifier() { return qualifier; }
@@ -257,6 +260,9 @@ public abstract class SMTExpr implements IExpr {
 		/** Returns the original String - use for debugging and use a printer to print to concrete syntax. */
 		@Override
 		public String toString() { return originalString; }
+		
+		@Override
+		public ISymbol headSymbol() { return this; }
 		
 		@Override
 		public boolean equals(Object o) {
@@ -330,13 +336,16 @@ public abstract class SMTExpr implements IExpr {
 	static public class BinaryLiteral extends Literal<String>  implements IBinaryLiteral {
 		
 		public BinaryLiteral(String unquotedValue) {
-			super(unquotedValue);
+			super(unquotedValue.substring(2));
 			length = unquotedValue.length()-2;
 			intvalue = new BigInteger(unquotedValue.substring(2),2);
 		}
 		
 		int length;
 		BigInteger intvalue;
+		
+		@Override
+		public BigInteger intValue() { return intvalue; }
 		
 		@Override
 		public int length() { return length; }
@@ -348,11 +357,11 @@ public abstract class SMTExpr implements IExpr {
 		public boolean equals(Object o) {
 			if (this == o) return true;
 			if (!(o instanceof IBinaryLiteral)) return false;
-			return ((IBinaryLiteral)o).value().equals(value);
+			return ((IBinaryLiteral)o).intValue().equals(intvalue);
 		}
 		
 		@Override
-		public int hashCode() { return value.hashCode(); }
+		public int hashCode() { return intvalue.hashCode(); }
 		
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
@@ -361,13 +370,16 @@ public abstract class SMTExpr implements IExpr {
 	static public class HexLiteral extends Literal<String>  implements IHexLiteral {
 		
 		public HexLiteral(String unquotedValue) {
-			super(unquotedValue);
+			super(unquotedValue.substring(2));
 			length = unquotedValue.length() - 2;
-			value = new BigInteger(unquotedValue.substring(2),16);
+			intvalue = new BigInteger(unquotedValue.substring(2),16);
 		}
 		
 		int length; // in hex digits
-		BigInteger value;
+		BigInteger intvalue;
+		
+		@Override
+		public BigInteger intValue() { return intvalue; }
 		
 		@Override
 		public int length() { return length; }
@@ -379,7 +391,7 @@ public abstract class SMTExpr implements IExpr {
 		public boolean equals(Object o) {
 			if (this == o) return true;
 			if (!(o instanceof IHexLiteral)) return false;
-			return ((IHexLiteral)o).value().equals(value);
+			return ((IHexLiteral)o).intValue().equals(intvalue);
 		}
 		
 		@Override

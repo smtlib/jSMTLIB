@@ -203,7 +203,7 @@ public class Lexer {
 	/** A pattern to skip through the end of the line */
 	final public static Pattern skipThroughEndOfLine = Pattern.compile(".*");
 	
-	// We need lexical tokens that inherit ffom ILexToken so they can be returned uniformly from
+	// We need lexical tokens that inherit from ILexToken so they can be returned uniformly from
 	// getToken(); they also need to actually be the tokens used in the Parser (i.e. from org.smtlib.impl.*);
 	// and they are S-expression tokens in this concrete syntax.  So we do this inheritance structure.
 	// It works fine with one drawback: within the lexer we are directly allocating (with 'new') instances

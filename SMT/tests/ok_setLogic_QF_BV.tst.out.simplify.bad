@@ -1,0 +1,3 @@
+(set-logic QF_BV )
+           ^^^^^
+(error "The simplify solver does not yet support the bit-vector theory")

@@ -1,0 +1,157 @@
+success
+success
+success
+success
+(assert (= (bvnot x) #b1011))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 5 column 29: could not locate id  #.\")
+")
+(assert (= (bvnot true) #b1011))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"line 6 column 40: unknown\")
+(error \"ERROR: Operator is applied to arguments of the wrong sort (bvnot true)
+The arguments have sorts: bool\")
+")
+(assert (= (bvnot x y) #b1011))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 7 column 31: could not locate id  #.\")
+")
+(assert (= (bvneg x) #b0111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 8 column 29: could not locate id  #.\")
+")
+(assert (= (bvneg x y) #b0111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 9 column 31: could not locate id  #.\")
+")
+(assert (= (bvand true y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"line 10 column 41: unknown\")
+(error \"ERROR: Operator is applied to arguments of the wrong sort (bvand true y)
+The arguments have sorts: bool bv[5]\")
+")
+(assert (= (bvand x false) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 11 column 35: could not locate id  #.\")
+")
+(assert (= (bvand x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 12 column 31: could not locate id  #.\")
+")
+(assert (= (bvand x y z) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 13 column 33: could not locate id  #.\")
+")
+(assert (= (bvor x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 14 column 30: could not locate id  #.\")
+")
+(assert (= (bvadd x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 15 column 31: could not locate id  #.\")
+")
+(assert (= (bvmul x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 16 column 31: could not locate id  #.\")
+")
+(assert (= (bvshl x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 17 column 31: could not locate id  #.\")
+")
+(assert (= (bvlshr x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 18 column 32: could not locate id  #.\")
+")
+(assert (= (bvudiv x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 19 column 32: could not locate id  #.\")
+")
+(assert (= (bvurem x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 20 column 32: could not locate id  #.\")
+")
+(assert (bvult x y))
+^^^^^^^^^^^^^^^^^^^^
+(error "(error \"WARNING: Sort mismatch for argument 2 of decl y :: bv[5]
+decl x :: bv[3]
+(bvult x y)
+
+Expected sort: bv[3]
+Actual sort:   bv[5]
+Function sort: (define bvult bv[3] bv[3] bool).
+ERROR: line 21 column 21: expression is not well sorted.\")
+")
+(assert (bvult y))
+^^^^^^^^^^^^^^^^^^
+(error "(error \"WARNING: unexpected number of arguments.
+ERROR: line 22 column 19: expression is not well sorted.\")
+")
+(assert (bvult true y))
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"line 23 column 25: unknown\")
+(error \"ERROR: Operator is applied to arguments of the wrong sort (bvult true y)
+The arguments have sorts: bool bv[5]\")
+")
+(assert (bvult x false))
+^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"WARNING: Sort mismatch for argument 2 of decl x :: bv[3]
+(bvult x false)
+
+Expected sort: bv[3]
+Actual sort:   bool
+Function sort: (define bvult bv[3] bv[3] bool).
+ERROR: line 24 column 25: expression is not well sorted.\")
+")
+(assert (= (concat x y) #xa))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 25 column 32: could not locate id  #.\")
+")
+(assert (= (concat y) #xaa))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 26 column 30: could not locate id  #.\")
+")
+(assert (= (concat x true) z))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"line 27 column 38: unknown\")
+(error \"ERROR: Could not obtain size for concatenation\")
+")
+(assert (= ((_ extract 2 40) z) x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"line 28 column 43: unknown\")
+(error \"ERROR: Could not obtain size for extract\")
+")
+(assert (= ((_ extract 2 1) z) x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"WARNING: Sort mismatch for argument 2 of decl x :: bv[3]
+decl z :: bv[8]
+#39 := (extract[2:1] z)
+(= #39 x)
+
+Expected sort: bv[2]
+Actual sort:   bv[3]
+Function sort: (define = bv[2] bv[2] bool).
+ERROR: line 29 column 41: expression is not well sorted.\")
+")
+(assert (= ((_ extract a 1) z) x))
+                       ^
+(error "Expected a numeral here, instead of a symbol")
+(assert (= ((_ extract ) z) x))
+                       ^
+(error "Expected a numeral here, instead of a )")
+(assert (= ((_ extract 1 2 3 ) z) x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"line 30 column 44: unknown\")
+(error \"ERROR: Could not obtain size for extract\")
+")
+(assert (= #b101 #b1010))
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 31 column 17: could not locate id  #.\")
+")
+(assert (distinct #b1 #b10))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 32 column 20: could not locate id  #.\")
+")
+(assert (ite true #b0 #b11))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 33 column 20: could not locate id  #.\")
+")

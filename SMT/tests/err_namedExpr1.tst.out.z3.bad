@@ -1,0 +1,12 @@
+success
+success
+success
+success
+success
+success
+success
+success
+(assert PP) ; should not exist
+^^^^^^^^^^^
+(error "(error \"ERROR: line 9 column 10: could not locate id  PP.\")
+")

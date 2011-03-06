@@ -1,0 +1,28 @@
+success
+success
+success
+success
+(declare-fun k () (_ BitVec 0))
+                            ^
+(error "A bit-vector sort must have a length of at least 1")
+(declare-fun k () (_ BitVecx 0))
+                  ^^^^^^^^^^^^^
+(error "No such sort symbol declared: (_ BitVecx 0)")
+(declare-fun k () (_ BitVec -1))
+                            ^^
+(error "Expected a numeral here, instead of a symbol")
+(declare-fun k () (_ BitVec))
+                           ^
+(error "Expected a numeral here, instead of a )")
+(declare-fun k () (_ BitVec 1 2))
+                              ^
+(error "A bit-vector sort must have exactly one numeral")
+(assert (= x #b010 ))
+        ^^^^^^^^^^^^
+(error "Mismatched sorts of arguments: (_ BitVec 4) vs. (_ BitVec 3)")
+(assert (= z #xab ))
+        ^^^^^^^^^^^
+(error "Mismatched sorts of arguments: (_ BitVec 4) vs. (_ BitVec 8)")
+(assert (= z y ))
+        ^^^^^^^^
+(error "Mismatched sorts of arguments: (_ BitVec 4) vs. (_ BitVec 1)")

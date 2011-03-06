@@ -12,7 +12,6 @@ import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IPos.IPosable;
-import org.smtlib.impl.SMTExpr.Symbol;
 
 /** The interface for an SMT-LIB concept of a Sort */
 public interface ISort extends IAccept, IPosable {

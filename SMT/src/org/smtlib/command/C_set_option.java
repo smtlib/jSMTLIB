@@ -11,7 +11,6 @@ import org.smtlib.ICommand.Iset_option;
 import org.smtlib.*;
 import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.IKeyword;
-import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.SMT.Configuration;
 import org.smtlib.impl.Command;

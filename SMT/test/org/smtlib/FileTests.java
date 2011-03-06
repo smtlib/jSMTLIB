@@ -26,11 +26,12 @@ public class FileTests  extends LogicTests {
     			data.add(new String[]{"test",ff.getName()}); 
     			data.add(new String[]{"simplify",ff.getName()}); 
     			data.add(new String[]{"z3",ff.getName()}); 
-    			//data.add(new String[]{"yices",ff.getName()}); // FIXME - add other solvers - add them from array
+    			data.add(new String[]{"cvc",ff.getName()}); 
+    			data.add(new String[]{"yices",ff.getName()});
     		}
     	}
 //    	data.clear();
-//		data.add(new String[]{"test","err_assertBadExpr.tst"}); 
+//		data.add(new String[]{"yices","ok_ite.tst"}); 
     	return data;
     }
     
@@ -62,9 +63,9 @@ public class FileTests  extends LogicTests {
     
 	@Test
 	public void checkFile() {
-//		ifXME - skip this
+//		FIXME - skip this
 //		if ("ok_regularOutput.tst".equals(testfile)) return; // FIXME - skip this
-		if ("err_getValueMalformed.tst".equals(testfile)) return; //  ("ok_printSuccess.tst".equals(testfile)) return; // FIFIXME - skip this
+//		if ("err_getValueMalformed.tst".equals(testfile)) return; //  ("ok_printSuccess.tst".equals(testfile)) return; // FIFIXME - skip this
 		String script = readFile("tests/" + testfile);
 		String outname = "tests/" + testfile + ".out";
 		String altname = outname + "." + solvername;
@@ -73,9 +74,9 @@ public class FileTests  extends LogicTests {
 		if (new File(altname).isFile()) outname = altname;
 		String output = readFile(outname);
 		String actual = doScript(script);
-		output = output.replace("\r\n","\n");
-		actual = actual.replace("\r\n","\n");
-		if (output.contains("error")) return; // FIXME - fix this along with error stuff
+		output = testfile + " " + solvername + "\n" + output.replace("\r\n","\n");
+		actual = testfile + " " + solvername + "\n" + actual.replace("\r\n","\n");
+		//if (output.contains("error")) return; // FIXME - fix this along with error stuff
 		Assert.assertEquals(output,actual);
 	}
 	

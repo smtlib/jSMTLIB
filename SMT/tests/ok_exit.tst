@@ -1,0 +1,2 @@
+; Valid exit command
+(exit)

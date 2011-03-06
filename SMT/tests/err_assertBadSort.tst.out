@@ -1,0 +1,4 @@
+success
+(assert x)
+        ^
+(error "Unknown constant symbol x")

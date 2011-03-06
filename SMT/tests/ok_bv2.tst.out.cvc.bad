@@ -1,0 +1,28 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(assert (= (bvshl x x) #b111))
+           ^^^^^^^^^^^
+(error "SMT BitVector function bvshl is not implemented in cvc")
+(assert (= (bvlshr x x) #b111))
+           ^^^^^^^^^^^^
+(error "SMT BitVector function bvlshr is not implemented in cvc")
+(assert (= (bvudiv x x) #b111))
+           ^^^^^^^^^^^^
+(error "SMT BitVector function bvudiv is not implemented in cvc")
+(assert (= (bvurem x x) #b111))
+           ^^^^^^^^^^^^
+(error "SMT BitVector function bvurem is not implemented in cvc")
+success
+success
+success
+success
+success

@@ -1,0 +1,7 @@
+success
+(get-unsat-core)
+^^^^^^^^^^^^^^^^
+(error "The get-unsat-core command is only valid if :produce-unsat-cores has been enabled")
+(get-unsat-core xxx)
+                ^^^
+(error "A get-unsat-core command takes no arguments")

@@ -8,7 +8,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.smtlib.IPos.ISource;
-import org.smtlib.impl.TypeChecker;
 import org.smtlib.solvers.Solver_test;
 
 // FIXME - need to check complex sorts; parameterized definitions; Int and NUMERAL types; variadic functions; parameterized function sorts

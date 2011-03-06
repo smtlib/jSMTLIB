@@ -181,41 +181,6 @@ public class Response {
 			return v.visit(this);
 		}
 	}
-	
-//	static public class Token extends Pos.Posable implements IResponse {
-//		
-//		String name;
-//		Token(String name) {
-//			this.name = name;
-//		}
-//
-//		@Override
-//		public boolean isOK() {
-//			return OK.equals(name);
-//		}
-//
-//		@Override
-//		public boolean isError() {
-//			return false;
-//		}
-//		
-//		public String toString() {
-//			return name;
-//		}
-//
-//		public boolean equals(Object o) {
-//			if (!(o instanceof Token)) return false;
-//			return ((Token)o).name.equals(name);
-//		}
-//		
-//		// FIXME - hashCode
-//
-//		@Override
-//		public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-//			return v.visit(this);
-//		}
-//
-//	} // FIXME - remove?
 
 	static public class AssignmentResponse implements IResponse.IAssignmentResponse {
 		private List<IPair<IExpr.ISymbol,Boolean>> assignments = new LinkedList<IPair<IExpr.ISymbol,Boolean>>();

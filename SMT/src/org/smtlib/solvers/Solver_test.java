@@ -14,10 +14,13 @@ import org.smtlib.ICommand.Ideclare_sort;
 import org.smtlib.ICommand.Idefine_fun;
 import org.smtlib.ICommand.Idefine_sort;
 import org.smtlib.*;
-import org.smtlib.IExpr.*;
+import org.smtlib.IExpr.IAttribute;
+import org.smtlib.IExpr.IAttributeValue;
+import org.smtlib.IExpr.IIdentifier;
+import org.smtlib.IExpr.IKeyword;
+import org.smtlib.IExpr.INumeral;
+import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IPos.IPosable;
-import org.smtlib.IVisitor.VisitorException;
-import org.smtlib.impl.TypeChecker;
 
 /** This class is a Solver implementation that simply type-checks formulae and checks that
  * commands are used correctly; it does not do any proving.
@@ -268,6 +271,7 @@ public class Solver_test implements ISolver {
 				Utils.PRODUCE_PROOFS.equals(option) ||
 				Utils.PRODUCE_UNSAT_CORES.equals(option)) {
 			if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
+			return smtConfig.responseFactory.unsupported();
 		}
 		if (Utils.VERBOSITY.equals(option)) {
 			IAttributeValue v = options.get(option);
@@ -313,7 +317,6 @@ public class Solver_test implements ISolver {
 	public IResponse get_option(IKeyword key) {
 		String option = key.value();
 		IAttributeValue value = options.get(option);
-		IResponse response;
 		if (value == null) return smtConfig.responseFactory.unsupported();
 		return value;
 	}
@@ -332,7 +335,6 @@ public class Solver_test implements ISolver {
 	@Override
 	public IResponse get_info(IKeyword key) { // FIXME - only strictly supported infoflags
 		String option = key.value();
-		String value;
 		IAttributeValue lit;
 		if (Utils.ERROR_BEHAVIOR.equals(option)) {
 			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION,null);
@@ -360,63 +362,6 @@ public class Solver_test implements ISolver {
 	protected String encode(IIdentifier id) {
 		return id.toString(); // FIXME composite definitions; encode the String?
 	}
-	
-	// FIXME - cleanup checkSort checkSortDecl - perhaps merge them into eval
-	// so this is more O-O and since we have to do the eval anyway to convert to
-	// a canonical form - else we have to do the eval during equals.
-//	protected ISort checkSortResult;
-	
-//	protected IResponse checkSort(ISort s) {
-//		IResponse res = null;
-//		if (s instanceof ISort.IExpression) {
-//			ISort.IExpression sortExpr = (ISort.IExpression)s;
-//			List<ISort> args = new LinkedList<ISort>();
-//			for (ISort ss: sortExpr.parameters()) {
-//				if ((res=checkSort(ss)) != null) return res;
-//				args.add(checkSortResult);
-//			}
-//			ISort.IDefinition ss = symTable.lookupSort(sortExpr.family());
-//			if (ss == null) {
-//				return smtConfig.responseFactory.error("No such sort is defined: " + smtConfig.defaultPrinter.toString(sortExpr.family()),sortExpr.family().pos());
-//			}
-//			int numArgs = sortExpr.parameters().size();
-//			if (ss.intArity() != numArgs) {
-//				return smtConfig.responseFactory.error("Expected a sort symbol defined to have " + numArgs + " arguments here: " + smtConfig.defaultPrinter.toString(sortExpr.family()),sortExpr.family().pos());
-//			}
-//			checkSortResult = ss.eval(args);
-//		} else if (s instanceof ISort.IFamily) {
-//			IIdentifier id = ((ISort.IFamily)s).identifier();
-//			ISort.IDefinition ss = symTable.lookupSort(id);
-//			if (ss.intArity() != 0) {
-//				return smtConfig.responseFactory.error("Expected a sort symbol with no arguments here: " + smtConfig.defaultPrinter.toString(id));
-//			}
-//			checkSortResult = ss.eval(emptyList);
-//		} else {
-//			return smtConfig.responseFactory.error("INTERNAL ERROR: Unknown kind of sort here: " + smtConfig.defaultPrinter.toString(s));
-//		}
-//		return null;
-//	}
-	
-	private final List<ISort> emptyList = new LinkedList<ISort>();
-	
-//	ISort.IFcnSort checkSortDeclResult;
-	
-//	protected IResponse checkSortDecl(ISort.IFcnSort fcnSort) {
-//		IResponse res = null;
-//		int i = 0;
-//		ISort[] newArgs = new ISort[fcnSort.argSorts().length];
-//		for (ISort s: fcnSort.argSorts()) {
-//			List<IResponse> list = TypeChecker.checkSort(symTable,s);
-//			if (list != null && !list.isEmpty()) {
-//				return list.get(0); // FIXME
-//			}
-//			newArgs[i++] = (checkSortResult);
-//		}
-//		res = TypeChecker.checkSort(symTable,fcnSort.resultSort());
-//		if (res != null && !res.isEmpty()) return res;
-//		checkSortDeclResult =  smtConfig.sortFactory.createFcnSort(newArgs,checkSortResult);
-//		return null;
-//	}
 
 	@Override 
 	public IResponse declare_fun(Ideclare_fun cmd) {
@@ -440,7 +385,7 @@ public class Solver_test implements ISolver {
 	}
 
 	@Override
-	public IResponse define_fun(Idefine_fun cmd) {// FIXME - implement
+	public IResponse define_fun(Idefine_fun cmd) {
 		if (!logicSet) {
 			return smtConfig.responseFactory.error("The logic must be set before a define-fun command is issued");
 		}
@@ -465,37 +410,6 @@ public class Solver_test implements ISolver {
 		} else {
 			return list.get(0); // FIXME - return all?
 		}
-
-		
-//		
-//		ISort args[] = new ISort[cmd.parameters().size()];
-//		int i = 0;
-//
-//		List<IExpr.IDeclaration> newp = new LinkedList<IExpr.IDeclaration>();
-//		TypeChecker tc = new TypeChecker(symTable);
-//		try {
-//			for (IExpr.IDeclaration d: cmd.parameters()) {
-//				d.sort().accept(tc);
-//				args[i++] = d.sort(); // FIXME - use resolved sort?
-//				newp.add(smtConfig.exprFactory.declaration(d.parameter(),d.sort(),d.pos()));
-//			}
-//			TypeChecker.check(symTable,cmd.expression(),typemap,newp);
-//			ISort resultSort = typemap.get(cmd.expression());
-//
-//			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(args,resultSort);
-//			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null);
-//			if (symTable.add(entry,!logicSet)) { 
-//				return smtConfig.responseFactory.success();
-//			} else {
-//				return smtConfig.responseFactory.error("Symbol " + encodedName + " is already defined");
-//			}
-//		} catch (IVisitor.VisitorException e) {
-//			
-//		} finally {
-//			if (!tc.result.isEmpty()) {
-//				return tc.result.get(0);// FIME - all errors?
-//			}
-//		}
 	}
 	
 	@Override 
