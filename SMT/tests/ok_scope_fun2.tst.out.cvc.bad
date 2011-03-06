@@ -1,0 +1,14 @@
+success
+success
+success
+success
+success
+success
+success
+(define-fun y () Bool true)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "*** Fatal exception:
+Type Checking error: Redefinition of variable y:
+ This variable is already defined.
+stdin:7: this is the location of the error
+")

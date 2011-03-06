@@ -1,0 +1,13 @@
+success
+success
+success
+success
+(assert (! (and q P) :named PQ))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 5 column 17: could not locate id  P.\")
+")
+success
+(assert (or PP QQ))
+^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 7 column 15: could not locate id  PP.\")
+")

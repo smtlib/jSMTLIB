@@ -1,0 +1,16 @@
+success
+success
+success
+(assert (forall ((r Bool)) (! r :named R))) ; error
+                              ^
+(error "The expression being named is not closed - this symbol is a variable: r")
+(assert (exists ((r Bool)) (! r :named R))) ; error
+                              ^
+(error "The expression being named is not closed - this symbol is a variable: r")
+success
+(assert (let ((r true)) (! r :named R))) ; error - R already defined
+                                    ^
+(error "Symbol R is already defined")
+success
+success
+success

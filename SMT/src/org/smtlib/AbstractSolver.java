@@ -38,7 +38,7 @@ public abstract class AbstractSolver implements ISolver {
 		throw new UnsupportedOperationException("AbstractSolver.exit");
 	}
 
-	/** @see org.smtlib.ISolver#set_logic(String) */
+	/** @see org.smtlib.ISolver#set_logic(String,IPos) */
 	@Override
 	public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
 		throw new UnsupportedOperationException("AbstractSolver.set_logic");

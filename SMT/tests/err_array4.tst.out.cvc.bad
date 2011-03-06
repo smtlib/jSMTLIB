@@ -1,0 +1,24 @@
+success
+success
+success
+(declare-sort AA 2)
+^^^^^^^^^^^^^^^^^^^
+(error "CVC adapter does not implement parameterized user-defined sorts")
+(declare-fun a () (AA I V))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "*** Fatal exception:
+Parse Error: cannot resolve an identifier: \"UNKNOWN\"
+stdin:3: this is the location of the error
+")
+(declare-fun i () I)
+^^^^^^^^^^^^^^^^^^^^
+(error "Failed to execute set_logic: java.io.IOException: The pipe is being closed")
+(declare-fun v () V)
+^^^^^^^^^^^^^^^^^^^^
+(error "Failed to execute set_logic: java.io.IOException: The pipe is being closed")
+(assert (= v (select a i)))
+             ^^^^^^^^^^^^
+(error "Unknown predicate symbol select with argument types (AA I V) I")
+(assert (= a (store a i v)))
+             ^^^^^^^^^^^^^
+(error "Unknown predicate symbol store with argument types (AA I V) I V")

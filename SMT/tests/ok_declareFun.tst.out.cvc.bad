@@ -1,0 +1,8 @@
+success
+success
+(declare-fun y (Bool Bool) Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "*** Fatal exception:
+Function argument types must be non-Boolean: (BOOLEAN, BOOLEAN) -> BOOLEAN
+stdin:2: this is the location of the error
+")

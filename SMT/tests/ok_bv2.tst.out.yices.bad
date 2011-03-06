@@ -1,0 +1,28 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(assert (= (bvshl x x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvshl is not implementetd in yices")
+(assert (= (bvlshr x x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvlshr is not implementetd in yices")
+(assert (= (bvudiv x x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvudiv is not implementetd in yices")
+(assert (= (bvurem x x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvurem is not implementetd in yices")
+success
+success
+success
+success
+success

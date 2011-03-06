@@ -1,0 +1,10 @@
+; test scope of declare-sort
+(set-logic QF_UF)
+(declare-sort A 0)
+(push 1)
+(declare-sort B 0)
+(declare-fun x () A)
+(declare-fun y () B)
+(pop 1)
+(declare-fun xx () A)
+(declare-sort B 1)

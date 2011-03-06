@@ -1,0 +1,18 @@
+; tests that we catch bad kind of data to options
+(set-option :print-success 0)
+(set-option :verbosity true)
+(set-option :regular-output-channel true)
+(set-option :diagnostic-output-channel false)
+(set-option :expand-definitions 0)
+(set-option :produce-proofs 0)
+(set-option :produce-models 0)
+(set-option :produce-assignments 0)
+(set-option :produce-unsat-cores 0)
+(set-option :interactive-mode 0)
+(set-option :random-seed true)
+(set-option :zzz x) ; OK
+(set-option :zzz)
+(set-option)
+(set-option :zzz :zzz)
+(set-option :zzz x x)
+(set-option :random-seed -1)

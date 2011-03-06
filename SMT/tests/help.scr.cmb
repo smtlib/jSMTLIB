@@ -1,0 +1,32 @@
+The main routine of this Java executable is org.smtlib.SMT,
+    but the jar file is an executable jar file, and can be run
+    using the command: java -jar jSMTLIB.jar 
+THIS IS AN ALPHA VERSION AND STILL BEING CORRECTED AND POLISHED
+The command-line arguments are typical options and files.
+If no files are present, commands are read from standard input
+    until a control-D is read, indicating end of input.
+If files are listed on the command-line they are processed
+    after all options are read and in the order the fies are listed.
+Option names have a long version, beginning with --
+    and an abbreviated version, beginning with a single -.
+The recognized options are these:
+    -h, --help : prints this help message and exits
+        --version : prints the version of this application and exits
+    -v, --verbose <int>: enables verbose mode, so more stuff is printed
+    -s, --solver <name> : indicates the SMT solver to use (or 'test')
+        The name of the adaptor class is "org.smtlib.solvers.Solver_" + <name>
+    -e, --exec <path> : indicates the SMT solver executable to use
+        The argument is the pathname of the executable for the named solver
+    -L, --logics <path>: the directory containing SMT-LIB logic and theory 
+              definitions (default is to use the internal, built-in definitions)
+        --out <file or 'stdout' or 'stderr'>: where to send normal and error output
+        --diag <file or 'stdout' or 'stderr'>: where to send verbose (diagnostic) output
+        --port <number>: which port to use for client-server communication
+        --text: text to process (ignoring file and port input)
+        --echo: if enabled, commands are echoed to diagnostic output when successfully parsed
+        --abort: if enabled, an error causes immediate exit
+        --noshow: if enabled, error location information is not shown
+    -q, --nosuccess: if enabled, 'success' responses are suppressed
+        --relax: if enabled, extensions to strict SMT-LIB are permitted
+This software is Copyright 2010 by David R. Cok. The accompanying LICENSE 
+    file describes the conditions under which it may be used.

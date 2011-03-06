@@ -1,0 +1,4 @@
+success
+(assert (= ((as and Bool) true false) false))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Unknown predicate symbol and with argument types Bool Bool")

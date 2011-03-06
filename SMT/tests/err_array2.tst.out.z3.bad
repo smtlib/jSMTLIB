@@ -1,0 +1,70 @@
+success
+success
+(declare-fun a () (Array Bool))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Could not translate response: (error \"line 3 column 31: unknown\")
+(error \"ERROR: Invalid array sort definition, invalid number of parameters.\")")
+success
+success
+success
+success
+success
+success
+(assert (= i (select i i)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"line 10 column 35: unknown\")
+(error \"ERROR: Select requires as many arguments as the size of the domain\")
+")
+(assert (= i (select a a)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"line 11 column 35: unknown\")
+(error \"ERROR: Domain sort array[Int:Int] and parameter Int do not match\")
+")
+(assert (= i (select a)))
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"line 12 column 33: unknown\")
+(error \"ERROR: Select takes at least two arguments\")
+")
+(assert (= i (select a i i)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"line 13 column 37: unknown\")
+(error \"ERROR: Select requires as many arguments as the size of the domain\")
+")
+(assert (= i (select a i)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"line 14 column 35: unknown\")
+(error \"ERROR: Domain sort I and parameter Int do not match\")
+")
+(assert (= i (store a i v)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"line 15 column 36: unknown\")
+(error \"ERROR: Domain sort I and parameter Int do not match\")
+")
+(assert (= i (store i v v)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"line 16 column 36: unknown\")
+(error \"ERROR: Store expects the first argument sort 'I' to be an array.\")
+")
+(assert (= i (store a i v v)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"line 17 column 38: unknown\")
+(error \"ERROR: Store expects the first argument sort 'array[Int:Int]' to be an array taking 3 arguments. Instead store it was passed 3 arguments.\")
+")
+(assert (= i (store a v v)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"line 18 column 36: unknown\")
+(error \"ERROR: Domain sort V and parameter Int do not match\")
+")
+(assert (= i (store a i i)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"line 19 column 36: unknown\")
+(error \"ERROR: Domain sort I and parameter Int do not match\")
+")
+success
+success
+success
+(assert (= aa (store aa i v)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"line 23 column 38: unknown\")
+(error \"ERROR: Store expects the first argument sort 'A[I:V]' to be an array.\")
+")

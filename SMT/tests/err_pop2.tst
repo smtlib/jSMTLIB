@@ -1,0 +1,12 @@
+; tests that the argument to a pop is a number
+( set-logic QF_UF)
+( push 2)
+( pop 0.0 )
+( pop "asd")
+( pop #b1 )
+( pop #x0 )
+( pop a )
+( pop |A| )
+( pop 1 2 3 )
+( pop -1 )
+(pop)

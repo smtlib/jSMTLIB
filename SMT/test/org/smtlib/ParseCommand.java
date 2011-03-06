@@ -110,7 +110,7 @@ public class ParseCommand {
 
 	@Test
 	public void define_fun_duplicate() throws Exception {
-		testCommand("(define-fun .x ((p Bool)(|p| Bool)) Bool (and p q))","A name is duplicated in the parameter list: |p|");
+		testCommand("(define-fun x ((p Bool)(|p| Bool)) Bool (and p q))","A name is duplicated in the parameter list: |p|");
 	}
 
 	@Test

@@ -1,44 +1,18 @@
-package org.smtlib.impl;
+package org.smtlib;
 
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.smtlib.*;
-import org.smtlib.IExpr.IAsIdentifier;
-import org.smtlib.IExpr.IAttribute;
-import org.smtlib.IExpr.IAttributeValue;
-import org.smtlib.IExpr.IAttributedExpr;
-import org.smtlib.IExpr.IBinaryLiteral;
-import org.smtlib.IExpr.IDecimal;
-import org.smtlib.IExpr.IDeclaration;
-import org.smtlib.IExpr.IError;
-import org.smtlib.IExpr.IExists;
-import org.smtlib.IExpr.IFcnExpr;
-import org.smtlib.IExpr.IForall;
-import org.smtlib.IExpr.IHexLiteral;
-import org.smtlib.IExpr.IIdentifier;
-import org.smtlib.IExpr.IKeyword;
-import org.smtlib.IExpr.ILet;
-import org.smtlib.IExpr.INumeral;
-import org.smtlib.IExpr.IParameterizedIdentifier;
-import org.smtlib.IExpr.IQualifiedIdentifier;
-import org.smtlib.IExpr.IStringLiteral;
-import org.smtlib.IExpr.ISymbol;
-import org.smtlib.ISort.IDefinition;
-import org.smtlib.ISort.IFcnSort;
-
-// FIXME - should this be a class in org.smtlib ?
+import org.smtlib.IExpr.*;
+import org.smtlib.ISort.*;
 
 /** This class is a visitor that typechecks a formula */
 public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 
 	/** Compilation of errors */
 	public List<IResponse> result = new LinkedList<IResponse>();
-
-	//		/** A reference to the calling solver */
-	//		private Solver_test solver;
 
 	/** A reference to the current symbol table */
 	private SymbolTable symTable;
@@ -51,28 +25,31 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	
 	private ISymbol isClosed = null;
 
-	/** Constructs a formula typechecker from the current instance of the test solver and the current
-	 * symbol table
+	/** Constructs a formula typechecker from the current
+	 * symbol table and type map
 	 */
 	private TypeChecker(SymbolTable symTable, Map<IExpr,ISort> typemap) {
 		this.symTable = symTable;
-		//this.solver = st;
 		this.smtConfig = symTable.smtConfig;
 		this.typemap = typemap;
 	}
 	
+	/** Constructs a type checker without keeping a type map */
 	public TypeChecker(SymbolTable symTable) {
 		this(symTable,null);
 	}
 	
+	/** Utility method for recording an error */
 	protected void error(String msg, IPos pos) {
 		result.add(smtConfig.responseFactory.error(msg,pos));
 	}
 	
+	/** Utility method for printing an expression, using the default printer */
 	protected String pr(IExpr e) {
 		return smtConfig.defaultPrinter.toString(e);
 	}
 
+	/** Utility method for printing a sort, using the default printer */
 	protected String pr(ISort e) {
 		return smtConfig.defaultPrinter.toString(e);
 	}
@@ -89,7 +66,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	}
 
 	public static List<IResponse> checkSortAbbreviation(SymbolTable symTable, List<ISort.IParameter> params, ISort expr) {
-		TypeChecker f = new TypeChecker(symTable,null);
+		TypeChecker f = new TypeChecker(symTable,null); // FIXME - we should use a factory
 		symTable.push();
 		boolean errors = false;
 		try {
@@ -102,6 +79,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			}
 			if (!errors) expr.accept(f);
 		} catch (IVisitor.VisitorException e) {
+			f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(),expr.pos());
+		} catch (Exception e) {
 			f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(),expr.pos());
 		} finally {
 			symTable.pop();
@@ -118,6 +97,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			result.accept(f);
 		} catch (IVisitor.VisitorException e) {
 			f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(), pos);
+		} catch (Exception e) {
+			f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(), null);
 		}
 		return f.result;
 		
@@ -129,12 +110,9 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		try {
 			for (IDeclaration p : params) {
 				if (p.sort().accept(f) != null) {
-					ISort.IFcnSort fs = new Sort.FcnSort(p.sort()); // FIXME - factory?
+					ISort.IFcnSort fs = symTable.smtConfig.sortFactory.createFcnSort(new ISort[0],p.sort());
 					SymbolTable.Entry entry = new SymbolTable.Entry(p.parameter(),fs,null);
 					symTable.add(entry,true);
-					if (false) { // FIXME - this is checked but we should recheck
-						f.error("Duplicate sort parameters: " + p.parameter(),p.parameter().pos());
-					}
 				}
 			}
 			if (f.result.isEmpty()) {
@@ -147,6 +125,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				}
 			}
 		} catch (IVisitor.VisitorException e) {
+			f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(),expr.pos());
+		} catch (Exception e) {
 			f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(),expr.pos());
 		} finally {
 			symTable.pop();
@@ -165,6 +145,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			}
 		} catch (IVisitor.VisitorException e) {
 			f.error("Visitor Exception: " + e.getMessage(), e.pos());
+		} catch (Exception e) {
+			f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(),expr.pos());
 		}
 		return f.result;
 	}
@@ -176,11 +158,13 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		try {
 			ISort topsort = expr.accept(f);
 			if (topsort != null && !topsort.isBool()) {
-				f.result.add(symTable.smtConfig.responseFactory.error("Expected an expression with Bool sort, not " + topsort, expr.pos()));
+				f.error("Expected an expression with Bool sort, not " + topsort, expr.pos());
 			}
 			if (f.result.isEmpty()) symTable.merge();
 		} catch (IVisitor.VisitorException e) {
-			f.result.add(symTable.smtConfig.responseFactory.error("Visitor Exception: " + e.getMessage(), e.pos()));
+			f.error("Visitor Exception: " + e.getMessage(), e.pos());
+		} catch (Exception e) {
+			f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(),expr.pos());
 		} finally {
 			if (!f.result.isEmpty()) symTable.pop();
 		}
@@ -195,15 +179,17 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			}
 			ISort topsort = expr.accept(f);
 			if (topsort != null && !topsort.isBool()) {
-				f.result.add(symTable.smtConfig.responseFactory.error("Expected an expression with Bool sort, not " + topsort, expr.pos()));
+				f.error("Expected an expression with Bool sort, not " + topsort, expr.pos());
 			}
 		} catch (IVisitor.VisitorException e) {
-			f.result.add(symTable.smtConfig.responseFactory.error("Visitor Exception: " + e.getMessage(), e.pos()));
+			f.error("Visitor Exception: " + e.getMessage(), e.pos());
+		} catch (Exception e) {
+			f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(),expr.pos());
 		}
 		return f.result;
 	}
 
-	public ISort save(IExpr e, ISort s) {
+	public /*@Nullable*/ ISort save(/*@NonNull*/IExpr e, /*@Nullable*/ISort s) {
 		if (typemap != null) typemap.put(e,s);
 		return s;
 	}
@@ -211,7 +197,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	@Override
 	public /*@Nullable*/ ISort visit(INumeral e) {
 		IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("NUMERAL",null));
-		if (sort == null) result.add(smtConfig.responseFactory.error("No sort specified for numeral",e.pos()));
+		if (sort == null) error("No sort specified for numeral",e.pos());
 		return save(e,sort == null ? null : sort.resultSort());
 	}
 
@@ -242,8 +228,6 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		ISort resultSort = null;
 		if (qhead instanceof IAsIdentifier) {
 			resultSort = qhead.accept(this);
-//			String msg = "Typechecking of qualified identifiers (as) is not implemented";
-//			error(msg,head.pos());
 			if (resultSort == null) return null;
 			head = ((IAsIdentifier)qhead).head();
 		} else {
@@ -268,7 +252,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			ISort b = smtConfig.sortFactory.Bool();
 			b.accept(this);
 			return save(e,b);
-		} else if (head.toString().equals("ite")) {
+		} else if (name.equals("ite")) {
 			// FIXME - this is just here until we get par types implemented
 			if (!argSorts.get(0).isBool()) {
 				error("The first argument of ite must have sort Bool",e.pos());
@@ -279,12 +263,31 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				return null;
 			}
 			return save(e,argSorts.get(1));
-		} else if (symTable.arrayTheorySet && head.toString().equals("store")) {
+		} else if (symTable.arrayTheorySet && name.equals("store")) {
 			if (argSorts.size() != 3) {
 				error(" The store function should have three arguments",head.pos());
 				return null;
 			}
-			// FIXME - check that the first is an Array sort, and the second matches it
+			// FIXME - this needs to be fully expanded of all definitions
+			ISort sort1 = argSorts.get(0);
+			if (sort1 instanceof ISort.IExpression) {
+				ISort.IExpression asort = (ISort.IExpression)sort1;
+				if (!(asort.family().headSymbol().toString().equals("Array"))) {
+					error("The first argument of the store function should be an Array sort, not " + sort1,e.pos());
+					return null;
+				}
+				if (!asort.parameters().get(0).equals(argSorts.get(1))) {
+					error("The second argument of the store function must match the array index sort: " + argSorts.get(1) + " vs. " + asort.parameters().get(0), e.pos() );
+					return null;
+				}
+				if (!asort.parameters().get(1).equals(argSorts.get(2))) {
+					error("The third argument of the store function must match the array value sort: " + argSorts.get(2) + " vs. " + asort.parameters().get(1), e.pos() );
+					return null;
+				}
+			} else {
+				error("The first argument of the store function should be an Array sort, not " + sort1,e.pos());
+				return null;
+			}
 			// FIXME - this is just here until we get par types implemented; it also should depend on which theories are installed
 			return save(e,argSorts.get(0));
 		}
@@ -296,10 +299,27 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			}
 			// FIXME - check that the first is an Array sort, and the others matches it
 			ISort s = argSorts.get(0);
-			if (((ISort.IExpression)s).parameters().size() != 2) {
-				error("Expected an expression of Array sort",e.args().get(0).pos());
+//			if (((ISort.IExpression)s).parameters().size() != 2) {
+//				error("Expected an expression of Array sort",e.args().get(0).pos());
+//				return null;
+//			}
+			// FIXME - this needs to be fully expanded of all definitions
+			ISort sort1 = argSorts.get(0);
+			if (sort1 instanceof ISort.IExpression) {
+				ISort.IExpression asort = (ISort.IExpression)sort1;
+				if (!(asort.family().headSymbol().toString().equals("Array"))) {
+					error("The first argument of the select function should be an Array sort, not " + sort1,e.pos());
+					return null;
+				}
+				if (!asort.parameters().get(0).equals(argSorts.get(1))) {
+					error("The second argument of the select function must match the array index sort: " + argSorts.get(1) + " vs. " + asort.parameters().get(0), e.pos() );
+					return null;
+				}
+			} else {
+				error("The first argument of the select function should be an Array sort, not " + sort1,e.pos());
 				return null;
 			}
+			// FIXME - this is just here until we get par types implemented; it also should depend on which theories are installed
 			s = ((ISort.IExpression)s).parameters().get(1);
 			return save(e,s);
 		} 
@@ -383,7 +403,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		}
 		if (symTable.bitVectorTheorySet && 
 				head instanceof IParameterizedIdentifier &&
-				((IParameterizedIdentifier)head).head().toString().equals("extract")) {
+				((IParameterizedIdentifier)head).headSymbol().toString().equals("extract")) {
 			if (argSorts.size() != 1) {
 				error(" The " + name + " function should have one argument",head.pos());
 				return null;
@@ -425,12 +445,6 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		} else {
 			return save(e,entry.sort.resultSort());
 		}
-//		} else {
-//			IResponse.IError error = smtConfig.responseFactory.error("INTERNAL ERROR: A IQualifiedIdentifier is something other than an IIdentifier or an IAsIdentifier: " + head.getClass());
-//			error.setPos(head.pos());
-//			result.add(error);
-//			return null;
-//		}
 	}
 	
 	private boolean isBitVec(ISort s) {
@@ -438,7 +452,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		ISort.IExpression se = (ISort.IExpression)s;
 		if (!(se.family() instanceof IParameterizedIdentifier)) return false;
 		IParameterizedIdentifier pid = (IParameterizedIdentifier)se.family();
-		return pid.head().toString().equals("BitVec"); // FIXME - compare against a stored symbol?
+		return pid.headSymbol().toString().equals("BitVec"); // FIXME - compare against a stored symbol?
 	}
 
 	private int bitvecSize(ISort s) {
@@ -485,7 +499,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 
 	@Override
 	public /*@Nullable*/ISort visit(IDecimal e) {
-		IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("DECIMAL",null));
+		IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("DECIMAL",null)); // FIXME - don't recreate this every time it is used
 		if (sort == null) result.add(smtConfig.responseFactory.error("No sort specified for decimal literal",e.pos()));
 		return save(e,sort == null ? null : sort.resultSort());
 	}
@@ -511,7 +525,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 
 	@Override
 	public /*@Nullable*/ ISort visit(IStringLiteral e) {
-		IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("STRING",null));
+		IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("STRING",null)); // FIXME - don't recreate this everytime it is used
 		if (sort == null) result.add(smtConfig.responseFactory.error("No sort specified for string-literal",e.pos()));
 		return save(e,sort == null ? null : sort.resultSort());
 	}
@@ -572,9 +586,6 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 						result.add(smtConfig.responseFactory.error("The expression being named is not closed - this symbol is a variable: " + smtConfig.defaultPrinter.toString(isClosed),isClosed.pos()));
 						errors = true;
 					}
-					//			} else if (!smtConfig.relax) {
-					//				result.add(smtConfig.responseFactory.error("Unexpected keyword in an attributed expression: " +  a.keyword().toString(),a.keyword().pos()));
-					//				errors = true;
 				}
 			}
 		} finally {
@@ -584,8 +595,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		return resultSort;
 	}
 
-	Map<ISymbol,Variable> currentScope = new HashMap<ISymbol,Variable>();
-	List<Map<ISymbol,Variable>> parameters = new LinkedList<Map<ISymbol,Variable>>();
+	protected Map<ISymbol,Variable> currentScope = new HashMap<ISymbol,Variable>();
+	protected List<Map<ISymbol,Variable>> parameters = new LinkedList<Map<ISymbol,Variable>>();
 
 	@Override
 	public /*@Nullable*/ ISort visit(IForall e) throws IVisitor.VisitorException {
@@ -659,11 +670,11 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		IDefinition def = symTable.lookupSort(f);
 		if (def == null && f instanceof IParameterizedIdentifier) {
 			IParameterizedIdentifier pf = (IParameterizedIdentifier)f;
-			if (symTable.bitVectorTheorySet && pf.head().toString().equals("BitVec")) { // FIXME -  toString() or value()?
+			if (symTable.bitVectorTheorySet && pf.headSymbol().toString().equals("BitVec")) { // FIXME -  toString() or value()?
 				if (pf.numerals().size() != 1) {
 					error("A bit-vector sort must have exactly one numeral",
 							pf.numerals().size() > 1 ? pf.numerals().get(1).pos()
-									: pf.head().pos());
+									: pf.headSymbol().pos());
 					return null;
 				}
 				if (pf.numerals().get(0).intValue() == 0) {

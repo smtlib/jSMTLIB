@@ -40,7 +40,7 @@ import org.smtlib.IParser.ParserException;
  */
 public class SMT {
 	
-	public static final String VERSION_ID = "jSMTLIB version 0.5";
+	public static final String VERSION_ID = "jSMTLIB version 0.6";
 	
 	public Properties props;
 	
@@ -107,7 +107,7 @@ public class SMT {
 		 * within a solver. */
 		public boolean nosuccess = false;
 		
-		/** If true, conmmand processing in a solver (not in check mode) aborts
+		/** If true, command processing in a solver (not in check mode) aborts
 		 * on the first error
 		 */
 		public boolean abort = false;
@@ -181,7 +181,7 @@ public class SMT {
 		/** The factory to use to create IParser, IPos, ISource objects */
 		public IParser.IFactory smtFactory;
 		
-		public IPrinter defaultPrinter = null;
+		public /*@LazyNonNull*/IPrinter defaultPrinter = null;
 		
 		/** Holds a mapping from command name to the class implementing the command */
 		public Map<String,Class<? extends ICommand>> commands = new HashMap<String,Class<? extends ICommand>>();
@@ -194,7 +194,7 @@ public class SMT {
 		 * the commands map and all but the initial entry of commandExtensionPrefixes are 
 		 * ignored. 
 		 */
-		public ICommand.IFinder commandFinder = new ICommand.IFinder() {
+		public /*@Nullable*/ ICommand.IFinder commandFinder = new ICommand.IFinder() {
 			public Class<? extends ICommand> findCommand(String name) {
 				Class<? extends ICommand> clazz = commands.get(name);
 				if (relax && clazz != null) return clazz;
@@ -204,7 +204,7 @@ public class SMT {
 						Class<?> clazzz = Class.forName(className);
 						if (clazzz == null) continue; // This won't happen - exception is thrown instead
 						if (!ICommand.class.isAssignableFrom(clazzz)) continue; // FIXME - message?
-						return (Class<? extends ICommand>)clazzz;
+						return (Class<? extends ICommand>)clazzz; // Check for this - implementation may be wrong
 					} catch (ClassNotFoundException e) {
 						continue;
 					}
@@ -251,7 +251,7 @@ public class SMT {
 	public Properties readProperties() {
 		Properties p = new Properties();
 		File f;
-		Reader rdr = null;
+		/*@Nullable @Mutable*/ Reader rdr = null;
 		// Find and read file on class path
 		URL url =  ClassLoader.getSystemResource(Utils.PROPS_FILE);
 		if (url != null) {
@@ -261,10 +261,13 @@ public class SMT {
 				rdr = new FileReader(f);
 				p.load(rdr);
 			} catch (IOException e) {
+				smtConfig.log.logDiag("IOException " + e); // FIXME - is this how to report this error
 			} finally {
 				try {
 					if (rdr != null) rdr.close();
-				} catch (Exception ee) {} // Ignore
+				} catch (Exception ee) {
+					smtConfig.log.logDiag("Failed to close reader " + f); // FIXME - is this how to report this error
+				} // Ignore
 			}
 		}
 		// Find and read file in the directory that contains
@@ -338,7 +341,7 @@ public class SMT {
 		return ret;
 	}
 	
-	public IResponse checkSatStatus = null;
+	public /*@Nullable*/ IResponse checkSatStatus = null;
 	
 	/** Executes, presuming all options (e.g. from the command-line) are set in the configuration object */
 	public int exec() {
@@ -578,7 +581,6 @@ public class SMT {
 				help();
 				return -1;
 			} else if ("--version".equals(s)) {
-				// FIXME - reference a Utils string
 				System.out.println(VERSION_ID);
 				return -1;
 			} else if ("--echo".equals(s)) {
@@ -649,7 +651,7 @@ public class SMT {
 	 */
 	/*@Nullable*/
 	public ISolver startSolver(SMT.Configuration smtConfig, /*@NonNull*/String solvername, /*@Nullable*/String executable) {
-		ISolver solver;
+		/*@NonNull*/ ISolver solver;
 		String name = "";
 		if (executable == null && !solvername.equals(Utils.TEST_SOLVER)) {
 			executable = props.getProperty(Utils.PROPS_SOLVER_EXEC_PREFIX + solvername);
@@ -790,11 +792,12 @@ public class SMT {
 	}
 	
 	public static interface ILogicFinder {
-		InputStream find(Configuration smtConfig, String logicName, /*@Nullable*/IPos pos) throws IOException, Utils.SMTLIBException;
+		/*@Mutable*/ InputStream find(Configuration smtConfig, String logicName, /*@Nullable*/IPos pos) throws IOException, Utils.SMTLIBException;
 	}
 	
 	public static ILogicFinder logicFinder = new ILogicFinder() {
-		public InputStream find(Configuration smtConfig, String name, IPos pos) throws IOException, Utils.SMTLIBException {
+		@Override
+		public InputStream find(Configuration smtConfig, String name, /*@Nullable*/IPos pos) throws IOException, Utils.SMTLIBException {
 			String path = smtConfig.logicPath;
 			if (path == null) {
 				URL url = ClassLoader.getSystemResource(name + org.smtlib.Utils.SUFFIX);

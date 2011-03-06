@@ -1,0 +1,17 @@
+success
+success
+success
+(declare-sort AA 2)
+^^^^^^^^^^^^^^^^^^^
+(error "Yices declare-sort command failed: Yices does not support defining parameterized types")
+(declare-fun a () (AA I V))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "declare-fun command failed: Yices does not support user-defined parameterized sorts: (AA I V)")
+success
+success
+(assert (= v (select a i)))
+             ^^^^^^^^^^^^
+(error "Unknown predicate symbol select with argument types (AA I V) I")
+(assert (= a (store a i v)))
+             ^^^^^^^^^^^^^
+(error "Unknown predicate symbol store with argument types (AA I V) I V")

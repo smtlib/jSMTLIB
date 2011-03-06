@@ -38,6 +38,7 @@ import org.smtlib.IExpr.IParameterizedIdentifier;
 import org.smtlib.IExpr.IQualifiedIdentifier;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
+import org.smtlib.IVisitor.VisitorException;
 
 // FIXME - in some commands, like assert, push, pop, the effect in solver_test happens even if the effect in the 
 // solver itself causes an error, putting the two out of synch; also, push and pop can happen partially
@@ -82,22 +83,29 @@ public class Solver_yices extends Solver_test implements ISolver {
 			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
 		}
 	}
+	
+	protected /*@Nullable*/ IResponse send(IPos pos, String... solverCmds) {
+		try {
+			for (String s: solverCmds) solverProcess.sendNoListen(s);
+			String response = solverProcess.sendAndListen("\n");
+			if (response.contains(errorIndication)) {
+				return smtConfig.responseFactory.error(response,pos);
+			}
+			return null;
+		} catch (IOException e) {
+			return smtConfig.responseFactory.error(e.getMessage(),pos);
+		}
+	}
 
 	// FIXME - are we capturing errors from the solver?
 	
 	@Override
 	public IResponse exit() {
-		try {
-			String s = solverProcess.sendAndListen("(exit)\n");
-			solverProcess.exit();
-			if (s.contains(errorIndication)) {
-				return smtConfig.responseFactory.error(s);
-			}
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Ended yices ");
-			return smtConfig.responseFactory.success_exit();
-		} catch (IOException e) {
-			return smtConfig.responseFactory.error("Failed to exit Yices process: " + e.getMessage());
-		}
+		IResponse r = send(null,"(exit)");
+		if (r != null) return r;
+		solverProcess.exit();
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("Ended yices ");
+		return smtConfig.responseFactory.success_exit();
 	}
 
 	@Override
@@ -106,13 +114,9 @@ public class Solver_yices extends Solver_test implements ISolver {
 			IResponse status = super.assertExpr(sexpr);
 			if (!status.isOK()) return status;
 
-			String response = solverProcess.sendAndListen("(assert+ ",translate(sexpr)," )\n");
-			if (response.contains(errorIndication)) {
-				return smtConfig.responseFactory.error(response);
-			}
+			IResponse response = send(sexpr.pos(),"(assert+ ",translate(sexpr)," )");
+			if (response != null) return response;
 			return status;
-		} catch (IOException e) {
-			return smtConfig.responseFactory.error("Yices assert command failed: " + e.getMessage());
 		} catch (IVisitor.VisitorException e) {
 			return smtConfig.responseFactory.error("Yices assert command failed: " + e.getMessage());
 		}
@@ -142,70 +146,50 @@ public class Solver_yices extends Solver_test implements ISolver {
 
 	@Override
 	public IResponse pop(int number) {
-		try {
-			IResponse status = super.pop(number);
-			if (status.isError()) return status;
-			while (number-- > 0) {
-				String response = solverProcess.sendAndListen("(pop)\n");
-				if (response.contains(errorIndication)) {
-					return smtConfig.responseFactory.error(response);
-				}
-			}
-			return smtConfig.responseFactory.success();
-		} catch (IOException e) {
-			return smtConfig.responseFactory.error("Yices pop command failed: " + e.getMessage());
+		IResponse status = super.pop(number);
+		if (status.isError()) return status;
+		while (number-- > 0) {
+			IResponse response = send(null,"(pop)");
+			if (response != null) return response;
 		}
+		return smtConfig.responseFactory.success();
 	}
 
 	@Override
 	public IResponse push(int number) {
-		try {
-			IResponse status = super.push(number);
-			if (status.isError()) return status;
-			while (number-- > 0) {
-				String response = solverProcess.sendAndListen("(push)\n");
-				if (response.contains(errorIndication)) {
-					return smtConfig.responseFactory.error(response);
-				}
-			}
-			return smtConfig.responseFactory.success();
-		} catch (IOException e) {
-			return smtConfig.responseFactory.error("push command failed: " + e.getMessage());
+		IResponse status = super.push(number);
+		if (status.isError()) return status;
+		while (number-- > 0) {
+			IResponse response = send(null,"(push)");
+			if (response != null) return response;
 		}
+		return smtConfig.responseFactory.success();
 	}
 
 	@Override
 	public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
-		try {
-			boolean lSet = logicSet;
-			IResponse status = super.set_logic(logicName,pos);
-			if (!status.isOK()) return status;
+		boolean lSet = logicSet;
+		IResponse status = super.set_logic(logicName,pos);
+		if (!status.isOK()) return status;
 
-			// FIXME - discrimninate among logics
+		// FIXME - discrimninate among logics
 
-			if (lSet) {
-				if (!smtConfig.relax) return smtConfig.responseFactory.error("Logic is already set");
-				String response = solverProcess.sendAndListen("(reset)\n");
-				if (response.contains(errorIndication)) {
-					return smtConfig.responseFactory.error(response,pos);
-				}
-			}
-			return status;
-		} catch (IOException e) {
-			return smtConfig.responseFactory.error("set_logic command failed: " + e.getMessage());
+		if (lSet) {
+			if (!smtConfig.relax) return smtConfig.responseFactory.error("Logic is already set");
+			IResponse response = send(pos,"(reset)");
+			if (response != null) return response;
 		}
-
-
+		return status;
 	}
 
 	@Override
 	public IResponse set_option(IKeyword option, IAttributeValue value) {
-		return super.set_option(option,value); // FIXME - send to yices?
+		return super.set_option(option,value);
 	}
 
 	@Override
 	public IResponse get_option(IKeyword option) {
-		return super.get_option(option); // FIXME - does yices know this
+		return super.get_option(option);
 	}
 
 	@Override
@@ -220,9 +204,9 @@ public class Solver_yices extends Solver_test implements ISolver {
 		} else if (":reason-unknown".equals(option)) {
 			return smtConfig.responseFactory.unsupported(); // FIXME
 		} else if (":authors".equals(option)) {
-			return smtConfig.responseFactory.stringLiteral(Utils.AUTHORS_VALUE);
+			return smtConfig.responseFactory.stringLiteral("SRI");
 		} else if (":version".equals(option)) {
-			return smtConfig.responseFactory.stringLiteral(Utils.VERSION_VALUE);
+			return smtConfig.responseFactory.stringLiteral("1.0.28");
 		} else if (":name".equals(option)) {
 			return smtConfig.responseFactory.stringLiteral("yices");
 		} else {
@@ -239,22 +223,18 @@ public class Solver_yices extends Solver_test implements ISolver {
 			String name = translate(cmd.symbol());
 			String yicescmd;
 			if (cmd.argSorts().size() == 0) {
-				yicescmd = "(define " + name + "::" + translate(cmd.resultSort()) + ")\n";
+				yicescmd = "(define " + name + "::" + translate(cmd.resultSort()) + ")";
 			} else {
 				yicescmd = "(define " + name + "::(->";
 				for (ISort s: cmd.argSorts()) {
 					yicescmd = yicescmd + " " + translate(s);
 				}
-				yicescmd = yicescmd + " " + translate(cmd.resultSort()) + "))\n";
+				yicescmd = yicescmd + " " + translate(cmd.resultSort()) + "))";
 				
 			}
-			String response = solverProcess.sendAndListen(yicescmd);
-			if (response.contains(errorIndication)) {
-				return smtConfig.responseFactory.error(response);
-			}
+			IResponse response = send(null,yicescmd);
+			if (response != null) return response;
 			return status;
-		} catch (IOException e) {
-			return smtConfig.responseFactory.error("declare-fun command failed: " + e.getMessage());
 		} catch (IVisitor.VisitorException e) {
 			return smtConfig.responseFactory.error("declare-fun command failed: " + e.getMessage());
 		}
@@ -265,15 +245,35 @@ public class Solver_yices extends Solver_test implements ISolver {
 		try {
 			IResponse status = super.define_fun(cmd);
 			if (!status.isOK()) return status;
-			if (false) throw new IOException();
-
-//			String name = cmd.identifier().toString(); // FIXME need proper encoding
-//			String response = solverProcess.sendAndListen("(define " + name + "::bool)\n");
-//			if (response.contains(errorIndication)) {
-//				return smtConfig.responseFactory.error(response);
-//			}
+			
+			String name = translate(cmd.symbol());
+			StringBuilder yicescmd = new StringBuilder();;
+			if (cmd.parameters().size() == 0) {
+				yicescmd.append("(define " + name + "::" + translate(cmd.resultSort()) + " " 
+								+ translate(cmd.expression()));
+			} else {
+				yicescmd.append("(define " + name + "::(->");
+				for (IDeclaration d: cmd.parameters()) {
+					yicescmd.append(" " + translate(d.sort()));
+				}
+				yicescmd.append(" " + translate(cmd.resultSort()) + ") ");
+				yicescmd.append("(lambda (");
+				for (IDeclaration d: cmd.parameters()) {
+					yicescmd.append(translate(d.parameter()));
+					yicescmd.append("::");
+					yicescmd.append(translate(d.sort()));
+					yicescmd.append(" ");
+				}
+				yicescmd.append(") ");
+				yicescmd.append(translate(cmd.expression()));
+				yicescmd.append(")");
+			}
+			yicescmd.append(")");
+			IResponse response = send(null,yicescmd.toString());
+			if (response != null) return response;
 			return status;
-		} catch (IOException e) {
+
+		} catch (IVisitor.VisitorException e) {
 			return smtConfig.responseFactory.error("assert command failed: " + e.getMessage());
 		}
 
@@ -284,19 +284,20 @@ public class Solver_yices extends Solver_test implements ISolver {
 		try {
 			IResponse status = super.declare_sort(cmd);
 			if (!status.isOK()) return status;
-			if (false) throw new IOException();
+			
+			if (cmd.arity().intValue() == 0) {
+				IResponse response = send(cmd.sortSymbol().pos(),"(define-type " + translate(cmd.sortSymbol()) + ")");
+				if (response != null) return response;
+			} else {
+				throw new IVisitor.VisitorException("Yices does not support defining parameterized types",null);
+			}
+			return status;
 			
 			// FIXME - Yices does not seem to allow creating arbitrary new types
 			// Besides Yices uses structural equivalence.
 
-//			String name = cmd.identifier().toString(); // FIXME need proper encoding
-//			solverProcess.sendAndListen("(define " + name + "::bool)\n");
-//			if (response.contains(errorIndication)) {
-//				return smtConfig.responseFactory.error(response);
-//			}
-			return status;
-		} catch (IOException e) {
-			return smtConfig.responseFactory.error("Yices declare-sort command failed: " + e.getMessage());
+		} catch (IVisitor.VisitorException e) {
+			return smtConfig.responseFactory.error("Yices declare-sort command failed: " + e.getMessage(),e.pos());
 		}
 
 	}
@@ -306,15 +307,22 @@ public class Solver_yices extends Solver_test implements ISolver {
 		try {
 			IResponse status = super.define_sort(cmd);
 			if (!status.isOK()) return status;
-			if (false) throw new IOException();
-//			String name = cmd.identifier().toString(); // FIXME need proper encoding
-//			solverProcess.sendAndListen("(define " + name + "::bool)\n");
-//			if (response.contains(errorIndication)) {
-//				return smtConfig.responseFactory.error(response);
-//			}
+
+			if (cmd.parameters().size() == 0) {
+				String msg = "(define-type " + translate(cmd.sortSymbol()) + " ";
+				msg = msg + translate(cmd.expression()) + ")";
+				IResponse response = send(cmd.sortSymbol().pos(),msg);
+				if (response != null) return response;
+			} else {
+				throw new IVisitor.VisitorException("Yices does not support defining parameterized types",null);
+			}
 			return status;
-		} catch (IOException e) {
-			return smtConfig.responseFactory.error("Yices define-sort command failed: " + e.getMessage());
+
+			// FIXME - Yices does not seem to allow creating arbitrary new types
+				// Besides Yices uses structural equivalence.
+
+		} catch (IVisitor.VisitorException e) {
+			return smtConfig.responseFactory.error("Yices define-sort command failed: " + e.getMessage(),e.pos());
 		}
 
 	}
@@ -432,10 +440,30 @@ public class Solver_yices extends Solver_test implements ISolver {
 	 * 		FIXME - not  defined what Yices ids can be made of
 	 */
 	
+	static Map<String,String> bvfcns = new HashMap<String,String>();
+	static {
+		bvfcns.put("bvadd","bv-add");
+		bvfcns.put("bvand","bv-and");
+		bvfcns.put("bvor","bv-add");
+		bvfcns.put("bvmul","bv-mul");
+		bvfcns.put("bvshl","bv-shift-left0"); // second argument is an integer
+		bvfcns.put("bvlshr","bv-shift-right0"); // second argument is an integer
+		bvfcns.put("bvneg","bv-neg");
+		bvfcns.put("bvnot","bv-not");
+		bvfcns.put("bvudiv","");
+		bvfcns.put("bvurem","");
+		bvfcns.put("concat","bv-concat");
+		bvfcns.put("extract","bv-extract");
+		bvfcns.put("bvult","bv-lt");
+	};
 	
-	static public class Translator extends IVisitor.NullVisitor<String> {
+	public class Translator extends IVisitor.NullVisitor<String> {
 		
 		public Translator() {}
+		
+		protected String encode(IAttributeValue sym) {
+			return org.smtlib.sexpr.Printer.write(sym); // FIXME - is this OK?
+		}
 
 		@Override
 		public String visit(IDecimal e) throws IVisitor.VisitorException {
@@ -454,20 +482,29 @@ public class Solver_yices extends Solver_test implements ISolver {
 
 		@Override
 		public String visit(IBinaryLiteral e) throws IVisitor.VisitorException {
-			throw new VisitorException("Did not expect a Binary literal in an expression to be translated",e.pos());
+			return "0b" + e.value();
 		}
 
 		@Override
 		public String visit(IHexLiteral e) throws IVisitor.VisitorException {
-			throw new VisitorException("Did not expect a Hex literal in an expression to be translated",e.pos());
+			// Convert to binary literal
+			final String[] bits = { "0000", "1000", "0100", "1100", "0010", "1010", "0110", "1110", "0001", "1001", "0101", "1101", "0011", "1011", "0111", "1111" };
+			StringBuilder s = new StringBuilder();
+			for (int i = 0; i < e.value().length(); i++) {
+				char c = e.value().charAt(i);
+				int k = c <= '9' ? (c-'0') : c <= 'Z' ? (c - 'A' + 10) : (c - 'a' + 10);
+				s.append(bits[k]);
+			}
+			return s.toString();
 		}
+		
 
 		@Override
 		public String visit(IFcnExpr e) throws IVisitor.VisitorException {
 			Iterator<IExpr> iter = e.args().iterator();
 			if (!iter.hasNext()) throw new VisitorException("Did not expect an empty argument list",e.pos());
 			IQualifiedIdentifier fcn = e.head();
-			String fcnname = fcn.accept(this);
+			String fcnname = fcn.headSymbol().accept(this);
 			StringBuilder sb = new StringBuilder();
 			int length  = e.args().size();
 			if (fcnname.equals("or") || fcnname.equals("and")) {
@@ -525,7 +562,46 @@ public class Solver_yices extends Solver_test implements ISolver {
 				sb.append(iter.next().accept(this));
 				sb.append(" )");
 				return sb.toString();
+			} else if (length == 2 && symTable.arrayTheorySet && fcnname.equals("select")) {
+				sb.append("(");
+				sb.append(iter.next().accept(this));
+				sb.append(" ");
+				sb.append(iter.next().accept(this));
+				sb.append(")");
+				return sb.toString();
+			} else if (length == 3 && symTable.arrayTheorySet && fcnname.equals("store")) {
+				sb.append("(update ");
+				sb.append(iter.next().accept(this));
+				sb.append(" (");
+				sb.append(iter.next().accept(this));
+				sb.append(") ");
+				sb.append(iter.next().accept(this));
+				sb.append(")");
+				return sb.toString();
 			} else {
+				if (symTable.bitVectorTheorySet) {
+					// Predefined: bvadd, bvmul, bvneg, bvnot, bvshl, bvlshr, concat, extract, bvult, bvudiv, bvurem, bvand, bvor
+					String newname = bvfcns.get(fcnname);
+					if (newname == null) {
+						// continue
+					} else if (newname.isEmpty()) {
+						throw new VisitorException("The BitVector function " + fcnname + " is not implementetd in yices",e.pos());
+					} else if (fcnname.equals("extract")) {
+						sb.append("(bv-extract ");
+						IParameterizedIdentifier pid = (IParameterizedIdentifier)fcn;
+						sb.append(pid.numerals().get(1).intValue());
+						sb.append(" ");
+						sb.append(pid.numerals().get(0).intValue());
+						sb.append(" ");
+						sb.append(iter.next().accept(this));
+						sb.append(")");
+						return sb.toString();
+					} else if (fcnname.equals("bvshl") || fcnname.equals("bvlshr")) {
+						throw new VisitorException("The BitVector function " + fcnname + " is not implementetd in yices",e.pos());
+					} else {
+						fcnname = newname;
+					}
+				}
 				// no associativity 
 				sb.append("( ");
 				sb.append(fcnname);
@@ -674,7 +750,21 @@ public class Solver_yices extends Solver_test implements ISolver {
 
 		@Override
 		public String visit(IAttributedExpr e) throws IVisitor.VisitorException {
-			return e.expr().accept(this); // FIXME - not doing anything with names
+			IExpr expr = e.expr();
+			IAttribute<?> attr = e.attributes().get(0);
+			if (attr.keyword().toString().equals(":named")) {
+				String name = encode(attr.attrValue());
+				String ex = expr.accept(this);
+				String sort = typemap.get(expr).accept(this);
+				String def = "(define " + name + "::" + sort + " " + ex + ")";
+				IResponse response = send(e.pos(),def);
+				if (response != null) {
+					throw new VisitorException("Failed to define attributed expression: " + response, e.pos()); // FIXME - error message format?
+				}
+				return ex;
+			} else {
+				throw new VisitorException("Unexpected kind of keyword: " + smtConfig.defaultPrinter.toString(attr.keyword()),attr.pos());
+			}
 		}
 
 		@Override
@@ -692,13 +782,28 @@ public class Solver_yices extends Solver_test implements ISolver {
 		
 		public String visit(ISort.IExpression s) throws IVisitor.VisitorException {
 			if (s.isBool()) return "bool";
+			String sort = s.family().headSymbol().accept(this);
 			if (s.parameters().size() == 0) {
-				String sort = s.family().accept(this);
 				if ("Int".equals(sort)) return "int";
 				if ("Real".equals(sort)) return "real";
+				if (symTable.bitVectorTheorySet && "BitVec".equals(sort)) {
+					String sbv = "(bitvector ";
+					int k = ((IParameterizedIdentifier)s.family()).numerals().get(0).intValue();
+					sbv = sbv + k + ")";
+					return sbv;
+				}
 				return sort;
 			} else {
-				throw new UnsupportedOperationException("visit-ISort.IExpression");
+				if (symTable.arrayTheorySet && "Array".equals(sort)) {
+					StringBuilder sb = new StringBuilder();
+					sb.append("(-> ");
+					sb.append(s.parameters().get(0).accept(this));
+					sb.append(" ");
+					sb.append(s.parameters().get(1).accept(this));
+					sb.append(")");
+					return sb.toString();
+				}
+				throw new VisitorException("Yices does not support user-defined parameterized sorts: " + s, s.pos());
 			}
 		}
 		public String visit(ISort.IFcnSort s) {

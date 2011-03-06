@@ -1,0 +1,11 @@
+success
+success
+(define-fun y ((p Bool)(q Bool)) Bool (and p q))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "*** Fatal exception:
+Function argument types must be non-Boolean: (BOOLEAN, BOOLEAN) -> BOOLEAN
+stdin:2: this is the location of the error
+")
+(assert (y x x))
+        ^^^^^^^
+(error "Failed to assert expression: java.io.IOException: The pipe is being closed (y x x)")

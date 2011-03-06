@@ -1,0 +1,5 @@
+success
+success
+(declare-sort A 1)
+              ^
+(error "The identifier is already declared to be a sort: A")

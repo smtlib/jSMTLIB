@@ -114,16 +114,24 @@ public interface IExpr extends IAccept, IPosable {
 	
 	/** This interface represents SMT-LIB binary literals */
 	static public interface IBinaryLiteral extends ILiteral {
-		/** Returns a canonical value of the binary literal */
-		Object value();
+		/** Returns a canonical value of the binary literal: 0 and 1 digits from MSB to LSB */
+		String value();
+		
+		/** The binary value as an unsigned integer */
+		BigInteger intValue();
+		
 		/** Number of binary bits */
 		int length();
-	} // FIXME BinaryLiteral
+	}
 	
 	/** This interface represents SMT-LIB hex literals */
 	static public interface IHexLiteral extends ILiteral {
-		/** Returns a canonical value of the binary literal */
-		Object value(); 
+		/** Returns a canonical value of the hex literal; lower-case hex digits from MS to LS */
+		String value(); 
+		
+		/** The hex value as an unsigned integer */
+		BigInteger intValue();
+		
 		/** Number of hex digits */
 		int length();
 	} // FIXME HexLiteral
@@ -155,17 +163,25 @@ public interface IExpr extends IAccept, IPosable {
 	/** This interface represents SMT-LIB identifiers for function ids (either ids or parameterized ids
 	 * or as-type identifiers) */
 	static public interface IQualifiedIdentifier extends IExpr {
+		/** The head symbol of the identifier */
+		ISymbol headSymbol();
 	}
 	
 	/** This interface represents SMT-LIB identifiers (either ids or parameterized ids) */
 	static public interface IIdentifier extends IQualifiedIdentifier {
+		/** The head symbol of the identifier */
+		ISymbol headSymbol();
+
 	}
 	
 	/** This interface represents SMT-LIB identifiers that are sort qualifiers on function ids */
 	static public interface IAsIdentifier extends IQualifiedIdentifier {
-		/** The head symbol of the identifier */
+		/** The head of the identifier */
 		IIdentifier head();
 		
+		/** The head symbol of the identifier */
+		ISymbol headSymbol();
+
 		/** The Sort qualifier */
 		ISort qualifier();
 	}
@@ -173,7 +189,7 @@ public interface IExpr extends IAccept, IPosable {
 	/** This interface represents SMT-LIB identifiers (either ids or parameterized ids) */
 	static public interface IParameterizedIdentifier extends IIdentifier {
 		/** The head symbol of the identifier */
-		ISymbol head();
+		ISymbol headSymbol();
 		
 		/** The non-negative integer parameters of the identifier */
 		//@ ensures \result.size() > 0;

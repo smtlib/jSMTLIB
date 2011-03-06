@@ -2,8 +2,8 @@ Plugin:
 
  put in a multipage editor with output to alternate page
  output to a new popup widow
- expand the HELP document
- implement options
+ * expand the HELP document
+ * implement options
  DONE - implement different solvers 
  DONE - implement markers for errors
  DONE ENOUGH - find out how repairing syntax coloring works
@@ -45,7 +45,7 @@ App
  handle reading and checking "par" declarations
  handle restrictions on attributes in logic and theory
  tie sort and fcn parameters to their declarations - will need corresponding visitors
- checking that expressions are valid in the logic
+* checking that expressions are valid in the logic
  general handling of sort with parameterized identifiers
  DONE - implement properties for solver executables and reading a properties file
 * implement strict smtlib behavior
