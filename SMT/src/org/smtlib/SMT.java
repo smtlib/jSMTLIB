@@ -40,7 +40,7 @@ import org.smtlib.IParser.ParserException;
  */
 public class SMT {
 	
-	public static final String VERSION_ID = "jSMTLIB version 0.6";
+	public static final String VERSION_ID = "jSMTLIB version 0.8";
 	
 	public Properties props;
 	

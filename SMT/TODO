@@ -1,3 +1,14 @@
+Pieces:
+ - SMT-LIB checker
+ - Adapters to various solvers
+ - Network server/client
+ - Plugin
+ - Tutorial
+ - User guide
+ - Java API
+ - validation suite
+ - extensibility
+
 Plugin:
 
  put in a multipage editor with output to alternate page
@@ -37,6 +48,7 @@ Plugin:
  showing markers on linked files that are not in the project
  Enable/disable auto typechecking
  Add an another tool bar button solely for type-checking
+ Help document
  
 App
  cleanup connection of configuration to solvers, e.g. verbosity, print success, logic

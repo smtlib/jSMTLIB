@@ -30,6 +30,9 @@ public abstract class CharSequenceInfinite implements CharSequence {
 	 * interactive input, the prompter may print out prompt characters.
 	 */
 	public static interface IPrompter {
+		/** Implement this call-back to do whatever user actions are needed to
+		 * cause more input to be available.
+		 */
 		void prompt();
 	}
 	
@@ -74,7 +77,7 @@ public abstract class CharSequenceInfinite implements CharSequence {
 	/** The character to use to mark the end of input */
 	final public static char endChar = (char)25;
 
-	//@ constraint (\forall int i; 0 <= i < amountRead; \old([buf[i]) == buf[i]);
+	//@ constraint (\forall int i; 0 <= i < \old(amountRead); \old(buf[i]) == buf[i]);
 	//@ constraint amountRead >= \old(amountRead);
 	
 	/** Returns the char at the given index; this may block while input is read if the char has
@@ -112,7 +115,7 @@ public abstract class CharSequenceInfinite implements CharSequence {
 	}
 	
 	/** Reads more characters into the buffer; may block until some are read;
-	 * returns the number read; returns false if end of input has been reached,
+	 * returns false if end of input has been reached,
 	 * in which case no additional chars should have been read.  Does not expand the
 	 * buffer, so the buffer must have extra space in it when readChars() is called.
 	 * @return true if characters were read, false if no chars were read and end of input was reached
@@ -137,7 +140,7 @@ public abstract class CharSequenceInfinite implements CharSequence {
 		int newlength = buf.length;
 		do {
 			int k = (int) Math.ceil(newlength*sizeMultiple+sizeIncrease);
-			newlength = (k <= newlength) ? newlength+100 : k;
+			newlength = (k <= newlength) ? newlength+100 : k; // check for both bad parameters and for integer overflow
 		} while (newSize > newlength);
 		char[] nbuf = new char[newlength];
 		System.arraycopy(buf,0,nbuf,0,amountRead);

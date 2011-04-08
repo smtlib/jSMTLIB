@@ -56,7 +56,7 @@ public interface ICommand extends IAccept {
 		Ideclare_sort declare_sort(ISymbol sym, INumeral arity);
 		
 		/** Creates a define-fun command object */
-		Idefine_fun define_fun(IIdentifier id, List<IDeclaration> declarations, IExpr expression); // FIXME - abstract syntax has a result sort
+		Idefine_fun define_fun(IIdentifier id, List<IDeclaration> declarations, ISort resultSort, IExpr expression);
 		
 		/** Creates a define-sort command object. */
 		Idefine_sort define_sort(IIdentifier id, List<IParameter> parameters, ISort.IExpression expression);

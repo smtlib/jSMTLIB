@@ -17,5 +17,5 @@ public interface IAccept {
 	 * @param v the visitor class
 	 * @return the value returned by the visit method
 	 */
-	</*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException;
+	<T extends /*@Nullable*/Object> T accept(IVisitor<T> v) throws IVisitor.VisitorException;
 }
