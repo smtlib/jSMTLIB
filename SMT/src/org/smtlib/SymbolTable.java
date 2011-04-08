@@ -291,18 +291,18 @@ public class SymbolTable {
 				// First check for an exact match on arity
 				List<Entry> entrylist = arityMap.get(arity);
 				if (entrylist != null) for (Entry entry: entrylist) {
-					if (entry != null) {
-						java.util.Iterator<ISort> actuals = argSorts.iterator();
-						java.util.Iterator<ISort> defs = Arrays.asList(entry.sort.argSorts()).iterator();
-						while (actuals.hasNext() && defs.hasNext()) {
-							if (!defs.next().equals(actuals.next())) { entry = null; break; }
-						}
-						// Cases to consider
-						//   resultSort != null & just one argument sort match -> error - not supposed to use a qualifier
-						//   resultSort != null & multiple argument sort matches -> pick the one that matches on result sort
-						//   resultSort == null & and just one argument sort match -> return it
-						//   resultSort == null & multiple argument sort matches -> ambiguous
+					java.util.Iterator<ISort> actuals = argSorts.iterator();
+					java.util.Iterator<ISort> defs = Arrays.asList(entry.sort.argSorts()).iterator();
+					while (actuals.hasNext() && defs.hasNext()) {
+						if (!defs.next().equals(actuals.next())) { entry = null; break; }
+					}
+					// Cases to consider
+					//   resultSort != null & just one argument sort match -> error - not supposed to use a qualifier
+					//   resultSort != null & multiple argument sort matches -> pick the one that matches on result sort
+					//   resultSort == null & and just one argument sort match -> return it
+					//   resultSort == null & multiple argument sort matches -> ambiguous
 						
+					if (entry != null) {
 						// Have a match on the arguments, so check for a match on the result
 						if (resultSort != null) {
 							if (resultSort.equals(entry.sort.resultSort())) {
@@ -318,13 +318,14 @@ public class SymbolTable {
 						} else {
 							// No result sort specified - there should not be any overloading
 							if (found != null) {
+								// Found something previously and now have this match - so ambiguous
 								// FIXME - no place to give an error message that the result sort is ambiguous
 								return null;
 							}
-							// Otherwise keep checking for more matches
+							found = entry;
+							// Otherwise have just one match - keep checking the rest of the list
 						}
 					}
-					if (entry != null) found = entry;
 				}
 				if (resultSort != null && found != null && !foundMatchButNotOnResult) {
 					// FIXME - should report unneeded disambiguation

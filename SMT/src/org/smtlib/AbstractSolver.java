@@ -11,10 +11,11 @@ import org.smtlib.ICommand.Idefine_fun;
 import org.smtlib.ICommand.Idefine_sort;
 import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.IKeyword;
+import org.smtlib.SMT.Configuration;
 
 
 /** This class implements all the operations of the org.smtlib.ISolver interface
- *  to throw an UnsupportedOperationException
+ *  to throw an UnsupportedOperationException.
  *  Thus it can be used as a base class for a solver adapter class, if you want the 
  *  convenience of not having to implement all the operations at once.  The adapter
  *  class can simply remove AbstractSolver as a base class and retain ISolver as
@@ -24,7 +25,7 @@ import org.smtlib.IExpr.IKeyword;
  * @author David Cok
  *
  */
-public abstract class AbstractSolver implements ISolver {
+public class AbstractSolver implements ISolver {
 	
 	/** @see org.smtlib.ISolver#start() */
 	@Override
@@ -144,5 +145,17 @@ public abstract class AbstractSolver implements ISolver {
 	@Override
 	public IResponse get_info(IKeyword option){
 		throw new UnsupportedOperationException("AbstractSolver.get_info");
+	}
+
+	/** @see org.smtlib.ISolver#smt()*/
+	@Override
+	public Configuration smt() {
+		throw new UnsupportedOperationException("AbstractSolver.smt");
+	}
+
+	/** @see org.smtlib.ISolver#checkSatStatus()*/
+	@Override
+	public IResponse checkSatStatus() {
+		throw new UnsupportedOperationException("AbstractSolver.checkSatStatus");
 	}
 }

@@ -21,12 +21,16 @@ public class Driver {
 	
 	/** The exit code corresponding to a 'success' response to an SMT-LIB command */
 	static final int EX_SUCCESS = 0;
+
 	/** The exit code corresponding to a 'sat' response to an SMT-LIB command */
 	static final int EX_SMT_SAT = 2;
+
 	/** The exit code corresponding to a 'unsat' response to an SMT-LIB command */
 	static final int EX_SMT_UNSAT = 3;
+
 	/** The exit code corresponding to a 'unknown' response to an SMT-LIB command */
 	static final int EX_SMT_UNKNOWN = 4;
+
 	/** The exit code corresponding to any other response to an SMT-LIB command */
 	static final int EX_SMT_OTHER = 5;
 
@@ -35,34 +39,40 @@ public class Driver {
 
 	/** The exit code used when there is an error in the command-line arguments */
 	static final int EX_CMD_LINE_ERROR = 11;
+
 	/** The exit code used when there is an internal exception in the application */
 	static final int EX_EXCEPTION = 12;
 	
-	/** The main entry point to the application */
+	/** The port to which to send commands (set as a command-line option)*/
+	protected int port = 0;
+
+	/** If true, verbose, debugging information is emitted by the application (set as a command-line option)*/
+	protected boolean verbose = false;
+
+	/** If true, do not echo 'success' responses (unless verbose is enabled) */
+	protected boolean quiet = false;
+
+	/** Whether to start a service process from this process */
+	protected boolean start = false;
+	
+	/** The commands as specified on the command-line */
+	protected List<String> commands = new LinkedList<String>();
+	
+	/** The main entry point to the application 
+	 * @param args the command-line arguments
+	 */
 	public static void main(String[] args) {
 		int exitCode = (new Driver()).exec(args);
 		System.exit(exitCode);
 	}
-	
-	/** The port to which to send commands (set as a command-line option)*/
-	int port;
-	/** If true, verbose, debugging information is emitted by the application (set as a command-line option)*/
-	boolean verbose = false;
-	/** If true, do not echo 'success' responses (unless verbose is enabled) */
-	boolean quiet = false;
-	/** Whether to start a service process from this process */
-	boolean start = false;
-	
-	/** The commands as specified on the command-line */
-	List<String> commands = new LinkedList<String>();
 	
 	/** The non-static entry point to the application 
 	 * @param args the command-line arguments
 	 * @return the exit code
 	 */
 	public int exec(String[] args) {
-		int k = processOptions(args);
-		if (k != 0) return k>0 ? k : 0;
+		int exitCode = processOptions(args);
+		if (exitCode != 0) return exitCode>0 ? exitCode : 0;
 		if (port <= 0) {
 			System.out.println("Error: no port is specified");
 			return EX_CMD_LINE_ERROR;
@@ -77,7 +87,7 @@ public class Driver {
 	}
 	
 	/** Sets the fields of the class according to the command-line */
-	public int processOptions(String[] args) {
+	protected int processOptions(String[] args) {
 		int i = 0;
 		while (i < args.length) {
 			if ("--port".equals(args[i]) || "-p".equals(args[i])) {
