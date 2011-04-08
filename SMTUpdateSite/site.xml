@@ -15,5 +15,8 @@
    <feature url="features/org.smtlib.SMTFeature_0.7.4.jar" id="org.smtlib.SMTFeature" version="0.7.4">
       <category name="org.smtlib.SMT"/>
    </feature>
+   <feature url="features/org.smtlib.SMTFeature_0.8.1.jar" id="org.smtlib.SMTFeature" version="0.8.1">
+      <category name="org.smtlib.SMT"/>
+   </feature>
    <category-def name="org.smtlib.SMT" label="jSMTLIB"/>
 </site>
