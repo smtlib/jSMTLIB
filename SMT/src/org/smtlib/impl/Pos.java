@@ -112,6 +112,7 @@ public class Pos implements IPos {
 		@Override
 		public int lineBeginning(int pos) {
 			int p = pos;
+			if (p >= chars().length()) p = chars().length()-1; // FIXME - check this for cases in which the length is indeterminate - perhaps just catch the exception for out of bounds access
 			if (p > 0 && charAt(p) == '\n' && charAt(p-1) == '\r') --p;
 			char c;
 			while (p >= 0 && (c=charAt(p)) != '\n' && c != '\r') --p;
@@ -135,6 +136,7 @@ public class Pos implements IPos {
 		//@ ensures \result >= pos;
 		protected int nextLineTermination(int pos) {
 			char c;
+			if (pos >= chars().length()) return chars().length()-1; // FIXME - check this for csaes in which the length is indeterminate - perhaps just catch the out of bounds exception
 			while ((c=charAt(pos)) != '\n' && c != '\r' && c != CharSequenceInfinite.endChar) ++pos;
 			if (c == '\r' && charAt(pos+1) == '\n') ++pos;
 			else if (c == CharSequenceInfinite.endChar) --pos;

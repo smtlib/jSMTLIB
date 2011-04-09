@@ -61,6 +61,9 @@ App
  general handling of sort with parameterized identifiers
  DONE - implement properties for solver executables and reading a properties file
 * implement strict smtlib behavior
+* refactor the implementation of bit-vector functions.  They are all hand-coded. 
+  Although SMT defines them all informally, we need a cleaner way to implement
+  and add to the set of functions within the software.
 
 Bugs
  problem with showing error locations that span lines
@@ -73,6 +76,7 @@ Document
  
 Adapters:
 ** finish solver adapters
+** implement bitvector extensions
  figure out how to handle sorts within Simplify
  implement options and info in other solvers
   

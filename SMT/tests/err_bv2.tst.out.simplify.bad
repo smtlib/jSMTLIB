@@ -27,34 +27,34 @@ success
 (error "The argument must have a BitVec sort, not Bool")
 (assert (= (bvand x y) #b111))
            ^^^^^^^^^^^
-(error "The sorts must match: (_ BitVec 3) .vs (_ BitVec 5)")
+(error "The sorts must match: (_ BitVec 3) vs. (_ BitVec 5)")
 (assert (= (bvand x y z) #b111))
             ^^^^^
 (error " The bvand function should have two arguments")
 (assert (= (bvor x y) #b111))
            ^^^^^^^^^^
-(error "The sorts must match: (_ BitVec 3) .vs (_ BitVec 5)")
+(error "The sorts must match: (_ BitVec 3) vs. (_ BitVec 5)")
 (assert (= (bvadd x y) #b111))
            ^^^^^^^^^^^
-(error "The sorts must match: (_ BitVec 3) .vs (_ BitVec 5)")
+(error "The sorts must match: (_ BitVec 3) vs. (_ BitVec 5)")
 (assert (= (bvmul x y) #b111))
            ^^^^^^^^^^^
-(error "The sorts must match: (_ BitVec 3) .vs (_ BitVec 5)")
+(error "The sorts must match: (_ BitVec 3) vs. (_ BitVec 5)")
 (assert (= (bvshl x y) #b111))
            ^^^^^^^^^^^
-(error "The sorts must match: (_ BitVec 3) .vs (_ BitVec 5)")
+(error "The sorts must match: (_ BitVec 3) vs. (_ BitVec 5)")
 (assert (= (bvlshr x y) #b111))
            ^^^^^^^^^^^^
-(error "The sorts must match: (_ BitVec 3) .vs (_ BitVec 5)")
+(error "The sorts must match: (_ BitVec 3) vs. (_ BitVec 5)")
 (assert (= (bvudiv x y) #b111))
            ^^^^^^^^^^^^
-(error "The sorts must match: (_ BitVec 3) .vs (_ BitVec 5)")
+(error "The sorts must match: (_ BitVec 3) vs. (_ BitVec 5)")
 (assert (= (bvurem x y) #b111))
            ^^^^^^^^^^^^
-(error "The sorts must match: (_ BitVec 3) .vs (_ BitVec 5)")
+(error "The sorts must match: (_ BitVec 3) vs. (_ BitVec 5)")
 (assert (bvult x y))
         ^^^^^^^^^^^
-(error "The sorts must match: (_ BitVec 3) .vs (_ BitVec 5)")
+(error "The sorts must match: (_ BitVec 3) vs. (_ BitVec 5)")
 (assert (bvult y))
          ^^^^^
 (error " The bvult function should have two arguments")

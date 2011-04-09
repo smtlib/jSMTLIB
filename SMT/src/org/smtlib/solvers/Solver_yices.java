@@ -39,6 +39,7 @@ import org.smtlib.IExpr.IQualifiedIdentifier;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IVisitor.VisitorException;
+import org.smtlib.impl.SMTExpr.ParameterizedIdentifier;
 
 // FIXME - in some commands, like assert, push, pop, the effect in solver_test happens even if the effect in the 
 // solver itself causes an error, putting the two out of synch; also, push and pop can happen partially
@@ -444,7 +445,7 @@ public class Solver_yices extends Solver_test implements ISolver {
 	static {
 		bvfcns.put("bvadd","bv-add");
 		bvfcns.put("bvand","bv-and");
-		bvfcns.put("bvor","bv-add");
+		bvfcns.put("bvor","bv-or");
 		bvfcns.put("bvmul","bv-mul");
 		bvfcns.put("bvshl","bv-shift-left0"); // second argument is an integer
 		bvfcns.put("bvlshr","bv-shift-right0"); // second argument is an integer
@@ -455,7 +456,25 @@ public class Solver_yices extends Solver_test implements ISolver {
 		bvfcns.put("concat","bv-concat");
 		bvfcns.put("extract","bv-extract");
 		bvfcns.put("bvult","bv-lt");
-	};
+		bvfcns.put("bvnand","");
+		bvfcns.put("bvnor","");
+		bvfcns.put("bvxor","");
+		bvfcns.put("bvxnor","");
+		bvfcns.put("bvcomp","");
+		bvfcns.put("bvsub","");
+		bvfcns.put("bvsdiv","");
+		bvfcns.put("bvsrem","");
+		bvfcns.put("bvsmod","");
+		bvfcns.put("bvashr","");
+		bvfcns.put("bvule","");
+		bvfcns.put("bvugt","");
+		bvfcns.put("bvuge","");
+		bvfcns.put("bvslt","");
+		bvfcns.put("bvsle","");
+		bvfcns.put("bvsgt","");
+		bvfcns.put("bvsge","");
+	}
+
 	
 	public class Translator extends IVisitor.NullVisitor<String> {
 		
@@ -505,6 +524,10 @@ public class Solver_yices extends Solver_test implements ISolver {
 			if (!iter.hasNext()) throw new VisitorException("Did not expect an empty argument list",e.pos());
 			IQualifiedIdentifier fcn = e.head();
 			String fcnname = fcn.headSymbol().accept(this);
+			// FIXME - should we be doing these comparisons with strings?
+			if (fcn instanceof ParameterizedIdentifier && fcn.headSymbol().toString().equals(fcnname)) {
+				throw new VisitorException("Unknown parameterized function symbol: " + fcnname, e.pos());
+			}
 			StringBuilder sb = new StringBuilder();
 			int length  = e.args().size();
 			if (fcnname.equals("or") || fcnname.equals("and")) {
@@ -585,7 +608,7 @@ public class Solver_yices extends Solver_test implements ISolver {
 					if (newname == null) {
 						// continue
 					} else if (newname.isEmpty()) {
-						throw new VisitorException("The BitVector function " + fcnname + " is not implementetd in yices",e.pos());
+						throw new VisitorException("The BitVector function " + fcnname + " is not implemented in yices",e.pos());
 					} else if (fcnname.equals("extract")) {
 						sb.append("(bv-extract ");
 						IParameterizedIdentifier pid = (IParameterizedIdentifier)fcn;
@@ -686,7 +709,8 @@ public class Solver_yices extends Solver_test implements ISolver {
 
 		@Override
 		public String visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
-			throw new UnsupportedOperationException("visit-IParameterizedIdentifier");
+			// FIXME - use default printer properly to print Symbol
+			throw new IVisitor.VisitorException("Unsupported parameterized function symbol: " + e.headSymbol().toString(),e.pos());
 		}
 
 		@Override

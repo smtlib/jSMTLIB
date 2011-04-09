@@ -46,3 +46,43 @@ success
 (assert (distinct #x0 #b0000))
                   ^^^
 (error "Did not expect a Hex literal in an expression to be translated")
+(assert (= (_ bv17 5) #b10001 ))
+                      ^^^^^^^
+(error "Did not expect a Binary literal in an expression to be translated")
+success
+success
+success
+success
+(assert (= (bvxnor x x) #b111))
+                        ^^^^^
+(error "Did not expect a Binary literal in an expression to be translated")
+(assert (= (bvcomp x x) #b1))
+                        ^^^
+(error "Did not expect a Binary literal in an expression to be translated")
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(assert (= ((_ repeat 2) #b10) #b1010))
+           ^^^^^^^^^^^^^^^^^^^
+(error "Have not yet implemented parameterized bit-vector functions")
+(assert (= ((_ zero_extend 2) #b11) #b0011))
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Have not yet implemented parameterized bit-vector functions")
+(assert (= ((_ sign_extend 2) #b10) #b1110))
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Have not yet implemented parameterized bit-vector functions")
+(assert (= ((_ rotate_left 1) #b0010) #b0100))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Have not yet implemented parameterized bit-vector functions")
+(assert (= ((_ rotate_right 1) #b0011) #b1001))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Have not yet implemented parameterized bit-vector functions")

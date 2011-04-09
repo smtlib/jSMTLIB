@@ -11,6 +11,7 @@ import java.util.*;
 
 import org.smtlib.*;
 import org.smtlib.ICommand.*;
+import org.smtlib.impl.SMTExpr.ParameterizedIdentifier;
 import org.smtlib.ICommand.Idefine_fun;
 import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IAttributeValue;
@@ -624,10 +625,14 @@ public class Solver_cvc extends Solver_test implements ISolver {
 		public String visit(IFcnExpr e) throws IVisitor.VisitorException {
 			boolean resultIsFormula = this.isFormula;
 			Iterator<IExpr> iter = e.args().iterator();
-			if (!iter.hasNext()) throw new VisitorException("Did not expect an empty argument list", (IPos)e);
+			if (!iter.hasNext()) throw new VisitorException("Did not expect an empty argument list", e.pos());
 			String oldName = e.head().headSymbol().toString();
 			String newName = e.head().headSymbol().accept(this);
 			int length = e.args().size();
+			// FIXME - should we be doing these comparisons with strings?
+			if (e.head() instanceof ParameterizedIdentifier && oldName.equals(newName)) {
+				throw new VisitorException("Unknown parameterized function symbol: " + oldName, e.pos());
+			}
 			StringBuilder sb = new StringBuilder();
 			try {
 				// Determine if the arguments are formulas or terms
@@ -795,7 +800,12 @@ public class Solver_cvc extends Solver_test implements ISolver {
 					sb.append(":");
 					sb.append(org.smtlib.sexpr.Printer.write(pid.numerals().get(0)));
 					sb.append("]");
-				} else if (symTable.bitVectorTheorySet && (oldName.equals("bvudiv") || oldName.equals("bvurem") || oldName.equals("bvshl") || oldName.equals("bvlshr"))) {
+				} else if (symTable.bitVectorTheorySet && (oldName.equals("bvudiv") || oldName.equals("bvurem") || oldName.equals("bvshl") || oldName.equals("bvlshr")
+						|| oldName.equals("bvsge") || oldName.equals("bvsgt") || oldName.equals("bvsle") || oldName.equals("bvslt") 
+						|| oldName.equals("bvuge") || oldName.equals("bvugt") || oldName.equals("bvule") || oldName.equals("bvashr") 
+						|| oldName.equals("bvsmod") || oldName.equals("bvsrem") || oldName.equals("bvsdiv") || oldName.equals("bvsub") 
+						|| oldName.equals("bvcomp") || oldName.equals("bvxnor") || oldName.equals("bvxor") || oldName.equals("bvnor") || oldName.equals("bvnand") 
+						)) {
 					throw new VisitorException("SMT BitVector function " + oldName + " is not implemented in cvc",e.pos());
 				} else if (symTable.bitVectorTheorySet && ("@".equals(newName) || (oldName.startsWith("bv") && newName != null && newName.charAt(0) != 'B'))) {
 					// infix
@@ -875,7 +885,8 @@ public class Solver_cvc extends Solver_test implements ISolver {
 
 		@Override
 		public String visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
-			throw new VisitorException("Did not expect a IParameterizedIdentifier token in an expression to be translated",pos(e));
+			// FIXME - use default printer properly to print Symbol
+			throw new IVisitor.VisitorException("Unsupported parameterized function symbol: " + e.headSymbol().toString(),e.pos());
 		}
 
 		@Override
