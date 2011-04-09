@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.smtlib.IExpr.*;
 import org.smtlib.ISort.*;
+import org.smtlib.impl.Sort;
 
 /** This class is a visitor that typechecks a formula */
 public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
@@ -323,6 +324,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			s = ((ISort.IExpression)s).parameters().get(1);
 			return save(e,s);
 		} 
+		boolean useext = true;
 		if (bvperhaps) {
 			if (name.equals("bvnot") || name.equals("bvneg")) {
 				if (argSorts.size() != 1) {
@@ -335,10 +337,16 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 					return null;
 				}
 				return save(e,s);
+				
 			} else if (name.equals("bvand") || name.equals("bvor") 
 					|| name.equals("bvadd") || name.equals("bvmul")
 					|| name.equals("bvudiv") || name.equals("bvurem")
-					|| name.equals("bvshl") || name.equals("bvlshr")) {
+					|| name.equals("bvshl") || name.equals("bvlshr") ||
+					(useext && (name.equals("bvnand") || name.equals("bvnor") || name.equals("bvxor") || name.equals("bvxnor")
+							|| name.equals("bvsub") || name.equals("bvsdiv") || name.equals("bvsrem") || name.equals("bvsmod")
+							|| name.equals("bvashr") || name.equals("bvcomp") 
+					))
+					) {
 				if (argSorts.size() != 2) {
 					error(" The " + name + " function should have two arguments",head.pos());
 					return null;
@@ -354,11 +362,18 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 					return null;
 				}
 				if (!s.equals(ss)) {
-					error("The sorts must match: " + pr(s) + " .vs " + pr(ss),e.pos());
+					error("The sorts must match: " + pr(s) + " vs. " + pr(ss),e.pos());
 					return null;
+				}
+				if (name.equals("bvcomp")) {
+					s = makeBitVec(1);
+					return save(e,s);
 				}
 				return save(e,s);
-			} else if (name.equals("bvult")) {
+			} else if (name.equals("bvult") || (useext && (name.equals("bvule") || name.equals("bvugt") || name.equals("bvuge")
+					|| name.equals("bvslt") || name.equals("bvsle") || name.equals("bvsgt") || name.equals("bvsge")
+					)
+					)) {
 				if (argSorts.size() != 2) {
 					error(" The " + name + " function should have two arguments",head.pos());
 					return null;
@@ -374,7 +389,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 					return null;
 				}
 				if (!s.equals(ss)) {
-					error("The sorts must match: " + pr(s) + " .vs " + pr(ss),e.pos());
+					error("The sorts must match: " + pr(s) + " vs. " + pr(ss),e.pos());
 					return null;
 				}
 				ISort b = smtConfig.sortFactory.Bool(); // FIXME - get something from the symbol table?
@@ -383,7 +398,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			}
 					
 		}
-		if (symTable.bitVectorTheorySet && head.toString().equals("concat")) {
+		if (symTable.bitVectorTheorySet && name.equals("concat")) {
 			if (argSorts.size() != 2) {
 				error(" The " + name + " function should have two arguments",head.pos());
 				return null;
@@ -401,9 +416,11 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			s = makeBitVec(bitvecSize(s)+bitvecSize(ss));
 			return save(e,s);
 		}
+		String pname = null;
+		if (head instanceof IParameterizedIdentifier) pname = ((IParameterizedIdentifier)head).headSymbol().toString();
 		if (symTable.bitVectorTheorySet && 
 				head instanceof IParameterizedIdentifier &&
-				((IParameterizedIdentifier)head).headSymbol().toString().equals("extract")) {
+				pname.equals("extract")) {
 			if (argSorts.size() != 1) {
 				error(" The " + name + " function should have one argument",head.pos());
 				return null;
@@ -430,6 +447,78 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				return null;
 			}
 			s = makeBitVec(end-start+1);
+			return save(e,s);
+
+		}
+		if (useext && symTable.bitVectorTheorySet && 
+				head instanceof IParameterizedIdentifier &&
+				(pname.equals("repeat")
+				)) {
+			if (argSorts.size() != 1) {
+				error(" The " + name + " function should have one argument",head.pos());
+				return null;
+			}
+			ISort s = argSorts.get(0);
+			if (!isBitVec(s)) {
+				error("The argument must have a BitVec sort, not " + pr(s),e.args().get(0).pos());
+				return null;
+			}
+			IParameterizedIdentifier pid = (IParameterizedIdentifier)head;
+			if (pid.numerals().size() != 1) {
+				error("Expected exactly one numeral in a repeat identifier",pid.pos());
+				return null;
+			}
+			int val = pid.numerals().get(0).intValue();
+			if (val == 0) {
+				error("The numeral may not be 0 in a repeat",pid.numerals().get(0).pos());
+				return null;
+			}
+			s = makeBitVec(val*bitvecSize(s));
+			return save(e,s);
+
+		}
+		
+		if (useext && symTable.bitVectorTheorySet && 
+				head instanceof IParameterizedIdentifier &&
+				(pname.equals("zero_extend") || pname.equals("sign_extend")
+				)) {
+			if (argSorts.size() != 1) {
+				error(" The " + name + " function should have one argument",head.pos());
+				return null;
+			}
+			ISort s = argSorts.get(0);
+			if (!isBitVec(s)) {
+				error("The argument must have a BitVec sort, not " + pr(s),e.args().get(0).pos());
+				return null;
+			}
+			IParameterizedIdentifier pid = (IParameterizedIdentifier)head;
+			if (pid.numerals().size() != 1) {
+				error("Expected exactly one numeral in a repeat identifier",pid.pos());
+				return null;
+			}
+			int val = pid.numerals().get(0).intValue();
+			s = makeBitVec(val+bitvecSize(s));
+			return save(e,s);
+
+		}
+		if (useext && symTable.bitVectorTheorySet && 
+				head instanceof IParameterizedIdentifier &&
+				(pname.equals("rotate_left") || pname.equals("rotate_right")
+				)) {
+			if (argSorts.size() != 1) {
+				error(" The " + name + " function should have one argument",head.pos());
+				return null;
+			}
+			ISort s = argSorts.get(0);
+			if (!isBitVec(s)) {
+				error("The argument must have a BitVec sort, not " + pr(s),e.args().get(0).pos());
+				return null;
+			}
+			IParameterizedIdentifier pid = (IParameterizedIdentifier)head;
+			if (pid.numerals().size() != 1) {
+				error("Expected exactly one numeral in a repeat identifier",pid.pos());
+				return null;
+			}
 			return save(e,s);
 
 		}
@@ -543,8 +632,22 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	}
 
 	@Override
-	public /*@Nullable*/ ISort visit(IParameterizedIdentifier e) {
+	public /*@Nullable*/ ISort visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
 		IFcnSort sort = null;
+		boolean useext = true;
+		String pname = e.headSymbol().toString();
+		if (useext && symTable.bitVectorTheorySet && 
+				(pname.matches("bv[0-9]+")  // FIXME - Allows leading zeros
+				)) {
+			if (e.numerals().size() != 1) {
+				error("Expected exactly one numeral in a bv identifier",e.pos());
+				return null;
+			}
+			int size = e.numerals().get(0).intValue();
+			ISort s = makeBitVec(size);
+			return save(e,s);
+		}
+
 		if ((sort=symTable.lookup(0,e))==null) {
 			result.add(smtConfig.responseFactory.error("No sort known for identifier: " + smtConfig.defaultPrinter.toString(e),e.pos()));
 			return null;

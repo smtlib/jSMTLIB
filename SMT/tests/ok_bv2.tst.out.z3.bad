@@ -58,3 +58,51 @@ success
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (error "(error \"ERROR: line 20 column 20: could not locate id  #.\")
 ")
+(assert (= (_ bv17 5) #b10001 ))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 21 column 28: could not locate id  #.\")
+")
+success
+success
+success
+success
+(assert (= (bvxnor x x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 26 column 32: could not locate id  #.\")
+")
+(assert (= (bvcomp x x) #b1))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 27 column 32: could not locate id  #.\")
+")
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(assert (= ((_ repeat 2) #b10) #b1010))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 40 column 32: could not locate id  #.\")
+")
+(assert (= ((_ zero_extend 2) #b11) #b0011))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 41 column 37: could not locate id  #.\")
+")
+(assert (= ((_ sign_extend 2) #b10) #b1110))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 42 column 37: could not locate id  #.\")
+")
+(assert (= ((_ rotate_left 1) #b0010) #b0100))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 43 column 37: could not locate id  #.\")
+")
+(assert (= ((_ rotate_right 1) #b0011) #b1001))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(error \"ERROR: line 44 column 38: could not locate id  #.\")
+")
