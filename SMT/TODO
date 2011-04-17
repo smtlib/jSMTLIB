@@ -49,6 +49,8 @@ Plugin:
  Enable/disable auto typechecking
  Add an another tool bar button solely for type-checking
  Help document
+ Show non-OK responses in a plug-in window
+ Show get-value responses as a tooltip
  
 App
  cleanup connection of configuration to solvers, e.g. verbosity, print success, logic
@@ -64,6 +66,10 @@ App
 * refactor the implementation of bit-vector functions.  They are all hand-coded. 
   Although SMT defines them all informally, we need a cleaner way to implement
   and add to the set of functions within the software.
+Saw crashes when using the driver with multiple commands
+Pretty print mode
+Clean up the code for showing values, maintaining state
+
 
 Bugs
  problem with showing error locations that span lines

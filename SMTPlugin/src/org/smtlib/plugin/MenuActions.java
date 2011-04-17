@@ -178,4 +178,12 @@ abstract public class MenuActions implements IWorkbenchWindowActionDelegate {
         }
     }
 
+    /** Does a get-value command on the selected text */
+    public static class GetValue extends MenuActions {
+        @Override
+        public final void run(final IAction action) {
+        	Activator.utils.getValue(shell,selection);
+        }
+    }
+
 }

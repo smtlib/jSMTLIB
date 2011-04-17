@@ -58,6 +58,13 @@
                  id = the unique id of this action
          -->
          <action
+               label="Get Value"
+               class="org.smtlib.plugin.MenuActions$GetValue"
+               menubarPath="SMTMenu/SMTGroup"
+               definitionId="org.smtlib.plugin.commands.GetValue"
+               id="org.smtlib.plugin.MenuActions.getValueAction">
+         </action>
+         <action
                label="View Logic"
                class="org.smtlib.plugin.MenuActions$ViewLogic"
                menubarPath="SMTMenu/SMTGroup"
@@ -415,6 +422,12 @@
             description="Shows SMT logic or theory file in an editor"
             categoryId="org.smtlib.plugin.SMTCommandCategory"
             id="org.smtlib.plugin.commands.ViewLogic">
+      </command> 
+      <command
+            name="Get Value of SMT-LIB expression"
+            description="Shows the value of an expression in a current satisfiable model"
+            categoryId="org.smtlib.plugin.SMTCommandCategory"
+            id="org.smtlib.plugin.commands.GetValue">
       </command> 
 
   </extension>

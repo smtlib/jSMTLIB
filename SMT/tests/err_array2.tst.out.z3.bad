@@ -2,8 +2,7 @@ success
 success
 (declare-fun a () (Array Bool))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Could not translate response: (error \"line 3 column 31: unknown\")
-(error \"ERROR: Invalid array sort definition, invalid number of parameters.\")")
+(error "line 3 column 31: unknown")
 success
 success
 success
