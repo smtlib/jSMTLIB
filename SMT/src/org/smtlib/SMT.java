@@ -16,6 +16,7 @@ import java.util.*;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IParser.AbortParseException;
 import org.smtlib.IParser.ParserException;
+import org.smtlib.IPos.ISource;
 
 //import checkers.javari.quals.Mutable; NonNull
 
@@ -414,12 +415,28 @@ public class SMT {
 			return retcode;
 		}
 	}
-			
+	
+	public int execCommand(String cmd) {
+		IPos.ISource src = smtConfig.smtFactory.createSource(cmd,null);
+		IParser p = smtConfig.smtFactory.createParser(smtConfig,src);
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("Command " + cmd);
+		int e = doParser(p,false);
+		return e;
+	}
+	
 	protected int doParser(IParser p) { 
+		return doParser(p,true);
+	}
+	
+	protected /*@Nullable*/ ISolver solver = null;
+	
+	public IResponse lastResponse = null; // FIXME - quick hack to export the result of an interactive command
+	
+	protected int doParser(IParser p, boolean restart) { 
 		boolean checkMode = Utils.TEST_SOLVER.equals(smtConfig.solvername);
 		boolean abortMode = smtConfig.abort && !checkMode;
 
-		/*@Nullable*/ ISolver solver = startSolver(smtConfig, smtConfig.solvername, smtConfig.executable);
+		if (restart || solver == null) solver = startSolver(smtConfig, smtConfig.solvername, smtConfig.executable);
 		if (solver == null) return 1;
 		IKeyword printSuccessKW = smtConfig.exprFactory.keyword(Utils.PRINT_SUCCESS,null);
 		if (smtConfig.nosuccess) {
@@ -471,6 +488,7 @@ public class SMT {
 					} else if (!result.isOK() || "true".equals(solver.get_option(printSuccessKW).toString())) { // FIXME 
 						smtConfig.log.logOut(result);
 					}
+					lastResponse = result;
 				} catch (AbortParseException e) {
 					smtConfig.topLevel = true;
 					if (abortMode) {

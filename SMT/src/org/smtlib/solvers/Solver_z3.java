@@ -43,6 +43,7 @@ import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.impl.Pos;
+import org.smtlib.sexpr.Parser;
 
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into Z3 commands */
 public class Solver_z3 extends AbstractSolver implements ISolver {
@@ -58,7 +59,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 	public SMT.Configuration smt() { return smtConfig; }
 	
 	/** The command-line arguments for launching the Z3 solver */
-	String cmds[] = new String[]{ "", "/smt2","/in","MODEL=true"}; 
+	String cmds[] = new String[]{ "", "/smt2","/in","/m"}; 
 
 	/** The object that interacts with external processes */
 	private SolverProcess solverProcess;
@@ -144,6 +145,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 	
 	protected IResponse parseResponse(String response) {
 		try {
+			responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source(response,null));
 			return responseParser.parseResponse(response);
 		} catch (ParserException e) {
 			return smtConfig.responseFactory.error("ParserException while parsing response: " + response + " " + e);
@@ -307,11 +309,13 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 			return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
 		}
 		if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 
-				Utils.PRODUCE_MODELS.equals(option) || 
 				Utils.PRODUCE_PROOFS.equals(option) ||
 				Utils.PRODUCE_UNSAT_CORES.equals(option)) {
 			if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
 			return smtConfig.responseFactory.unsupported();
+		}
+		if (Utils.PRODUCE_MODELS.equals(option)) {
+			if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
 		}
 		if (Utils.VERBOSITY.equals(option)) {
 			IAttributeValue v = options.get(option);
@@ -349,6 +353,9 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 				}
 			}
 		}
+		// Save the options on our side as well
+		options.put(option,value);
+
 		if (!Utils.PRINT_SUCCESS.equals(option)) {
 			try {
 				solverProcess.sendAndListen("(set-option ",option," ",value.toString(),")\n");// FIXME - detect errors
@@ -358,13 +365,11 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 		}
 		
 
-		// Save the options on our side as well
-		options.put(option,value);
 		return smtConfig.responseFactory.success();
 	}
 
 	@Override
-	public IResponse get_option(IKeyword key) { // FIXME - use the solver? what types of results?
+	public IResponse get_option(IKeyword key) {
 		String option = key.value();
 		IAttributeValue value = options.get(option);
 		if (value == null) return smtConfig.responseFactory.unsupported();
@@ -557,7 +562,8 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 				solverProcess.sendNoListen(" ",translate(e));
 				solverProcess.sendNoListen(")");
 			}
-			return parseResponse(solverProcess.sendAndListen("))\n"));
+			String response = solverProcess.sendAndListen("))\n");
+			return parseResponse(response);
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
 		} catch (IVisitor.VisitorException e) {

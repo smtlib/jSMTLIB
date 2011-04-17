@@ -49,6 +49,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.editors.text.TextEditor;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.ITextEditor;
+import org.smtlib.IResponse;
 import org.smtlib.SMT;
 import org.smtlib.plugin.editor.SMTEditor;
 
@@ -114,7 +115,12 @@ public class Utils {
     				smt.smtConfig.files = null;
     				String[] cmd = new String[]{ "-s", solver, "--exec", exec, r.getLocation().toString() };
     				deleteMarkers(r,null);
-    				launchJob(r.getName(),smt,cmd,null); // Do the work in a computational thread
+    				boolean batch = false;
+    				if (batch) {
+    					launchJob(r.getName(),smt,cmd,null); // Do the work in a computational thread
+    				} else {
+    					interactiveJob(r.getName(),smt,cmd,null);
+    				}
     			} catch (java.lang.Exception e) {
     				Activator.log.errorlog("SMT - Internal exception",e);
     			}
@@ -155,11 +161,18 @@ public class Utils {
 			smt.smtConfig.files = null;
 			String[] cmd = new String[]{ "-s", solver, "--exec", exec, "--text", text, file.getLocation().toString() };
 			deleteMarkers(file,null);
-			launchJob(file.getLocation().toString(),smt,cmd,null);
+			boolean batch = false;
+			if (batch) {
+				launchJob(file.getLocation().toString(),smt,cmd,null);
+			} else {
+				interactiveJob(file.getLocation().toString(),smt,cmd,null);
+			}
     	} catch (java.lang.Exception e) {
     		Activator.log.errorlog("SMT - Internal exception",e);
     	}
     }
+    
+    SMT saved_smt = null;
     
     /** Executes the given command (cmd) by the smt instance as a computational (non-UI) Job
      *
@@ -188,6 +201,22 @@ public class Utils {
     	};
     	j.setUser(true); // true = initiated by an end-user
     	j.schedule();
+    }
+
+    public void interactiveJob(String name, SMT smt, String[] cmd, /*@Nullable*/ final Shell shell) {
+    			boolean c = false;
+    			try {
+    				smt.smtConfig.log.numErrors = 0;
+    				int exitCode = smt.exec(cmd);
+    				Activator.log.logln("Completed " + cmd[1] // + "(exitcode=" + exitCode +")" - FIXME - how to handle exit codes for scripts?
+    						+ (smt.smtConfig.log.numErrors == 0? "" : (" : " + smt.smtConfig.log.numErrors + " errors")) 
+    						+ (smt.checkSatStatus == null ? "" : (" " + smt.smtConfig.defaultPrinter.toString(smt.checkSatStatus)))
+    						);
+    			} catch (PluginException e) {
+    				showMessageInUI(shell,"SMT PluginException",e.getClass() + " - " + e.getMessage());
+    				c = true;
+    			}
+				saved_smt = smt;
     }
 
     /* This runs a type-check only on the given text, in the UI thread. */
@@ -702,4 +731,36 @@ public class Utils {
     		}
     	}
     }
+    
+    /** Performs a get-value command on the selected text. */
+    public void getValue(Shell shell, ISelection selection) {
+    	String text = "";
+    	try {
+    		ITextSelection tsel = Utils.getSelectedText(selection);
+    		if (tsel == null) {
+    			Activator.utils.showMessage(shell,windowHeader,"Select an expression whose value is wanted");
+    			return;
+    		}
+    		text = tsel.getText();
+    		if (text == null || text.length() == 0) {
+    			Activator.utils.showMessage(shell,windowHeader,"Select an expression whose value is wanted");
+    			return;
+    		}
+    		if (saved_smt == null) {
+    			Activator.utils.showMessage(shell,windowHeader,"There is no current model");
+    			return;
+    		}
+    		
+    		int e = saved_smt.execCommand("(get-value (" + text + "))");
+    		if (e != 0) {
+    			Activator.utils.showMessage(shell,windowHeader,"The selected text is not a valid expression:\n" + text);
+    		} else {
+    			IResponse response = saved_smt.lastResponse;
+    			Activator.utils.showMessage(shell,windowHeader,"Value: " + saved_smt.smtConfig.defaultPrinter.toString(response));
+    		}
+    	} catch (PluginException e) {
+    		Activator.utils.topLevelException(shell,windowHeader,e);
+    	}
+    }
+
 }

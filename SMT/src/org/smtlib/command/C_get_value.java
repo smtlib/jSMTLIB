@@ -50,7 +50,7 @@ public class C_get_value extends Command implements Iget_value {
 			return null;
 		}
 		ILexToken lp = p.parseLP();
-		while (!p.isRP()) {
+		while (!p.isRP() && !p.isEOD()) {
 			IExpr e = p.parseExpr();
 			if (e == null) anyErrors = true;
 			else list.add(e);

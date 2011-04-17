@@ -5,8 +5,7 @@ success
 success
 (declare-fun k () (_ BitVecx 0))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Could not translate response: (error \"line 6 column 32: could not parse function declaration\")
-(error \"ERROR: line 6 column 31: could not find sort symbol 'BitVecx'.\")")
+(error "line 6 column 32: could not parse function declaration")
 (declare-fun k () (_ BitVec -1))
                             ^^
 (error "Expected a numeral here, instead of a symbol")
@@ -15,8 +14,7 @@ success
 (error "Expected a numeral here, instead of a )")
 (declare-fun k () (_ BitVec 1 2))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Could not translate response: (error \"line 7 column 33: unknown\")
-(error \"ERROR: Expecting one integer parameter to bit-vector sort\")")
+(error "line 7 column 33: unknown")
 (assert (= x #b010 ))
 ^^^^^^^^^^^^^^^^^^^^^
 (error "(error \"ERROR: line 8 column 19: could not locate id  #.\")
