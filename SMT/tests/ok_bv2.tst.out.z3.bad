@@ -45,11 +45,7 @@ success
 ")
 success
 success
-(assert (= ((_ extract 2 4) z) x))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "(error \"line 18 column 42: unknown\")
-(error \"ERROR: Could not obtain size for extract\")
-")
+success
 (assert (= #xF #b1111))
 ^^^^^^^^^^^^^^^^^^^^^^^
 (error "(error \"ERROR: line 19 column 17: could not locate id  #.\")

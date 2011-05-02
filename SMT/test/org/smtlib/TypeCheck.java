@@ -74,15 +74,8 @@ public class TypeCheck extends TypeCheckRoot {
 		doCommand("(declare-sort X 0)");
 		doCommand("(declare-fun p () Bool)");
 		doCommand("(declare-fun q () X)");
-		check("(forall ((r Bool)(s X)) (and r p))");
-	}
-	
-	@Test
-	public void checkBadForall() {
-		doCommand("(declare-sort X 0)");
-		doCommand("(declare-fun p () Bool)");
-		doCommand("(declare-fun q () X)");
-		check("(forall ((r Bool)(s X)) (and s t))","Unknown constant symbol t");
+		check("(forall ((r Bool)(s X)) (and r p))",
+				"A quantified expression is not allowed in the QF_UF logic");
 	}
 	
 	@Test
@@ -90,17 +83,8 @@ public class TypeCheck extends TypeCheckRoot {
 		doCommand("(declare-sort X 0)");
 		doCommand("(declare-fun p () Bool)");
 		doCommand("(declare-fun q () X)");
-		check("(exists ((r Bool)(s X)) (and r p))");
-	}
-	
-	@Test
-	public void checkBadExists() {
-		doCommand("(declare-sort X 0)");
-		doCommand("(declare-fun p () Bool)");
-		doCommand("(declare-fun q () X)");
-		check("(exists ((r Bool)(s X)) (or (and s q) t))",
-				"Unknown predicate symbol and with argument types X X",
-				"Unknown constant symbol t");
+		check("(exists ((r Bool)(s X)) (and r p))",
+				"A quantified expression is not allowed in the QF_UF logic");
 	}
 	
 	@Test

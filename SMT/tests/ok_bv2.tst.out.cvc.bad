@@ -23,7 +23,7 @@ success
 (error "SMT BitVector function bvurem is not implemented in cvc")
 success
 success
-(assert (= ((_ extract 2 4) z) x))
+(assert (= ((_ extract 4 2) z) x))
            ^^^^^^^^^^^^^^^^^^^
 (error "Unknown parameterized function symbol: extract")
 success

@@ -154,8 +154,8 @@ public class Factory implements IExpr.IFactory, ISort.IFactory {
 	}
 
 	@Override
-	public ParameterizedIdentifier id(ISymbol symbol, List<INumeral> num, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos,new ParameterizedIdentifier(symbol,num));
+	public ParameterizedIdentifier id(ISymbol symbol, List<INumeral> nums, /*@Nullable*//*@ReadOnly*/ IPos pos) {
+		return setPos(pos,new ParameterizedIdentifier(symbol,nums));
 	}
 	
 	@Override

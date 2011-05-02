@@ -14,6 +14,7 @@ import java.util.NoSuchElementException;
 
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.INumeral;
+import org.smtlib.IExpr.IParameterizedIdentifier;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.ISort.IFcnSort;
 import org.smtlib.ISort.IParameter;
@@ -29,6 +30,12 @@ public class SymbolTable {
 	/** true if the bit-vector theory has been set */
 	// Used only while we have BitVec built in
 	public boolean bitVectorTheorySet = false;
+	
+	/** The logic that is being used - this value is used to check that 
+	 * expressions, etc., conform to the language restrictions of the current
+	 * logic.
+	 */
+	public ILogic logicInUse = null;
 	
 	/** A reference to the Configuration for this instance of SMT. */
 	public SMT.Configuration smtConfig;
@@ -190,6 +197,7 @@ public class SymbolTable {
 		sorts = sortStack.get(0);
 	}
 	
+	// FIXME - document
 	public boolean addSortParameter(ISymbol symbol) {
 		ISort.IDefinition previous = sorts.put(symbol, smtConfig.sortFactory.createSortParameter(symbol));
 		if (previous == null) return true;
@@ -238,6 +246,23 @@ public class SymbolTable {
 			ISort.IDefinition s = set.get(name);
 			if (s != null) return s;
 		}
+		if (name instanceof IParameterizedIdentifier) {
+			IParameterizedIdentifier pf = (IParameterizedIdentifier)name;
+			if (bitVectorTheorySet && pf.headSymbol().toString().equals("BitVec")) { // FIXME -  toString() or value()?
+				if (pf.numerals().size() != 1) {
+					return new ISort.ErrorDefinition(name,"A bit-vector sort must have exactly one numeral",
+							pf.numerals().size() > 1 ? pf.numerals().get(1).pos()
+									: pf.headSymbol().pos());
+				}
+				if (pf.numerals().get(0).intValue() == 0) {
+					return new ISort.ErrorDefinition(name,"A bit-vector sort must have a length of at least 1",pf.numerals().get(0).pos());
+				}
+				ISort.IDefinition def = smtConfig.sortFactory.createSortFamily(name,smtConfig.exprFactory.numeral(0));
+				sorts.put(name, def);
+				return def;
+			}
+		}
+
 		return null;
 	}
 	

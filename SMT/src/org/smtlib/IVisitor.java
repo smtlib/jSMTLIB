@@ -83,7 +83,8 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 	public /*@Nullable*/T visit(IResponse.IAttributeList e) throws VisitorException;
 
 	/** This class is an implementation of IVisitor, meant to be used as a base class
-	 * for further derivation; it implements all of the visitors to simply return null.
+	 * for further derivation; it implements all of the visitors to simply return null
+	 * - that is it will not walk the tree without further implementation.
 	 * @param <T> the type of the return value of each visitor
 	 */
 	static public class NullVisitor</*@Nullable*/T extends /*@Nullable*/Object> implements IVisitor</*@Nullable*/T> {

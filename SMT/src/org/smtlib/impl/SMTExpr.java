@@ -10,6 +10,7 @@ import java.math.BigInteger;
 import java.util.*;
 
 import org.smtlib.*;
+import org.smtlib.IExpr.IIdentifier;
 
 // FIXME - Decide whether we use reference or structural equality - either complete or remove equals and hashCode
 
@@ -147,57 +148,6 @@ public abstract class SMTExpr implements IExpr {
 		public String toString() { return value.toString(); }
 	}
 	
-	static public class ParameterizedIdentifier extends Pos.Posable implements IParameterizedIdentifier {
-		protected ISymbol head;
-		protected List<INumeral> numerals = new LinkedList<INumeral>();
-		
-		public ParameterizedIdentifier(ISymbol symbol, List<INumeral> nums) {
-			this.head = symbol;
-			this.numerals = nums;
-		}
-		
-		@Override
-		public ISymbol headSymbol() { return head; }
-		
-		@Override
-		public List<INumeral> numerals() { return numerals; }
-		
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (!(o instanceof ParameterizedIdentifier)) return false;
-			ParameterizedIdentifier p = (ParameterizedIdentifier)o;
-			if (!this.headSymbol().equals(p.headSymbol())) return false;
-			if (this.numerals().size() != p.numerals().size()) return false;
-			Iterator<INumeral> iter1 = this.numerals().iterator();
-			Iterator<INumeral> iter2 = p.numerals().iterator();
-			while (iter1.hasNext() && iter2.hasNext()) {
-				if (!iter1.next().equals(iter2.next())) return false;
-			}
-			return iter1.hasNext() == iter2.hasNext();
-		}
-		
-		@Override
-		public int hashCode() {
-			int hash = headSymbol().hashCode();
-			Iterator<INumeral> iter = this.numerals().iterator();
-			while (iter.hasNext()) {
-				hash = (hash<<1) + iter.next().hashCode();
-			}
-			return hash;
-		}
-		
-		@Override
-		public String kind() { return "parameterizedSymbol"; }
-
-		@Override
-		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
-
-		/** Just for debugging - use a Printer for proper output */
-		public String toString() { return org.smtlib.sexpr.Printer.write(this); }
-
-	}
-	
 	static public class AsIdentifier extends Pos.Posable implements IAsIdentifier {
 		protected IIdentifier head;
 		protected ISort qualifier;
@@ -233,6 +183,58 @@ public abstract class SMTExpr implements IExpr {
 		
 		@Override
 		public String kind() { return "qualifiedSymbol"; }
+
+		@Override
+		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+		
+		/** Just for debugging - use a Printer for proper output */
+		public String toString() { return org.smtlib.sexpr.Printer.write(this); }
+
+	}
+	
+	static public class ParameterizedIdentifier extends Pos.Posable implements IParameterizedIdentifier {
+		protected IIdentifier head;
+		protected List<INumeral>  nums;
+		
+		public ParameterizedIdentifier(IIdentifier symbol, List<INumeral> nums) {
+			this.head = symbol;
+			this.nums = nums;
+		}
+		
+		@Override
+		public IIdentifier head() { return this; }
+		
+		@Override
+		public ISymbol headSymbol() { return head.headSymbol(); }
+		
+		@Override
+		public List<INumeral> numerals() {return nums; }
+		
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (!(o instanceof ParameterizedIdentifier)) return false;
+			ParameterizedIdentifier p = (ParameterizedIdentifier)o;
+			if (! this.headSymbol().equals(p.headSymbol())) return false;
+			if (this.nums.size() != p.nums.size()) return false;
+			for (int i=0; i< this.nums.size(); i++) {
+				if (!this.nums.get(i).equals(p.nums.get(i))) return false;
+			}
+			return true;
+		}
+		
+		@Override
+		public int hashCode() {
+			int hash = headSymbol().hashCode();
+			Iterator<INumeral> iter = this.numerals().iterator();
+			while (iter.hasNext()) {
+				hash = (hash<<1) + iter.next().hashCode();
+			}
+			return hash;
+		}
+		
+		@Override
+		public String kind() { return "parameterizedSymbol"; }
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
@@ -295,6 +297,8 @@ public abstract class SMTExpr implements IExpr {
 		}
 
 		public static class LetParameter extends Symbol implements ILetParameter {
+
+
 			public LetParameter(ISymbol s) { super(s.toString()); pos = s.pos();  }
 		}
 
@@ -620,6 +624,13 @@ public abstract class SMTExpr implements IExpr {
 			return attr.attrValue();
 		}
 		
+		// FIXME - do we really want this here
+		public void validExpression(IExpr expr)  throws IVisitor.VisitorException {}
+
+		public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {}
+
+		public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {}
+
 		// @Override
 		public String kind() { return "logic"; }
 

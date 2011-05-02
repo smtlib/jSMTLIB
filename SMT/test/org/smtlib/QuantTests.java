@@ -24,7 +24,7 @@ public class QuantTests extends LogicTests {
 	@Test
 	public void checkQuantifiedTransSat() {
 		String result = "simplify".equals(solvername) ? "sat" : "unknown";
-		doCommand("(set-logic QF_UF)");
+		doCommand("(set-logic AUFLIA)");
 		doCommand("(declare_fun p () Bool)");
 		doCommand("(declare_fun q () Bool)");
 		doCommand("(declare_fun r () Bool)");
@@ -38,7 +38,7 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void checkQuantifiedTransUnsat() {
-		doCommand("(set-logic QF_UF)");
+		doCommand("(set-logic AUFLIA)");
 		doCommand("(declare_fun p () Bool)");
 		doCommand("(declare_fun q () Bool)");
 		doCommand("(declare_fun r () Bool)");
@@ -51,15 +51,15 @@ public class QuantTests extends LogicTests {
 	}
 
 	@Test
-	public void checkQuantifiedTransSatInt() {
+	public void checkQuantifiedTransSatNT() {
 		String result = "simplify".equals(solvername) ? "sat" : "unknown";
-		doCommand("(set-logic QF_UF)");
-		doCommand("(declare-sort Int 0)");
-		doCommand("(declare_fun p () Int)");
-		doCommand("(declare_fun q () Int)");
-		doCommand("(declare_fun r () Int)");
-		doCommand("(declare_fun f (Int Int) Bool)");
-		doCommand("(assert (forall ((x Int)(y Int)(z Int)) (=> (and (f x y) (f y z)) (f x z))))");
+		doCommand("(set-logic AUFLIA)");
+		doCommand("(declare-sort B 0)");
+		doCommand("(declare_fun p () B)");
+		doCommand("(declare_fun q () B)");
+		doCommand("(declare_fun r () B)");
+		doCommand("(declare_fun f (B B) Bool)");
+		doCommand("(assert (forall ((x B)(y B)(z B)) (=> (and (f x y) (f y z)) (f x z))))");
 		doCommand("(assert (and (f p q) (f q r)))");
 		doCommand("(assert (f p r))");
 		doCommand("(check-sat)",result); // FIXME - why is this not sat
@@ -67,14 +67,14 @@ public class QuantTests extends LogicTests {
 	}
 
 	@Test
-	public void checkQuantifiedTransUnSatInt() {
-		doCommand("(set-logic QF_UF)");
-		doCommand("(declare-sort Int 0)");
-		doCommand("(declare_fun p () Int)");
-		doCommand("(declare_fun q () Int)");
-		doCommand("(declare_fun r () Int)");
-		doCommand("(declare_fun f (Int Int) Bool)");
-		doCommand("(assert (forall ((x Int)(y Int)(z Int)) (=> (and (f x y) (f y z)) (f x z))))");
+	public void checkQuantifiedTransUnSatNT() {
+		doCommand("(set-logic AUFLIA)");
+		doCommand("(declare-sort B 0)");
+		doCommand("(declare_fun p () B)");
+		doCommand("(declare_fun q () B)");
+		doCommand("(declare_fun r () B)");
+		doCommand("(declare_fun f (B B) Bool)");
+		doCommand("(assert (forall ((x B)(y B)(z B)) (=> (and (f x y) (f y z)) (f x z))))");
 		doCommand("(assert (and (f p q) (f q r)))");
 		doCommand("(assert (not (f p r)))");
 		doCommand("(check-sat)","unsat"); // FIXME - why is this not sat
@@ -85,7 +85,7 @@ public class QuantTests extends LogicTests {
 	public void checkQuantifiedTransBool() {
 		String result = "simplify".equals(solvername) ? "sat" : "unknown";
 		String result2 = "simplify".equals(solvername) ? "unsat" : "unsat";
-		doCommand("(set-logic QF_UF)");
+		doCommand("(set-logic AUFLIA)");
 		doCommand("(declare_fun p () Bool)");
 		doCommand("(declare_fun q () Bool)");
 		doCommand("(declare_fun r () Bool)");

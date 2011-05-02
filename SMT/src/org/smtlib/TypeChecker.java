@@ -66,7 +66,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		return f.result;
 	}
 
-	public static List<IResponse> checkSortAbbreviation(SymbolTable symTable, List<ISort.IParameter> params, ISort expr) {
+	public static List<IResponse> checkSortAbbreviation(SymbolTable symTable, IIdentifier id, List<ISort.IParameter> params, ISort expr) {
 		TypeChecker f = new TypeChecker(symTable,null); // FIXME - we should use a factory
 		symTable.push();
 		boolean errors = false;
@@ -79,6 +79,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				}
 			}
 			if (!errors) expr.accept(f);
+			symTable.logicInUse.checkSortDeclaration(id,params,expr);
 		} catch (IVisitor.VisitorException e) {
 			f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(),expr.pos());
 		} catch (Exception e) {
@@ -89,13 +90,18 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		return f.result;
 	}
 	
-	public static List<IResponse> checkFcn(SymbolTable symTable, List<ISort> sorts, ISort result, IPos pos) {
+	public static List<IResponse> checkFcn(SymbolTable symTable, IIdentifier id, List<ISort> sorts, ISort result, IPos pos) {
 		TypeChecker f = new TypeChecker(symTable,null);
 		try {
 			for (ISort p : sorts) {
 				p.accept(f);
 			}
 			result.accept(f);
+			try {
+				symTable.logicInUse.checkFcnDeclaration(id,sorts,result,null);
+			} catch (IVisitor.VisitorException e) {
+				f.error(e.getMessage(), e.pos());
+			}
 		} catch (IVisitor.VisitorException e) {
 			f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(), pos);
 		} catch (Exception e) {
@@ -105,7 +111,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		
 	}
 
-	public static List<IResponse> checkFcn(SymbolTable symTable, List<IDeclaration> params, ISort result, IExpr expr, IPos pos) {
+	public static List<IResponse> checkFcn(SymbolTable symTable, IIdentifier id, List<IDeclaration> params, ISort result, IExpr expr, IPos pos) {
 		TypeChecker f = new TypeChecker(symTable,null);
 		symTable.push();
 		try {
@@ -124,6 +130,14 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 							+ symTable.smtConfig.defaultPrinter.toString(result) + " vs. " 
 							+ symTable.smtConfig.defaultPrinter.toString(res),result.pos());
 				}
+			}
+			try {
+				List<ISort> sorts = new LinkedList<ISort>(); 
+				for (IDeclaration p : params) sorts.add(p.sort());
+				symTable.logicInUse.checkFcnDeclaration(id,sorts,result,null);
+				symTable.logicInUse.validExpression(expr);
+			} catch (IVisitor.VisitorException e) {
+				f.error(e.getMessage(), e.pos());
 			}
 		} catch (IVisitor.VisitorException e) {
 			f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(),expr.pos());
@@ -144,6 +158,11 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			if (topsort != null && !topsort.isBool()) {
 				f.error("Expected an expression with Bool sort, not " + topsort, expr.pos());
 			}
+			try {
+				symTable.logicInUse.validExpression(expr);
+			} catch (IVisitor.VisitorException e) {
+				f.error(e.getMessage(), e.pos());
+			}
 		} catch (IVisitor.VisitorException e) {
 			f.error("Visitor Exception: " + e.getMessage(), e.pos());
 		} catch (Exception e) {
@@ -160,6 +179,11 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			ISort topsort = expr.accept(f);
 			if (topsort != null && !topsort.isBool()) {
 				f.error("Expected an expression with Bool sort, not " + topsort, expr.pos());
+			}
+			try {
+				symTable.logicInUse.validExpression(expr);
+			} catch (IVisitor.VisitorException e) {
+				f.error(e.getMessage(), e.pos());
 			}
 			if (f.result.isEmpty()) symTable.merge();
 		} catch (IVisitor.VisitorException e) {
@@ -181,6 +205,11 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			ISort topsort = expr.accept(f);
 			if (topsort != null && !topsort.isBool()) {
 				f.error("Expected an expression with Bool sort, not " + topsort, expr.pos());
+			}
+			try {
+				symTable.logicInUse.validExpression(expr);
+			} catch (IVisitor.VisitorException e) {
+				f.error(e.getMessage(), e.pos());
 			}
 		} catch (IVisitor.VisitorException e) {
 			f.error("Visitor Exception: " + e.getMessage(), e.pos());
@@ -435,8 +464,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				error("Expected exactly two numerals in an extract identifier",pid.pos());
 				return null;
 			}
-			int start = pid.numerals().get(0).intValue();
-			int end = pid.numerals().get(1).intValue();
+			int end = pid.numerals().get(0).intValue();
+			int start = pid.numerals().get(1).intValue();
 			if (end < start) {
 				error("The end index is less than the starting index",pid.numerals().get(1).pos());
 				return null;
@@ -771,22 +800,10 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		IIdentifier f = s.family();
 		List<ISort> args = s.parameters();
 		IDefinition def = symTable.lookupSort(f);
-		if (def == null && f instanceof IParameterizedIdentifier) {
-			IParameterizedIdentifier pf = (IParameterizedIdentifier)f;
-			if (symTable.bitVectorTheorySet && pf.headSymbol().toString().equals("BitVec")) { // FIXME -  toString() or value()?
-				if (pf.numerals().size() != 1) {
-					error("A bit-vector sort must have exactly one numeral",
-							pf.numerals().size() > 1 ? pf.numerals().get(1).pos()
-									: pf.headSymbol().pos());
-					return null;
-				}
-				if (pf.numerals().get(0).intValue() == 0) {
-					error("A bit-vector sort must have a length of at least 1",pf.numerals().get(0).pos());
-					return null;
-				}
-				symTable.addSortDefinition(f,smtConfig.exprFactory.numeral(0));
-				def = symTable.lookupSort(f);
-			}
+		if (def instanceof ISort.ErrorDefinition) {
+			ISort.ErrorDefinition ed = (ISort.ErrorDefinition)def;
+			error(ed.error,ed.pos);
+			return null;
 		}
 		s.definition(null);
 		boolean errors = false;

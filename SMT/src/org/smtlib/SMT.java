@@ -41,7 +41,7 @@ import org.smtlib.IPos.ISource;
  */
 public class SMT {
 	
-	public static final String VERSION_ID = "jSMTLIB version 0.8.4";
+	public static final String VERSION_ID = "jSMTLIB version 0.8.5";
 	
 	public Properties props;
 	

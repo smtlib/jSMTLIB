@@ -16,7 +16,7 @@
 (assert (= (bvurem x x) #b111))
 (assert (bvult x t))
 (assert (= (concat x y) z))
-(assert (= ((_ extract 2 4) z) x))
+(assert (= ((_ extract 4 2) z) x))
 (assert (= #xF #b1111))
 (assert (distinct #x0 #b0000))
 

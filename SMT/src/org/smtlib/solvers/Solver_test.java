@@ -369,7 +369,7 @@ public class Solver_test implements ISolver {
 			return smtConfig.responseFactory.error("The logic must be set before a declare-fun command is issued");// FIXME - position and on other similar statements
 		}
 		String encodedName = encode(cmd.symbol());
-		List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.argSorts(),cmd.resultSort(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
+		List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.argSorts(),cmd.resultSort(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
 		if (list.isEmpty()) {
 			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(cmd.argSorts().toArray(new ISort[cmd.argSorts().size()]),cmd.resultSort());
 			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null);
@@ -390,7 +390,7 @@ public class Solver_test implements ISolver {
 			return smtConfig.responseFactory.error("The logic must be set before a define-fun command is issued");
 		}
 		String encodedName = encode(cmd.symbol());
-		List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.parameters(),cmd.resultSort(),cmd.expression(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
+		List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.parameters(),cmd.resultSort(),cmd.expression(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
 		if (list.isEmpty()) {
 			ISort args[] = new ISort[cmd.parameters().size()];
 			int i = 0;
@@ -430,7 +430,7 @@ public class Solver_test implements ISolver {
 		if (!logicSet) {
 			return smtConfig.responseFactory.error("The logic must be set before a define-sort command is issued");
 		}
-		List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable,cmd.parameters(),cmd.expression());
+		List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable,cmd.sortSymbol(),cmd.parameters(),cmd.expression());
 		boolean b = list.isEmpty();
 		if (b) {
 			b = symTable.addSortDefinition(cmd.sortSymbol(),cmd.parameters(),cmd.expression());
