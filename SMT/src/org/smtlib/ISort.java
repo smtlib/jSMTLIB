@@ -12,6 +12,7 @@ import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IPos.IPosable;
+import org.smtlib.IVisitor.VisitorException;
 
 /** The interface for an SMT-LIB concept of a Sort */
 public interface ISort extends IAccept, IPosable {
@@ -42,6 +43,40 @@ public interface ISort extends IAccept, IPosable {
 		/** The arity of the symbol*/
 		//@ ensures \result >= 0;
 		int intArity();
+	}
+	
+	// FIXME - do we really want this - is it properly abstract?
+	static public class ErrorDefinition implements IDefinition {
+		public IIdentifier id;
+		public String error;
+		public IPos pos;
+		
+		public ErrorDefinition(IIdentifier id, String error, IPos pos) {
+			this.id = id;
+			this.error = error;
+			this.pos = pos;
+		}
+		
+		@Override
+		public <T> T accept(IVisitor<T> v) throws VisitorException {
+			return null;
+		}
+
+		@Override
+		public IIdentifier identifier() {
+			return id;
+		}
+
+		@Override
+		public ISort eval(List<ISort> sorts) {
+			return null;
+		}
+
+		@Override
+		public int intArity() {
+			return 0;
+		}
+		
 	}
 	
 	/** This interface represents a new Sort symbol designating either

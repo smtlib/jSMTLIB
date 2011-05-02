@@ -23,7 +23,7 @@ success
 (error "Yices assert command failed: The BitVector function bvurem is not implemented in yices")
 success
 success
-(assert (= ((_ extract 2 4) z) x))
+(assert (= ((_ extract 4 2) z) x))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (error "Yices assert command failed: Unknown parameterized function symbol: extract")
 success

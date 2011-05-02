@@ -188,6 +188,9 @@ public interface IExpr extends IAccept, IPosable {
 	
 	/** This interface represents SMT-LIB identifiers (either ids or parameterized ids) */
 	static public interface IParameterizedIdentifier extends IIdentifier {
+		
+		IIdentifier head();
+		
 		/** The head symbol of the identifier */
 		ISymbol headSymbol();
 		

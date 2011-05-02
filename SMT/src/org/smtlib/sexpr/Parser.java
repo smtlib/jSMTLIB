@@ -5,12 +5,10 @@
  */
 package org.smtlib.sexpr;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 
 import org.smtlib.*;
@@ -868,6 +866,30 @@ public class Parser extends Lexer implements IParser {
 		ILexToken rp = parseRP();
 		if (rp != null) {
 			if (!isEOD()) error("Expected the end of file after the right parenthesis",
+					pos(lp.pos().charStart(),currentPos()));
+		}
+		String clazzName = "org.smtlib.logic." + name;
+		try {
+			Class<? extends ILogic> clazz = (Class<? extends ILogic>)Class.forName(clazzName);
+			Constructor<? extends ILogic> con = clazz.getConstructor(ISymbol.class,Collection.class);
+			return con.newInstance(name,attributes);
+		} catch (ClassNotFoundException e) {
+			// OK - no extension class - no language restrictions
+		} catch (NoSuchMethodException e) {
+			// error - the class must have the right constructor
+			error("The constructor for the class " + clazzName + " does not have a constructor with the correct argument types",
+					pos(lp.pos().charStart(),currentPos()));
+		} catch (IllegalAccessException e) {
+			// error - could not create a new instance
+			error("An exception occured when instantiating class " + clazzName + ": " + e,
+					pos(lp.pos().charStart(),currentPos()));
+		} catch (InstantiationException e) {
+			// error - could not create a new instance
+			error("An exception occured when instantiating class " + clazzName + ": " + e,
+					pos(lp.pos().charStart(),currentPos()));
+		} catch (InvocationTargetException e) {
+			// error - could not create a new instance
+			error("An exception occured when instantiating class " + clazzName + ": " + e,
 					pos(lp.pos().charStart(),currentPos()));
 		}
 		return new SMTExpr.Logic(name,attributes);

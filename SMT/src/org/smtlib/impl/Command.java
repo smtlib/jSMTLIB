@@ -136,13 +136,16 @@ public abstract class Command implements ICommand, IPosable {
 				return smtConfig.responseFactory.error("INTERNAL ERROR: Unexpected null command list in a script");
 			}
 			Iterator<ICommand> iter = commands.iterator();
+			IResponse response = null;
 			while (iter.hasNext()) {
 				ICommand s = iter.next();
 				// TODO: should we typecheck the entire script before executing it?
 				IResponse r = s.execute(solver);
 				if (r.isError()) return r; // TODO: continue on - if so, how to return an error?
+				if (!r.isOK()) smtConfig.log.logDiag(smtConfig.defaultPrinter.toString(r));
+				response = r;
 			}
-			return smtConfig.responseFactory.success();
+			return response;
 		}
 		
 		/** The accept method for visitor classes; the type parameter is the return type of the accept and visit methods */

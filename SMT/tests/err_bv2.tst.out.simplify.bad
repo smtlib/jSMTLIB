@@ -73,10 +73,10 @@ success
 (assert (= (concat x true) z))
                      ^^^^
 (error "The argument must have a BitVec sort, not Bool")
-(assert (= ((_ extract 2 40) z) x))
-                         ^^
+(assert (= ((_ extract 40 2) z) x))
+                          ^
 (error "The end index must be less than the length of the argument sort: 40 vs. 8")
-(assert (= ((_ extract 2 1) z) x))
+(assert (= ((_ extract 1 2) z) x))
                          ^
 (error "The end index is less than the starting index")
 (assert (= ((_ extract a 1) z) x))
