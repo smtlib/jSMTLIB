@@ -10,13 +10,16 @@ import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.ISymbol;
 
-/** This logic does not allow quantifiers or uninterpreted functions */
-public class QF_ABV extends QF_UF {
+public class QF_BV extends Logic {
 
-	public QF_ABV(ISymbol name, Collection<IAttribute<?>> attributes) {
+	public QF_BV(ISymbol name, Collection<IAttribute<?>> attributes) {
 		super(name,attributes);
 	}
+
+	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
+	}
 	
+
 	public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
 		// May declare constants, but not functions without definitions
 		noFunctions(id,argSorts,resultSort,definition);
@@ -26,9 +29,9 @@ public class QF_ABV extends QF_UF {
 		noSorts(id,params,expr);
 	}
 
-
-	// FIXME - restricted Array sorts
+	// All sorts are bitvector sorts; no new functions
 	// FIXME : what does this mean : Formulas in ite terms must satisfy the same
 	//  restriction as well, with the exception that they need not be closed 
 	//  (because they may be in the scope of a let binder
+
 }

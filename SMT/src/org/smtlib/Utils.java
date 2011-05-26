@@ -542,6 +542,8 @@ public class Utils {
 				symTable.arrayTheorySet = true;
 			if (theoryName.equals("Fixed_Size_BitVectors"))
 				symTable.bitVectorTheorySet = true;
+			if (theoryName.equals("Reals_Ints"))
+				symTable.realsIntsTheorySet = true;
 		}
 		return response;
 	}

@@ -47,6 +47,11 @@ public class Parser extends Lexer implements IParser {
 	 * etc. that are fields of smtConfig */
 	public SMT.Configuration smt() { return smtConfig; }
 	
+	/** The most recent error, or null */
+	public /*@ Nullable */ IResponse.IError lastError = null;
+	
+	public /*@ Nullable */ IResponse.IError lastError() { return lastError; }
+	
 	/** The (common) factory used to generate objects */
 	final protected IExpr.IFactory factory;
 	
@@ -180,7 +185,7 @@ public class Parser extends Lexer implements IParser {
 						// the configuration
 						Class<? extends ICommand> clazz = smt().commandFinder.findCommand(name);
 						if (clazz == null) {
-							error("Unknown command: " + name,sym.pos());
+							lastError = error("Unknown command: " + name,sym.pos());
 							command = null;
 						} else {
 							// Call the static parser method of the command class; that will create an
@@ -191,7 +196,7 @@ public class Parser extends Lexer implements IParser {
 							rp = null;
 							if (command != null) {
 								if (!isRP()) {
-									error("Too many arguments or extraneous material after the command or missing right parenthesis",
+									lastError = error("Too many arguments or extraneous material after the command or missing right parenthesis",
 											//pos(currentPos()-1,currentPos()));
 											peekToken().pos());
 								} else {
@@ -200,7 +205,15 @@ public class Parser extends Lexer implements IParser {
 							}
 						}
 					} catch (InvocationTargetException ex) {
-						error(ex.getTargetException().toString(),sym.pos());
+						if (ex.getTargetException() instanceof StackOverflowError) {
+							lastError = error("Stack overflow occurred while parsing input", sym.pos());
+							throw new ParserException(null,null);
+						} else if (ex.getTargetException() instanceof OutOfMemoryError) {
+							lastError = error("Out of memory error occurred while parsing input", sym.pos());
+							throw new ParserException(null,null);
+						} else {
+							lastError = error(ex.getTargetException().toString(),sym.pos());
+						}
 					}
 					if (command == null) {
 						skipThruRP();
@@ -218,7 +231,7 @@ public class Parser extends Lexer implements IParser {
 				} catch (ParserException e) {
 					Matcher m = skipThroughEndOfLine.matcher(csr);
 					m.region(matcher.regionStart(),matcher.regionEnd());
-					smtConfig.log.logError(smtConfig.responseFactory.error(e.getMessage(),e.pos()));
+					if (e.getMessage() != null) lastError = smtConfig.log.logError(smtConfig.responseFactory.error(e.getMessage(),e.pos()));
 					if (m.lookingAt()) {
 						//smtConfig.log.logOut("SKIPPED " + m.start() + " " + m.end());
 						matcher.region(m.end(),matcher.regionEnd());
@@ -230,9 +243,9 @@ public class Parser extends Lexer implements IParser {
 			}
 		} catch (Exception e) {
 			IPos pos = new Pos(0,0,null);
-			IResponse.IError result = smtConfig.responseFactory.error("Error while parsing command: " + e,pos);
+			lastError = smtConfig.responseFactory.error("Error while parsing command: " + e,pos);
 			e.printStackTrace(System.out); // FIXME - should write to the log output
-			smtConfig.log.logError(result);
+			smtConfig.log.logError(lastError);
 		} finally {
 			smtConfig.topLevel = savedTopLevel;
 		}
@@ -977,8 +990,8 @@ public class Parser extends Lexer implements IParser {
 	}
 	
 	/** Emits an error message consisting of the given message string and position. */
-	public void error(String msg, /*@Nullable*//*@ReadOnly*/IPos pos) {
-		smtConfig.log.logError(smtConfig.responseFactory.error(msg,pos));
+	public IResponse.IError error(String msg, /*@Nullable*//*@ReadOnly*/IPos pos) {
+		return smtConfig.log.logError(smtConfig.responseFactory.error(msg,pos));
 	}
 	
 	/** Emits an error message consisting of the given message string with any '#' 

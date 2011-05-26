@@ -18,7 +18,7 @@ public class TypeCheckInt extends TypeCheckRoot {
 	@Before
 	public void setup() {
 		super.setup();
-		checkResponse(solver.set_logic("QF_LIA",null));
+		checkResponse(solver.set_logic("AUFNIRA",null));
 	}
 	
 	

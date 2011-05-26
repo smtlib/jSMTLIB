@@ -22,8 +22,42 @@ public interface IExpr extends IAccept, IPosable {
 	/** The interface defining the factory type for producing objects of various subtypes of IExpr;
 	 * the IPos argument is an optional argument giving information about the textual position of an expression. */
 	static public interface IFactory {
-		INumeral numeral(String v, /*@Nullable*//*@ReadOnly*/ IPos pos);
+		INumeral numeral(String v);
 		INumeral numeral(long v);
+		IDecimal decimal(String v);
+		/** The argument is a pure character string, with no Java or SMTLIB escapes or enclosing quotes */
+		IStringLiteral unquotedString(String v);
+		/** The argument is SMTLIB escaped, with enclosing quotes */
+		IStringLiteral quotedString(String v);
+		IKeyword keyword(String v);
+		IBinaryLiteral binary(String v);
+		IHexLiteral hex(String v);
+		ISymbol symbol(String v);
+		IAttribute<?> attribute(IKeyword k);
+		<T extends IAttributeValue> IAttribute<T> attribute(IKeyword k, T value);
+		//@ requires attributes.size() > 0;
+		IAttributedExpr attributedExpr(IExpr e, List<IAttribute<?>> attributes);
+		<T extends IAttributeValue> IAttributedExpr attributedExpr(IExpr e, IKeyword key, /*@Nullable*/T value);
+        IFcnExpr fcn(IQualifiedIdentifier id, List<IExpr> args);
+        IFcnExpr fcn(IQualifiedIdentifier id, IExpr... args);
+		//@ requires num.size() > 0;
+		IParameterizedIdentifier id(ISymbol symbol, List<INumeral> num);
+		IAsIdentifier id(IIdentifier identifier, ISort qualifier);
+		//@ requires bindings.size() > 0;
+		ILet let(List<IBinding> bindings, IExpr e);
+		IBinding binding(ISymbol.ILetParameter symbol, IExpr expr);
+		IDeclaration declaration(ISymbol.IParameter symbol, ISort sort);
+		//@ requires params.size() > 0;
+		IForall forall(List<IDeclaration> params, IExpr e);
+		//@ requires params.size() > 0;
+		IExists exists(List<IDeclaration> params, IExpr e);
+
+		IScript script(/*@Nullable*/IStringLiteral filename, /*@Nullable*/List<ICommand> commands);
+
+		IError error(String text);
+
+		// FIXME - get rid of the following
+		INumeral numeral(String v, /*@Nullable*//*@ReadOnly*/ IPos pos);
 		IDecimal decimal(String v, /*@Nullable*//*@ReadOnly*/ IPos pos);
 		/** THe argument is a pure character string, with no Java or SMTLIB escapes or enclosing quotes */
 		IStringLiteral unquotedString(String v, /*@Nullable*//*@ReadOnly*/ IPos pos);
@@ -38,7 +72,7 @@ public interface IExpr extends IAccept, IPosable {
 		//@ requires attributes.size() > 0;
 		IAttributedExpr attributedExpr(IExpr e, List<IAttribute<?>> attributes, /*@Nullable*//*@ReadOnly*/ IPos pos);
 		<T extends IAttributeValue> IAttributedExpr attributedExpr(IExpr e, IKeyword key, /*@Nullable*/T value, /*@Nullable*//*@ReadOnly*/ IPos pos);
-		IFcnExpr fcn(IQualifiedIdentifier id, List<IExpr> args, /*@Nullable*//*@ReadOnly*/ IPos pos);
+        IFcnExpr fcn(IQualifiedIdentifier id, List<IExpr> args, /*@Nullable*//*@ReadOnly*/ IPos pos);
 		//@ requires num.size() > 0;
 		IParameterizedIdentifier id(ISymbol symbol, List<INumeral> num, /*@Nullable*//*@ReadOnly*/ IPos pos);
 		IAsIdentifier id(IIdentifier identifier, ISort qualifier, /*@Nullable*//*@ReadOnly*/ IPos pos);
@@ -50,8 +84,6 @@ public interface IExpr extends IAccept, IPosable {
 		IForall forall(List<IDeclaration> params, IExpr e, /*@Nullable*//*@ReadOnly*/ IPos pos);
 		//@ requires params.size() > 0;
 		IExists exists(List<IDeclaration> params, IExpr e, /*@Nullable*//*@ReadOnly*/ IPos pos);
-
-		IScript script(/*@Nullable*/IStringLiteral filename, /*@Nullable*/List<ICommand> commands);
 
 		IError error(String text, /*@Nullable*//*@ReadOnly*/ IPos pos);
 	}

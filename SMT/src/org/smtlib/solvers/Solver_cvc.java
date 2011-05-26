@@ -618,7 +618,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 
 		Set<String> infix = new HashSet<String>();
 		{
-			infix.addAll(Arrays.asList(new String[]{"OR","AND","+","*","XOR"}));
+			infix.addAll(Arrays.asList(new String[]{"OR","AND","+","*","XOR","-","/"}));
 		}
 
 		@Override
@@ -673,7 +673,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 					this.isFormula = false;
 				} // FIXME - implies, equality, non-equality, 
 
-				if (infix.contains(newName) || (length >= 2 && newName.equals("-"))) {
+				if (infix.contains(newName) && length >= 2) {
 					// infix
 					sb.append("(");
 					sb.append(iter.next().accept(this));

@@ -142,7 +142,8 @@ public abstract class Command implements ICommand, IPosable {
 				// TODO: should we typecheck the entire script before executing it?
 				IResponse r = s.execute(solver);
 				if (r.isError()) return r; // TODO: continue on - if so, how to return an error?
-				if (!r.isOK()) smtConfig.log.logDiag(smtConfig.defaultPrinter.toString(r));
+				// TODO: If we include this output, we need a way to control it via the API so OpenJML can control it
+				//if (!r.isOK()) smtConfig.log.logDiag(smtConfig.defaultPrinter.toString(r));
 				response = r;
 			}
 			return response;

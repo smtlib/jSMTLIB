@@ -13,17 +13,29 @@ import java.util.List;
 
 import org.smtlib.*;
 import org.smtlib.ICommand.IScript;
+import org.smtlib.IExpr.IAsIdentifier;
 import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IAttributeValue;
+import org.smtlib.IExpr.IAttributedExpr;
+import org.smtlib.IExpr.IBinaryLiteral;
 import org.smtlib.IExpr.IBinding;
+import org.smtlib.IExpr.IDecimal;
 import org.smtlib.IExpr.IDeclaration;
+import org.smtlib.IExpr.IError;
+import org.smtlib.IExpr.IExists;
+import org.smtlib.IExpr.IFcnExpr;
+import org.smtlib.IExpr.IForall;
+import org.smtlib.IExpr.IHexLiteral;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.IKeyword;
+import org.smtlib.IExpr.ILet;
 import org.smtlib.IExpr.ILiteral;
 import org.smtlib.IExpr.INumeral;
+import org.smtlib.IExpr.IParameterizedIdentifier;
 import org.smtlib.IExpr.IQualifiedIdentifier;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
+import org.smtlib.IExpr.ISymbol.ILetParameter;
 import org.smtlib.IPos.IPosable;
 import org.smtlib.ISort.IExpression;
 import org.smtlib.ISort.IParameter;
@@ -148,10 +160,17 @@ public class Factory implements IExpr.IFactory, ISort.IFactory {
 		return setPos(pos,new AttributedExpr(e,list));
 	}
 
-	@Override
-	public FcnExpr fcn(IQualifiedIdentifier id, List<IExpr> args, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos,new FcnExpr(id,args));
-	}
+    @Override
+    public FcnExpr fcn(IQualifiedIdentifier id, List<IExpr> args, /*@Nullable*//*@ReadOnly*/ IPos pos) {
+        return setPos(pos,new FcnExpr(id,args));
+    }
+
+    @Override
+    public FcnExpr fcn(IQualifiedIdentifier id, IExpr... args) {
+        List<IExpr> arglist = new LinkedList<IExpr>();
+        for (IExpr a: args) arglist.add(a);
+        return new FcnExpr(id,arglist);
+    }
 
 	@Override
 	public ParameterizedIdentifier id(ISymbol symbol, List<INumeral> nums, /*@Nullable*//*@ReadOnly*/ IPos pos) {
@@ -240,6 +259,115 @@ public class Factory implements IExpr.IFactory, ISort.IFactory {
 	public IExpression Bool() {
 		IExpression sort = createSortExpression(symbol("Bool",null));
 		return sort;
+	}
+
+	@Override
+	public INumeral numeral(String v) {
+		return numeral(v,null);
+	}
+
+	@Override
+	public IDecimal decimal(String v) {
+		return decimal(v,null);
+	}
+
+	@Override
+	public IStringLiteral unquotedString(String v) {
+		return unquotedString(v,null);
+	}
+
+	@Override
+	public IStringLiteral quotedString(String v) {
+		return quotedString(v,null);
+	}
+
+	@Override
+	public IKeyword keyword(String v) {
+		return keyword(v,null);
+	}
+
+	@Override
+	public IBinaryLiteral binary(String v) {
+		return binary(v,null);
+	}
+
+	@Override
+	public IHexLiteral hex(String v) {
+		return hex(v,null);
+	}
+
+	@Override
+	public ISymbol symbol(String v) {
+		return symbol(v,null);
+	}
+
+	@Override
+	public IAttribute<?> attribute(IKeyword k) {
+		return attribute(k,(IPos)null);
+	}
+
+	@Override
+	public <T extends IAttributeValue> IAttribute<T> attribute(IKeyword k,
+			T value) {
+		return attribute(k,value,null);
+	}
+
+	@Override
+	public IAttributedExpr attributedExpr(IExpr e,
+			List<IAttribute<?>> attributes) {
+		return attributedExpr(e,attributes,null);
+	}
+
+	@Override
+	public <T extends IAttributeValue> IAttributedExpr attributedExpr(IExpr e,
+			IKeyword key, T value) {
+		return attributedExpr(e,key,value,null);
+	}
+
+	@Override
+	public IFcnExpr fcn(IQualifiedIdentifier id, List<IExpr> args) {
+		return fcn(id,args,null);
+	}
+
+	@Override
+	public IParameterizedIdentifier id(ISymbol symbol, List<INumeral> num) {
+		return id(symbol,num,null);
+	}
+
+	@Override
+	public IAsIdentifier id(IIdentifier identifier, ISort qualifier) {
+		return id(identifier,qualifier,null);
+	}
+
+	@Override
+	public ILet let(List<IBinding> bindings, IExpr e) {
+		return let(bindings,e,null);
+	}
+
+	@Override
+	public IBinding binding(ILetParameter symbol, IExpr expr) {
+		return binding(symbol,expr,null);
+	}
+
+	@Override
+	public IDeclaration declaration(org.smtlib.IExpr.ISymbol.IParameter symbol,
+			ISort sort) {
+		return declaration(symbol,sort,null);
+	}
+
+	@Override
+	public IForall forall(List<IDeclaration> params, IExpr e) {
+		return forall(params,e,null);
+	}
+
+	@Override
+	public IExists exists(List<IDeclaration> params, IExpr e) {
+		return exists(params,e,null);
+	}
+
+	@Override
+	public IError error(String text) {
+		return error(text,null);
 	}
 
 }

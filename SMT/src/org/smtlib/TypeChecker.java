@@ -134,7 +134,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			try {
 				List<ISort> sorts = new LinkedList<ISort>(); 
 				for (IDeclaration p : params) sorts.add(p.sort());
-				symTable.logicInUse.checkFcnDeclaration(id,sorts,result,null);
+				symTable.logicInUse.checkFcnDeclaration(id,sorts,result,expr);
 				symTable.logicInUse.validExpression(expr);
 			} catch (IVisitor.VisitorException e) {
 				f.error(e.getMessage(), e.pos());
@@ -272,11 +272,19 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			for (ISort s: argSorts) {
 				if (ss == null) ss = s;
 				else if (!ss.equals(s)) {
-					String msg = "Mismatched sorts of arguments: " + 
+					if (symTable.realsIntsTheorySet &&
+							(ss.toString().equals("Real") && s.toString().equals("Int"))) {
+						// OK
+					} else if (symTable.realsIntsTheorySet &&
+								(s.toString().equals("Real") && ss.toString().equals("Int"))) {
+						ss = s;
+					} else {
+						String msg = "Mismatched sorts of arguments: " + 
 						smtConfig.defaultPrinter.toString(ss) + " vs. " +
 						smtConfig.defaultPrinter.toString(s);
-					error(msg,e.pos());
-					return null;
+						error(msg,e.pos());
+						return null;
+					}
 				}
 			}
 			ISort b = smtConfig.sortFactory.Bool();
@@ -553,6 +561,23 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		}
 		
 		SymbolTable.Entry entry = symTable.lookup(head,argSorts,resultSort);
+		if (entry == null && symTable.realsIntsTheorySet) {
+			ISort realSort = null;
+			for (ISort sort: argSorts) {
+				if (sort.toString().equals("Real")) realSort = sort; 
+			}
+			if (realSort != null) {
+				List<ISort> newargs = new LinkedList<ISort>();
+				for (ISort sort: argSorts) {
+					if (sort.toString().equals("Int")) {
+						newargs.add(realSort);
+					} else {
+						newargs.add(sort);
+					}
+				}
+				entry = symTable.lookup(head,newargs,resultSort);
+			}
+		}
 		if (entry == null) {
 			String msg = "Unknown predicate symbol " + name + " with argument types";
 			for (ISort s: argSorts) {

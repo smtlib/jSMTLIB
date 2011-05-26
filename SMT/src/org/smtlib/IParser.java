@@ -28,6 +28,9 @@ public interface IParser {
 	/** Returns true if the parser is at the end of data */
 	boolean isEOD() throws IOException, ParserException;
 	
+	/** Returns the most recent error, or null */
+	IResponse.IError lastError();
+	
 	/** Skips remainder of current line */
 	void abortLine();
 	

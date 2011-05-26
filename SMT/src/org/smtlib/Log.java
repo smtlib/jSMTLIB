@@ -132,11 +132,12 @@ public class Log {
 	}
 
 	/** Reports the error to any listeners. */
-	public void logError(/*@NonNull*//*@ReadOnly*/ IResponse.IError r) {
+	public IResponse.IError logError(/*@NonNull*//*@ReadOnly*/ IResponse.IError r) {
 		numErrors++;
 		for (IListener listener: listeners) {
 			listener.logError(r);
 		}
+		return r;
 	}
 	
 	/** Reports the error to any listeners. */
@@ -192,9 +193,24 @@ public class Log {
 		int b;
 		StringBuilder sb = new StringBuilder();
 		b = source.lineBeginning(s);
+		String prefix = "";
+		String suffix = "";
+		int start = 0;
 		// Print the text line
 		if (!smtConfig.interactive) {
 			String input = source.textLine(s);
+			int len = input.length();
+			if (s-b > 150) {
+				prefix = "... ";
+				start = 20 * ((s-b)/20 - 1);
+			}
+			if (len-start > 150) {
+				len = start + 150;
+				suffix = "...\n";
+				if (e > b+len) e = b+len;
+			}
+			if (!prefix.isEmpty() || !suffix.isEmpty()) input = prefix + input.substring(start,len) + suffix;
+				
 			// input will have a line terminator
 			sb.append(input);
 		}
@@ -207,6 +223,8 @@ public class Log {
 				bb++;
 			}
 		}
+		sb.append(prefix);
+		b += start;
 		while (b < s) {
 			char c = source.charAt(b);
 			sb.append(c == '\t' ? '\t' : ' ');

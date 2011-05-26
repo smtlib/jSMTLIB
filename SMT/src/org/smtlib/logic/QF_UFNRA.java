@@ -10,15 +10,18 @@ import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.ISymbol;
 
-public class QF_LRA extends LRA {
+public class QF_UFNRA extends Logic {
 
-	public QF_LRA(ISymbol name, Collection<IAttribute<?>> attributes) {
+	public QF_UFNRA(ISymbol name, Collection<IAttribute<?>> attributes) {
 		super(name,attributes);
 	}
 	
 	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
 		noQuantifiers(expression);
-		super.validExpression(expression);
 	}
-	
+
+	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
+		// new sorts permitted
+	}
+
 }

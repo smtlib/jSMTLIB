@@ -527,6 +527,11 @@ public abstract class SMTExpr implements IExpr {
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+		
+		@Override
+		public String toString() {
+			return parameter + ":" + expr;
+		}
 	}
 	
 	static public class Attribute<TT extends IAttributeValue> extends Pos.Posable implements IAttribute<TT> {

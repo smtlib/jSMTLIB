@@ -35,7 +35,7 @@ public class LetTests extends LogicTests {
 
 	@Test
 	public void checkLetInt() {
-		doCommand("(set-logic QF_LIA)");
+		doCommand("(set-logic AUFNIRA)");
 		doCommand("(declare_fun c () Int)");
 		doCommand("(assert (let ((x 5)(y (+ c 1)) (z (- c 1))) (= (- y z) 2)))");
 		doCommand("(check-sat)","sat");
@@ -44,7 +44,7 @@ public class LetTests extends LogicTests {
 
 	@Test
 	public void checkLetInt2() {
-		doCommand("(set-logic QF_LIA)");
+		doCommand("(set-logic AUFNIRA)");
 		doCommand("(declare_fun c () Int)");
 		doCommand("(assert (let ((x 5)(y (+ c 1)) (z (- c 1))) (= (- y z) 3)))");
 		doCommand("(check-sat)","unsat");

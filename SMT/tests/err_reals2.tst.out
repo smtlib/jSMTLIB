@@ -1,6 +1,4 @@
 success
 success
-(assert (= x 1))
-        ^^^^^^^
-(error "Mismatched sorts of arguments: Real vs. Int")
+success
 success
