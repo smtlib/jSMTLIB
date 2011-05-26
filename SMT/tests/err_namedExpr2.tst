@@ -1,5 +1,5 @@
 ; tests that named expressions are closed
-(set-logic AUFLIA)
+(set-logic AUFNIRA)
 (declare-fun p () Bool)
 (declare-fun q () Bool)
 (assert (forall ((r Bool)) (! r :named R))) ; error

@@ -9,7 +9,7 @@ public class TypeCheckRealsInts extends TypeCheckRoot {
 	@Before
 	public void setup() {
 		super.setup();
-		checkResponse(solver.set_logic("AUFLIRA",null));
+		checkResponse(solver.set_logic("AUFNIRA",null));
 	}
 	
 	@Test

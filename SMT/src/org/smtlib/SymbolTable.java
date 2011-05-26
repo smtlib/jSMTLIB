@@ -31,6 +31,9 @@ public class SymbolTable {
 	// Used only while we have BitVec built in
 	public boolean bitVectorTheorySet = false;
 	
+	/** true if the RealsInts theory is set (which allows implicit promotion of ints to reals) */
+	public boolean realsIntsTheorySet = false;
+	
 	/** The logic that is being used - this value is used to check that 
 	 * expressions, etc., conform to the language restrictions of the current
 	 * logic.

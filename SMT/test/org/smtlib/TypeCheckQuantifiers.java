@@ -9,7 +9,7 @@ public class TypeCheckQuantifiers extends TypeCheckRoot {
 	@Before
 	public void setup() {
 		super.setup();
-		checkResponse(solver.set_logic("AUFLIA",null)); // Any logic that allows quantifiers
+		checkResponse(solver.set_logic("AUFNIRA",null)); // Any logic that allows quantifiers
 	}
 	
 	@Test

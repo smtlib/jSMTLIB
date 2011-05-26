@@ -1,8 +1,6 @@
 success
 success
-(assert (= x 1))
-        ^^^^^^^
-(error "Mismatched sorts of arguments: Real vs. Int")
+success
 (assert (= x 1.0))
              ^^^
 (error "The simplify solver cannot handle decimal literals")

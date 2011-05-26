@@ -7,10 +7,7 @@ import org.smtlib.IExpr;
 import org.smtlib.ILanguage;
 import org.smtlib.ISort;
 import org.smtlib.IVisitor;
-import org.smtlib.IExpr.IAttribute;
-import org.smtlib.IExpr.IExists;
-import org.smtlib.IExpr.IForall;
-import org.smtlib.IExpr.ISymbol;
+import org.smtlib.IExpr.*;
 import org.smtlib.impl.SMTExpr;
 
 /** This logic does not allow quantifiers or uninterpreted functions */
@@ -47,17 +44,22 @@ public class LRA extends Logic {
 	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
 		IVisitor<Void> visitor = new IVisitor.TreeVisitor<Void>() {
 			public Void visit(IExpr.IFcnExpr e) throws IVisitor.VisitorException {
-				super.visit(e); // checks all the arguments
 				if (e.args().size() == 2) {
 					String fcn = e.head().toString();
 					if (fcn.equals("*")) {
 						if (!(isConst(e.args().get(0)) || isConst(e.args().get(1)))) {
-								throw new IVisitor.VisitorException("The expression must be linear: ",e.pos());
+								throw new IVisitor.VisitorException("The expression must be linear: ", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
 						}
 					} else if (fcn.equals("/")) {
-						throw new IVisitor.VisitorException("The expression must be linear: ",e.pos());
+						if (!(isConst(e.args().get(0)) && isConst(e.args().get(1)))) {
+							throw new IVisitor.VisitorException("The expression must be linear: ", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
+						}
+					} else {
+						super.visit(e); // checks all the arguments
 					}
 						
+				} else {
+					super.visit(e); // checks all the arguments
 				}
 				return (Void)null;
 			}
@@ -70,5 +72,7 @@ public class LRA extends Logic {
 		noFunctions(id,argSorts,resultSort,definition);
 	}
 
-	// FIXME - should not allow new sorts
+	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
+		noSorts(id,params,expr);
+	}
 }

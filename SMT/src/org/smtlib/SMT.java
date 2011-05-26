@@ -460,6 +460,7 @@ public class SMT {
 							}
 							p.abortLine();
 						}
+						result = p.lastError();
 						continue;
 					}
 
@@ -506,6 +507,12 @@ public class SMT {
 			retcode = 2;
 		} catch (ParserException e) {
 			error("ParserException reading input: " + e);
+			retcode = 2;
+		} catch (StackOverflowError e) {
+			error("Stack overflow while processing input");
+			retcode = 2;
+		} catch (OutOfMemoryError e) {
+			error("Out of memory while processing input");
 			retcode = 2;
 		}
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("Exiting program");
