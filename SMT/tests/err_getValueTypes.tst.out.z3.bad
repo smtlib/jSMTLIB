@@ -5,4 +5,16 @@ success
 success
 success
 sat
-( x y )
+(get-value (x y (and x y) ))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(x
+y)
+(error \"WARNING: Sort mismatch for argument 1 of decl y :: bool
+decl x :: A
+(and x y)
+
+Expected sort: bool
+Actual sort:   A
+Function sort: (define and bool bool bool).
+ERROR: line 8 column 34: expression is not well sorted.\")
+")

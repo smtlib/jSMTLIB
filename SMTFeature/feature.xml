@@ -2,7 +2,7 @@
 <feature
       id="org.smtlib.SMTFeature"
       label="jSMTLIB Feature"
-      version="0.8.5"
+      version="0.9.2"
       provider-name="David R. Cok">
 
    <description>
@@ -162,14 +162,14 @@ civil liability in connection with the SOFTWARE.
          id="org.smtlib.plugin.SMTPlugin"
          download-size="0"
          install-size="0"
-         version="0.8.5"
+         version="0.9.2"
          unpack="false"/>
 
    <plugin
          id="org.smtlib.SMT"
          download-size="0"
          install-size="0"
-         version="0.8.5"
+         version="0.9.2"
          unpack="false"/>
 
 </feature>

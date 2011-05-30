@@ -47,7 +47,7 @@ public class Lexer {
 	/** Creates a Lexer using an SMT configuration object and a source for
 	 * characters
 	 */
-	public Lexer(SMT.Configuration smtConfig, IPos.ISource src) {
+	public Lexer(SMT.Configuration smtConfig, ISource src) {
 		this.smtConfig = smtConfig;
 		this.source = src;
 		this.csr = src.chars();
@@ -103,13 +103,13 @@ public class Lexer {
 	 * parser object will be used for each source (e.g. different file, string,
 	 * port, etc.) of input data.
 	 */
-	final private IPos.ISource source;
+	final private ISource source;
 
 	/** The source of input used in this parser; typically a different
 	 * parser object will be used for each source (e.g. different file, string,
 	 * port, etc.) of input data.
 	 */
-	final public IPos.ISource source() { return source; }
+	final public ISource source() { return source; }
 	
 	/** The CharSequence corresponding to the source object */
 	final protected CharSequence csr;

@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.smtlib.*;
 import org.smtlib.ICommand.Ideclare_fun;
@@ -145,6 +147,22 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 	
 	protected IResponse parseResponse(String response) {
 		try {
+			if (response.contains("error")) {
+				// Z3 returns an s-expr (always?)
+				// FIXME - (1) the {Print} also needs {Space}; (2) err_getValueTypes.tst returns a non-error s-expr and then an error s-expr - this fails for that case
+				//Pattern p = Pattern.compile("\\p{Space}*\\(\\p{Blank}*error\\p{Blank}+\"(([\\p{Space}\\p{Print}^[\\\"\\\\]]|\\\\\")*)\"\\p{Blank}*\\)\\p{Space}*");
+				Pattern p = Pattern.compile("\\p{Space}*\\(\\p{Blank}*error\\p{Blank}+\"(([\\p{Print}\\p{Space}&&[^\"\\\\]]|\\\\\")*)\"\\p{Blank}*\\)");
+				Matcher m = p.matcher(response);
+				String concat = "";
+				while (m.lookingAt()) {
+					if (!concat.isEmpty()) concat = concat + "; ";
+					String matched = m.group(1);
+					concat = concat + matched;
+					m.region(m.end(0),m.regionEnd());
+				}
+				if (!concat.isEmpty()) response = concat;
+				return smtConfig.responseFactory.error(response);
+			}
 			responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source(response,null));
 			return responseParser.parseResponse(response);
 		} catch (ParserException e) {
@@ -154,6 +172,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 
 	@Override
 	public IResponse assertExpr(IExpr sexpr) {
+		IResponse response;
 		if (pushesStack.size() == 0) {
 			return smtConfig.responseFactory.error("All assertion sets have been popped from the stack");
 		}
@@ -162,7 +181,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 		}
 		try {
 			String s = solverProcess.sendAndListen("(assert ",translate(sexpr),")\n");
-			if (s.contains("error")) return smtConfig.responseFactory.error(s);  // FIXME - doubly nested error
+			response = parseResponse(s);
 			pushes++; // FIXME
 			checkSatStatus = null;
 		} catch (IVisitor.VisitorException e) {
@@ -170,7 +189,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Failed to assert expression: " + e + " " + sexpr);
 		}
-		return smtConfig.responseFactory.success();
+		return response;
 	}
 	
 	@Override

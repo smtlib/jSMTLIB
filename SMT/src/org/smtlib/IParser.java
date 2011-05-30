@@ -127,18 +127,18 @@ public interface IParser {
 	/** The interface for the parser/printer factory */
 	public static interface IFactory {
 		/** Creates a parser that reads and parses concrete syntax from the given source */
-		IParser createParser(SMT.Configuration smtConfig, IPos.ISource source);
+		IParser createParser(SMT.Configuration smtConfig, ISource source);
 		
 		/** Creates a character source from the given CharSequence; the second argument is just to be
 		 * used as a location designator.
 		 */
-		IPos.ISource createSource(CharSequence cs, /*@Nullable*/String filepath);
+		ISource createSource(CharSequence cs, /*@Nullable*/String filepath);
 		
 		/** Creates a character source from the given file */
-		IPos.ISource createSource(SMT.Configuration smtConfig, java.io.File file) throws java.io.FileNotFoundException;
+		ISource createSource(SMT.Configuration smtConfig, java.io.File file) throws java.io.FileNotFoundException;
 
 		/** Creates a character source from the given stream */
-		IPos.ISource createSource(SMT.Configuration smtConfig, java.io.InputStream file, Object location);
+		ISource createSource(SMT.Configuration smtConfig, java.io.InputStream file, Object location);
 
 		/** Creates a printer */
 		IPrinter createPrinter(SMT.Configuration smtConfig, Writer w);

@@ -7,10 +7,7 @@ package org.smtlib.impl;
 
 import java.io.*;
 
-import org.smtlib.CharSequenceInfinite;
-import org.smtlib.CharSequenceReader;
-import org.smtlib.IPos;
-import org.smtlib.SMT;
+import org.smtlib.*;
 
 /** Represents a range of characters in a source - used to indicate the location of errors */
 public class Pos implements IPos {

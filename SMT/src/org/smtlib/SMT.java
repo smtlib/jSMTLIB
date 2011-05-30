@@ -16,7 +16,6 @@ import java.util.*;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IParser.AbortParseException;
 import org.smtlib.IParser.ParserException;
-import org.smtlib.IPos.ISource;
 
 //import checkers.javari.quals.Mutable; NonNull
 
@@ -41,7 +40,7 @@ import org.smtlib.IPos.ISource;
  */
 public class SMT {
 	
-	public static final String VERSION_ID = "jSMTLIB version 0.8.5";
+	public static final String VERSION_ID = "jSMTLIB version 0.9.1";
 	
 	public Properties props;
 	
@@ -348,7 +347,7 @@ public class SMT {
 	public int exec() {
 		int retcode = 0;
 		IParser p;
-		IPos.ISource src;
+		ISource src;
 		if (smtConfig.text != null) {
 			// If 'text' is set, use it as the input
 			smtConfig.interactive = false;
@@ -417,7 +416,7 @@ public class SMT {
 	}
 	
 	public int execCommand(String cmd) {
-		IPos.ISource src = smtConfig.smtFactory.createSource(cmd,null);
+		ISource src = smtConfig.smtFactory.createSource(cmd,null);
 		IParser p = smtConfig.smtFactory.createParser(smtConfig,src);
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("Command " + cmd);
 		int e = doParser(p,false);
@@ -606,7 +605,7 @@ public class SMT {
 				help();
 				return -1;
 			} else if ("--version".equals(s)) {
-				System.out.println(VERSION_ID);
+				System.out.println(Version.VERSION_ID);
 				return -1;
 			} else if ("--echo".equals(s)) {
 				options.echo = true;
