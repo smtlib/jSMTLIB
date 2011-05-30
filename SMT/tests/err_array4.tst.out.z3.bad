@@ -8,6 +8,4 @@ success
 success
 (assert (= a (store a i v)))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "(error \"line 9 column 36: unknown\")
-(error \"ERROR: Store expects the first argument sort 'AA[I:V]' to be an array.\")
-")
+(error "line 9 column 36: unknown; ERROR: Store expects the first argument sort 'AA[I:V]' to be an array.")

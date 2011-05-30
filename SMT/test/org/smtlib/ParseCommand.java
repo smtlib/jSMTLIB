@@ -3,7 +3,6 @@ package org.smtlib;
 import java.io.StringWriter;
 
 import org.junit.*;
-import org.smtlib.IPos.ISource;
 
 
 public class ParseCommand {

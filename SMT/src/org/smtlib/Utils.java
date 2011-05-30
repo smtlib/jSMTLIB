@@ -360,7 +360,7 @@ public class Utils {
 																				 * Nullable
 																				 */
 			IPos pos) throws Utils.SMTLIBException {
-		IPos.ISource source;
+		ISource source;
 		InputStream input = null;
 		try {
 			SMT.Configuration config = smtConfig.clone();
@@ -411,7 +411,7 @@ public class Utils {
 	 */
 	public/* @Nullable */ITheory findTheory(String name, /* @Nullable */
 			String path) {
-		IPos.ISource source;
+		ISource source;
 		InputStream input = null;
 		try {
 			SMT.Configuration config = smtConfig.clone();
@@ -455,7 +455,7 @@ public class Utils {
 		ILogic sx = null; // = findLogic(logicName, smtConfig.logicPath, pos);
 		{
 			String name = logicName;
-			IPos.ISource source;
+			ISource source;
 			InputStream input = null;
 			try {
 				SMT.Configuration config = smtConfig.clone();

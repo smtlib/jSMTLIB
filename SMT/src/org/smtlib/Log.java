@@ -8,7 +8,6 @@ package org.smtlib;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.smtlib.IPos.ISource;
 
 
 /** This class is used as a collection point for all output.  The SMTLIB defines two output

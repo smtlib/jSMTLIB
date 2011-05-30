@@ -79,7 +79,7 @@ public class Parser extends Lexer implements IParser {
 	/** Creates a Parser using an SMT configuration object and a source for
 	 * characters; ordinarily use a factory to obtain a parser.
 	 */
-	public Parser(SMT.Configuration smtConfig, IPos.ISource src) {
+	public Parser(SMT.Configuration smtConfig, ISource src) {
 		super(smtConfig, src);
 		this.smtConfig = smtConfig;
 		this.factory = smtConfig.exprFactory;
@@ -99,7 +99,7 @@ public class Parser extends Lexer implements IParser {
 				filename = parseStringLiteral();
 				if (filename == null) return null;
 				//scr = smtConfig.commandFactory.script(filename,null);
-				scr = new Command.Script(filename,null); // FIXME - use a factory, set position
+				scr = new Script(filename,null); // FIXME - use a factory, set position
 				//scr = setPos(smtConfig.commandFactory.script(filename,null),filename.pos());// FIXME - set pos
 			} else {
 				// This loop skips over invalid commands, producing error messages (parseCommand
@@ -116,7 +116,7 @@ public class Parser extends Lexer implements IParser {
 				}
 				ILexToken rp = parseRP();
 				if (rp == null || anyError) return null;
-				scr = new Command.Script(null,res); // FIXME - use a factory, set position
+				scr = new Script(null,res); // FIXME - use a factory, set position
 				// FIXME set pos pos(lp.pos(),rp.pos(),source);
 			}
 			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Completed input");

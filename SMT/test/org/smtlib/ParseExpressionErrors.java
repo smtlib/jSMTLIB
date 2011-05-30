@@ -5,7 +5,6 @@ import java.io.StringWriter;
 import org.junit.*;
 import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IParser.ParserException;
-import org.smtlib.IPos.ISource;
 
 
 public class ParseExpressionErrors {

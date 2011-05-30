@@ -1,0 +1,10 @@
+(assert )
+        ^
+(error "Expected an expression here")
+BAD COMMAND
+(and p (not p))
+(set-logic QF_UF)
+(assert (and p (not p)))
+success
+(error "ERROR: line 3 column 9: could not locate id  q.")
+unsat

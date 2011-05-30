@@ -10,8 +10,8 @@ import java.io.StringWriter;
 import java.io.Writer;
 
 import org.smtlib.IParser;
-import org.smtlib.IPos;
 import org.smtlib.IPrinter;
+import org.smtlib.ISource;
 import org.smtlib.SMT;
 import org.smtlib.impl.Pos;
 
@@ -22,7 +22,7 @@ import org.smtlib.impl.Pos;
 public class Factory implements IParser.IFactory {
 	
 	@Override
-	public Parser createParser(SMT.Configuration smtConfig, IPos.ISource source) {
+	public Parser createParser(SMT.Configuration smtConfig, ISource source) {
 		return new Parser(smtConfig, source);
 	}
 	

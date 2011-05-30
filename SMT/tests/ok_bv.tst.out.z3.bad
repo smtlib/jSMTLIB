@@ -4,9 +4,7 @@ success
 success
 (assert (= x #b0101 ))
 ^^^^^^^^^^^^^^^^^^^^^^
-(error "(error \"ERROR: line 5 column 19: could not locate id  #.\")
-")
+(error "ERROR: line 5 column 19: could not locate id  #.")
 (assert (= z #xa ))
 ^^^^^^^^^^^^^^^^^^^
-(error "(error \"ERROR: line 6 column 19: could not locate id  #.\")
-")
+(error "ERROR: line 6 column 19: could not locate id  #.")

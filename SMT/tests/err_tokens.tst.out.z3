@@ -28,12 +28,10 @@ success
 (error "Incorrect format for a number - no leading zeros allowed: 01.2")
 (assert 0.000) ; OK
 ^^^^^^^^^^^^^^
-(error "(error \"ERROR: line 2 column 13: expecting Boolean expression.\")
-")
+(error "ERROR: line 2 column 13: expecting Boolean expression.")
 (assert 0.0) ; OK
 ^^^^^^^^^^^^
-(error "(error \"ERROR: line 3 column 11: expecting Boolean expression.\")
-")
+(error "ERROR: line 3 column 11: expecting Boolean expression.")
 (assert 0. ) ; FIXME - needs a better error message
         ^^
 (error "Invalid token: 0.")
@@ -58,8 +56,7 @@ success
 (error "Invalid token: 0a")
 (assert .123)
 ^^^^^^^^^^^^^
-(error "(error \"ERROR: line 4 column 12: could not locate id  .123.\")
-")
+(error "ERROR: line 4 column 12: could not locate id  .123.")
 (assert , ) ; FIXME - in general change 'Invalid characters' erro rmessage to 'Invalid token'
         ^
 (error "Invalid token: ,")

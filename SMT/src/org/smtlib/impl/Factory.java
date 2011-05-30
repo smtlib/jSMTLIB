@@ -209,7 +209,7 @@ public class Factory implements IExpr.IFactory, ISort.IFactory {
 	
 	@Override
 	public IScript script(/*@Nullable*/IStringLiteral filename, /*@Nullable*/List<ICommand> commands) {
-		return new Command.Script(filename,commands);
+		return new Script(filename,commands);
 	}
 
 
