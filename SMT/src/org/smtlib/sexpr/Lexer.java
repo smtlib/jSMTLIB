@@ -133,9 +133,9 @@ public class Lexer {
 	/** Pattern regular expression for an invalid SMT-LIB numeral or decimal (that has leading zeros) */
 	private final static String rgxLeadingZero = "0+(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?";
 	/** Pattern regular expression for SMT-LIB binary literal */
-	private final static String rgxBinary = "#b[01]+";
+	private final static String rgxBinary = "#b([01]+)";
 	/** Pattern regular expression for SMT-LIB hex literal */
-	private final static String rgxHex = "#x[0-9a-fA-F]+";
+	private final static String rgxHex = "#x([0-9a-fA-F]+)";
 	/** Pattern regular expression for SMT-LIB string (except for the enclosing quotes) */
 	// Not actually used now - instead we match the first " with the Matcher and then match the rest by hand
 	private final static String rgxStringLiteral = "\"(?:[!#-\\[\\]-~ \t\r\n]|\\\\\\\\|\\\\\")*\"";
@@ -189,15 +189,15 @@ public class Lexer {
 			    + rgxQuotedSymbol + ")|("	// group 8: quoted symbol
 			    + rgxKeyword + ")|("	// group 9: keyword
 				+ rgxDecimal + ")" + trailer + "|("	// group 10: decimal
-				+ rgxBinary + ")" + trailer + "|("                 // group 11: binary literal
-				+ rgxHex + ")" + trailer + "|("                    // group 12: hex literal
-				+ rgxEndOfInput + ")|("				// group 13: end of input
-			    + rgxNonTermQuotedSymbol + ")|("	// group 14: error - non terminated quoted symbol
-			    + rgxLeadingZero + ")" + trailer + "|"	// group 15: invalid leading zero
-			    + "\"(" + rgxInvalidString + ")\"" + "|("		// group 16: invalid string // NO LONGER MATCHES SINCE CHANGING THE STRING MATCHING
-			    + "\\030" + ")|("		// group 17: the control-X character to kill input
-			    + rgxAnyNonWS + ")"		// group 18: error symbol
-			    + "|([ \t\r\n]+)"				// group 19: stop-gap whitespace
+				+ rgxBinary  + ")" + trailer + "|("                 // group 11,12: binary literal
+				+ rgxHex  + ")" + trailer + "|("                    // group 13,14: hex literal
+				+ rgxEndOfInput + ")|("				// group 15: end of input
+			    + rgxNonTermQuotedSymbol + ")|("	// group 16: error - non terminated quoted symbol
+			    + rgxLeadingZero + ")" + trailer + "|"	// group 17: invalid leading zero
+			    + "\"(" + rgxInvalidString + ")\"" + "|("		// group 18: invalid string // NO LONGER MATCHES SINCE CHANGING THE STRING MATCHING
+			    + "\\030" + ")|("		// group 19: the control-X character to kill input
+			    + rgxAnyNonWS + ")"		// group 20: error symbol
+			    + "|([ \t\r\n]+)"				// group 21: stop-gap whitespace
 		+   ")"  );
 	
 	/** A pattern to skip through the end of the line */
@@ -430,25 +430,23 @@ public class Lexer {
 				end = matcher.end(k);
 			} else if ((matched = matcher.group(k=11)) != null) {
 				pos = pos(matcher.start(k),matcher.end(k));
-				//token = factory.binary(matched,pos);
-				token = setPos(new LexBinaryLiteral(matched),pos);
-				end = matcher.end(k);
-			} else if ((matched = matcher.group(k=12)) != null) {
-				pos = pos(matcher.start(k),matcher.end(k));
-				//token = factory.hex(matched,pos);
-				token = setPos(new LexHexLiteral(matched),pos);
+				token = setPos(new LexBinaryLiteral(matcher.group(k+1)),pos);
 				end = matcher.end(k);
 			} else if ((matched = matcher.group(k=13)) != null) {
 				pos = pos(matcher.start(k),matcher.end(k));
+				token = setPos(new LexHexLiteral(matcher.group(k+1)),pos);
+				end = matcher.end(k);
+			} else if ((matched = matcher.group(k=15)) != null) {
+				pos = pos(matcher.start(k),matcher.end(k));
 				token = this.EOD(matcher.start(k));
-			} else if ((matched = matcher.group(k=14)) != null) {
+			} else if ((matched = matcher.group(k=16)) != null) {
 				pos = pos(matcher.start(k),matcher.end(k));
 				//token = factory.error(matched,pos);
 				token = setPos(new LexError("Bar(|)-enclosed symbol is not terminated: " + matched),pos);
 				smtConfig.log.logError(smtConfig.responseFactory.error("Bar(|)-enclosed symbol is not terminated: " + matched,token.pos()));
 //				matcher.region(end,csr.length());
 //				throw new SyntaxException("Invalid token: " + matched,token.pos());
-			} else if ((matched = matcher.group(k=15)) != null) {
+			} else if ((matched = matcher.group(k=17)) != null) {
 				pos = pos(matcher.start(k),matcher.end(k));
 				//token = factory.error(matched,pos);
 				String msg = "Incorrect format for a number - no leading zeros allowed: ";
@@ -457,7 +455,7 @@ public class Lexer {
 				end = matcher.end(k);
 //				matcher.region(end,csr.length());
 //				throw new SyntaxException("Leading zeros are not allowed: " + matched,token.pos());
-			} else if ((matched = matcher.group(k=16)) != null) {
+			} else if ((matched = matcher.group(k=18)) != null) {
 				// This case no longer matches since we made a special case of string matching.
 				pos = pos(matcher.start(k),matcher.end(k));
 				//token = factory.error(matched,pos);
@@ -466,11 +464,11 @@ public class Lexer {
 				matcher.region(end,csr.length());
 				// FIXME - decide whether to throw exceptions or emit error messages and error tokens
 				throw new SyntaxException(("Invalid string: " + matched),token.pos());
-			} else if ((matched = matcher.group(17)) != null) {
+			} else if ((matched = matcher.group(19)) != null) {
 				//System.out.println("Killed");
 				matcher.region(end,csr.length());
 				throw new AbortParseException();
-			} else if ((matched = matcher.group(k=18)) != null) {
+			} else if ((matched = matcher.group(k=20)) != null) {
 				pos = pos(matcher.start(k),matcher.end(k));
 				//token = factory.error(matched,pos);
 				if (matched.charAt(0) < ' ') matched = "(ASCII char " + (int)matched.charAt(0) + " (decimal))";
@@ -480,7 +478,7 @@ public class Lexer {
 //				matcher.region(end,csr.length());
 //				throw new SyntaxException("Invalid token: " + matched,token.pos());
 				//SMT.out.println(smtConfig.responseFactory.error("Invalid token: " + matched));
-			} else if ((matched = matcher.group(k=19)) != null) {
+			} else if ((matched = matcher.group(k=21)) != null) {
 				// FIXME - This should never happen either - it is a stopgap hack, because
 				// with whitespace at the very beginning of a file, the whitespace detector is not finding it
 				matcher.region(end,csr.length());

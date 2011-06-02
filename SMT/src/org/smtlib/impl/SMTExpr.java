@@ -340,9 +340,9 @@ public abstract class SMTExpr implements IExpr {
 	static public class BinaryLiteral extends Literal<String>  implements IBinaryLiteral {
 		
 		public BinaryLiteral(String unquotedValue) {
-			super(unquotedValue.substring(2));
-			length = unquotedValue.length()-2;
-			intvalue = new BigInteger(unquotedValue.substring(2),2);
+			super(unquotedValue);
+			length = unquotedValue.length();
+			intvalue = new BigInteger(unquotedValue,2);
 		}
 		
 		int length;
@@ -374,9 +374,9 @@ public abstract class SMTExpr implements IExpr {
 	static public class HexLiteral extends Literal<String>  implements IHexLiteral {
 		
 		public HexLiteral(String unquotedValue) {
-			super(unquotedValue.substring(2));
-			length = unquotedValue.length() - 2;
-			intvalue = new BigInteger(unquotedValue.substring(2),16);
+			super(unquotedValue);
+			length = unquotedValue.length();
+			intvalue = new BigInteger(unquotedValue,16);
 		}
 		
 		int length; // in hex digits

@@ -147,6 +147,16 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 	
 	protected IResponse parseResponse(String response) {
 		try {
+			Pattern oldbv = Pattern.compile("bv([0-9]+)\\[([0-9]+)\\]");
+			Matcher mm = oldbv.matcher(response);
+			while (mm.find()) {
+				long val = Long.parseLong(mm.group(1));
+				int base = Integer.parseInt(mm.group(2));
+				String bits = "";
+				for (int i=0; i<base; i++) { bits = ((val&1)==0 ? "0" : "1") + bits; val = val >>> 1; }
+				response = response.substring(0,mm.start()) + "#b" + bits + response.substring(mm.end(),response.length());
+				mm = oldbv.matcher(response);
+			}
 			if (response.contains("error")) {
 				// Z3 returns an s-expr (always?)
 				// FIXME - (1) the {Print} also needs {Space}; (2) err_getValueTypes.tst returns a non-error s-expr and then an error s-expr - this fails for that case
@@ -611,12 +621,12 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 
 		@Override
 		public String visit(IBinaryLiteral e) throws IVisitor.VisitorException {
-			return "#b" + e.value();
+			return "bv" + e.intValue() + "[" + e.length() + "]";
 		}
 
 		@Override
 		public String visit(IHexLiteral e) throws IVisitor.VisitorException {
-			return "#x" + e.value();
+			return "bv" + e.intValue() + "[" + (4*e.length()) + "]";
 		}
 
 		@Override
