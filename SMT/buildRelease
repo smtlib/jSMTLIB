@@ -13,4 +13,6 @@ cp ../../../texstuff/papers/SMTLIBUserGuide/SMTLIBUserGuide.pdf jSMTLIBUserGuide
 tar cf jSMTLIB.tar jSMTLIB.jar LICENSE jSMTLIBUserGuide.pdf jsmtlib.properties-template
 rm jSMTLIBUserGuide.pdf
 tar tvf jSMTLIB.tar
+rm jSMTLIB.tar.gz
+gzip jSMTLIB.tar
 echo Build complete
