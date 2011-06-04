@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source version.check
+
 for f in *.scr ; do
     echo $f
 	expectedret=`grep EXITCODE $f | sed -e "s/##EXITCODE //" `

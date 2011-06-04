@@ -14,6 +14,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.StringWriter;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -735,8 +736,22 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 			throw new VisitorException("Did not expect a Error token in an expression to be translated", e.pos());
 		}
 
+		private final String zeros = "00000000000000000000000000000000000000000000000000";
 		@Override
 		public String visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
+			String s = e.headSymbol().toString();
+			if (s.matches("bv[0-9]+")) {
+				int length = e.numerals().get(0).intValue();
+				//BigInteger value = new BigInteger(s.substring(2));
+				return s + "[" + length + "]";
+//				String bits = value.toString(2);
+//				while (bits.length() < length) {
+//					int n = zeros.length() - (length - bits.length());
+//					if (n < 0) n = 0;
+//					bits = zeros.substring(n) + bits;
+//				}
+//				return "#b" + bits;
+			}
 			return translateSMT(e);
 		}
 

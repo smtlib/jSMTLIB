@@ -1,0 +1,10 @@
+##EXITCODE 0
+tail -2 ../src/org/smtlib/Version.java | head -1 | sed -e 'sx\tString VERSION_ID = \"xx' -e 'sx\"\;xx' > tempout
+VER=`cat tempout | sed 's/jSMTLIB version//'`
+echo $VER
+java -cp ../bin org.smtlib.SMT --version | diff -b tempout -
+rm tempout
+VER2=`cat ../META-INF/MANIFEST.MF | grep 'Bundle-Version' | sed -e 's/Bundle-Version://'`
+VER3=`cat ../../SMTPlugin/META-INF/MANIFEST.MF | grep 'Bundle-Version' | sed -e 's/Bundle-Version://'`
+VER4=`cat ../../SMTFeature/feature.xml | grep 'version=' | tail +2 | sed -e 's/version="//' -e 's/"//'`
+echo $VER2 $VER3 $VER4

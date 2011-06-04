@@ -1,1 +1,6 @@
-jSMTLIB version 0.9.2
+(set-option :interactive-mode xxxx)(exit zz)
+                              ^^^^
+(error "Expected true or false as the value of :interactive-mode")
+(set-option :interactive-mode xxxx)(exit zz)
+                                         ^^
+(error "A exit command takes no arguments")

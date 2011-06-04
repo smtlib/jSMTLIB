@@ -24,3 +24,4 @@ if [ $fail == 0 ]; then
 else
     echo $fail FAILURES out of $count tests
 fi
+source version.check

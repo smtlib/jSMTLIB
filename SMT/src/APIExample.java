@@ -112,7 +112,7 @@ public class APIExample {
 			solver.pop(1);
 			solver.exit();
 			
-
+			System.out.println("END");
 			
 		} catch (java.io.IOException e) {
 			// Can happen if the ISource is reading from a file
