@@ -5,13 +5,21 @@
  */
 package org.smtlib.solvers;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.smtlib.*;
 import org.smtlib.ICommand.*;
+import org.smtlib.impl.Pos;
 import org.smtlib.impl.SMTExpr.ParameterizedIdentifier;
+import org.smtlib.sexpr.ISexpr;
+import org.smtlib.sexpr.Sexpr;
 import org.smtlib.ICommand.Idefine_fun;
 import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IAttributeValue;
@@ -87,7 +95,8 @@ public class Solver_cvc extends Solver_test implements ISolver {
 		try {
 			IResponse status = super.assertExpr(sexpr);
 			if (!status.isOK()) return status;
-			String response = solverProcess.sendAndListen("ASSERT " + translate(sexpr) + " ;\n");
+			String translated = translate(sexpr);
+			String response = solverProcess.sendAndListen("ASSERT " + translated + " ;\n");
 			if (response.contains(errorIndication)) {
 				return smtConfig.responseFactory.error(response);
 			}
@@ -100,7 +109,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 	}
 
 	@Override
-	public IResponse check_sat() {
+	public IResponse check_sat() { // FIXME - do we need to do a PUSH before a check-sat and then a POP after the last get-value?
 		IResponse res;
 		IResponse status = super.check_sat();
 		if (status.isError()) return status;
@@ -169,19 +178,76 @@ public class Solver_cvc extends Solver_test implements ISolver {
 
 	@Override
 	public IResponse set_option(IKeyword key, IAttributeValue value) {
-		return super.set_option(key,value);
+		String option = key.value();
+		if (Utils.PRINT_SUCCESS.equals(option)) {
+			if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
+				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
+			}
+		}
+		if (logicSet && Utils.INTERACTIVE_MODE.equals(option)) {
+			return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
+		}
+		if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 
+				//Utils.PRODUCE_MODELS.equals(option) || 
+				Utils.PRODUCE_PROOFS.equals(option) ||
+				Utils.PRODUCE_UNSAT_CORES.equals(option)) {
+			if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
+			return smtConfig.responseFactory.unsupported();
+		}
+		if (Utils.VERBOSITY.equals(option)) {
+			IAttributeValue v = options.get(option);
+			smtConfig.verbose = (v instanceof INumeral) ? ((INumeral)v).intValue() : 0;
+		} else if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
+			// Actually, v should never be anything but IStringLiteral - that should
+			// be checked during parsing
+			String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : "stderr";
+			if (name.equals("stdout")) {
+				smtConfig.log.diag = System.out;
+			} else if (name.equals("stderr")) {
+				smtConfig.log.diag = System.err;
+			} else {
+				try {
+					FileOutputStream f = new FileOutputStream(name,true); // append
+					smtConfig.log.diag = new PrintStream(f);
+				} catch (java.io.IOException e) {
+					return smtConfig.responseFactory.error("Failed to open or write to the diagnostic output " + e.getMessage(),value.pos());
+				}
+			}
+		} else if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
+			// Actually, v should never be anything but IStringLiteral - that should
+			// be checked during parsing
+			String name = (value instanceof IStringLiteral)?((IStringLiteral)value).value() : "stdout";
+			if (name.equals("stdout")) {
+				smtConfig.log.out = System.out;
+			} else if (name.equals("stderr")) {
+				smtConfig.log.out = System.err;
+			} else {
+				try {
+					FileOutputStream f = new FileOutputStream(name,true); // append
+					smtConfig.log.out = new PrintStream(f);
+				} catch (java.io.IOException e) {
+					return smtConfig.responseFactory.error("Failed to open or write to the regular output " + e.getMessage(),value.pos());
+				}
+			}
+		}
+		options.put(option,value);
+		return smtConfig.responseFactory.success();
 	}
 
 	@Override
 	public IResponse get_option(IKeyword key) {
-		return super.get_option(key);
+		String option = key.value();
+		IAttributeValue value = options.get(option);
+		if (value == null) return smtConfig.responseFactory.unsupported();
+		return value;
 	}
 
 	@Override
 	public IResponse get_info(IKeyword key) {
 		String option = key.value();
+		IAttributeValue lit;
 		if (":error-behavior".equals(option)) {
-			return smtConfig.responseFactory.continued_execution(); // FIXME - is this true?
+			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION,null); // FIXME
 		} else if (":status".equals(option)) {
 			return checkSatStatus==null ? smtConfig.responseFactory.unsupported() : checkSatStatus; 
 		} else if (":all-statistics".equals(option)) {
@@ -189,14 +255,16 @@ public class Solver_cvc extends Solver_test implements ISolver {
 		} else if (":reason-unknown".equals(option)) {
 			return smtConfig.responseFactory.unsupported(); // FIXME
 		} else if (":authors".equals(option)) {
-			return smtConfig.responseFactory.stringLiteral("Clark Barrett, Cesare Tinelli, and others");
+			lit = smtConfig.exprFactory.unquotedString("Clark Barrett, Cesare Tinelli, and others");
 		} else if (":version".equals(option)) {
-			return smtConfig.responseFactory.stringLiteral("2.2"); // FIXME
+			lit = smtConfig.exprFactory.unquotedString("2.2");
 		} else if (":name".equals(option)) {
-			return smtConfig.responseFactory.stringLiteral("CVC3");
+			lit = smtConfig.exprFactory.unquotedString("CVC3");
 		} else {
 			return smtConfig.responseFactory.unsupported();
 		}
+		IAttribute<?> attr = smtConfig.exprFactory.attribute(key,lit,null);
+		return smtConfig.responseFactory.get_info_response(attr);
 	}
 	
 	
@@ -381,6 +449,96 @@ public class Solver_cvc extends Solver_test implements ISolver {
 			return smtConfig.responseFactory.error("Failed to execute define_sort: " + e, e.pos());
 		}
 	}
+	
+	@Override
+	public IResponse get_value(IExpr... terms) {
+		TypeChecker tc = new TypeChecker(symTable);
+		try {
+			for (IExpr term: terms) {
+				term.accept(tc);
+			}
+		} catch (IVisitor.VisitorException e) {
+			tc.result.add(smtConfig.responseFactory.error(e.getMessage()));
+		} finally {
+			if (!tc.result.isEmpty()) return tc.result.get(0); // FIXME - report all errors?
+		}
+		// FIXME - do we really want to call get-option here? it involves going to the solver?
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS,null)))) {
+			return smtConfig.responseFactory.error("The get-value command is only valid if :produce-models has been enabled");
+		}
+		if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
+			return smtConfig.responseFactory.error("The get-value command is only valid immediately after check-sat returned sat or unknown");
+		}
+		try {
+			String response = solverProcess.sendAndListen("COUNTERMODEL;\n");
+			List<ISexpr> values = new LinkedList<ISexpr>();
+			org.smtlib.sexpr.Lexer lexer = new org.smtlib.sexpr.Lexer(smtConfig,null);
+			for (IExpr e: terms) {
+				response = solverProcess.sendAndListen("TRANSFORM " + translate(e) + ";\n");
+				if (response.endsWith("CVC> ")) response = response.substring(0,response.length()-5).trim();
+				if (response.startsWith("0bin")) response = "#b" + response.substring(4);
+				else if (response.equals("TRUE")) response = "true";
+				else if (response.equals("FALSE")) response = "false";
+				else if (response.contains("(")) {
+					ISexpr s = (ISexpr)lexer.getToken("\"" + response + "\"");
+					values.add(s);
+					continue;
+				}
+				ISexpr s = ((ISexpr)lexer.getToken(response));
+				if (s != null) values.add(s);
+				else {
+						s = (ISexpr)lexer.getToken("?");
+						values.add(s);
+				}
+			}
+			return new Sexpr.Seq(values);//		try {
+//			String response = solverProcess.sendAndListen("COUNTERMODEL;\n");
+//			Pattern p = Pattern.compile("ASSERT (\\(([a-zA-X_]+) = ([0-9a-zA-Z-_\\.\\(\\)]+)|(NOT )?([a-zA-X_]+))\\;");
+//			Pattern pvalue = Pattern.compile("([0-9]+)|(true)|(false)|0bin([01]+)");
+//			Matcher m = p.matcher(response);
+//			Map<String,String> map = new HashMap<String,String>();
+//			while (m.find()) {
+//				String name = m.group(2);
+//				if (name != null) {
+//					String value = m.group(3);
+//					if (value.startsWith("0bin")) {
+//						value = "#b" + value.substring(4,value.length()-1);
+//					} else {
+//						value = value.substring(0,value.length()-1);						
+//					}
+//					map.put(name,value);
+//				} else {
+//					name = m.group(5);
+//					map.put(name,m.group(4)==null?"true":"false");
+//				}
+//			}
+//			List<ISexpr> values = new LinkedList<ISexpr>();
+//			org.smtlib.sexpr.Lexer lexer = new org.smtlib.sexpr.Lexer(smtConfig,null);
+//			for (IExpr e: terms) {
+//				String v = map.get(e.toString());
+//				if (v == null) {
+//					ISexpr s = (ISexpr)lexer.getToken("?");
+//					values.add(s);
+//					continue; // FIXME - should have an error
+//				}
+//				ISexpr s = ((ISexpr)lexer.getToken(v));
+//				if (s != null) values.add(s);
+//				else {
+//						s = (ISexpr)lexer.getToken("\"" + v + "\"");
+//						values.add(s);
+//				}
+//			}
+//			return new Sexpr.Seq(values);
+		} catch (IOException e) {
+			return smtConfig.responseFactory.error("Error writing to CVC solver: " + e);
+		} catch (IVisitor.VisitorException e) {
+			return smtConfig.responseFactory.error("Error writing to CVC solver: " + e);
+		} catch (IParser.ParserException e) {
+			return smtConfig.responseFactory.error("Error writing to CVC solver: " + e);
+		}
+	}
+
+
 
 	public String translate(IExpr expr) throws IVisitor.VisitorException {
 		return expr.accept(new Translator(typemap,smtConfig));
@@ -436,8 +594,13 @@ public class Solver_cvc extends Solver_test implements ISolver {
 		fcnNames.put("let","LET");
 		
 		fcnNames.put("bvadd","BVPLUS"); // needs a first argument of the number of bits
+		fcnNames.put("bvsub","BVSUB"); // needs a first argument of the number of bits
 		fcnNames.put("bvmul","BVMULT"); // needs a first argument of the number of bits
 		fcnNames.put("bvneg","BVUMINUS");
+		fcnNames.put("bvnand","BVNAND");
+		fcnNames.put("bvnor","BVNOR");
+		fcnNames.put("bvxor","BVXOR");
+		fcnNames.put("bvxnor","BVXNOR");
 		fcnNames.put("bvnot","~");
 		fcnNames.put("bvand","&"); // infix
 		fcnNames.put("bvor","|"); // infix
@@ -447,6 +610,9 @@ public class Solver_cvc extends Solver_test implements ISolver {
 		fcnNames.put("bvlshr",">>"); // infix// FIXME
 		fcnNames.put("concat","@"); // infix
 		fcnNames.put("bvult","BVLT");
+		fcnNames.put("bvule","BVLE");
+		fcnNames.put("bvugt","BVGT");
+		fcnNames.put("bvuge","BVGE");
 		fcnNames.put("extract","extract");
 		
 		logicNames.add("or");
@@ -630,9 +796,6 @@ public class Solver_cvc extends Solver_test implements ISolver {
 			String newName = e.head().headSymbol().accept(this);
 			int length = e.args().size();
 			// FIXME - should we be doing these comparisons with strings?
-			if (e.head() instanceof ParameterizedIdentifier && oldName.equals(newName)) {
-				throw new VisitorException("Unknown parameterized function symbol: " + oldName, e.pos());
-			}
 			StringBuilder sb = new StringBuilder();
 			try {
 				// Determine if the arguments are formulas or terms
@@ -686,14 +849,6 @@ public class Solver_cvc extends Solver_test implements ISolver {
 					sb.append(")");
 				} else if (newName.equals("=>")) {
 					sb.append(rightassoc(newName,iter));
-				} else if (newName.equals("BVXOR")) {
-					sb.append(newName);
-					sb.append(iter.next().accept(this));
-					while (iter.hasNext()) {
-						sb.append(",");
-						sb.append(iter.next().accept(this));
-					}
-					sb.append(")");
 				} else if (oldName.equals("=")) {
 					boolean argsAreBool = typemap.get(e.args().get(0)).isBool();
 					boolean needsAnd = length > 2;
@@ -796,15 +951,15 @@ public class Solver_cvc extends Solver_test implements ISolver {
 					IParameterizedIdentifier pid = (IParameterizedIdentifier)e.head();
 					sb.append(iter.next().accept(this));
 					sb.append("[");
-					sb.append(org.smtlib.sexpr.Printer.write(pid.numerals().get(1)));
-					sb.append(":");
 					sb.append(org.smtlib.sexpr.Printer.write(pid.numerals().get(0)));
+					sb.append(":");
+					sb.append(org.smtlib.sexpr.Printer.write(pid.numerals().get(1)));
 					sb.append("]");
 				} else if (symTable.bitVectorTheorySet && (oldName.equals("bvudiv") || oldName.equals("bvurem") || oldName.equals("bvshl") || oldName.equals("bvlshr")
 						|| oldName.equals("bvsge") || oldName.equals("bvsgt") || oldName.equals("bvsle") || oldName.equals("bvslt") 
-						|| oldName.equals("bvuge") || oldName.equals("bvugt") || oldName.equals("bvule") || oldName.equals("bvashr") 
-						|| oldName.equals("bvsmod") || oldName.equals("bvsrem") || oldName.equals("bvsdiv") || oldName.equals("bvsub") 
-						|| oldName.equals("bvcomp") || oldName.equals("bvxnor") || oldName.equals("bvxor") || oldName.equals("bvnor") || oldName.equals("bvnand") 
+						|| oldName.equals("bvashr") 
+						|| oldName.equals("bvsmod") || oldName.equals("bvsrem") || oldName.equals("bvsdiv") 
+						|| oldName.equals("bvcomp") 
 						)) {
 					throw new VisitorException("SMT BitVector function " + oldName + " is not implemented in cvc",e.pos());
 				} else if (symTable.bitVectorTheorySet && ("@".equals(newName) || (oldName.startsWith("bv") && newName != null && newName.charAt(0) != 'B'))) {
@@ -816,7 +971,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 					sb.append("(");
 					sb.append(iter.next().accept(this));
 					sb.append("))");
-				} else if (symTable.bitVectorTheorySet && (newName.equals("BVPLUS") || newName.equals("BVMULT"))) {
+				} else if (symTable.bitVectorTheorySet && (newName.equals("BVPLUS") || newName.equals("BVSUB") || newName.equals("BVMULT"))) {
 					ISort sort = typemap.get(e);
 					int k = 1;
 					if (sort instanceof IExpression) {
@@ -833,6 +988,106 @@ public class Solver_cvc extends Solver_test implements ISolver {
 					sb.append(",");
 					sb.append(iter.next().accept(this));
 					sb.append(")");
+				} else if (symTable.bitVectorTheorySet && newName.equals("sign_extend")) {
+					ISort sort = typemap.get(e);
+					int k = 1;
+					if (sort instanceof IExpression) {
+						IIdentifier id = ((IExpression)sort).family();
+						if (id instanceof IParameterizedIdentifier) {
+							k = ((IParameterizedIdentifier)id).numerals().get(0).intValue();
+						}
+					}
+//					List<INumeral> numerals = ((IParameterizedIdentifier)e.head()).numerals();
+//					int arg = numerals.get(0).intValue();
+					sb.append("SX");
+					sb.append("(");
+					sb.append(iter.next().accept(this));
+					sb.append(",");
+					sb.append(k);
+					sb.append(")");
+				} else if (symTable.bitVectorTheorySet && newName.equals("rotate_left")) {
+					ISort sort = typemap.get(e);
+					int k = 1;
+					if (sort instanceof IExpression) {
+						IIdentifier id = ((IExpression)sort).family();
+						if (id instanceof IParameterizedIdentifier) {
+							k = ((IParameterizedIdentifier)id).numerals().get(0).intValue();
+						}
+					}
+					List<INumeral> numerals = ((IParameterizedIdentifier)e.head()).numerals();
+					int arg = numerals.get(0).intValue();
+					String expr = (iter.next().accept(this));
+
+					sb.append("(");
+					sb.append(expr);
+					sb.append("[");
+					sb.append(k-1);
+					sb.append(":");
+					sb.append(k-arg);
+					sb.append("]@");
+					sb.append(expr);
+					sb.append("[");
+					sb.append(k-arg-1);
+					sb.append(":0])");
+				} else if (symTable.bitVectorTheorySet && newName.equals("rotate_right")) {
+					ISort sort = typemap.get(e);
+					int k = 1;
+					if (sort instanceof IExpression) {
+						IIdentifier id = ((IExpression)sort).family();
+						if (id instanceof IParameterizedIdentifier) {
+							k = ((IParameterizedIdentifier)id).numerals().get(0).intValue();
+						}
+					}
+					List<INumeral> numerals = ((IParameterizedIdentifier)e.head()).numerals();
+					int arg = numerals.get(0).intValue();
+					String expr = (iter.next().accept(this));
+
+					sb.append("(");
+					sb.append(expr);
+					sb.append("[");
+					sb.append(k-1);
+					sb.append(":");
+					sb.append(arg);
+					sb.append("]@");
+					sb.append(expr);
+					sb.append("[");
+					sb.append(arg-1);
+					sb.append(":0])");
+				} else if (symTable.bitVectorTheorySet && newName.equals("zero_extend")) {
+					ISort sort = typemap.get(e);
+					int k = 1;
+					if (sort instanceof IExpression) {
+						IIdentifier id = ((IExpression)sort).family();
+						if (id instanceof IParameterizedIdentifier) {
+							k = ((IParameterizedIdentifier)id).numerals().get(0).intValue();
+						}
+					}
+					List<INumeral> numerals = ((IParameterizedIdentifier)e.head()).numerals();
+					int arg = numerals.get(0).intValue();
+					String expr = (iter.next().accept(this));
+					
+					String addedzeros = "";
+					while (addedzeros.length() < arg) {
+						addedzeros = addedzeros + zeros.substring(zeros.length() - (arg-addedzeros.length()) );
+					}
+					sb.append("(0bin");
+					sb.append(addedzeros);
+					sb.append("@");
+					sb.append(expr);
+					sb.append(")");
+				} else if (symTable.bitVectorTheorySet && newName.equals("repeat")) {
+					List<INumeral> numerals = ((IParameterizedIdentifier)e.head()).numerals();
+					int arg = numerals.get(0).intValue();
+					String expr = (iter.next().accept(this));
+					sb.append("((");
+					sb.append(expr);
+					for (int i=1; i<arg; i++) {
+						sb.append(")@(");
+						sb.append(expr);
+					}
+					sb.append("))");
+				} else if (e.head() instanceof ParameterizedIdentifier) {
+					throw new VisitorException("Unknown parameterized function symbol: " + oldName, e.pos());
 				} else {
 					// usual functional notation
 					sb.append(newName == null ? oldName : newName);
@@ -881,10 +1136,24 @@ public class Solver_cvc extends Solver_test implements ISolver {
 		@Override
 		public String visit(IError e) throws IVisitor.VisitorException {
 			throw new VisitorException("Did not expect a Error token in an expression to be translated",pos(e));
-}
+		}
+		
+		private final static String zeros = "00000000000000000000000000000000000000000000000000";
 
 		@Override
 		public String visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
+			String s = e.headSymbol().toString();
+			if (s.matches("bv[0-9]+")) {
+				int length = e.numerals().get(0).intValue();
+				BigInteger value = new BigInteger(s.substring(2));
+				String bits = value.toString(2);
+				while (bits.length() < length) {
+					int n = zeros.length() - (length - bits.length());
+					if (n < 0) n = 0;
+					bits = zeros.substring(n) + bits;
+				}
+				return "0bin" + bits;
+			}
 			// FIXME - use default printer properly to print Symbol
 			throw new IVisitor.VisitorException("Unsupported parameterized function symbol: " + e.headSymbol().toString(),e.pos());
 		}

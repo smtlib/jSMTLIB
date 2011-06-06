@@ -2,7 +2,7 @@ success
 success
 success
 success
-unknown
+sat
 (get-value)
           ^
 (error "Expected a parenthesized list of terms beginning here")
@@ -12,7 +12,7 @@ unknown
 (get-value x y)
            ^
 (error "Expected a parenthesized list of terms beginning here")
-unsupported
+( true )
 (get-value (x) x)
                ^
 (error "Too many arguments or extraneous material after the command or missing right parenthesis")

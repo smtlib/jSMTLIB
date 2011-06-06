@@ -23,29 +23,15 @@ success
 (error "SMT BitVector function bvurem is not implemented in cvc")
 success
 success
-(assert (= ((_ extract 4 2) z) x))
-           ^^^^^^^^^^^^^^^^^^^
-(error "Unknown parameterized function symbol: extract")
 success
 success
-(assert (= (_ bv17 5) #b10001 ))
-           ^^^^^^^^^^
-(error "Unsupported parameterized function symbol: bv17")
-(assert (= (bvnand x x) (bvneg x)))
-           ^^^^^^^^^^^^
-(error "SMT BitVector function bvnand is not implemented in cvc")
-(assert (= (bvnor x x) (bvneg x)))
-           ^^^^^^^^^^^
-(error "SMT BitVector function bvnor is not implemented in cvc")
-(assert (= (bvsub x x) (_ bv0 3)))
-           ^^^^^^^^^^^
-(error "SMT BitVector function bvsub is not implemented in cvc")
-(assert (= (bvxor x x) (_ bv0 3)))
-           ^^^^^^^^^^^
-(error "SMT BitVector function bvxor is not implemented in cvc")
-(assert (= (bvxnor x x) #b111))
-           ^^^^^^^^^^^^
-(error "SMT BitVector function bvxnor is not implemented in cvc")
+success
+success
+success
+success
+success
+success
+success
 (assert (= (bvcomp x x) #b1))
            ^^^^^^^^^^^^
 (error "SMT BitVector function bvcomp is not implemented in cvc")
@@ -61,15 +47,9 @@ success
 (assert (= (bvsmod x x) x))
            ^^^^^^^^^^^^
 (error "SMT BitVector function bvsmod is not implemented in cvc")
-(assert (bvule x x))
-        ^^^^^^^^^^^
-(error "SMT BitVector function bvule is not implemented in cvc")
-(assert (bvuge x x))
-        ^^^^^^^^^^^
-(error "SMT BitVector function bvuge is not implemented in cvc")
-(assert (not (bvugt x x)))
-             ^^^^^^^^^^^
-(error "SMT BitVector function bvugt is not implemented in cvc")
+success
+success
+success
 (assert (bvsle x x))
         ^^^^^^^^^^^
 (error "SMT BitVector function bvsle is not implemented in cvc")
@@ -85,18 +65,8 @@ success
 (assert (= (bvashr x x) x))
            ^^^^^^^^^^^^
 (error "SMT BitVector function bvashr is not implemented in cvc")
-(assert (= ((_ repeat 2) #b10) #b1010))
-           ^^^^^^^^^^^^^^^^^^^
-(error "Unknown parameterized function symbol: repeat")
-(assert (= ((_ zero_extend 2) #b11) #b0011))
-           ^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Unknown parameterized function symbol: zero_extend")
-(assert (= ((_ sign_extend 2) #b10) #b1110))
-           ^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Unknown parameterized function symbol: sign_extend")
-(assert (= ((_ rotate_left 1) #b0010) #b0100))
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Unknown parameterized function symbol: rotate_left")
-(assert (= ((_ rotate_right 1) #b0011) #b1001))
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Unknown parameterized function symbol: rotate_right")
+success
+success
+success
+success
+success

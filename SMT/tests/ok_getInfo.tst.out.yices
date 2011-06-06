@@ -1,4 +1,4 @@
-"SRI"
-"yices"
-"1.0.28"
-continued-execution
+(:authors "SRI" )
+(:name "yices" )
+(:version "1.0.28" )
+(:error-behavior continued-execution )

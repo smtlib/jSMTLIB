@@ -221,6 +221,7 @@ public class Utils {
 
     /* This runs a type-check only on the given text, in the UI thread. */
     public void runCheck(IFile file, String text) {
+    	if (text.length() > 1000000) return; // FIXME - disable for large text
     	try {
 			SMT smt = new SMT();
 			// FIXME - would rather not clone the configuration and allocate
