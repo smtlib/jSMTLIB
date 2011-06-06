@@ -39,7 +39,7 @@ public class CharSequenceReader extends CharSequenceInfinite implements CharSequ
 	 * @param rdr the Reader that supplies characters on demand
 	 */
 	public CharSequenceReader(/*@NonNull*/Reader rdr) {
-		this(rdr, 10000, 100, 2);
+		this(rdr, 100000, 100, 2);
 	}
 	
 	/** The Reader that supplies characters for the CharSequence */

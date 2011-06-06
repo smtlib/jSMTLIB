@@ -1,4 +1,4 @@
-"Clark Barrett, Cesare Tinelli, and others"
-"CVC3"
-"2.2"
-continued-execution
+(:authors "Clark Barrett, Cesare Tinelli, and others" )
+(:name "CVC3" )
+(:version "2.2" )
+(:error-behavior continued-execution )

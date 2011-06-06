@@ -266,13 +266,13 @@ public class Solver_test implements ISolver {
 		if (logicSet && Utils.INTERACTIVE_MODE.equals(option)) {
 			return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
 		}
-		if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 
-				Utils.PRODUCE_MODELS.equals(option) || 
-				Utils.PRODUCE_PROOFS.equals(option) ||
-				Utils.PRODUCE_UNSAT_CORES.equals(option)) {
-			if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
-			return smtConfig.responseFactory.unsupported();
-		}
+//		if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 
+//				//Utils.PRODUCE_MODELS.equals(option) || 
+//				Utils.PRODUCE_PROOFS.equals(option) ||
+//				Utils.PRODUCE_UNSAT_CORES.equals(option)) {
+//			if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
+//			return smtConfig.responseFactory.unsupported();
+//		}
 		if (Utils.VERBOSITY.equals(option)) {
 			IAttributeValue v = options.get(option);
 			smtConfig.verbose = (v instanceof INumeral) ? ((INumeral)v).intValue() : 0;

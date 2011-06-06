@@ -5,8 +5,10 @@
  */
 package org.smtlib.solvers;
 
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -184,20 +186,77 @@ public class Solver_yices extends Solver_test implements ISolver {
 	}
 
 	@Override
-	public IResponse set_option(IKeyword option, IAttributeValue value) {
-		return super.set_option(option,value);
+	public IResponse set_option(IKeyword key, IAttributeValue value) {
+		String option = key.value();
+		if (Utils.PRINT_SUCCESS.equals(option)) {
+			if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
+				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
+			}
+		}
+		if (logicSet && Utils.INTERACTIVE_MODE.equals(option)) {
+			return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
+		}
+		if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 
+				Utils.PRODUCE_MODELS.equals(option) || 
+				Utils.PRODUCE_PROOFS.equals(option) ||
+				Utils.PRODUCE_UNSAT_CORES.equals(option)) {
+			if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
+			return smtConfig.responseFactory.unsupported();
+		}
+		if (Utils.VERBOSITY.equals(option)) {
+			IAttributeValue v = options.get(option);
+			smtConfig.verbose = (v instanceof INumeral) ? ((INumeral)v).intValue() : 0;
+		} else if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
+			// Actually, v should never be anything but IStringLiteral - that should
+			// be checked during parsing
+			String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : "stderr";
+			if (name.equals("stdout")) {
+				smtConfig.log.diag = System.out;
+			} else if (name.equals("stderr")) {
+				smtConfig.log.diag = System.err;
+			} else {
+				try {
+					FileOutputStream f = new FileOutputStream(name,true); // append
+					smtConfig.log.diag = new PrintStream(f);
+				} catch (java.io.IOException e) {
+					return smtConfig.responseFactory.error("Failed to open or write to the diagnostic output " + e.getMessage(),value.pos());
+				}
+			}
+		} else if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
+			// Actually, v should never be anything but IStringLiteral - that should
+			// be checked during parsing
+			String name = (value instanceof IStringLiteral)?((IStringLiteral)value).value() : "stdout";
+			if (name.equals("stdout")) {
+				smtConfig.log.out = System.out;
+			} else if (name.equals("stderr")) {
+				smtConfig.log.out = System.err;
+			} else {
+				try {
+					FileOutputStream f = new FileOutputStream(name,true); // append
+					smtConfig.log.out = new PrintStream(f);
+				} catch (java.io.IOException e) {
+					return smtConfig.responseFactory.error("Failed to open or write to the regular output " + e.getMessage(),value.pos());
+				}
+			}
+		}
+		options.put(option,value);
+		return smtConfig.responseFactory.success();
 	}
 
 	@Override
-	public IResponse get_option(IKeyword option) {
-		return super.get_option(option);
+	public IResponse get_option(IKeyword key) {
+		String option = key.value();
+		IAttributeValue value = options.get(option);
+		if (value == null) return smtConfig.responseFactory.unsupported();
+		return value;
 	}
 
 	@Override
 	public IResponse get_info(IKeyword key) {
 		String option = key.value();
+		IAttributeValue lit;
 		if (":error-behavior".equals(option)) {
-			return smtConfig.responseFactory.continued_execution(); // FIXME - is this true?
+			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION,null); // FIXME
 		} else if (":status".equals(option)) {
 			return checkSatStatus==null ? smtConfig.responseFactory.unsupported() : checkSatStatus; 
 		} else if (":all-statistics".equals(option)) {
@@ -205,14 +264,16 @@ public class Solver_yices extends Solver_test implements ISolver {
 		} else if (":reason-unknown".equals(option)) {
 			return smtConfig.responseFactory.unsupported(); // FIXME
 		} else if (":authors".equals(option)) {
-			return smtConfig.responseFactory.stringLiteral("SRI");
+			lit = smtConfig.exprFactory.unquotedString("SRI");
 		} else if (":version".equals(option)) {
-			return smtConfig.responseFactory.stringLiteral("1.0.28");
+			lit = smtConfig.exprFactory.unquotedString("1.0.28");
 		} else if (":name".equals(option)) {
-			return smtConfig.responseFactory.stringLiteral("yices");
+			lit = smtConfig.exprFactory.unquotedString("yices");
 		} else {
 			return smtConfig.responseFactory.unsupported();
 		}
+		IAttribute<?> attr = smtConfig.exprFactory.attribute(key,lit,null);
+		return smtConfig.responseFactory.get_info_response(attr);
 	}
 	
 	@Override

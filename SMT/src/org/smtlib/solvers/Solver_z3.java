@@ -14,7 +14,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.StringWriter;
-import java.math.BigInteger;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -428,30 +427,6 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 		}
 		IAttribute<?> attr = smtConfig.exprFactory.attribute(key,lit,null);
 		return smtConfig.responseFactory.get_info_response(attr);
-//		try {
-//			String s = solverProcess.sendAndListen("(get-info ",option,")\n");// FIXME - detect errors
-//			return smtConfig.responseFactory.stringLiteral(s);
-//		} catch (IOException e) {
-//			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
-//		}
-
-//		if (":error-behavior".equals(option)) {
-//			return IResponse.CONTINUED_EXECUTION; // FIXME - is this true?
-//		} else if (":checkSatStatus".equals(option)) {
-//			return checkSatStatus; 
-//		} else if (":all-statistics".equals(option)) {
-//			return smtConfig.responseFactory.unsupported(); // FIXME
-//		} else if (":reason-unknown".equals(option)) {
-//			return smtConfig.responseFactory.unsupported(); // FIXME
-//		} else if (":authors".equals(option)) {
-//			return smtConfig.responseFactory.stringLiteral()("David R. Cok");
-//		} else if (":version".equals(option)) {
-//			return smtConfig.responseFactory.stringLiteral()("0.0");
-//		} else if (":name".equals(option)) {
-//			return smtConfig.responseFactory.stringLiteral()("z3");
-//		} else {
-//			return smtConfig.responseFactory.unsupported();
-//		}
 	}
 	
 	@Override
@@ -588,7 +563,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 		try {
 			solverProcess.sendNoListen("(get-value (");
 			for (IExpr e: terms) {
-				solverProcess.sendNoListen("("); // FIXME - too many parentheses?
+				solverProcess.sendNoListen("(");
 				solverProcess.sendNoListen(" ",translate(e));
 				solverProcess.sendNoListen(")");
 			}

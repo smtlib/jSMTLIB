@@ -74,7 +74,10 @@ public class ProblemListener implements org.smtlib.Log.IListener {
 				return;
 			}
 			Object location = pos.source().location();
-			if (location == null) return; // Can happen with bad text in thte Get Value command
+			if (location == null) {
+				Activator.utils.showMessageInUI(null,"SMT Error", msg);
+				return;
+			}
 			
 			String filename = location.toString(); // Note: locations are not necessarily paths,
 											// but if it is not, I presume we'll just not find it

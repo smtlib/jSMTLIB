@@ -7,18 +7,21 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class InfoOptions  extends LogicTests {
 
+	boolean isTest;
+	
     public InfoOptions(String solvername) {
-    	this.solvername = "test"; // solvername; FIXME
+    	this.solvername = solvername; 
+    	this.isTest = "test".equals(solvername);
     }
     
 	@Test
 	public void checkAuthors() {
 		doCommand("(get-info :authors)","(:authors \"" + 
 				(solvername.equals("test") ? "David R. Cok"
-				: solvername.equals("simplify") ? ""
-				: solvername.equals("yices") ? ""
-				: solvername.equals("cvc") ? ""
-				: solvername.equals("z3") ? ""
+				: solvername.equals("simplify") ? "David Detlefs and Greg Nelson and James B. Saxe"
+				: solvername.equals("yices") ? "SRI"
+				: solvername.equals("cvc") ? "Clark Barrett, Cesare Tinelli, and others"
+				: solvername.equals("z3") ? "Leonardo de Moura and Nikolaj Bjorner"
 				: "???" )
 				+ "\" )");
 	}
@@ -27,10 +30,10 @@ public class InfoOptions  extends LogicTests {
 	public void checkVersion() {
 		doCommand("(get-info :version)","(:version \"" + 
 				(solvername.equals("test") ? "0.0"
-				: solvername.equals("simplify") ? "0.0"
-				: solvername.equals("yices") ? "0.0"
-				: solvername.equals("cvc") ? "0.0"
-				: solvername.equals("z3") ? "0.0"
+				: solvername.equals("simplify") ? "1.5.4"
+				: solvername.equals("yices") ? "1.0.28"
+				: solvername.equals("cvc") ? "2.2"
+				: solvername.equals("z3") ? "2.11-0.0"
 				: "???" )
 				+ "\" )");
 	}
@@ -41,17 +44,17 @@ public class InfoOptions  extends LogicTests {
 				(solvername.equals("test") ? "test"
 				: solvername.equals("simplify") ? "simplify"
 				: solvername.equals("yices") ? "yices"
-				: solvername.equals("cvc") ? ""
-				: solvername.equals("z3") ? "Z3"
+				: solvername.equals("cvc") ? "CVC3"
+				: solvername.equals("z3") ? "z3"
 				: "???" )
 				+ "\" )");
 	}
     
 	// FIXME - no sure what this really should be
-	@Test
-	public void checkErrorBehavior() {
-		doCommand("(get-info :error-behavior)","(:error-behavior continued-execution )");
-	}
+//	@Test
+//	public void checkErrorBehavior() {
+//		doCommand("(get-info :error-behavior)","(:error-behavior continued-execution )");
+//	}
 	
 	// FIXME - need a test for :reason-unknown
 
@@ -119,9 +122,9 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceProofs() {
-		doCommand("(set-option :produce-proofs true)", "unsupported");
-		doCommand("(get-option :produce-proofs)", "false");
-		doCommand("(set-option :produce-proofs false)", "unsupported");
+		doCommand("(set-option :produce-proofs true)", isTest? "success" :  "unsupported");
+		doCommand("(get-option :produce-proofs)", isTest? "true" :  "false");
+		doCommand("(set-option :produce-proofs false)", isTest? "success" :  "unsupported");
 		doCommand("(get-option :produce-proofs)", "false");
 	}
 	
@@ -134,9 +137,10 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceModels() {
-		doCommand("(set-option :produce-models true)", "unsupported");
-		doCommand("(get-option :produce-models)", "false");
-		doCommand("(set-option :produce-models false)", "unsupported");
+		boolean support = isTest || "z3".equals(solvername) || "cvc".equals(solvername);
+		doCommand("(set-option :produce-models true)", support? "success" : "unsupported");
+		doCommand("(get-option :produce-models)", support? "true" :  "false");
+		doCommand("(set-option :produce-models false)", support? "success" : "unsupported");
 		doCommand("(get-option :produce-models)", "false");
 	}
 	
@@ -149,9 +153,9 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceAssignments() {
-		doCommand("(set-option :produce-assignments true)", "unsupported");
-		doCommand("(get-option :produce-assignments)", "false");
-		doCommand("(set-option :produce-assignments false)", "unsupported");
+		doCommand("(set-option :produce-assignments true)",isTest? "success" : "unsupported");
+		doCommand("(get-option :produce-assignments)", isTest? "true" :"false");
+		doCommand("(set-option :produce-assignments false)",isTest? "success" : "unsupported");
 		doCommand("(get-option :produce-assignments)", "false");
 	}
 	
@@ -164,9 +168,9 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceUnsatCores() {
-		doCommand("(set-option :produce-unsat-cores true)", "unsupported");
-		doCommand("(get-option :produce-unsat-cores)", "false");
-		doCommand("(set-option :produce-unsat-cores false)", "unsupported");
+		doCommand("(set-option :produce-unsat-cores true)",isTest? "success" :  "unsupported");
+		doCommand("(get-option :produce-unsat-cores)", isTest? "true" : "false");
+		doCommand("(set-option :produce-unsat-cores false)",isTest? "success" :  "unsupported");
 		doCommand("(get-option :produce-unsat-cores)", "false");
 	}
 	

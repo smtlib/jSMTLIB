@@ -50,8 +50,13 @@ public class Lexer {
 	public Lexer(SMT.Configuration smtConfig, ISource src) {
 		this.smtConfig = smtConfig;
 		this.source = src;
-		this.csr = src.chars();
-		this.matcher = combined.matcher(this.csr);
+		if (src != null) {
+			this.csr = src.chars();
+			this.matcher = combined.matcher(this.csr);
+		} else {
+			this.csr = null;
+			this.matcher = null;
+		}
 	}
 
 	/** A lexical token class for single punctuation characters. */
@@ -331,16 +336,29 @@ public class Lexer {
 		return new Pos(start,end,source);
 	}
 	
+	public ILexToken getToken(String text)  throws ParserException{
+		if (!text.isEmpty() && text.charAt(0) == '"') {
+			return new LexStringLiteral(text,true);
+		}
+		Matcher matcher = combined.matcher(text);
+		return getToken(matcher);
+	}
+	
 	/** Returns the next lexical token, advancing the scanner.
 	 * @throws ParserException if something bad or an intentional abort happens
 	 */
-	public ILexToken getToken() throws  ParserException {
+	public ILexToken getToken() throws ParserException {
 		ILexToken token = null;
 		if (nextToken != null) {
 			token = nextToken;
 			nextToken = null;
 			return token;
 		}
+		return getToken(matcher);
+	}
+	
+	protected ILexToken getToken(Matcher matcher) throws ParserException {
+		ILexToken token = null;
 		if (matcher.lookingAt()) {
 			int end = matcher.end(2);
 			//			System.out.println("MATCHED RANGE " + matcher.start() + " " + matcher.end() + " !" + matcher.group() + "!");
@@ -497,7 +515,7 @@ public class Lexer {
 				throw new SMT.InternalException("Failed to report which regular expression matched: "
 						+ " " + b + " " + e + " " + s);
 			}
-			matcher.region(end,csr.length());
+			if (csr != null) matcher.region(end,csr.length());
 		} else {
 			// FIXME - there is a problem if we have spaces at the very beginning of a file, prior to the LP
 			// the matcher does not match???

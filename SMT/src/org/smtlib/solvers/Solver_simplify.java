@@ -20,6 +20,7 @@ import org.smtlib.ICommand.Ideclare_fun;
 import org.smtlib.*;
 import org.smtlib.IExpr.IAsIdentifier;
 import org.smtlib.IExpr.IAttribute;
+import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.IAttributedExpr;
 import org.smtlib.IResponse.IAssertionsResponse;
 import org.smtlib.IResponse.IAssignmentResponse;
@@ -243,8 +244,11 @@ public class Solver_simplify extends Solver_test implements ISolver {
 	}
 
 	@Override
-	public IResponse get_option(IKeyword option) {
-		return super.get_option(option);
+	public IResponse get_option(IKeyword key) {
+		String option = key.value();
+		IAttributeValue value = options.get(option);
+		if (value == null) return smtConfig.responseFactory.unsupported();
+		return value;
 	}
 
 	@Override
@@ -307,6 +311,28 @@ public class Solver_simplify extends Solver_test implements ISolver {
 //	public IResponse get_unsat_core() {
 //		return smtConfig.responseFactory.error("The get-proof command is not implemented for simplify"); // FIXME - get-proof for simplify
 //	}
+
+	@Override
+	public IResponse get_value(IExpr... terms) {
+		TypeChecker tc = new TypeChecker(symTable);
+		try {
+			for (IExpr term: terms) {
+				term.accept(tc);
+			}
+		} catch (IVisitor.VisitorException e) {
+			tc.result.add(smtConfig.responseFactory.error(e.getMessage()));
+		} finally {
+			if (!tc.result.isEmpty()) return tc.result.get(0); // FIXME - report all errors?
+		}
+		// FIXME - do we really want to call get-option here? it involves going to the solver?
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS,null)))) {
+			return smtConfig.responseFactory.error("The get-value command is only valid if :produce-models has been enabled");
+		}
+		if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
+			return smtConfig.responseFactory.error("The get-value command is only valid immediately after check-sat returned sat or unknown");
+		}
+		return smtConfig.responseFactory.unsupported();
+	}
 
 
 
