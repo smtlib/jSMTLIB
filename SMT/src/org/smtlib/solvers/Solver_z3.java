@@ -45,6 +45,9 @@ import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.impl.Pos;
+import org.smtlib.sexpr.ISexpr;
+import org.smtlib.sexpr.Sexpr;
+import org.smtlib.sexpr.ISexpr.ISeq;
 import org.smtlib.sexpr.Parser;
 
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into Z3 commands */
@@ -567,8 +570,22 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 				solverProcess.sendNoListen(" ",translate(e));
 				solverProcess.sendNoListen(")");
 			}
-			String response = solverProcess.sendAndListen("))\n");
-			return parseResponse(response);
+			// FIXME - z3 does not make pairs of the result
+			String r = solverProcess.sendAndListen("))\n");
+			IResponse response = parseResponse(r);
+			if (response instanceof ISeq) {
+				List<ISexpr> valueslist = new LinkedList<ISexpr>();
+				Iterator<ISexpr> iter = ((ISeq)response).sexprs().iterator();
+				for (IExpr e: terms) {
+					if (!iter.hasNext()) break;
+					List<ISexpr> values = new LinkedList<ISexpr>();
+					values.add(new Sexpr.Expr(e));
+					values.add(iter.next());
+					valueslist.add(new Sexpr.Seq(values));
+				}	
+				return new Sexpr.Seq(valueslist);
+			}
+			return response;
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
 		} catch (IVisitor.VisitorException e) {

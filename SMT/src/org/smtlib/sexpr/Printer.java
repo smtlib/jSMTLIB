@@ -612,7 +612,10 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	public Void visit(ISexpr.ISeq e) throws IVisitor.VisitorException {
 		try {
 			w.append("(");
-			for (ISexpr expr: e.sexprs()) { w.append(" "); expr.accept(this); } 
+			for (ISexpr expr: e.sexprs()) { 
+				w.append(" "); 
+				expr.accept(this); 
+			} 
 			w.append(" )");
 		} catch (IOException ex) { throw new IVisitor.VisitorException(ex); }
 		return null;

@@ -471,9 +471,11 @@ public class Solver_cvc extends Solver_test implements ISolver {
 		}
 		try {
 			String response = solverProcess.sendAndListen("COUNTERMODEL;\n");
-			List<ISexpr> values = new LinkedList<ISexpr>();
+			List<ISexpr> valueslist = new LinkedList<ISexpr>();
 			org.smtlib.sexpr.Lexer lexer = new org.smtlib.sexpr.Lexer(smtConfig,null);
 			for (IExpr e: terms) {
+				List<ISexpr> values = new LinkedList<ISexpr>();
+				values.add(new Sexpr.Expr(e));
 				response = solverProcess.sendAndListen("TRANSFORM " + translate(e) + ";\n");
 				if (response.endsWith("CVC> ")) response = response.substring(0,response.length()-5).trim();
 				if (response.startsWith("0bin")) response = "#b" + response.substring(4);
@@ -490,8 +492,10 @@ public class Solver_cvc extends Solver_test implements ISolver {
 						s = (ISexpr)lexer.getToken("?");
 						values.add(s);
 				}
+				valueslist.add(new Sexpr.Seq(values));
 			}
-			return new Sexpr.Seq(values);//		try {
+			return new Sexpr.Seq(valueslist);
+//		try {
 //			String response = solverProcess.sendAndListen("COUNTERMODEL;\n");
 //			Pattern p = Pattern.compile("ASSERT (\\(([a-zA-X_]+) = ([0-9a-zA-Z-_\\.\\(\\)]+)|(NOT )?([a-zA-X_]+))\\;");
 //			Pattern pvalue = Pattern.compile("([0-9]+)|(true)|(false)|0bin([01]+)");

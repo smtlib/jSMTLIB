@@ -390,7 +390,7 @@ public class Solver_test implements ISolver {
 			return smtConfig.responseFactory.error("The logic must be set before a define-fun command is issued");
 		}
 		String encodedName = encode(cmd.symbol());
-		List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.parameters(),cmd.resultSort(),cmd.expression(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
+		List<IResponse> list = TypeChecker.checkFcn(symTable, typemap, cmd.symbol(), cmd.parameters(),cmd.resultSort(),cmd.expression(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
 		if (list.isEmpty()) {
 			ISort args[] = new ISort[cmd.parameters().size()];
 			int i = 0;
