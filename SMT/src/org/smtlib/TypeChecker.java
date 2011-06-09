@@ -112,8 +112,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		
 	}
 
-	public static List<IResponse> checkFcn(SymbolTable symTable, IIdentifier id, List<IDeclaration> params, ISort result, IExpr expr, IPos pos) {
-		TypeChecker f = new TypeChecker(symTable,null);
+	public static List<IResponse> checkFcn(SymbolTable symTable, Map<IExpr,ISort> typemap, IIdentifier id, List<IDeclaration> params, ISort result, IExpr expr, IPos pos) {
+		TypeChecker f = new TypeChecker(symTable,typemap);
 		symTable.push();
 		try {
 			for (IDeclaration p : params) {
@@ -125,7 +125,9 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			}
 			if (f.result.isEmpty()) {
 				ISort res = result.accept(f);
-				if (res != null) res = expr.accept(f);
+				if (res != null) {
+					res = expr.accept(f);
+				}
 				if (res != null && !res.equals(result)) {
 					f.error("Declared sort of the result does not match the sort of the expression: "
 							+ symTable.smtConfig.defaultPrinter.toString(result) + " vs. " 

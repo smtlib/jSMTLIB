@@ -12,7 +12,7 @@ sat
 (get-value x y)
            ^
 (error "Expected a parenthesized list of terms beginning here")
-( true )
+( ( x true ) )
 (get-value (x) x)
                ^
 (error "Too many arguments or extraneous material after the command or missing right parenthesis")

@@ -5,11 +5,15 @@
  */
 package org.smtlib.sexpr;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.smtlib.IExpr;
+import org.smtlib.IPrinter;
 import org.smtlib.IVisitor;
+import org.smtlib.IVisitor.VisitorException;
 import org.smtlib.impl.Pos;
 
 /** This is the root class for S-expressions in the concrete syntax */
@@ -130,5 +134,46 @@ public abstract class Sexpr extends Pos.Posable implements ISexpr {
 		public <TT> TT accept(IVisitor<TT> v) throws IVisitor.VisitorException {
 			return v.visit(this);
 		}
+	}
+	
+	// FIXME - this class is temporary until we have a way to convert an IExpr to an ISexpr
+	public static class Expr extends Sexpr {
+
+		@Override
+		public String kind() {
+			return "Expr";
+		}
+
+		@Override
+		public boolean isOK() {
+			return true;
+		}
+
+		@Override
+		public boolean isError() {
+			return false;
+		}
+
+		@Override
+		public <T> T accept(IVisitor<T> v) throws VisitorException {
+			try {
+				// FIXME - this is a temporary fix until we can convert IExpr to SExpr
+				if (v instanceof Printer) { ((Printer)v).writer().write(this.toString()); }
+				return null;
+			} catch (IOException e) {
+				return null;
+			}
+		}
+		
+		public IExpr expr;
+		
+		public Expr(IExpr e) {
+			expr = e;
+		}
+		
+		public String toString() {
+			return expr.toString();
+		}
+		
 	}
 }
