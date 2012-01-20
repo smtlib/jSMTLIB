@@ -38,7 +38,7 @@ public interface IResponse extends IAccept {
 	}
 
 	
-	/** The interface representing the factory for IResponse instances */
+	/** The interface representing the factory for IResponse instances */ // TODO _ more restrictive return types?
 	public static interface IFactory {
 		IError error(String msg);
 		IError error(String msg, /*@Nullable*//*@ReadOnly*/ IPos pos);
@@ -53,7 +53,7 @@ public interface IResponse extends IAccept {
 		IResponse memout();
 		IResponse incomplete();
 		/** Returns a constant response with the given canonical name */
-		IResponse constant(String id);
+		IResponse constant(String id); // FIXME - use abstract keyword?
 		/** The argument has no SMT-LIB escapes and no enclosing quotes */
 		IResponse stringLiteral(String value);
 		IResponse numericLiteral(int value);

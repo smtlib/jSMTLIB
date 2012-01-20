@@ -21,6 +21,7 @@ import org.smtlib.IResponse.IAttributeList;
 import org.smtlib.IResponse.IError;
 import org.smtlib.IResponse.IPair;
 
+/** This class holds subclasses that are implementations of the various IResponse interfaces. */
 public class Response {
 	
 	final static String ERROR = "error";
@@ -37,14 +38,18 @@ public class Response {
 	final static public SMTExpr.Symbol TIMEOUT = new SMTExpr.Symbol("timeout"); // TODO - timeout is not standard SMTLIB
 	final static public SMTExpr.Symbol INCOMPLETE = new SMTExpr.Symbol("incomplete"); // TODO - incomplete is not standard SMTLIB
 	
+	/** Implements the IResponse.IPair interface */
 	static public class Pair<T1,T2> implements IResponse.IPair<T1,T2>{
 		public Pair(T1 first, T2 second) { this.first = first; this.second = second; }
 		public T1 first;
 		public T2 second;
+		@Override
 		public T1 first() { return first; }
+		@Override
 		public T2 second() { return second; }
 	}
 	
+	/** Implements the IResponse.IFactory interface */
 	static public class Factory implements IResponse.IFactory {
 		
 		SMT.Configuration smtConfig;
@@ -110,7 +115,7 @@ public class Response {
 			return new Pair<T1,T2>(first,second);
 		}
 
-		// The response to get-option is a literal or symbol or s-expression
+		// The response to get-option is a literal or symbol or s-expression  // FIXME
 //		@Override
 //		public IResponse get_option_response();
 		
@@ -139,6 +144,7 @@ public class Response {
 
 	}
 	
+	/** Implements the IResponse.IError interface */
 	static public class Error extends Pos.Posable implements IResponse.IError, IPosable {
 		
 		private String msg;
@@ -174,20 +180,20 @@ public class Response {
 		/** Setting the textual position of the command */
 		public <T extends IPosable> T setPos(T t, /*@Nullable*/ IPos p) { t.setPos(p); return t; }
 
-		// FIXME - equals, hashCode
-
 		@Override
 		public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
 			return v.visit(this);
 		}
 	}
 
+	/** Implements the IResponse.IAssignmentResponse interface */
 	static public class AssignmentResponse implements IResponse.IAssignmentResponse {
 		private List<IPair<IExpr.ISymbol,Boolean>> assignments = new LinkedList<IPair<IExpr.ISymbol,Boolean>>();
 		public List<IPair<IExpr.ISymbol,Boolean>> assignments() { return assignments; }
 		public AssignmentResponse(List<IPair<IExpr.ISymbol,Boolean>> assignments) {
 			this.assignments = assignments;
 		}
+		
 		public boolean isOK() { return false; }
 		public boolean isError() { return false; }
 		public IPos pos() { return null; }
@@ -201,18 +207,18 @@ public class Response {
 		}
 	}
 
+	/** Implements the IResponse.IValueResponse interface */
 	static public class ValueResponse implements IResponse.IValueResponse {
 		private List<IPair<IExpr,IExpr>> values = new LinkedList<IPair<IExpr,IExpr>>();
 		public List<IPair<IExpr,IExpr>> values() { return values; }
 		public ValueResponse(List<IPair<IExpr,IExpr>> values) {
 			this.values = values;
 		}
+		
 		@Override
 		public boolean isOK() { return false; }
 		@Override
 		public boolean isError() { return false; }
-//		@Override
-//		public IPos pos() { return null; }
 
 		@Override
 		public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
@@ -220,6 +226,7 @@ public class Response {
 		}
 	}
 
+	/** Implements the IResponse.IAssertionsResponse interface */
 	static public class AssertionsResponse implements IResponse.IAssertionsResponse {
 		private List<IExpr> assertions = new LinkedList<IExpr>();
 		public List<IExpr> assertions() { return assertions; }
@@ -231,8 +238,6 @@ public class Response {
 		public boolean isOK() { return false; }
 		@Override
 		public boolean isError() { return false; }
-//		@Override
-//		public IPos pos() { return null; }
 
 		@Override
 		public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
@@ -240,6 +245,7 @@ public class Response {
 		}
 	}
 
+	/** Implements the IResponse.IUnsatCoreResponse interface */
 	static public class UnsatCoreResponse implements IResponse.IUnsatCoreResponse {
 		private List<ISymbol> names = new LinkedList<ISymbol>();
 		public List<ISymbol> names() { return names; }
@@ -251,8 +257,6 @@ public class Response {
 		public boolean isOK() { return false; }
 		@Override
 		public boolean isError() { return false; }
-//		@Override
-//		public IPos pos() { return null; }
 
 		@Override
 		public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
@@ -260,7 +264,9 @@ public class Response {
 		}
 	}
 
+	/** Implements the IResponse.IProofResponse interface */
 	static public class ProofResponse implements IResponse.IProofResponse {
+		// TODO - no implementation for proofs as yet
 		public ProofResponse() {}
 		public Object proof() { return null; }
 		public boolean isOK() { return false; }

@@ -31,7 +31,7 @@ public interface ISexpr extends IPosable, IAttributeValue, IAccept {
 	}
 	
 	/** A factory to create components of S-expressions */
-	public static interface IFactory {
+	public static interface IFactory {  // FIXME - not used; is this class in the correct place?
 		ISeq createSeq(List<ISexpr> sexprs);
 		<T> IToken<T> createToken(T value);
 	}

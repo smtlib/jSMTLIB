@@ -22,4 +22,6 @@ public interface ITheory extends IAccept {
 	// TODO: Use IKeyword for String?
 	/** The value of an attribute; returns null if the attribute does not exist for this theory */
 	/*@Nullable*/IAttributeValue value(String keyword);
+	
+	// TODO - do we export the pre-defined symbols?
 }

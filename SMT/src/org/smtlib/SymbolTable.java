@@ -45,7 +45,7 @@ public class SymbolTable {
 	
 	/* The tops of the stack are at the beginning of the lists.  The table manages a stack of
 	 * scopes, each stack element holds a scope.  Within a scope, a symbol can be 
-	 * defined with with different arities and different sort arguments. */
+	 * defined with various different arities (and multiple mappings for a given arity) and different sort arguments. */
 	
 	//@ private invariant sorts = sortStack.get(0);
 	/** The stack of Sort declaration scopes */
@@ -160,15 +160,18 @@ public class SymbolTable {
 		symStack.add(0,names=new HashMap<IIdentifier,Map<Integer,List<Entry>>>());
 	}
 	
+	/** Combines the top two symbol scopes, removing the current top scope; presumes that there
+	 * is no shadowing of symbols; the top sort scope is discarded.
+	 */
 	public void merge() {
 		Map<IIdentifier,Map<Integer,List<SymbolTable.Entry>>> oldnames = names;
 		pop();
-		// Put everything in symStack onto the current top
+		// Put everything in oldnames into the current top
 		for (Map<Integer,List<SymbolTable.Entry>> e: oldnames.values()) {
 			for (List<SymbolTable.Entry> ee: e.values()) {
 				for (SymbolTable.Entry entry: ee) {
 					// We have already checked that there is no shadowing
-					add(entry,false);
+					add(entry);
 				}
 			}
 		}
@@ -200,7 +203,13 @@ public class SymbolTable {
 		sorts = sortStack.get(0);
 	}
 	
-	// FIXME - document
+	/** Adds the given symbol as a sort to the top scope of the sort table; 
+	 * returns false if the given symbol is already in the top scope (and the sort table is unchanged);
+	 * returns true if the symbol is not already in the top scope.
+	 * @param symbol the symbol to add
+	 * @return true if successfully added, false if alrady present
+	 */
+	
 	public boolean addSortParameter(ISymbol symbol) {
 		ISort.IDefinition previous = sorts.put(symbol, smtConfig.sortFactory.createSortParameter(symbol));
 		if (previous == null) return true;
@@ -212,7 +221,7 @@ public class SymbolTable {
 	 * 
 	 * @param identifier the identifier of the new Sort definition
 	 * @param arity the arity of the new Sort definition
-	 * @return true if successfully added, false if there already is a sort by this identifier
+	 * @return true if successfully added, false if there already is a sort with this identifier
 	 */
 	public boolean addSortDefinition(IIdentifier identifier, INumeral arity) {
 		// We don't allow shadowing of previous sort definitions, so check for them
@@ -249,6 +258,8 @@ public class SymbolTable {
 			ISort.IDefinition s = set.get(name);
 			if (s != null) return s;
 		}
+		
+		// FIXME _ improve so this is not hard coded
 		if (name instanceof IParameterizedIdentifier) {
 			IParameterizedIdentifier pf = (IParameterizedIdentifier)name;
 			if (bitVectorTheorySet && pf.headSymbol().toString().equals("BitVec")) { // FIXME -  toString() or value()?
@@ -287,7 +298,6 @@ public class SymbolTable {
 	}
 
 	/** Lookup the Symbol with the given identifier, returning a Map of arity to List&lt;Entry&gt;.
-	 * If the symbol has more than one arity, an arbitrary
 	 * @param name the name of the Symbol
 	 * @return null if not found, the Sort of the Symbol if found
 	 */
@@ -299,14 +309,15 @@ public class SymbolTable {
 		return null;
 	}
 	
-	/** Lookup a Symbol with the given name and argument Sorts.
+	// FIXME - review
+	/** Lookup a Symbol with the given name and argument Sorts and result Sort.
 	 * @param name the name to find
 	 * @param argSorts the Sorts of the arguments
 	 * @return the result Sort
 	 */
 	// The background scope may overload an identifier with definitions of the same or
-	// different arity.
-	// However, if added scopes, no overloading is allowed of any arity in any scope.
+	// different arity (but different sort). However, in non-background scopes, no 
+	// overloading is allowed of any arity in any scope.
 	/*@Nullable*/
 	public Entry lookup(IIdentifier name, List<ISort> argSorts, ISort resultSort) {
 		Entry found = null;
@@ -397,6 +408,7 @@ public class SymbolTable {
 		return null;
 	}
 	
+	/** Returns true if the entry contains a value for the given attribute name */
 	private boolean hasAttribute(Entry entry, String attr) {
 		for (IExpr.IAttribute<?> a: entry.attributes) {
 			if (a.keyword().value().equals(attr)) return true;
@@ -404,19 +416,11 @@ public class SymbolTable {
 		return false;
 	}
 	
-	/** Adds the given entry to the symbol table; if the identifier in the entry is already in the table,
-	 * the method returns false (without changing the symbol table); otherwise the entry is added and the
-	 * method returns true
-	 * 
+	/** Adds the given entry to the symbol table.
 	 * @param entry the Entry to add
 	 */
 	public void add(Entry entry) {
-		// Check if the entry is already present in any scope;
-		// return false if it is.  Allow overloading if logicSet is false
-//		for (Map<IIdentifier,Map<Integer,List<Entry>>> set: symStack) {
-//			if (set.get(entry.name) != null) return false;
-//		}
-		// Symbol is not present so add it
+
 		Map<Integer,List<Entry>> arityMap = names.get(entry.name);
 		if (arityMap == null) {
 			arityMap = new HashMap<Integer,List<Entry>>();
@@ -430,6 +434,12 @@ public class SymbolTable {
 		entrylist.add(entry);
 	}
 	
+	/** Adds the given entry to the symbol table; if overload is false and the identifier in the entry is already in the table,
+	 * the method returns false (without changing the symbol table); otherwise the entry is added and the
+	 * method returns true
+	 * 
+	 * @param entry the Entry to add
+	 */
 	public boolean add(Entry entry, boolean overload) {
 		// Check if the entry is already present in any scope;
 		// return false if it is.  Allow overloading if the second argument is true.
@@ -440,14 +450,8 @@ public class SymbolTable {
 				}
 			}
 		}
-		// Symbol is not present so add it
+		// Symbol is not present or overloading is allowed, so add it
 		add(entry);
-//		Map<Integer,List<Entry>> arityMap = names.get(entry.name);
-//		if (arityMap == null) {
-//			arityMap = new HashMap<Integer,List<Entry>>();
-//			names.put(entry.name,arityMap);
-//		}
-//		arityMap.put(entry.sort.argSorts().length,entry);
 		return true;
 	}
 }

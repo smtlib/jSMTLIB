@@ -27,17 +27,17 @@ public class Factory implements IParser.IFactory {
 	}
 	
 	@Override 
-	public Pos.Source createSource(CharSequence cs, /*@Nullable*/String filepath) {  // FIXME - String or File for file?
-		return new Pos.Source(cs, filepath);
+	public Pos.Source createSource(CharSequence cs, /*@Nullable*/String location) {
+		return new Pos.Source(cs, location);
 	}
 
 	@Override 
-	public Pos.Source createSource(SMT.Configuration smtConfig, java.io.File file) throws java.io.FileNotFoundException {  // FIXME - String or File for file?
+	public Pos.Source createSource(SMT.Configuration smtConfig, java.io.File file) throws java.io.FileNotFoundException {
 		return new Pos.Source(smtConfig, file);
 	}
 	
 	@Override 
-	public Pos.Source createSource(SMT.Configuration smtConfig, InputStream file, Object location) {  // FIXME - String or File for file?
+	public Pos.Source createSource(SMT.Configuration smtConfig, InputStream file, Object location) {
 		return new Pos.Source(smtConfig, file, location);
 	}
 	

@@ -37,7 +37,7 @@ import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IExpr.ISymbol.ILetParameter;
 import org.smtlib.IPos.IPosable;
-import org.smtlib.ISort.IExpression;
+import org.smtlib.ISort.IApplication;
 import org.smtlib.ISort.IParameter;
 import org.smtlib.impl.SMTExpr.AsIdentifier;
 import org.smtlib.impl.SMTExpr.Attribute;
@@ -57,7 +57,7 @@ import org.smtlib.impl.SMTExpr.ParameterizedIdentifier;
 import org.smtlib.impl.SMTExpr.StringLiteral;
 import org.smtlib.impl.SMTExpr.Symbol;
 import org.smtlib.impl.Sort.Abbreviation;
-import org.smtlib.impl.Sort.Expression;
+import org.smtlib.impl.Sort.Application;
 import org.smtlib.impl.Sort.Family;
 import org.smtlib.impl.Sort.FcnSort;
 import org.smtlib.impl.Sort.Parameter;
@@ -74,7 +74,6 @@ public class Factory implements IExpr.IFactory, ISort.IFactory {
 	 * @param config the configuration object to initialize
 	 */
 	public static void initFactories(SMT.Configuration config) {
-		// FIXME - put everything into the Factory?
 		config.responseFactory = new Response.Factory(config);
 		Factory f = new Factory();
 		config.sortFactory = f;
@@ -88,136 +87,6 @@ public class Factory implements IExpr.IFactory, ISort.IFactory {
 	 * receiver object without the type changing. */
 	<T extends IPosable> T setPos(/*@Nullable*//*@ReadOnly*/IPos pos, T t) { t.setPos(pos); return t; }
 	
-	@Override
-	public Numeral numeral(String v, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos,new Numeral(new BigInteger(v)));
-	}
-
-	@Override
-	public Numeral numeral(long v) {
-		return setPos(null,new Numeral(BigInteger.valueOf(v)));
-	}
-
-	@Override
-	public Decimal decimal(String v, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos,new Decimal(new BigDecimal(v)));
-	}
-
-	@Override
-	public StringLiteral quotedString(String v, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos,new StringLiteral(v,true));
-	}
-
-	@Override
-	public StringLiteral unquotedString(String v, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos,new StringLiteral(v,false));
-	}
-
-	@Override
-	public Keyword keyword(String v, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos,new Keyword(v));
-	}
-
-	@Override
-	public BinaryLiteral binary(String v, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos,new BinaryLiteral(v));
-	}
-
-	@Override
-	public HexLiteral hex(String v, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos,new HexLiteral(v));
-	}
-
-	@Override
-	public Symbol symbol(String v, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos,new Symbol(v));
-	}
-
-	@Override
-	public Attribute<?> attribute(IKeyword k, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		Attribute<?> a = new Attribute<ILiteral>(k,null); // TODO: Just using ILiteral because we have to use some type
-		a.setPos(pos);
-		return a;
-	}
-
-	@Override
-	public <T extends IAttributeValue> Attribute<T> attribute(IKeyword k, T value, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		Attribute<T> a = new Attribute<T>(k,value);
-		a.setPos(pos);
-		return a;
-	}
-
-	@Override
-	public AttributedExpr attributedExpr(IExpr e, List<IAttribute<?>> attr, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos,new AttributedExpr(e,attr));
-	}
-
-	@Override
-	public <T extends IAttributeValue> AttributedExpr attributedExpr(IExpr e, IKeyword key, T value, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		IAttribute<?> a = attribute(key,value,pos);
-		List<IAttribute<?>> list = new LinkedList<IAttribute<?>>();
-		list.add(a);
-		return setPos(pos,new AttributedExpr(e,list));
-	}
-
-    @Override
-    public FcnExpr fcn(IQualifiedIdentifier id, List<IExpr> args, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-        return setPos(pos,new FcnExpr(id,args));
-    }
-
-    @Override
-    public FcnExpr fcn(IQualifiedIdentifier id, IExpr... args) {
-        List<IExpr> arglist = new LinkedList<IExpr>();
-        for (IExpr a: args) arglist.add(a);
-        return new FcnExpr(id,arglist);
-    }
-
-	@Override
-	public ParameterizedIdentifier id(ISymbol symbol, List<INumeral> nums, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos,new ParameterizedIdentifier(symbol,nums));
-	}
-	
-	@Override
-	public AsIdentifier id(IIdentifier identifier, ISort qualifier, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos,new AsIdentifier(identifier,qualifier));
-	}
-	
-	@Override
-	public Let let(List<IBinding> params, IExpr e, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos, new Let(params,e));
-	}
-	
-	@Override
-	public Declaration declaration(ISymbol.IParameter symbol, ISort sort, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos, new Declaration(symbol,sort));
-	}
-
-	@Override
-	public Binding binding(ISymbol.ILetParameter symbol, IExpr expr, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos, new Binding(symbol,expr));
-	}
-
-	@Override
-	public Forall forall(List<IDeclaration> params, IExpr e, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos, new Forall(params,e));
-	}
-
-	@Override
-	public Exists exists(List<IDeclaration> params, IExpr e, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos, new Exists(params,e));
-	}
-	
-	@Override
-	public IScript script(/*@Nullable*/IStringLiteral filename, /*@Nullable*/List<ICommand> commands) {
-		return new Script(filename,commands);
-	}
-
-
-	@Override
-	public SMTExpr.Error error(String text, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-		return setPos(pos,new SMTExpr.Error(text));
-	}
-
 	// The following methods are those of the Sort factory
 
 	@Override
@@ -232,16 +101,15 @@ public class Factory implements IExpr.IFactory, ISort.IFactory {
 
 	// CAUTION: keeps a reference to the list of ISort parameters
 	@Override
-	public Expression createSortExpression(IIdentifier sortFamily,
+	public Application createSortExpression(IIdentifier sortFamily,
 			List<ISort> exprs) {
-		return new Expression(sortFamily,exprs);
+		return new Application(sortFamily,exprs);
 	}
 
-	// CAUTION: keeps a reference to the list of ISort expressions
 	@Override
-	public Expression createSortExpression(IIdentifier sortFamily,
+	public Application createSortExpression(IIdentifier sortFamily,
 			ISort... exprs) {
-		return new Expression(sortFamily, Arrays.asList(exprs));
+		return new Application(sortFamily, Arrays.asList(exprs));
 	}
 
 	@Override
@@ -256,118 +124,141 @@ public class Factory implements IExpr.IFactory, ISort.IFactory {
 	}
 
 	@Override
-	public IExpression Bool() {
-		IExpression sort = createSortExpression(symbol("Bool",null));
-		return sort;
+	public IApplication Bool() {
+		return Sort.Bool();
 	}
+	
+	// The following methods are those of the IExpr factory
+
+	@Override
+	public IScript script(/*@Nullable*/IStringLiteral filename, /*@Nullable*/List<ICommand> commands) {
+		return new Script(filename,commands);
+	}
+
 
 	@Override
 	public INumeral numeral(String v) {
-		return numeral(v,null);
+		return new Numeral(new BigInteger(v));
+	}
+
+	@Override
+	public Numeral numeral(long v) {
+		return setPos(null,new Numeral(BigInteger.valueOf(v)));
 	}
 
 	@Override
 	public IDecimal decimal(String v) {
-		return decimal(v,null);
+		return new Decimal(new BigDecimal(v));
 	}
 
 	@Override
 	public IStringLiteral unquotedString(String v) {
-		return unquotedString(v,null);
+		return new StringLiteral(v,false);
 	}
 
 	@Override
 	public IStringLiteral quotedString(String v) {
-		return quotedString(v,null);
+		return new StringLiteral(v,true);
 	}
 
 	@Override
 	public IKeyword keyword(String v) {
-		return keyword(v,null);
+		return new Keyword(v);
 	}
 
 	@Override
 	public IBinaryLiteral binary(String v) {
-		return binary(v,null);
+		return new BinaryLiteral(v);
 	}
 
 	@Override
 	public IHexLiteral hex(String v) {
-		return hex(v,null);
+		return new HexLiteral(v);
 	}
 
 	@Override
 	public ISymbol symbol(String v) {
-		return symbol(v,null);
+		return new Symbol(v);
 	}
 
 	@Override
 	public IAttribute<?> attribute(IKeyword k) {
-		return attribute(k,(IPos)null);
+		return new Attribute<ILiteral>(k,null); // Just using ILiteral because we have to use some type
 	}
 
 	@Override
-	public <T extends IAttributeValue> IAttribute<T> attribute(IKeyword k,
-			T value) {
-		return attribute(k,value,null);
+	public <T extends IAttributeValue> IAttribute<T> attribute(IKeyword k, T value) {
+		return new Attribute<T>(k,value);
 	}
 
 	@Override
 	public IAttributedExpr attributedExpr(IExpr e,
 			List<IAttribute<?>> attributes) {
-		return attributedExpr(e,attributes,null);
+		return new AttributedExpr(e,attributes);
 	}
 
 	@Override
 	public <T extends IAttributeValue> IAttributedExpr attributedExpr(IExpr e,
 			IKeyword key, T value) {
-		return attributedExpr(e,key,value,null);
+		IAttribute<T> a = attribute(key,value);
+		List<IAttribute<?>> list = new LinkedList<IAttribute<?>>();
+		list.add(a);
+		return new AttributedExpr(e,list);
 	}
 
 	@Override
 	public IFcnExpr fcn(IQualifiedIdentifier id, List<IExpr> args) {
-		return fcn(id,args,null);
+		List<IExpr> arglist = new LinkedList<IExpr>();
+		for (IExpr a: args) arglist.add(a);
+		return new FcnExpr(id,arglist);
+	}
+
+	@Override
+    public IFcnExpr fcn(IQualifiedIdentifier id, IExpr... args) {
+		List<IExpr> arglist = new LinkedList<IExpr>();
+		for (IExpr a: args) arglist.add(a);
+		return new FcnExpr(id,arglist);
 	}
 
 	@Override
 	public IParameterizedIdentifier id(ISymbol symbol, List<INumeral> num) {
-		return id(symbol,num,null);
+		return new ParameterizedIdentifier(symbol,num);
 	}
 
 	@Override
 	public IAsIdentifier id(IIdentifier identifier, ISort qualifier) {
-		return id(identifier,qualifier,null);
+		return new AsIdentifier(identifier,qualifier);
 	}
 
 	@Override
 	public ILet let(List<IBinding> bindings, IExpr e) {
-		return let(bindings,e,null);
+		return new Let(bindings,e);
 	}
 
 	@Override
 	public IBinding binding(ILetParameter symbol, IExpr expr) {
-		return binding(symbol,expr,null);
+		return new Binding(symbol,expr);
 	}
 
 	@Override
 	public IDeclaration declaration(org.smtlib.IExpr.ISymbol.IParameter symbol,
 			ISort sort) {
-		return declaration(symbol,sort,null);
+		return new Declaration(symbol,sort);
 	}
 
 	@Override
 	public IForall forall(List<IDeclaration> params, IExpr e) {
-		return forall(params,e,null);
+		return new Forall(params,e);
 	}
 
 	@Override
 	public IExists exists(List<IDeclaration> params, IExpr e) {
-		return exists(params,e,null);
+		return new Exists(params,e);
 	}
 
 	@Override
 	public IError error(String text) {
-		return error(text,null);
+		return new SMTExpr.Error(text);
 	}
 
 }

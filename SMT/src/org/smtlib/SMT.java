@@ -162,7 +162,7 @@ public class SMT {
 		 */
 		public String[] commandExtensionPrefixes = { "org.smtlib.command.C_","org.smtlib.ext.C_"};
 		
-		/** The path on which to find logic and theory definitions */
+		/** The path on which to find logic and theory definitions - currently a single directory */
 		public /*@Nullable*/ String logicPath = null;
 		
 		/** The prompt to use when needing new input from the user in an interactive mode. */
@@ -182,6 +182,9 @@ public class SMT {
 		public IParser.IFactory smtFactory;
 		
 		public /*@LazyNonNull*/IPrinter defaultPrinter = null;
+		
+		// FIXME - document
+		public int initialInputBufferSize = 1000000;
 		
 		/** Holds a mapping from command name to the class implementing the command */
 		public Map<String,Class<? extends ICommand>> commands = new HashMap<String,Class<? extends ICommand>>();
@@ -437,7 +440,7 @@ public class SMT {
 
 		if (restart || solver == null) solver = startSolver(smtConfig, smtConfig.solvername, smtConfig.executable);
 		if (solver == null) return 1;
-		IKeyword printSuccessKW = smtConfig.exprFactory.keyword(Utils.PRINT_SUCCESS,null);
+		IKeyword printSuccessKW = smtConfig.exprFactory.keyword(Utils.PRINT_SUCCESS);
 		if (smtConfig.nosuccess) {
 			solver.set_option(printSuccessKW,Utils.FALSE);
 		}
@@ -629,9 +632,10 @@ public class SMT {
 		
 		props = readProperties();
 
-		if (options.logicPath == null) {
-			options.logicPath = props.getProperty(Utils.PROPS_LOGIC_PATH);
-			if (options.logicPath != null && options.logicPath.trim().length() == 0) options.logicPath = null;
+		if (options.logicPath == null) options.logicPath = props.getProperty(Utils.PROPS_LOGIC_PATH);
+		if (options.logicPath != null) {
+			options.logicPath = options.logicPath.trim();
+			if (options.logicPath.length() == 0) options.logicPath = null;
 		}
 
 		if (options.out != null) {
@@ -816,12 +820,21 @@ public class SMT {
 	}
 	
 	public static interface ILogicFinder {
+		/** Looks for a logic with the given name, returning an InputStream by which to read it
+		 * @param smtConfig the current smt configuration, indicating where to look for logics
+		 * @param logicName the name of the logic to find
+		 * @param pos if not null, the textual position of the logicName, used for error messages
+		 * @return an InputStream from which to read the logic
+		 * @throws IOException if the file cannot be opened or other I/O exception happens
+		 * @throws Utils.SMTLIBException if the logic file cannot be found
+		 */
 		/*@Mutable*/ InputStream find(Configuration smtConfig, String logicName, /*@Nullable*/IPos pos) throws IOException, Utils.SMTLIBException;
 	}
 	
+	/** An instance of a logic finder that looks in the configuration's logicPath, or (if there is no such path) as a file on the system CLASSPATH */
 	public static ILogicFinder logicFinder = new ILogicFinder() {
 		@Override
-		public InputStream find(Configuration smtConfig, String name, /*@Nullable*/IPos pos) throws IOException, Utils.SMTLIBException {
+		public /*@Mutable*/ InputStream find(Configuration smtConfig, String name, /*@Nullable*/IPos pos) throws IOException, Utils.SMTLIBException {
 			String path = smtConfig.logicPath;
 			if (path == null) {
 				URL url = ClassLoader.getSystemResource(name + org.smtlib.Utils.SUFFIX);
@@ -830,11 +843,11 @@ public class SMT {
 				}
 				return url.openStream();
 			} else {
-				File f = new File(path + File.separator + name + ".smt2");
-				if (!f.isFile()) {
-					throw new Utils.SMTLIBException(smtConfig.responseFactory.error("No logic file found for " + name + " as " + f.getPath(), pos));
+				for (String d: path.split(File.pathSeparator)) {
+					File f = new File(d + File.separator + name + org.smtlib.Utils.SUFFIX);
+					if (f.exists()) return new FileInputStream(f);
 				}
-				return new FileInputStream(f);
+				throw new Utils.SMTLIBException(smtConfig.responseFactory.error("No logic file found for " + name + " on path \"" + path + "\"", pos));
 			}
 		}
 	};

@@ -7,6 +7,8 @@ import org.smtlib.*;
 import org.smtlib.IExpr.*;
 import org.smtlib.impl.SMTExpr;
 
+// FIXME - move some of this to ILogic - should the logic classes depend on SMTExpr.Logic?
+//FIXME - document
 public abstract class Logic extends SMTExpr.Logic implements ILanguage {
 
 	public Logic(ISymbol name, Collection<IAttribute<?>> attributes) {

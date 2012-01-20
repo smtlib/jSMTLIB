@@ -59,7 +59,7 @@ public interface ICommand extends IAccept {
 		Idefine_fun define_fun(IIdentifier id, List<IDeclaration> declarations, ISort resultSort, IExpr expression);
 		
 		/** Creates a define-sort command object. */
-		Idefine_sort define_sort(IIdentifier id, List<IParameter> parameters, ISort.IExpression expression);
+		Idefine_sort define_sort(IIdentifier id, List<IParameter> parameters, ISort.IApplication expression);
 		
 		/** Creates an exit command object. */
 		Iexit exit();
@@ -101,7 +101,8 @@ public interface ICommand extends IAccept {
 		Iset_option set_option(IKeyword option, IAttributeValue value);
 	}
 	
-	/** Interface to be implemented by all objects representing SMT-LIB scripts. */
+	/** Interface to be implemented by all objects representing SMT-LIB scripts. A script may consist of a file or an explicit list of commands. */
+	
 	static public interface IScript extends IAccept {
 		/*@Nullable*/ IStringLiteral filename();
 		/*@Nullable*/ List<ICommand> commands();

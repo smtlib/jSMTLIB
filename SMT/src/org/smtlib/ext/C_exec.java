@@ -20,9 +20,6 @@ public class C_exec extends Command implements Iexec {
 	/** The command name */
 	public String commandName() { return commandName; }
 	
-	/** A reference to the configuration */
-	protected SMT.Configuration smtConfig;
-	
 	/** The command script to be run */
 	protected IScript script;
 	
@@ -30,9 +27,8 @@ public class C_exec extends Command implements Iexec {
 	public IScript script() { return script; }
 
 	/** Constructs a command object for the given script */
-	public C_exec(IScript script, SMT.Configuration smtConfig) {
+	public C_exec(IScript script) {
 		this.script = script;
-		this.smtConfig = smtConfig;
 	}
 	
 	/** Parses the arguments of the command, producing a new command instance */
@@ -43,7 +39,7 @@ public class C_exec extends Command implements Iexec {
 		} 
 		IScript script = p.parseScript();
 		if (script == null) return null;
-		return new C_exec(script,p.smt());
+		return new C_exec(script);
 	}
 
 	/** Writes the command in the syntax of the given printer */

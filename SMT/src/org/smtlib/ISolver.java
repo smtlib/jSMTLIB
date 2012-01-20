@@ -95,12 +95,12 @@ public interface ISolver {
 	 * If the solver prints the list of assertions itself, then this method simply returns success.
 	 * May only be used in interactive mode.  If interactive mode is not implemented,
 	 * this command may return unsupported.
-	 * @return success or a list of formulae (as Strings or terms?) - TODO check this
+	 * @return success or a list of formulae (as Strings or terms?) // TODO is this what we want?
 	 */
 	IResponse get_assertions();
 	
 	/** Returns a proof that the current state is unsatisfiable. If the solver prints the proof itself,
-	 * then it returns simply success
+	 * then it returns simply success. // TODO check is this what we want
 	 * May only be issued if the :produce-proofs option is enabled.
 	 * Supporting proof production is optional.
 	 * @return error or success or unsupported (if proof production is not supported) or a proof

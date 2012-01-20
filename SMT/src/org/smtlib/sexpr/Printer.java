@@ -37,7 +37,7 @@ import org.smtlib.IResponse.IProofResponse;
 import org.smtlib.IResponse.IUnsatCoreResponse;
 import org.smtlib.IResponse.IValueResponse;
 import org.smtlib.ISort.IAbbreviation;
-import org.smtlib.ISort.IExpression;
+import org.smtlib.ISort.IApplication;
 import org.smtlib.ISort.IFamily;
 import org.smtlib.ISort.IFcnSort;
 import org.smtlib.ISort.IParameter;
@@ -128,7 +128,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	}
 
 	@Override
-	public Void visit(IBinaryLiteral e) throws IVisitor.VisitorException { // FIXME - need binary representation from anywhere
+	public Void visit(IBinaryLiteral e) throws IVisitor.VisitorException {
 		try { 
 			w.append("#b");
 			w.append(e.value()); 
@@ -139,7 +139,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	}
 
 	@Override
-	public Void visit(IHexLiteral e) throws IVisitor.VisitorException { // FIXME - need hex representation from anywhere
+	public Void visit(IHexLiteral e) throws IVisitor.VisitorException {
 		try { 
 			w.append("#x");
 			w.append(e.value());
@@ -350,7 +350,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 				w.append("\"<ERROR: Script has no content>\"");
 			}
 		} catch (IOException ex) {
-			throw new VisitorException(ex);
+			throw exc(ex,null);
 		}
 		return null;
 	}
@@ -382,8 +382,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 			s.arity().accept(this);
 			w.append(" )");
 		} catch (IOException ex) {
-			throw new IVisitor.VisitorException(ex,
-					s instanceof IPos.IPosable ? ((IPos.IPosable)s).pos() : null);
+			throw exc(ex,s);
 		}
 		return null;
 	}
@@ -402,14 +401,13 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 			s.sortExpression().accept(this);
 			w.append(")");
 		} catch (IOException ex) {
-			throw new IVisitor.VisitorException(ex,
-					s instanceof IPos.IPosable ? ((IPos.IPosable)s).pos() : null);
+			throw exc(ex,s);
 		}
 		return null;
 	}
 
 	@Override
-	public Void visit(IExpression s) throws IVisitor.VisitorException {
+	public Void visit(IApplication s) throws IVisitor.VisitorException {
 		try {
 			if (s.parameters().size() == 0) {
 				s.family().accept(this);
@@ -423,7 +421,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 				w.append(")");
 			}
 		} catch (IOException ex) {
-			throw new IVisitor.VisitorException(ex,s.pos());
+			throw exc(ex,s);
 		}
 		return null;
 	}
@@ -439,7 +437,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 			w.append(") -> ");
 			s.resultSort().accept(this);
 		} catch (IOException ex) {
-			throw new IVisitor.VisitorException(ex,s.pos());
+			throw exc(ex,s);
 		}
 		return null;
 	}
@@ -491,6 +489,14 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 		} else {
 			throw new VisitorException("Undelegated IResponse in Printer for " + e.getClass(),null);
 		}
+	}
+	
+	/** Utility function to create an exception using the message from the first argument and the
+	 * position from the second, if it is IPosable.
+	 */
+	public IVisitor.VisitorException exc(Exception ex, Object possiblePos) {
+		return new IVisitor.VisitorException(ex,
+			possiblePos instanceof IPos.IPosable ? ((IPos.IPosable)possiblePos).pos() : null);
 	}
 	
 	/** Utility function to print error messages in this printer's format */

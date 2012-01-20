@@ -22,6 +22,6 @@ public class LogicsWithPath extends LogicsBase {
 	@Test
 	public void testLogic() {
 		doCommand("(set-logic " + logicname + ")",
-				logicname.equals("ZZZ") ? "No logic file found for ZZZ as logics"+File.separator+"ZZZ.smt2" : "success");
+				logicname.equals("ZZZ") ? "No logic file found for ZZZ on path \"logics\"" : "success");
 	}
 }

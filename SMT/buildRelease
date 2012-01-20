@@ -10,7 +10,7 @@ jar -cfm ../jSMTLIB.jar ../temp/manifest .
 cp ../jsmtlib.properties .
 cd ..
 cp ../../../texstuff/papers/SMTLIBUserGuide/SMTLIBUserGuide.pdf jSMTLIBUserGuide.pdf
-tar cf jSMTLIB.tar jSMTLIB.jar LICENSE jSMTLIBUserGuide.pdf jsmtlib.properties-template
+tar cf jSMTLIB.tar jSMTLIB.jar LICENSE jSMTLIBUserGuide.pdf jsmtlib.properties-template doc
 rm jSMTLIBUserGuide.pdf
 tar tvf jSMTLIB.tar
 rm jSMTLIB.tar.gz

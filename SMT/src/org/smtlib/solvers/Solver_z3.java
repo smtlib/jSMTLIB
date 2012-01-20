@@ -107,7 +107,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 	@Override
 	public IResponse start() {
 		try {
-			solverProcess.startNoListen();
+			solverProcess.start(false);
 			// FIXME - enable the following lines when the Z3 solver supports them
 //			if (smtConfig.solverVerbosity > 0) solverProcess.sendNoListen("(set-option :verbosity ",Integer.toString(smtConfig.solverVerbosity),")");
 //			if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
@@ -211,7 +211,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 			return smtConfig.responseFactory.error("The logic must be set before a get-assertions command is issued");
 		}
 		// FIXME - do we really want to call get-option here? it involves going to the solver?
-		if (!smtConfig.relax && !Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.INTERACTIVE_MODE,null)))) {
+		if (!smtConfig.relax && !Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.INTERACTIVE_MODE)))) {
 			return smtConfig.responseFactory.error("The get-assertions command is only valid if :interactive-mode has been enabled");
 		}
 		try {
@@ -413,13 +413,13 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 		String option = key.value();
 		IAttributeValue lit;
 		if (Utils.ERROR_BEHAVIOR.equals(option)) {
-			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION,null);
+			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION);
 		} else if (Utils.NAME.equals(option)) {
-			lit = smtConfig.exprFactory.unquotedString(NAME_VALUE,null);
+			lit = smtConfig.exprFactory.unquotedString(NAME_VALUE);
 		} else if (Utils.AUTHORS.equals(option)) {
-			lit = smtConfig.exprFactory.unquotedString(AUTHORS_VALUE,null);
+			lit = smtConfig.exprFactory.unquotedString(AUTHORS_VALUE);
 		} else if (Utils.VERSION.equals(option)) {
-			lit = smtConfig.exprFactory.unquotedString(VERSION_VALUE,null);
+			lit = smtConfig.exprFactory.unquotedString(VERSION_VALUE);
 			
 		} else if (Utils.REASON_UNKNOWN.equals(option)) {
 			return smtConfig.responseFactory.unsupported();
@@ -428,7 +428,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 		} else {
 			return smtConfig.responseFactory.unsupported();
 		}
-		IAttribute<?> attr = smtConfig.exprFactory.attribute(key,lit,null);
+		IAttribute<?> attr = smtConfig.exprFactory.attribute(key,lit);
 		return smtConfig.responseFactory.get_info_response(attr);
 	}
 	
@@ -507,7 +507,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 	
 	@Override 
 	public IResponse get_proof() {
-		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_PROOFS,null)))) {
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_PROOFS)))) {
 			return smtConfig.responseFactory.error("The get-proof command is only valid if :produce-proofs has been enabled");
 		}
 		if (checkSatStatus != smtConfig.responseFactory.unsat()) {
@@ -522,7 +522,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 
 	@Override 
 	public IResponse get_unsat_core() {
-		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_UNSAT_CORES,null)))) {
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_UNSAT_CORES)))) {
 			return smtConfig.responseFactory.error("The get-unsat-core command is only valid if :produce-unsat-cores has been enabled");
 		}
 		if (checkSatStatus != smtConfig.responseFactory.unsat()) {
@@ -538,7 +538,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 	@Override 
 	public IResponse get_assignment() {
 		// FIXME - do we really want to call get-option here? it involves going to the solver?
-		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSIGNMENTS,null)))) {
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSIGNMENTS)))) {
 			return smtConfig.responseFactory.error("The get-assignment command is only valid if :produce-assignments has been enabled");
 		}
 		if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
@@ -554,7 +554,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 	@Override 
 	public IResponse get_value(IExpr... terms) {
 		// FIXME - do we really want to call get-option here? it involves going to the solver?
-		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS,null)))) {
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
 			return smtConfig.responseFactory.error("The get-value command is only valid if :produce-models has been enabled");
 		}
 		if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
@@ -826,7 +826,7 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 			throw new UnsupportedOperationException("visit-ISort.IAbbreviation");
 		}
 		
-		public String visit(ISort.IExpression s) throws IVisitor.VisitorException {
+		public String visit(ISort.IApplication s) throws IVisitor.VisitorException {
 			return translateSMT(s);
 		}
 		

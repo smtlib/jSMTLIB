@@ -34,11 +34,16 @@ import org.smtlib.IResponse.IProofResponse;
 import org.smtlib.IResponse.IUnsatCoreResponse;
 import org.smtlib.IResponse.IValueResponse;
 import org.smtlib.ISort.IAbbreviation;
-import org.smtlib.ISort.IExpression;
+import org.smtlib.ISort.IApplication;
 import org.smtlib.ISort.IFamily;
 import org.smtlib.ISort.IFcnSort;
 import org.smtlib.ISort.IParameter;
 
+/** This is a visitor interface for visitors over IExpr ASTs. Each AST class implements
+ * an accept method that calls the appropriate element of the IVisitor class. An implementation
+ * of the IVisitor class will implement an appropriate action in the visit() method.
+ * The type parameter T is the return type of the visit method.
+ */
 public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 	public /*@Nullable*/T visit(IAttribute<?> e) throws VisitorException;
 	//public /*@Nullable*/T visit(IAttributeValue e) throws VisitorException;
@@ -66,7 +71,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 	
 	public /*@Nullable*/T visit(ISort.IFamily s) throws VisitorException;
 	public /*@Nullable*/T visit(ISort.IAbbreviation s) throws VisitorException;
-	public /*@Nullable*/T visit(ISort.IExpression s) throws VisitorException;
+	public /*@Nullable*/T visit(ISort.IApplication s) throws VisitorException;
 	public /*@Nullable*/T visit(ISort.IFcnSort s) throws VisitorException;
 	public /*@Nullable*/T visit(ISort.IParameter s) throws VisitorException;
 	
@@ -215,7 +220,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 		}
 
 		@Override
-		public T visit(IExpression s) throws VisitorException {
+		public T visit(IApplication s) throws VisitorException {
 			return null;
 		}
 
@@ -273,7 +278,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 	
 	/** This class is an implementation of IVisitor meant fur further derivation:
 	 * each visitor is implemented to visit its children without doing anything else;
-	 * the return value is the return from the last child or is null.
+	 * the default return value is null.
 	 * @param <T> the type of the return value
 	 */
 	public class TreeVisitor</*@Nullable*/T> implements IVisitor</*@Nullable*/T> {
@@ -433,7 +438,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 		}
 
 		@Override
-		public /*@Nullable*/T visit(IExpression s) throws VisitorException {
+		public /*@Nullable*/T visit(IApplication s) throws VisitorException {
 			s.family().accept(this);
 			for (ISort ss: s.parameters()) ss.accept(this);
 			return null;
@@ -451,6 +456,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 			s.symbol().accept(this);
 			return null;
 		}
+		
 		@Override
 		public /*@Nullable*/T visit(ILogic s) throws VisitorException {
 			s.logicName().accept(this);
@@ -481,7 +487,6 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 		public T visit(IAssignmentResponse e) throws VisitorException {
 			for (IResponse.IPair<ISymbol,Boolean> p : e.assignments()) {
 				p.first().accept(this);
-				//p.second().accept(this);
 			}
 			return null;
 		}

@@ -54,13 +54,8 @@ public class SolverProcess {
 	 * @param args the command-line arguments that will launch the desired process
 	 * @param endMarker text that marks the end of text returned from the process, e.g. the end of the 
 	 * prompt for new input
+	 * @param log if not null, the name of a file to log communications to, for diagnostic purposes
 	 */
-	public SolverProcess(String[] args, String endMarker) {
-		this.app = args;
-		this.endMarker = endMarker;
-	}
-	
-	// FIXME - document this; get rid of the constructor above
 	public SolverProcess(String[] args, String endMarker, /*@Nullable*/String logfile) {
 		this.app = args;
 		this.endMarker = endMarker;
@@ -71,14 +66,14 @@ public class SolverProcess {
 		}
 	}
 	
-	/** Starts the process, listening to its output until a prompt is read. */
-    public void start() throws ProverException {
+	/** Starts the process; if the argument is true, then also listens to its output until a prompt is read. */
+    public void start(boolean listen) throws ProverException {
     	try {
     		process = Runtime.getRuntime().exec(app);
     		toProcess = new OutputStreamWriter(process.getOutputStream());
     		fromProcess = new BufferedReader(new InputStreamReader(process.getInputStream()));
     		errors = new InputStreamReader(process.getErrorStream());
-    		listen(); // FIXME - detect errors here?
+    		if (listen) listen();
     	} catch (IOException e) {
     		throw new ProverException(e.getMessage());
     	} catch (RuntimeException e) {
@@ -86,22 +81,8 @@ public class SolverProcess {
     	}
     }
 
-    /** Starts the process, but without listening for any response */
-    public void startNoListen() throws ProverException {
-    	try {
-    		if (app == null || app[0] == null) throw new ProverException("The executable pat has not been specified");
-    		process = Runtime.getRuntime().exec(app);
-    		toProcess = new OutputStreamWriter(process.getOutputStream());
-    		fromProcess = new BufferedReader(new InputStreamReader(process.getInputStream()));
-    		errors = new InputStreamReader(process.getErrorStream());
-    	} catch (IOException e) {
-    		throw new ProverException(e.getMessage());
-    	} catch (RuntimeException e) {
-    		throw new ProverException(e.getMessage());
-    	}
-    }
-
-    /** Listens to the process's standard output until the designated endMarker is read. */
+    /** Listens to the process's standard output until the designated endMarker is read; returns the standard out from the process;
+     * if there is no data on that channel, then returns the error output. */
 	public String listen() throws IOException {
 		// FIXME - need to put the two reads in parallel, otherwise one might block on a full buffer, preventing the other from completing
 		String err = listenThru(errors,null);
@@ -110,17 +91,29 @@ public class SolverProcess {
 		return err.isEmpty() ? out : err;
 	}
 	
-	/** Quits the process */
+	/** Aborts the process */
 	public void exit() {
 		process.destroy();
 	}
 	
 	/** Sends all the given text arguments, then listens for the designated end marker text */
+	public String send(boolean listen, String ... args) throws IOException {
+		if (toProcess == null) throw new ProverException("The solver has not been started");
+		for (String arg: args) {
+			if (log != null) log.write(arg);
+			toProcess.write(arg);
+		}
+		if (log != null) log.flush();
+		toProcess.flush();
+		if (listen) return listen();
+		return null;
+	}
+
+	/** Sends all the given text arguments, then listens for the designated end marker text */
 	public String sendAndListen(String ... args) throws IOException {
 		if (toProcess == null) throw new ProverException("The solver has not been started");
 		for (String arg: args) {
 			if (log != null) log.write(arg);
-			//System.out.print(arg);
 			toProcess.write(arg);
 		}
 		if (log != null) log.flush();
@@ -134,14 +127,14 @@ public class SolverProcess {
 		if (toProcess == null) throw new ProverException("The solver has not been started");
 		for (String arg: args) {
 			if (log != null) log.write(arg);
-			//System.out.print(s);
 			toProcess.write(arg);
 		}
 		if (log != null) log.flush();
 		toProcess.flush();
 	}
 
-// TODO - combine listen and noListen versions of start and send?
+// TODO - combine listen and noListen versions of send?
+	
 	/** A pool of buffers used by listenThru. The listenThru method needs a buffer, which may need to be big.
 	 *  However, the method is called often and we do not want to be continually allocating big buffers that
 	 *  have to wait around to be garbage collected.  Especially since, unless there are multiple SMT processes
@@ -156,6 +149,9 @@ public class SolverProcess {
 	synchronized private static char[] getBuffer() {
 		char[] buf;
 		if (bufferCollection.isEmpty()) {
+			// There is nothing magic about the size of the buffers - just meant to be generally enough to
+			// hold the output of a read, but not so large as to unnecessarily use memory. 
+			// If it is not large enough, it will be expanded.
 			buf = new char[10000];
 		} else {
 			buf = bufferCollection.remove(0);
@@ -192,7 +188,15 @@ public class SolverProcess {
 				if (i == -1) break; // End of Input
 				p += i;
 				//System.out.println("HEARD: " + new String(buf,0,p));
-				if (end != null && p >= len && end.equals(new String(buf,p-len,len))) break; // stopping string matched
+				if (end != null && p >= len) {
+					// Need to compare a String to a part of a char array - we iterate by
+					// hand to avoid creating a new String or CharBuffer object
+					boolean match = true;
+					for (int j=0; j<len; j++) {
+						if (end.charAt(j) != buf[p-len+j]) { match = false; break; }
+					}
+					if (match) break; // stopping string matched
+				}
 				if (p == buf.length) { // expand the buffer
 					char[] nbuf = new char[2*buf.length];
 					System.arraycopy(buf,0,nbuf,0,p);

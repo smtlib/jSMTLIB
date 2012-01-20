@@ -46,7 +46,7 @@ public class C_what extends Command implements Iwhat {
 	/** Parses the input concrete S-expression syntax to produce a command instance */
 	static public /*@Nullable*/C_what parse(Parser p) throws IOException, ParserException {
 		if (!p.smt().relax) {
-			error(p.smt(),"Invalid SMT-LIB command: " + commandName,p.commandName.pos());
+			error(p.smt(),"Invalid SMT-LIB command: " + commandName, p.commandName.pos());
 			return null;
 		}
 		List<IIdentifier> ids = new LinkedList<IIdentifier>();

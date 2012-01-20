@@ -14,29 +14,51 @@ import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IPos.IPosable;
 import org.smtlib.IVisitor.VisitorException;
 
-/** The interface for an SMT-LIB concept of a Sort */
+/** The interface for an SMT-LIB concept of a Sort. Two kinds of things are modeled here.
+ * <P>
+ * First, a definition of a Sort, modeled by ISort.IDefinition. There are these kinds of 
+ * definitions:
+ * <UL>
+ * <LI> an ISort.IFamily, which defines a new sort symbol of a given arity
+ * <LI> an ISort.IAbbreivation, which defines a (possibly parameterized) abbreviation for a sort expression.
+ * <LI> an ISort.IParameter, which defines a sort name used as a parameter in an abbreviation definition
+ * <LI> The ISort.ErrorDefinition class, which is used as a definition place holder for ill-formed definitions, to avoid excessive redundant errors
+ * </UL>
+ * Second, Sort expressions themselves, modeled by ISort:
+ * <UL>
+ * <LI>A ISort.IApplication, which is the application of an IDefinition to the appropriate number
+ * (possible 0) of Sort expressions
+ * <LI>A ISort.IParameter, which is a simple symbol designating the parameter of a parameterized abbreviation
+ * <LI>A ISort.IFcnSort, an expression designating a function sort; this is not expressible in SMT-LIBv2, but is 
+ * useful internally within jSMTLIB.
+ * </UL>
+ */
 public interface ISort extends IAccept, IPosable {
-	
-	/** Returns true if the object and receiver represent the same Sort */
+
+	/** Structural equality after expansion of abbreviations, but without any substitution of free parameters. */
 	boolean equals(Object o);
 
-	/** Returns true if the object and receiver represent the same Sort, under the given sort parameter substitutions */
-	boolean equals(Map<IIdentifier,ISort> leftmap, ISort s, Map<IIdentifier,ISort> rightmap, SymbolTable symTable);
+	/** Structural equality after expansion of abbreviations (as looked up in the symbol table)
+	 * and substitution of free parameters according to the respective maps. 
+	 */
+	boolean equals(Map<IParameter,ISort> leftmap, ISort s, Map<IParameter,ISort> rightmap, SymbolTable symTable);
 
 	/** Returns true if the receiver designates the Bool pre-defined Sort. */
 	boolean isBool();
 	
 	/** Returns a new sort with any parameters substituted */
-	ISort substitute(java.util.Map<IIdentifier,ISort> map);
+	ISort substitute(java.util.Map<IParameter,ISort> map); // FIXME - should use IParameter instead of IIdentifier?
 
-	/** A super-interface for definitions of new sort ids; there are two
-	 * kinds of such definitions: new Sort families and new Sort abbreviations.
+	/** Compares sort expressions without abbreviation expansion or parameter substitution */
+	boolean equalsNoExpand(ISort sort);
+	
+	/** A super-interface for definitions of new sort ids.
 	 */
 	static public interface IDefinition extends IAccept {
 		/** The identifier for the sort symbol */
 		IIdentifier identifier();
 		
-		/** A new sort expression that results from applying the sort symbol to a list of sorts */
+		/** A new sort expression that results from applying the sort symbol to a list of sort expressions */
 		//@ requires sorts.size() == intArity();
 		ISort eval(List<ISort> sorts);
 		
@@ -45,7 +67,9 @@ public interface ISort extends IAccept, IPosable {
 		int intArity();
 	}
 	
-	// FIXME - do we really want this - is it properly abstract?
+	/** This class is an instance of a sort definition that represents an erroneous definition
+	 * of a Sort; by defining an actual IDefinition, excessive propagation of errors is avoided.
+	 */ // TODO - check if the above statement is actually valid and that having this class makes a difference
 	static public class ErrorDefinition implements IDefinition {
 		public IIdentifier id;
 		public String error;
@@ -97,24 +121,46 @@ public interface ISort extends IAccept, IPosable {
 	 * abbreviation for a (possibly parameterized) sort expression.
 	 */
 	static public interface IAbbreviation extends IDefinition {
+		/** The identifier of the abbreviation */
 		IIdentifier identifier();
+		/** The list of parameters of the abbreviation (possible empty, but not null) */
 		List<IParameter> parameters();
+		/** The sort expression that the abbreviation represents, presumably using the given parameters */
 		ISort sortExpression();
 	}
 	
-	/** The interface for a Sort expression that consists either of
+	/** The interface for a Sort expression that consists either
 	 * an arity 0 sort symbol or a positive-arity symbol with the 
 	 * appropriate number of arguments.
 	 */
-	static public interface IExpression extends ISort {
+	static public interface IApplication extends ISort {
+		/** The head identifier of the sort expression */
 		IIdentifier family();
+		
+		/** Returns the ith parameter */
 		//@ requires i >= 0 && i < parameters().size();
 		ISort param(int i);
+		
+		/** Returns the list of parameters */
 		List<ISort> parameters();
+		
+		/** The definition of the family identifier, valid after the sort expression has been type-checked. */
 		IDefinition definition();
+
+		/** Sets and returns the value of definition() for this object to the value that is the argument */
 		IDefinition definition(IDefinition definition);
+		
+		/** Expands any head abbreviations, if any; requires definition() to be defined */
+		ISort expand();
+
+		@Override
 		boolean equals(/*@Nullable*/Object o);
-		boolean equals(Map<IIdentifier,ISort> leftmap, ISort s, Map<IIdentifier,ISort> rightmap, SymbolTable symTable);
+		
+		@Override
+		boolean equals(Map<IParameter,ISort> leftmap, ISort s, Map<IParameter,ISort> rightmap, SymbolTable symTable);
+
+		@Override
+		boolean equalsNoExpand(ISort sort);
 
 	}
 
@@ -122,9 +168,18 @@ public interface ISort extends IAccept, IPosable {
 	 * (including in the defining expression).
 	 */
 	static public interface IParameter extends ISort, IDefinition {
+		/** The symbol that names the parameter */
 		ISymbol symbol();
+		
+		@Override
 		boolean equals(/*@Nullable*/Object o);
-		boolean equals(Map<IIdentifier,ISort> leftmap, ISort s, Map<IIdentifier,ISort> rightmap, SymbolTable symTable);
+		
+		@Override
+		boolean equals(Map<IParameter,ISort> leftmap, ISort s, Map<IParameter,ISort> rightmap, SymbolTable symTable);
+		
+		@Override
+		boolean equalsNoExpand(ISort sort);
+
 	}
 	
 	/** An interface to represent the Sort of a function; this is
@@ -139,15 +194,29 @@ public interface ISort extends IAccept, IPosable {
 	
 	/** The interface for a Sort-creating factory */
 	static public interface IFactory {
-		
+		/** Creates a sort family with the given identifier and arity */
 		IFamily createSortFamily(IIdentifier identifier, INumeral arity);
+		
+		/** Creates a parameter for a parameterized sort abbreviation */
 		IParameter createSortParameter(ISymbol symbol);
-		IExpression createSortExpression(IIdentifier sortFamily, ISort... exprs);
-		IExpression createSortExpression(IIdentifier sortFamily, List<ISort> exprs);
+		
+		/** Creates a sort expression, applying a family to a list of sort arguments;
+		 * the arity of the identifier in the applicable symbol table must match the number of sort arguments
+		 */
+		IApplication createSortExpression(IIdentifier sortFamily, ISort... exprs);
+
+		/** Creates a sort expression, applying a family to a list of sort arguments;
+		 * the arity of the identifier in the applicable symbol table must match the number of sort arguments
+		 */
+		IApplication createSortExpression(IIdentifier sortFamily, List<ISort> exprs);
+		
+		/** Creates a new sort abbreviation */
 		IAbbreviation createSortAbbreviation(IIdentifier identifier, List<IParameter> params, ISort sortExpr);
+		
+		/** Creates a function sort */
 		IFcnSort createFcnSort(ISort[] args, ISort result);
 		
 		/** Returns the Bool Sort */
-		IExpression Bool();
+		IApplication Bool();
 	}
 }

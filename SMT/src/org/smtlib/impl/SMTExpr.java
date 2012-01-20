@@ -10,7 +10,6 @@ import java.math.BigInteger;
 import java.util.*;
 
 import org.smtlib.*;
-import org.smtlib.IExpr.IIdentifier;
 
 // FIXME - Decide whether we use reference or structural equality - either complete or remove equals and hashCode
 
@@ -118,7 +117,7 @@ public abstract class SMTExpr implements IExpr {
 	}
 	
 	static public class Keyword extends Pos.Posable  implements IKeyword {
-		protected String value;
+		protected String value; // Keyword string with leading colon (TODO - check this)
 		
 		public Keyword(String v) {
 			super();
@@ -292,6 +291,7 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public boolean isError() { return false; }
 		
+		// FIXME - do we want these?
 		public static class Parameter extends Symbol implements IParameter {
 			public Parameter(ISymbol s) { super(s.toString()); pos = s.pos(); }
 		}
@@ -309,9 +309,6 @@ public abstract class SMTExpr implements IExpr {
 		protected List<IExpr> args;
 		
 		public FcnExpr(IQualifiedIdentifier id, List<IExpr> args) {
-//			super(new LinkedList<ISexpr>());
-//			sexprs().add((ISexpr)id);
-//			for (IExpr e: args) sexprs().add((ISexpr)e);
 			this.id = id;
 			this.args = args;
 		}
@@ -496,7 +493,7 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public ISort sort() { return sort; }
 		
-		// @Override
+		// FIXME @Override
 		public String kind() {
 			return "declaration";
 		}
@@ -520,7 +517,7 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public IExpr expr() { return expr; }
 		
-		// @Override
+		// FIXME @Override
 		public String kind() {
 			return "binding";
 		}
@@ -617,7 +614,7 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public ISymbol logicName() { return logicName; }
 		
-		/** The attributes, as a Map, keyed by the keyword in the attribute */
+		/** The attributes, as a Map, keyed by the keyword in the attribute */  // FIXME _ key by IKeyword
 		@Override
 		public Map<String,IAttribute<?>> attributes() { return attributes; }
 		
@@ -636,7 +633,7 @@ public abstract class SMTExpr implements IExpr {
 
 		public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {}
 
-		// @Override
+		// FIXME @Override
 		public String kind() { return "logic"; }
 
 		@Override
@@ -661,7 +658,7 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public ISymbol theoryName() { return theoryName; }
 		
-		/** The attributes, as a Map, keyed by the keyword in the attribute */
+		/** The attributes, as a Map, keyed by the keyword in the attribute */ // FIXME - key by IKeyword?
 		@Override
 		public Map<String,IAttribute<?>> attributes() { return attributes; }
 		

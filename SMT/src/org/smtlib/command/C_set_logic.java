@@ -25,7 +25,7 @@ public class C_set_logic extends Command implements Iset_logic {
 	/** The command name */
 	public String commandName() { return commandName; }
 
-	/** The name of the logic to set (initialized by the check() call) */
+	/** The name of the logic to set */
 	protected ISymbol logicName;
 	
 	/** The name of the logic to set */

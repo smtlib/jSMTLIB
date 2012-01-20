@@ -11,6 +11,7 @@ import org.smtlib.IExpr;
 import org.smtlib.IExpr.IDecimal;
 import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.ISymbol;
+import org.smtlib.command.*;
 import org.smtlib.impl.Pos;
 import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.*;
@@ -18,7 +19,7 @@ import org.smtlib.*;
 //FIXME - review asSort, find/load logic/theory, checkOptionType
 // FIXME - document
 
-/** Holds a interactiveMode of constants and utility methods pertinent to the S-expression concrete
+/** Holds constants and utility methods pertinent to the S-expression concrete
  * implementation of the SMT-LIB syntax.
  */
 public class Utils extends org.smtlib.Utils {
@@ -65,32 +66,35 @@ public class Utils extends org.smtlib.Utils {
 		reservedWordsNotCommands.add(PAR);
 		reservedWordsNotCommands.add(STRING);
 		reservedWords.addAll(reservedWordsNotCommands);
-		reservedWords.add("assert");
-		reservedWords.add("check-sat");
-		reservedWords.add("declare-fun");
-		reservedWords.add("declare-sort");
-		reservedWords.add("define-fun");
-		reservedWords.add("define-sort");
-		reservedWords.add("exit");
-		reservedWords.add("get-assertions");
-		reservedWords.add("get-assignment");
-		reservedWords.add("get-info");
-		reservedWords.add("get-option");
-		reservedWords.add("get-proof");
-		reservedWords.add("get-unsat-core");
-		reservedWords.add("get-value");
-		reservedWords.add("pop");
-		reservedWords.add("push");
-		reservedWords.add("set-info");
-		reservedWords.add("set-logic");
-		reservedWords.add("set-option");
+		reservedWords.add(C_assert.commandName);
+		reservedWords.add(C_check_sat.commandName);
+		reservedWords.add(C_declare_fun.commandName);
+		reservedWords.add(C_declare_sort.commandName);
+		reservedWords.add(C_define_fun.commandName);
+		reservedWords.add(C_define_sort.commandName);
+		reservedWords.add(C_exit.commandName);
+		reservedWords.add(C_get_assertions.commandName);
+		reservedWords.add(C_get_assignment.commandName);
+		reservedWords.add(C_get_info.commandName);
+		reservedWords.add(C_get_option.commandName);
+		reservedWords.add(C_get_proof.commandName);
+		reservedWords.add(C_get_unsat_core.commandName);
+		reservedWords.add(C_get_value.commandName);
+		reservedWords.add(C_pop.commandName);
+		reservedWords.add(C_push.commandName);
+		reservedWords.add(C_set_info.commandName);
+		reservedWords.add(C_set_logic.commandName);
+		reservedWords.add(C_set_option.commandName);
 	}
+	
+	private <T extends IPos.IPosable>T setPos(T p, IPos pos) { p.setPos(pos); return p; } 
 
 	/** Creates a Utils instance for the given configuration */
 	public Utils(SMT.Configuration smtConfig) {
 		super(smtConfig);
 	}
 	
+	/** Initializes the default printer and the smtConfig.smtFactory */
 	public void initFactories(SMT.Configuration smtConfig) {
 		smtConfig.smtFactory = new Factory();
 		smtConfig.defaultPrinter = new Printer(new StringWriter());
@@ -201,16 +205,16 @@ public class Utils extends org.smtlib.Utils {
 					if (iter2.hasNext()) {
 						ISexpr key2 = iter2.next();
 						if (key2 instanceof IExpr.IKeyword) {
-							attrs.add(smtConfig.exprFactory.attribute((IExpr.IKeyword)key,null,key.pos()));
+							attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword)key,null),key.pos()));
 							key = key2;
 						} else {
-							attrs.add(smtConfig.exprFactory.attribute((IExpr.IKeyword)key,key2,
+							attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword)key,key2),
 										new Pos(key.pos().charStart(),key2.pos().charEnd(),key.pos().source()))); // FIXME - factory?
 							if (!iter2.hasNext()) break;
 							key = iter2.next();
 						}
 					} else {
-						attrs.add(smtConfig.exprFactory.attribute((IExpr.IKeyword)key,null,key.pos()));
+						attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword)key,null),key.pos()));
 						break;
 					}
 				}
@@ -224,11 +228,11 @@ public class Utils extends org.smtlib.Utils {
 		if (theoryName.equals("ArraysEx")) {
 			ISort.IFcnSort fs = smtConfig.sortFactory.createFcnSort(new ISort[0],null);
 			SymbolTable.Entry e = new SymbolTable.Entry(
-					smtConfig.exprFactory.symbol("store",null),
+					smtConfig.exprFactory.symbol("store"),
 					fs,null);
 			symTable.add(e);
 			e = new SymbolTable.Entry(
-					smtConfig.exprFactory.symbol("select",null),
+					smtConfig.exprFactory.symbol("select"),
 					fs,null);
 			symTable.add(e);
 		}
@@ -251,7 +255,7 @@ public class Utils extends org.smtlib.Utils {
 			if (def == null || def.intArity() != 0) {
 				return null;
 			}
-			ISort.IExpression sort = smtConfig.sortFactory.createSortExpression(def.identifier());
+			ISort.IApplication sort = smtConfig.sortFactory.createSortExpression(def.identifier());
 			sort.definition(def);
 			return sort;
 //		} else if (sexpr instanceof ISexpr.ISeq) {  // FIXME - do we need to expand this ???

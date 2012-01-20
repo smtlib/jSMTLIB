@@ -10,7 +10,7 @@ public interface ISource {
 	
 	/** The internal character stream as a CharSequence.  We would like to avoid the constraint of
 	 * having to have this kind of internal representation, but the parser uses Pattern and Matcher,
-	 * which require a CharSequence.  The CharSequence might not contain all the characters the might
+	 * which require a CharSequence.  The CharSequence might not contain all the characters that might
 	 * ever be read, but will contain characters as they are read.
 	 */
 	CharSequence chars();
