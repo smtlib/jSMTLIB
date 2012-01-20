@@ -1,4 +1,10 @@
+/*
+ * This file is part of the SMT project.
+ * Copyright 2010 David R. Cok
+ * Created August 2010
+ */
 package org.smtlib;
+// FIXME- NEEDS REVIEW
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -8,7 +14,6 @@ import java.util.Map;
 
 import org.smtlib.IExpr.*;
 import org.smtlib.ISort.*;
-import org.smtlib.impl.Sort;
 
 /** This class is a visitor that typechecks a formula */
 public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
@@ -97,9 +102,9 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			for (ISort p : sorts) {
 				p.accept(f);
 			}
-			result.accept(f);
+			ISort newresult = result.accept(f);
 			try {
-				symTable.logicInUse.checkFcnDeclaration(id,sorts,result,null);
+				symTable.logicInUse.checkFcnDeclaration(id,sorts,newresult,null);
 			} catch (IVisitor.VisitorException e) {
 				f.error(e.getMessage(), e.pos());
 			}
@@ -229,7 +234,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	
 	@Override
 	public /*@Nullable*/ ISort visit(INumeral e) {
-		IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("NUMERAL",null));
+		IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("NUMERAL"));
 		if (sort == null) error("No sort specified for numeral",e.pos());
 		return save(e,sort == null ? null : sort.resultSort());
 	}
@@ -311,8 +316,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			}
 			// FIXME - this needs to be fully expanded of all definitions
 			ISort sort1 = argSorts.get(0);
-			if (sort1 instanceof ISort.IExpression) {
-				ISort.IExpression asort = (ISort.IExpression)sort1;
+			if (sort1 instanceof ISort.IApplication) {
+				ISort.IApplication asort = (ISort.IApplication)sort1;
 				if (!(asort.family().headSymbol().toString().equals("Array"))) {
 					error("The first argument of the store function should be an Array sort, not " + sort1,e.pos());
 					return null;
@@ -346,8 +351,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 //			}
 			// FIXME - this needs to be fully expanded of all definitions
 			ISort sort1 = argSorts.get(0);
-			if (sort1 instanceof ISort.IExpression) {
-				ISort.IExpression asort = (ISort.IExpression)sort1;
+			if (sort1 instanceof ISort.IApplication) {
+				ISort.IApplication asort = (ISort.IApplication)sort1;
 				if (!(asort.family().headSymbol().toString().equals("Array"))) {
 					error("The first argument of the select function should be an Array sort, not " + sort1,e.pos());
 					return null;
@@ -361,7 +366,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				return null;
 			}
 			// FIXME - this is just here until we get par types implemented; it also should depend on which theories are installed
-			s = ((ISort.IExpression)s).parameters().get(1);
+			s = ((ISort.IApplication)s).parameters().get(1);
 			return save(e,s);
 		} 
 		boolean useext = true;
@@ -594,16 +599,16 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	}
 	
 	private boolean isBitVec(ISort s) {
-		if (!(s instanceof ISort.IExpression)) return false;
-		ISort.IExpression se = (ISort.IExpression)s;
+		if (!(s instanceof ISort.IApplication)) return false;
+		ISort.IApplication se = (ISort.IApplication)s;
 		if (!(se.family() instanceof IParameterizedIdentifier)) return false;
 		IParameterizedIdentifier pid = (IParameterizedIdentifier)se.family();
 		return pid.headSymbol().toString().equals("BitVec"); // FIXME - compare against a stored symbol?
 	}
 
 	private int bitvecSize(ISort s) {
-		if (!(s instanceof ISort.IExpression)) return -1;
-		ISort.IExpression se = (ISort.IExpression)s;
+		if (!(s instanceof ISort.IApplication)) return -1;
+		ISort.IApplication se = (ISort.IApplication)s;
 		if (!(se.family() instanceof IParameterizedIdentifier)) return -1;
 		IParameterizedIdentifier pid = (IParameterizedIdentifier)se.family();
 		if (pid.numerals().size() != 1) return -1;
@@ -614,7 +619,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		List<INumeral> nums = new LinkedList<INumeral>();
 		nums.add(smtConfig.exprFactory.numeral(length));
 		// FIXME - use a pre-constructed symbol for BitVec when it does not have a position?
-		IIdentifier id = smtConfig.exprFactory.id(smtConfig.exprFactory.symbol("BitVec",null),nums,null);
+		IIdentifier id = smtConfig.exprFactory.id(smtConfig.exprFactory.symbol("BitVec"),nums);
 		ISort s = smtConfig.sortFactory.createSortExpression(id, new ISort[0]);
 		s.accept(this);
 		return s;
@@ -645,7 +650,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 
 	@Override
 	public /*@Nullable*/ISort visit(IDecimal e) {
-		IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("DECIMAL",null)); // FIXME - don't recreate this every time it is used
+		IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("DECIMAL")); // FIXME - don't recreate this every time it is used
 		if (sort == null) result.add(smtConfig.responseFactory.error("No sort specified for decimal literal",e.pos()));
 		return save(e,sort == null ? null : sort.resultSort());
 	}
@@ -663,7 +668,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		if (!symTable.bitVectorTheorySet) result.add(smtConfig.responseFactory.error("No sort specified for a hex literal",e.pos()));
 		List<INumeral> nums = new LinkedList<INumeral>();
 		nums.add(smtConfig.exprFactory.numeral(e.length()*4));
-		IIdentifier id = smtConfig.exprFactory.id(smtConfig.exprFactory.symbol("BitVec",null),nums,null);
+		IIdentifier id = smtConfig.exprFactory.id(smtConfig.exprFactory.symbol("BitVec"),nums);
 		ISort s = smtConfig.sortFactory.createSortExpression(id, new ISort[0]);
 		s.accept(this);
 		return save(e,s);
@@ -671,7 +676,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 
 	@Override
 	public /*@Nullable*/ ISort visit(IStringLiteral e) {
-		IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("STRING",null)); // FIXME - don't recreate this everytime it is used
+		IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("STRING")); // FIXME - don't recreate this everytime it is used
 		if (sort == null) result.add(smtConfig.responseFactory.error("No sort specified for string-literal",e.pos()));
 		return save(e,sort == null ? null : sort.resultSort());
 	}
@@ -829,7 +834,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	}
 	
 	@Override
-	public /*@Nullable*/ ISort visit(ISort.IExpression s) throws IVisitor.VisitorException {
+	public /*@Nullable*/ ISort visit(ISort.IApplication s) throws IVisitor.VisitorException {
 		IIdentifier f = s.family();
 		List<ISort> args = s.parameters();
 		IDefinition def = symTable.lookupSort(f);
@@ -840,9 +845,11 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		}
 		s.definition(null);
 		boolean errors = false;
+		List<ISort> newargs = new LinkedList<ISort>();
 		for (ISort ss : args) {
 			ISort result = ss.accept(this);
 			if (result == null) errors = true;
+			else newargs.add(result);
 		}
 		if (def == null) {
 			error("No such sort symbol declared: " + pr(f),f.pos());
@@ -855,7 +862,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		}
 		if (errors) return null;
 		s.definition(def);
-		return def.eval(args);
+		return def.eval(newargs);
 	}
 	
 	@Override

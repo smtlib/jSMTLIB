@@ -37,6 +37,7 @@ public class Lexer {
 		@Override String kind();
 	}
 	
+	/** Skips the rest of the current line, resetting the matcher to point to the line termination character */
 	public void abortLine() {
 		int i = matcher.regionStart();
 		char c;
@@ -104,14 +105,14 @@ public class Lexer {
 	/** The Matcher used to do lexical scanning */
 	final protected Matcher matcher;
 	
-	/** The source of input used in this parser; typically a different
-	 * parser object will be used for each source (e.g. different file, string,
+	/** The source of input used in this lexer; typically a different
+	 * lexer object will be used for each source (e.g. different file, string,
 	 * port, etc.) of input data.
 	 */
 	final private ISource source;
 
-	/** The source of input used in this parser; typically a different
-	 * parser object will be used for each source (e.g. different file, string,
+	/** The source of input used in this lexer; typically a different
+	 * lexer object will be used for each source (e.g. different file, string,
 	 * port, etc.) of input data.
 	 */
 	final public ISource source() { return source; }
@@ -149,7 +150,7 @@ public class Lexer {
 	private final static String rgxInvalidString = "(?:[!#-~ \t\r\n])*";
 	/** Pattern regular expression for SMT-LIB decimal literal */
 	private final static String rgxDecimal = "(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?"; // the use of ( is non-capturing
-	/** Pattern regular expression for SMT-LIB symbol (without baRS) */
+	/** Pattern regular expression for SMT-LIB symbol (without bars) */
 	private final static String rgxSymbol = "[a-zA-Z_~!@$%^&*+=<>.?/\\-][0-9a-zA-Z_~!@$%^&*+=<>.?/\\-]*";
 	/** Pattern regular expression for SMT-LIB symbol enclosed in bars */
 	private final static String rgxQuotedSymbol = "\\|[0-9a-zA-Z_~!@$%^&*+=<>.?/\"'(),:;{}#`\\[\\] \t\r\n\\-]*\\|";
@@ -205,7 +206,7 @@ public class Lexer {
 			    + "|([ \t\r\n]+)"				// group 21: stop-gap whitespace
 		+   ")"  );
 	
-	/** A pattern to skip through the end of the line */
+	/** A pattern to skip up to the end of the line */
 	final public static Pattern skipThroughEndOfLine = Pattern.compile(".*");
 	
 	// We need lexical tokens that inherit from ILexToken so they can be returned uniformly from
@@ -304,7 +305,7 @@ public class Lexer {
 	}
 	
 	
-	/** Reads and discards tokens until a right parenthesis or end-of-data is read
+	/** Reads and discards tokens until an unmatched right parenthesis or end-of-data is read
 	 * @return the position of the right parenthesis or end-of-data
 	 */
 	public IPos skipThruRP() throws ParserException {
@@ -332,11 +333,13 @@ public class Lexer {
 		return (token.kind() == LexToken.RP);
 	}
 	
+	/** Creates an IPos object with the given start and end and the source for this Lexer */
 	public IPos pos(int start, int end) {
 		return new Pos(start,end,source);
 	}
 	
-	public ILexToken getToken(String text)  throws ParserException{
+	/** Returns the first token found in the given text */
+	public ILexToken getToken(String text)  throws ParserException {
 		if (!text.isEmpty() && text.charAt(0) == '"') {
 			return new LexStringLiteral(text,true);
 		}
@@ -357,6 +360,7 @@ public class Lexer {
 		return getToken(matcher);
 	}
 	
+	/** Returns the next token found in the given matcher, advancing the matcher */
 	protected ILexToken getToken(Matcher matcher) throws ParserException {
 		ILexToken token = null;
 		if (matcher.lookingAt()) {
@@ -374,20 +378,20 @@ public class Lexer {
 				token = this.LP(matcher.start(k));
 			} else if ((matched = matcher.group(k=4)) != null) {
 				token = this.RP(matcher.start(k));
-			} else if((matched = matcher.group(k=5)) != null) { // numeral
+			} else if ((matched = matcher.group(k=5)) != null) { // numeral
 				pos = pos(matcher.start(k),matcher.end(k));
 				//token = factory.numeral(matched,pos);
 				token = setPos(new LexNumeral(new BigInteger(matched)),pos);
 				end = matcher.end(k);
-			} else if((matched = matcher.group(k=6)) != null) { // simple symbol
+			} else if ((matched = matcher.group(k=6)) != null) { // simple symbol
 				pos = pos(matcher.start(k),matcher.end(k));
 				//token = factory.symbol(matched,pos); 
 				token = setPos(new LexSymbol(matched),pos);
-			} else if((matched = matcher.group(k=8)) != null) { // bar-quoted symbol
+			} else if ((matched = matcher.group(k=8)) != null) { // bar-quoted symbol
 				pos = pos(matcher.start(k),matcher.end(k));
 				//token = factory.symbol(matched,pos);
 				token = setPos(new LexSymbol(matched),pos);
-			} else if((matched = matcher.group(k=7)) != null) { // string 
+			} else if ((matched = matcher.group(k=7)) != null) { // string 
 				// The match is just to the initial quote
 				int begin = matcher.start(k); // position of the initial quote
 				int p = begin;
@@ -398,7 +402,7 @@ public class Lexer {
 						if (c == '\\') {
 							c = csr.charAt(++p);
 							// \\ is translated to \ and \" to "
-							// \x for anthing else is just \x
+							// \x for anything else is just \x
 //							if (c == '\\' || c == '"') {
 //								continue;
 //							} else {
@@ -437,13 +441,13 @@ public class Lexer {
 					token = setPos(new LexError(matched),pos);
 					smtConfig.log.logError(smtConfig.responseFactory.error("String literal is not terminated: " + matched,token.pos()));
 				}
-			} else if((matched = matcher.group(k=9)) != null) { // colon-initiated keyword
+			} else if ((matched = matcher.group(k=9)) != null) { // colon-initiated keyword
 				pos = pos(matcher.start(k),matcher.end(k));
 				//token = factory.keyword(matched,pos);
 				token = setPos(new LexKeyword(matched),pos);
-			} else if((matched = matcher.group(k=10)) != null) { // decimal
+			} else if ((matched = matcher.group(k=10)) != null) { // decimal
 				pos = pos(matcher.start(k),matcher.end(k));
-				//token = factory.decimal(matched,pos);
+				//token = factory.decimal(matched,pos);   // FIXME - use a factory everywhere?
 				token = setPos(new LexDecimal(new BigDecimal(matched)),pos);
 				end = matcher.end(k);
 			} else if ((matched = matcher.group(k=11)) != null) {
@@ -482,7 +486,7 @@ public class Lexer {
 				matcher.region(end,csr.length());
 				// FIXME - decide whether to throw exceptions or emit error messages and error tokens
 				throw new SyntaxException(("Invalid string: " + matched),token.pos());
-			} else if ((matched = matcher.group(19)) != null) {
+			} else if ((matched = matcher.group(k=19)) != null) {
 				//System.out.println("Killed");
 				matcher.region(end,csr.length());
 				throw new AbortParseException();

@@ -29,7 +29,7 @@ import org.smtlib.IResponse.IProofResponse;
 import org.smtlib.IResponse.IUnsatCoreResponse;
 import org.smtlib.IResponse.IValueResponse;
 import org.smtlib.ISort.IAbbreviation;
-import org.smtlib.ISort.IExpression;
+import org.smtlib.ISort.IApplication;
 import org.smtlib.ISort.IFamily;
 import org.smtlib.ISort.IFcnSort;
 import org.smtlib.ISort.IParameter;
@@ -80,7 +80,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 	@Override
 	public IResponse start() {
 		super.start();
-		solverProcess.start();
+		solverProcess.start(true);
 		try {
 			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Started simplify");
 			solverProcess.sendAndListen("(BG_PUSH (FORALL (B X Y) (IMPLIES (EQ B |@true|) (EQ (" + ite_term + " B X Y) X))))\n");
@@ -191,7 +191,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 			}
 			return smtConfig.responseFactory.success();
 		} catch (IOException e) {
-			return smtConfig.responseFactory.error("Failed to push",null);
+			return smtConfig.responseFactory.error("Failed to push");
 		}
 	}
 
@@ -208,7 +208,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 			}
 			return smtConfig.responseFactory.success();
 		} catch (IOException e) {
-			return smtConfig.responseFactory.error("Failed to push",null);
+			return smtConfig.responseFactory.error("Failed to push");
 		}
 	}
 
@@ -257,13 +257,13 @@ public class Solver_simplify extends Solver_test implements ISolver {
 		String option = key.value();
 		IAttributeValue lit;
 		if (Utils.ERROR_BEHAVIOR.equals(option)) {
-			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION,null);
+			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION);
 		} else if (Utils.AUTHORS.equals(option)) {
-			lit = smtConfig.exprFactory.unquotedString("David Detlefs and Greg Nelson and James B. Saxe",null);
+			lit = smtConfig.exprFactory.unquotedString("David Detlefs and Greg Nelson and James B. Saxe");
 		} else if (Utils.VERSION.equals(option)) {
-			lit = smtConfig.exprFactory.unquotedString("1.5.4",null);
+			lit = smtConfig.exprFactory.unquotedString("1.5.4");
 		} else if (Utils.NAME.equals(option)) {
-			lit = smtConfig.exprFactory.unquotedString("simplify",null);
+			lit = smtConfig.exprFactory.unquotedString("simplify");
 		} else if (Utils.REASON_UNKNOWN.equals(option)) {
 			return smtConfig.responseFactory.unsupported();
 		} else if (Utils.ALL_STATISTICS.equals(option)) {
@@ -271,7 +271,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 		} else {
 			return smtConfig.responseFactory.unsupported();
 		}
-		IAttribute<?> attr = smtConfig.exprFactory.attribute(key,lit,null);
+		IAttribute<?> attr = smtConfig.exprFactory.attribute(key,lit);
 		return smtConfig.responseFactory.get_info_response(attr);
 	}
 
@@ -325,7 +325,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 			if (!tc.result.isEmpty()) return tc.result.get(0); // FIXME - report all errors?
 		}
 		// FIXME - do we really want to call get-option here? it involves going to the solver?
-		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS,null)))) {
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
 			return smtConfig.responseFactory.error("The get-value command is only valid if :produce-models has been enabled");
 		}
 		if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
@@ -825,7 +825,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 		}
 
 		@Override
-		public String visit(IExpression s) throws VisitorException {
+		public String visit(IApplication s) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}

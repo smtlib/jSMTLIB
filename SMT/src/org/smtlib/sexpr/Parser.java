@@ -355,6 +355,8 @@ public class Parser extends Lexer implements IParser {
 		}
 	}
 	
+//	private <T extends IPos.IPosable> T setPos(T p, IPos pos) { p.setPos(pos); return p; }
+	
 	/** Parses an 'as' identifier, presuming the left-paren and the 'as' are already parsed,
 	 * from the token stream, returning null (with logged error messages) if there is not one.
 	 */
@@ -366,7 +368,7 @@ public class Parser extends Lexer implements IParser {
 		ILexToken rp = parseRP();
 		if (rp == null) { skipThruRP(); return null; }
 		IPos pos = pos(lp.pos(),rp.pos());
-		return smtConfig.exprFactory.id(name,sort,pos);
+		return setPos(smtConfig.exprFactory.id(name,sort),pos);
 	}
 	
 	/** Parses an identifier (either symbol or parameterized identifier) from the token
@@ -413,7 +415,7 @@ public class Parser extends Lexer implements IParser {
 		ILexToken rp = parseRP();
 		if (rp == null)  { skipThruRP();  return null; }
 		IPos pos = pos(lp.pos(),rp.pos());
-		return smtConfig.exprFactory.id(name,numerals,pos);
+		return setPos(smtConfig.exprFactory.id(name,numerals),pos);
 	}
 	
 	/** Parses an expression, returning null with error messages if there is not a valid
@@ -456,19 +458,19 @@ public class Parser extends Lexer implements IParser {
 				IExpr expr = decls == null ? null : parseExpr();
 				ILexToken rp = expr == null ? null : parseRP();
 				if (rp == null) { skipThruRP(); return null ; }
-				return smtConfig.exprFactory.forall(decls, expr, pos(lp.pos(), rp.pos()));
+				return setPos(smtConfig.exprFactory.forall(decls, expr), pos(lp.pos(), rp.pos()));
 			} else if (Utils.EXISTS.equals(s)) {
 				List<IDeclaration> decls = parseDeclarations();
 				IExpr expr = decls == null ? null : parseExpr();
 				ILexToken rp = expr == null ? null : parseRP();
 				if (rp == null) { skipThruRP(); return null ; }
-				return smtConfig.exprFactory.exists(decls, expr, pos(lp.pos(), rp.pos()));
+				return setPos(smtConfig.exprFactory.exists(decls, expr), pos(lp.pos(), rp.pos()));
 			} else if (Utils.LET.equals(s)) {
 				List<IBinding> decls = parseBindings();
 				IExpr expr = decls == null ? null : parseExpr();
 				ILexToken rp = expr == null ? null : parseRP();
 				if (rp == null) { skipThruRP(); return null ; }
-				return smtConfig.exprFactory.let(decls, expr, pos(lp.pos(), rp.pos()));
+				return setPos(smtConfig.exprFactory.let(decls, expr), pos(lp.pos(), rp.pos()));
 			} else if (Utils.AS.equals(s)) {
 				return parseAsIdentifierRest(lp);
 			} else if (Utils.UNDERSCORE.equals(s)) {
@@ -480,7 +482,7 @@ public class Parser extends Lexer implements IParser {
 				if (list == null) { skipThruRP(); return null; }
 				ILexToken rp = parseRP();
 				if (rp == null) { skipThruRP(); return null; }
-				return smtConfig.exprFactory.attributedExpr(expr,list,pos(lp.pos(), rp.pos()));
+				return setPos(smtConfig.exprFactory.attributedExpr(expr,list),pos(lp.pos(), rp.pos()));
 			}
 		}
 		List<IExpr> list = new LinkedList<IExpr>();
@@ -501,7 +503,7 @@ public class Parser extends Lexer implements IParser {
 			error("A function expression must have at least one argument",pos(lp.pos(),rp.pos()));
 			return null;
 		}
-		return smtConfig.exprFactory.fcn(head,list, pos(lp.pos(), rp.pos()));
+		return setPos(smtConfig.exprFactory.fcn(head,list), pos(lp.pos(), rp.pos()));
 	}
 	
 	/** Parses a parenthesized sequence of IDeclaration items, returning null with error messages if an error occurs */
@@ -561,7 +563,7 @@ public class Parser extends Lexer implements IParser {
 		ILexToken rp = sort == null ? null : parseRP();
 		if (rp == null) return null;
 		ISymbol.IParameter p = new Symbol.Parameter(sym); // FIXME - use a factory
-		return smtConfig.exprFactory.declaration(p,sort, pos(lp.pos(), rp.pos()));
+		return setPos(smtConfig.exprFactory.declaration(p,sort), pos(lp.pos(), rp.pos()));
 	}
 
 	/** Parses a binding "(id expression)", returning null with error messages if an error occurs */
@@ -573,7 +575,7 @@ public class Parser extends Lexer implements IParser {
 		ILexToken rp = expr == null ? null : parseRP();
 		if (rp == null) return null;
 		ISymbol.ILetParameter p = new Symbol.LetParameter(sym); // FIXME - use a factory
-		return smtConfig.exprFactory.binding(p,expr, pos(lp.pos(), rp.pos()));
+		return setPos(smtConfig.exprFactory.binding(p,expr), pos(lp.pos(), rp.pos()));
 	}
 
 	/** Parses a symbol, returning null with messages and not advancing the parser if an error occurs */
@@ -723,7 +725,7 @@ public class Parser extends Lexer implements IParser {
 		if (!isLP()) {
 			Symbol sym = parseSymbol();
 			if (sym == null) { getToken(); return null; } // Make sure to make some forward progress
-			return setPos(new Sort.Expression(sym),sym.pos());
+			return setPos(new Sort.Application(sym),sym.pos());
 		} else {
 			ILexToken lp = parseLP();
 			
@@ -734,7 +736,7 @@ public class Parser extends Lexer implements IParser {
 				} else if (head.toString().equals("_")) {
 					IIdentifier id = parseIdentifierRest(lp);
 					if (id == null) { return null; }
-					return setPos(new Sort.Expression(id),id.pos());
+					return setPos(new Sort.Application(id),id.pos());
 				}
 				// else some other symbol
 
@@ -742,7 +744,7 @@ public class Parser extends Lexer implements IParser {
 				if (list == null) { skipThruRP(); return null; }
 				ILexToken rp = parseRP();
 				if (rp == null) { skipThruRP(); return null; }
-				return setPos(new Sort.Expression(head,list),pos(lp.pos(),rp.pos()));
+				return setPos(new Sort.Application(head,list),pos(lp.pos(),rp.pos()));
 			} else {
 				IIdentifier id = parseIdentifier();
 				if (id == null) { skipThruRP(); return null; }
@@ -750,7 +752,7 @@ public class Parser extends Lexer implements IParser {
 				if (list == null) { skipThruRP(); return null; }
 				ILexToken rp = parseRP();
 				if (rp == null) { skipThruRP(); return null; }
-				return setPos(new Sort.Expression(id,list),pos(lp.pos(),rp.pos()));
+				return setPos(new Sort.Application(id,list),pos(lp.pos(),rp.pos()));
 			}
 		}
 	}
@@ -815,17 +817,17 @@ public class Parser extends Lexer implements IParser {
 		Keyword keyword = parseKeyword();
 		if (keyword == null) return null;
 		if (isRP() || isEOD()) {
-			return smtConfig.exprFactory.attribute(keyword,keyword.pos());
+			return setPos(smtConfig.exprFactory.attribute(keyword),keyword.pos());
 		}
 		ILexToken n = peekToken();
 		if (n instanceof IKeyword) {
-			return smtConfig.exprFactory.attribute(keyword,keyword.pos());
+			return setPos(smtConfig.exprFactory.attribute(keyword),keyword.pos());
 		} else {
 			if (!isLP()) {
 				ILexToken t = getToken();
 				if (t instanceof IAttributeValue) {
 					IAttributeValue v = (IAttributeValue)t;
-					return smtConfig.exprFactory.attribute(keyword,v,pos(keyword.pos(),v.pos()));
+					return setPos(smtConfig.exprFactory.attribute(keyword,v),pos(keyword.pos(),v.pos()));
 				} else {
 					smtConfig.log.logError(smtConfig.responseFactory.error("The value for the keyword " + 
 							smtConfig.defaultPrinter.toString(keyword) + " is not a legal attribute value"));
@@ -834,7 +836,7 @@ public class Parser extends Lexer implements IParser {
 			} else {
 				Sexpr value = parseSexpr();
 				if (value == null) return null;
-				return smtConfig.exprFactory.attribute(keyword,value,pos(keyword.pos(),value.pos()));
+				return setPos(smtConfig.exprFactory.attribute(keyword,value),pos(keyword.pos(),value.pos()));
 			}
 		}
 	}

@@ -17,6 +17,6 @@ public class LogicsBadPath extends LogicsBase {
 
 	@Test
 	public void testLogic() {
-		doCommand("(set-logic QF_UF)","No logic file found for QF_UF as xxx"+File.separator+"QF_UF.smt2");
+		doCommand("(set-logic QF_UF)","No logic file found for QF_UF on path \"xxx\"");
 	}
 }

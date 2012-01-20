@@ -22,70 +22,62 @@ public interface IExpr extends IAccept, IPosable {
 	/** The interface defining the factory type for producing objects of various subtypes of IExpr;
 	 * the IPos argument is an optional argument giving information about the textual position of an expression. */
 	static public interface IFactory {
+		/** Creates a INumeral object; the argument must be a string of digits. */
 		INumeral numeral(String v);
+		/** Creates a INumeral object; the argument must be non-negative */
 		INumeral numeral(long v);
+		/** Creates a IDecimal object; the argument must be a string of digits with just one decimal point */
 		IDecimal decimal(String v);
 		/** The argument is a pure character string, with no Java or SMTLIB escapes or enclosing quotes */
 		IStringLiteral unquotedString(String v);
 		/** The argument is SMTLIB escaped, with enclosing quotes */
 		IStringLiteral quotedString(String v);
+		/** Creates a IKeyword object from a canonical string representation */
 		IKeyword keyword(String v);
+		/** Creates a IBinaryLiteral from a string of 0 and 1 digits */
 		IBinaryLiteral binary(String v);
+		/** Creates a IHexLiteral object from a string of hex digits (either case) */
 		IHexLiteral hex(String v);
+		/** Creates a ISymbol object from a canonical String representation of the symbol */
 		ISymbol symbol(String v);
-		IAttribute<?> attribute(IKeyword k);
+		/** Creates an attribute with just a keyword and no attribute value */
+		IAttribute<?> attribute(IKeyword k); // FIXME _ should the template argument be Void
+		/** Creates an attribute with a keyword and a value */
 		<T extends IAttributeValue> IAttribute<T> attribute(IKeyword k, T value);
+		/** Creates an attributed expression (an expression with a positive number of attributes) */
 		//@ requires attributes.size() > 0;
 		IAttributedExpr attributedExpr(IExpr e, List<IAttribute<?>> attributes);
+		/** Creates an attributed expression with just one attribute. */
 		<T extends IAttributeValue> IAttributedExpr attributedExpr(IExpr e, IKeyword key, /*@Nullable*/T value);
+		/** Creates a function expression (perhaps with an empty argument list) */
         IFcnExpr fcn(IQualifiedIdentifier id, List<IExpr> args);
+		/** Creates a function expression (perhaps with an empty argument list) */
         IFcnExpr fcn(IQualifiedIdentifier id, IExpr... args);
-		//@ requires num.size() > 0;
+        /** Creates a parameterized identifier from a symbol and a non-empty list of numerals */
+        //@ requires num.size() > 0;
 		IParameterizedIdentifier id(ISymbol symbol, List<INumeral> num);
+		/** Creates a 'as' identifier from an identifier and a sort qualifier */
 		IAsIdentifier id(IIdentifier identifier, ISort qualifier);
+		/** Creates a Let expression */
 		//@ requires bindings.size() > 0;
 		ILet let(List<IBinding> bindings, IExpr e);
+		/** Creates a binding for a Let expression */
 		IBinding binding(ISymbol.ILetParameter symbol, IExpr expr);
+		/** Creates a parameter declaration */
 		IDeclaration declaration(ISymbol.IParameter symbol, ISort sort);
+		/** Creates a Forall expression */
 		//@ requires params.size() > 0;
 		IForall forall(List<IDeclaration> params, IExpr e);
+		/** Creates a Exists expression */
 		//@ requires params.size() > 0;
 		IExists exists(List<IDeclaration> params, IExpr e);
 
+		/** Creates a command script from a file of commands */
 		IScript script(/*@Nullable*/IStringLiteral filename, /*@Nullable*/List<ICommand> commands);
 
+		/** Creates an error expression */
 		IError error(String text);
 
-		// FIXME - get rid of the following
-		INumeral numeral(String v, /*@Nullable*//*@ReadOnly*/ IPos pos);
-		IDecimal decimal(String v, /*@Nullable*//*@ReadOnly*/ IPos pos);
-		/** THe argument is a pure character string, with no Java or SMTLIB escapes or enclosing quotes */
-		IStringLiteral unquotedString(String v, /*@Nullable*//*@ReadOnly*/ IPos pos);
-		/** The argument is SMTLIB escaped, with enclosing quotes */
-		IStringLiteral quotedString(String v, /*@Nullable*//*@ReadOnly*/ IPos pos);
-		IKeyword keyword(String v, /*@Nullable*//*@ReadOnly*/ IPos pos);
-		IBinaryLiteral binary(String v, /*@Nullable*//*@ReadOnly*/ IPos pos);
-		IHexLiteral hex(String v, /*@Nullable*//*@ReadOnly*/ IPos pos);
-		ISymbol symbol(String v, /*@Nullable*//*@ReadOnly*/ IPos pos);
-		IAttribute<?> attribute(IKeyword k, /*@Nullable*//*@ReadOnly*/ IPos pos);
-		<T extends IAttributeValue> IAttribute<T> attribute(IKeyword k, T value, /*@Nullable*//*@ReadOnly*/ IPos pos);
-		//@ requires attributes.size() > 0;
-		IAttributedExpr attributedExpr(IExpr e, List<IAttribute<?>> attributes, /*@Nullable*//*@ReadOnly*/ IPos pos);
-		<T extends IAttributeValue> IAttributedExpr attributedExpr(IExpr e, IKeyword key, /*@Nullable*/T value, /*@Nullable*//*@ReadOnly*/ IPos pos);
-        IFcnExpr fcn(IQualifiedIdentifier id, List<IExpr> args, /*@Nullable*//*@ReadOnly*/ IPos pos);
-		//@ requires num.size() > 0;
-		IParameterizedIdentifier id(ISymbol symbol, List<INumeral> num, /*@Nullable*//*@ReadOnly*/ IPos pos);
-		IAsIdentifier id(IIdentifier identifier, ISort qualifier, /*@Nullable*//*@ReadOnly*/ IPos pos);
-		//@ requires bindings.size() > 0;
-		ILet let(List<IBinding> bindings, IExpr e, /*@Nullable*//*@ReadOnly*/ IPos pos);
-		IBinding binding(ISymbol.ILetParameter symbol, IExpr expr, /*@Nullable*//*@ReadOnly*/IPos pos);
-		IDeclaration declaration(ISymbol.IParameter symbol, ISort sort, /*@Nullable*//*@ReadOnly*/IPos pos);
-		//@ requires params.size() > 0;
-		IForall forall(List<IDeclaration> params, IExpr e, /*@Nullable*//*@ReadOnly*/ IPos pos);
-		//@ requires params.size() > 0;
-		IExists exists(List<IDeclaration> params, IExpr e, /*@Nullable*//*@ReadOnly*/ IPos pos);
-
-		IError error(String text, /*@Nullable*//*@ReadOnly*/ IPos pos);
 	}
 	
 	/** This interface represents all literal (explicit constant) expressions. */
@@ -166,11 +158,15 @@ public interface IExpr extends IAccept, IPosable {
 		
 		/** Number of hex digits */
 		int length();
-	} // FIXME HexLiteral
+	}
+	
+	// FIXME - document toString for all interfaces
+	// FIXME - review headSymbol, head
+	// FIXME - review IParameter, ILetParameter
 	
 	/** This interface represents SMT-LIB string literals */
 	static public interface IStringLiteral extends ILiteral {
-		/** Returns the value without enclosing quotes and without any escape sequences */
+		/** Returns the value without enclosing quotes and without any escape sequences; there may be explicit new line (and other white space characters) */
 		//@ pure
 		String value();
 
@@ -218,7 +214,7 @@ public interface IExpr extends IAccept, IPosable {
 		ISort qualifier();
 	}
 	
-	/** This interface represents SMT-LIB identifiers (either ids or parameterized ids) */
+	/** This interface represents SMT-LIB parameterized identifiers */
 	static public interface IParameterizedIdentifier extends IIdentifier {
 		
 		IIdentifier head();
@@ -235,6 +231,7 @@ public interface IExpr extends IAccept, IPosable {
 	static public interface IAttributedExpr extends IExpr {
 		//@ pure
 		IExpr expr();
+		
 		//@ ensures \result.size() > 0;
 		//@ pure
 		List<IAttribute<?>> attributes();
@@ -251,6 +248,7 @@ public interface IExpr extends IAccept, IPosable {
 	static public interface IAttribute<TT extends IAttributeValue> extends IAccept, IPosable, IResponse {
 		//@ pure
 		IKeyword keyword();
+		
 		//@ pure
 		/*@Nullable*/ TT attrValue();
 	}

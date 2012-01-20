@@ -21,17 +21,14 @@ import org.smtlib.impl.SMTExpr;
 /** A class of static utility methods and constants for the SMT-LIB package. */
 public class Utils {
 
+	/** The name of the properties file read by jSMTLIB */
 	static final public String PROPS_FILE = "jsmtlib.properties";
+	
+	/** The default prefix for the property names that identify solver executables */
 	static final public String PROPS_SOLVER_EXEC_PREFIX = "org.smtlib.solver_";
+	
+	/** The property giving the default logic path */
 	static final public String PROPS_LOGIC_PATH = "org.smtlib.logic_path";
-
-	/** A reference to the configuration being used for this instance of SMT. */
-	protected SMT.Configuration smtConfig;
-
-	/** Creates a Utils instance for the given configuration */
-	public Utils(SMT.Configuration smtConfig) {
-		this.smtConfig = smtConfig;
-	}
 
 	/** The name of the test solver, implemented by this SMT app. */
 	final static public String TEST_SOLVER = "test";
@@ -188,7 +185,7 @@ public class Utils {
 	static public final ISymbol FALSE = new SMTExpr.Symbol("false".intern());
 
 	static {
-		// Initializing all the standard smtConfig
+		// Initializing all the standard smtConfig keywords
 		boolOptions.add(PRINT_SUCCESS);
 		boolOptions.add(EXPAND_DEFINITIONS);
 		boolOptions.add(INTERACTIVE_MODE);
@@ -236,7 +233,7 @@ public class Utils {
 	// }
 
 	/**
-	 * Quotes a string, adding enclosing quotes and putting in SMT-LIB escapes
+	 * Quotes a string, adding enclosing quotes and putting in SMT-LIBv2 escapes
 	 * as needed
 	 * 
 	 * @param msg
@@ -281,7 +278,7 @@ public class Utils {
 
 	/**
 	 * Converts a quoted string (which has enclosing double quotes) to a raw
-	 * sequence of ASCII characters, undoing any escape sequences, and without
+	 * sequence of ASCII characters, undoing any SMT-LIBv2 escape sequences, and without
 	 * the enclosing quotes
 	 */
 	public static String unescape(String msg) {
@@ -294,8 +291,7 @@ public class Utils {
 				sb.append(msg.substring(k, endPos));
 				break;
 			} else {
-				if (k < kk)
-					sb.append(msg.substring(k, kk));
+				if (k < kk) sb.append(msg.substring(k, kk));
 				char c = msg.charAt(kk + 1);
 				// In SMT-LIB v2, \\ is \ , \" is "
 				// and \x for some other x is \x (the \ is not special)
@@ -344,6 +340,16 @@ public class Utils {
 		}
 		return sb.toString();
 	}
+	
+	//////////////////// NON-STATIC MATERIAL
+
+	/** A reference to the configuration being used for this instance of Utils. */
+	protected SMT.Configuration smtConfig;
+
+	/** Creates a Utils instance for the given configuration */
+	public Utils(SMT.Configuration smtConfig) {
+		this.smtConfig = smtConfig;
+	}
 
 	/**
 	 * Reads a logic file.
@@ -352,23 +358,24 @@ public class Utils {
 	 *            the name of the logic
 	 * @param path
 	 *            the directory in which logic files are stored
-	 * @return either an ISexpr that holds a logic definition or a IResponse
-	 *         containing an error
+	 * @return an ISexpr that holds a logic definition
+	 * @throws SMTLIBException if an error occurred
 	 */
-	public/* @Nullable */ILogic findLogic(String name, /* @Nullable */String path, /*
-																				 * @
-																				 * Nullable
-																				 */
-			IPos pos) throws Utils.SMTLIBException {
+	public ILogic findLogic(String name, 
+										/* @Nullable */String path, 
+										/* @Nullable */ IPos pos) throws Utils.SMTLIBException {
 		ISource source;
 		InputStream input = null;
 		try {
 			SMT.Configuration config = smtConfig.clone();
 			config.interactive = false;
 			input = SMT.logicFinder.find(smtConfig, name, pos);
-			// All errors should result in thrown exceptions
-			if (input == null)
-				return null;
+			// All errors should result in thrown exceptions, not all null response
+			if (input == null) {
+				throw new Utils.SMTLIBException(smtConfig.responseFactory.error(
+						"Unexpected null returned from SMT.logicFinder when parsing the logic file for " + name + " in "
+								+ path));
+			}
 			source = config.smtFactory.createSource(config, input, null);
 			IParser p = config.smtFactory.createParser(config, source);
 			return p.parseLogic();
@@ -384,8 +391,7 @@ public class Utils {
 							+ " : " + e, null));
 		} finally {
 			try {
-				if (input != null)
-					input.close();
+				if (input != null) input.close();
 			} catch (java.io.IOException e) {
 				throw new Utils.SMTLIBException(
 						smtConfig.responseFactory.error(
@@ -396,49 +402,50 @@ public class Utils {
 		}
 	}
 
-	// FIXME - use the log or exceptions in findLogic and findTheory - why the
-	// difference
-
 	/**
 	 * Reads a theory file, returning the S-expression that it holds.
 	 * 
 	 * @param name
 	 *            the name of the theory
 	 * @param path
-	 *            the directory in which theory files are stored
-	 * @return either an ISexpr that holds a theory definition or an IResponse
-	 *         containing an error
+	 *            the directory path in which theory files are stored
+	 * @return an ISexpr that holds a theory definition
+	 * @throws SMTLIBException if an error occurs
 	 */
-	public/* @Nullable */ITheory findTheory(String name, /* @Nullable */
-			String path) {
+	// FIXME Fix the use of path here - it actually is used only for error messages and should not be null
+	public ITheory findTheory(String name, /* @Nullable */ String path) throws SMTLIBException {
 		ISource source;
 		InputStream input = null;
 		try {
 			SMT.Configuration config = smtConfig.clone();
 			config.interactive = false;
 			input = SMT.logicFinder.find(smtConfig, name, null);
+			// All errors should result in thrown exceptions, not all null response
+			if (input == null) {
+				throw new Utils.SMTLIBException(smtConfig.responseFactory.error(
+						"Unexpected null returned from SMT.logicFinder when parsing the theory file for " + name + " in "
+								+ path));
+			}
 			source = config.smtFactory.createSource(config, input, null);
 			IParser p = config.smtFactory.createParser(config, source);
 			return p.parseTheory();
 		} catch (IParser.ParserException e) {
-			smtConfig.log.logError(smtConfig.responseFactory.error(
+			throw new SMTLIBException(smtConfig.log.logError(smtConfig.responseFactory.error(
 					"Failed to parse the theory file " + name + " in " + path
-							+ ": " + e, e.pos()));
+							+ ": " + e, e.pos())));
 		} catch (Exception e) {
-			smtConfig.log.logError(smtConfig.responseFactory.error(
+			throw new SMTLIBException(smtConfig.log.logError(smtConfig.responseFactory.error(
 					"Failed to read the theory file " + name + " in " + path
-							+ ": " + e, null));
+							+ ": " + e, null)));
 		} finally {
 			try {
-				if (input != null)
-					input.close();
+				if (input != null) input.close();
 			} catch (java.io.IOException e) {
-				smtConfig.log.logError(smtConfig.responseFactory.error(
+				throw new SMTLIBException(smtConfig.log.logError(smtConfig.responseFactory.error(
 						"Failed to close a stream while parsing " + name
-								+ " in " + path + " : " + e, null));
+								+ " in " + path + " : " + e, null)));
 			}
 		}
-		return null;
 	}
 
 	/**
@@ -462,7 +469,7 @@ public class Utils {
 				config.interactive = false;
 				input = SMT.logicFinder.find(smtConfig, name, pos);
 				if (input == null)
-					return smtConfig.responseFactory.error("No logic loaded "
+					return smtConfig.responseFactory.error("Unexpected null result: No logic loaded "
 							+ name, pos);
 				// The above error should not happen, because an exception
 				// ought to be thrown for any problems in find().
@@ -514,14 +521,15 @@ public class Utils {
 	 *            the theory to load
 	 * @param symTable
 	 *            the symbol table into which to put the theory
-	 * @return null if OK, otherwise an error as a CommandResult
+	 * @return null if OK, otherwise an error as a IResponse
 	 */
 	public/* @Nullable */IResponse loadTheory(String theoryName,
 			SymbolTable symTable) {
-		ITheory th = findTheory(theoryName, smtConfig.logicPath);
-		if (th == null) {
-			// FIXME - this is a repetitive error
-			return smtConfig.responseFactory.error("Failed to load theory");
+		ITheory th = null;
+		try {
+			th = findTheory(theoryName, smtConfig.logicPath);
+		} catch (SMTLIBException e) {
+			return e.errorResponse;
 		}
 
 		// The second element should be the name of the logic, if specified
@@ -533,9 +541,10 @@ public class Utils {
 							+ th.theoryName().value(), th.theoryName().pos());
 		}
 
-		if (smtConfig.verbose != 0)
+		if (smtConfig.verbose != 0) {
 			smtConfig.log.logDiag("#Installing theory " + theoryName);
-
+		}
+		
 		/* @Nullable */IResponse response = loadTheory(th, symTable);
 		if (response == null) {
 			if (theoryName.equals("ArraysEx"))
@@ -548,6 +557,8 @@ public class Utils {
 		return response;
 	}
 
+	// FIXME - where are these overridden???
+	
 	/**
 	 * This method must be overridden by a subclass to interpret the ILogic
 	 * object according to the concrete syntax
@@ -566,6 +577,7 @@ public class Utils {
 				"org.smtlib.Utils.loadTheory must be overridden");
 	}
 
+	/** An Exception class used by the library */
 	static public class SMTLIBException extends Exception {
 		private static final long serialVersionUID = 1L;
 		public IResponse.IError errorResponse;

@@ -42,7 +42,9 @@ public class Pos implements IPos {
 	 *  that can be used as a base class if necessary */
 	public static class Posable implements IPosable {
 		protected /*@Nullable*/ IPos pos;
+		@Override
 		public IPos pos() { return pos; }
+		@Override
 		public void setPos(IPos pos) { this.pos = pos; }
 	}
 	
@@ -50,6 +52,18 @@ public class Pos implements IPos {
 	public static class Source implements ISource {
 		private Reader rdr = null;
 		
+		/** The sequence of characters */
+		private CharSequence chars;
+		/** The sequence of characters */
+		@Override
+		public CharSequence chars() { return chars; }
+		
+		/** The identifier for the location */
+		private /*@Nullable*/ Object location;
+		/** The identifier for the location */
+		@Override
+		public /*@Nullable*/ Object location() { return location; }
+
 		/** Creates a Source from a character sequence
 		 * @param cs the sequence to use as a source of characters
 		 * @param location a designator of the location of the source, used for identification only
@@ -59,14 +73,15 @@ public class Pos implements IPos {
 			this.location = location;
 		}
 
-		/** Creates a Source from a File
+		/** Creates a Source from a File; for these objects, the location is the file path (a String)
 		 * @param smtConfig the SMT Configuration object
 		 * @param f the File object from which to read characters
 		 * @throws java.io.FileNotFoundException if a problem occurred opening or reading the file
 		 */
 		public Source(SMT.Configuration smtConfig, java.io.File f) throws java.io.FileNotFoundException {
 			rdr = new FileReader(f);
-			CharSequenceReader csr = new CharSequenceReader(rdr,100000,0,2);
+			// The numbers in the next call are not magic - they just double the buffer by a factor of 2 if it is not large enough
+			CharSequenceReader csr = new CharSequenceReader(rdr,smtConfig.initialInputBufferSize,0,2);
 			csr.prompter = new SMT.Prompter(smtConfig);
 			chars = csr;
 			this.location = f.getPath();
@@ -79,28 +94,20 @@ public class Pos implements IPos {
 		 */
 		public Source(SMT.Configuration smtConfig, InputStream f, Object location) {
 			rdr = new InputStreamReader(f);
-			CharSequenceReader csr = new CharSequenceReader(rdr,100000,0,2);
+			// The numbers in the next call are not magic - they just double the buffer by a factor of 2 if it is not large enough
+			CharSequenceReader csr = new CharSequenceReader(rdr,smtConfig.initialInputBufferSize,0,2);
 			csr.prompter = new SMT.Prompter(smtConfig);
 			chars = csr;
 			this.location = location;
 		}
 		
+		@Override
 		public void close() {
 			try {
 				rdr.close();
 			} catch (IOException e) {}
 		}
 		
-		/** The sequence of characters */
-		private CharSequence chars;
-		/** The sequence of characters */
-		public CharSequence chars() { return chars; }
-		
-		/** The identifier for the location */
-		private /*@Nullable*/ Object location;
-		/** The identifier for the location */
-		public /*@Nullable*/ Object location() { return location; }
-
 		@Override
 		public char charAt(int pos) {
 			return this.chars.charAt(pos);
@@ -109,7 +116,7 @@ public class Pos implements IPos {
 		@Override
 		public int lineBeginning(int pos) {
 			int p = pos;
-			if (p >= chars().length()) p = chars().length()-1; // FIXME - check this for cases in which the length is indeterminate - perhaps just catch the exception for out of bounds access
+			if (p >= chars().length()) p = chars().length()-1; // If the length is indeterminate, length() should be INT_MAX
 			if (p > 0 && charAt(p) == '\n' && charAt(p-1) == '\r') --p;
 			char c;
 			while (p >= 0 && (c=charAt(p)) != '\n' && c != '\r') --p;
@@ -133,13 +140,16 @@ public class Pos implements IPos {
 		//@ ensures \result >= pos;
 		protected int nextLineTermination(int pos) {
 			char c;
-			if (pos >= chars().length()) return chars().length()-1; // FIXME - check this for csaes in which the length is indeterminate - perhaps just catch the out of bounds exception
+			if (pos >= chars().length()) return chars().length()-1; // If the length is indeterminate, length() should be INT_MAX
 			while ((c=charAt(pos)) != '\n' && c != '\r' && c != CharSequenceInfinite.endChar) ++pos;
 			if (c == '\r' && charAt(pos+1) == '\n') ++pos;
 			else if (c == CharSequenceInfinite.endChar) --pos;
 			return pos;
 		}
 		
+		// Note: this counts lines from the beginning of the character sequence, calling charAt at each
+		// character position; this is not very efficient; the presumption is that this method is called
+		// just for the occasional error message.
 		@Override
 		public int lineNumber(int pos) {
 			int line = 1;

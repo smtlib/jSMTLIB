@@ -21,7 +21,7 @@ public abstract class Sexpr extends Pos.Posable implements ISexpr {
 	
 	/** The class corresponding to sequences of S-expressions */
 	public static class Seq extends Sexpr implements ISeq {
-		List<ISexpr> sexprs;
+		protected List<ISexpr> sexprs;
 		
 		public Seq() {
 			this.sexprs = new LinkedList<ISexpr>();
@@ -36,30 +36,6 @@ public abstract class Sexpr extends Pos.Posable implements ISexpr {
 			return sexprs;
 		}
 
-		// Use object identity
-//		@Override
-//		public boolean equals(Object o) {
-//			if (!(o instanceof Seq)) return false;
-//			Seq s = (Seq)o;
-//			if (s.sexprs.size() != sexprs.size()) return false;
-//			Iterator<? extends ISexpr> iter = sexprs.iterator();
-//			Iterator<? extends ISexpr> iterb = s.sexprs().iterator();
-//			while (iter.hasNext() && iterb.hasNext()) {
-//				if (!(iter.next().equals(iterb.next()))) return false;
-//			}
-//			return true;
-//		}
-//		
-//		@Override
-//		public int hashCode() {
-//			Iterator<? extends ISexpr> iter = sexprs.iterator();
-//			int hash = sexprs.size();
-//			while (iter.hasNext()) {
-//				hash += iter.next().hashCode();
-//			}
-//			return hash;
-//		}
-		
 		/** For debugging - for real printing use a Printer */
 		@Override
 		public String toString() {
@@ -92,7 +68,8 @@ public abstract class Sexpr extends Pos.Posable implements ISexpr {
 	
 	/** Represents a single S-expression token with intrinsic type T */
 	public static class Token<T> extends Sexpr implements IToken<T> {
-		T value;
+		protected T value;
+		
 		public Token(T value) {
 			this.value = value;
 		}
@@ -102,19 +79,6 @@ public abstract class Sexpr extends Pos.Posable implements ISexpr {
 			return value;
 		}
 
-		// Use object identity
-//
-//		@Override
-//		public boolean equals(Object o) {
-//			if (!(o instanceof IToken)) return false;
-//			return ((IToken<?>)o).value().equals(value);
-//		}
-//		
-//		@Override
-//		public int hashCode() {
-//			return value.hashCode();
-//		}
-		
 		/** For debugging - for real printing use a Printer */
 		@Override
 		public String toString() {

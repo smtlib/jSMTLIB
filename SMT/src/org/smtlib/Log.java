@@ -34,17 +34,23 @@ public class Log {
 	 * messages; the Object must register itself by calling Log.addListener.
 	 */
 	public static interface IListener {
-		/** Logs the given msg to the SMT-LIB normal output (with no additional line termination) */
+		/** Called when messages are logged to the normal output. */
 		public void logOut(String msg);
-		/** Logs the given response to the SMT-LIB normal output, with a line termination */
+		
+		/** Called when a response it logged to the normal output (it is expected that a line termination will be added);
+		 * the argument is converted to text using the defaultPrinter in the smt configuration. */
 		public void logOut(/*@ReadOnly*/ IResponse result);
-		/** Logs the given msg to the SMT-LIB normal output as an error message (with line termination added) */
+		
+		/** Called when an error is being recorded on the normal output (it is expected that a line termination will be added) */
 		public void logError(String msg);
-		/** Logs an error response to the SMT-LIB normal output, with error position information, and line termination */
+		
+		/** Called when an IError is being recorded on the normal output - the listener has the opportunity to record error location information as well */
 		public void logError(/*@ReadOnly*/ IResponse.IError result);
-		/** Logs the given message to the SMT-LIB diagnostic output (with line termination) */
+		
+		/** Called when a message is sent to the SMT-LIB diagnostic output (it is expected that a line termination will be added) */
 		public void logDiag(String msg);
-		/** Amount of offset in the input line */
+		
+		/** The character sequence with which to start any log line */
 		public void indent(String chars);
 	}
 	
@@ -116,6 +122,8 @@ public class Log {
 		}
 	}
 	
+	// FIXME - the two following calls do not differ - do the callers of the first actually expect line terminations added?
+	
 	/** Prints the argument on the regular output stream and to any listeners*/
 	public void logOut(/*@NonNull*/ String message) {
 		for (IListener listener: listeners) {
@@ -130,7 +138,7 @@ public class Log {
 		}
 	}
 
-	/** Reports the error to any listeners. */
+	/** Reports the error to any listeners, returning the input. */
 	public IResponse.IError logError(/*@NonNull*//*@ReadOnly*/ IResponse.IError r) {
 		numErrors++;
 		for (IListener listener: listeners) {
@@ -147,11 +155,6 @@ public class Log {
 		}
 	}
 	
-	/** Prints the argument to any listeners. */
-	public void logDiag(/*@NonNull*/ IResponse r) {
-		logDiag(smtConfig.defaultPrinter.toString(r));
-	}
-
 	/** Prints the argument to any listeners (adds a line terminator). */
 	public void logDiag(/*@NonNull*/ String message) {
 		for (IListener listener: listeners) {
@@ -184,7 +187,14 @@ public class Log {
 		return listeners.remove(listener);
 	}
 
-	// Result does not have a final line-termination
+	/** Creates a location indication string from the pos argument; the returned value
+	 * does not have a final line termination.
+	 * @param pos the position to indicate
+	 * @param prompt the prompt with which to begin each line
+	 * @param smtConfig the current configuration
+	 * @return
+	 */
+	// FIXME - more detail on what is actually produced
 	static public String locationIndication(IPos pos, String prompt, SMT.Configuration smtConfig) {
 		int s = pos.charStart();
 		int e = pos.charEnd();

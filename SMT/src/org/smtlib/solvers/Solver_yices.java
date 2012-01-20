@@ -79,7 +79,7 @@ public class Solver_yices extends Solver_test implements ISolver {
 	public IResponse start() {
 		super.start();
 		try {
-			solverProcess.start();
+			solverProcess.start(true);
 			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Started yices " + (solverProcess!=null));
 			return smtConfig.responseFactory.success();
 		} catch (Exception e) {
@@ -256,7 +256,7 @@ public class Solver_yices extends Solver_test implements ISolver {
 		String option = key.value();
 		IAttributeValue lit;
 		if (":error-behavior".equals(option)) {
-			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION,null); // FIXME
+			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION); // FIXME
 		} else if (":status".equals(option)) {
 			return checkSatStatus==null ? smtConfig.responseFactory.unsupported() : checkSatStatus; 
 		} else if (":all-statistics".equals(option)) {
@@ -272,7 +272,7 @@ public class Solver_yices extends Solver_test implements ISolver {
 		} else {
 			return smtConfig.responseFactory.unsupported();
 		}
-		IAttribute<?> attr = smtConfig.exprFactory.attribute(key,lit,null);
+		IAttribute<?> attr = smtConfig.exprFactory.attribute(key,lit);
 		return smtConfig.responseFactory.get_info_response(attr);
 	}
 	
@@ -865,7 +865,7 @@ public class Solver_yices extends Solver_test implements ISolver {
 			throw new UnsupportedOperationException("visit-ISort.IAbbreviation");
 		}
 		
-		public String visit(ISort.IExpression s) throws IVisitor.VisitorException {
+		public String visit(ISort.IApplication s) throws IVisitor.VisitorException {
 			if (s.isBool()) return "bool";
 			String sort = s.family().headSymbol().accept(this);
 			if (s.parameters().size() == 0) {

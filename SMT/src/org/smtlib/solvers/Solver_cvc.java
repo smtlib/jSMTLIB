@@ -40,7 +40,7 @@ import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.IParameterizedIdentifier;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
-import org.smtlib.ISort.IExpression;
+import org.smtlib.ISort.IApplication;
 import org.smtlib.IVisitor.VisitorException;
 
 /** This class implements the adapter of SMTv2 to old CVC commands. */ 
@@ -68,7 +68,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 	public IResponse start() {
 		super.start();
 		try {
-			solverProcess.start();
+			solverProcess.start(true);
 //			String response = solverProcess.sendAndListen("DATATYPE T$$PBOOL = _$TRUE | _$FALSE END;\n");
 //			if (response.contains(errorIndication)) {
 //				return smtConfig.responseFactory.error(response);
@@ -247,7 +247,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 		String option = key.value();
 		IAttributeValue lit;
 		if (":error-behavior".equals(option)) {
-			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION,null); // FIXME
+			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION); // FIXME
 		} else if (":status".equals(option)) {
 			return checkSatStatus==null ? smtConfig.responseFactory.unsupported() : checkSatStatus; 
 		} else if (":all-statistics".equals(option)) {
@@ -263,7 +263,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 		} else {
 			return smtConfig.responseFactory.unsupported();
 		}
-		IAttribute<?> attr = smtConfig.exprFactory.attribute(key,lit,null);
+		IAttribute<?> attr = smtConfig.exprFactory.attribute(key,lit);
 		return smtConfig.responseFactory.get_info_response(attr);
 	}
 	
@@ -463,7 +463,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 			if (!tc.result.isEmpty()) return tc.result.get(0); // FIXME - report all errors?
 		}
 		// FIXME - do we really want to call get-option here? it involves going to the solver?
-		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS,null)))) {
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
 			return smtConfig.responseFactory.error("The get-value command is only valid if :produce-models has been enabled");
 		}
 		if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
@@ -978,8 +978,8 @@ public class Solver_cvc extends Solver_test implements ISolver {
 				} else if (symTable.bitVectorTheorySet && (newName.equals("BVPLUS") || newName.equals("BVSUB") || newName.equals("BVMULT"))) {
 					ISort sort = typemap.get(e);
 					int k = 1;
-					if (sort instanceof IExpression) {
-						IIdentifier id = ((IExpression)sort).family();
+					if (sort instanceof IApplication) {
+						IIdentifier id = ((IApplication)sort).family();
 						if (id instanceof IParameterizedIdentifier) {
 							k = ((IParameterizedIdentifier)id).numerals().get(0).intValue();
 						}
@@ -995,8 +995,8 @@ public class Solver_cvc extends Solver_test implements ISolver {
 				} else if (symTable.bitVectorTheorySet && newName.equals("sign_extend")) {
 					ISort sort = typemap.get(e);
 					int k = 1;
-					if (sort instanceof IExpression) {
-						IIdentifier id = ((IExpression)sort).family();
+					if (sort instanceof IApplication) {
+						IIdentifier id = ((IApplication)sort).family();
 						if (id instanceof IParameterizedIdentifier) {
 							k = ((IParameterizedIdentifier)id).numerals().get(0).intValue();
 						}
@@ -1012,8 +1012,8 @@ public class Solver_cvc extends Solver_test implements ISolver {
 				} else if (symTable.bitVectorTheorySet && newName.equals("rotate_left")) {
 					ISort sort = typemap.get(e);
 					int k = 1;
-					if (sort instanceof IExpression) {
-						IIdentifier id = ((IExpression)sort).family();
+					if (sort instanceof IApplication) {
+						IIdentifier id = ((IApplication)sort).family();
 						if (id instanceof IParameterizedIdentifier) {
 							k = ((IParameterizedIdentifier)id).numerals().get(0).intValue();
 						}
@@ -1036,8 +1036,8 @@ public class Solver_cvc extends Solver_test implements ISolver {
 				} else if (symTable.bitVectorTheorySet && newName.equals("rotate_right")) {
 					ISort sort = typemap.get(e);
 					int k = 1;
-					if (sort instanceof IExpression) {
-						IIdentifier id = ((IExpression)sort).family();
+					if (sort instanceof IApplication) {
+						IIdentifier id = ((IApplication)sort).family();
 						if (id instanceof IParameterizedIdentifier) {
 							k = ((IParameterizedIdentifier)id).numerals().get(0).intValue();
 						}
@@ -1060,8 +1060,8 @@ public class Solver_cvc extends Solver_test implements ISolver {
 				} else if (symTable.bitVectorTheorySet && newName.equals("zero_extend")) {
 					ISort sort = typemap.get(e);
 					int k = 1;
-					if (sort instanceof IExpression) {
-						IIdentifier id = ((IExpression)sort).family();
+					if (sort instanceof IApplication) {
+						IIdentifier id = ((IApplication)sort).family();
 						if (id instanceof IParameterizedIdentifier) {
 							k = ((IParameterizedIdentifier)id).numerals().get(0).intValue();
 						}
@@ -1224,7 +1224,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 			throw new UnsupportedOperationException("CVC visit-ISort.IAbbreviation");
 		}
 		
-		public String visit(ISort.IExpression s) throws IVisitor.VisitorException {
+		public String visit(ISort.IApplication s) throws IVisitor.VisitorException {
 			if (s.isBool()) return "BOOLEAN";
 			if (s.parameters().size() == 0) {
 				String sort = encodeSort(s.family());

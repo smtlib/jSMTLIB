@@ -46,7 +46,7 @@ public class C_get_value extends Command implements Iget_value {
 		boolean anyErrors = false;
 		if (!p.isLP()) {
 			error(p.smt(),"Expected a parenthesized list of terms beginning here",
-					new Pos(p.currentPos()-1,p.currentPos(),p.source())); // FIXME - factory?
+					p.pos(p.currentPos()-1,p.currentPos()));
 			return null;
 		}
 		ILexToken lp = p.parseLP();
@@ -59,7 +59,7 @@ public class C_get_value extends Command implements Iget_value {
 		if (anyErrors) { return null; }
 		if (list.isEmpty()) {
 			error(p.smt(),"Expected a parenthesized list of at least one term",
-					new Pos(lp.pos().charStart(),rp.pos().charEnd(),p.source())); // FIXME - factory?
+					p.pos(lp.pos().charStart(),rp.pos().charEnd()));
 			return null;
 		}
 		return new C_get_value(list);

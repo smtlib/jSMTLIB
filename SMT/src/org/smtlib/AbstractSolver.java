@@ -93,13 +93,13 @@ public class AbstractSolver implements ISolver {
 		throw new UnsupportedOperationException("AbstractSolver.declare_sort");
 	}
 
-	/** @see org.smtlib.ISolver#set_option(IExpr.IKeyword,IAttributeValue)  */
+	/** @see org.smtlib.ISolver#set_option(IExpr.IKeyword,IExpr.IAttributeValue)  */
 	@Override
 	public IResponse set_option(IKeyword option, IAttributeValue value){
 		throw new UnsupportedOperationException("AbstractSolver.set_option");
 	}
 
-	/** @see org.smtlib.ISolver#set_info(IExpr.IKeyword, IAttributeValue)  */
+	/** @see org.smtlib.ISolver#set_info(IExpr.IKeyword, IExpr.IAttributeValue)  */
 	@Override
 	public IResponse set_info(IKeyword key, IAttributeValue value){
 		throw new UnsupportedOperationException("AbstractSolver.set_info");

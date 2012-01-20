@@ -10,6 +10,7 @@ import org.smtlib.IPos;
 public interface ILexToken {
 	/** The lexical position of the token */
 	/*@Nullable*//*@ReadOnly*/ IPos pos();
+	
 	/** A short word characterizing the class of token (e.g. "numeral")*/
 	String kind();
 	

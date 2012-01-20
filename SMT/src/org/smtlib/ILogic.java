@@ -21,5 +21,5 @@ public interface ILogic extends IAccept, ILanguage {
 	Map<String,IAttribute<?>> attributes();
 	
 	/** The value of an attribute; returns null if the attribute does not exist for this logic. */
-	/*@Nullable*/IAttributeValue value(String keyword);
+	/*@Nullable*/IAttributeValue value(String keyword); // TODO _ abstract keyword?
 }
