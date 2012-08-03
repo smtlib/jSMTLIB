@@ -1,12 +1,16 @@
 #! /bin/bash
 
+echo JAVA_HOME $JAVA_HOME
+which jar
+export JAVA_HOME=C:/cygwin/home/dcok/ProgramFilesX/Java/jdk1.7.0_01-32bit
+
 rm -rf temp
 mkdir temp
 echo "Manifest-Version: 1.0" > temp/manifest
 echo "Main-Class: org.smtlib.SMT" >> temp/manifest
 cd bin
 rm -f jsmtlib.properties
-jar -cfm ../jSMTLIB.jar ../temp/manifest .
+$JAVA_HOME/bin/jar -cfm ../jSMTLIB.jar ../temp/manifest .
 cp ../jsmtlib.properties .
 cd ..
 cp ../../../texstuff/papers/SMTLIBUserGuide/SMTLIBUserGuide.pdf jSMTLIBUserGuide.pdf

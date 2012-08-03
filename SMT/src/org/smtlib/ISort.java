@@ -46,6 +46,9 @@ public interface ISort extends IAccept, IPosable {
 	/** Returns true if the receiver designates the Bool pre-defined Sort. */
 	boolean isBool();
 	
+	/** Expands all abbreviations */
+	ISort expand();
+	
 	/** Returns a new sort with any parameters substituted */
 	ISort substitute(java.util.Map<IParameter,ISort> map); // FIXME - should use IParameter instead of IIdentifier?
 

@@ -104,7 +104,7 @@ public interface IParser {
 	/** Parses a sort, returning null with error messages if a valid sort is not in the 
 	 * next parser tokens.
 	 */
-	/*@Nullable*/Sort parseSort() throws ParserException;
+	/*@Nullable*/Sort parseSort(List<ISort.IParameter> parameters) throws ParserException;
 
 		/** Parse an SMT-LIB logic; return null and log an error response if there is no valid logic definition */
 	/*@Nullable*/ ILogic parseLogic() throws ParserException;

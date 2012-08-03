@@ -867,14 +867,13 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	
 	@Override
 	public /*@Nullable*/ ISort visit(ISort.IFamily s) throws IVisitor.VisitorException {
-		error("INTERNAL ERROR - unexpected type-checking of a ISort.IFamily " + s, null);// FIXME - check sort
+		error("INTERNAL ERROR - unexpected type-checking of a ISort.IFamily " + s, null);
 		return null;
 	}
 	
 	@Override
 	public /*@Nullable*/ ISort visit(ISort.IParameter s) throws IVisitor.VisitorException {
-		error("NOT TYPECHECKING " + s, s.pos());// FIXME - check sort
-		return null;
+		return s;
 	}
 	
 	@Override

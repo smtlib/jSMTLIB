@@ -84,7 +84,7 @@ public class C_define_sort extends Command implements Idefine_sort {
 		}
 		p.parseRP();
 		if (anyErrors) return null;
-		ISort expr = p.parseSort();
+		ISort expr = p.parseSort(list);
 		if (expr == null) return null;
 		String v = name.value();
 		if (v.length() > 0 && (v.charAt(0) == '@' || v.charAt(0) == '.')) {
