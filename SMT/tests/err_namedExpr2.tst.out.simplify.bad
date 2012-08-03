@@ -13,9 +13,7 @@ success
 (assert (let ((r true)) (! r :named R))) ; error - R already defined
                                     ^
 (error "Symbol R is already defined")
-(assert (let ((r true)) (! r :named R2))) ; OK
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Use of let is not yet implemented in the Simplify adapter")
+success
 (assert (forall ((r Bool)) (let ((r true)) (! r :named RR)))) ; OK
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (error "Boolean quantifiers are not implemented in the Simplify adapter")

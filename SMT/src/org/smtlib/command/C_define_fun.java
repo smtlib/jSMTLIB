@@ -95,7 +95,7 @@ public class C_define_fun extends Command implements Idefine_fun {
 		}
 		p.parseRP();
 		if (anyErrors) return null;
-		ISort resultSort = p.parseSort();
+		ISort resultSort = p.parseSort(null);
 		if (resultSort == null) return null;
 		IExpr expr = p.parseExpr();
 		if (expr == null) return null;

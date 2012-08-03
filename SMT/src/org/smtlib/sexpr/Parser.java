@@ -363,7 +363,7 @@ public class Parser extends Lexer implements IParser {
 	private /*@Nullable*/ IAsIdentifier parseAsIdentifierRest(ILexToken lp) throws ParserException {
 		IIdentifier name = parseIdentifier();
 		if (name == null) return null;
-		ISort sort = parseSort();
+		ISort sort = parseSort(null);
 		if (sort == null) { skipThruRP(); return null; }
 		ILexToken rp = parseRP();
 		if (rp == null) { skipThruRP(); return null; }
@@ -559,7 +559,7 @@ public class Parser extends Lexer implements IParser {
 	public /*@Nullable*/IDeclaration parseDeclaration() throws ParserException {
 		ILexToken lp = parseLP();
 		ISymbol sym = lp == null ?  null : parseSymbol();
-		ISort sort = sym == null ? null : parseSort();
+		ISort sort = sym == null ? null : parseSort(null);
 		ILexToken rp = sort == null ? null : parseRP();
 		if (rp == null) return null;
 		ISymbol.IParameter p = new Symbol.Parameter(sym); // FIXME - use a factory
@@ -721,10 +721,15 @@ public class Parser extends Lexer implements IParser {
 	//		( symbol sort+ )
 	//		( ( _ symbol numeral+ ) sort+ )
 	@Override
-	public /*@Nullable*/Sort parseSort() throws ParserException {
+	public /*@Nullable*/Sort parseSort(List<ISort.IParameter> parameters) throws ParserException {
 		if (!isLP()) {
 			Symbol sym = parseSymbol();
 			if (sym == null) { getToken(); return null; } // Make sure to make some forward progress
+			if (parameters != null) {
+				for (ISort.IParameter p: parameters) {
+					if (p.identifier().equals(sym)) return (Sort)p;
+				}
+			}
 			return setPos(new Sort.Application(sym),sym.pos());
 		} else {
 			ILexToken lp = parseLP();
@@ -740,7 +745,7 @@ public class Parser extends Lexer implements IParser {
 				}
 				// else some other symbol
 
-				List<ISort> list = parseSortList();
+				List<ISort> list = parseSortList(parameters);
 				if (list == null) { skipThruRP(); return null; }
 				ILexToken rp = parseRP();
 				if (rp == null) { skipThruRP(); return null; }
@@ -748,7 +753,7 @@ public class Parser extends Lexer implements IParser {
 			} else {
 				IIdentifier id = parseIdentifier();
 				if (id == null) { skipThruRP(); return null; }
-				List<ISort> list = parseSortList();
+				List<ISort> list = parseSortList(parameters);
 				if (list == null) { skipThruRP(); return null; }
 				ILexToken rp = parseRP();
 				if (rp == null) { skipThruRP(); return null; }
@@ -760,14 +765,14 @@ public class Parser extends Lexer implements IParser {
 	/** Parses sequence of sorts up to a right-parenthesis, returning null with error messages
 	 * if an error occurs.
 	 */
-	public /*@Nullable*/List<ISort> parseSortList() throws ParserException {
+	public /*@Nullable*/List<ISort> parseSortList(List<ISort.IParameter> parameters) throws ParserException {
 		List<ISort> list = new LinkedList<ISort>();
 		while (!isRP()) {
 			if (isEOD()) {
 				error("Unexpected end of data while parsing a sort",pos(currentPos()-1,currentPos()));
 				return null;
 			}
-			ISort s = parseSort();
+			ISort s = parseSort(parameters);
 			if (s != null) list.add(s);
 			else { skipThruRP(); return null; }
 		}

@@ -75,14 +75,14 @@ public class C_declare_fun extends Command implements Ideclare_fun {
 		if (p.parseLP() == null) return null;
 		while (!p.isRP()) {
 			if (p.isEOD()) return null;
-			ISort s = p.parseSort();
+			ISort s = p.parseSort(null);
 			if (s == null) anyErrors = true;
 			else argSorts.add(s);
 		}
 		p.parseRP();
 		if (anyErrors) return null;
 
-		/*@Nullable*/ ISort result = p.parseSort();
+		/*@Nullable*/ ISort result = p.parseSort(null);
 		if (result == null) return null;
 		String v = symbol.value();
 		if (v.length() > 0 && (v.charAt(0) == '@' || v.charAt(0) == '.')) {

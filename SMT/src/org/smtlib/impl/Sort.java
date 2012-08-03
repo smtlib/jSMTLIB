@@ -176,6 +176,9 @@ public abstract class Sort extends Pos.Posable implements ISort {
 		/** Reference to definition; filled in during type-checking */
 		private ISort.IDefinition definition;  
 		
+		/** Cached value for expanded() */
+		private ISort expanded = null;
+		
 		public Application(IIdentifier sortID, List<ISort> sortParameters) {
 			this.sortID = sortID;
 			this.sortParameters = sortParameters;
@@ -209,35 +212,46 @@ public abstract class Sort extends Pos.Posable implements ISort {
 			// Note we could call definition().eval(sortParameters) always, but that 
 			// creates a duplicate object in Family.eval
 			
-			ISort ss = this;
-			while (ss instanceof Application) {
-				if (((Application)ss).definition() instanceof IFamily) return ss;
-				ss = definition().eval(sortParameters);
+			if (expanded == null) {
+				boolean changed = false;
+				ISort ss = this;
+				for (ISort param: parameters()) {
+					ISort p = param.expand();
+					if (p != param) changed = true;
+				}
+				while (ss instanceof Application) {
+					if (((Application)ss).definition() instanceof IFamily) return ss;
+					ss = definition().eval(sortParameters);
+				}
+				expanded = ss;
 			}
-			return ss;
+			return expanded;
 		}
+		
 
 		@Override
 		public boolean equals(Object sort) {
 			if (this == sort) return true;
-			Object esort = sort;
-			if (sort instanceof IApplication) {
-				IApplication e = (IApplication)sort;
-				if (e.family().equals(this.family())) {
-					boolean matches = true;
-					int i = 0;
-					for (ISort p: this.parameters()) {
-						if (!p.equals(e.param(i++))) { matches = false; break; }
-					}
-					if (matches) return true;
-				}
-				esort = e.expand();
-			}
-			// Substitute abbreviations
-			ISort ethis = expand();
-			// If either one was expanded, call equals recursively
-			if (this != ethis || sort != esort) return ethis.equals(esort);
-			return false;
+			if (!(sort instanceof ISort)) return false;
+			return expand().equalsNoExpand( ((ISort)sort).expand());
+//			Object esort = sort;
+//			if (sort instanceof IApplication) {
+//				IApplication e = (IApplication)sort;
+//				if (e.family().equals(this.family())) {
+//					boolean matches = true;
+//					int i = 0;
+//					for (ISort p: this.parameters()) {
+//						if (!p.equals(e.param(i++))) { matches = false; break; }
+//					}
+//					if (matches) return true;
+//				}
+//				esort = e.expand();
+//			}
+//			// Substitute abbreviations
+//			ISort ethis = expand();
+//			// If either one was expanded, call equals recursively
+//			if (this != ethis || sort != esort) return ethis.equals(esort);
+//			return false;
 		}
 		
 		@Override
@@ -253,7 +267,7 @@ public abstract class Sort extends Pos.Posable implements ISort {
 				}
 				return true;
 			} else {
-				return sort.equals(this);
+				return false;
 			}
 		}	
 		
@@ -372,6 +386,9 @@ public abstract class Sort extends Pos.Posable implements ISort {
 		}
 		
 		@Override
+		public ISort expand() { return this; } // TODO: Fix this?
+		
+		@Override
 		public ISort resultSort() { return resultSort; }
 		
 		@Override
@@ -466,6 +483,9 @@ public abstract class Sort extends Pos.Posable implements ISort {
 			ISort s = map.get(this);
 			return s == null ? this : s;
 		}
+		
+		@Override
+		public ISort expand() { return this; } // TODO: Fix this?
 		
 		@Override
 		public boolean equals(Object o) {

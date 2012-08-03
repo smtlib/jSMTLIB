@@ -338,7 +338,15 @@ public class Solver_simplify extends Solver_test implements ISolver {
 
 	
 	public /*@Nullable*/String translate(IExpr expr) throws IVisitor.VisitorException {
-		return expr.accept(new Translator(typemap,smtConfig));
+		Translator t = new Translator(typemap,smtConfig);
+		String r = expr.accept(t);
+		if (t.conjuncts.isEmpty()) return r;
+		String and = "(AND ";
+		for (String c: t.conjuncts) {
+			and = and + c + " ";
+		}
+		and = and + r + " )";
+		return and;
 	}
 	/* Translating simplify:
 	 *  Simplify has no type definitions
@@ -445,6 +453,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 		boolean isFormula = true;
 		final private Map<IExpr,ISort> typemap;
 		final private SMT.Configuration smtConfig;
+		private List<String> conjuncts = new LinkedList<String>();
 		
 		public Translator(Map<IExpr,ISort> typemap, SMT.Configuration smtConfig) {
 			this.typemap = typemap;
@@ -758,7 +767,15 @@ public class Solver_simplify extends Solver_test implements ISolver {
 			// Simplify does not have let
 			// We can create a new temp variable (or function of any quantified parameters)
 			// and then use that.
-			throw new VisitorException("Use of let is not yet implemented in the Simplify adapter",e.pos()); // FIXME - let in Simplify
+			for (IBinding b : e.bindings()) {
+				String r = b.expr().accept(this);
+				ISort s = typemap.get(b.expr());
+				// FIXME - don't use toString - also need to map to a unique new temporary
+				r = (s.isBool()? "(IFF " : "(EQ ") + b.parameter().accept(this) + " " + r + " )";
+				conjuncts.add(r);
+			}
+			return e.expr().accept(this);
+			//throw new VisitorException("Use of let is not yet implemented in the Simplify adapter",e.pos()); // FIXME - let in Simplify
 		}
 
 		@Override 
