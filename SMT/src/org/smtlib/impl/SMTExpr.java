@@ -13,7 +13,8 @@ import org.smtlib.*;
 
 // FIXME - Decide whether we use reference or structural equality - either complete or remove equals and hashCode
 
-/** This class defines a number of subclasses that implement the SMT-LIB abstract AST */
+/** This class defines a number of subclasses that implement the SMT-LIB abstract AST;
+ * they are used by commands and expressions. */
 public abstract class SMTExpr implements IExpr {
 	
 	/** Just a convenient base class to provide some method implementations */
@@ -25,17 +26,22 @@ public abstract class SMTExpr implements IExpr {
 		public boolean isError() { return false; }
 		
 		/** Just for debugging - use a Printer for proper output */
+		@Override
 		public String toString() { return value.toString(); }
 	}
 
-	/** This class represents a Numeral expression or syntax token */
+	/** This class represents an SMT Numeral expression or syntax token */
 	static public class Numeral extends Literal<BigInteger> implements INumeral {
+		/** A value equivalent to the BigInteger, when it is in range. */
 		protected int number;
+		
+		/** Constructs a Numeral with the given value. */  // FIXME - test with too big a number
 		public Numeral(BigInteger i) {
 			super(i);
 			number = value.intValue();
 		}
 		
+		/** Constructs a Numeral with the given value. */ 
 		public Numeral(int i) {
 			super(BigInteger.valueOf(i));
 			number = i;
@@ -47,6 +53,7 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public String kind() { return "numeral"; }
 		
+		/** Equal to any INumeral with the same numeric value */
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
@@ -62,7 +69,10 @@ public abstract class SMTExpr implements IExpr {
 
 	}
 	
+	/** This class represents an SMT String literal expression or syntax token */
 	static public class StringLiteral extends Literal<String>  implements IStringLiteral {
+		
+		// The 'value' field holds an unquoted string
 		
 		/** If quoted is true, then the value should be the string with all escape sequences intact and
 		 * enclosing quotes in place; if quoted is false, the value should not have enclosing quotes and
@@ -73,12 +83,13 @@ public abstract class SMTExpr implements IExpr {
 		}
 		
 		/** For a StringLiteral, toString produces a properly escaped and quoted string */
+		@Override
 		public String toString() { return Utils.quote(value); }
 
-		
 		@Override
 		public String kind() { return "string-literal"; }
 
+		/** Equal to any IStringLiteral with the same string value */
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
@@ -93,6 +104,7 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 	
+	/** This class represents an SMT Decimal literal expression or syntax token */
 	static public class Decimal extends Literal<BigDecimal> implements IDecimal {
 		
 		public Decimal(BigDecimal v) {
@@ -102,6 +114,7 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public String kind() { return "decimal"; }
 
+		/** Equal to any IDecimal with the same BigDecimal value */
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
@@ -116,6 +129,7 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 	
+	/** This class represents an SMT Keyword syntax token */
 	static public class Keyword extends Pos.Posable  implements IKeyword {
 		protected String value; // Keyword string with leading colon (TODO - check this)
 		
@@ -130,6 +144,7 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public String kind() { return "keyword"; }
 
+		/** Equal to any IKeyword designating the same abstract keyword. */
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
@@ -144,9 +159,11 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 
 		/** Just for debugging - use a Printer for proper output */
+		@Override
 		public String toString() { return value.toString(); }
 	}
 	
+	/** This class represents an SMT as-identifier AST */
 	static public class AsIdentifier extends Pos.Posable implements IAsIdentifier {
 		protected IIdentifier head;
 		protected ISort qualifier;
@@ -187,10 +204,12 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 		
 		/** Just for debugging - use a Printer for proper output */
+		@Override
 		public String toString() { return org.smtlib.sexpr.Printer.write(this); }
 
 	}
 	
+	/** This class represents an SMT parameterized-identifier AST */
 	static public class ParameterizedIdentifier extends Pos.Posable implements IParameterizedIdentifier {
 		protected IIdentifier head;
 		protected List<INumeral>  nums;
@@ -239,17 +258,21 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 		
 		/** Just for debugging - use a Printer for proper output */
+		@Override
 		public String toString() { return org.smtlib.sexpr.Printer.write(this); }
 
 	}
 	
+	/** This class represents an SMT Symbol */
 	static public class Symbol extends Pos.Posable  implements ISymbol {
+		
+		 // FIXME - this incorporates some concrete syntax
 		
 		protected String value; // canonical string (without bars)
 		protected String originalString;
 		
 		/** The argument is a Symbol string, with or without enclosing bars */
-		public Symbol(String v) {
+		public Symbol(String v) { 
 			value = v.length() > 0 && v.charAt(0) == '|' ? v.substring(1,v.length()-1) : v;
 			originalString = v;
 		}
@@ -330,6 +353,7 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 
 		/** Just for debugging - use a Printer for proper output */
+		@Override
 		public String toString() { return org.smtlib.sexpr.Printer.write(this); }
 
 	}
@@ -541,12 +565,16 @@ public abstract class SMTExpr implements IExpr {
 			this.value = value;
 		}
 		
+		@Override
 		public boolean isOK() { return false; }
 		
+		@Override
 		public boolean isError() { return false; }
 		
+		@Override
 		public IKeyword keyword() { return keyword; }
 		
+		@Override
 		public TT attrValue() { return value; }
 		
 		@Override
@@ -627,10 +655,13 @@ public abstract class SMTExpr implements IExpr {
 		}
 		
 		// FIXME - do we really want this here
+		@Override
 		public void validExpression(IExpr expr)  throws IVisitor.VisitorException {}
 
+		@Override
 		public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {}
 
+		@Override
 		public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {}
 
 		// FIXME @Override
@@ -670,7 +701,7 @@ public abstract class SMTExpr implements IExpr {
 			return attr.attrValue();
 		}
 		
-		// @Override
+		//FIXME @Override
 		public String kind() { return "theory"; }
 
 		@Override

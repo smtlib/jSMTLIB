@@ -7,6 +7,7 @@ package org.smtlib;
 
 // FIXME - document IVisitor, including an example of an implementation and a discussion about accept; not sure it is used
 // FIXME - figure out how to properly do Nullable for generic types
+// FIXME - do a review of all of the visit methods to be sure we have the structure correct
 
 import org.smtlib.ICommand.IScript;
 import org.smtlib.IExpr.IAsIdentifier;
@@ -92,6 +93,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 	 * - that is it will not walk the tree without further implementation.
 	 * @param <T> the type of the return value of each visitor
 	 */
+	// FIXME - revisit the annotations. SHould all the methods have Nullable returns or all of them not?
 	static public class NullVisitor</*@Nullable*/T extends /*@Nullable*/Object> implements IVisitor</*@Nullable*/T> {
 
 		@Override

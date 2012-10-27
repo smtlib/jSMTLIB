@@ -64,13 +64,17 @@ public class Lexer {
 	protected class LexToken implements IPLexToken {
 		private String chars;
 		private IPos pos;
+		@Override
 		public IPos pos() { return pos; }
 		public LexToken(String s, int cp) { // FIXME - factory? or Lexer.pos?
 			chars = s.intern(); 
 			pos = new Pos(cp,cp+1,source); 
 		} 
+		@Override
 		public boolean isError() { return false; }
+		@Override
 		public String toString() { return chars; }
+		@Override
 		public String kind() { return chars; }
 	}
 	

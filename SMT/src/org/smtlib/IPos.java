@@ -24,9 +24,9 @@ public interface IPos {
 	/** Returns the source object containing the characters */
 	public abstract /*@Nullable*/ ISource source() /*@ReadOnly*/;
 	
-	/** The starting position within the character sequence */
+	/** The starting position within the character sequence (0-based) */
 	public abstract int charStart() /*@ReadOnly*/;
 
-	/** One beyond the last position of the character sequence range. */
+	/** One beyond the last position of the character sequence range (0-based). */
 	public abstract int charEnd() /*@ReadOnly*/;
 }

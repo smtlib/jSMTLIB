@@ -32,10 +32,13 @@ public class Pos implements IPos {
 	}
 	
 	/** The starting character, beginning from 0 */
+	@Override
 	public int charStart() { return charStart; }
 	/** One past the last character of the range, beginning from 0 */
+	@Override
 	public int charEnd() { return charEnd; }
 	/** The source of text */
+	@Override
 	public /*@Nullable*/ISource source() { return source; }
 
 	/** An implementation of IPosable, holding an instance of Pos,

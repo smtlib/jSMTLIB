@@ -4,7 +4,7 @@
  * Created August 2010
  */
 package org.smtlib;
-// FIXME- NEEDS REVIEW
+// FIXME- NEEDS REVIEW; use an interface?
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -15,7 +15,7 @@ import java.util.Map;
 import org.smtlib.IExpr.*;
 import org.smtlib.ISort.*;
 
-/** This class is a visitor that typechecks a formula */
+/** This class is a visitor that type-checks a formula */
 public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 
 	/** Compilation of errors */
