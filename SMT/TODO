@@ -85,4 +85,4 @@ Adapters:
 ** implement bitvector extensions
  figure out how to handle sorts within Simplify
  implement options and info in other solvers
-  
+
