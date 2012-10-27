@@ -12,6 +12,8 @@ import java.util.List;
 
 /** This class is used as a collection point for all output.  The SMTLIB defines two output
  * streams - regular output and diagnostic output, normally assigned to standard out and stderr.
+ * The SMT out stream contains all standard SMT-LIB responses (including errors);
+ * the SMT diag stream is for user-defined debugging or other information.
  * 
  * @author David Cok
  *
@@ -24,7 +26,8 @@ public class Log {
 	/** Keeps a reference to smtConfig for this instance of the SMT tool*/
 	/*@NonNull*/ private SMT.Configuration smtConfig;
 	
-	/** Constructs a Log based on the given configuration */
+	/** Constructs a Log based on the given configuration, adding a 
+	 * StandardListener */
 	public Log(SMT.Configuration smtConfig) {
 		this.smtConfig = smtConfig;
 		addListener(new StandardListener());
@@ -59,7 +62,7 @@ public class Log {
 	 * are reflected here as well.
 	 */
 	public class StandardListener implements IListener {
-		String prompt = null;
+		protected String prompt = ""; // TODO _ I don't think prompt is being used anywhere - remove it
 		
 		@Override
 		public void indent(String chars) {
@@ -107,12 +110,12 @@ public class Log {
 	}
 	
 	/** The list of listeners to send log messages to */
-	private List<IListener> listeners = new LinkedList<IListener>();
+	protected List<IListener> listeners = new LinkedList<IListener>();
 	
-	/** The stream used for regular output and error information */
+	/** The stream used for regular output and error information (may be modified directly)*/
 	public /*@NonNull*/ java.io.PrintStream out = System.out;
 	
-	/** The stream used for diagnostic log information */
+	/** The stream used for diagnostic log information (may be modified directly) */
 	public /*@NonNull*/ java.io.PrintStream diag = System.err;
 
 	/** Prints the argument on the regular output stream and to any listeners */
@@ -194,7 +197,7 @@ public class Log {
 	 * @param smtConfig the current configuration
 	 * @return
 	 */
-	// FIXME - more detail on what is actually produced
+	// FIXME - REVIEW AND DOCUMENT more detail on what is actually produced
 	static public String locationIndication(IPos pos, String prompt, SMT.Configuration smtConfig) {
 		int s = pos.charStart();
 		int e = pos.charEnd();

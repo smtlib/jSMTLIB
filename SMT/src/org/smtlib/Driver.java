@@ -133,6 +133,7 @@ public class Driver {
 		System.out.println("  This process sends SMT-LIB commands (as specified on the command-line) to a");
 		System.out.println("  server process, which must be on the local host, and is started by ");
 		System.out.println("  'java org.smtlib.SMT --port <number>' ");
+		System.out.println("  Each SMT command is a (quoted) single command-line argument.");
 	}
 
 	/** Sends the options and commands to the port; returns the exit code corresponding to the response

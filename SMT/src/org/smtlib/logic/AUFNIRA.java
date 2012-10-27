@@ -16,12 +16,15 @@ public class AUFNIRA extends Logic {
 		super(name,attributes);
 	}
 
+	@Override
 	public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
 	}
 
+	@Override
 	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
 	}
 	
+	@Override
 	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
 	}
 

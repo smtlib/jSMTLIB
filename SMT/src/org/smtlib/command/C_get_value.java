@@ -16,7 +16,6 @@ import org.smtlib.IResponse;
 import org.smtlib.ISolver;
 import org.smtlib.IVisitor;
 import org.smtlib.impl.Command;
-import org.smtlib.impl.Pos;
 import org.smtlib.sexpr.ILexToken;
 import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;

@@ -16,11 +16,13 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-/** This class implements launching, writing to, and reading responses from a launched process (particularly
- * solver processes).
+/** This class implements launching, writing to, and reading responses from a 
+ * launched process (in particular, solver processes).
  * @author David Cok
  */
 public class SolverProcess {
+	
+	final static protected String eol = System.getProperty("line.separator");
 	
 	/** Wraps an exception thrown because of a failure in the prover */
 	public static class ProverException extends RuntimeException {
@@ -30,24 +32,24 @@ public class SolverProcess {
 	}
 	
 	/** The command-line arguments that launch a new process */
-	String[] app;
+	protected String[] app;
 
 	/** The text that marks the end of the text returned from the process */
-	String endMarker;
+	protected String endMarker;
 
 	/** The Java process object (initialized by start() )*/
-	Process process;
+	protected Process process;
 	
 	/** The Writer object that writes to the spawned process (initialized by start() )*/
-	Writer toProcess;
+	protected Writer toProcess;
 	
 	/** The Reader process that reads from the standard output of the spawned process (initialized by start() )*/
-	Reader fromProcess;
+	protected Reader fromProcess;
 	
 	/** The Reader process that reads from the standard error stream of the spawned process (initialized by start() )*/
-	Reader errors;
+	protected Reader errors;
 	
-	/** A place, if non-null, to write all outbound communications for diagnostic purposes */
+	/** A place (e.g., log file), if non-null, to write all outbound communications for diagnostic purposes */
 	public /*@Nullable*/Writer log;
 	
 	/** Constructs a SolverProcess object, without actually starting the process as yet.
@@ -81,23 +83,40 @@ public class SolverProcess {
     	}
     }
 
-    /** Listens to the process's standard output until the designated endMarker is read; returns the standard out from the process;
-     * if there is no data on that channel, then returns the error output. */
+    /** Listens to the process's standard output until the designated endMarker is read 
+     * and to the error output. If there is error output, it is returned;
+     * otherwise the standard output is returned.
+     */
 	public String listen() throws IOException {
 		// FIXME - need to put the two reads in parallel, otherwise one might block on a full buffer, preventing the other from completing
 		String err = listenThru(errors,null);
 		String out = listenThru(fromProcess,endMarker);
 		err = err + listenThru(errors,null);
+		if (log != null) {
+			if (!out.isEmpty()) { log.write("OUT: "); log.write(out); log.write(eol); } // input usually ends with a prompt and no line terminator
+			if (!err.isEmpty()) { log.write("ERR: "); log.write(err); } // input usually ends with a line terminator, we think
+		}
 		return err.isEmpty() ? out : err;
 	}
 	
 	/** Aborts the process */
 	public void exit() {
 		process.destroy();
+		process = null;
+		toProcess = null;
+		if (log != null) {
+			try {
+				log.write("Exiting solver"); 
+				log.write(eol);
+				log.flush();
+			} catch (IOException e) {
+				// Ignore
+			}
+		}
 	}
 	
-	/** Sends all the given text arguments, then listens for the designated end marker text */
-	public String send(boolean listen, String ... args) throws IOException {
+	/** Sends all the given text arguments, then (if listen is true) listens for the designated end marker text */
+	public /*@Nullable*/ String send(boolean listen, String ... args) throws IOException {
 		if (toProcess == null) throw new ProverException("The solver has not been started");
 		for (String arg: args) {
 			if (log != null) log.write(arg);
@@ -110,27 +129,13 @@ public class SolverProcess {
 	}
 
 	/** Sends all the given text arguments, then listens for the designated end marker text */
-	public String sendAndListen(String ... args) throws IOException {
-		if (toProcess == null) throw new ProverException("The solver has not been started");
-		for (String arg: args) {
-			if (log != null) log.write(arg);
-			toProcess.write(arg);
-		}
-		if (log != null) log.flush();
-		toProcess.flush();
-		String reply = listen();
-		return reply;
+	public /*@Nullable*/ String sendAndListen(String ... args) throws IOException {
+		return send(true,args);
 	}
 
 	/** Sends all the given text arguments, but does not wait for a response */
 	public void sendNoListen(String ... args) throws IOException {
-		if (toProcess == null) throw new ProverException("The solver has not been started");
-		for (String arg: args) {
-			if (log != null) log.write(arg);
-			toProcess.write(arg);
-		}
-		if (log != null) log.flush();
-		toProcess.flush();
+		send(false,args);
 	}
 
 // TODO - combine listen and noListen versions of send?
@@ -192,8 +197,9 @@ public class SolverProcess {
 					// Need to compare a String to a part of a char array - we iterate by
 					// hand to avoid creating a new String or CharBuffer object
 					boolean match = true;
+					int k = p-len;
 					for (int j=0; j<len; j++) {
-						if (end.charAt(j) != buf[p-len+j]) { match = false; break; }
+						if (end.charAt(j) != buf[k++]) { match = false; break; }
 					}
 					if (match) break; // stopping string matched
 				}

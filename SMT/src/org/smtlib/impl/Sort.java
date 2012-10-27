@@ -24,7 +24,7 @@ public abstract class Sort extends Pos.Posable implements ISort {
 	/** Returns true iff the receiver is a Sort expression designating the pre-defined Bool sort */
 	@Override
 	public boolean isBool() {
-		return (this instanceof IApplication) && (this == Bool || ((IApplication)this).family().toString().equals(BOOL));
+		return this == Bool || ((this instanceof IApplication) &&  ((IApplication)this).family().toString().equals(BOOL));
 	}
 
 	/** Returns the pre-defined Bool sort */
@@ -32,7 +32,7 @@ public abstract class Sort extends Pos.Posable implements ISort {
 		return Bool;
 	}
 	
-	/** Concrete syntax for the pre-defined Bool sort */
+	/** Concrete syntax for the pre-defined Bool sort */  // FIXME - do we want concrete syntax here?
 	static final private String BOOL = "Bool";
 	
 	/** A cached instance of the pre-defined Bool sort */
@@ -69,7 +69,7 @@ public abstract class Sort extends Pos.Posable implements ISort {
 		public boolean equals(Object o) {
 			if (this == o) return true;
 			if (!(o instanceof IFamily)) return false;
-			return identifier().equals(((IFamily)o).identifier());
+			return identifier().equals(((IFamily)o).identifier());  // FIXME - is this sufficient in the presence of overriding symbols?
 		}
 
 		@Override
@@ -228,7 +228,7 @@ public abstract class Sort extends Pos.Posable implements ISort {
 			return expanded;
 		}
 		
-
+// TODO _ review all the equals implementations
 		@Override
 		public boolean equals(Object sort) {
 			if (this == sort) return true;
@@ -366,8 +366,9 @@ public abstract class Sort extends Pos.Posable implements ISort {
 		}
 	}
 	
-	/** Represents the class of the sort of a function symbol.  This is not a sort that can be expressed in
-	 * SMT-LIB sort grammar, except implicitly when function ids are defined in define-fun and declare-fun
+	/** Represents the class of the sort of a function symbol.  This is not a 
+	 * sort that can be expressed in SMT-LIB sort grammar, except implicitly 
+	 * when function ids are defined in define-fun and declare-fun
 	 * commands and in theory definitions.
 	 */
 	static public class FcnSort extends Sort implements IFcnSort {

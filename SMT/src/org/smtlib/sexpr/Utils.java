@@ -142,7 +142,8 @@ public class Utils extends org.smtlib.Utils {
 		return res;
 	}
 	
-	/** This version of loadTheory loads a theory as defined in the theory expression, if it is a valid definition
+	/** This version of loadTheory loads a theory into the symbol table,
+	 * as defined in the theory expression, if it is a valid definition
 	 * of a logic.
 	 * @param theory the theory object to load
 	 * @param symTable the symbol table into which to load the ids defined by the theory

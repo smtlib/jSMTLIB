@@ -19,6 +19,8 @@ import org.smtlib.IExpr.ISymbol;
 import org.smtlib.ISort.IFcnSort;
 import org.smtlib.ISort.IParameter;
 
+// FIXME - define an interface for symbol table?
+
 /** This class manages a symbol table used for storing definitions and looking up ids in expressions.
  *  The table maps names to Entry objects that hold information about the defined symbol. */
 public class SymbolTable {
@@ -43,9 +45,11 @@ public class SymbolTable {
 	/** A reference to the Configuration for this instance of SMT. */
 	public SMT.Configuration smtConfig;
 	
-	/* The tops of the stack are at the beginning of the lists.  The table manages a stack of
-	 * scopes, each stack element holds a scope.  Within a scope, a symbol can be 
-	 * defined with various different arities (and multiple mappings for a given arity) and different sort arguments. */
+	/* The tops of the stack are at the beginning of the lists.  The table 
+	 * manages a stack of scopes, each stack element holds a scope.  
+	 * Within a scope, a symbol can be defined with various different arities 
+	 * (and multiple mappings for a given arity) and different sort arguments. 
+	 */
 	
 	//@ private invariant sorts = sortStack.get(0);
 	/** The stack of Sort declaration scopes */
@@ -162,7 +166,7 @@ public class SymbolTable {
 	
 	/** Combines the top two symbol scopes, removing the current top scope; presumes that there
 	 * is no shadowing of symbols; the top sort scope is discarded.
-	 */
+	 */ // TODO - say more about why this is used/needed; also review this
 	public void merge() {
 		Map<IIdentifier,Map<Integer,List<SymbolTable.Entry>>> oldnames = names;
 		pop();
@@ -178,7 +182,8 @@ public class SymbolTable {
 	}
 	
 	/** Removes the top frame from the symbol table stack. 
-	 * The symbol table must have at least one non-background scope or an InternalException will be thrown.
+	 * The symbol table must have at least one non-background scope or an 
+	 * InternalException will be thrown.
 	 */
 	public void pop() {
 		// The comparison is <= 1 since there is always also the background scope
@@ -193,7 +198,8 @@ public class SymbolTable {
 		names = symStack.get(0);
 	}
 	
-	/** Removes the previous background frame, then removes the top frame and inserts it as the bottom (background) frame. */
+	/** Removes the previous background frame, then removes the top frame and 
+	 * inserts it as the bottom (background) frame. */
 	public void moveToBackground() {
 		sortStack.remove(sortStack.size()-1);
 		symStack.remove(symStack.size()-1);
@@ -207,9 +213,8 @@ public class SymbolTable {
 	 * returns false if the given symbol is already in the top scope (and the sort table is unchanged);
 	 * returns true if the symbol is not already in the top scope.
 	 * @param symbol the symbol to add
-	 * @return true if successfully added, false if alrady present
+	 * @return true if successfully added, false if already present
 	 */
-	
 	public boolean addSortParameter(ISymbol symbol) {
 		ISort.IDefinition previous = sorts.put(symbol, smtConfig.sortFactory.createSortParameter(symbol));
 		if (previous == null) return true;
@@ -221,7 +226,8 @@ public class SymbolTable {
 	 * 
 	 * @param identifier the identifier of the new Sort definition
 	 * @param arity the arity of the new Sort definition
-	 * @return true if successfully added, false if there already is a sort with this identifier
+	 * @return true if successfully added, false if there already is a sort 
+	 * (in any scope) with this identifier
 	 */
 	public boolean addSortDefinition(IIdentifier identifier, INumeral arity) {
 		// We don't allow shadowing of previous sort definitions, so check for them
@@ -238,8 +244,9 @@ public class SymbolTable {
 	 * @param identifier the name of the new Sort definition
 	 * @param parameters the names of the parameters of the Sort abbreviation
 	 * @param definition the expression of the Sort abbreviation
-	 * @return true if successfully added, false if there already is a sort by this name
-	 */
+	 * @return true if successfully added, false if there already is a sort by 
+	 * this name in the top scope
+	 */ // FIXME - why is this only the top scope and the previous call is any scope?
 	public boolean addSortDefinition(IIdentifier identifier, List<IParameter> parameters, ISort definition) {
 		ISort.IDefinition s = sorts.get(identifier);
 		if (s != null) return false;
@@ -299,7 +306,8 @@ public class SymbolTable {
 
 	/** Lookup the Symbol with the given identifier, returning a Map of arity to List&lt;Entry&gt;.
 	 * @param name the name of the Symbol
-	 * @return null if not found, the Sort of the Symbol if found
+	 * @return null if not found, the corresponding List&lt;Entry&gt from the 
+	 * top-most scope in which the identifier is found
 	 */
 	public /*@Nullable*/ Map<Integer,List<Entry>> lookup(IIdentifier name) {
 		for (Map<IIdentifier,Map<Integer,List<Entry>>> set: symStack) {
@@ -408,7 +416,7 @@ public class SymbolTable {
 		return null;
 	}
 	
-	/** Returns true if the entry contains a value for the given attribute name */
+	/** Returns true if the entry contains a value for the given attribute name */ // FIXME - lookup by keyword?
 	private boolean hasAttribute(Entry entry, String attr) {
 		for (IExpr.IAttribute<?> a: entry.attributes) {
 			if (a.keyword().value().equals(attr)) return true;
@@ -434,8 +442,10 @@ public class SymbolTable {
 		entrylist.add(entry);
 	}
 	
-	/** Adds the given entry to the symbol table; if overload is false and the identifier in the entry is already in the table,
-	 * the method returns false (without changing the symbol table); otherwise the entry is added and the
+	/** Adds the given entry to the symbol table; if overload is false and the 
+	 * identifier in the entry is already in the table,
+	 * the method returns false (without changing the symbol table); 
+	 * otherwise the entry is added and the
 	 * method returns true
 	 * 
 	 * @param entry the Entry to add

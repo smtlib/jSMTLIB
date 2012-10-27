@@ -25,6 +25,7 @@ public interface IExpr extends IAccept, IPosable {
 		/** Creates a INumeral object; the argument must be a string of digits. */
 		INumeral numeral(String v);
 		/** Creates a INumeral object; the argument must be non-negative */
+		//@ requires v > 0;
 		INumeral numeral(long v);
 		/** Creates a IDecimal object; the argument must be a string of digits with just one decimal point */
 		IDecimal decimal(String v);
@@ -72,7 +73,7 @@ public interface IExpr extends IAccept, IPosable {
 		//@ requires params.size() > 0;
 		IExists exists(List<IDeclaration> params, IExpr e);
 
-		/** Creates a command script from a file of commands */
+		/** Creates a command script from a file of commands or a list of commands */
 		IScript script(/*@Nullable*/IStringLiteral filename, /*@Nullable*/List<ICommand> commands);
 
 		/** Creates an error expression */
@@ -150,7 +151,7 @@ public interface IExpr extends IAccept, IPosable {
 	
 	/** This interface represents SMT-LIB hex literals */
 	static public interface IHexLiteral extends ILiteral {
-		/** Returns a canonical value of the hex literal; lower-case hex digits from MS to LS */
+		/** Returns a canonical value of the hex literal; lower-case hex digits from most-significant to least-significant */
 		String value(); 
 		
 		/** The hex value as an unsigned integer */
@@ -217,6 +218,7 @@ public interface IExpr extends IAccept, IPosable {
 	/** This interface represents SMT-LIB parameterized identifiers */
 	static public interface IParameterizedIdentifier extends IIdentifier {
 		
+		// TODO - document
 		IIdentifier head();
 		
 		/** The head symbol of the identifier */

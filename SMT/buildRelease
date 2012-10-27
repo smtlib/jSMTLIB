@@ -1,8 +1,8 @@
 #! /bin/bash
 
-echo JAVA_HOME $JAVA_HOME
-which jar
-export JAVA_HOME=C:/cygwin/home/dcok/ProgramFilesX/Java/jdk1.7.0_01-32bit
+## TODO - this is not portable across build environments
+
+export JAVA_HOME=C:/cygwin/home/dcok/ProgramFiles/Java/jdk1.7.0_07
 
 rm -rf temp
 mkdir temp

@@ -16,7 +16,7 @@ import java.net.Socket;
 /** This class implements a CharSequence that obtains its characters from a ServerSocket.  The characters 
  * read are held in an internal char array, whose size grows as needed; it starts as initialSize and
  * is expanded to currentSize*sizeMultiple + sizeIncrease whenever needed.
- * 
+ * <P>
  * The CharSequenceReader is an unconventional CharSequence in that its length() is not known; 
  * whether this will cause problems
  * in some uses of the CharSequenceReader is unknown.  The user should not use the value of length()

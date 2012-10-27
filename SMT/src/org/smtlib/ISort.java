@@ -20,7 +20,7 @@ import org.smtlib.IVisitor.VisitorException;
  * definitions:
  * <UL>
  * <LI> an ISort.IFamily, which defines a new sort symbol of a given arity
- * <LI> an ISort.IAbbreivation, which defines a (possibly parameterized) abbreviation for a sort expression.
+ * <LI> an ISort.IAbbreviation, which defines a (possibly parameterized) abbreviation for a sort expression.
  * <LI> an ISort.IParameter, which defines a sort name used as a parameter in an abbreviation definition
  * <LI> The ISort.ErrorDefinition class, which is used as a definition place holder for ill-formed definitions, to avoid excessive redundant errors
  * </UL>
@@ -132,7 +132,7 @@ public interface ISort extends IAccept, IPosable {
 		ISort sortExpression();
 	}
 	
-	/** The interface for a Sort expression that consists either
+	/** The interface for a Sort expression that consists of either
 	 * an arity 0 sort symbol or a positive-arity symbol with the 
 	 * appropriate number of arguments.
 	 */

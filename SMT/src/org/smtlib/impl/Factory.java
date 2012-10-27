@@ -63,6 +63,8 @@ import org.smtlib.impl.Sort.FcnSort;
 import org.smtlib.impl.Sort.Parameter;
 import org.smtlib.sexpr.Utils;
 
+// FIXME - spearate out the concrete syntax?
+
 /** Implements a factory for SMT-LIB expressions using the standard concrete syntax.
  * Instances of these IExpr objects have an IPos element. 
  * The various factories are all implemented together in this one class because they

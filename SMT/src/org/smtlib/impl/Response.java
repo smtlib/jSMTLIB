@@ -168,6 +168,7 @@ public class Response {
 			return true;
 		}
 		
+		@Override
 		public String toString() {
 			return "(error " + Utils.quote(msg) + ")";
 		}
@@ -189,14 +190,15 @@ public class Response {
 	/** Implements the IResponse.IAssignmentResponse interface */
 	static public class AssignmentResponse implements IResponse.IAssignmentResponse {
 		private List<IPair<IExpr.ISymbol,Boolean>> assignments = new LinkedList<IPair<IExpr.ISymbol,Boolean>>();
+		@Override 
 		public List<IPair<IExpr.ISymbol,Boolean>> assignments() { return assignments; }
 		public AssignmentResponse(List<IPair<IExpr.ISymbol,Boolean>> assignments) {
 			this.assignments = assignments;
 		}
 		
-		public boolean isOK() { return false; }
-		public boolean isError() { return false; }
-		public IPos pos() { return null; }
+		@Override public boolean isOK() { return false; }
+		@Override public boolean isError() { return false; }
+		public IPos pos() { return null; }  // FIXME - should override?
 		public void add(IExpr.ISymbol name, Boolean value) {
 			assignments.add(new Pair<IExpr.ISymbol,Boolean>(name,value));
 		}
@@ -210,7 +212,7 @@ public class Response {
 	/** Implements the IResponse.IValueResponse interface */
 	static public class ValueResponse implements IResponse.IValueResponse {
 		private List<IPair<IExpr,IExpr>> values = new LinkedList<IPair<IExpr,IExpr>>();
-		public List<IPair<IExpr,IExpr>> values() { return values; }
+		@Override public List<IPair<IExpr,IExpr>> values() { return values; }
 		public ValueResponse(List<IPair<IExpr,IExpr>> values) {
 			this.values = values;
 		}
@@ -229,7 +231,7 @@ public class Response {
 	/** Implements the IResponse.IAssertionsResponse interface */
 	static public class AssertionsResponse implements IResponse.IAssertionsResponse {
 		private List<IExpr> assertions = new LinkedList<IExpr>();
-		public List<IExpr> assertions() { return assertions; }
+		@Override public List<IExpr> assertions() { return assertions; }
 		public AssertionsResponse(List<IExpr> assertions) {
 			this.assertions = assertions;
 		}
@@ -248,7 +250,9 @@ public class Response {
 	/** Implements the IResponse.IUnsatCoreResponse interface */
 	static public class UnsatCoreResponse implements IResponse.IUnsatCoreResponse {
 		private List<ISymbol> names = new LinkedList<ISymbol>();
+		@Override 
 		public List<ISymbol> names() { return names; }
+		
 		public UnsatCoreResponse(List<ISymbol> names) {
 			this.names = names;
 		}
@@ -268,9 +272,9 @@ public class Response {
 	static public class ProofResponse implements IResponse.IProofResponse {
 		// TODO - no implementation for proofs as yet
 		public ProofResponse() {}
-		public Object proof() { return null; }
-		public boolean isOK() { return false; }
-		public boolean isError() { return false; }
+		@Override public Object proof() { return null; }
+		@Override public boolean isOK() { return false; }
+		@Override public boolean isError() { return false; }
 		public IPos pos() { return null; }
 
 		@Override
@@ -290,6 +294,7 @@ public class Response {
 			this.list = list;
 		}
 		
+		@Override 
 		public List<IAttribute<? extends IAttributeValue>> attributes() { return list; }
 
 
@@ -303,6 +308,7 @@ public class Response {
 			return false;
 		}
 		
+		@Override 
 		public String toString() {
 			return super.toString();
 		}

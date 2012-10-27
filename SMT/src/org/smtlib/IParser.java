@@ -50,7 +50,7 @@ public interface IParser {
 	 */
 	/*@Nullable*/ ICommand parseCommand() throws IOException, ParserException;
 	
-	/** Parses an SMT-LIB command script.  The argument is either a string literal or a 
+	/** Parses an SMT-LIB command script.  The result is either a string literal or a 
 	 * parenthesized list of commands (which are parenthesized themselves); the string literal
 	 * denotes the name of a file from which the commands are read when the command is executed;
 	 * if the script is included directly, it is parsed, but typechecking is performed in
@@ -93,18 +93,18 @@ public interface IParser {
 	/** Parses a qualified identifier (either a symbol, a parameterized identifier, or an as identifier)
 	 * from the token stream, returning null (with logged error messages) if there is not one.
 	 */
-	/*@Nullable*/IQualifiedIdentifier parseQualifiedIdentifier() throws ParserException;
+	/*@Nullable*/ IQualifiedIdentifier parseQualifiedIdentifier() throws ParserException;
 
 	/** Parses an identifier (either a symbol or a parameterized identifier)
 	 * from the token stream, returning null (with logged error messages) if there is not one.
 	 */
-	/*@Nullable*/IIdentifier parseIdentifier() throws ParserException;
+	/*@Nullable*/ IIdentifier parseIdentifier() throws ParserException;
 
 	
 	/** Parses a sort, returning null with error messages if a valid sort is not in the 
 	 * next parser tokens.
 	 */
-	/*@Nullable*/Sort parseSort(List<ISort.IParameter> parameters) throws ParserException;
+	/*@Nullable*/ ISort parseSort(List<ISort.IParameter> parameters) throws ParserException;
 
 		/** Parse an SMT-LIB logic; return null and log an error response if there is no valid logic definition */
 	/*@Nullable*/ ILogic parseLogic() throws ParserException;

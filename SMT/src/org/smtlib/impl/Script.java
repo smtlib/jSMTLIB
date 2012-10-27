@@ -58,13 +58,14 @@ public class Script implements IScript {
 	/** Adds a command to the end of the script */
 	//@ requires commands() != null;
 	public void add(ICommand command) {
-		if (commands == null) commands = new LinkedList<ICommand>();
+		if (commands == null) commands = new LinkedList<ICommand>();  // FIXME - test without this line
 		commands.add(command);
 	}
 	
-	public String kind() { return "script"; }
+	public String kind() { return "script"; }  // FIXME - should override?
 
 	/** Executes the current list */
+	// FIXME _ should we have an incremental read and execute option?
 	@Override
 	public IResponse execute(ISolver solver) {
 		SMT.Configuration smtConfig = solver.smt();
@@ -113,6 +114,7 @@ public class Script implements IScript {
 	}
 	
 	/** The accept method for visitor classes; the type parameter is the return type of the accept and visit methods */
+	@Override
 	public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
 		return v.visit(this);
 	}

@@ -5,6 +5,7 @@
  */
 package org.smtlib;
 //FIXME-NOW - SMT needs more review and documentation
+// FIXME - check that this uses interfaces as much as possible
 
 import java.io.*;
 import java.lang.reflect.Constructor;
@@ -39,8 +40,6 @@ import org.smtlib.IParser.ParserException;
  * </UL> 
  */
 public class SMT {
-	
-	public static final String VERSION_ID = "jSMTLIB version 0.9.1";
 	
 	public Properties props;
 	
@@ -245,8 +244,8 @@ public class SMT {
 		System.exit(exitValue);
 	}
 	
-	/** Reads and returns the properties file for the application
-	 * (from file Utils.PROPS_FILE in the working directory 
+	/** Reads and returns the properties file for the application:
+	 * from file Utils.PROPS_FILE in the working directory 
 	 * or user's home directory
 	 * or on the class path
 	 * or in the directory in which jSMTLIB.jar resides (if it is being run with -jar).
@@ -338,7 +337,7 @@ public class SMT {
 	public int exec(String[] args) {
 		//System.err.println("#Start exec");
 		int ret = processCommandLine(args,smtConfig);
-		if (ret == -1) return 0;
+		if (ret == -1) return 0; // help or version
 		if (ret != 0) return ret;
 		ret = exec();
 		return ret;
@@ -792,7 +791,8 @@ public class SMT {
 		System.out.println("    file describes the conditions under which it may be used.");
 	}
 	
-	/** This class is used to turn internal bugs into exceptions that can be reported */
+	/** This class is used to turn internal bugs that we do not want to try
+	 * to recover into exceptions that can be reported */
 	public static class InternalException extends RuntimeException {
 		private static final long serialVersionUID = 1L;
 
