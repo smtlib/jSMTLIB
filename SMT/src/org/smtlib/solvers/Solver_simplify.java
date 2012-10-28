@@ -18,6 +18,7 @@ import java.util.Set;
 import org.smtlib.ICommand.IScript;
 import org.smtlib.ICommand.Ideclare_fun;
 import org.smtlib.*;
+import org.smtlib.ICommand.Idefine_fun;
 import org.smtlib.IExpr.IAsIdentifier;
 import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IAttributeValue;
@@ -160,6 +161,35 @@ public class Solver_simplify extends Solver_test implements ISolver {
 				sb.append(translate(cmd.symbol()));
 				int n = cmd.argSorts().size();
 				for (int i = 0; i<n; i++) {
+					sb.append(" X");  // FIXME - fix this
+					sb.append(i);
+				}
+				sb.append("))\n");
+				String s = solverProcess.sendAndListen(sb.toString());
+				// FIXME - check for error in s -- System.out.println("HEARD " + s);
+				res = smtConfig.responseFactory.success();
+			} else {
+				res = smtConfig.responseFactory.success();
+			}
+		} catch (IOException e) {
+			res = smtConfig.responseFactory.error("Failed to declare-fun: " + e.getMessage(),null); // FIXME - position?
+		} catch (IVisitor.VisitorException e) {
+			res = smtConfig.responseFactory.error("Failed to declare-fun: " + e.getMessage(),null);
+		}
+		return res;
+	}
+
+	@Override
+	public IResponse define_fun(Idefine_fun cmd) {
+		IResponse res = super.define_fun(cmd);
+		if (res.isError()) return res;
+		try {
+			if (cmd.resultSort().isBool() && cmd.parameters().size() > 0) {
+				StringBuilder sb = new StringBuilder();
+				sb.append("(DEFPRED (");
+				sb.append(translate(cmd.symbol()));
+				int n = cmd.parameters().size();
+				for (int i = 0; i<n; i++) {
 					sb.append(" X");
 					sb.append(i);
 				}
@@ -170,6 +200,9 @@ public class Solver_simplify extends Solver_test implements ISolver {
 			} else {
 				res = smtConfig.responseFactory.success();
 			}
+			IExpr.IFactory f = smtConfig.exprFactory;
+			assertExpr(f.fcn(f.symbol("="),cmd.symbol(),cmd.expression()));
+					
 		} catch (IOException e) {
 			res = smtConfig.responseFactory.error("Failed to declare-fun: " + e.getMessage(),null); // FIXME - position?
 		} catch (IVisitor.VisitorException e) {

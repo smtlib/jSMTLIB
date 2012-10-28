@@ -68,11 +68,6 @@ public class Solver_yices extends Solver_test implements ISolver {
 		super(smtConfig,"");
 		cmds[0] = executable;
 		solverProcess = new SolverProcess(cmds,"yices > ","solver.out.yices");
-		try {
-			solverProcess.log = new FileWriter("solver.out.yices");
-		} catch (IOException e) {
-			smtConfig.log.logError("Failed to create solver log file for yices: " + e);
-		}
 	}
 	
 	@Override

@@ -24,8 +24,21 @@ public class Utils {
 	/** The name of the properties file read by jSMTLIB */
 	static final public String PROPS_FILE = "jsmtlib.properties";
 	
-	/** The default prefix for the property names that identify solver executables */
-	static final public String PROPS_SOLVER_EXEC_PREFIX = "org.smtlib.solver_";
+	/** The property name that specified the default solver */
+	static final public String PROPS_DEFAULT_SOLVER = "org.smtlib.default-solver";
+	
+	/** The default prefix for the property names that identify solver executables,
+	 * as in org.smtlib.solver_ZZZ */
+	static final public String PROPS_SOLVER_PREFIX = "org.smtlib.solver_";
+	
+	/** The suffix for adapter properties, as in org.smtlib.solver_ZZZ.adapter */
+	static final public String PROPS_ADAPTER_SUFFIX = ".adapter";
+	
+	/** The suffix for adapter properties, as in org.smtlib.solver_ZZZ.adapter */
+	static final public String PROPS_EXEC_SUFFIX = ".exec";
+	
+	/** The suffix for adapter properties, as in org.smtlib.solver_ZZZ.adapter */
+	static final public String PROPS_COMMAND_SUFFIX = ".command";
 	
 	/** The property giving the default logic path */
 	static final public String PROPS_LOGIC_PATH = "org.smtlib.logic_path";

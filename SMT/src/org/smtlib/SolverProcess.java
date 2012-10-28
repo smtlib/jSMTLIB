@@ -64,7 +64,7 @@ public class SolverProcess {
 		try {
 			if (logfile != null) log = new FileWriter(logfile);
 		} catch (IOException e) {
-			System.out.println("Failed to create solver log file " + logfile); // FIXME - wwrite to somewhere better
+			System.out.println("Failed to create solver log file " + logfile + ": " + e); // FIXME - wwrite to somewhere better
 		}
 	}
 	
@@ -109,6 +109,7 @@ public class SolverProcess {
 				log.write("Exiting solver"); 
 				log.write(eol);
 				log.flush();
+				log.close();
 			} catch (IOException e) {
 				// Ignore
 			}

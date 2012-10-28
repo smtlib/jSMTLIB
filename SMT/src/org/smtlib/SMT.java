@@ -197,6 +197,7 @@ public class SMT {
 		 * ignored. 
 		 */
 		public /*@Nullable*/ ICommand.IFinder commandFinder = new ICommand.IFinder() {
+			@Override
 			public Class<? extends ICommand> findCommand(String name) {
 				Class<? extends ICommand> clazz = commands.get(name);
 				if (relax && clazz != null) return clazz;
@@ -658,12 +659,14 @@ public class SMT {
 		}
 
 		if (options.solvername == null) {
-			options.solvername = Utils.TEST_SOLVER;
-		}
-		if (options.executable == null && !options.solvername.equals(Utils.TEST_SOLVER)) {
-			options.executable = 
-				props.getProperty(Utils.PROPS_SOLVER_EXEC_PREFIX + options.solvername);
-			if (options.executable != null && options.executable.trim().length() == 0) options.executable = null;
+			String p = props.getProperty(Utils.PROPS_DEFAULT_SOLVER);
+			if (p == null || p.isEmpty()) p = Utils.TEST_SOLVER;
+			options.solvername = p;
+			if (options.executable != null) {
+				error("If you specify an executable, you must also specify a solver");
+				usage();
+				return 1;
+			}
 		}
 		return 0;
 	}
@@ -677,46 +680,88 @@ public class SMT {
 	 * @return the ISolver object, or null if errors happened
 	 */
 	/*@Nullable*/
-	public ISolver startSolver(SMT.Configuration smtConfig, /*@NonNull*/String solvername, /*@Nullable*/String executable) {
+	public ISolver startSolver(SMT.Configuration smtConfig, /*@NonNull*/String solvername, /*@Nullable*/String executableIn) {
 		/*@NonNull*/ ISolver solver;
-		String name = "";
-		if (executable == null && !solvername.equals(Utils.TEST_SOLVER)) {
-			executable = props.getProperty(Utils.PROPS_SOLVER_EXEC_PREFIX + solvername);
-			if (executable == null) {
-				error("No executable has been specified for solver " + solvername);
+		Class<? extends Object> adapterClass = null;
+		String executable = executableIn;
+		String[] command = null;
+		String adapterClassName = "";
+		
+		// Find the adapter, executable, command
+		if (!solvername.equals(Utils.TEST_SOLVER)) {
+			adapterClassName = "org.smtlib.solvers.Solver_" + solvername;
+			//if (adapterClassName != null) {
+				try {
+					adapterClass = Class.forName(adapterClassName);
+				} catch (ClassNotFoundException e) {
+					adapterClass = null;
+				}
+			//}
+				// But use this if it is specified
+			adapterClassName = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_ADAPTER_SUFFIX);
+			if (adapterClassName != null) {
+				try {
+					adapterClass = Class.forName(adapterClassName);
+				} catch (ClassNotFoundException e) {
+					adapterClass = null;
+				}
+				if (adapterClass == null) adapterClass = org.smtlib.solvers.Solver_smt.class;
+			}
+		
+			String propName = Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_COMMAND_SUFFIX;
+			String commandString = props.getProperty(propName);
+			if (commandString != null && !commandString.isEmpty()) {
+				command = commandString.split(",");
+				if (command.length == 0) {
+					error("The command specified for " + propName + " appears to have no content");
+					usage();
+					return null;
+				}
+			}
+
+			if (executable == null ) {
+				executable = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX);
+				if (executable != null && executable.isEmpty()) executable = null;
+			}
+			
+			if (command != null && executable != null) command[0] = executable;
+			
+			if (executable == null && command == null) {
+				error("Neither an executable nor a command specified for a solver named " + solvername );
+				usage();
 				return null;
 			}
+		} else {
+			adapterClass = org.smtlib.solvers.Solver_test.class;
 		}
+		
 		try {
-			// FIXME - put this into a name finder 
-			name = "org.smtlib.solvers.Solver_" + solvername;
-			Class<? extends Object> o = Class.forName(name);
-			Constructor<?> constructor = o.getConstructor(SMT.Configuration.class,String.class);
-			solver = (ISolver)(constructor.newInstance(smtConfig,executable));
+			Constructor<?> constructor = adapterClass.getConstructor(SMT.Configuration.class,String.class);
+			if (command == null) {
+				solver = (ISolver)(constructor.newInstance(smtConfig,executable));
+			} else {
+				solver = (ISolver)(constructor.newInstance(smtConfig,command));
+			}
 			IResponse res = solver.start();
 			if (res.isError()) {
 				smtConfig.log.logError((IResponse.IError)res);
 				error("ISolver failed to start: " + solvername);
 				return null;
 			}
-		} catch (ClassNotFoundException e) {
-			error("Could not find a solver class named " + name + " (defined in class " + name + ")");
-			usage();
-			return null;
 		} catch (NoSuchMethodException e) {
-			error("Could not find an appropriate constructor in " + name + ": " + e);
+			error("Could not find an appropriate constructor in " + adapterClassName + ": " + e);
 			usage();
 			return null;
 		} catch (IllegalAccessException e) {
-			error("Could not find an adapter class named " + name + ": " + e);
+			error("Could not find an adapter class named " + adapterClassName + ": " + e);
 			usage();
 			return null;
 		} catch (InstantiationException e) {
-			error("Could not create an instance of a " + name + ": " + e);
+			error("Could not create an instance of a " + adapterClassName + ": " + e);
 			usage();
 			return null;
 		} catch (InvocationTargetException e) {
-			error("Could not invoke the constructor of " + name + ": " + e);
+			error("Could not invoke the constructor of " + adapterClassName + ": " + e);
 			usage();
 			return null;
 		} catch (SolverProcess.ProverException e) {
@@ -741,8 +786,8 @@ public class SMT {
 		System.out.println("       --solver [-s] <solvername>");
 		System.out.println("       --exec   [-e] <path>");
 		System.out.println("       --logics [-L] <path>");
-		System.out.println("       --out         <file or 'stdout' or 'stderr'>");
-		System.out.println("       --diag        <file or 'stdout' or 'stderr'>");
+		System.out.println("       --out         <filename or 'stdout' or 'stderr'>");
+		System.out.println("       --diag        <filename or 'stdout' or 'stderr'>");
 		System.out.println("       --port        <int>");
 		System.out.println("       --text        <string>");
 		System.out.println("       --echo   [-e]");
@@ -778,8 +823,8 @@ public class SMT {
 // FIXME - if not specified, uses the value of...		
 		System.out.println("    -L, --logics <path>: the directory containing SMT-LIB logic and theory ");
 		System.out.println("              definitions (default is to use the internal, built-in definitions)");
-		System.out.println("        --out <file or 'stdout' or 'stderr'>: where to send normal and error output");
-		System.out.println("        --diag <file or 'stdout' or 'stderr'>: where to send verbose (diagnostic) output");
+		System.out.println("        --out <filename or 'stdout' or 'stderr'>: where to send normal and error output");
+		System.out.println("        --diag <filename or 'stdout' or 'stderr'>: where to send verbose (diagnostic) output");
 		System.out.println("        --port <number>: which port to use for client-server communication");
 		System.out.println("        --text: text to process (ignoring file and port input)");
 		System.out.println("        --echo: if enabled, commands are echoed to diagnostic output when successfully parsed");

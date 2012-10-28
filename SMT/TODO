@@ -33,10 +33,10 @@ Plugin:
  The list of logics updates when Apply is pushed ; can it update when the logic directory field is changed?
  Can we make a menu of logics to view that is appropriately dynamic?
  Can we make the default logic Path be a location within the plugin?
- Would like to have the list of solvers (in preferences and in the menu) by dynamic
+ Would like to have the list of solvers (in preferences and in the menu) be dynamic
  Hover information: e.g. type, value in current model
  Symbolic execution given a model
- Navigate to matching ( )
+ Navigate to matching ( ); highlight matching ()
  Change selection to left sibling, right sibling, first child, last child, parent
  Find definition
  Find references
@@ -51,6 +51,7 @@ Plugin:
  Help document
  Show non-OK responses in a plug-in window
  Show get-value responses as a tooltip
+ Show logic of the selected file, if no text is selected
  
 App
  cleanup connection of configuration to solvers, e.g. verbosity, print success, logic

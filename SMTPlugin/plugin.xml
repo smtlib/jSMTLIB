@@ -22,6 +22,150 @@
       </editor>
    </extension>
 
+<!-- This next section creates the needed menus for the plugin -->
+<extension
+         point="org.eclipse.ui.menus">
+      <!-- This adds the Display Warning Details menu to the Eclipse Problem View Menu -->
+<!--
+      <menuContribution
+            locationURI="menu:org.eclipse.ui.views.ProblemView">
+         <command
+               commandId="codesonar.commands.displayWarningDetails">
+         </command>
+      </menuContribution>
+-->
+      <!-- This adds the Display Warning Details menu to the Eclipse Problem View Context Menu -->
+<!--
+      <menuContribution
+            locationURI="popup:org.eclipse.ui.views.ProblemView">
+         <command
+               commandId="codesonar.commands.displayWarningDetails"> 
+         </command>
+      </menuContribution>
+-->
+      <!-- This adds the Lock Design Notes View menu option to the Design Notes View Menu -->
+<!--
+      <menuContribution
+            locationURI="menu:codesonar.views.CodeSonarView">
+         <command
+               commandId="codesonar.commands.lockDesignNotes">
+         </command>
+      </menuContribution>
+-->
+      <!-- These next few menus add CodeSonar Menu Options to the context menu for Projects
+           in the Eclipse Project Explorer. Menus are added to:
+               1. Activate CodeSonar
+               2. Deactivate CodeSonar
+               3. Start Visualization
+               4. Update Warning
+               5. Hide Warnings
+           These all work on the current project selected on the Project Explorer 
+           TODO possibly change the visibles to deactivated  -->
+<!--
+      <menuContribution
+         locationURI=
+         "popup:org.eclipse.ui.navigator.ProjectExplorer#PopupMenu?before=additions">
+         <menu
+               icon="icons/GrammaTech16.png"
+               label="CodeSonar">
+            <command
+                  commandId="codesonar.commands.activateCodesonar"
+                  icon="icons/GrammaTech16.png"
+                  label="%command.name.activateCodesonar"
+                  tooltip="%command.description.activateCodesonar">
+            </command>
+            <command
+                  commandId="codesonar.commands.deactivateCodesonar"
+                  icon="icons/GrammaTech16.png"
+                  label="%command.name.deactivateCodesonar"
+                  tooltip="%command.description.deactivateCodesonar">
+            </command>
+            <command
+                  commandId="codesonar.commands.startVisualization"
+                  icon="icons/GrammaTech16.png">
+            </command>
+            <command
+                  commandId="codesonar.commands.updateWarnings"
+                  icon="icons/GrammaTech16.png">
+            </command>
+            <command
+                  commandId="codesonar.commands.deleteWarnings"
+                  icon="icons/GrammaTech16.png">
+            </command>
+         </menu>
+      </menuContribution>
+-->
+      <!-- These next few menus add CodeSonar menu options to the Project Explorer Menu bar -->
+<!--      <menuContribution
+         locationURI=
+         "menu:org.eclipse.ui.navigator.ProjectExplorer?before=additions">
+         <menu
+               icon="icons/GrammaTech16.png"
+               label="CodeSonar">
+            <command
+                  commandId="codesonar.commands.activateCodesonar"
+                  icon="icons/GrammaTech16.png"
+                  label="%command.name.activateCodesonar"
+                  tooltip="%command.description.activateCodesonar">
+            </command>
+            <command
+                  commandId="codesonar.commands.deactivateCodesonar"
+                  icon="icons/GrammaTech16.png"
+                  label="%command.name.deactivateCodesonar"
+                  tooltip="%command.description.deactivateCodesonar">
+            </command>
+            <command
+                  commandId="codesonar.commands.startVisualization"
+                  icon="icons/GrammaTech16.png">
+            </command>
+            <command
+                  commandId="codesonar.commands.updateWarnings"
+                  icon="icons/GrammaTech16.png">
+            </command>
+            <command
+                  commandId="codesonar.commands.deleteWarnings"
+                  icon="icons/GrammaTech16.png">
+            </command>
+         </menu>
+      </menuContribution>
+      -->
+      <!-- These next few menus add CodeSonar menu options to the Main Menu for Eclipse --> 
+<!--
+      <menuContribution
+             allPopups="false"
+             locationURI="menu:org.eclipse.ui.main.menu">
+          <menu
+                label="%menu.label"
+                tooltip="%menu.tooltip">
+             <command
+                   commandId="codesonar.commands.updateWarnings"
+                   style="push"
+                   tooltip="%command.description.updateWarnings">
+             </command>
+             <command
+                   commandId="codesonar.commands.deleteWarnings"
+                   style="push"
+                   tooltip="%command.description.deleteWarnings">
+             </command>
+             <command
+                   commandId="codesonar.commands.deactivateCodesonar"
+                   style="push"
+                   tooltip="%command.description.deactivateCodesonar">
+             </command>
+             <command
+                   commandId="codesonar.commands.activateCodesonar"
+                   style="push"
+                   tooltip="%command.description.activateCodesonar">
+             </command>
+             <command
+                   commandId="codesonar.commands.startVisualization"
+                   style="push"
+                   tooltip="%command.description.startVisualization">
+             </command>
+          </menu>
+       </menuContribution>
+       -->
+ </extension>
 <!-- These extensions add menu items to the menubar and toolbar -->
   <extension
      point="org.eclipse.ui.actionSets">
@@ -73,7 +217,7 @@
          </action>
          <!-- Adds a menu item -->
          <action
-               label="Delete SMT markers"
+               label="%Delete.SMT.Markers"
                class="org.smtlib.plugin.MenuActions$DeleteMarkers"
                menubarPath="SMTMenu/SMTGroup"
                definitionId="org.smtlib.plugin.commands.DeleteMarkers"

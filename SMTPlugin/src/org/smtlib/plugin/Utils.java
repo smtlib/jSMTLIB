@@ -86,20 +86,21 @@ public class Utils {
     	if (solver == null) solver = Preferences.poptions.defaultSolver.getStringValue();
     	String exec = "";
     	if (!solver.equals(org.smtlib.Utils.TEST_SOLVER)) try {  // FIXME - make "test" a symbolic constant
-    		exec = Preferences.getExec(solver);
-    		if (exec == null) {
-    			Activator.log.errorlog("SMT: INTERNAL ERROR: Could not find an executable option for " + solver,null);
-    			return;
-    		}
-    		File f = new File(exec);
-    		if (!f.exists()) {
-    			Activator.utils.showMessage(null,windowHeader,"The executable path for this solver does not appear to exist: " + solver + " \"" + exec + "\"");
-    			return;
-    		}
-    		if (!f.canExecute()) {
-    			Activator.utils.showMessage(null,windowHeader,"The executable path for this solver does not appear to be executable: " + solver + " " + exec);
-    			return;
-    		}
+    		// FIXME - If the executable is bad, we need a way to fix it
+//    		exec = Preferences.getExec(solver);
+//    		if (exec == null) {
+//    			Activator.log.errorlog("SMT: INTERNAL ERROR: Could not find an executable option for " + solver,null);
+//    			return;
+//    		}
+//    		File f = new File(exec);
+//    		if (!f.exists()) {
+//    			Activator.utils.showMessage(null,windowHeader,"The executable path for this solver does not appear to exist: " + solver + " \"" + exec + "\"");
+//    			return;
+//    		}
+//    		if (!f.canExecute()) {
+//    			Activator.utils.showMessage(null,windowHeader,"The executable path for this solver does not appear to be executable: " + solver + " " + exec);
+//    			return;
+//    		}
     	} catch (java.lang.Exception e) {
 			Activator.log.errorlog("SMT: Could not lookup the executable for the solver " + solver,e);
 			return;
@@ -113,7 +114,8 @@ public class Utils {
     				SMT smt = new SMT();
     				smt.smtConfig = Activator.smtConfiguration.clone();
     				smt.smtConfig.files = null;
-    				String[] cmd = new String[]{ "-s", solver, "--exec", exec, r.getLocation().toString() };
+    				//String[] cmd = new String[]{ "-s", solver, "--exec", exec, r.getLocation().toString() };
+    				String[] cmd = new String[]{ "-s", solver, r.getLocation().toString() };
     				deleteMarkers(r,null);
     				boolean batch = false;
     				if (batch) {
