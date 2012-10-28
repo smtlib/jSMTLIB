@@ -959,6 +959,10 @@ public class Parser extends Lexer implements IParser {
 			if (list.get(0).toString().equals("error") && list.get(1) instanceof IStringLiteral) {
 				return f.error(((IStringLiteral)list.get(1)).value());
 			}
+			if (list.get(0) instanceof IKeyword) {
+	            IAttribute<?> attr = smtConfig.exprFactory.attribute((IKeyword)list.get(0),(IStringLiteral)list.get(1));
+	            return f.get_info_response(attr);
+			}
 		}
 		return sexpr;
 		//return f.error("Could not translate response: " + response);
