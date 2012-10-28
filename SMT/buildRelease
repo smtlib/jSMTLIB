@@ -1,7 +1,9 @@
 #! /bin/bash
 
 ## TODO - this is not portable across build environments
+## COnvert this to ant
 
+## Need the following for jar
 export JAVA_HOME=C:/cygwin/home/dcok/ProgramFiles/Java/jdk1.7.0_07
 
 rm -rf temp

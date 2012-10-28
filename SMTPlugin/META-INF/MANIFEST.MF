@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: jSMTLIB-Plugin
+Bundle-Name: %Bundle-Name
 Bundle-SymbolicName: org.smtlib.plugin.SMTPlugin;singleton:=true
 Bundle-Version: 0.9.6
 Bundle-Activator: org.smtlib.plugin.Activator
@@ -19,3 +19,6 @@ Bundle-ActivationPolicy: lazy
 Import-Package: org.eclipse.core.resources,
  org.eclipse.ui.console,
  org.eclipse.ui.texteditor
+Bundle-ClassPath: .
+Export-Package: org.smtlib.plugin,
+ org.smtlib.plugin.editor
