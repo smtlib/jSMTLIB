@@ -705,8 +705,9 @@ public class SMT {
 				} catch (ClassNotFoundException e) {
 					adapterClass = null;
 				}
-				if (adapterClass == null) adapterClass = org.smtlib.solvers.Solver_smt.class;
 			}
+			// But otherwise presume the solver is a standard smt solver
+			if (adapterClass == null) adapterClass = org.smtlib.solvers.Solver_smt.class;
 		
 			String propName = Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_COMMAND_SUFFIX;
 			String commandString = props.getProperty(propName);
@@ -736,10 +737,12 @@ public class SMT {
 		}
 		
 		try {
-			Constructor<?> constructor = adapterClass.getConstructor(SMT.Configuration.class,String.class);
+			Constructor<?> constructor;
 			if (command == null) {
+				constructor = adapterClass.getConstructor(SMT.Configuration.class,String.class);
 				solver = (ISolver)(constructor.newInstance(smtConfig,executable));
 			} else {
+				constructor = adapterClass.getConstructor(SMT.Configuration.class,command.getClass());
 				solver = (ISolver)(constructor.newInstance(smtConfig,command));
 			}
 			IResponse res = solver.start();

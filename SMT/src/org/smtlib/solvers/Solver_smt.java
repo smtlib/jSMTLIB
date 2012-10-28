@@ -83,7 +83,7 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 	@Override
 	public IResponse start() {
 		try {
-			solverProcess.start(false);
+			solverProcess.start(true);
 			if (smtConfig.solverVerbosity > 0) solverProcess.sendNoListen("(set-option :verbosity ",Integer.toString(smtConfig.solverVerbosity),")");
 			//if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
 			// Can't turn off printing success, or we get no feedback
