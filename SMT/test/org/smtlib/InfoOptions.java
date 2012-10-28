@@ -1,8 +1,15 @@
 package org.smtlib;
 
+import java.util.List;
+
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.smtlib.IExpr.IAttribute;
+import org.smtlib.IExpr.IAttributeValue;
+import org.smtlib.IExpr.IStringLiteral;
+import org.smtlib.impl.Response;
 
 @RunWith(Parameterized.class)
 public class InfoOptions  extends LogicTests {
@@ -14,40 +21,57 @@ public class InfoOptions  extends LogicTests {
     	this.isTest = "test".equals(solvername);
     }
     
+    public void checkGetInfo(String keyword, String expected) {
+		IResponse r = doCommand("(get-info " + keyword + ")");
+		if (r instanceof Response.Seq) {
+			List<IAttribute<?>> list = ((Response.Seq)r).attributes();
+			Object o = list.get(0).attrValue();
+			if (o instanceof IStringLiteral) {
+				String n = ((IStringLiteral)o).value();
+				if (expected != null) Assert.assertEquals(expected,n);
+				else Assert.assertTrue(n != null);
+				return;
+			}
+		}
+		Assert.assertTrue("Response is wrong " + r,false);
+    }
+    
 	@Test
 	public void checkAuthors() {
-		doCommand("(get-info :authors)","(:authors \"" + 
+		checkGetInfo(":authors",
 				(solvername.equals("test") ? "David R. Cok"
 				: solvername.equals("simplify") ? "David Detlefs and Greg Nelson and James B. Saxe"
 				: solvername.equals("yices") ? "SRI"
 				: solvername.equals("cvc") ? "Clark Barrett, Cesare Tinelli, and others"
+				: solvername.equals("cvc4") ? null // Long text that we don't check
 				: solvername.equals("z3") ? "Leonardo de Moura and Nikolaj Bjorner"
 				: "???" )
-				+ "\" )");
+				);
 	}
     
 	@Test
 	public void checkVersion() {
-		doCommand("(get-info :version)","(:version \"" + 
+		checkGetInfo(":version",
 				(solvername.equals("test") ? "0.0"
 				: solvername.equals("simplify") ? "1.5.4"
 				: solvername.equals("yices") ? "1.0.28"
 				: solvername.equals("cvc") ? "2.2"
+				: solvername.equals("cvc4") ? "0.0prerelease"
 				: solvername.equals("z3") ? "2.11-0.0"
 				: "???" )
-				+ "\" )");
+				);
 	}
     
 	@Test
 	public void checkName() {
-		doCommand("(get-info :name)","(:name \"" + 
-				(solvername.equals("test") ? "test"
-				: solvername.equals("simplify") ? "simplify"
-				: solvername.equals("yices") ? "yices"
-				: solvername.equals("cvc") ? "CVC3"
-				: solvername.equals("z3") ? "z3"
-				: "???" )
-				+ "\" )");
+		checkGetInfo(":name",
+						solvername.equals("test") ? "test"
+						: solvername.equals("simplify") ? "simplify"
+						: solvername.equals("yices") ? "yices"
+						: solvername.equals("cvc") ? "CVC3"
+						: solvername.equals("cvc4") ? "cvc4"
+						: solvername.equals("z3") ? "z3"
+						: "???" );
 	}
     
 	// FIXME - no sure what this really should be

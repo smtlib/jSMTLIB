@@ -71,10 +71,12 @@ public class LogicTests {
 		}
 	}
 	
-	public void doCommand(String input) {
+	public IResponse doCommand(String input) {
 		ICommand command = parseCommand(input);
 		if (command == null) throw new RuntimeException("Failed to create command");
-		checkResponse(command.execute(solver),null);
+		IResponse r;
+		checkResponse(r=command.execute(solver),null);
+		return r;
 	}
 	
 	public IResponse doCommand(String input, String result) {
