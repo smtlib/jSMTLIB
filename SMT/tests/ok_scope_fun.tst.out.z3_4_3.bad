@@ -1,0 +1,10 @@
+success
+success
+success
+success
+success
+success
+success
+(declare-fun y () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 9 column 22: invalid declaration, constant 'y' (whith the given signature) already declared")

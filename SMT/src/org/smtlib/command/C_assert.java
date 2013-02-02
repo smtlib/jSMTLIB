@@ -26,13 +26,16 @@ public class C_assert extends Command implements Iassert {
 	}
 	
 	/** Returns the asserted formula */
+	@Override
 	public IExpr expr() {
 		return formula;
 	}
 	
 	/** The command name */
 	public static final String commandName = "assert";
+	
 	/** The command name */
+	@Override
 	public String commandName() { return commandName; }
 
 	/** The formula to assert */

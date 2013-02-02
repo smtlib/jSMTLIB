@@ -466,8 +466,8 @@ public class Solver_cvc extends Solver_test implements ISolver {
 		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
 			return smtConfig.responseFactory.error("The get-value command is only valid if :produce-models has been enabled");
 		}
-		if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
-			return smtConfig.responseFactory.error("The get-value command is only valid immediately after check-sat returned sat or unknown");
+		if (!smtConfig.responseFactory.sat().equals(checkSatStatus) && !smtConfig.responseFactory.unknown().equals(checkSatStatus)) {
+			return smtConfig.responseFactory.error("A get-value command is valid only after check-sat has returned sat or unknown");
 		}
 		try {
 			String response = solverProcess.sendAndListen("COUNTERMODEL;\n");

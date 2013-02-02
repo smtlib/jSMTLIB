@@ -6,6 +6,7 @@ import org.junit.*;
 import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IParser.ParserException;
 
+/** Tests parsing valid expressions without invoking solvers */
 public class ParseExpressions {
 
 	static JUnitListener listener;

@@ -6,7 +6,7 @@ import org.junit.*;
 import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IParser.ParserException;
 
-
+/** Tests parsing invalid expressions, without invoking solvers */
 public class ParseExpressionErrors {
 	
 	static JUnitListener listener; // FIXME - only keeps the last message

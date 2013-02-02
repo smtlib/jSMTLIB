@@ -1,8 +1,12 @@
 package org.smtlib;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 
 import org.junit.Assert;
@@ -14,7 +18,7 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class FileTests  extends LogicTests {
 
- static Collection<String[]> data = datax();
+	static Collection<String[]> data = datax();
 	
     @Parameters
     static public  Collection<String[]> datax() {
@@ -25,7 +29,15 @@ public class FileTests  extends LogicTests {
     		if (ff.getName().endsWith(".tst")) {
     			data.add(new String[]{"test",ff.getName()}); 
     			data.add(new String[]{"simplify",ff.getName()}); 
-    			data.add(new String[]{"z3",ff.getName()}); 
+    			if (
+    					!ff.getName().equals("ok_regularOutput.tst") &&
+    					!ff.getName().equals("err_bv2.tst") &&
+    					!ff.getName().equals("err_bv.tst") &&
+    					!ff.getName().equals("ok_bv2.tst") 
+    					) {
+    				data.add(new String[]{"z3_4_3",ff.getName()}); // FIXME - z3 crashes or hangs or is non-deterministic 
+    			}
+    			data.add(new String[]{"z3_2_11",ff.getName()}); 
     			data.add(new String[]{"cvc",ff.getName()}); 
     			data.add(new String[]{"yices",ff.getName()});
     		}
@@ -35,20 +47,19 @@ public class FileTests  extends LogicTests {
     	return data;
     }
     
-    String testfile;
+    protected String testfile;
     
-//  public FileTests(String solvername) {
-//	this.solvername = "test"; // solvername;  FIXME
-//}
-  public FileTests(String solvername, String testfile) {
-	this.solvername = solvername; // solvername;  FIXME
-	this.testfile = testfile; //data.iterator().next()[0];
-}
+    public FileTests(String solvername, String testfile) {
+    	this.solvername = solvername;
+    	this.testfile = testfile;
+    }
   
+    /** Reads a file into a String */
 	public String readFile(String filename) {
 		char[] b = new char[100000];
+		Reader r = null;
 		try {
-			Reader r = new FileReader(filename);
+			r = new FileReader(filename);
 			int i = 0;
 			int ii = 0;
 			while ((ii = r.read(b,i,b.length-i)) > 0) {
@@ -58,25 +69,38 @@ public class FileTests  extends LogicTests {
 			return new String(b,0,i);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
+		} finally {
+			if (r != null) try { r.close(); } catch (IOException ee) {}
 		}
 	}
     
 	@Test
 	public void checkFile() {
-//		FIXME - skip this
-//		if ("ok_regularOutput.tst".equals(testfile)) return; // FIXME - skip this
-//		if ("err_getValueMalformed.tst".equals(testfile)) return; //  ("ok_printSuccess.tst".equals(testfile)) return; // FIFIXME - skip this
+		//System.out.println("File: " + testfile + "  Solver: " + solvername);
 		String script = readFile("tests/" + testfile);
 		String outname = "tests/" + testfile + ".out";
 		String altname = outname + "." + solvername;
 		if (new File(altname).isFile()) outname = altname;
+		else if (new File(altname.replace("z3_4_3", "z3")).isFile()) outname = altname.replace("z3_4_3", "z3");
+		else if (new File(altname.replace("z3_2_11", "z3")).isFile()) outname = altname.replace("z3_2_11", "z3");
 		altname = altname + ".bad";
 		if (new File(altname).isFile()) outname = altname;
-		String output = readFile(outname);
-		String actual = doScript(script);
-		output = testfile + " " + solvername + "\n" + output.replace("\r\n","\n");
-		actual = testfile + " " + solvername + "\n" + actual.replace("\r\n","\n");
-		//if (output.contains("error")) return; // FIXME - fix this along with error stuff
+		else if (new File(altname.replace("z3_4_3", "z3")).isFile()) outname = altname.replace("z3_4_3", "z3");
+		else if (new File(altname.replace("z3_2_11", "z3")).isFile()) outname = altname.replace("z3_2_11", "z3");
+		String output = readFile(outname).replace("\r\n","\n");
+		String actual = doScript(script).replace("\r\n","\n");
+		if (!output.equals(actual)) {
+			try {
+				File f = new File("tests/" + testfile + ".out." + solvername + ".actual");
+				BufferedWriter w = new BufferedWriter(new FileWriter(f));
+				w.write(actual);
+				w.close();
+			} catch (IOException e) {
+				// ignore
+			}
+		}
+		output = testfile + " " + solvername + "\n" + output;
+		actual = testfile + " " + solvername + "\n" + actual;
 		Assert.assertEquals(output,actual);
 	}
 	

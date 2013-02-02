@@ -17,9 +17,11 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
 	
 	public void noQuantifiers(IExpr expression) throws IVisitor.VisitorException {
 		IVisitor<Void> visitor = new IVisitor.TreeVisitor<Void>() {
+			@Override
 			public Void visit(IForall e) throws IVisitor.VisitorException {
 				throw new IVisitor.VisitorException("A quantified expression is not allowed in the " + logicName + " logic",e.pos());
 			}
+			@Override
 			public Void visit(IExists e) throws IVisitor.VisitorException {
 				throw new IVisitor.VisitorException("A quantified expression is not allowed in the " + logicName + " logic",e.pos());
 			}

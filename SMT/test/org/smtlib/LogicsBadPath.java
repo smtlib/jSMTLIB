@@ -1,12 +1,12 @@
 package org.smtlib;
 
-import java.io.File;
-
 import org.junit.Test;
 
+// FIXME - which solver is this using?
 
 public class LogicsBadPath extends LogicsBase {
 
+	@Override
 	public void init() {
 		super.init();
 		smt.smtConfig.logicPath = "xxx";

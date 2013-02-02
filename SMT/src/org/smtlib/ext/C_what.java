@@ -30,13 +30,16 @@ public class C_what extends Command implements Iwhat {
 
 	/** The command name */
 	public static final String commandName = "what";
+	
 	/** The command name */
+	@Override
 	public String commandName() { return commandName; }
 	
 	/** The ids that are the arguments of the command */
 	protected List<IIdentifier> ids;
 	
 	/** The ids that are the arguments of the command */
+	@Override
 	public List<IIdentifier> ids() { return ids; }
 
 	public C_what(List<IIdentifier> ids) {

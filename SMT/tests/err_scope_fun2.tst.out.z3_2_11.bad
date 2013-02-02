@@ -1,0 +1,8 @@
+success
+success
+success
+success
+success
+(assert y)
+^^^^^^^^^^
+(error "ERROR: line 6 column 9: could not locate id  y.")

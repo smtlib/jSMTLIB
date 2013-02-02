@@ -51,7 +51,7 @@ public class APIExample {
 			script.commands().add(command4);
 			
 			// Execute the script
-			ISolver solver = new org.smtlib.solvers.Solver_z3(smt.smtConfig,"C:/cygwin/home/dcok/mybin/z3.exe");
+			ISolver solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,"C:/cygwin/home/dcok/mybin/z3-4.3.exe");
 			solver.start();
 			IResponse response = script.execute(solver);
 			System.out.println(printer.toString(response));
@@ -63,7 +63,7 @@ public class APIExample {
 			script.commands().add(command2);
 			script.commands().add(new org.smtlib.command.C_assert(q));
 			script.commands().add(command4);			
-			solver = new org.smtlib.solvers.Solver_z3(smt.smtConfig,"C:/cygwin/home/dcok/mybin/z3.exe");
+			solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,"C:/cygwin/home/dcok/mybin/z3-4.3.exe");
 			solver.start();
 			response = script.execute(solver);
 			System.out.println(printer.toString(response));
@@ -72,7 +72,7 @@ public class APIExample {
 			// THIS API WILL BE CHANGING
 			ISort.IFactory sortfactory = smt.smtConfig.sortFactory;
 			ISort boolsort = sortfactory.createSortExpression(efactory.symbol("Bool"));
-			solver = new org.smtlib.solvers.Solver_z3(smt.smtConfig,"C:/cygwin/home/dcok/mybin/z3.exe");
+			solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,"C:/cygwin/home/dcok/mybin/z3-4.3.exe");
 			solver.start();
 			IResponse r = solver.set_logic("QF_UF",null);
 			r = solver.declare_fun(new C_declare_fun(p,new java.util.LinkedList<ISort>(),boolsort));
@@ -88,7 +88,7 @@ public class APIExample {
 			List<IExpr.INumeral> nums = new LinkedList<IExpr.INumeral>();
 			nums.add(efactory.numeral(32)); // TODO - room for improvement in ease of use here...
 			ISort bv32 = sortfactory.createSortExpression(efactory.id(efactory.symbol("BitVec"),nums));
-			solver = new org.smtlib.solvers.Solver_z3(smt.smtConfig,"C:/cygwin/home/dcok/mybin/z3.exe");
+			solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,"C:/cygwin/home/dcok/mybin/z3-4.3.exe");
 			solver.start();
 			solver.set_option(efactory.keyword(":produce-models"),efactory.symbol("true"));
 			r = solver.set_logic("QF_BV",null);

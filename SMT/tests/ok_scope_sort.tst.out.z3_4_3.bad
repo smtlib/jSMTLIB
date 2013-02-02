@@ -1,0 +1,11 @@
+success
+success
+success
+success
+success
+success
+success
+success
+(declare-sort B 1)
+^^^^^^^^^^^^^^^^^^
+(error "line 10 column 14: invalid sort declaration, sort already declared/defined")

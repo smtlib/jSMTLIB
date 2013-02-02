@@ -36,7 +36,7 @@ public class TypeCheckRoot {
 	
 	public void checkResponse(IResponse res, String expected) {
 		if (res == null || !res.isError()) Assert.assertTrue("Expected an error",false);
-		Assert.assertEquals(expected,((IResponse.IError)res).errorMsg());
+		else Assert.assertEquals(expected,((IResponse.IError)res).errorMsg());
 	}
 	
 	public ICommand parseCommand(String input) {

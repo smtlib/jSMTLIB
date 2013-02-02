@@ -17,13 +17,16 @@ import org.smtlib.sexpr.Printer;
 public class C_exec extends Command implements Iexec {
 	/** The command name */
 	public static final String commandName = "exec";
+	
 	/** The command name */
+	@Override
 	public String commandName() { return commandName; }
 	
 	/** The command script to be run */
 	protected IScript script;
 	
 	/** Returns a reference to the command script to be run */
+	@Override
 	public IScript script() { return script; }
 
 	/** Constructs a command object for the given script */

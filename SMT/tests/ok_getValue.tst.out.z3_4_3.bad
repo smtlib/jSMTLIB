@@ -1,0 +1,8 @@
+success
+success
+success
+success
+sat
+(get-value (x))
+^^^^^^^^^^^^^^^
+(error "line 7 column 15: invalid function application, arguments missing")

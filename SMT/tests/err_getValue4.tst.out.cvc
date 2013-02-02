@@ -5,4 +5,4 @@ success
 unsat
 (get-value (x))
 ^^^^^^^^^^^^^^^
-(error "The get-value command is only valid immediately after check-sat returned sat or unknown")
+(error "A get-value command is valid only after check-sat has returned sat or unknown")

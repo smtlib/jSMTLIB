@@ -37,6 +37,8 @@ public class LogicsBase {
 	public void teardown() {
 	}
 	
+	// FIXME - duplicates stuff in LogicTests.java
+	
 	public void init() {
 		smt = new SMT();
 		listener = new JUnitListener();

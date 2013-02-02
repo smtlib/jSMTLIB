@@ -1,12 +1,9 @@
 package org.smtlib;
 
-import java.util.Arrays;
-import java.util.Collection;
-
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class QuantTests extends LogicTests {
@@ -17,6 +14,7 @@ public class QuantTests extends LogicTests {
     	this.solvername = solvername;
     }
     
+	@Override
 	public IResponse doCommand(String input, String result) {
 		return super.doCommand(input,(solvername.equals("test") ? "unknown" : result));
 	}
@@ -118,23 +116,23 @@ public class QuantTests extends LogicTests {
 		doCommand("(exit)");
 	}
 
-// FIXME
-//	@Test
-//	public void forallBoolUnSat() {
-//		doCommand("(set-logic QF_LIA)");
-//		doCommand("(assert (forall ((q Bool)) (not q)))"); // false
-//		doCommand("(check-sat)","unknown");
-//		doCommand("(exit)");
-//	}
-//
-//	@Test
-//	public void forallBoolSat2() {
-//		doCommand("(set-logic QF_LIA)");
-//		doCommand("(declare-fun p () Bool)");
-//		doCommand("(assert (not (forall ((q Bool)) (not q))))"); // true
-//		doCommand("(check-sat)","sat");
-//		doCommand("(exit)");
-//	}
+ 
+	@Test @Ignore // FIXME
+	public void forallBoolUnSat() {
+		doCommand("(set-logic QF_LIA)");
+		doCommand("(assert (forall ((q Bool)) (not q)))"); // false
+		doCommand("(check-sat)","unknown");
+		doCommand("(exit)");
+	}
+
+	@Test @Ignore // FIXME
+	public void forallBoolSat2() {
+		doCommand("(set-logic QF_LIA)");
+		doCommand("(declare-fun p () Bool)");
+		doCommand("(assert (not (forall ((q Bool)) (not q))))"); // true
+		doCommand("(check-sat)","sat");
+		doCommand("(exit)");
+	}
 
 	@Test
 	public void forallBoolSat() {

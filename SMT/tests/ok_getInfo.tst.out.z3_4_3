@@ -1,0 +1,4 @@
+(:authors "Leonardo de Moura and Nikolaj Bjorner" )
+(:name "z3-4.3" )
+(:version "4.3" )
+(:error-behavior continued-execution )

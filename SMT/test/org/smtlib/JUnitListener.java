@@ -5,6 +5,7 @@ public class JUnitListener implements Log.IListener {
 	
 	IResponse msg;
 	
+	@Override
 	public void logError(IResponse.IError msg) {
 		this.msg = msg;
 	}
