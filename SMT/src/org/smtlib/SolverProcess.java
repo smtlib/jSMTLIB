@@ -53,19 +53,24 @@ public class SolverProcess {
 	public /*@Nullable*/Writer log;
 	
 	/** Constructs a SolverProcess object, without actually starting the process as yet.
-	 * @param args the command-line arguments that will launch the desired process
+	 * @param args the command-line that will launch the desired process
 	 * @param endMarker text that marks the end of text returned from the process, e.g. the end of the 
 	 * prompt for new input
 	 * @param log if not null, the name of a file to log communications to, for diagnostic purposes
 	 */
-	public SolverProcess(String[] args, String endMarker, /*@Nullable*/String logfile) {
-		this.app = args;
+	public SolverProcess(String[] cmd, String endMarker, /*@Nullable*/String logfile) {
+		setCmd(cmd);
 		this.endMarker = endMarker;
 		try {
 			if (logfile != null) log = new FileWriter(logfile);
 		} catch (IOException e) {
 			System.out.println("Failed to create solver log file " + logfile + ": " + e); // FIXME - wwrite to somewhere better
 		}
+	}
+	
+	/** Enables changing the command-line; must be called prior to start() */
+	public void setCmd(String[] cmd) {
+		this.app = cmd;
 	}
 	
 	/** Starts the process; if the argument is true, then also listens to its output until a prompt is read. */
