@@ -614,12 +614,12 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
 		@Override
 		public String visit(IBinaryLiteral e) throws IVisitor.VisitorException {
-			return "bv" + e.intValue() + "[" + e.length() + "]";
+			return "#b" + e.value();
 		}
 
 		@Override
 		public String visit(IHexLiteral e) throws IVisitor.VisitorException {
-			return "bv" + e.intValue() + "[" + (4*e.length()) + "]";
+			return "#x" + e.value();
 		}
 
 		@Override

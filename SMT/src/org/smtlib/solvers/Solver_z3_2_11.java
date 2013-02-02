@@ -1,14 +1,20 @@
 package org.smtlib.solvers;
 
+import org.smtlib.IAccept;
 import org.smtlib.IResponse;
+import org.smtlib.IVisitor;
 import org.smtlib.SMT;
+import org.smtlib.IExpr.IBinaryLiteral;
+import org.smtlib.IExpr.IHexLiteral;
+import org.smtlib.solvers.Solver_z3_4_3.Translator;
 
 public class Solver_z3_2_11 extends Solver_z3_4_3 {
 
 	/** Creates an instance of the Z3 solver */
 	public Solver_z3_2_11(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
 		super(smtConfig,executable);
-		cmds = new String[]{ "", "/smt2","/in","/m"}; 
+		cmds = new String[]{ executable, "/smt2","/in","/m"}; 
+		solverProcess.setCmd(cmds);
 		NAME_VALUE = "z3-2.11";
 		VERSION_VALUE = "2.11";
 	}
@@ -28,6 +34,28 @@ public class Solver_z3_2_11 extends Solver_z3_4_3 {
 		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
 		}
+	}
+
+	/** Translates an S-expression into Z3 syntax */
+	@Override
+	protected String translate(IAccept sexpr) throws IVisitor.VisitorException {
+		// The z3 solver uses the standard S-expression concrete syntax, but not quite
+		// so we have to use our own translator
+		return sexpr.accept(new Translator());
+	}
+	
+	public class Translator extends Solver_z3_4_3.Translator {
+		
+		@Override
+		public String visit(IBinaryLiteral e) throws IVisitor.VisitorException {
+			return "bv" + e.intValue() + "[" + e.length() + "]";
+		}
+
+		@Override
+		public String visit(IHexLiteral e) throws IVisitor.VisitorException {
+			return "bv" + e.intValue() + "[" + (4*e.length()) + "]";
+		}
+
 	}
 
 }

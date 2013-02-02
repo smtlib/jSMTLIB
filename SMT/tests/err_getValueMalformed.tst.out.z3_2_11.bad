@@ -12,9 +12,7 @@ sat
 (get-value x y)
            ^
 (error "Expected a parenthesized list of terms beginning here")
-(get-value (x) ) ; OK
-^^^^^^^^^^^^^^^^
-(error "line 6 column 18: There is no model in the current context")
+( ( x x ) )
 (get-value (x) x)
                ^
 (error "Too many arguments or extraneous material after the command or missing right parenthesis")
