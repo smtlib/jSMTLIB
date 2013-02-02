@@ -4,7 +4,7 @@ import java.io.StringWriter;
 
 import org.junit.*;
 
-
+/** Tests parsing commands, without invoking solvers */
 public class ParseCommand {
 	
 	JUnitListener listener;

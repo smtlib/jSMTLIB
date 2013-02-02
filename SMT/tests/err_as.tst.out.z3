@@ -1,5 +1,0 @@
-success
-(assert (= ((as and Bool) true false) false))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "ERROR: line 2 column 31: could not find overload for '' Argument: true has type bool.
-Argument: false has type bool.")

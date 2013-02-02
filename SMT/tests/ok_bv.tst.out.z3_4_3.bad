@@ -1,0 +1,10 @@
+success
+success
+success
+success
+(assert (= x #b0101 ))
+^^^^^^^^^^^^^^^^^^^^^^
+(error "line 6 column 18: unknown constant bv5")
+(assert (= z #xa ))
+^^^^^^^^^^^^^^^^^^^
+(error "line 6 column 21: unexpected character; line 6 column 23: unexpected character")

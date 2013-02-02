@@ -1,19 +1,14 @@
 package org.smtlib;
 
-import java.util.Iterator;
-import java.util.List;
-
-import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.smtlib.solvers.Solver_test;
 
 // FIXME - need to check complex sorts; parameterized definitions; Int and NUMERAL types; variadic functions; parameterized function sorts
 // FIXME - need to implement checking of sort expressions
 
 public class TypeCheckInt extends TypeCheckRoot {
 	
+	@Override
 	@Before
 	public void setup() {
 		super.setup();

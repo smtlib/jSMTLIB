@@ -1,7 +1,5 @@
 package org.smtlib;
 
-import java.io.File;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -10,6 +8,7 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class LogicsWithPath extends LogicsBase {
 
+	@Override
 	public void init() {
 		super.init();
 		smt.smtConfig.logicPath = "logics";

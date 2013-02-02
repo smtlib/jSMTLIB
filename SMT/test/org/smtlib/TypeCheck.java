@@ -8,6 +8,7 @@ import org.junit.Test;
 
 public class TypeCheck extends TypeCheckRoot {
 
+	@Override
 	@Before
 	public void setup() {
 		super.setup();

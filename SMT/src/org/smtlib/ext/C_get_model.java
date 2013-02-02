@@ -24,6 +24,7 @@ public class C_get_model extends Command implements Iget_model {
 	public static final String commandName = "get-model";
 	
 	/** The command name */
+	@Override
 	public String commandName() { return commandName; }
 	
 	/** Parses the command, producing a new command instance */

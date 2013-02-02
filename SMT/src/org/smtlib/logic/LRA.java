@@ -41,8 +41,10 @@ public class LRA extends Logic {
 		return false;
 	}
 	
+	@Override
 	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
 		IVisitor<Void> visitor = new IVisitor.TreeVisitor<Void>() {
+			@Override
 			public Void visit(IExpr.IFcnExpr e) throws IVisitor.VisitorException {
 				if (e.args().size() == 2) {
 					String fcn = e.head().toString();
@@ -67,11 +69,13 @@ public class LRA extends Logic {
 		expression.accept(visitor);
 	}
 	
+	@Override
 	public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
 		// May declare constants, but not functions without definitions
 		noFunctions(id,argSorts,resultSort,definition);
 	}
 
+	@Override
 	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
 		noSorts(id,params,expr);
 	}

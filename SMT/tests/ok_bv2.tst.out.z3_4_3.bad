@@ -1,0 +1,90 @@
+success
+success
+success
+success
+success
+(assert (= (bvnot x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 7 column 28: unknown constant bv7")
+(assert (= (bvneg x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 7 column 31: unexpected character; line 7 column 33: unexpected character; line 8 column 28: unknown constant bv7; line 8 column 31: unexpected character; line 8 column 33: unexpected character")
+(assert (= (bvand x t) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 9 column 30: unknown constant bv7")
+(assert (= (bvor x x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 9 column 33: unexpected character; line 9 column 35: unexpected character")
+(assert (= (bvadd x x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 10 column 29: unknown constant bv7; line 10 column 32: unexpected character; line 10 column 34: unexpected character")
+(assert (= (bvmul x x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 11 column 30: unknown constant bv7; line 11 column 33: unexpected character; line 11 column 35: unexpected character; line 12 column 30: unknown constant bv7; line 12 column 33: unexpected character; line 12 column 35: unexpected character")
+(assert (= (bvshl x x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 13 column 30: unknown constant bv7; line 13 column 33: unexpected character; line 13 column 35: unexpected character")
+(assert (= (bvlshr x x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 14 column 31: unknown constant bv7")
+(assert (= (bvudiv x x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 14 column 34: unexpected character; line 14 column 36: unexpected character")
+(assert (= (bvurem x x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 15 column 31: unknown constant bv7; line 15 column 34: unexpected character; line 15 column 36: unexpected character")
+(assert (bvult x t))
+^^^^^^^^^^^^^^^^^^^^
+(error "line 16 column 31: unknown constant bv7; line 16 column 34: unexpected character; line 16 column 36: unexpected character")
+success
+success
+(assert (= #xF #b1111))
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 20 column 16: unknown constant bv15; line 20 column 20: unexpected character; line 20 column 22: unexpected character; line 20 column 28: unexpected character; line 20 column 30: unexpected character")
+(assert (distinct #x0 #b0000))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 21 column 19: unknown constant bv0; line 21 column 22: unexpected character; line 21 column 24: unexpected character; line 21 column 29: unexpected character; line 21 column 31: unexpected character")
+(assert (= (_ bv17 5) #b10001 ))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 22 column 16: unknown constant bv17; line 22 column 20: unexpected character; line 22 column 22: unexpected character; line 22 column 28: unexpected character; line 22 column 30: unexpected character")
+success
+success
+(assert (= (bvsub x x) (_ bv0 3)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 25 column 30: unknown constant bv0; line 25 column 33: unexpected character; line 25 column 35: unexpected character")
+(assert (= (bvxor x x) (_ bv0 3)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 26 column 30: unknown constant bv0; line 26 column 33: unexpected character; line 26 column 35: unexpected character")
+(assert (= (bvxnor x x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 27 column 31: unknown constant bv7; line 27 column 34: unexpected character; line 27 column 36: unexpected character")
+(assert (= (bvcomp x x) #b1))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 28 column 31: unknown constant bv1; line 28 column 34: unexpected character; line 28 column 36: unexpected character")
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(assert (= ((_ repeat 2) #b10) #b1010))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 41 column 31: unknown constant bv2; line 41 column 34: unexpected character; line 41 column 36: unexpected character; line 41 column 44: unexpected character; line 41 column 46: unexpected character")
+(assert (= ((_ zero_extend 2) #b11) #b0011))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 42 column 36: unknown constant bv3")
+(assert (= ((_ sign_extend 2) #b10) #b1110))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 42 column 39: unexpected character; line 42 column 41: unexpected character; line 42 column 48: unexpected character; line 42 column 50: unexpected character")
+(assert (= ((_ rotate_left 1) #b0010) #b0100))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 43 column 36: unknown constant bv2; line 43 column 39: unexpected character; line 43 column 41: unexpected character; line 43 column 49: unexpected character; line 43 column 51: unexpected character")
+(assert (= ((_ rotate_right 1) #b0011) #b1001))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 44 column 36: unknown constant bv2; line 44 column 39: unexpected character; line 44 column 41: unexpected character; line 44 column 48: unexpected character; line 44 column 50: unexpected character")

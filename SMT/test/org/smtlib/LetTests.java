@@ -11,6 +11,7 @@ public class LetTests extends LogicTests {
     	this.solvername = solvername;
     }
     
+	@Override
 	public IResponse doCommand(String input, String result) {
 		return super.doCommand(input,(solvername.equals("test") ? "unknown" : result));
 	}
@@ -18,7 +19,7 @@ public class LetTests extends LogicTests {
 	@Test
 	public void checkLetBool() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun p () Bool)");
+		doCommand("(declare-fun p () Bool)");
 		doCommand("(assert (let ((x p)(y (not p))) (= x (not y)) ))");
 		doCommand("(check-sat)","sat");
 		doCommand("(exit)");
@@ -27,7 +28,7 @@ public class LetTests extends LogicTests {
 	@Test
 	public void checkLetBool2() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun p () Bool)");
+		doCommand("(declare-fun p () Bool)");
 		doCommand("(assert (let ((x p)(y (not p))) (= x y) ))");
 		doCommand("(check-sat)","unsat");
 		doCommand("(exit)");
@@ -36,7 +37,7 @@ public class LetTests extends LogicTests {
 	@Test
 	public void checkLetInt() {
 		doCommand("(set-logic AUFNIRA)");
-		doCommand("(declare_fun c () Int)");
+		doCommand("(declare-fun c () Int)");
 		doCommand("(assert (let ((x 5)(y (+ c 1)) (z (- c 1))) (= (- y z) 2)))");
 		doCommand("(check-sat)","sat");
 		doCommand("(exit)");

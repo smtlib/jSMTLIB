@@ -1,0 +1,4 @@
+(:authors "Leonardo de Moura and Nikolaj Bjorner" )
+(:name "z3-2.11" )
+(:version "2.11" )
+(:error-behavior continued-execution )

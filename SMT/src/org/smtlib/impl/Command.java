@@ -21,9 +21,11 @@ public abstract class Command implements ICommand, IPosable {
 	protected /*@Nullable*//*@ReadOnly*/IPos pos;
 	
 	/** The textual position of the command, if any */
+	@Override
 	public /*@Nullable*//*@ReadOnly*/IPos pos() { return pos; }
 	
 	/** Setting the textual position of the command, if any */
+	@Override
 	public void setPos(/*@Nullable*//*@ReadOnly*/ IPos p) { pos = p; }
 	
 	/** The command name */
@@ -35,6 +37,7 @@ public abstract class Command implements ICommand, IPosable {
 	}
 
 	/** For debugging only - use a Printer for real printing */
+	@Override
 	public String toString() {
 		// FIXME - change to print from the parser source
 		return (new org.smtlib.sexpr.Printer(null)).toString(this);

@@ -51,11 +51,11 @@ import org.smtlib.sexpr.ISexpr.ISeq;
 import org.smtlib.sexpr.Parser;
 
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into Z3 commands */
-public class Solver_z3 extends AbstractSolver implements ISolver {
+public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	
-	protected String NAME_VALUE = "z3";
+	protected String NAME_VALUE = "z3-4.3";
 	protected String AUTHORS_VALUE = "Leonardo de Moura and Nikolaj Bjorner";
-	protected String VERSION_VALUE = "2.11-0.0";
+	protected String VERSION_VALUE = "4.3";
 	
 	/** A reference to the SMT configuration */
 	protected SMT.Configuration smtConfig;
@@ -64,10 +64,10 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 	public SMT.Configuration smt() { return smtConfig; }
 	
 	/** The command-line arguments for launching the Z3 solver */
-	String cmds[] = new String[]{ "", "/smt2","/in","/m"}; 
+	protected String cmds[] = new String[]{ "", "/smt2","/in"}; 
 
 	/** The object that interacts with external processes */
-	private SolverProcess solverProcess;
+	protected SolverProcess solverProcess;
 	
 	/** The parser that parses responses from the solver */
 	protected org.smtlib.sexpr.Parser responseParser;
@@ -97,10 +97,10 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 	}
 	
 	/** Creates an instance of the Z3 solver */
-	public Solver_z3(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
+	public Solver_z3_4_3(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
 		this.smtConfig = smtConfig;
 		cmds[0] = executable;
-		solverProcess = new SolverProcess(cmds,"\n","solver.out.z3"); // FIXME - what prompt?
+		solverProcess = new SolverProcess(cmds,"\n","solver.out.z3");
 		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
 	}
 	
@@ -112,8 +112,9 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 //			if (smtConfig.solverVerbosity > 0) solverProcess.sendNoListen("(set-option :verbosity ",Integer.toString(smtConfig.solverVerbosity),")");
 //			if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
 			// Can't turn off printing success, or we get no feedback
+			solverProcess.sendAndListen("(set-option :print-success true)\n"); // Z3 4.3.0 needs this because it mistakenly has the default for :print-success as false
 			//if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Started Z3 ");
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Started Z3-4.3 ");
 			return smtConfig.responseFactory.success();
 		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
@@ -282,7 +283,8 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 		if (number == 0) return smtConfig.responseFactory.success();
 		try {
 			checkSatStatus = null;
-			while (number-- > 0) {
+			int n = number;
+			while (n-- > 0) {
 				pushes = pushesStack.remove(0);
 			}
 			return parseResponse(solverProcess.sendAndListen("(pop ",new Integer(number).toString(),")\n"));
@@ -301,7 +303,8 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 		if (number == 0) return smtConfig.responseFactory.success();
 		try {
 			pushesStack.add(pushes);
-			while (--number > 0) {
+			int n = number;
+			while (--n > 0) {
 				pushesStack.add(0);
 			}
 			pushes = 0;
@@ -557,11 +560,8 @@ public class Solver_z3 extends AbstractSolver implements ISolver {
 		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
 			return smtConfig.responseFactory.error("The get-value command is only valid if :produce-models has been enabled");
 		}
-		if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
-			return smtConfig.responseFactory.error("The get-value command is only valid immediately after check-sat returned sat or unknown");
-		}
-		if (!smtConfig.responseFactory.sat().equals(checkSatStatus) || smtConfig.responseFactory.unknown().equals(checkSatStatus)) {
-			return smtConfig.responseFactory.error("The checkSatStatus must be sat or unknown for a get-value command");
+		if (!smtConfig.responseFactory.sat().equals(checkSatStatus) && !smtConfig.responseFactory.unknown().equals(checkSatStatus)) {
+			return smtConfig.responseFactory.error("A get-value command is valid only after check-sat has returned sat or unknown");
 		}
 		try {
 			solverProcess.sendNoListen("(get-value (");

@@ -1,0 +1,10 @@
+success
+success
+success
+success
+success
+(assert (! (and q P) :named PQ))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 7 column 16: unknown constant P")
+success
+success

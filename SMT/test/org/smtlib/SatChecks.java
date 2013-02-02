@@ -1,12 +1,8 @@
 package org.smtlib;
 
-import java.util.Arrays;
-import java.util.Collection;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class SatChecks extends LogicTests {
@@ -15,6 +11,7 @@ public class SatChecks extends LogicTests {
     	this.solvername = solvername;
     }
 
+	@Override
 	public IResponse doCommand(String input, String result) {
 		return super.doCommand(input,(solvername.equals("test") ? "unknown" : result));
 	}

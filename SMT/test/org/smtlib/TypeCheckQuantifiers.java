@@ -6,6 +6,7 @@ import org.junit.Test;
 public class TypeCheckQuantifiers extends TypeCheckRoot {
 
 
+	@Override
 	@Before
 	public void setup() {
 		super.setup();
