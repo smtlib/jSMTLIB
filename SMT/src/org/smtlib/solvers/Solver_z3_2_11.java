@@ -1,23 +1,21 @@
 package org.smtlib.solvers;
 
 import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.smtlib.IAccept;
-import org.smtlib.IExpr;
+import org.smtlib.*;
+import org.smtlib.IExpr.IBinaryLiteral;
+import org.smtlib.IExpr.IFcnExpr;
+import org.smtlib.IExpr.IHexLiteral;
 import org.smtlib.IExpr.IParameterizedIdentifier;
-import org.smtlib.IResponse;
-import org.smtlib.IVisitor;
-import org.smtlib.SMT;
-import org.smtlib.Utils;
-import org.smtlib.IExpr.*;
-import org.smtlib.IVisitor.VisitorException;
+import org.smtlib.IExpr.IQualifiedIdentifier;
 import org.smtlib.sexpr.ISexpr;
 import org.smtlib.sexpr.ISexpr.ISeq;
 import org.smtlib.sexpr.Sexpr;
-import org.smtlib.solvers.Solver_z3_4_3.Translator;
 
 public class Solver_z3_2_11 extends Solver_z3_4_3 {
 
@@ -88,19 +86,33 @@ public class Solver_z3_2_11 extends Solver_z3_4_3 {
 	protected String translate(IAccept sexpr) throws IVisitor.VisitorException {
 		// The z3 solver uses the standard S-expression concrete syntax, but not quite
 		// so we have to use our own translator
-		return sexpr.accept(new Translator());
+		StringWriter sw = new StringWriter();
+		sexpr.accept(new Translator(sw));
+		return sw.toString();
 	}
 	
 	public class Translator extends Solver_z3_4_3.Translator {
 		
+		public Translator(Writer w) { super (w); }
+		
 		@Override
-		public String visit(IBinaryLiteral e) throws IVisitor.VisitorException {
-			return "bv" + e.intValue() + "[" + e.length() + "]";
+		public Void visit(IBinaryLiteral e) throws IVisitor.VisitorException {
+			try {
+				w.append( "bv" + e.intValue() + "[" + e.length() + "]" );
+			} catch (IOException ex) {
+				throw new IVisitor.VisitorException(ex,e.pos());
+			}
+			return null;
 		}
 
 		@Override
-		public String visit(IHexLiteral e) throws IVisitor.VisitorException {
-			return "bv" + e.intValue() + "[" + (4*e.length()) + "]";
+		public Void visit(IHexLiteral e) throws IVisitor.VisitorException {
+			try {
+				w.append( "bv" + e.intValue() + "[" + (4*e.length()) + "]" );
+			} catch (IOException ex) {
+				throw new IVisitor.VisitorException(ex,e.pos());
+			}
+			return null;
 		}
 
 //		@Override
@@ -109,100 +121,115 @@ public class Solver_z3_2_11 extends Solver_z3_4_3 {
 //		}
 
 		@Override
-		public String visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
-			String s = e.headSymbol().toString();
-			if (s.matches("bv[0-9]+")) {
-				int length = e.numerals().get(0).intValue();
-				return s + "[" + length + "]";
-			}
-			return translateSMT(e);
-		}
-
-		@Override
-		public String visit(IForall e) throws IVisitor.VisitorException {
-			StringBuffer sb = new StringBuffer();
-			sb.append("(forall (");
-			for (IDeclaration d: e.parameters()) {
-				sb.append("(");
-				sb.append(d.parameter().accept(this));
-				sb.append(" ");
-				sb.append(d.sort().accept(this));
-				sb.append(")");
-			}
-			sb.append(") ");
-			sb.append(e.expr().accept(this));
-			sb.append(")");
-			return sb.toString();
-		}
-
-		@Override
-		public String visit(IExists e) throws IVisitor.VisitorException {
-			StringBuffer sb = new StringBuffer();
-			sb.append("(exists (");
-			for (IDeclaration d: e.parameters()) {
-				sb.append("(");
-				sb.append(d.parameter().accept(this));
-				sb.append(" ");
-				sb.append(d.sort().accept(this));
-				sb.append(")");
-			}
-			sb.append(") ");
-			sb.append(e.expr().accept(this));
-			sb.append(")");
-			return sb.toString();
-		}
-
-		@Override
-		public String visit(ILet e) throws IVisitor.VisitorException {
-			StringBuffer sb = new StringBuffer();
-			sb.append("(let (");
-			for (IBinding d: e.bindings()) {
-				sb.append("(");
-				sb.append(d.parameter().accept(this));
-				sb.append(" ");
-				sb.append(d.expr().accept(this));
-				sb.append(")");
-			}
-			sb.append(") ");
-			sb.append(e.expr().accept(this));
-			sb.append(")");
-			return sb.toString();
-		}
-
-		@Override
-		public String visit(IFcnExpr e) throws IVisitor.VisitorException {
-			Iterator<IExpr> iter = e.args().iterator();
-			if (!iter.hasNext()) throw new VisitorException("Did not expect an empty argument list",e.pos());
-			IQualifiedIdentifier fcn = e.head();
-			String fcnname = fcn.accept(this);
-			StringBuilder sb = new StringBuilder();
-			int length = e.args().size();
-			if (fcnname.equals("=") || fcnname.equals("<") || fcnname.equals(">") || fcnname.equals("<=") || fcnname.equals(">=")) {
-				// chainable
-				return chainable(fcnname,iter);
-			} else if (fcnname.equals("xor")) {
-				// left-associative operators that need grouping
-				return leftassoc(fcnname,length,iter);
-			} else if (length > 1 && fcnname.equals("-")) {
-				// left-associative operators that need grouping
-				return leftassoc(fcnname,length,iter);
-			} else if (fcnname.equals("=>")) {
-				// right-associative operators that need grouping
-				if (!iter.hasNext()) {
-					throw new VisitorException("=> operation without arguments",e.pos());
+		public Void visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
+			try {
+				String s = e.headSymbol().toString();
+				if (s.matches("bv[0-9]+")) {
+					int length = e.numerals().get(0).intValue();
+					w.append( s + "[" + length + "]" );
+				} else {
+					super.visit(e);
 				}
-				return rightassoc(fcnname,iter);
-			} else {
-				// no associativity 
-				sb.append("( ");
-				sb.append(fcnname);
-				while (iter.hasNext()) {
-					sb.append(" ");
-					sb.append(iter.next().accept(this));
-				}
-				sb.append(" )");
-				return sb.toString();
+			} catch (IOException ex) {
+				throw new IVisitor.VisitorException(ex,e.pos());
 			}
+			return null;
+		}
+
+//		@Override
+//		public Void visit(IForall e) throws IVisitor.VisitorException {
+//			try {
+//				w.append("(forall (");
+//				for (IDeclaration d: e.parameters()) {
+//					w.append("(");
+//					d.parameter().accept(this);
+//					w.append(" ");
+//					d.sort().accept(this);
+//					w.append(")");
+//				}
+//				w.append(") ");
+//				e.expr().accept(this);
+//				w.append(")");
+//			} catch (IOException ex) {
+//				throw new IVisitor.VisitorException(ex,e.pos());
+//			}
+//			return null;
+//		}
+//
+//		@Override
+//		public Void visit(IExists e) throws IVisitor.VisitorException {
+//			try {
+//				w.append("(exists (");
+//				for (IDeclaration d: e.parameters()) {
+//					w.append("(");
+//					d.parameter().accept(this);
+//					w.append(" ");
+//					d.sort().accept(this);
+//					w.append(")");
+//				}
+//				w.append(") ");
+//				e.expr().accept(this);
+//				w.append(")");
+//			} catch (IOException ex) {
+//				throw new IVisitor.VisitorException(ex,e.pos());
+//			}
+//			return null;
+//		}
+//
+//		@Override
+//		public String visit(ILet e) throws IVisitor.VisitorException {
+//			StringBuffer sb = new StringBuffer();
+//			sb.append("(let (");
+//			for (IBinding d: e.bindings()) {
+//				sb.append("(");
+//				sb.append(d.parameter().accept(this));
+//				sb.append(" ");
+//				sb.append(d.expr().accept(this));
+//				sb.append(")");
+//			}
+//			sb.append(") ");
+//			sb.append(e.expr().accept(this));
+//			sb.append(")");
+//			return sb.toString();
+//		}
+
+		@Override
+		public Void visit(IFcnExpr e) throws IVisitor.VisitorException {
+			try {
+				Iterator<IExpr> iter = e.args().iterator();
+				if (!iter.hasNext()) throw new VisitorException("Did not expect an empty argument list",e.pos());
+				IQualifiedIdentifier fcn = e.head();
+				String fcnname = fcn.toString(); // FIXME - fcn.accept(this);
+				int length = e.args().size();
+				if (fcnname.equals("=") || fcnname.equals("<") || fcnname.equals(">") || fcnname.equals("<=") || fcnname.equals(">=")) {
+					// chainable
+					chainable(fcnname,iter);
+				} else if (fcnname.equals("xor")) {
+					// left-associative operators that need grouping
+					leftassoc(fcnname,length,iter);
+				} else if (length > 1 && fcnname.equals("-")) {
+					// left-associative operators that need grouping
+					leftassoc(fcnname,length,iter);
+				} else if (fcnname.equals("=>")) {
+					// right-associative operators that need grouping
+					if (!iter.hasNext()) {
+						throw new VisitorException("=> operation without arguments",e.pos());
+					}
+					rightassoc(fcnname,iter);
+				} else {
+					// no associativity 
+					w.append("( ");
+					w.append(fcnname);
+					while (iter.hasNext()) {
+						w.append(" ");
+						iter.next().accept(this);
+					}
+					w.append(" )");
+				}
+			} catch (IOException ex) {
+				throw new IVisitor.VisitorException(ex,e.pos());
+			}
+			return null;
 		}
 			
 	}

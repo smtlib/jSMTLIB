@@ -7,7 +7,7 @@ success
 (error "ERROR: line 5 column 21: could not locate id  P.")
 (assert (! (and q P) :named PQ))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "ERROR: line 6 column 19: could not locate id  P.")
+(error "ERROR: line 6 column 20: could not locate id  P.")
 success
 (assert (! p :named P))
 ^^^^^^^^^^^^^^^^^^^^^^^
