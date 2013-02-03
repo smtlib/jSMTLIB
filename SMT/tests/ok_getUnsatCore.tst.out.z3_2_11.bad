@@ -1,0 +1,9 @@
+unsupported
+success
+(assert (! false :named F))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "ERROR: line 2 column 25: could not locate id  F.")
+sat
+(get-unsat-core)
+^^^^^^^^^^^^^^^^
+(error "The get-unsat-core command is only valid if :produce-unsat-cores has been enabled")
