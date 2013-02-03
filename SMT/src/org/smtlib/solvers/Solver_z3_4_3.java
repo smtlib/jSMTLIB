@@ -14,8 +14,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.StringWriter;
-import java.math.BigInteger;
-import java.util.*;
+import java.io.Writer;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,32 +28,17 @@ import org.smtlib.ICommand.Ideclare_fun;
 import org.smtlib.ICommand.Ideclare_sort;
 import org.smtlib.ICommand.Idefine_fun;
 import org.smtlib.ICommand.Idefine_sort;
-import org.smtlib.IExpr.IAsIdentifier;
 import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IAttributeValue;
-import org.smtlib.IExpr.IAttributedExpr;
-import org.smtlib.IExpr.IBinaryLiteral;
-import org.smtlib.IExpr.IBinding;
-import org.smtlib.IExpr.IDecimal;
-import org.smtlib.IExpr.IDeclaration;
-import org.smtlib.IExpr.IError;
-import org.smtlib.IExpr.IExists;
 import org.smtlib.IExpr.IFcnExpr;
-import org.smtlib.IExpr.IForall;
-import org.smtlib.IExpr.IHexLiteral;
+import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.IKeyword;
-import org.smtlib.IExpr.ILet;
 import org.smtlib.IExpr.INumeral;
-import org.smtlib.IExpr.IParameterizedIdentifier;
 import org.smtlib.IExpr.IQualifiedIdentifier;
 import org.smtlib.IExpr.IStringLiteral;
-import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.impl.Pos;
-import org.smtlib.sexpr.ISexpr;
-import org.smtlib.sexpr.Sexpr;
-import org.smtlib.sexpr.ISexpr.ISeq;
-import org.smtlib.sexpr.Parser;
+import org.smtlib.sexpr.Printer;
 
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into Z3 commands */
 public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
@@ -139,7 +128,9 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	protected String translate(IAccept sexpr) throws IVisitor.VisitorException {
 		// The z3 solver uses the standard S-expression concrete syntax, but not quite
 		// so we have to use our own translator
-		return sexpr.accept(new Translator());
+		StringWriter sw = new StringWriter();
+		sexpr.accept(new Translator(sw));
+		return sw.toString();
 	}
 	
 	/** Translates an S-expression into standard SMT syntax */
@@ -591,218 +582,230 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		}
 	}
 
-	public class Translator extends IVisitor.NullVisitor<String> {
+	public class Translator extends Printer { //extends IVisitor.NullVisitor<String> {
 		
-		public Translator() {}
+		public Translator(Writer w) { super(w); }
+
+//		@Override
+//		public String visit(IDecimal e) throws IVisitor.VisitorException {
+//			return translateSMT(e);
+//		}
+//
+//		@Override
+//		public String visit(IStringLiteral e) throws IVisitor.VisitorException {
+//			throw new VisitorException("The Z3 solver cannot handle string literals",e.pos());
+//		}
+//
+//		@Override
+//		public String visit(INumeral e) throws IVisitor.VisitorException {
+//			return e.value().toString();
+//		}
+//
+//		@Override
+//		public String visit(IBinaryLiteral e) throws IVisitor.VisitorException {
+//			return "#b" + e.value();
+//		}
+//
+//		@Override
+//		public String visit(IHexLiteral e) throws IVisitor.VisitorException {
+//			return "#x" + e.value();
+//		}
 
 		@Override
-		public String visit(IDecimal e) throws IVisitor.VisitorException {
-			return translateSMT(e);
-		}
-
-		@Override
-		public String visit(IStringLiteral e) throws IVisitor.VisitorException {
-			throw new VisitorException("The Z3 solver cannot handle string literals",e.pos());
-		}
-
-		@Override
-		public String visit(INumeral e) throws IVisitor.VisitorException {
-			return e.value().toString();
-		}
-
-		@Override
-		public String visit(IBinaryLiteral e) throws IVisitor.VisitorException {
-			return "#b" + e.value();
-		}
-
-		@Override
-		public String visit(IHexLiteral e) throws IVisitor.VisitorException {
-			return "#x" + e.value();
-		}
-
-		@Override
-		public String visit(IFcnExpr e) throws IVisitor.VisitorException {
-			String ss = translateSMT(e);
+		public Void visit(IFcnExpr e) throws IVisitor.VisitorException {
 			// Only - for >=2 args is not correctly done, but we can't delegate to translateSMT because it might be a sub-expression.
 			Iterator<IExpr> iter = e.args().iterator();
 			if (!iter.hasNext()) throw new VisitorException("Did not expect an empty argument list",e.pos());
 			IQualifiedIdentifier fcn = e.head();
-			String fcnname = fcn.accept(this);
-			StringBuilder sb = new StringBuilder();
 			int length = e.args().size();
-			if (length > 2 && (fcnname.equals("=") || fcnname.equals("<") || fcnname.equals(">") || fcnname.equals("<=") || fcnname.equals(">="))) {
-				// chainable
-				return chainable(fcnname,iter);
-			} else if (fcnname.equals("xor")) {
-				// left-associative operators that need grouping
-				return leftassoc(fcnname,length,iter);
-			} else if (length > 1 && fcnname.equals("-")) {
-				// left-associative operators that need grouping
-				return leftassoc(fcnname,length,iter);
-			} else if (fcnname.equals("=>")) {
-				// right-associative operators that need grouping
-				if (!iter.hasNext()) {
-					throw new VisitorException("=> operation without arguments",e.pos());
-				}
-				return rightassoc(fcnname,iter);
+			if (length > 2 && (fcn instanceof IIdentifier) && fcn.toString().equals("-")) {
+				leftassoc(fcn.toString(),length,iter);
 			} else {
-				// no associativity 
-				sb.append("(");
-				sb.append(fcnname);
-				while (iter.hasNext()) {
-					sb.append(" ");
-					sb.append(iter.next().accept(this));
-				}
-				sb.append(")");
-				return sb.toString();
+				super.visit(e);
 			}
+			return null;
+//			String fcnname = fcn.accept(this);
+//			StringBuilder sb = new StringBuilder();
+//			int length = e.args().size();
+//			if (length > 2 && (fcnname.equals("=") || fcnname.equals("<") || fcnname.equals(">") || fcnname.equals("<=") || fcnname.equals(">="))) {
+//				// chainable
+//				return chainable(fcnname,iter);
+//			} else if (fcnname.equals("xor")) {
+//				// left-associative operators that need grouping
+//				return leftassoc(fcnname,length,iter);
+//			} else if (length > 1 && fcnname.equals("-")) {
+//				// left-associative operators that need grouping
+//				return leftassoc(fcnname,length,iter);
+//			} else if (fcnname.equals("=>")) {
+//				// right-associative operators that need grouping
+//				if (!iter.hasNext()) {
+//					throw new VisitorException("=> operation without arguments",e.pos());
+//				}
+//				return rightassoc(fcnname,iter);
+//			} else {
+//				// no associativity 
+//				sb.append("(");
+//				sb.append(fcnname);
+//				while (iter.hasNext()) {
+//					sb.append(" ");
+//					sb.append(iter.next().accept(this));
+//				}
+//				sb.append(")");
+//				return sb.toString();
+//			}
 		}
 
 		//@ requires iter.hasNext();
 		//@ requires length > 0;
-		protected <T extends IExpr> String leftassoc(String fcnname, int length, Iterator<T> iter ) throws IVisitor.VisitorException {
+		protected <T extends IExpr> void leftassoc(String fcnname, int length, Iterator<T> iter ) throws IVisitor.VisitorException {
 			if (length == 1) {
-				return iter.next().accept(this);
+				iter.next().accept(this);
 			} else {
-				StringBuilder sb = new StringBuilder();
-				sb.append("(");
-				sb.append(fcnname);
-				sb.append(" ");
-				sb.append(leftassoc(fcnname,length-1,iter));
-				sb.append(" ");
-				sb.append(iter.next().accept(this));
-				sb.append(")");
-				return sb.toString();
+				try {
+					w.append("(");
+					w.append(fcnname);
+					w.append(" ");
+					leftassoc(fcnname,length-1,iter);
+					w.append(" ");
+					iter.next().accept(this);
+					w.append(")");
+				} catch (IOException ex) {
+					throw new IVisitor.VisitorException(ex,null); // FIXME - null ?
+				}
 			}
 		}
 
 		//@ requires iter.hasNext();
-		protected <T extends IExpr> String rightassoc(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
+		protected <T extends IExpr> void rightassoc(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
 			T n = iter.next();
 			if (!iter.hasNext()) {
-				return n.accept(this);
+				n.accept(this);
 			} else {
-				StringBuilder sb = new StringBuilder();
-				sb.append("(");
-				sb.append(fcnname);
-				sb.append(" ");
-				sb.append(n.accept(this));
-				sb.append(" ");
-				sb.append(rightassoc(fcnname,iter));
-				sb.append(")");
-				return sb.toString();
+				try {
+					w.append("(");
+					w.append(fcnname);
+					w.append(" ");
+					n.accept(this);
+					w.append(" ");
+					rightassoc(fcnname,iter);
+					w.append(")");
+				} catch (IOException ex) {
+					throw new IVisitor.VisitorException(ex,null); // FIXME - null ?
+				}
 			}
 		}
 
 		
 		//@ requires iter.hasNext();
 		//@ requires length > 0;
-		protected <T extends IAccept> String chainable(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
-			StringBuilder sb = new StringBuilder();
-			sb.append("(and ");
-			T left = iter.next();
-			while (iter.hasNext()) {
-				sb.append("(");
-				sb.append(fcnname);
-				sb.append(" ");
-				sb.append(left.accept(this));
-				sb.append(" ");
-				sb.append((left=iter.next()).accept(this));
-				sb.append(")");
-			}
-			sb.append(")");
-			return sb.toString();
-		}
-
-
-		@Override
-		public String visit(ISymbol e) throws IVisitor.VisitorException {
-			return translateSMT(e);
-		}
-
-		@Override
-		public String visit(IKeyword e) throws IVisitor.VisitorException {
-			throw new VisitorException("Did not expect a Keyword in an expression to be translated",e.pos());
-		}
-
-		@Override
-		public String visit(IError e) throws IVisitor.VisitorException {
-			throw new VisitorException("Did not expect a Error token in an expression to be translated", e.pos());
-		}
-
-		private final String zeros = "00000000000000000000000000000000000000000000000000";
-		@Override
-		public String visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
-			return translateSMT(e);
-		}
-
-		@Override
-		public String visit(IAsIdentifier e) throws IVisitor.VisitorException {
-			return translateSMT(e);
-		}
-
-		@Override
-		public String visit(IForall e) throws IVisitor.VisitorException {
-			return translateSMT(e);
-		}
-
-		@Override
-		public String visit(IExists e) throws IVisitor.VisitorException {
-			return translateSMT(e);
-		}
-
-		@Override
-		public String visit(ILet e) throws IVisitor.VisitorException {
-			return translateSMT(e);
-		}
-
-		@Override
-		public String visit(IAttribute<?> e) throws IVisitor.VisitorException {
-			throw new UnsupportedOperationException("visit-IAttribute");
-		}
-
-		@Override
-		public String visit(IAttributedExpr e) throws IVisitor.VisitorException {
-			return translateSMT(e);
-		}
-
-		@Override
-		public String visit(IDeclaration e) throws IVisitor.VisitorException {
-			throw new UnsupportedOperationException("visit-IDeclaration");
-		}
-
-		@Override
-		public String visit(ISort.IFamily s) throws IVisitor.VisitorException {
-			return s.identifier().accept(this);
-		}
-		
-		@Override
-		public String visit(ISort.IAbbreviation s) throws IVisitor.VisitorException {
-			throw new UnsupportedOperationException("visit-ISort.IAbbreviation");
-		}
-		
-		@Override
-		public String visit(ISort.IApplication s) throws IVisitor.VisitorException {
-			return translateSMT(s);
-		}
-		
-		@Override
-		public String visit(ISort.IFcnSort s) throws IVisitor.VisitorException {
-			throw new UnsupportedOperationException("visit-ISort.IFcnSort");
-		}
-		
-		@Override
-		public String visit(ISort.IParameter s) throws IVisitor.VisitorException {
-			throw new UnsupportedOperationException("visit-ISort.IParameter");
-		}
-		
-		@Override
-		public String visit(ICommand command) throws IVisitor.VisitorException {
-			if (command instanceof ICommand.Iassert) {
-				return "(assert " + ((ICommand.Iassert)command).expr().accept(this) + ")";
-			} else {
-				return translateSMT(command);
+		protected <T extends IAccept> void chainable(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
+			try {
+				w.append("(and ");
+				T left = iter.next();
+				while (iter.hasNext()) {
+					w.append("(");
+					w.append(fcnname);
+					w.append(" ");
+					left.accept(this);
+					w.append(" ");
+					(left=iter.next()).accept(this);
+					w.append(")");
+				}
+				w.append(")");
+			} catch (IOException ex) {
+				throw new IVisitor.VisitorException(ex,null); // FIXME - null ?
 			}
 		}
+
+
+//		@Override
+//		public String visit(ISymbol e) throws IVisitor.VisitorException {
+//			return translateSMT(e);
+//		}
+//
+//		@Override
+//		public String visit(IKeyword e) throws IVisitor.VisitorException {
+//			throw new VisitorException("Did not expect a Keyword in an expression to be translated",e.pos());
+//		}
+//
+//		@Override
+//		public String visit(IError e) throws IVisitor.VisitorException {
+//			throw new VisitorException("Did not expect a Error token in an expression to be translated", e.pos());
+//		}
+//
+//		private final String zeros = "00000000000000000000000000000000000000000000000000";
+//		@Override
+//		public String visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
+//			return translateSMT(e);
+//		}
+//
+//		@Override
+//		public String visit(IAsIdentifier e) throws IVisitor.VisitorException {
+//			return translateSMT(e);
+//		}
+//
+//		@Override
+//		public String visit(IForall e) throws IVisitor.VisitorException {
+//			return translateSMT(e);
+//		}
+//
+//		@Override
+//		public String visit(IExists e) throws IVisitor.VisitorException {
+//			return translateSMT(e);
+//		}
+//
+//		@Override
+//		public String visit(ILet e) throws IVisitor.VisitorException {
+//			return translateSMT(e);
+//		}
+//
+//		@Override
+//		public String visit(IAttribute<?> e) throws IVisitor.VisitorException {
+//			throw new UnsupportedOperationException("visit-IAttribute");
+//		}
+//
+//		@Override
+//		public String visit(IAttributedExpr e) throws IVisitor.VisitorException {
+//			return translateSMT(e);
+//		}
+//
+//		@Override
+//		public String visit(IDeclaration e) throws IVisitor.VisitorException {
+//			throw new UnsupportedOperationException("visit-IDeclaration");
+//		}
+//
+//		@Override
+//		public String visit(ISort.IFamily s) throws IVisitor.VisitorException {
+//			return s.identifier().accept(this);
+//		}
+//		
+//		@Override
+//		public String visit(ISort.IAbbreviation s) throws IVisitor.VisitorException {
+//			throw new UnsupportedOperationException("visit-ISort.IAbbreviation");
+//		}
+//		
+//		@Override
+//		public String visit(ISort.IApplication s) throws IVisitor.VisitorException {
+//			return translateSMT(s);
+//		}
+//		
+//		@Override
+//		public String visit(ISort.IFcnSort s) throws IVisitor.VisitorException {
+//			throw new UnsupportedOperationException("visit-ISort.IFcnSort");
+//		}
+//		
+//		@Override
+//		public String visit(ISort.IParameter s) throws IVisitor.VisitorException {
+//			throw new UnsupportedOperationException("visit-ISort.IParameter");
+//		}
+//		
+//		@Override
+//		public String visit(ICommand command) throws IVisitor.VisitorException {
+//			if (command instanceof ICommand.Iassert) {
+//				return "(assert " + ((ICommand.Iassert)command).expr().accept(this) + ")";
+//			} else {
+//				return translateSMT(command);
+//			}
+//		}
 	}
 }
