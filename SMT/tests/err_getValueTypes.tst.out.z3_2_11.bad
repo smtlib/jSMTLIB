@@ -16,5 +16,5 @@ decl x :: A
 Expected sort: bool
 Actual sort:   A
 Function sort: (define and bool bool bool).
-ERROR: line 8 column 34: expression is not well sorted.\")
+ERROR: line 8 column 28: expression is not well sorted.\")
 ")
