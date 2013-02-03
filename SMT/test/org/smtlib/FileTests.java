@@ -37,7 +37,11 @@ public class FileTests  extends LogicTests {
     					) {
     				data.add(new String[]{"z3_4_3",ff.getName()}); // FIXME - z3 crashes or hangs or is non-deterministic 
     			}
-    			data.add(new String[]{"z3_2_11",ff.getName()}); 
+    			if (
+    					!ff.getName().equals("err_namedExpr2.tst")
+    					) {
+    				data.add(new String[]{"z3_2_11",ff.getName()}); // FIXME - z3 crashes 
+    			}
     			data.add(new String[]{"cvc",ff.getName()}); 
     			data.add(new String[]{"yices",ff.getName()});
     		}

@@ -1,9 +1,7 @@
 success
 success
 success
-(declare-fun a () (Array I V))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 5 column 19: unknown sort 'Array'")
+success
 success
 success
 success

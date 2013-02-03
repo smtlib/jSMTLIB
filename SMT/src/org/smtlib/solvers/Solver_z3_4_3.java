@@ -14,6 +14,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.StringWriter;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -64,7 +65,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	public SMT.Configuration smt() { return smtConfig; }
 	
 	/** The command-line arguments for launching the Z3 solver */
-	protected String cmds[] = new String[]{ "", "/smt2","/in"}; 
+	protected String cmds[] = new String[]{ "", "/smt2","/in","SMTLIB2_COMPLIANT=true"}; 
 
 	/** The object that interacts with external processes */
 	protected SolverProcess solverProcess;
@@ -76,7 +77,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	private boolean logicSet = false;
 	
 	/** The checkSatStatus returned by check-sat, if sufficiently recent, otherwise null */
-	private /*@Nullable*/ IResponse checkSatStatus = null;
+	protected /*@Nullable*/ IResponse checkSatStatus = null;
 	
 	@Override
 	public /*@Nullable*/IResponse checkSatStatus() { return checkSatStatus; }
@@ -566,25 +567,22 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		try {
 			solverProcess.sendNoListen("(get-value (");
 			for (IExpr e: terms) {
-				solverProcess.sendNoListen("(");
 				solverProcess.sendNoListen(" ",translate(e));
-				solverProcess.sendNoListen(")");
 			}
-			// FIXME - z3 does not make pairs of the result
 			String r = solverProcess.sendAndListen("))\n");
 			IResponse response = parseResponse(r);
-			if (response instanceof ISeq) {
-				List<ISexpr> valueslist = new LinkedList<ISexpr>();
-				Iterator<ISexpr> iter = ((ISeq)response).sexprs().iterator();
-				for (IExpr e: terms) {
-					if (!iter.hasNext()) break;
-					List<ISexpr> values = new LinkedList<ISexpr>();
-					values.add(new Sexpr.Expr(e));
-					values.add(iter.next());
-					valueslist.add(new Sexpr.Seq(values));
-				}	
-				return new Sexpr.Seq(valueslist);
-			}
+//			if (response instanceof ISeq) {
+//				List<ISexpr> valueslist = new LinkedList<ISexpr>();
+//				Iterator<ISexpr> iter = ((ISeq)response).sexprs().iterator();
+//				for (IExpr e: terms) {
+//					if (!iter.hasNext()) break;
+//					List<ISexpr> values = new LinkedList<ISexpr>();
+//					values.add(new Sexpr.Expr(e));
+//					values.add(iter.next());
+//					valueslist.add(new Sexpr.Seq(values));
+//				}	
+//				return new Sexpr.Seq(valueslist);
+//			}
 			return response;
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
@@ -624,13 +622,15 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
 		@Override
 		public String visit(IFcnExpr e) throws IVisitor.VisitorException {
+			String ss = translateSMT(e);
+			// Only - for >=2 args is not correctly done, but we can't delegate to translateSMT because it might be a sub-expression.
 			Iterator<IExpr> iter = e.args().iterator();
 			if (!iter.hasNext()) throw new VisitorException("Did not expect an empty argument list",e.pos());
 			IQualifiedIdentifier fcn = e.head();
 			String fcnname = fcn.accept(this);
 			StringBuilder sb = new StringBuilder();
 			int length = e.args().size();
-			if (fcnname.equals("=") || fcnname.equals("<") || fcnname.equals(">") || fcnname.equals("<=") || fcnname.equals(">=")) {
+			if (length > 2 && (fcnname.equals("=") || fcnname.equals("<") || fcnname.equals(">") || fcnname.equals("<=") || fcnname.equals(">="))) {
 				// chainable
 				return chainable(fcnname,iter);
 			} else if (fcnname.equals("xor")) {
@@ -647,19 +647,37 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 				return rightassoc(fcnname,iter);
 			} else {
 				// no associativity 
-				sb.append("( ");
+				sb.append("(");
 				sb.append(fcnname);
 				while (iter.hasNext()) {
 					sb.append(" ");
 					sb.append(iter.next().accept(this));
 				}
-				sb.append(" )");
+				sb.append(")");
 				return sb.toString();
 			}
 		}
-			
+
 		//@ requires iter.hasNext();
-		private <T extends IExpr> String rightassoc(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
+		//@ requires length > 0;
+		protected <T extends IExpr> String leftassoc(String fcnname, int length, Iterator<T> iter ) throws IVisitor.VisitorException {
+			if (length == 1) {
+				return iter.next().accept(this);
+			} else {
+				StringBuilder sb = new StringBuilder();
+				sb.append("(");
+				sb.append(fcnname);
+				sb.append(" ");
+				sb.append(leftassoc(fcnname,length-1,iter));
+				sb.append(" ");
+				sb.append(iter.next().accept(this));
+				sb.append(")");
+				return sb.toString();
+			}
+		}
+
+		//@ requires iter.hasNext();
+		protected <T extends IExpr> String rightassoc(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
 			T n = iter.next();
 			if (!iter.hasNext()) {
 				return n.accept(this);
@@ -676,27 +694,10 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			}
 		}
 
-		//@ requires iter.hasNext();
-		//@ requires length > 0;
-		private <T extends IExpr> String leftassoc(String fcnname, int length, Iterator<T> iter ) throws IVisitor.VisitorException {
-			if (length == 1) {
-				return iter.next().accept(this);
-			} else {
-				StringBuilder sb = new StringBuilder();
-				sb.append("(");
-				sb.append(fcnname);
-				sb.append(" ");
-				sb.append(leftassoc(fcnname,length-1,iter));
-				sb.append(" ");
-				sb.append(iter.next().accept(this));
-				sb.append(")");
-				return sb.toString();
-			}
-		}
 		
 		//@ requires iter.hasNext();
 		//@ requires length > 0;
-		private <T extends IAccept> String chainable(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
+		protected <T extends IAccept> String chainable(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
 			StringBuilder sb = new StringBuilder();
 			sb.append("(and ");
 			T left = iter.next();
@@ -712,6 +713,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			sb.append(")");
 			return sb.toString();
 		}
+
 
 		@Override
 		public String visit(ISymbol e) throws IVisitor.VisitorException {
@@ -731,19 +733,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		private final String zeros = "00000000000000000000000000000000000000000000000000";
 		@Override
 		public String visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
-			String s = e.headSymbol().toString();
-			if (s.matches("bv[0-9]+")) {
-				int length = e.numerals().get(0).intValue();
-				//BigInteger value = new BigInteger(s.substring(2));
-				return s + "[" + length + "]";
-//				String bits = value.toString(2);
-//				while (bits.length() < length) {
-//					int n = zeros.length() - (length - bits.length());
-//					if (n < 0) n = 0;
-//					bits = zeros.substring(n) + bits;
-//				}
-//				return "#b" + bits;
-			}
 			return translateSMT(e);
 		}
 
@@ -754,53 +743,17 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
 		@Override
 		public String visit(IForall e) throws IVisitor.VisitorException {
-			StringBuffer sb = new StringBuffer();
-			sb.append("(forall (");
-			for (IDeclaration d: e.parameters()) {
-				sb.append("(");
-				sb.append(d.parameter().accept(this));
-				sb.append(" ");
-				sb.append(d.sort().accept(this));
-				sb.append(")");
-			}
-			sb.append(") ");
-			sb.append(e.expr().accept(this));
-			sb.append(")");
-			return sb.toString();
+			return translateSMT(e);
 		}
 
 		@Override
 		public String visit(IExists e) throws IVisitor.VisitorException {
-			StringBuffer sb = new StringBuffer();
-			sb.append("(exists (");
-			for (IDeclaration d: e.parameters()) {
-				sb.append("(");
-				sb.append(d.parameter().accept(this));
-				sb.append(" ");
-				sb.append(d.sort().accept(this));
-				sb.append(")");
-			}
-			sb.append(") ");
-			sb.append(e.expr().accept(this));
-			sb.append(")");
-			return sb.toString();
+			return translateSMT(e);
 		}
 
 		@Override
 		public String visit(ILet e) throws IVisitor.VisitorException {
-			StringBuffer sb = new StringBuffer();
-			sb.append("(let (");
-			for (IBinding d: e.bindings()) {
-				sb.append("(");
-				sb.append(d.parameter().accept(this));
-				sb.append(" ");
-				sb.append(d.expr().accept(this));
-				sb.append(")");
-			}
-			sb.append(") ");
-			sb.append(e.expr().accept(this));
-			sb.append(")");
-			return sb.toString();
+			return translateSMT(e);
 		}
 
 		@Override
@@ -810,7 +763,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
 		@Override
 		public String visit(IAttributedExpr e) throws IVisitor.VisitorException {
-			return e.expr().accept(this); // FIXME - not doing anything with names
+			return translateSMT(e);
 		}
 
 		@Override
@@ -818,25 +771,32 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			throw new UnsupportedOperationException("visit-IDeclaration");
 		}
 
+		@Override
 		public String visit(ISort.IFamily s) throws IVisitor.VisitorException {
 			return s.identifier().accept(this);
 		}
 		
+		@Override
 		public String visit(ISort.IAbbreviation s) throws IVisitor.VisitorException {
 			throw new UnsupportedOperationException("visit-ISort.IAbbreviation");
 		}
 		
+		@Override
 		public String visit(ISort.IApplication s) throws IVisitor.VisitorException {
 			return translateSMT(s);
 		}
 		
+		@Override
 		public String visit(ISort.IFcnSort s) throws IVisitor.VisitorException {
 			throw new UnsupportedOperationException("visit-ISort.IFcnSort");
 		}
+		
+		@Override
 		public String visit(ISort.IParameter s) throws IVisitor.VisitorException {
 			throw new UnsupportedOperationException("visit-ISort.IParameter");
 		}
 		
+		@Override
 		public String visit(ICommand command) throws IVisitor.VisitorException {
 			if (command instanceof ICommand.Iassert) {
 				return "(assert " + ((ICommand.Iassert)command).expr().accept(this) + ")";

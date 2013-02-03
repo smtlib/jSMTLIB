@@ -12,9 +12,7 @@ sat
 (get-value x y)
            ^
 (error "Expected a parenthesized list of terms beginning here")
-(get-value (x) ) ; OK
-^^^^^^^^^^^^^^^^
-(error "line 7 column 15: invalid function application, arguments missing")
+( ( x false ) )
 (get-value (x) x)
                ^
 (error "Too many arguments or extraneous material after the command or missing right parenthesis")
