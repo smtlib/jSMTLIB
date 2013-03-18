@@ -98,15 +98,15 @@ public class Utils {
     		}
     		File execFile = new File(exec);
     		if (!execFile.exists()) {
-    			Activator.utils.showMessage(null,windowHeader,"The executable path for this solver does not appear to exist: " + solver + " \"" + exec + "\"");
+    			Activator.utils.showMessageInUI(null,windowHeader,"The executable path for this solver does not appear to exist: " + solver + " \"" + exec + "\"");
     			return;
     		}
     		if (!execFile.canExecute()) {
-    			Activator.utils.showMessage(null,windowHeader,"The executable path for this solver does not appear to be executable: " + solver + " " + exec);
+    			Activator.utils.showMessageInUI(null,windowHeader,"The executable path for this solver does not appear to be executable: " + solver + " " + exec);
     			return;
     		}
     	} catch (java.lang.Exception e) {
-			Activator.log.errorlog("SMT: Could not lookup the executable for the solver " + solver,e);
+			Activator.log.errorlog("SMT: Could not find the executable for the solver " + solver,e);
 			return;
     	}
     	if (Activator.verbose) Activator.log.logln("ISolver = " + solver);
@@ -384,10 +384,8 @@ public class Utils {
     		file = e==null ? null : (IFile)e.getAdapter(IFile.class);
     		if (file == null) return null;
 			if (p instanceof ITextEditor) {
-				if (!p.isDirty()) {
-					list.add(file);
-				} else {
-					//Activator.log.log("DIRTY " + p.getClass());
+				list.add(file);
+				if (p.isDirty()) {
 					IDocumentProvider doc = ((ITextEditor)p).getDocumentProvider();
 					if (doc == null) return null;
 					IDocument d = doc.getDocument(e);
