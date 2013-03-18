@@ -24,7 +24,8 @@ org.smtlib.logic_path=
 # by any value specified on the command-line (--exec option)
 org.smtlib.solver_yices.exec=
 org.smtlib.solver_cvc.exec=
-org.smtlib.solver_z3.exec=
+org.smtlib.solver_z3_2_11.exec=
+org.smtlib.solver_z3_4_3.exec=
 org.smtlib.solver_simplify.exec=
 
 # A command (executable + arguments) is specified by a comma-separated list

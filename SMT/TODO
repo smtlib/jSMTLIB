@@ -14,6 +14,7 @@ Bug with simplify on copy.smt2
 Plugin:
 
  set a time out on jobs
+ enabling problem navigation
  reporting exception errors better
  result matrix
  cancelling running job, including long-running solver tasks
