@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.ISymbol;
+import org.smtlib.IExpr.IKeyword;
 
 /** This interface represents a definition of an SMT-LIB theory */
 public interface ITheory extends IAccept {
@@ -17,11 +18,11 @@ public interface ITheory extends IAccept {
 	
 	/** The attributes (keyword-value pairs) of the theory. */
 	//@ ensures \result.size() > 0;
-	Map<String,IExpr.IAttribute<?>> attributes();
+	Map<IKeyword,IExpr.IAttribute<?>> attributes();
 	
 	// TODO: Use IKeyword for String?
 	/** The value of an attribute; returns null if the attribute does not exist for this theory */
-	/*@Nullable*/IAttributeValue value(String keyword);
+	/*@Nullable*/IAttributeValue value(IKeyword keyword);
 	
 	// TODO - do we export the pre-defined symbols?
 }

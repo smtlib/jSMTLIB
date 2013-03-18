@@ -7,6 +7,7 @@ import org.junit.*;
 /** Tests parsing commands, without invoking solvers */
 public class ParseCommand {
 	
+	final String eol = System.getProperty("line.separator");
 	JUnitListener listener;
 	SMT.Configuration config;
 	
@@ -25,7 +26,7 @@ public class ParseCommand {
 		StringWriter sw = new StringWriter();
 		if (e != null) org.smtlib.sexpr.Printer.write(sw,e);
 		// Expecting success
-		Assert.assertTrue(listener.msg == null ? "": listener.msg.toString(),listener.msg == null);
+		Assert.assertTrue(listener.msgs.isEmpty() ? "": listener.msgs.get(0).toString(),listener.msgs.isEmpty());
 		Assert.assertEquals(input,sw.toString()); // expected,actual
 		Assert.assertTrue(e != null);
 	}
@@ -37,8 +38,8 @@ public class ParseCommand {
 		StringWriter sw = new StringWriter();
 		if (e != null) org.smtlib.sexpr.Printer.write(sw,e);
 		// Expecting an error 
-		Assert.assertTrue("Expected an error message",listener.msg != null);
-		Assert.assertEquals(errormsg,((IResponse.IError)listener.msg).errorMsg());
+		Assert.assertTrue("Expected an error message",!listener.msgs.isEmpty());
+		Assert.assertEquals(errormsg,((IResponse.IError)listener.msgs.get(0)).errorMsg()); // FIXME - check other messages?
 		Assert.assertTrue(e == null);
 	}
 
@@ -152,7 +153,7 @@ public class ParseCommand {
 	@Test
 	public void exec() throws Exception {
 		config.relax = true;
-		testCommand("(exec (\r\n(exit)\r\n))");  // FIXME - platform dependent eol needed here
+		testCommand("(exec ("+eol+"(exit)"+eol+"))");
 	}
 	
 	@Test

@@ -315,26 +315,24 @@ public class Solver_test implements ISolver {
 
 	@Override
 	public IResponse get_option(IKeyword key) {
-		String option = key.value();
-		IAttributeValue value = options.get(option);
+		IAttributeValue value = options.get(key.value());
 		if (value == null) return smtConfig.responseFactory.unsupported();
 		return value;
 	}
 	
 	@Override
 	public IResponse set_info(IKeyword key, IAttributeValue value) {
-		String option = key.value();
-		if (Utils.infoKeywords.contains(option)) {
+		if (Utils.infoKeywords.contains(key)) {
 			return smtConfig.responseFactory.error("Setting the value of a pre-defined keyword is not permitted: "+ 
 					smtConfig.defaultPrinter.toString(key),key.pos());
 		}
-		options.put(option,value);
+		options.put(key.value(),value);
 		return smtConfig.responseFactory.success();
 	}
 
 	@Override
 	public IResponse get_info(IKeyword key) { // FIXME - only strictly supported infoflags
-		String option = key.value();
+		IKeyword option = key;
 		IAttributeValue lit;
 		if (Utils.ERROR_BEHAVIOR.equals(option)) {
 			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION);

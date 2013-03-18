@@ -8,26 +8,30 @@ package org.smtlib.plugin;
 // FIXME - still needs review
 // FIXME - need to be sure that the showMessage... methods are called in the UI context when they need to be
 
-import java.io.*;
-import java.net.URL;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringBufferInputStream;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -46,12 +50,10 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.editors.text.TextEditor;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.smtlib.IResponse;
 import org.smtlib.SMT;
-import org.smtlib.plugin.editor.SMTEditor;
 
 /** This class holds utility values and methods to support the Eclipse plugin.
  * 
@@ -81,55 +83,6 @@ public class Utils {
     final public static  String SMT_MARKER_ID = Activator.PLUGIN_ID + ".SMTProblem";
 
     
-    /** Runs the designated solver on the given list of files, as a computational Job; call this method from the UI thread. */
-    public void runSolver(String solver, List<? extends IResource> resources) {
-    	if (solver == null) solver = Preferences.poptions.defaultSolver.getStringValue();
-    	String exec = "";
-    	if (!solver.equals(org.smtlib.Utils.TEST_SOLVER)) try {  // FIXME - make "test" a symbolic constant
-    		// FIXME - If the executable is bad, we need a way to fix it
-//    		exec = Preferences.getExec(solver);
-//    		if (exec == null) {
-//    			Activator.log.errorlog("SMT: INTERNAL ERROR: Could not find an executable option for " + solver,null);
-//    			return;
-//    		}
-//    		File f = new File(exec);
-//    		if (!f.exists()) {
-//    			Activator.utils.showMessage(null,windowHeader,"The executable path for this solver does not appear to exist: " + solver + " \"" + exec + "\"");
-//    			return;
-//    		}
-//    		if (!f.canExecute()) {
-//    			Activator.utils.showMessage(null,windowHeader,"The executable path for this solver does not appear to be executable: " + solver + " " + exec);
-//    			return;
-//    		}
-    	} catch (java.lang.Exception e) {
-			Activator.log.errorlog("SMT: Could not lookup the executable for the solver " + solver,e);
-			return;
-    	}
-    	// FIXME - but what if "test" gets this far - there is no exec to be used below
-    	if (Activator.verbose) Activator.log.logln("ISolver = " + solver);
-		for (IResource r: resources) {
-			if (Activator.verbose) Activator.log.logln("Resource = " + r.getLocation());
-    		if (r instanceof IFile) {
-    			try {
-    				SMT smt = new SMT();
-    				smt.smtConfig = Activator.smtConfiguration.clone();
-    				smt.smtConfig.files = null;
-    				//String[] cmd = new String[]{ "-s", solver, "--exec", exec, r.getLocation().toString() };
-    				String[] cmd = new String[]{ "-s", solver, r.getLocation().toString() };
-    				deleteMarkers(r,null);
-    				boolean batch = false;
-    				if (batch) {
-    					launchJob(r.getName(),smt,cmd,null); // Do the work in a computational thread
-    				} else {
-    					interactiveJob(r.getName(),smt,cmd,null);
-    				}
-    			} catch (java.lang.Exception e) {
-    				Activator.log.errorlog("SMT - Internal exception",e);
-    			}
-    		}
-		}
-    }
-
     /** Run a specific solver on the given text, belonging to the given file (unsaved edits), in a computational job. 
      * If solver is null, then use the default from the options.  Call the method from the UI thread.
      */
@@ -161,10 +114,11 @@ public class Utils {
 			SMT smt = new SMT();
 			smt.smtConfig = Activator.smtConfiguration.clone();
 			smt.smtConfig.files = null;
-			String[] cmd = new String[]{ "-s", solver, "--exec", exec, "--text", text, file.getLocation().toString() };
+			String[] cmd = text == null ? new String[]{ "-s", solver, "--exec", exec, file.getLocation().toString() }
+										: new String[]{ "-s", solver, "--exec", exec, "--text", text, file.getLocation().toString() };
 			deleteMarkers(file,null);
 			boolean batch = false;
-			if (batch) {
+			if (batch) { // FIXME - get rid of launchJob now?
 				launchJob(file.getLocation().toString(),smt,cmd,null);
 			} else {
 				interactiveJob(file.getLocation().toString(),smt,cmd,null);
@@ -185,14 +139,17 @@ public class Utils {
      */
     public void launchJob(String name, final SMT smt, final String[] cmd, /*@Nullable*/ final Shell shell) {
     	Job j = new Job("SMT Solver: " + name) {
+    		@Override
     		public IStatus run(IProgressMonitor monitor) {
     			boolean c = false;
     			try {
     				smt.smtConfig.log.numErrors = 0;
     				int exitCode = smt.exec(cmd);
-    				Activator.log.logln("Completed " + cmd[1] // + "(exitcode=" + exitCode +")" - FIXME - how to handle exit codes for scripts?
+    				String timestring = "[" + new Date().toString() + "] ";
+    				Activator.log.logln(timestring + "Completed " + cmd[1]
+    						+ (exitCode == 0 ? "" : " (exitcode=" + exitCode +")")
     						+ (smt.smtConfig.log.numErrors == 0? "" : (" : " + smt.smtConfig.log.numErrors + " errors")) 
-    						+ (smt.checkSatStatus == null ? "" : (" " + smt.smtConfig.defaultPrinter.toString(smt.checkSatStatus)))
+    						+ (smt.checkSatStatus == null ? "(no result)" : (" " + smt.smtConfig.defaultPrinter.toString(smt.checkSatStatus)))
     						);
     			} catch (PluginException e) {
     				showMessageInUI(shell,"SMT PluginException",e.getClass() + " - " + e.getMessage());
@@ -205,23 +162,28 @@ public class Utils {
     	j.schedule();
     }
 
+    /** Executes the given command within the given SMT object,
+     *  reporting results on the console and to the given shell;
+     *  'name' is an informational name giving the file being working on;
+     *  this method must be called in a computational thread.
+     */
     public void interactiveJob(String name, SMT smt, String[] cmd, /*@Nullable*/ final Shell shell) {
-    			boolean c = false;
     			try {
     				smt.smtConfig.log.numErrors = 0;
     				int exitCode = smt.exec(cmd);
-    				Activator.log.logln("Completed " + cmd[1] // + "(exitcode=" + exitCode +")" - FIXME - how to handle exit codes for scripts?
+    				String timestring = "[" + new Date().toString() + "] ";
+    				Activator.log.logln(timestring + "Completed " + cmd[1] + " on " + name + " :"
+    						+ (exitCode == 0 ? "" : " (exitcode=" + exitCode +")")
     						+ (smt.smtConfig.log.numErrors == 0? "" : (" : " + smt.smtConfig.log.numErrors + " errors")) 
-    						+ (smt.checkSatStatus == null ? "" : (" " + smt.smtConfig.defaultPrinter.toString(smt.checkSatStatus)))
+    						+ (smt.checkSatStatus == null ? "(no result)" : (" " + smt.smtConfig.defaultPrinter.toString(smt.checkSatStatus)))
     						);
     			} catch (PluginException e) {
     				showMessageInUI(shell,"SMT PluginException",e.getClass() + " - " + e.getMessage());
-    				c = true;
     			}
 				saved_smt = smt;
     }
 
-    /* This runs a type-check only on the given text, in the UI thread. */
+    /** This runs a type-check only on the given text, in the UI thread. */
     public void runCheck(IFile file, String text) {
     	if (text.length() > 1000000) return; // FIXME - disable for large text
     	try {
@@ -339,6 +301,62 @@ public class Utils {
         return list;
     }
     
+    // TODO - duplicated with Preferences.solverNames, and should be made configurable
+	final String[] solverList = new String[]{ "simplify", "yices", "cvc", "z3_2_11", "z3_4_3"};
+    
+	/** Interprets the input string (the action id, as in action.getId()) to
+	 * determine which solvers to run, returning their names in a list.
+	 */
+    public List<String> getSolvers(String id) {
+    	List<String> solvers = new LinkedList<String>();
+		int i = id.lastIndexOf('.');
+		String name = id.substring(i+1);
+    	if ("All".equals(name)) {
+    		for (String s: solverList) solvers.add(s);
+    	} else if ("default".equals(name)) {
+        	name = Preferences.poptions.defaultSolver.getStringValue();
+        	solvers.add(name);
+    	} else {
+    		solvers.add(name);
+    	}
+    	return solvers;
+    }
+    
+    public void runJobs(final List<String> solvers, final List<IFile> files) {
+		Job j = new Job("SMT Solving") {
+			@Override
+			public IStatus run(IProgressMonitor monitor) {
+				IStatus status = Status.OK_STATUS;
+				if (monitor != null) {
+					monitor.beginTask("SMT solving", solvers.size() * (files.isEmpty() ? 1 : files.size()));
+				}
+        		for (IFile file: files) {
+        			for (String solver: solvers) {
+        				try {
+        					if (monitor != null) monitor.subTask(solver + " on " + file.getName().substring(file.getName().lastIndexOf('/')+1));
+        					runSolver(solver,file,text);
+        				} catch (Exception e) {
+        					Activator.log.errorlog("Exception while executing " + solver + " on " + file.getName() + ": " + e,e);
+        				}
+        				if (monitor != null) {
+        					monitor.worked(1);
+        					if (monitor.isCanceled()) {
+        						status = Status.CANCEL_STATUS;
+        						break;
+        					}
+        				}
+        			}
+        		}
+				if (monitor != null) {
+					monitor.done();
+				}
+				return status;
+			}
+		};
+		j.setUser(true); // true = initiated by an end-user
+		j.schedule();
+    }
+    
     /** Finds the selected editor; if it is a TextEditor, then if the editor is
      * dirty, runs the solver on the text; if the editor is not dirty, runs the
      * solver on the file. Returns true if successfully found file or text on which
@@ -346,31 +364,35 @@ public class Utils {
      * 
      * This must be called in the UI thread; executes the check in a computational Job.
      * */
-    public boolean runSolverOnSelectedEditor(String solver, ISelection selection, 
+    public boolean runSolverOnSelectedEditor(String solver, List<IFile> files) throws CoreException {
+		for (IFile r: files) runSolver(solver,r,text);
+        return true;
+    }
+    
+    String text;
+    
+    // FIXME - document
+    public List<IFile> resources(ISelection selection, 
             /*@Nullable*/ IWorkbenchWindow window, /*@Nullable*/ Shell shell) throws CoreException {
     	IFile file = null;
+		List<IFile> list = new LinkedList<IFile>();
+		text = null;
     	try {
     		IWorkbenchPage page = window == null ? null : window.getActivePage();
     		IEditorPart p = page == null ? null : window.getActivePage().getActiveEditor();
     		IEditorInput e = p==null? null : p.getEditorInput();
     		file = e==null ? null : (IFile)e.getAdapter(IFile.class);
-    		if (file == null) return false;
+    		if (file == null) return null;
 			if (p instanceof ITextEditor) {
 				if (!p.isDirty()) {
-					List<IResource> list = new LinkedList<IResource>();
 					list.add(file);
-					runSolver(solver,list);
-					return true;
 				} else {
 					//Activator.log.log("DIRTY " + p.getClass());
 					IDocumentProvider doc = ((ITextEditor)p).getDocumentProvider();
-					if (doc == null) return false;
+					if (doc == null) return null;
 					IDocument d = doc.getDocument(e);
-					if (d == null) return false;
-					String text = d.get();
-					//Activator.log.log("TEXT " + text);
-					runSolver(solver,file,text);
-					return true;
+					if (d == null) return null;
+					text = d.get();
 				}
 			}
     	} catch (PluginException ee) {
@@ -378,7 +400,7 @@ public class Utils {
     		Activator.log.errorlog("PluginException when finding selected targets: " + ee,ee);
     		showMessage(shell,"JML Plugin PluginException","PluginException occurred when finding selected targets: " + ee);
     	}
-        return false;
+    	return list;
     }
     
     /** This adds files in the given resource to the list; if the resource is a container, it 

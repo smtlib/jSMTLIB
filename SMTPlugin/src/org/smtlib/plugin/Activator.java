@@ -53,6 +53,7 @@ public class Activator extends AbstractUIPlugin {
 	 * (non-Javadoc)
 	 * @see org.eclipse.ui.plugin.AbstractUIPlugin#start(org.osgi.framework.BundleContext)
 	 */
+	@Override
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
 		// Initialize the configuration
@@ -68,6 +69,7 @@ public class Activator extends AbstractUIPlugin {
 
 	    // Listens for Preference page changes and updates the SMT Configuration accordingly
 	    AbstractPreference.addListener(new AbstractPreference.Listener() { 
+	    	@Override
 	    	public void run() { 
 	    		// The following line also extracts and sets Activator.verbose
 	    		smtConfiguration = Preferences.extractOptions(smtConfiguration); 
@@ -79,6 +81,7 @@ public class Activator extends AbstractUIPlugin {
 	     * (b) if a logic directory path is set, it looks there.
 	     */
 	    SMT.logicFinder = new SMT.ILogicFinder() {
+	    	@Override
 	    	public InputStream find(SMT.Configuration smtConfig, String name, IPos pos) throws java.io.IOException {
 	    		if (smtConfig == null || smtConfig.logicPath == null || smtConfig.logicPath.trim().length() ==0) {
 	    			URL url = Platform.getBundle(org.smtlib.Utils.PLUGIN_ID).getResource("logics/" + name + org.smtlib.Utils.SUFFIX);
@@ -116,6 +119,7 @@ public class Activator extends AbstractUIPlugin {
 	 * (non-Javadoc)
 	 * @see org.eclipse.ui.plugin.AbstractUIPlugin#stop(org.osgi.framework.BundleContext)
 	 */
+	@Override
 	public void stop(BundleContext context) throws Exception {
 		super.stop(context);
 	}
@@ -130,15 +134,4 @@ public class Activator extends AbstractUIPlugin {
 		return plugin;
 	}
 
-// TODO - this is part of the standard Activator, but I'm not sure what it is for
-//	/**
-//	 * Returns an image descriptor for the image file at the given
-//	 * plug-in relative path
-//	 *
-//	 * @param path the path
-//	 * @return the image descriptor
-//	 */
-//	public static ImageDescriptor getImageDescriptor(String path) {
-//		return imageDescriptorFromPlugin(PLUGIN_ID, path);
-//	}
 }

@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IAttributeValue;
+import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.ISymbol;
 
 /** This interface represents a definition of an SMT_LIB logic */
@@ -18,8 +19,8 @@ public interface ILogic extends IAccept, ILanguage {
 	
 	/** The attributes of the logic */
 	//@ ensures \result.size() > 0;
-	Map<String,IAttribute<?>> attributes();
+	Map<IKeyword,IAttribute<?>> attributes();
 	
 	/** The value of an attribute; returns null if the attribute does not exist for this logic. */
-	/*@Nullable*/IAttributeValue value(String keyword); // TODO _ abstract keyword?
+	/*@Nullable*/IAttributeValue value(IKeyword keyword);
 }

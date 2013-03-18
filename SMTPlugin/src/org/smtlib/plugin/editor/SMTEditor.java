@@ -25,6 +25,7 @@ public class SMTEditor extends TextEditor {
 		setDocumentProvider(new SMTDocumentProvider());
 	}
 	
+	@Override
 	protected void doSetInput(final IEditorInput input) throws CoreException {
 		super.doSetInput(input);
 		IDocument d = getDocumentProvider().getDocument(input);
@@ -47,6 +48,7 @@ public class SMTEditor extends TextEditor {
 		
 	}
 	
+	@Override
 	public void dispose() {
 		super.dispose();
 	}

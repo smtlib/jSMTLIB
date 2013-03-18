@@ -1,10 +1,12 @@
 package org.smtlib;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
-// FIXME - which solver is this using?
 
-public class LogicsBadPath extends LogicsBase {
+@RunWith(Parameterized.class)
+public class LogicsBadPath extends LogicTests {
 
 	@Override
 	public void init() {
@@ -12,11 +14,14 @@ public class LogicsBadPath extends LogicsBase {
 		smt.smtConfig.logicPath = "xxx";
 	}
 
-    public LogicsBadPath() {
+    public LogicsBadPath(String solver) {
+    	solvername = solver;
     }
 
 	@Test
 	public void testLogic() {
-		doCommand("(set-logic QF_UF)","No logic file found for QF_UF on path \"xxx\"");
+		doCommand("(set-logic QF_UF)",
+				solvername.startsWith("z3") ? "success" : // FIXME
+				"(error \"No logic file found for QF_UF on path \\\"xxx\\\"\")");
 	}
 }

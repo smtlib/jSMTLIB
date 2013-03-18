@@ -34,7 +34,7 @@ public class ParseExpressions {
 		StringWriter sw = new StringWriter();
 		if (e != null) org.smtlib.sexpr.Printer.write(sw,e);
 		Assert.assertEquals(output,sw.toString()); // expected,actual
-		Assert.assertTrue("Did not expect an error",listener.msg ==null);
+		Assert.assertTrue("Did not expect an error",listener.msgs.isEmpty());
 	}
 
 	public void testSExpr(String input) throws Exception {

@@ -81,20 +81,6 @@ public class SMTPartitionScanner extends RuleBasedScanner implements IPartitionT
 	public final static IToken smtReservedWord = token(ISMTColorConstants.SMT_RESERVED_WORD);
 	public final static IToken smtInvalid = token(ISMTColorConstants.SMT_INVALID);
 
-//	public final static IToken smtDefault = new Token(SMT_DEFAULT);
-//	public final static IToken smtComment = new Token(SMT_COMMENT);
-//	public final static IToken smtParen = new Token(SMT_PAREN);
-//	public final static IToken smtBinary = new Token(SMT_BINARY);
-//	public final static IToken smtHex = new Token(SMT_HEX);
-//	public final static IToken smtNumeral = new Token(SMT_NUMERAL);
-//	public final static IToken smtKeyword = new Token(SMT_KEYWORD);
-//	public final static IToken smtSymbol = new Token(SMT_SYMBOL);
-//	public final static IToken smtQSymbol = new Token(SMT_QSYMBOL);
-//	public final static IToken smtDecimal = new Token(SMT_DECIMAL);
-//	public final static IToken smtString = new Token(SMT_STRING);
-//	public final static IToken smtCommand = new Token(SMT_COMMAND);
-//	public final static IToken smtReservedWord = new Token(SMT_RESERVED_WORD);
-//	public final static IToken smtInvalid = new Token(SMT_INVALID);
 
 	final static public String[] _reservedWords = {
 		"_", "!", "as", "NUMERAL", "DECIMAL", "STRING", "forall", "exists", "let", "par",
@@ -104,6 +90,7 @@ public class SMTPartitionScanner extends RuleBasedScanner implements IPartitionT
 		"get-proof", "get-assignment", "get-assertions", "get-unsat-core", "get-value",
 		"push", "pop",
 		"set-logic", "set-info", "set-option"};
+
 	final static public Set<String> reservedWords = new HashSet<String>();
 	static {
 		for (String s: _reservedWords) reservedWords.add(s);

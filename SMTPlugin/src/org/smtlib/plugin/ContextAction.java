@@ -7,7 +7,6 @@ package org.smtlib.plugin;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.widgets.Shell;
@@ -61,48 +60,37 @@ abstract public class ContextAction implements IObjectActionDelegate {
 		/**
 		 * @see IActionDelegate#run(IAction)
 		 */
-	    //JAVA16 @Override
+	    @Override
 		public void run(IAction action) {
-        	try {
-            	List<IFile> resources = Activator.utils.getSelectedFiles(selection,null,shell);
-        		Activator.utils.runSolver(null,resources);
-            } catch (Exception e) {
-                Activator.utils.topLevelException(shell,"MenuActions.RunSolver",e);
-            }
+    		try {
+    			final List<String> solvers = Activator.utils.getSolvers(action.getId());
+    			List<IFile> files = Activator.utils.getSelectedFiles(selection,null,shell);
+    			Activator.utils.text = null; // TODO - setting 'text' through side-effects is a bad design
+        		if (files.isEmpty()) files = Activator.utils.resources(selection,null,shell); // sets Activator.utils.text also
+        		if (files.isEmpty()) {
+        			Activator.utils.showMessageInUI(shell,"SMT Run Solver",
+        					"Failed to find a resource on which to run a solver (select one or more files or an editor)");
+        			return;
+        		}
+    			Activator.utils.runJobs(solvers,files);
+    		} catch (Exception e) {
+    			Activator.utils.topLevelException(shell,"ContextAction.RunSolver",e);
+    		}
         }
 	}
 	
-	/** Runs the chosen solver on the selected files */
-	static public class RunSpecificSolver extends ContextAction {
-		/**
-		 * @see IActionDelegate#run(IAction)
-		 */
-	    //JAVA16 @Override
-		public void run(IAction action) {
-        	try {
-            	List<IFile> resources = Activator.utils.getSelectedFiles(selection,null,shell);
-            	// The name of the solver must be the tail of the id of the menu item selected
-        		String name = action.getId();
-        		int i = name.lastIndexOf('.');
-        		name = name.substring(i+1);
-        		Activator.utils.runSolver(name,resources);
-            } catch (Exception e) {
-                Activator.utils.topLevelException(shell,"MenuActions.RunSolver",e);
-            }
-        }
-	}
 	
 	/** Deletes SMT markers on selected resources */
 	static public class DeleteMarkers extends ContextAction {
 		/**
 		 * @see IActionDelegate#run(IAction)
 		 */
-	    //JAVA16 @Override
+	    @Override
 		public void run(IAction action) {
             try {
                 Activator.utils.deleteMarkersInSelection(selection,null,shell);
             } catch (Exception e) {
-                Activator.utils.topLevelException(shell,"MenuActions.DeleteMarkers",e);
+                Activator.utils.topLevelException(shell,"ContextAction.DeleteMarkers",e);
             }
 		}
 	}

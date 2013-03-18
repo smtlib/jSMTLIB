@@ -37,7 +37,7 @@ public class LogicsBase {
 	public void teardown() {
 	}
 	
-	// FIXME - duplicates stuff in LogicTests.java
+	// NOTE - duplicates stuff in LogicTests.java
 	
 	public void init() {
 		smt = new SMT();
@@ -55,8 +55,8 @@ public class LogicsBase {
 			Assert.assertTrue("Response is null",false);
 		} else if (res.isError()) {
 			Assert.assertEquals(result,((IResponse.IError)res).errorMsg());
-		} else if (listener.msg instanceof IResponse.IError) {
-			Assert.assertEquals(result,((IResponse.IError)listener.msg).errorMsg());
+		} else if (listener.msgs.size() > 0  && listener.msgs.get(0) instanceof IResponse.IError) { // FIXME - check all the messages?
+			Assert.assertEquals(result,((IResponse.IError)listener.msgs.get(0)).errorMsg());
 		} else if (!res.isOK() && result != null) {
 			Assert.assertEquals(result,res.toString());
 		}

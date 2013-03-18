@@ -287,7 +287,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 	@Override
 	public IResponse get_info(IKeyword key) {
 		super.get_info(key);
-		String option = key.value();
+		IKeyword option = key;
 		IAttributeValue lit;
 		if (Utils.ERROR_BEHAVIOR.equals(option)) {
 			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION);
