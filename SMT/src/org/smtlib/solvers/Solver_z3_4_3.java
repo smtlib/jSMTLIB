@@ -405,7 +405,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
 	@Override
 	public IResponse get_info(IKeyword key) { // FIXME - use the solver? what types of results?
-		String option = key.value();
+		IKeyword option = key;
 		IAttributeValue lit;
 		if (Utils.ERROR_BEHAVIOR.equals(option)) {
 			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION);
@@ -429,12 +429,11 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	
 	@Override
 	public IResponse set_info(IKeyword key, IAttributeValue value) {
-		String option = key.value();
-		if (Utils.infoKeywords.contains(option)) {
+		if (Utils.infoKeywords.contains(key)) {
 			return smtConfig.responseFactory.error("Setting the value of a pre-defined keyword is not permitted: "+ 
 					smtConfig.defaultPrinter.toString(key),key.pos());
 		}
-		options.put(option,value);
+		options.put(key.value(),value);
 		return smtConfig.responseFactory.success();
 	}
 

@@ -135,7 +135,7 @@ public abstract class SMTExpr implements IExpr {
 		
 		public Keyword(String v) {
 			super();
-			value = v;
+			value = v.intern();
 		}
 		
 		@Override
@@ -153,7 +153,9 @@ public abstract class SMTExpr implements IExpr {
 		}
 		
 		@Override
-		public int hashCode() { return value.hashCode(); }
+		public int hashCode() { 
+			return value.hashCode(); 
+		}
 		
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
@@ -629,26 +631,26 @@ public abstract class SMTExpr implements IExpr {
 		public Logic(ISymbol name, Collection<IAttribute<?>> attributes) {
 			this.logicName = name;
 			for (IAttribute<?> attr: attributes) {
-				this.attributes.put(attr.keyword().value(),attr);
+				this.attributes.put(attr.keyword(),attr);
 			}
 		}
 		/** The name of the logic */
 		protected ISymbol logicName;
 		
 		/** The logic's attributes */
-		protected Map<String,IAttribute<?>> attributes = new HashMap<String,IAttribute<?>>();
+		protected Map<IKeyword,IAttribute<?>> attributes = new HashMap<IKeyword,IAttribute<?>>();
 		
 		/** The name of the logic */
 		@Override
 		public ISymbol logicName() { return logicName; }
 		
-		/** The attributes, as a Map, keyed by the keyword in the attribute */  // FIXME _ key by IKeyword
+		/** The attributes, as a Map, keyed by the keyword in the attribute */
 		@Override
-		public Map<String,IAttribute<?>> attributes() { return attributes; }
+		public Map<IKeyword,IAttribute<?>> attributes() { return attributes; }
 		
 		/** The value of a given attribute */
 		@Override
-		public /*@Nullable*/IAttributeValue value(String keyword) {
+		public /*@Nullable*/IAttributeValue value(IKeyword keyword) {
 			IAttribute<?> attr = attributes.get(keyword);
 			if (attr == null) return null;
 			return attr.attrValue();
@@ -676,26 +678,26 @@ public abstract class SMTExpr implements IExpr {
 		public Theory(ISymbol name, Collection<IAttribute<?>> attributes) {
 			this.theoryName = name;
 			for (IAttribute<?> attr: attributes) {
-				this.attributes.put(attr.keyword().value(),attr);
+				this.attributes.put(attr.keyword(),attr);
 			}
 		}
 		/** The name of the theory */
 		protected ISymbol theoryName;
 		
 		/** The theory attributes */
-		protected Map<String,IAttribute<?>> attributes = new HashMap<String,IAttribute<?>>();
+		protected Map<IKeyword,IAttribute<?>> attributes = new HashMap<IKeyword,IAttribute<?>>();
 		
 		/** The name of the theory */
 		@Override
 		public ISymbol theoryName() { return theoryName; }
 		
-		/** The attributes, as a Map, keyed by the keyword in the attribute */ // FIXME - key by IKeyword?
+		/** The attributes, as a Map, keyed by the keyword in the attribute */
 		@Override
-		public Map<String,IAttribute<?>> attributes() { return attributes; }
+		public Map<IKeyword,IAttribute<?>> attributes() { return attributes; }
 		
 		/** The value of a given attribute */
 		@Override
-		public /*@Nullable*/ IAttributeValue value(String keyword) {
+		public /*@Nullable*/ IAttributeValue value(IKeyword keyword) {
 			IAttribute<?> attr = attributes.get(keyword);
 			if (attr == null) return null;
 			return attr.attrValue();

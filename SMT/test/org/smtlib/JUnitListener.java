@@ -1,13 +1,16 @@
 package org.smtlib;
 
+import java.util.LinkedList;
+import java.util.List;
+
 
 public class JUnitListener implements Log.IListener {
 	
-	IResponse msg;
+	List<IResponse> msgs = new LinkedList<IResponse>();
 	
 	@Override
 	public void logError(IResponse.IError msg) {
-		this.msg = msg;
+		this.msgs.add(msg);
 	}
 
 	@Override

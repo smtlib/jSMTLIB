@@ -9,7 +9,7 @@ import org.smtlib.IParser.ParserException;
 /** Tests parsing invalid expressions, without invoking solvers */
 public class ParseExpressionErrors {
 	
-	static JUnitListener listener; // FIXME - only keeps the last message
+	static JUnitListener listener;
 	
 	@Before
 	public void init() {
@@ -23,9 +23,9 @@ public class ParseExpressionErrors {
 		ISource source = config.smtFactory.createSource(input,null);
 		IParser p = new org.smtlib.sexpr.Parser(config,source);
 		IExpr e = p.parseExpr();
-		Assert.assertTrue("Response was not an error",listener.msg instanceof IResponse.IError);
-		Assert.assertEquals(msg,((IResponse.IError)listener.msg).errorMsg());// expected,actual
-		IPos pos = ((IResponse.IError)listener.msg).pos();
+		Assert.assertTrue("Response was not an error",listener.msgs.get(0) instanceof IResponse.IError);
+		Assert.assertEquals(msg,((IResponse.IError)listener.msgs.get(0)).errorMsg());// expected,actual
+		IPos pos = ((IResponse.IError)listener.msgs.get(0)).pos();
 		Assert.assertEquals(start,pos.charStart());
 		Assert.assertEquals(end,pos.charEnd());
 		Assert.assertTrue(e == null || e instanceof IExpr.IError); 
@@ -43,7 +43,7 @@ public class ParseExpressionErrors {
 //			Assert.assertEquals(output,((IResponse.IError)listener.msg).errorMsg());// expected,actual
 			StringWriter sw = new StringWriter();
 			if (e != null) org.smtlib.sexpr.Printer.write(sw,e);
-			if (listener.msg != null) sw.append(config.defaultPrinter.toString(listener.msg));
+			if (!listener.msgs.isEmpty()) sw.append(config.defaultPrinter.toString(listener.msgs.get(0))); // FIXME - append them all?
 			Assert.assertEquals(output,sw.toString()); // expected,actual
 		} catch (ParserException e) {
 			Assert.assertEquals(output,"ParserException: " + e.getMessage()); // expected,actual

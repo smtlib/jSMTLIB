@@ -202,14 +202,14 @@
                  id = the unique id of this action
          -->
          <action
-               label="Get Value"
+               label="%Get.Value"
                class="org.smtlib.plugin.MenuActions$GetValue"
                menubarPath="SMTMenu/SMTGroup"
                definitionId="org.smtlib.plugin.commands.GetValue"
                id="org.smtlib.plugin.MenuActions.getValueAction">
          </action>
          <action
-               label="View Logic"
+               label="%View.Logic"
                class="org.smtlib.plugin.MenuActions$ViewLogic"
                menubarPath="SMTMenu/SMTGroup"
                definitionId="org.smtlib.plugin.commands.ViewLogic"
@@ -225,45 +225,36 @@
          </action>
          <!-- Adds a menu item -->
          <action
-               label="Run default solver"
+               label="%Run.default.solver"
                tooltip="Runs the default SMT solver"
                class="org.smtlib.plugin.MenuActions$RunSolver"
                menubarPath="SMTMenu/SMTGroup"
-               id="RunSolver"
+               id="org.smtlib.plugin.MenuActions.RunSolver.default"
                definitionId="org.smtlib.plugin.commands.RunSolver">
                <!-- <dynamic class="org.smtlib.plugin.MenuActions$Solvers"
                     id="org.smtlib.plugin.MenuActions,Solvers"/> -->
          </action>
-         <!-- Adds submenu items 
-         <menu
-               label="Run solver"
-               path="SMTMenu/SMTGroup"
-               id="SMTSolver">
-            <separator
-                  name="SMTSolvers">
-            </separator>
-         </menu>
-         <action
-               label="Simplify"
-               tooltip="Runs the Simplify SMT solver"
-               class="org.smtlib.plugin.MenuActions$RunSolver"
-               menubarPath="SMTMenu/SMTSolver/SMTSolvers"
-               id="org.smtlib.plugin.MenuActions.RunSolver.Simplify"
-               definitionId="org.smtlib.plugin.commands.RunSimplify">
-         </action> -->
          <!-- NOTE: for the following, the string following the last . of the id must be the name of the solver -->
          <action
-               label="Z3"
-               tooltip="Runs the Z3 SMT solver"
-               class="org.smtlib.plugin.MenuActions$RunSpecificSolver"
+               label="Z3-4.3"
+               tooltip="Runs the Z3-4.3 SMT solver"
+               class="org.smtlib.plugin.MenuActions$RunSolver"
                menubarPath="SMTMenu/SMTSolvers"
-               id="org.smtlib.plugin.MenuActions.RunSolver.z3"
-               definitionId="org.smtlib.plugin.commands.RunZ3">
+               id="org.smtlib.plugin.MenuActions.RunSolver.z3_4_3"
+               definitionId="org.smtlib.plugin.commands.RunZ3_4_3">
+         </action>
+         <action
+               label="Z3-2.11"
+               tooltip="Runs the Z3-2.11 SMT solver"
+               class="org.smtlib.plugin.MenuActions$RunSolver"
+               menubarPath="SMTMenu/SMTSolvers"
+               id="org.smtlib.plugin.MenuActions.RunSolver.z3_2_11"
+               definitionId="org.smtlib.plugin.commands.RunZ3_2_11">
          </action>
          <action
                label="CVC"
                tooltip="Runs the CVC SMT solver"
-               class="org.smtlib.plugin.MenuActions$RunSpecificSolver"
+               class="org.smtlib.plugin.MenuActions$RunSolver"
                menubarPath="SMTMenu/SMTSolvers"
                id="org.smtlib.plugin.MenuActions.RunSolver.cvc"
                definitionId="org.smtlib.plugin.commands.RunCVC">
@@ -271,7 +262,7 @@
          <action
                label="Yices"
                tooltip="Runs the Yices SMT solver"
-               class="org.smtlib.plugin.MenuActions$RunSpecificSolver"
+               class="org.smtlib.plugin.MenuActions$RunSolver"
                menubarPath="SMTMenu/SMTSolvers"
                id="org.smtlib.plugin.MenuActions.RunSolver.yices"
                definitionId="org.smtlib.plugin.commands.RunYices">
@@ -279,7 +270,7 @@
          <action
                label="Simplify"
                tooltip="Runs the Simplify SMT solver"
-               class="org.smtlib.plugin.MenuActions$RunSpecificSolver"
+               class="org.smtlib.plugin.MenuActions$RunSolver"
                menubarPath="SMTMenu/SMTSolvers"
                id="org.smtlib.plugin.MenuActions.RunSolver.simplify"
                definitionId="org.smtlib.plugin.commands.RunSimplify">
@@ -287,15 +278,15 @@
          <action
                label="check"
                tooltip="Type-checks the SMT-LIB script"
-               class="org.smtlib.plugin.MenuActions$RunSpecificSolver"
+               class="org.smtlib.plugin.MenuActions$RunSolver"
                menubarPath="SMTMenu/SMTSolvers"
                id="org.smtlib.plugin.MenuActions.RunSolver.test"
                definitionId="org.smtlib.plugin.commands.RunCheck">
          </action>
          <action
-               label="All"
-               tooltip="Runs all solvers"
-               class="org.smtlib.plugin.MenuActions$RunSpecificSolver"
+               label="%All"
+               tooltip="%Runs.All.Solvers"
+               class="org.smtlib.plugin.MenuActions$RunSolver"
                menubarPath="SMTMenu/SMTSolvers"
                id="org.smtlib.plugin.MenuActions.RunSolver.All"
                definitionId="org.smtlib.plugin.commands.RunAll">
@@ -303,11 +294,11 @@
          <!-- Adds a tool bar item -->
          <action
                label="SMT"
-               tooltip="Runs the selected SMT solver"
+               tooltip="%Toolbar.SMT.Tooltip"
                class="org.smtlib.plugin.MenuActions$RunSolver"
                toolbarPath="Normal/build.ext"
                icon="icons/smt_icon.gif"
-               id="org.smtlib.plugin.ToolbarActions.RunSolver"
+               id="org.smtlib.plugin.ToolbarActions.RunSolver.default"
                >
          </action>
      </actionSet>
@@ -341,54 +332,68 @@
          -->
          <!-- Does not make sense to have the ViewLogic command here -->
          <action
-               label="Delete markers"
+               label="%Delete.SMT.Markers"
                class="org.smtlib.plugin.ContextAction$DeleteMarkers"
                menubarPath="SMTContextMenuItem/group1"
                enablesFor="+"
                id="SMTContextMenuItem.deleteMarkersAction">
          </action>
          <action
-               label="Run solver"
+               label="Run default solver"
                class="org.smtlib.plugin.ContextAction$RunSolver"
                menubarPath="SMTContextMenuItem/group1"
                enablesFor="+"
-               id="SMTContextMenuItem.solverAction">
+               id="SMTContextMenuItem.solverAction.default">
          </action>
          
          <action
-               label="Z3"
-               class="org.smtlib.plugin.ContextAction$RunSpecificSolver"
+               label="Z3-4.3"
+               class="org.smtlib.plugin.ContextAction$RunSolver"
                menubarPath="SMTContextMenuItem/group2"
                enablesFor="+"
-               id="SMTContextMenuItem.solverAction.z3">
+               id="SMTContextMenuItem.solverAction.z3_4_3">
+         </action>
+         <action
+               label="Z3-2.11"
+               class="org.smtlib.plugin.ContextAction$RunSolver"
+               menubarPath="SMTContextMenuItem/group2"
+               enablesFor="+"
+               id="SMTContextMenuItem.solverAction.z3_2_11">
          </action>
          <action
                label="CVC"
-               class="org.smtlib.plugin.ContextAction$RunSpecificSolver"
+               class="org.smtlib.plugin.ContextAction$RunSolver"
                menubarPath="SMTContextMenuItem/group2"
                enablesFor="+"
                id="SMTContextMenuItem.solverAction.cvc">
          </action>
           <action
                label="yices"
-               class="org.smtlib.plugin.ContextAction$RunSpecificSolver"
+               class="org.smtlib.plugin.ContextAction$RunSolver"
                menubarPath="SMTContextMenuItem/group2"
                enablesFor="+"
                id="SMTContextMenuItem.solverAction.yices">
          </action>
         <action
                label="simplify"
-               class="org.smtlib.plugin.ContextAction$RunSpecificSolver"
+               class="org.smtlib.plugin.ContextAction$RunSolver"
                menubarPath="SMTContextMenuItem/group2"
                enablesFor="+"
                id="SMTContextMenuItem.solverAction.simplify">
          </action>
          <action
                label="check"
-               class="org.smtlib.plugin.ContextAction$RunSpecificSolver"
+               class="org.smtlib.plugin.ContextAction$RunSolver"
                menubarPath="SMTContextMenuItem/group2"
                enablesFor="+"
                id="SMTContextMenuItem.solverAction.test">
+         </action>
+         <action
+               label="All"
+               class="org.smtlib.plugin.ContextAction$RunSolver"
+               menubarPath="SMTContextMenuItem/group2"
+               enablesFor="+"
+               id="SMTContextMenuItem.solverAction.All">
          </action>
          
       </objectContribution>
@@ -532,10 +537,16 @@
             id="org.smtlib.plugin.commands.RunCVC">
       </command> 
       <command
-            name="Run Z3"
-            description="Runs the Z3 SMT solver"
+            name="Run Z3-4.3"
+            description="Runs the Z3-4.3 SMT solver"
             categoryId="org.smtlib.plugin.SMTCommandCategory"
-            id="org.smtlib.plugin.commands.RunZ3">
+            id="org.smtlib.plugin.commands.RunZ3_4_3">
+      </command> 
+      <command
+            name="Run Z3-2.11"
+            description="Runs the Z3-2.11 SMT solver"
+            categoryId="org.smtlib.plugin.SMTCommandCategory"
+            id="org.smtlib.plugin.commands.RunZ3_2_11">
       </command> 
       <command
             name="Run type-checker"
@@ -544,14 +555,14 @@
             id="org.smtlib.plugin.commands.RunCheck">
       </command> 
       <command
-            name="Run type-checker"
-            description="Runs all solvers"
+            name="Run All Solvers"
+            description="Runs all solvers on selected files"
             categoryId="org.smtlib.plugin.SMTCommandCategory"
             id="org.smtlib.plugin.commands.RunAll">
       </command> 
       <command
-            name="Run SMT solver"
-            description="Runs the currently selected SMT solver"
+            name="%Run.SMT.Solver.Cmd"
+            description="%Run.SMT.Solver.Desc"
             categoryId="org.smtlib.plugin.SMTCommandCategory"
             id="org.smtlib.plugin.commands.RunSolver">
       </command> 

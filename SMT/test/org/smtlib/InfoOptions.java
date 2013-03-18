@@ -118,8 +118,8 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test @Ignore
 	public void checkSetRegularOutput() {
-		doCommand("(set-option :regular-output-channel \"xx\")", "success"); // FIXME - writes success to xx ?
-		doCommand("(get-option :regular-output-channel)", "\"xx\"");
+		doCommand("(set-option :regular-output-channel \"test-output\")", "success"); // FIXME - writes success to test-output? - hangs for z3_4_3 ?
+		doCommand("(get-option :regular-output-channel)", "\"test-output\"");
 		doCommand("(set-option :regular-output-channel \"stdout\")", "success");
 		doCommand("(get-option :regular-output-channel)", "\"stdout\"");
 	}

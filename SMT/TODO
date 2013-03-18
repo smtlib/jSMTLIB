@@ -9,8 +9,22 @@ Pieces:
  - validation suite
  - extensibility
 
+Bug with simplify on copy.smt2
+
 Plugin:
 
+ set a time out on jobs
+ reporting exception errors better
+ result matrix
+ cancelling running job, including long-running solver tasks
+ undocked progress monitor
+ finish moving strings to properties files
+ distinguish dirty files in the console
+ allow loading preferences from jsmtlib.properties file by button push
+ implement a way to easily add new solvers (either pure SMT or new adapters)
+ unsupported responses should be shown in the editor as markers
+ errors should be shown in the console window as well
+ have a progress monitor
  put in a multipage editor with output to alternate page
  output to a new popup widow
  * expand the HELP document

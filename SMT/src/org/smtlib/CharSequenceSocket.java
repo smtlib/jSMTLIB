@@ -57,6 +57,7 @@ public class CharSequenceSocket extends CharSequenceInfinite {
 	private /*@Nullable*/ Reader rdr = null;
 	
 	//@ requires !needsNewConnection => rdr != null;
+	@Override
 	protected boolean readChars() throws java.io.IOException {
 		while (true) {
 			if (needsNewConnection) {

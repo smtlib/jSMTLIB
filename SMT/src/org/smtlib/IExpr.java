@@ -135,6 +135,9 @@ public interface IExpr extends IAccept, IPosable {
 		/** Helpful method that indicates the class of expression, used in human-readable messages. */
 		//@ pure
 		String kind();
+		
+		@Override
+		boolean equals(Object o);
 	}
 	
 	/** This interface represents SMT-LIB binary literals */
@@ -222,6 +225,7 @@ public interface IExpr extends IAccept, IPosable {
 		IIdentifier head();
 		
 		/** The head symbol of the identifier */
+		@Override
 		ISymbol headSymbol();
 		
 		/** The non-negative integer parameters of the identifier */

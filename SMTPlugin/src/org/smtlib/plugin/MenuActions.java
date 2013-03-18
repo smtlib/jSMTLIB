@@ -78,78 +78,25 @@ abstract public class MenuActions implements IWorkbenchWindowActionDelegate {
      * @author David R. Cok
      */
     public static class RunSolver extends MenuActions {
-        @Override
-        public final void run(final IAction action) {
-        	try {
-        		if (selection == null) {
+
+    	@Override
+    	public final void run(final IAction action) {
+    		try {
+    			final List<String> solvers = Activator.utils.getSolvers(action.getId());
+    			List<IFile> files = Activator.utils.getSelectedFiles(selection,window,shell);
+    			Activator.utils.text = null; // TODO - setting 'text' through side-effects is a bad design
+        		if (files.isEmpty()) files = Activator.utils.resources(selection,window,shell); // sets Activator.utils.text also
+        		if (files.isEmpty()) {
         			Activator.utils.showMessageInUI(shell,"SMT Run Solver",
-						"Failed to find resource on which to run a solver (no selection)");
+        					"Failed to find a resource on which to run a solver (select one or more files or an editor)");
         			return;
         		}
-            	List<IFile> resources = Activator.utils.getSelectedFiles(selection,window,shell);
-            	if (!resources.isEmpty()) {
-            		Activator.utils.runSolver(null,resources);
-            	} else {
-            		boolean b = Activator.utils.runSolverOnSelectedEditor(null,selection,window,shell);
-            		if (!b) {
-            			Activator.utils.showMessageInUI(shell,"SMT Run Solver",
-            					"Failed to find resource on which to run a solver");
-            		}
-            	}
-            } catch (Exception e) {
-                Activator.utils.topLevelException(shell,"MenuActions.RunSolver",e);
-            }
-        }
-    }
+    			Activator.utils.runJobs(solvers,files);
+    		} catch (Exception e) {
+    			Activator.utils.topLevelException(shell,"MenuActions.RunSolver",e);
+    		}
 
-    /**
-     * This class implements the action for checking
-     * JML in the selected objects (which may be working sets, folders,
-     * or java files).  Applying the operation
-     * to a container applies it to all its contents recursively.
-     * The checks are done in a non-UI thread.
-     * 
-     * @author David R. Cok
-     */
-    public static class RunSpecificSolver extends MenuActions {
-        @Override
-        public final void run(final IAction action) {
-        	try {
-        		String name = action.getId();
-        		int i = name.lastIndexOf('.');
-        		name = name.substring(i+1);
-            	List<IFile> resources = Activator.utils.getSelectedFiles(selection,window,shell);
-            	if (!resources.isEmpty()) {
-            		if ("All".equals(name)) {
-            			// FIXME - use a dynamic or user-created list of defaultSolver
-            			Activator.utils.runSolver("simplify",resources);
-            			Activator.utils.runSolver("yices",resources);
-            			Activator.utils.runSolver("cvc",resources);
-            			Activator.utils.runSolver("z3",resources);
-            			
-            		} else {
-            			Activator.utils.runSolver(name,resources);
-            		}
-            	} else {
-            		boolean b;
-            		if ("All".equals(name)) {
-            			// FIXME - use a dynamic or user-created list of defaultSolver
-                		b = Activator.utils.runSolverOnSelectedEditor("simplify",selection,window,shell);
-                		b = Activator.utils.runSolverOnSelectedEditor("yices",selection,window,shell);
-                		b = Activator.utils.runSolverOnSelectedEditor("cvc",selection,window,shell);
-                		b = Activator.utils.runSolverOnSelectedEditor("z3",selection,window,shell);
-            		} else {
-                		b = Activator.utils.runSolverOnSelectedEditor(name,selection,window,shell);
-            		}
-            		if (!b) {
-            			Activator.utils.showMessageInUI(shell,"SMT Run Solver",
-            					"Failed to find resource on which to run a solver");
-            		}
-            	}
-            } catch (Exception e) {
-                Activator.utils.topLevelException(shell,"MenuActions.RunSolver",e);
-            }
-        }
+    	}
     }
 
     /**

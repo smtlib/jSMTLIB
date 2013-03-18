@@ -101,7 +101,7 @@ public class ConsoleLogger implements org.smtlib.plugin.Log.IListener, org.smtli
 	}
 
 	/** Color to use for error messages */
-	// FIXME - should get this color from the system preferences
+	// TODO - should get this color from the system preferences
 	static final private Color errorColor = new Color(null,255,0,0);
 	static final private Color diagColor = new Color(null,0,0,255);
 
@@ -135,6 +135,7 @@ public class ConsoleLogger implements org.smtlib.plugin.Log.IListener, org.smtli
 	 */
 	// TODO - must this be called from the UI thread (because it sets the color)?
 	//@ modifies content;
+	@Override
 	public void errorlog(/*@NonNull*/String msg, /*@Nullable*/ Throwable e) {
 		// Always put errors in the plug-in Error log
 		pluginLog.log(
@@ -204,7 +205,7 @@ public class ConsoleLogger implements org.smtlib.plugin.Log.IListener, org.smtli
 //			Color c = cs.getColor();
 //			cs.setColor(errorColor);
 			cs.println(msg);
-//			cs.setColor(c); // FIXME - causes "Invaid Thread access" errors when loggin errors from a computational thread
+//			cs.setColor(c); // FIXME - causes "Invalid Thread access" errors when logging errors from a computational thread
 		}
 	}
 
@@ -217,7 +218,7 @@ public class ConsoleLogger implements org.smtlib.plugin.Log.IListener, org.smtli
 //		Color c = cs.getColor();
 //		cs.setColor(diagColor);
 		cs.println(msg);
-//		cs.setColor(c); // FIXME - causes "Invaid Thread access" errors when loggin errors from a computational thread
+//		cs.setColor(c); // FIXME - causes "Invalid Thread access" errors when logging errors from a computational thread
 	}
 }
 

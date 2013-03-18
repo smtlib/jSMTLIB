@@ -87,6 +87,7 @@ abstract public class PreferenceWidget {
 		 * @param parent The Composite that holds all of the option widgets
 		 */
 		//@ ensures widget != null;
+		@Override
 		public void addWidget(Composite parent) {
 			AbstractPreference.ChoiceOption opt = (AbstractPreference.ChoiceOption)option;
 			Composite composite = new Widgets.HComposite(parent,2);
@@ -115,6 +116,7 @@ abstract public class PreferenceWidget {
 		 * Sets the UI widget to the option's default value
 		 *
 		 */
+		@Override
 		public void setDefault() {
 			widget.select(((AbstractPreference.ChoiceOption)option).getDefaultIndex());
 		}		
@@ -123,6 +125,7 @@ abstract public class PreferenceWidget {
 		 * Sets the option value to be consistent with the
 		 * current setting of the UI's widget.
 		 */
+		@Override
 		public void setOptionValue() { ((AbstractPreference.ChoiceOption)option).setValue(value()); } 
 		
 		/** Resets the list of choice items */
@@ -165,6 +168,7 @@ abstract public class PreferenceWidget {
 		 * @param parent The Composite that holds all of the option widgets
 		 */
 		//@ ensures widget != null;
+		@Override
 		public void addWidget(Composite parent) {
 			String fn = ((AbstractPreference.StringOption)option).getValue();
 			widget = new Widgets.FileTextField(parent,option.label(),fn,option.tooltip(),50);
@@ -184,6 +188,7 @@ abstract public class PreferenceWidget {
 		 */
 		//@ requires widget != null;
 		//@ requires option != null;
+		@Override
 		public void setDefault() {
 			widget.setText(((AbstractPreference.StringOption)option).getDefault());
 		}
@@ -194,6 +199,7 @@ abstract public class PreferenceWidget {
 		 */
 		//@ requires widget != null;
 		//@ requires option != null;
+		@Override
 		public void setOptionValue() { ((AbstractPreference.StringOption)option).setValue(value()); } 
 	}
 	
@@ -231,6 +237,7 @@ abstract public class PreferenceWidget {
 		 * @param parent The Composite that holds all of the option widgets
 		 */
 		//@ ensures widget != null;
+		@Override
 		public void addWidget(Composite parent) {
 			String fn = ((AbstractPreference.StringOption)option).getValue();
 			widget = new Widgets.DirTextField(parent,option.label(),fn,option.tooltip(),80);
@@ -254,6 +261,7 @@ abstract public class PreferenceWidget {
 		 */
 		//@ requires widget != null;
 		//@ requires option != null;
+		@Override
 		public void setDefault() {
 			widget.setText(((AbstractPreference.StringOption)option).getDefault());
 		}
@@ -264,6 +272,7 @@ abstract public class PreferenceWidget {
 		 */
 		//@ requires widget != null;
 		//@ requires option != null;
+		@Override
 		public void setOptionValue() { ((AbstractPreference.StringOption)option).setValue(value()); } 
 	}
 	
@@ -299,6 +308,7 @@ abstract public class PreferenceWidget {
 		 */
 		//@ requires option != null;
 		//@ ensures widget != null;
+		@Override
 		public void addWidget(Composite parent) {
 			widget = new Button(parent,SWT.CHECK);
 			widget.setText(option.label());
@@ -320,6 +330,7 @@ abstract public class PreferenceWidget {
 		 */
 		//@ requires widget != null;
 		//@ requires option != null;
+		@Override
 		public void setDefault() {
 			widget.setSelection(((AbstractPreference.BooleanOption)option).getDefault());
 		}
@@ -330,6 +341,7 @@ abstract public class PreferenceWidget {
 		 */
 		//@ requires widget != null;
 		//@ requires option != null;
+		@Override
 		public void setOptionValue() { ((AbstractPreference.BooleanOption)option).setValue(value()); } 
 	}
 
@@ -372,6 +384,7 @@ abstract public class PreferenceWidget {
          */
         //@ requires option != null;
         //@ ensures widget != null;
+		@Override
         public void addWidget(Composite parent) {
             AbstractPreference.IntOption opt = (AbstractPreference.IntOption)option;
             Composite composite = new Widgets.HComposite(parent,2);
@@ -404,6 +417,7 @@ abstract public class PreferenceWidget {
          */
         //@ requires widget != null;
         //@ requires option != null;
+		@Override
         public void setDefault() {
             widget.select(((AbstractPreference.IntOption)option).getDefault());
         }
@@ -414,6 +428,7 @@ abstract public class PreferenceWidget {
          */
         //@ requires widget != null;
         //@ requires option != null;
+		@Override
         public void setOptionValue() { ((AbstractPreference.IntOption)option).setValue(value()); } 
     }
     
@@ -450,6 +465,7 @@ abstract public class PreferenceWidget {
          */
         //@ requires option != null;
         //@ ensures widget != null;
+		@Override
         public void addWidget(Composite parent) {
           Composite composite = new Widgets.HComposite(parent,2);
           org.eclipse.swt.widgets.Label label2 = new org.eclipse.swt.widgets.Label(composite,SWT.NONE);
@@ -474,6 +490,7 @@ abstract public class PreferenceWidget {
          */
         //@ requires widget != null;
         //@ requires option != null;
+		@Override
         public void setDefault() {
             widget.setText(((AbstractPreference.StringOption)option).getDefault());
         }
@@ -484,6 +501,7 @@ abstract public class PreferenceWidget {
          */
         //@ requires widget != null;
         //@ requires option != null;
+		@Override
         public void setOptionValue() {
           ((AbstractPreference.StringOption)option).setValue(value()); 
         } 
@@ -523,6 +541,7 @@ abstract public class PreferenceWidget {
 		 * @param parent The Composite that holds all of the option widgets
 		 */
 		//@ ensures widget != null;
+		@Override
 		public void addWidget(Composite parent) {
 			widget = new Widgets.LabeledSeparator(parent,label);
 		}
@@ -530,11 +549,13 @@ abstract public class PreferenceWidget {
 		/**
 		 * Does nothing.
 		 */
+		@Override
 		public void setDefault() { } 
 		
 		/**
 		 * Does nothing.
 		 */
+		@Override
 		public void setOptionValue() { } 
 	}
 

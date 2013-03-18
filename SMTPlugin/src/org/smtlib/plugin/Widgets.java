@@ -177,6 +177,7 @@ public class Widgets {
       browse.setText("Browse");
       browse.setToolTipText(toolTipText);
       browse.addMouseListener(new MouseAdapter() {
+    	@Override
         public void mouseUp(MouseEvent e) {
           // TODO: Would be nice to start the directory browser
           // in the location that is currently set in the text
@@ -276,6 +277,7 @@ public class Widgets {
       browse.setText("Browse");
       browse.setToolTipText(toolTipText);
       browse.addMouseListener(new MouseAdapter() {
+    	@Override
         public void mouseUp(MouseEvent e) {
           // TODO: Would be nice to start the directory browser
           // in the location that is currently set in the text

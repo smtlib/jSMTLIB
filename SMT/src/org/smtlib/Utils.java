@@ -15,7 +15,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.smtlib.IExpr.IAttributeValue;
+import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.ISymbol;
+import org.smtlib.impl.Factory;
 import org.smtlib.impl.SMTExpr;
 
 /** A class of static utility methods and constants for the SMT-LIB package. */
@@ -56,7 +58,7 @@ public class Utils {
 	public static final String CORE = "Core";
 
 	/** The string designating an option item */
-	public static final String PRINT_SUCCESS = ":print-success";
+	public static final String PRINT_SUCCESS = ":print-success";  // FIXME - change remainder of Strings to IKeywords
 
 	/** The string designating an option item */
 	public static final String INTERACTIVE_MODE = ":interactive-mode";
@@ -89,25 +91,25 @@ public class Utils {
 	public static final String PRODUCE_MODELS = ":produce-models";
 
 	/** The string designating an info item */
-	public static final String ERROR_BEHAVIOR = ":error-behavior";
+	public static final IKeyword ERROR_BEHAVIOR = new Factory().keyword(":error-behavior");
 
 	/** The string designating an info item */
-	public static final String NAME = ":name";
+	public static final IKeyword NAME = new Factory().keyword(":name");
 
 	/** The string designating an info item */
-	public static final String AUTHORS = ":authors";
+	public static final IKeyword AUTHORS = new Factory().keyword(":authors");
 
 	/** The string designating an info item */
-	public static final String VERSION = ":version";
+	public static final IKeyword VERSION = new Factory().keyword(":version");
 
 	/** The string designating an info item */
-	public static final String STATUS = ":status";
+	public static final IKeyword STATUS = new Factory().keyword(":status");
 
 	/** The string designating an info item */
-	public static final String REASON_UNKNOWN = ":reason-unknown";
+	public static final IKeyword REASON_UNKNOWN = new Factory().keyword(":reason-unknown");
 
 	/** The string designating an info item */
-	public static final String ALL_STATISTICS = ":all-statistics";
+	public static final IKeyword ALL_STATISTICS = new Factory().keyword(":all-statistics");
 
 	/** The response to the :authors info item */
 	public static final String AUTHORS_VALUE = "David R. Cok";
@@ -120,19 +122,19 @@ public class Utils {
 	public static final String VERSION_VALUE = "0.0";
 
 	/** The string designating the smtlib attribute within a logic or theory */
-	public static final String SMTLIB_VERSION = ":smt-lib-version";
+	public static final IKeyword SMTLIB_VERSION = new Factory().keyword(":smt-lib-version");
 
 	/** The version of SMT-LIB that is expected of theory and logic definitions */
 	public static final String SMTLIB_VERSION_20 = "2.0";
 
 	/** The attribute tag for defining sorts in a theory */
-	public static final String SORTS = ":sorts";
+	public static final IKeyword SORTS = new Factory().keyword(":sorts");
 
 	/** The attribute tag for defining functions in a theory */
-	public static final String FUNS = ":funs";
+	public static final IKeyword FUNS = new Factory().keyword(":funs");
 
 	/** The attribute tag for defining theories in a logic */
-	public static final String THEORIES = ":theories";
+	public static final IKeyword THEORIES = new Factory().keyword(":theories");
 
 	/** An ERROR_BEHAVIOR return value */
 	public static final String CONTINUED_EXECUTION = "continued-execution";
@@ -225,9 +227,9 @@ public class Utils {
 				STDERR, false));
 	}
 
-	static final public HashSet<String> infoKeywords = new HashSet<String>();
+	static final public HashSet<IKeyword> infoKeywords = new HashSet<IKeyword>();
 	static {
-		for (String k : new String[] { NAME, AUTHORS, VERSION, ERROR_BEHAVIOR,
+		for (IKeyword k : new IKeyword[] { NAME, AUTHORS, VERSION, ERROR_BEHAVIOR,
 				REASON_UNKNOWN, ALL_STATISTICS }) {
 			infoKeywords.add(k);
 		}

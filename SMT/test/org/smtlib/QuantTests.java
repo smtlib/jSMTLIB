@@ -1,6 +1,5 @@
 package org.smtlib;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -8,8 +7,6 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class QuantTests extends LogicTests {
 
-	// FIXME - should use a different logic since these have quantifiers
-	
     public QuantTests(String solvername) {
     	this.solvername = solvername;
     }
@@ -21,7 +18,7 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void checkQuantifiedTransSat() {
-		String result = "simplify".equals(solvername) ? "sat" : "unknown";
+		String result = "simplify".equals(solvername) || "z3_4_3".equals(solvername) ? "sat" : "unknown";
 		doCommand("(set-logic AUFNIRA)");
 		doCommand("(declare_fun p () Bool)");
 		doCommand("(declare_fun q () Bool)");
@@ -30,7 +27,7 @@ public class QuantTests extends LogicTests {
 		doCommand("(assert (forall ((x Bool)(y Bool)(z Bool)) (=> (and (f x y) (f y z)) (f x z))))");
 		doCommand("(assert (and (f p q) (f q r)))");
 		doCommand("(assert (f p r))");
-		doCommand("(check-sat)",result); // FIXME - why is this not sat
+		doCommand("(check-sat)",result);
 		doCommand("(exit)");
 	}
 
@@ -50,7 +47,7 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void checkQuantifiedTransSatNT() {
-		String result = "simplify".equals(solvername) ? "sat" : "unknown";
+		String result = "simplify".equals(solvername) || "z3_4_3".equals(solvername) ? "sat" : "unknown";
 		doCommand("(set-logic AUFNIRA)");
 		doCommand("(declare-sort B 0)");
 		doCommand("(declare_fun p () B)");
@@ -60,7 +57,7 @@ public class QuantTests extends LogicTests {
 		doCommand("(assert (forall ((x B)(y B)(z B)) (=> (and (f x y) (f y z)) (f x z))))");
 		doCommand("(assert (and (f p q) (f q r)))");
 		doCommand("(assert (f p r))");
-		doCommand("(check-sat)",result); // FIXME - why is this not sat
+		doCommand("(check-sat)",result);
 		doCommand("(exit)");
 	}
 
@@ -75,13 +72,13 @@ public class QuantTests extends LogicTests {
 		doCommand("(assert (forall ((x B)(y B)(z B)) (=> (and (f x y) (f y z)) (f x z))))");
 		doCommand("(assert (and (f p q) (f q r)))");
 		doCommand("(assert (not (f p r)))");
-		doCommand("(check-sat)","unsat"); // FIXME - why is this not sat
+		doCommand("(check-sat)","unsat");
 		doCommand("(exit)");
 	}
 
 	@Test
 	public void checkQuantifiedTransBool() {
-		String result = "simplify".equals(solvername) ? "sat" : "unknown";
+		String result = "simplify".equals(solvername) || "z3_4_3".equals(solvername)? "sat" : "unknown";
 		String result2 = "simplify".equals(solvername) ? "unsat" : "unsat";
 		doCommand("(set-logic AUFNIRA)");
 		doCommand("(declare_fun p () Bool)");
@@ -117,17 +114,17 @@ public class QuantTests extends LogicTests {
 	}
 
  
-	@Test @Ignore // FIXME
+	@Test
 	public void forallBoolUnSat() {
-		doCommand("(set-logic QF_LIA)");
-		doCommand("(assert (forall ((q Bool)) (not q)))"); // false
-		doCommand("(check-sat)","unknown");
+		doCommand("(set-logic AUFNIRA)");
+		doCommand("(assert (forall ((q Bool)) (not q)))");
+		doCommand("(check-sat)",solvername.equals("z3_4_3") ? "unsat" : "unknown");
 		doCommand("(exit)");
 	}
 
-	@Test @Ignore // FIXME
+	@Test
 	public void forallBoolSat2() {
-		doCommand("(set-logic QF_LIA)");
+		doCommand("(set-logic AUFNIRA)");
 		doCommand("(declare-fun p () Bool)");
 		doCommand("(assert (not (forall ((q Bool)) (not q))))"); // true
 		doCommand("(check-sat)","sat");

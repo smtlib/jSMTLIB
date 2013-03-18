@@ -51,16 +51,16 @@ public class TypeCheckRoot {
 	
 	public void doCommand(String input) {
 		ICommand command = parseCommand(input);
-		Assert.assertEquals(null,listener.msg);
+		Assert.assertTrue(listener.msgs.isEmpty());
 		checkResponse(command.execute(solver));
-		Assert.assertEquals(null,listener.msg);
+		Assert.assertTrue(listener.msgs.isEmpty());
 	}
 	
 	public void doCommand(String input, String expectedError) {
 		ICommand command = parseCommand(input);
-		Assert.assertEquals(null,listener.msg);
+		Assert.assertTrue(listener.msgs.isEmpty());
 		checkResponse(command.execute(solver),expectedError);
-		Assert.assertEquals(null,listener.msg);
+		Assert.assertTrue(listener.msgs.isEmpty());
 
 	}
 	
@@ -80,8 +80,8 @@ public class TypeCheckRoot {
 			IParser p = new org.smtlib.sexpr.Parser(smt.smtConfig,source);
 			IExpr e = p.parseExpr();
 			if (e == null) {
-				Assert.assertTrue("Null expression and null error message - internal bug",listener.msg != null);
-				Assert.assertTrue(((IResponse.IError)listener.msg).errorMsg(),false);
+				Assert.assertTrue("Null expression and null error message - internal bug",!listener.msgs.isEmpty());
+				Assert.assertTrue(((IResponse.IError)listener.msgs.get(0)).errorMsg(),false);
 			}
 			List<IResponse> errors = TypeChecker.check(solver.symTable,e,null); 
 			Iterator<IResponse> iter = errors.iterator();

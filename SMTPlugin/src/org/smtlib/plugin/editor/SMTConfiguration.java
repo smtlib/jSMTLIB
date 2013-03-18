@@ -70,6 +70,7 @@ public class SMTConfiguration extends TextSourceViewerConfiguration {
 		SMTPartitionScanner.SMT_PAREN, SMTPartitionScanner.SMT_INVALID,
 	};
 	
+	@Override
 	public IPresentationReconciler getPresentationReconciler(ISourceViewer sourceViewer) {
 		PresentationReconciler reconciler = new PresentationReconciler();
 

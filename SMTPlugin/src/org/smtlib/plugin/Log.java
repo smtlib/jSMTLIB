@@ -43,7 +43,7 @@ public class Log {
 	}
 
 	/**
-	 * Called to record an ordinary message; notifies any listeners;
+	 * Called to record an error message; notifies any listeners;
 	 * if no listeners, simply writes to System.out; adds line separator
 	 */
 	public void errorlog(String s, Throwable e) {
