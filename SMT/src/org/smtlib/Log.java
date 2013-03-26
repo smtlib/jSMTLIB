@@ -195,7 +195,7 @@ public class Log {
 	 * @param pos the position to indicate
 	 * @param prompt the prompt with which to begin each line
 	 * @param smtConfig the current configuration
-	 * @return
+	 * @return a canonical string representation of the location
 	 */
 	// FIXME - REVIEW AND DOCUMENT more detail on what is actually produced
 	static public String locationIndication(IPos pos, String prompt, SMT.Configuration smtConfig) {
