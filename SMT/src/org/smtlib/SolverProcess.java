@@ -53,10 +53,10 @@ public class SolverProcess {
 	public /*@Nullable*/Writer log;
 	
 	/** Constructs a SolverProcess object, without actually starting the process as yet.
-	 * @param args the command-line that will launch the desired process
+	 * @param cmd the command-line that will launch the desired process
 	 * @param endMarker text that marks the end of text returned from the process, e.g. the end of the 
 	 * prompt for new input
-	 * @param log if not null, the name of a file to log communications to, for diagnostic purposes
+	 * @param logfile if not null, the name of a file to log communications to, for diagnostic purposes
 	 */
 	public SolverProcess(String[] cmd, String endMarker, /*@Nullable*/String logfile) {
 		setCmd(cmd);

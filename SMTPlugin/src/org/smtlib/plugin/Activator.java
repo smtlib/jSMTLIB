@@ -79,12 +79,26 @@ public class Activator extends AbstractUIPlugin {
 	    /** The logic file finder for the plug-in looks for a logic file with the given name:
 	     * (a) if no logic directory path is set, then it looks within the SMT plugin itself for any built-in files
 	     * (b) if a logic directory path is set, it looks there.
+	     * <P>
+	     * I would have thought that the non-plugin functionality of (a) exporting
+	     * logics directory and (b) finding the logic files on the classpath
+	     * would work - but I have not been able to make that function. Thus
+	     * we need one mechanism for finding resources inside a plug-in (this 
+	     * one - with reference to the plug-in bundle) and another mechanism
+	     * (looking on the classpath) when one is not inside a plug-in.
 	     */
 	    SMT.logicFinder = new SMT.ILogicFinder() {
 	    	@Override
 	    	public InputStream find(SMT.Configuration smtConfig, String name, IPos pos) throws java.io.IOException {
 	    		if (smtConfig == null || smtConfig.logicPath == null || smtConfig.logicPath.trim().length() ==0) {
-	    			URL url = Platform.getBundle(org.smtlib.Utils.PLUGIN_ID).getResource("logics/" + name + org.smtlib.Utils.SUFFIX);
+	    			// Note that the following logic depends on the fact that the 
+	    			// logic definition files (e.g., QF_UF.smt2) reside at the
+	    			// root of the plugin that holds the SMT application (not
+	    			// this plugin which is for the UI). They get there because
+	    			// they are copied into the bin directory as part of the
+	    			// build. The application depends on them being on the
+	    			// classpath.
+	    			URL url = Platform.getBundle(org.smtlib.Utils.PLUGIN_ID).getResource(name + org.smtlib.Utils.SUFFIX);
 	    			if (Activator.verbose) Activator.log.logln("Finding logic file " + name + " " + url);
 	    			if (url != null) {
 	    				InputStream stream =  url.openStream();

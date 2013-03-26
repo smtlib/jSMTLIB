@@ -680,10 +680,9 @@ public class SMT {
 	 * @return the ISolver object, or null if errors happened
 	 */
 	/*@Nullable*/
-	public ISolver startSolver(SMT.Configuration smtConfig, /*@NonNull*/String solvername, /*@Nullable*/String executableIn) {
+	public ISolver startSolver(SMT.Configuration smtConfig, /*@NonNull*/String solvername, /*@Nullable*/String executable) {
 		/*@NonNull*/ ISolver solver;
 		Class<? extends Object> adapterClass = null;
-		String executable = executableIn;
 		String[] command = null;
 		String adapterClassName = "";
 		
