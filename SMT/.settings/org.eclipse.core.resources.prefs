@@ -1,4 +1,4 @@
-#Fri Sep 24 22:05:24 EDT 2010
 eclipse.preferences.version=1
 encoding//src/org/smtlib/solvers/Solver_simplify.java=UTF-8
 encoding//src/org/smtlib/solvers/Solver_yices.java=UTF-8
+encoding//src/org/smtlib/solvers/Solver_yices2.java=UTF-8

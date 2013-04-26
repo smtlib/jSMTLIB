@@ -18,7 +18,7 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void checkQuantifiedTransSat() {
-		String result = "simplify".equals(solvername) || "z3_4_3".equals(solvername) ? "sat" : "unknown";
+		String result = "simplify".equals(solvername) || "z3_4_3".equals(solvername) || "yices2".equals(solvername) ? "sat" : "unknown";
 		doCommand("(set-logic AUFNIRA)");
 		doCommand("(declare_fun p () Bool)");
 		doCommand("(declare_fun q () Bool)");
@@ -47,7 +47,7 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void checkQuantifiedTransSatNT() {
-		String result = "simplify".equals(solvername) || "z3_4_3".equals(solvername) ? "sat" : "unknown";
+		String result = "simplify".equals(solvername) || "z3_4_3".equals(solvername)  || "yices2".equals(solvername) ? "sat" : "unknown";
 		doCommand("(set-logic AUFNIRA)");
 		doCommand("(declare-sort B 0)");
 		doCommand("(declare_fun p () B)");
@@ -63,6 +63,7 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void checkQuantifiedTransUnSatNT() {
+		String result = "simplify".equals(solvername) || "z3_4_3".equals(solvername) || "yices2".equals(solvername) ? "sat" : "unknown";
 		doCommand("(set-logic AUFNIRA)");
 		doCommand("(declare-sort B 0)");
 		doCommand("(declare_fun p () B)");
@@ -72,14 +73,14 @@ public class QuantTests extends LogicTests {
 		doCommand("(assert (forall ((x B)(y B)(z B)) (=> (and (f x y) (f y z)) (f x z))))");
 		doCommand("(assert (and (f p q) (f q r)))");
 		doCommand("(assert (not (f p r)))");
-		doCommand("(check-sat)","unsat");
+		doCommand("(check-sat)",result);
 		doCommand("(exit)");
 	}
 
 	@Test
 	public void checkQuantifiedTransBool() {
-		String result = "simplify".equals(solvername) || "z3_4_3".equals(solvername)? "sat" : "unknown";
-		String result2 = "simplify".equals(solvername) ? "unsat" : "unsat";
+		String result = "simplify".equals(solvername) || "z3_4_3".equals(solvername) || "yices2".equals(solvername)? "sat" : "unknown";
+		String result2 = "unsat";
 		doCommand("(set-logic AUFNIRA)");
 		doCommand("(declare_fun p () Bool)");
 		doCommand("(declare_fun q () Bool)");
@@ -107,35 +108,39 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void existsIntUnSat() {
+		String result = "unsat";
 		doCommand("(set-logic AUFNIRA)");
 		doCommand("(assert (exists ((x Int)) (and (<= 4 x) (<= x 3))  ))");
-		doCommand("(check-sat)","unsat");
+		doCommand("(check-sat)",result);
 		doCommand("(exit)");
 	}
 
  
 	@Test
 	public void forallBoolUnSat() {
+		String result = "unsat";
 		doCommand("(set-logic AUFNIRA)");
 		doCommand("(assert (forall ((q Bool)) (not q)))");
-		doCommand("(check-sat)",solvername.equals("z3_4_3") ? "unsat" : "unknown");
+		doCommand("(check-sat)",result);
 		doCommand("(exit)");
 	}
 
 	@Test
 	public void forallBoolSat2() {
+		String result = "sat";
 		doCommand("(set-logic AUFNIRA)");
 		doCommand("(declare-fun p () Bool)");
 		doCommand("(assert (not (forall ((q Bool)) (not q))))"); // true
-		doCommand("(check-sat)","sat");
+		doCommand("(check-sat)",result);
 		doCommand("(exit)");
 	}
 
 	@Test
 	public void forallBoolSat() {
+		String result = "sat";
 		doCommand("(set-logic AUFNIRA)");
 		doCommand("(assert (forall ((q Bool)) (or q (not q))))");
-		doCommand("(check-sat)","sat");
+		doCommand("(check-sat)",result);
 		doCommand("(exit)");
 	}
 
