@@ -18,6 +18,7 @@ public class SatChecks extends LogicTests {
 
 	@Test
 	public void checkTransSat() {
+		String result = "sat";
 		doCommand("(set-logic QF_UF)");
 		doCommand("(declare_fun x () Bool)");
 		doCommand("(declare_fun y () Bool)");
@@ -25,12 +26,13 @@ public class SatChecks extends LogicTests {
 		doCommand("(assert (and (=> x y) (=> y z)))");
 		doCommand("(assert x)");
 		doCommand("(assert z)");
-		doCommand("(check-sat)","sat");
+		doCommand("(check-sat)",result);
 		doCommand("(exit)");
 	}
 
 	@Test
 	public void checkTransUnsat() {
+		String result = "unsat";
 		doCommand("(set-logic QF_UF)");
 		doCommand("(declare_fun x () Bool)");
 		doCommand("(declare_fun y () Bool)");
@@ -38,7 +40,7 @@ public class SatChecks extends LogicTests {
 		doCommand("(assert (and (=> x y) (=> y z)))");
 		doCommand("(assert x)");
 		doCommand("(assert (not z))");
-		doCommand("(check-sat)","unsat");
+		doCommand("(check-sat)",result);
 		doCommand("(exit)");
 	}
 

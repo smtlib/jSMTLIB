@@ -11,6 +11,7 @@ import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IPos.IPosable;
+import org.smtlib.sexpr.ISexpr.ISeq;
 
 /** This interface represents responses that can be received from SMT-LIB commands. */
 public interface IResponse extends IAccept {

@@ -63,9 +63,9 @@ public interface IExpr extends IAccept, IPosable {
 		//@ requires bindings.size() > 0;
 		ILet let(List<IBinding> bindings, IExpr e);
 		/** Creates a binding for a Let expression */
-		IBinding binding(ISymbol.ILetParameter symbol, IExpr expr);
+		IBinding binding(ISymbol symbol, IExpr expr);
 		/** Creates a parameter declaration */
-		IDeclaration declaration(ISymbol.IParameter symbol, ISort sort);
+		IDeclaration declaration(ISymbol symbol, ISort sort);
 		/** Creates a Forall expression */
 		//@ requires params.size() > 0;
 		IForall forall(List<IDeclaration> params, IExpr e);
@@ -118,8 +118,8 @@ public interface IExpr extends IAccept, IPosable {
 		//@ pure
 		String toString();
 		
-		static public interface IParameter extends ISymbol {}
-		static public interface ILetParameter extends ISymbol {}
+//		static public interface IParameter extends ISymbol {}
+//		static public interface ILetParameter extends ISymbol {}
 	}
 	
 	/** This interface represents SMT-LIB attribute and infoflag names. */
@@ -261,13 +261,13 @@ public interface IExpr extends IAccept, IPosable {
 	
 	/** This interface represents a declaration of a parameter and its sort */
 	static public interface IDeclaration extends IAccept, IPosable {
-		ISymbol.IParameter parameter();
+		ISymbol parameter();
 		ISort sort();
 	}
 	
 	/** This interface represents a binding of a parameter and an expression */
 	static public interface IBinding extends IAccept, IPosable {
-		ISymbol.ILetParameter parameter();
+		ISymbol parameter();
 		IExpr expr();
 	}
 	

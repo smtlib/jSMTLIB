@@ -27,23 +27,24 @@ public class FileTests  extends LogicTests {
     	File[] files = f.listFiles();
     	for (File ff: files) { 
     		if (ff.getName().endsWith(".tst")) {
-    			data.add(new String[]{"test",ff.getName()}); 
-    			data.add(new String[]{"simplify",ff.getName()}); 
-    			if (
-    					!ff.getName().equals("ok_regularOutput.tst") &&
-    					!ff.getName().equals("err_bv2.tst") &&
-    					!ff.getName().equals("err_bv.tst") &&
-    					!ff.getName().equals("ok_bv2.tst") 
-    					) {
-    				data.add(new String[]{"z3_4_3",ff.getName()}); // FIXME - z3 crashes or hangs or is non-deterministic 
-    			}
-    			if (
-    					!ff.getName().equals("err_namedExpr2.tst")
-    					) {
-    				data.add(new String[]{"z3_2_11",ff.getName()}); // FIXME - z3 crashes 
-    			}
-    			data.add(new String[]{"cvc",ff.getName()}); 
-    			data.add(new String[]{"yices",ff.getName()});
+//    			data.add(new String[]{"test",ff.getName()}); 
+//    			data.add(new String[]{"simplify",ff.getName()}); 
+//    			if (
+//    					!ff.getName().equals("ok_regularOutput.tst") &&
+//    					!ff.getName().equals("err_bv2.tst") &&
+//    					!ff.getName().equals("err_bv.tst") &&
+//    					!ff.getName().equals("ok_bv2.tst") 
+//    					) {
+//    				data.add(new String[]{"z3_4_3",ff.getName()}); // FIXME - z3 crashes or hangs or is non-deterministic 
+//    			}
+//    			if (
+//    					!ff.getName().equals("err_namedExpr2.tst")
+//    					) {
+//    				data.add(new String[]{"z3_2_11",ff.getName()}); // FIXME - z3 crashes 
+//    			}
+//    			data.add(new String[]{"cvc",ff.getName()}); 
+//    			data.add(new String[]{"yices",ff.getName()});
+    			data.add(new String[]{"yices2",ff.getName()});
     		}
     	}
 //    	data.clear();

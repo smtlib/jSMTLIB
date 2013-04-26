@@ -316,16 +316,16 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public boolean isError() { return false; }
 		
-		// FIXME - do we want these?
-		public static class Parameter extends Symbol implements IParameter {
-			public Parameter(ISymbol s) { super(s.toString()); pos = s.pos(); }
-		}
-
-		public static class LetParameter extends Symbol implements ILetParameter {
-
-
-			public LetParameter(ISymbol s) { super(s.toString()); pos = s.pos();  }
-		}
+//		// FIXME - do we want these?
+//		public static class Parameter extends Symbol implements IParameter {
+//			public Parameter(ISymbol s) { super(s.toString()); pos = s.pos(); }
+//		}
+//
+//		public static class LetParameter extends Symbol implements ILetParameter {
+//
+//
+//			public LetParameter(ISymbol s) { super(s.toString()); pos = s.pos();  }
+//		}
 
 	}
 	
@@ -505,16 +505,16 @@ public abstract class SMTExpr implements IExpr {
 	}
 
 	static public class Declaration extends Pos.Posable implements IDeclaration {
-		ISymbol.IParameter parameter;
+		ISymbol parameter;
 		ISort sort;
 		
-		public Declaration(ISymbol.IParameter parameter, ISort sort) {
+		public Declaration(ISymbol parameter, ISort sort) {
 			this.parameter = parameter;
 			this.sort = sort;
 		}
 		
 		@Override
-		public ISymbol.IParameter parameter() { return parameter; }
+		public ISymbol parameter() { return parameter; }
 		
 		@Override
 		public ISort sort() { return sort; }
@@ -529,16 +529,16 @@ public abstract class SMTExpr implements IExpr {
 	}
 
 	static public class Binding extends Pos.Posable implements IBinding {
-		ISymbol.ILetParameter parameter;
+		ISymbol parameter;
 		IExpr expr;
 		
-		public Binding(ISymbol.ILetParameter parameter, IExpr expr) {
+		public Binding(ISymbol parameter, IExpr expr) {
 			this.parameter = parameter;
 			this.expr = expr;
 		}
 		
 		@Override
-		public ISymbol.ILetParameter parameter() { return parameter; }
+		public ISymbol parameter() { return parameter; }
 		
 		@Override
 		public IExpr expr() { return expr; }

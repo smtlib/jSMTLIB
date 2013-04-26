@@ -35,7 +35,6 @@ import org.smtlib.IExpr.IParameterizedIdentifier;
 import org.smtlib.IExpr.IQualifiedIdentifier;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
-import org.smtlib.IExpr.ISymbol.ILetParameter;
 import org.smtlib.IPos.IPosable;
 import org.smtlib.ISort.IApplication;
 import org.smtlib.ISort.IParameter;
@@ -238,16 +237,16 @@ public class Factory implements IExpr.IFactory, ISort.IFactory {
 	}
 
 	@Override
-	public IBinding binding(ILetParameter symbol, IExpr expr) {
+	public IBinding binding(ISymbol symbol, IExpr expr) {
 		return new Binding(symbol,expr);
 	}
 
 	@Override
-	public IDeclaration declaration(org.smtlib.IExpr.ISymbol.IParameter symbol,
+	public IDeclaration declaration(org.smtlib.IExpr.ISymbol symbol,
 			ISort sort) {
 		return new Declaration(symbol,sort);
 	}
-
+	
 	@Override
 	public IForall forall(List<IDeclaration> params, IExpr e) {
 		return new Forall(params,e);

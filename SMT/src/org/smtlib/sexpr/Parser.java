@@ -562,8 +562,8 @@ public class Parser extends Lexer implements IParser {
 		ISort sort = sym == null ? null : parseSort(null);
 		ILexToken rp = sort == null ? null : parseRP();
 		if (rp == null) return null;
-		ISymbol.IParameter p = new Symbol.Parameter(sym); // FIXME - use a factory
-		return setPos(smtConfig.exprFactory.declaration(p,sort), pos(lp.pos(), rp.pos()));
+		//ISymbol.IParameter p = new Symbol.Parameter(sym); // FIXME - use a factory
+		return setPos(smtConfig.exprFactory.declaration(sym,sort), pos(lp.pos(), rp.pos()));
 	}
 
 	/** Parses a binding "(id expression)", returning null with error messages if an error occurs */
@@ -574,8 +574,8 @@ public class Parser extends Lexer implements IParser {
 		IExpr expr = sym == null ? null : parseExpr();
 		ILexToken rp = expr == null ? null : parseRP();
 		if (rp == null) return null;
-		ISymbol.ILetParameter p = new Symbol.LetParameter(sym); // FIXME - use a factory
-		return setPos(smtConfig.exprFactory.binding(p,expr), pos(lp.pos(), rp.pos()));
+		//ISymbol.ILetParameter p = new Symbol.LetParameter(sym); // FIXME - use a factory
+		return setPos(smtConfig.exprFactory.binding(sym,expr), pos(lp.pos(), rp.pos()));
 	}
 
 	/** Parses a symbol, returning null with messages and not advancing the parser if an error occurs */

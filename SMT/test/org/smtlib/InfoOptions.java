@@ -41,7 +41,7 @@ public class InfoOptions  extends LogicTests {
 		checkGetInfo(":authors",
 				(solvername.equals("test") ? "David R. Cok"
 				: solvername.equals("simplify") ? "David Detlefs and Greg Nelson and James B. Saxe"
-				: solvername.equals("yices") ? "SRI"
+				: solvername.startsWith("yices") ? "SRI"
 				: solvername.equals("cvc") ? "Clark Barrett, Cesare Tinelli, and others"
 				: solvername.equals("cvc4") ? null // Long text that we don't check // TODO
 				: solvername.startsWith("z3") ? "Leonardo de Moura and Nikolaj Bjorner"
@@ -55,6 +55,7 @@ public class InfoOptions  extends LogicTests {
 				(solvername.equals("test") ? "0.0"
 				: solvername.equals("simplify") ? "1.5.4"
 				: solvername.equals("yices") ? "1.0.28"
+				: solvername.equals("yices2") ? "2.1"
 				: solvername.equals("cvc") ? "2.2"
 				: solvername.equals("cvc4") ? "0.0prerelease"
 				: solvername.equals("z3_4_3") ? "4.3"
@@ -69,6 +70,7 @@ public class InfoOptions  extends LogicTests {
 						solvername.equals("test") ? "test"
 						: solvername.equals("simplify") ? "simplify"
 						: solvername.equals("yices") ? "yices"
+						: solvername.equals("yices2") ? "yices2"
 						: solvername.equals("cvc") ? "CVC3"
 						: solvername.equals("cvc4") ? "cvc4"
 						: solvername.equals("z3_4_3") ? "z3-4.3"
