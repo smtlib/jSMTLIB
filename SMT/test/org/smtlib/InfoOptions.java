@@ -165,7 +165,7 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceModels() {
-		boolean support = isTest || solvername.startsWith("z3") || "cvc".equals(solvername);
+		boolean support = isTest || solvername.startsWith("z3") || "cvc".equals(solvername) || "yices2".equals(solvername);
 		doCommand("(set-option :produce-models true)", support? "success" : "unsupported");
 		doCommand("(get-option :produce-models)", support? "true" :  "false");
 		doCommand("(set-option :produce-models false)", support? "success" : "unsupported");
@@ -196,9 +196,10 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceUnsatCores() {
-		doCommand("(set-option :produce-unsat-cores true)",isTest? "success" :  "unsupported");
-		doCommand("(get-option :produce-unsat-cores)", isTest? "true" : "false");
-		doCommand("(set-option :produce-unsat-cores false)",isTest? "success" :  "unsupported");
+		boolean supported = isTest || solvername.equals("yices2");
+		doCommand("(set-option :produce-unsat-cores true)",supported ? "success" :  "unsupported");
+		doCommand("(get-option :produce-unsat-cores)", supported? "true" : "false");
+		doCommand("(set-option :produce-unsat-cores false)",supported? "success" :  "unsupported");
 		doCommand("(get-option :produce-unsat-cores)", "false");
 	}
 	

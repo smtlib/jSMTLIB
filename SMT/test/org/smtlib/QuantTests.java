@@ -63,7 +63,7 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void checkQuantifiedTransUnSatNT() {
-		String result = "simplify".equals(solvername) || "z3_4_3".equals(solvername) || "yices2".equals(solvername) ? "sat" : "unknown";
+		String result = "test".equals(solvername) ? "unknown" : "unsat";
 		doCommand("(set-logic AUFNIRA)");
 		doCommand("(declare-sort B 0)");
 		doCommand("(declare_fun p () B)");
@@ -118,7 +118,7 @@ public class QuantTests extends LogicTests {
  
 	@Test
 	public void forallBoolUnSat() {
-		String result = "unsat";
+		String result = solvername.equals("z3_2_11") || solvername.equals("yices") ? "unknwon" : "unsat";
 		doCommand("(set-logic AUFNIRA)");
 		doCommand("(assert (forall ((q Bool)) (not q)))");
 		doCommand("(check-sat)",result);
