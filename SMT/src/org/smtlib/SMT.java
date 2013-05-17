@@ -449,10 +449,10 @@ public class SMT {
 		int retcode = 0;
 		try {
 			IResponse result = null;
-			IResponse exit = smtConfig.responseFactory.success_exit();
-			while (result != exit && !p.isEOD()) {
+			ICommand command = null;
+			while (!(command instanceof ICommand.Iexit) && !p.isEOD()) {
 				try {
-					ICommand command = p.parseCommand();
+					command = p.parseCommand();
 					if (command == null) {
 						retcode = 1;
 						if (abortMode) {
@@ -488,7 +488,7 @@ public class SMT {
 							}
 							p.abortLine();
 						}
-					} else if (!result.isOK() || "true".equals(solver.get_option(printSuccessKW).toString())) { // FIXME 
+					} else if (!result.toString().isEmpty()) { // FIXME - is there a more abstract way to do this?
 						smtConfig.log.logOut(result);
 					}
 					lastResponse = result;

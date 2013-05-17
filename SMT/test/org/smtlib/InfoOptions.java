@@ -57,7 +57,7 @@ public class InfoOptions  extends LogicTests {
 				: solvername.equals("yices") ? "1.0.28"
 				: solvername.equals("yices2") ? "2.1"
 				: solvername.equals("cvc") ? "2.2"
-				: solvername.equals("cvc4") ? "0.0prerelease"
+				: solvername.equals("cvc4") ? "1.2"
 				: solvername.equals("z3_4_3") ? "4.3"
 				: solvername.equals("z3_2_11") ? "2.11"
 				: "???" )
@@ -88,12 +88,16 @@ public class InfoOptions  extends LogicTests {
 
 	@Test
 	public void checkSetName() {
-		doCommand("(set-info :name \"xx\")","(error \"Setting the value of a pre-defined keyword is not permitted: :name\")");
+		doCommand("(set-info :name \"xx\")",
+				solvername.equals("cvc4") ? "success"
+				: "(error \"Setting the value of a pre-defined keyword is not permitted: :name\")");
 	}
 	
 	@Test
 	public void checkSetAuthors() {
-		doCommand("(set-info :authors \"xx\")","(error \"Setting the value of a pre-defined keyword is not permitted: :authors\")");
+		doCommand("(set-info :authors \"xx\")",
+				solvername.equals("cvc4")? "unsupported"
+						: "(error \"Setting the value of a pre-defined keyword is not permitted: :authors\")");
 	}
 	
 	@Test
@@ -105,16 +109,21 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetPrintSuccess() {
-		doCommand("(set-option :print-success false)", "success");
-		doCommand("(get-option :print-success)", "false");
-		doCommand("(set-option :print-success true)", "success");
-		doCommand("(get-option :print-success)", "true");
+		doCommand("(set-option :print-success false)", 
+				"");
+		doCommand("(get-option :print-success)", 
+				"true");
+		doCommand("(set-option :print-success true)", 
+				"success");
+		doCommand("(get-option :print-success)", 
+				"true");
 	}
 	
 	@Test
 	public void checkRegularOutput() {
 		doCommand("(get-option :regular-output-channel)", 
-				"\"stdout\""
+				solvername.equals("cvc4")? "unsupported"
+						: "\"stdout\""
 				);
 	}
 	
@@ -129,16 +138,20 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkInteractiveMode() {
 		doCommand("(get-option :interactive-mode)", 
-				"false"
+				"cvc4".equals(solvername) ? "true" : "false"
 				);
 	}
 	
 	@Test
 	public void checkSetInteractiveMode() {
-		doCommand("(set-option :interactive-mode true)", "success");
-		doCommand("(get-option :interactive-mode)", "true");
-		doCommand("(set-option :interactive-mode false)", "success");
-		doCommand("(get-option :interactive-mode)", "false");
+		doCommand("(set-option :interactive-mode true)", 
+				"success");
+		doCommand("(get-option :interactive-mode)", 
+				"true");
+		doCommand("(set-option :interactive-mode false)", 
+				"success");
+		doCommand("(get-option :interactive-mode)", 
+				"false");
 	}
 	
 	@Test
@@ -150,10 +163,19 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceProofs() {
-		doCommand("(set-option :produce-proofs true)", isTest? "success" :  "unsupported");
-		doCommand("(get-option :produce-proofs)", isTest? "true" :  "false");
-		doCommand("(set-option :produce-proofs false)", isTest? "success" :  "unsupported");
-		doCommand("(get-option :produce-proofs)", "false");
+		doCommand("(set-option :produce-proofs true)", 
+				isTest? "success" 
+						: solvername.equals("cvc4")? "(error \"Error in option parsing: option `produce-proofs' requires a proofs-enabled build of CVC4; this binary was not built with proof support\")"
+						:  "unsupported");
+		doCommand("(get-option :produce-proofs)", 
+				isTest? "true"
+				:  "false");
+		doCommand("(set-option :produce-proofs false)", 
+				isTest? "success" 
+						: solvername.equals("cvc4")? "success"
+						:  "unsupported");
+		doCommand("(get-option :produce-proofs)", 
+				"false");
 	}
 	
 	@Test
@@ -165,11 +187,18 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceModels() {
-		boolean support = isTest || solvername.startsWith("z3") || "cvc".equals(solvername) || "yices2".equals(solvername);
-		doCommand("(set-option :produce-models true)", support? "success" : "unsupported");
-		doCommand("(get-option :produce-models)", support? "true" :  "false");
-		doCommand("(set-option :produce-models false)", support? "success" : "unsupported");
-		doCommand("(get-option :produce-models)", "false");
+		boolean support = isTest || solvername.startsWith("z3") || "cvc".equals(solvername) || "cvc4".equals(solvername) || "yices2".equals(solvername);
+		doCommand("(set-option :produce-models true)", 
+				support? "success" 
+						: "unsupported");
+		doCommand("(get-option :produce-models)", 
+				support? "true" 
+						:  "false");
+		doCommand("(set-option :produce-models false)", 
+				support? "success" 
+						: "unsupported");
+		doCommand("(get-option :produce-models)", 
+				"false");
 	}
 	
 	@Test
@@ -181,10 +210,19 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceAssignments() {
-		doCommand("(set-option :produce-assignments true)",isTest? "success" : "unsupported");
-		doCommand("(get-option :produce-assignments)", isTest? "true" :"false");
-		doCommand("(set-option :produce-assignments false)",isTest? "success" : "unsupported");
-		doCommand("(get-option :produce-assignments)", "false");
+		boolean supported = isTest || solvername.equals("cvc4");
+		
+		doCommand("(set-option :produce-assignments true)",
+					supported? "success" 
+						: "unsupported");
+		doCommand("(get-option :produce-assignments)", 
+				supported? "true" 
+						:"false");
+		doCommand("(set-option :produce-assignments false)",
+						supported? "success" 
+						: "unsupported");
+		doCommand("(get-option :produce-assignments)", 
+				"false");
 	}
 	
 	@Test
@@ -197,10 +235,18 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkSetProduceUnsatCores() {
 		boolean supported = isTest || solvername.equals("yices2");
-		doCommand("(set-option :produce-unsat-cores true)",supported ? "success" :  "unsupported");
-		doCommand("(get-option :produce-unsat-cores)", supported? "true" : "false");
-		doCommand("(set-option :produce-unsat-cores false)",supported? "success" :  "unsupported");
-		doCommand("(get-option :produce-unsat-cores)", "false");
+		doCommand("(set-option :produce-unsat-cores true)",
+				supported ? "success" 
+						:  "unsupported");
+		doCommand("(get-option :produce-unsat-cores)", 
+				supported? "true" 
+						: "false");
+		doCommand("(set-option :produce-unsat-cores false)",
+				supported? "success" 
+						: solvername.equals("cvc4") ? "success"
+						:  "unsupported");
+		doCommand("(get-option :produce-unsat-cores)", 
+				"false");
 	}
 	
 	@Test
@@ -213,9 +259,11 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkSetExpandDefinitions() {
 		doCommand("(set-option :expand-definitions true)", "success");
-		doCommand("(get-option :expand-definitions)", "true");
+		doCommand("(get-option :expand-definitions)", 
+				"true");
 		doCommand("(set-option :expand-definitions false)", "success");
-		doCommand("(get-option :expand-definitions)", "false");
+		doCommand("(get-option :expand-definitions)", 
+				"false");
 	}
 	
 	@Test
@@ -228,9 +276,13 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkSetRandomSeed() {
 		doCommand("(set-option :random-seed 1)", "success");
-		doCommand("(get-option :random-seed)", "1");
+		doCommand("(get-option :random-seed)", 
+				"cvc4".equals(solvername) ? "0" :
+				"1");
 		doCommand("(set-option :random-seed 2)", "success");
-		doCommand("(get-option :random-seed)", "2");
+		doCommand("(get-option :random-seed)", 
+				"cvc4".equals(solvername) ? "0" :
+				"2");
 	}
 	
 	@Test
@@ -242,10 +294,14 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetVerbosity() {
-		doCommand("(set-option :verbosity 1)", "success");
-		doCommand("(get-option :verbosity)", "1");
-		doCommand("(set-option :verbosity 2)", "success");
-		doCommand("(get-option :verbosity)", "2");
+		doCommand("(set-option :verbosity 1)", 
+				"success");
+		doCommand("(get-option :verbosity)", 
+				"1");
+		doCommand("(set-option :verbosity 2)", 
+				"success");
+		doCommand("(get-option :verbosity)", 
+				"2");
 	}
 }
 

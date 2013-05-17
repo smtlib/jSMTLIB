@@ -26,8 +26,8 @@ public class Response {
 	
 	final static String ERROR = "error";
 	final static String OK = "success";
+	final static public SMTExpr.Symbol EMPTY = new SMTExpr.Symbol("");
 	final static public SMTExpr.Symbol SUCCESS = new SMTExpr.Symbol(OK);
-	final static public SMTExpr.Symbol SUCCESS_EXIT = new SMTExpr.Symbol(OK);
 	final static public SMTExpr.Symbol UNSUPPORTED = new SMTExpr.Symbol("unsupported");
 	final static public SMTExpr.Symbol UNKNOWN = new SMTExpr.Symbol("unknown");
 	final static public SMTExpr.Symbol SAT = new SMTExpr.Symbol("sat");
@@ -51,6 +51,7 @@ public class Response {
 	
 	/** Implements the IResponse.IFactory interface */
 	static public class Factory implements IResponse.IFactory {
+		public boolean printSuccess = true;
 		
 		SMT.Configuration smtConfig;
 		public Factory(SMT.Configuration smtConfig) { this.smtConfig = smtConfig; }
@@ -62,10 +63,10 @@ public class Response {
 		public IError error(String msg, /*@Nullable*//*@ReadOnly*/ IPos pos) { return new Error(msg,pos); }
 
 		@Override
-		public IResponse success() { return SUCCESS; }
+		public IResponse empty() { return EMPTY; }
 
 		@Override
-		public IResponse success_exit() { return SUCCESS_EXIT; }
+		public IResponse success() { return printSuccess ? SUCCESS : EMPTY; }
 
 		@Override
 		public IResponse unsupported() { return UNSUPPORTED; }

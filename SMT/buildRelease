@@ -21,4 +21,9 @@ rm jSMTLIBUserGuide.pdf
 tar tvf jSMTLIB.tar
 rm jSMTLIB.tar.gz
 gzip jSMTLIB.tar
+
 echo Build complete
+
+if [ -e ../../OpenJML ] ; then cp jSMTLIB.jar ../../OpenJML ; else echo Copy failed ; fi
+if [ -e ../../OpenJMLUI ] ; then cp jSMTLIB.jar ../../OpenJMLUI ; else echo Copy failed; fi
+echo Copies complete

@@ -1,4 +1,4 @@
-; get-assignment after an assertionset command
+; get-assignment after an assertion set command
 (set-option :produce-assignments true)
 (set-logic QF_UF)
 (assert true)

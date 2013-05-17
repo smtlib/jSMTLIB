@@ -946,11 +946,14 @@ public class Parser extends Lexer implements IParser {
 	public /*@Nullable*/ IResponse parseResponse(String response) throws ParserException {
 		IResponse.IFactory f = smtConfig.responseFactory;
 		response = response.trim();
+		if ("".equals(response)) return f.empty();
 		if ("success".equals(response)) return f.success();
 		if ("sat".equals(response)) return f.sat();
 		if ("unsat".equals(response)) return f.unsat();
 		if ("unknown".equals(response)) return f.unknown();
 		if ("unsupported".equals(response)) return f.unsupported();
+		if ("true".equals(response)) return smtConfig.exprFactory.symbol("true");
+		if ("false".equals(response)) return smtConfig.exprFactory.symbol("false");
 		// FIXME - more - iterate over a list?
 		
 		Sexpr sexpr = parseSexpr();
@@ -960,7 +963,7 @@ public class Parser extends Lexer implements IParser {
 				return f.error(((IStringLiteral)list.get(1)).value());
 			}
 			if (list.get(0) instanceof IKeyword) {
-	            IAttribute<?> attr = smtConfig.exprFactory.attribute((IKeyword)list.get(0),(IStringLiteral)list.get(1));
+	            IAttribute<?> attr = smtConfig.exprFactory.attribute((IKeyword)list.get(0),list.get(1));
 	            return f.get_info_response(attr);
 			}
 		}

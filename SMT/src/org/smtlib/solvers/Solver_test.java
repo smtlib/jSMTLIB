@@ -21,6 +21,7 @@ import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IPos.IPosable;
+import org.smtlib.impl.Response;
 
 /** This class is a Solver implementation that simply type-checks formulae and checks that
  * commands are used correctly; it does not do any proving.
@@ -86,7 +87,7 @@ public class Solver_test implements ISolver {
 	@Override
 	public IResponse exit() {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#exit");
-		return smtConfig.responseFactory.success_exit();
+		return smtConfig.responseFactory.success();
 	}
 
 	@Override
@@ -262,6 +263,8 @@ public class Solver_test implements ISolver {
 			if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
 				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
 			}
+			// FIXME - make this more abstract
+			((Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
 		}
 		if (logicSet && Utils.INTERACTIVE_MODE.equals(option)) {
 			return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");

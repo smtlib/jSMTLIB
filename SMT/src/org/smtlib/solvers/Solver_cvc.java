@@ -85,7 +85,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 		super.exit();
 		solverProcess.exit();
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("Ended CVC ");
-		return smtConfig.responseFactory.success_exit();
+		return smtConfig.responseFactory.success();
 	}
 
 

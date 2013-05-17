@@ -20,9 +20,9 @@ public class SatChecks extends LogicTests {
 	public void checkTransSat() {
 		String result = "sat";
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (and (=> x y) (=> y z)))");
 		doCommand("(assert x)");
 		doCommand("(assert z)");
@@ -34,9 +34,9 @@ public class SatChecks extends LogicTests {
 	public void checkTransUnsat() {
 		String result = "unsat";
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (and (=> x y) (=> y z)))");
 		doCommand("(assert x)");
 		doCommand("(assert (not z))");
@@ -47,9 +47,9 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void checkXorSat() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (xor x y))");
 		doCommand("(assert x)");
 		doCommand("(assert (not y))");
@@ -60,9 +60,9 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void checkXorUnsat() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (xor x y))");
 		doCommand("(assert x)");
 		doCommand("(assert y)");
@@ -73,9 +73,9 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void checkXor3UnSat() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (xor x y z))");
 		doCommand("(assert x)");
 		doCommand("(assert (not y))");
@@ -87,9 +87,9 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void checkXor3sat() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (xor x y z))");
 		doCommand("(assert x)");
 		doCommand("(assert (not y))");
@@ -101,9 +101,9 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void checkLIASat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
-		doCommand("(declare_fun z () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
+		doCommand("(declare-fun z () Int)");
 		doCommand("(assert (= x (+ y 1)))");
 		doCommand("(assert (= z (- y 2)))");
 		doCommand("(assert (= x 4))");
@@ -115,9 +115,9 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void checkLIAUnsat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
-		doCommand("(declare_fun z () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
+		doCommand("(declare-fun z () Int)");
 		doCommand("(assert (= x (+ y 1)))");
 		doCommand("(assert (= z (- y 2)))");
 		doCommand("(assert (= x 4))");
@@ -129,10 +129,10 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void checkLIADistinct3Sat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
-		doCommand("(declare_fun z () Int)");
-		doCommand("(declare_fun m () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
+		doCommand("(declare-fun z () Int)");
+		doCommand("(declare-fun m () Int)");
 		doCommand("(assert (and (> x 1) (> m x)))");
 		doCommand("(assert (and (> y 1) (> m y)))");
 		doCommand("(assert (and (> z 1) (> m z)))");
@@ -145,9 +145,9 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void checkLIADistinctUnSat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
-		doCommand("(declare_fun z () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
+		doCommand("(declare-fun z () Int)");
 		doCommand("(assert (= x (+ y 1)))");
 		doCommand("(assert (= z (- y 2)))");
 		doCommand("(assert (= x 4))");
@@ -160,10 +160,10 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void checkLIADistinct3UnSat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
-		doCommand("(declare_fun z () Int)");
-		doCommand("(declare_fun m () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
+		doCommand("(declare-fun z () Int)");
+		doCommand("(declare-fun m () Int)");
 		doCommand("(assert (and (> x 1) (> m x)))");
 		doCommand("(assert (and (> y 1) (> m y)))");
 		doCommand("(assert (and (> z 1) (> m z)))");
@@ -176,10 +176,10 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void checkLIADistinct3UnSatB() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
-		doCommand("(declare_fun z () Int)");
-		doCommand("(declare_fun m () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
+		doCommand("(declare-fun z () Int)");
+		doCommand("(declare-fun m () Int)");
 		doCommand("(assert (and (> x 1) (> y x)))");
 		doCommand("(assert (and (> y 1) (> z y)))");
 		doCommand("(assert (and (> z 1) (> m z)))");
@@ -192,8 +192,8 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void add3argsSat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
 		doCommand("(assert (= x (+ 1 2 3)))");
 		doCommand("(assert (= x 6)))");
 		doCommand("(check-sat)","sat");
@@ -203,8 +203,8 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void add3argsUnSat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
 		doCommand("(assert (= x (+ 1 2 3)))");
 		doCommand("(assert (= x 7)))");
 		doCommand("(check-sat)","unsat");
@@ -214,8 +214,8 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void negativeUnSat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
 		doCommand("(assert (distinct 0 (+ x (- x))))");
 		doCommand("(check-sat)","unsat");
 		doCommand("(exit)");
@@ -224,8 +224,8 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void minus3argsSat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
 		doCommand("(assert (= x (- 3 2 1)))");
 		doCommand("(assert (= x 0)))");
 		doCommand("(check-sat)","sat");
@@ -235,8 +235,8 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void minus3argsUnSat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
 		doCommand("(assert (= x (- 8 4 2)))");
 		doCommand("(assert (= x 3)))");
 		doCommand("(check-sat)","unsat");
@@ -246,8 +246,8 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void mult3argsSat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
 		doCommand("(assert (= x (* 1 2 3)))");
 		doCommand("(assert (= x 6)))");
 		doCommand("(check-sat)","sat");
@@ -257,8 +257,8 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void mult3argsUnSat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
 		doCommand("(assert (= x (* 1 2 3)))");
 		doCommand("(assert (= x 7)))");
 		doCommand("(check-sat)","unsat");
@@ -270,8 +270,8 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void chainedLTunsat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
 		doCommand("(assert (< 1 x y 4))");
 		doCommand("(assert (= x y))");
 		doCommand("(check-sat)","unsat");
@@ -281,8 +281,8 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void chainedLTsat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
 		doCommand("(assert (< 1 x y 4))");
 		doCommand("(assert (= x 2))");
 		doCommand("(check-sat)","sat");
@@ -292,8 +292,8 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void chainedGTunsat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
 		doCommand("(assert (> 4 x y 1))");
 		doCommand("(assert (= x y))");
 		doCommand("(check-sat)","unsat");
@@ -303,8 +303,8 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void chainedGTsat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
 		doCommand("(assert (> 4 x y 1))");
 		doCommand("(assert (= x 3))");
 		doCommand("(check-sat)","sat");
@@ -314,8 +314,8 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void chainedLEunsat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
 		doCommand("(assert (<= 1 x y 4))");
 		doCommand("(assert (> x y))");
 		doCommand("(check-sat)","unsat");
@@ -325,8 +325,8 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void chainedLEsat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
 		doCommand("(assert (<= 1 x y 4))");
 		doCommand("(assert (= x 2))");
 		doCommand("(check-sat)","sat");
@@ -336,8 +336,8 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void chainedGEunsat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
 		doCommand("(assert (>= 4 x y 1))");
 		doCommand("(assert (< x y))");
 		doCommand("(check-sat)","unsat");
@@ -347,8 +347,8 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void chainedGEsat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
 		doCommand("(assert (>= 4 x y 1))");
 		doCommand("(assert (= x 3))");
 		doCommand("(check-sat)","sat");
@@ -358,9 +358,9 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void chainedEQunsat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
-		doCommand("(declare_fun z () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
+		doCommand("(declare-fun z () Int)");
 		doCommand("(assert (= z x y ))");
 		doCommand("(assert (distinct z y))");
 		doCommand("(check-sat)","unsat");
@@ -370,9 +370,9 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void chainedEQsat() {
 		doCommand("(set-logic QF_LIA)");
-		doCommand("(declare_fun x () Int)");
-		doCommand("(declare_fun y () Int)");
-		doCommand("(declare_fun z () Int)");
+		doCommand("(declare-fun x () Int)");
+		doCommand("(declare-fun y () Int)");
+		doCommand("(declare-fun z () Int)");
 		doCommand("(assert (= x y z))");
 		doCommand("(assert (= x 3))");
 		doCommand("(assert (= z 3))");
@@ -384,9 +384,9 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void checkor3Sat() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (or x y z))");
 		doCommand("(assert x)");
 		doCommand("(assert (not y))");
@@ -398,9 +398,9 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void checkor3Unsat() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (or x y z))");
 		doCommand("(assert (not x))");
 		doCommand("(assert (not y))");
@@ -412,9 +412,9 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void checkand3Sat() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (and x y z))");
 		doCommand("(assert z)");
 		doCommand("(check-sat)","sat");
@@ -424,9 +424,9 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void checkand3Unsat() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (and x y z))");
 		doCommand("(assert (not z))");
 		doCommand("(check-sat)","unsat");
@@ -436,9 +436,9 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void impliesIsRightAssoc() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (=> x y z))");
 		doCommand("(assert (not x))");
 		doCommand("(assert (not z))");
@@ -449,9 +449,9 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void impliesIsRightAssoc2() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (=> x y z))");
 		doCommand("(assert (not y))");
 		doCommand("(assert x)");
@@ -462,9 +462,9 @@ public class SatChecks extends LogicTests {
 	@Test
 	public void impliesIsRightAssoc3() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (=> x y z))");
 		doCommand("(assert (not z))");
 		doCommand("(assert x)");
@@ -488,9 +488,9 @@ FFF		F				T				T *
 	@Test
 	public void distinctBool() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (distinct x y ))");
 		doCommand("(assert x)");
 		doCommand("(assert y)");
@@ -501,9 +501,9 @@ FFF		F				T				T *
 	@Test
 	public void distinctBoolSat() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (distinct x y ))");
 		doCommand("(assert x)");
 		doCommand("(assert (not y))");
@@ -514,9 +514,9 @@ FFF		F				T				T *
 	@Test
 	public void distinctBool3() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (distinct x y z))");
 		doCommand("(check-sat)","unsat");
 		doCommand("(exit)");
@@ -525,9 +525,9 @@ FFF		F				T				T *
 	@Test
 	public void eqBool() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (= x y ))");
 		doCommand("(assert x)");
 		doCommand("(assert (not y))");
@@ -538,9 +538,9 @@ FFF		F				T				T *
 	@Test
 	public void eqBoolSat() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (= x y ))");
 		doCommand("(assert (not x))");
 		doCommand("(assert (not y))");
@@ -551,9 +551,9 @@ FFF		F				T				T *
 	@Test
 	public void eqBool3() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (= x y z))");
 		doCommand("(assert (not x))");
 		doCommand("(assert z)");
@@ -564,9 +564,9 @@ FFF		F				T				T *
 	@Test
 	public void eqBool3Sat() {
 		doCommand("(set-logic QF_UF)");
-		doCommand("(declare_fun x () Bool)");
-		doCommand("(declare_fun y () Bool)");
-		doCommand("(declare_fun z () Bool)");
+		doCommand("(declare-fun x () Bool)");
+		doCommand("(declare-fun y () Bool)");
+		doCommand("(declare-fun z () Bool)");
 		doCommand("(assert (= x y z))");
 		doCommand("(assert (not x))");
 		doCommand("(assert (not z))");
