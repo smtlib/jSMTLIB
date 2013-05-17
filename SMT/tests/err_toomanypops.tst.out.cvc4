@@ -1,0 +1,7 @@
+success
+success
+(pop 3)
+^^^^^^^
+(error "Parse Error: <shell>:1.5: Unknown exception
+")
+success

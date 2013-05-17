@@ -1,0 +1,6 @@
+success
+success
+(
+error
+"Cannot query the current assertion list when not in interactive mode."
+)

@@ -16,7 +16,7 @@ public class LogicTests {
     @Parameters
     public static Collection<String[]> data() {
             return Arrays.asList(new String[][] 
-                { { "test"}, { "z3_4_3" }, { "z3_2_11" }, { "yices" }, { "yices2" },  {"cvc"}, {"simplify"} } );
+                    {  { "test"}, { "z3_4_3" }, /*{ "z3_2_11" }, { "yices" },*/ { "yices2" }, {"cvc4"}, /* {"cvc"}, */{"simplify"} } );
     }
 
     String solvername;

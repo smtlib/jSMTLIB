@@ -28,6 +28,12 @@ public class FileTests  extends LogicTests {
     	for (File ff: files) { 
     		if (ff.getName().endsWith(".tst")) {
     			data.add(new String[]{"test",ff.getName()}); 
+    			if (
+    					!ff.getName().equals("err_getValueTypes.tst") // Crashes CVC4
+    					&& !ff.getName().equals("err_setLogic.tst")
+				) {
+    			data.add(new String[]{"cvc4",ff.getName()}); 
+    			}
     			data.add(new String[]{"simplify",ff.getName()}); 
     			if (
     					!ff.getName().equals("ok_regularOutput.tst") &&
@@ -81,7 +87,7 @@ public class FileTests  extends LogicTests {
     
 	@Test
 	public void checkFile() {
-		//System.out.println("File: " + testfile + "  Solver: " + solvername);
+		System.out.println("File: " + testfile + "  Solver: " + solvername);
 		String script = readFile("tests/" + testfile);
 		String outname = "tests/" + testfile + ".out";
 		String altname = outname + "." + solvername;

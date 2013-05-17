@@ -311,7 +311,7 @@ public abstract class SMTExpr implements IExpr {
 		}
 		
 		@Override
-		public boolean isOK() { return value.equals(Response.OK); }
+		public boolean isOK() { return value.equals(Response.OK) || value.equals(Response.EMPTY); }
 
 		@Override
 		public boolean isError() { return false; }

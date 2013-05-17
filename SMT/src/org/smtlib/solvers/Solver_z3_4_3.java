@@ -117,8 +117,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			solverProcess.sendAndListen("(exit)\n");
 			solverProcess.exit();
 			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Ended Z3 ");
-			//process = null;
-			return smtConfig.responseFactory.success_exit();
+			return smtConfig.responseFactory.success();
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
 		}

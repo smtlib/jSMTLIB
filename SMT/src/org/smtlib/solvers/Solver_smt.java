@@ -169,7 +169,6 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 			solverProcess.exit();
 			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Ended SMT ");
 			solverProcess = null;
-			if (response.isOK()) return smtConfig.responseFactory.success_exit();
 			return response;
 	}
 

@@ -21,7 +21,7 @@ public class LogicsBadPath extends LogicTests {
 	@Test
 	public void testLogic() {
 		doCommand("(set-logic QF_UF)",
-				solvername.startsWith("z3") ? "success" : // FIXME
+				solvername.startsWith("z3") || solvername.startsWith("cvc4")? "success" : // FIXME
 				"(error \"No logic file found for QF_UF on path \\\"xxx\\\"\")");
 	}
 }

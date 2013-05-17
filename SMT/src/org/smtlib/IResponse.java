@@ -43,8 +43,8 @@ public interface IResponse extends IAccept {
 	public static interface IFactory {
 		IError error(String msg);
 		IError error(String msg, /*@Nullable*//*@ReadOnly*/ IPos pos);
+		IResponse empty();
 		IResponse success();
-		IResponse success_exit(); // FIXME - find another way - this is not strict SMT-LIB
 		IResponse unsupported();
 		IResponse unknown();
 		IResponse sat();
