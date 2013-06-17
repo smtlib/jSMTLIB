@@ -47,6 +47,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	protected String AUTHORS_VALUE = "Leonardo de Moura and Nikolaj Bjorner";
 	protected String VERSION_VALUE = "4.3";
 	
+
 	/** A reference to the SMT configuration */
 	protected SMT.Configuration smtConfig;
 
@@ -54,7 +55,10 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	public SMT.Configuration smt() { return smtConfig; }
 	
 	/** The command-line arguments for launching the Z3 solver */
-	protected String cmds[] = new String[]{ "", "/smt2","/in","SMTLIB2_COMPLIANT=true"}; 
+	protected String cmds[];
+	protected String cmds_win[] = new String[]{ "", "/smt2","/in","SMTLIB2_COMPLIANT=true"}; 
+	protected String cmds_mac[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true"}; 
+	protected String cmds_unix[] = new String[]{ "", "-smt2","-in"}; 
 
 	/** The object that interacts with external processes */
 	protected SolverProcess solverProcess;
@@ -71,14 +75,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	@Override
 	public /*@Nullable*/IResponse checkSatStatus() { return checkSatStatus; }
 
-	/** The number of assertions on the top assertion stack */
-	private int pushes = 0; // FIXME - not needed
-	
-	/** A stack storing the numbers of assertions in previous assertion sets */
-	private List<Integer> pushesStack = new LinkedList<Integer>();
-	{
-		pushesStack.add(0);
-	}
+	/** The number of pushes less the number of pops so far */
+	private int pushesDepth = 0;
 	
 	/** Map that keeps current values of options */
 	protected Map<String,IAttributeValue> options = new HashMap<String,IAttributeValue>();
@@ -89,6 +87,13 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	/** Creates an instance of the Z3 solver */
 	public Solver_z3_4_3(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
 		this.smtConfig = smtConfig;
+		if (isWindows) {
+			cmds = cmds_win;
+		} else if (isMac) {
+			cmds = cmds_mac;
+		} else {
+			cmds = cmds_unix;
+		}
 		cmds[0] = executable;
 		solverProcess = new SolverProcess(cmds,"\n","solver.out.z3");
 		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
@@ -178,7 +183,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	@Override
 	public IResponse assertExpr(IExpr sexpr) {
 		IResponse response;
-		if (pushesStack.size() == 0) {
+		if (pushesDepth <= 0) {
 			return smtConfig.responseFactory.error("All assertion sets have been popped from the stack");
 		}
 		if (!logicSet) {
@@ -187,7 +192,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		try {
 			String s = solverProcess.sendAndListen("(assert ",translate(sexpr),")\n");
 			response = parseResponse(s);
-			pushes++; // FIXME
 			checkSatStatus = null;
 		} catch (IVisitor.VisitorException e) {
 			return smtConfig.responseFactory.error("Failed to assert expression: " + e + " " + sexpr);
@@ -270,14 +274,11 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			return smtConfig.responseFactory.error("The logic must be set before a pop command is issued");
 		}
 		if (number < 0) throw new SMT.InternalException("Internal bug: A pop command called with a negative argument: " + number);
-		if (number >= pushesStack.size()) return smtConfig.responseFactory.error("The argument to a pop command is too large: " + number + " vs. a maximum of " + (pushesStack.size()-1));
+		if (number > pushesDepth) return smtConfig.responseFactory.error("The argument to a pop command is too large: " + number + " vs. a maximum of " + (pushesDepth));
 		if (number == 0) return smtConfig.responseFactory.success();
 		try {
 			checkSatStatus = null;
-			int n = number;
-			while (n-- > 0) {
-				pushes = pushesStack.remove(0);
-			}
+			pushesDepth -= number;
 			return parseResponse(solverProcess.sendAndListen("(pop ",new Integer(number).toString(),")\n"));
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
@@ -293,14 +294,12 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		checkSatStatus = null;
 		if (number == 0) return smtConfig.responseFactory.success();
 		try {
-			pushesStack.add(pushes);
-			int n = number;
-			while (--n > 0) {
-				pushesStack.add(0);
-			}
-			pushes = 0;
-			return parseResponse(solverProcess.sendAndListen("(push ",new Integer(number).toString(),")\n"));
-		} catch (IOException e) {
+			pushesDepth += number;
+			IResponse r = parseResponse(solverProcess.sendAndListen("(push ",new Integer(number).toString(),")\n"));
+			// FIXME - actually only see this problem on Linux
+			if (r.isError() && !isWindows) return smtConfig.responseFactory.success();
+			return r;
+		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
 		}
 	}
@@ -312,9 +311,9 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#set-logic " + logicName);
 		if (logicSet) {
 			if (!smtConfig.relax) return smtConfig.responseFactory.error("Logic is already set");
-			pop(pushesStack.size());
-			push(1);
+			pop(pushesDepth);
 		}
+		pushesDepth++;
 		logicSet = true;
 		try {
 			return parseResponse(solverProcess.sendAndListen("(set-logic ",logicName,")\n"));
