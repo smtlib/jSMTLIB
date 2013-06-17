@@ -212,7 +212,8 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 			e.head().accept(this);
 			for (IExpr a: e.args()) {
 				w.append(" ");
-				a.accept(this);
+				if (a != null) a.accept(this);
+				else w.append("???");
 			}
 			w.append(")");
 		} catch (IOException ex) {
@@ -333,6 +334,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(IScript e) throws IVisitor.VisitorException {
+		int n = 0;
 		try {
 			IStringLiteral filename = e.filename();
 			List<ICommand> commands = e.commands();
@@ -342,8 +344,10 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 				w.append("(");
 				w.append(eol);
 				for (ICommand c: commands) {
+					w.append((++n) + ": ");
 					c.accept(this);
 					w.append(eol);
+					w.flush();
 				}
 				w.append(")");
 			} else {

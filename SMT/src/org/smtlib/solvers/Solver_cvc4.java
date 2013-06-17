@@ -45,7 +45,10 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 	public SMT.Configuration smt() { return smtConfig; }
 	
 	/** The command-line arguments for launching the solver */
-	String cmds[] = { "", "--smtlib-strict","--interactive"}; 
+	protected String cmds[];
+	protected String cmds_win[] = new String[]{ "", "--smtlib-strict","--interactive"}; 
+	protected String cmds_mac[] = new String[]{ "", "--smtlib-strict","--interactive"}; 
+	protected String cmds_unix[] = new String[]{ "", "--smtlib-strict","--incremental"}; 
 
 	/** The object that interacts with external processes */
 	private SolverProcess solverProcess;
@@ -69,8 +72,17 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 	/** Creates an instance of the solver */
 	public Solver_cvc4(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
 		this.smtConfig = smtConfig;
+		String prompt = "CVC4> ";
+		if (isWindows) {
+			cmds = cmds_win;
+		} else if (isMac) {
+			cmds = cmds_mac;
+		} else {
+			cmds = cmds_unix;
+			prompt = "\n";
+		}
 		cmds[0] = executable;
-		solverProcess = new SolverProcess(cmds,"CVC4> ","solver.out.cvc4") {
+		solverProcess = new SolverProcess(cmds,prompt,"solver.out.cvc4") {
 			
 			@Override
 			public String listen() throws IOException {
@@ -89,12 +101,12 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
 	}
 	
-	public Solver_cvc4(SMT.Configuration smtConfig, /*@NonNull*/ String[] executable) {
-		this.smtConfig = smtConfig;
-		cmds = executable;
-		solverProcess = new SolverProcess(cmds,"CVC4> ","solver.out.cvc4"); // FIXME - what prompt?
-		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
-	}
+//	public Solver_cvc4(SMT.Configuration smtConfig, /*@NonNull*/ String[] executable) {
+//		this.smtConfig = smtConfig;
+//		cmds = executable;
+//		solverProcess = new SolverProcess(cmds,"\n","solver.out.cvc4"); // FIXME - what prompt?
+//		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
+//	}
 	
 	@Override
 	public IResponse start() {
@@ -147,6 +159,12 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 		try {
 			if (response.contains("Error") && response.charAt(0) != '(') {
 				return smtConfig.responseFactory.error(response);
+			}
+			if (response.contains("SmtEngine") && response.charAt(0) != '(') {
+				// The one instance I know of this is when the prover states that
+				// it is turning off produce-models mode because of non-linear
+				// arithmetic. We will not pass this along.
+				return smtConfig.responseFactory.success();
 			}
 			responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source(response,null));
 			return responseParser.parseResponse(response);

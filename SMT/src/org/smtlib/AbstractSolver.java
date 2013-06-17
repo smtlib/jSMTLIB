@@ -26,7 +26,10 @@ import org.smtlib.SMT.Configuration;
  *
  */
 public class AbstractSolver implements ISolver {
-	
+
+	protected boolean isWindows = System.getProperty("os.name").contains("Wind");
+	protected boolean isMac = System.getProperty("os.name").contains("Mac");
+
 	/** @see org.smtlib.ISolver#start() */
 	@Override
 	public IResponse start() {
