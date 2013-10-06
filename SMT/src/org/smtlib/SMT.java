@@ -709,7 +709,7 @@ public class SMT {
 				}
 			}
 			// But otherwise presume the solver is a standard smt solver
-			if (adapterClass == null) adapterClass = org.smtlib.solvers.Solver_smt.class;
+            if (adapterClass == null) adapterClass = org.smtlib.solvers.Solver_smt.class;
 		
 			String propName = Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_COMMAND_SUFFIX;
 			String commandString = props.getProperty(propName);
@@ -741,10 +741,10 @@ public class SMT {
 		try {
 			Constructor<?> constructor;
 			if (command == null) {
-				constructor = adapterClass.getConstructor(SMT.Configuration.class,String.class);
+	            constructor = adapterClass.getConstructor(SMT.Configuration.class,String.class);
 				solver = (ISolver)(constructor.newInstance(smtConfig,executable));
 			} else {
-				constructor = adapterClass.getConstructor(SMT.Configuration.class,command.getClass());
+	            constructor = adapterClass.getConstructor(SMT.Configuration.class,command.getClass());
 				solver = (ISolver)(constructor.newInstance(smtConfig,command));
 			}
 			IResponse res = solver.start();
