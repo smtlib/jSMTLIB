@@ -1,0 +1,29 @@
+#! /bin/bash
+
+## TODO - this is not portable across build environments
+## COnvert this to ant
+
+## Need the following for jar
+export JAVA_HOME=C:/cygwin/home/dcok/ProgramFiles/Java/jdk1.7.0_07
+
+rm -rf temp
+mkdir temp
+echo "Manifest-Version: 1.0" > temp/manifest
+echo "Main-Class: org.smtlib.SMT" >> temp/manifest
+cd bin
+rm -f jsmtlib.properties
+$JAVA_HOME/bin/jar -cfm ../jSMTLIB.jar ../temp/manifest .
+cp ../jsmtlib.properties .
+cd ..
+cp ../../../texstuff/papers/SMTLIBUserGuide/SMTLIBUserGuide.pdf jSMTLIBUserGuide.pdf
+tar cf jSMTLIB.tar jSMTLIB.jar LICENSE jSMTLIBUserGuide.pdf jsmtlib.properties-template doc
+rm jSMTLIBUserGuide.pdf
+tar tvf jSMTLIB.tar
+rm jSMTLIB.tar.gz
+gzip jSMTLIB.tar
+
+echo Build complete
+
+if [ -e ../../OpenJML ] ; then cp jSMTLIB.jar ../../OpenJML ; else echo Copy failed ; fi
+if [ -e ../../OpenJMLUI ] ; then cp jSMTLIB.jar ../../OpenJMLUI ; else echo Copy failed; fi
+echo Copies complete

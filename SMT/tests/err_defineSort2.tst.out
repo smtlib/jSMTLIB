@@ -1,0 +1,5 @@
+success
+success
+(define-sort A () Bool)
+             ^
+(error "The identifier is already declared to be a sort: A")

@@ -1,0 +1,17 @@
+success
+success
+success
+(assert (! p :named q)) ; conflicts with existing name
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 5 column 20: invalid named expression, declaration already defined with this name q")
+success
+(assert (! q :named P)) ; conflicts
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 7 column 20: named expression already defined")
+(declare-fun P () Bool) ; conflicts
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 8 column 22: invalid declaration, named expression already defined with this name P")
+(assert (and (! p :named PP) (! q :named P))) ; second conflicts, first should be withdrawn
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 9 column 41: named expression already defined")
+success

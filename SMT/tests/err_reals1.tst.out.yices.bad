@@ -1,0 +1,6 @@
+success
+success
+(assert (= x 1.0))
+^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The yices solver cannot handle decimal literals")
+success

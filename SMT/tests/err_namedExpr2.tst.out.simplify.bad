@@ -1,0 +1,22 @@
+success
+success
+success
+(assert (forall ((r Bool)) (! r :named R))) ; error
+                              ^
+(error "The expression being named is not closed - this symbol is a variable: r")
+(assert (exists ((r Bool)) (! r :named R))) ; error
+                              ^
+(error "The expression being named is not closed - this symbol is a variable: r")
+(assert (forall ((r Bool)) (and r (! q :named R)))) ; OK
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Boolean quantifiers are not implemented in the Simplify adapter")
+(assert (let ((r true)) (! r :named R))) ; error - R already defined
+                                    ^
+(error "Symbol R is already defined")
+success
+(assert (forall ((r Bool)) (let ((r true)) (! r :named RR)))) ; OK
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Boolean quantifiers are not implemented in the Simplify adapter")
+(assert (forall ((q Bool)) (let ((r q)) (! r :named RRR)))) ; error - FIXME
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Boolean quantifiers are not implemented in the Simplify adapter")

@@ -1,0 +1,31 @@
+( set-logic 1)
+            ^
+(error "Expected a symbol here, not a numeral")
+(set-logic 1.1)
+           ^^^
+(error "Expected a symbol here, not a decimal")
+(set-logic #b0 )
+           ^^^
+(error "Expected a symbol here, not a binary")
+(set-logic #x1 )
+           ^^^
+(error "Expected a symbol here, not a hex-literal")
+(set-logic "QF_UF")
+           ^^^^^^^
+(error "Expected a symbol here, not a string-literal")
+(set-logic QF_UF 1)
+                 ^
+(error "Too many arguments or extraneous material after the command or missing right parenthesis")
+(set-logic Q)
+^^^^^^^^^^^^^
+(error "ParserException while parsing response: 
+This application has requested the Runtime to terminate it in an unusual way.
+Please contact the application's support team for more information.
+CVC4 threw an \"unexpected\" exception.
+terminate called after throwing an instance of 'CVC4::IllegalArgumentException'
+  what():  Illegal argument detected
+void CVC4::LogicInfo::setLogicString(std::string)
+
+  `logicString' is a bad argument
+LogicInfo::setLogicString(): junk (\"Q\") at end of logic string: Q
+ org.smtlib.IParser$ParserException: Token is not an S-expression token: class org.smtlib.sexpr.Lexer$LexSymbol")

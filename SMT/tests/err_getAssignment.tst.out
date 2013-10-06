@@ -1,0 +1,7 @@
+success
+(get-assignment)
+^^^^^^^^^^^^^^^^
+(error "The get-assignment command is only valid if :produce-assignments has been enabled")
+(get-assignment xxx)
+                ^^^
+(error "A get-assignment command takes no arguments")

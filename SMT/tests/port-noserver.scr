@@ -1,0 +1,12 @@
+##EXITCODE 12
+
+PORT=8777
+
+EXE="java -cp ../bin org.smtlib.Driver --port ${PORT}"
+
+
+${EXE} "(set-logic QF_UF)"
+
+
+
+

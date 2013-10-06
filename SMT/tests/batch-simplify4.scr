@@ -1,0 +1,2 @@
+##EXITCODE 0
+java -jar ../jSMTLIB.jar --solver simplify ok_sat.tst

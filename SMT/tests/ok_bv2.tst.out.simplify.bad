@@ -1,0 +1,88 @@
+(set-logic QF_BV)
+           ^^^^^
+(error "The simplify solver does not yet support the bit-vector theory")
+success
+success
+success
+success
+(assert (= (bvnot x) #b111))
+                     ^^^^^
+(error "Did not expect a Binary literal in an expression to be translated")
+(assert (= (bvneg x) #b111))
+                     ^^^^^
+(error "Did not expect a Binary literal in an expression to be translated")
+(assert (= (bvand x t) #b111))
+                       ^^^^^
+(error "Did not expect a Binary literal in an expression to be translated")
+(assert (= (bvor x x) #b111))
+                      ^^^^^
+(error "Did not expect a Binary literal in an expression to be translated")
+(assert (= (bvadd x x) #b111))
+                       ^^^^^
+(error "Did not expect a Binary literal in an expression to be translated")
+(assert (= (bvmul x x) #b111))
+                       ^^^^^
+(error "Did not expect a Binary literal in an expression to be translated")
+(assert (= (bvshl x x) #b111))
+                       ^^^^^
+(error "Did not expect a Binary literal in an expression to be translated")
+(assert (= (bvlshr x x) #b111))
+                        ^^^^^
+(error "Did not expect a Binary literal in an expression to be translated")
+(assert (= (bvudiv x x) #b111))
+                        ^^^^^
+(error "Did not expect a Binary literal in an expression to be translated")
+(assert (= (bvurem x x) #b111))
+                        ^^^^^
+(error "Did not expect a Binary literal in an expression to be translated")
+success
+success
+(assert (= ((_ extract 4 2) z) x))
+           ^^^^^^^^^^^^^^^^^^^
+(error "Have not yet implemented parameterized bit-vector functions")
+(assert (= #xF #b1111))
+           ^^^
+(error "Did not expect a Hex literal in an expression to be translated")
+(assert (distinct #x0 #b0000))
+                  ^^^
+(error "Did not expect a Hex literal in an expression to be translated")
+(assert (= (_ bv17 5) #b10001 ))
+                      ^^^^^^^
+(error "Did not expect a Binary literal in an expression to be translated")
+success
+success
+success
+success
+(assert (= (bvxnor x x) #b111))
+                        ^^^^^
+(error "Did not expect a Binary literal in an expression to be translated")
+(assert (= (bvcomp x x) #b1))
+                        ^^^
+(error "Did not expect a Binary literal in an expression to be translated")
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(assert (= ((_ repeat 2) #b10) #b1010))
+           ^^^^^^^^^^^^^^^^^^^
+(error "Have not yet implemented parameterized bit-vector functions")
+(assert (= ((_ zero_extend 2) #b11) #b0011))
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Have not yet implemented parameterized bit-vector functions")
+(assert (= ((_ sign_extend 2) #b10) #b1110))
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Have not yet implemented parameterized bit-vector functions")
+(assert (= ((_ rotate_left 1) #b0010) #b0100))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Have not yet implemented parameterized bit-vector functions")
+(assert (= ((_ rotate_right 1) #b0011) #b1001))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Have not yet implemented parameterized bit-vector functions")

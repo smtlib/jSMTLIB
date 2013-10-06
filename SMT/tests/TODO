@@ -1,0 +1,57 @@
+
+set-logic:
+	- test each defined logic - types and function symbols
+    - test axioms implicit in logics
+
+assert
+	- test that expressions conform to the logic
+
+get-proof, get-value, get-assignment, get-unsat-core: not checking the errors
+  when these are issued in an invalid location within the script
+
+err_array2.tst - incomplete type checking for select and store functions
+
+err_tokens.tst - needs better error messages
+
+ok_getInfo3.tst - how to handle user info items
+ok_getInfo2.tst
+err_getInfo2.tst
+
+
+err_getValue4.tst, err_getAssignment4.tst
+ok_getProof.tst, ok_getAssignment.tst, ok_getValue.tst, ok_getUnsatCore.tst
+
+CHECK: named expressions are implicit function definitions
+CHECK: character use in various token types - all bad characters in keyword, quotesym, simple symbol
+
+CHECK reason-unknwon when the reason is not unknown
+CHECK reason-unkown, all-statistics when check-sat result is no longer valid
+
+output channels - does not actually check that the output is sent to the named file, or that it is appended; does not check the diagnostic output at all
+
+no testing of :expand-definitions
+
+need to check that channel redirection works for adapters
+
+check that non-printable characters are trapped
+
+check that all whitespace is OK in strings and quoted symbols
+
+test that the remainder of client-server return codes work
+
+SCRIPT TESTS
+options to test:
+ --solver
+ --verbose
+ --exec
+ --logics
+ --logic
+ --out
+ --diag
+ --nosuccess
+ --relax
+short versions of options
+
+check the reteurn value
+
+check effect of --abort on client/server mode

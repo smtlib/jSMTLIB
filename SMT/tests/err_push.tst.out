@@ -1,0 +1,28 @@
+success
+( push 0.0 )
+       ^^^
+(error "Expected a numeral here, instead of a decimal")
+( push "asd")
+       ^^^^^
+(error "Expected a numeral here, instead of a string-literal")
+( push #b1 )
+       ^^^
+(error "Expected a numeral here, instead of a binary")
+( push #x0 )
+       ^^^
+(error "Expected a numeral here, instead of a hex-literal")
+( push a )
+       ^
+(error "Expected a numeral here, instead of a symbol")
+( push |A| )
+       ^^^
+(error "Expected a numeral here, instead of a symbol")
+( push 1 2 3 )
+         ^
+(error "Too many arguments or extraneous material after the command or missing right parenthesis")
+( push -1 )
+       ^^
+(error "Expected a numeral here, instead of a symbol")
+(push)
+     ^
+(error "Expected a numeral here, instead of a )")

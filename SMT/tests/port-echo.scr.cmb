@@ -1,0 +1,16 @@
+(set-logic QF_UF)
+SMT: success
+EX 0
+(declare-fun x () Bool)
+SMT: success
+EX 0
+SMT: (xxx)
+SMT:  ^^^
+SMT: (error "Unknown command: xxx")
+EX 10
+(declare-fun y () Bool)
+SMT: success
+EX 0
+(exit)
+SMT: success
+EX 0

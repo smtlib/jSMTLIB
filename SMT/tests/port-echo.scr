@@ -1,0 +1,26 @@
+##EXITCODE 0
+
+PORT=8777
+
+EXE="java -cp ../bin org.smtlib.Driver --port ${PORT}"
+
+java -cp ../bin org.smtlib.SMT --port ${PORT} --echo &
+
+${EXE} "(set-logic QF_UF)"
+echo EX $?
+
+${EXE} "(declare-fun x () Bool)"
+echo EX $?
+
+${EXE} "(xxx)"
+echo EX $?
+
+${EXE} "(declare-fun y () Bool)"
+echo EX $?
+
+${EXE} "(exit)"
+echo EX $?
+
+
+
+

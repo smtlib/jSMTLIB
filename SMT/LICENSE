@@ -1,0 +1,119 @@
+The software with which this license file is associated is 
+    Copyright (c) 2010 by David R. Cok.
+
+End-User License Agreement
+
+This is a legal agreement between you and David R. Cok, individually ("Author").
+The jSMTLIB application and library (“jSMTLIB”) and its documentation 
+(collectively the "SOFTWARE") are licensed by Author for use only on the terms 
+set forth herein. 
+
+YOU AGREE TO BE BOUND BY THE TERMS OF THIS SOFTWARE LICENSE BY INSTALLING, 
+COPYING, OR OTHERWISE USING THE SOFTWARE.  IF YOU DO NOT AGREE TO ALL OF THE 
+TERMS OF THIS LICENSE, DO NOT DOWNLOAD, COPY, INSTALL, OR USE THE SOFTWARE.
+GRANT OF LICENSE. 
+
+Author grants to you a non-exclusive, non-transferable, non-sublicensable 
+license to use the SOFTWARE upon download, for NON-PROFIT ACADEMIC USE ONLY AND 
+FOR NO OTHER PURPOSE, on the condition that any such allowed use is 
+acknowledged in publications of any work that used the SOFTWARE. 
+If you have an interest in using the SOFTWARE under terms other than those
+provided in this agreement, you are encouraged to contact Author.
+   
+You may not:
+1.  Rent, lease, sell, lend, license, transfer, or otherwise permit any person 
+    or entity to use the SOFTWARE in any manner;
+2.  Reverse engineer, decompile, disassemble, decipher, modify, create 
+    derivative works from the Software, or attempt to do any of the foregoing:
+   a.  Use the SOFTWARE as part of any for-profit business or in connection 
+       therewith; or
+   b.  Give, distribute, or furnish a copy of the Software and/or documentation 
+       to third parties, except as provided herein. 
+You may:
+1.  You may make copies of the SOFTWARE solely for backup or archival purposes 
+    provided that you reproduce all copyright, other proprietary notices, and  
+    any restrictive legends that are on the original copy of the SOFTWARE 
+    provided to you.  Such backup copies may be used only for recovery purposes.
+
+2.  You may incorporate the SOFTWARE as a library in other software for which 
+    use of such software is limited to non-profit academic use only.  If the 
+    SOFTWARE is incorporated, as permitted herein, written notification of such 
+    shall be provided to Author and attribution to Author prominently provided 
+    in any incorporating software.
+       
+TERM. This license agreement is effective upon your downloading the SOFTWARE 
+and shall continue until terminated as provided in this license agreement.  
+Upon termination for any reason, you: (i) are no longer authorized to use the 
+SOFTWARE and shall stop using the SOFTWARE; and (ii) shall destroy or erase 
+all copies, extracts, modifications, and derivative works of the SOFTWARE in 
+your possession (except for copies made for archival or backup purposes).  
+You may terminate this license agreement by taking these actions.  
+Author may terminate your license upon any suspected breach by you of any 
+term of this license agreement. 
+
+Notwithstanding the termination of this license agreement, all provisions of 
+this license agreement relating to disclaimers of warranties, use and 
+distribution of SOFTWARE output or documentation, limitations of liability, 
+remedies, damages, GrammaTech's proprietary rights, and limitations on export 
+shall survive such termination. 
+
+COPYRIGHT AND PROPRIETARY RIGHTS.  Author reserves all rights not expressly 
+granted to you in this license agreement.  The SOFTWARE is owned by Author, 
+its suppliers, and/or its licensors and is protected by United States copyright 
+laws and international treaty provisions.  The license agreement gives you no 
+rights in the content of the SOFTWARE.  You further acknowledge and warrant 
+that you will abide by the copyright law and all other applicable law of the 
+United States, including, but not limited to, export control laws.
+
+U.S. GOVERNMENT LICENSE RIGHTS.  All SOFTWARE provided to the United States 
+Government pursuant to solicitations is provided with the commercial license 
+rights and restrictions described elsewhere herein.  
+
+EXPORT-LAW ASSURANCES.  You acknowledge that the SOFTWARE is subject to U.S. 
+export jurisdiction. You agree to comply with all applicable international 
+and national laws that apply to the Software, including the U.S. Export 
+Administration Regulations, as well as end-user, end-use, and destination 
+restrictions issued by U.S. and other governments.
+
+GENERAL.  This Agreement will be governed by the laws of the State of 
+New York, except that body of law dealing with conflicts of law.  No terms of 
+this license agreement shall be modified, amended, or otherwise changed, 
+except as agreed to in writing and signed by the Author.
+
+SOFTWARE DISCLAIMER OF WARRANTY/LIMITATION ON LIABILITY & REMEDIES.  
+Author does not warrant that the SOFTWARE will meet your requirements, 
+that operation of the SOFTWARE will be uninterrupted or error-free, or 
+that all SOFTWARE errors will be corrected.  
+
+THERE IS NO WARRANTY FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE 
+LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING, THE AUTHOR AND/OR OTHER 
+PARTIES PROVIDE THE PROGRAM “AS IS AND WITH ALL FAULTS,” WITHOUT WARRANTY 
+OF ANY KIND, EITHER EXPRESS, IMPLIED OR STATUTORY (IF ANY), INCLUDING, BUT 
+NOT LIMITED TO, ANY IMPLIED WARRANTIES, DUTIES OR CONDITIONS OF 
+MERCHANTABILITY, OF FITNESS FOR A PARTICULAR PURPOSE, OF RELIABILITY OR 
+AVAILABILITY, OF ACCURACY OR COMPLETENESS OF RESPONSES, OF RESULTS, OF 
+WORKMANLIKE EFFORT, OF LACK OF VIRUSES, AND OF LACK OF NEGLIGENCE, ALL 
+WITH REGARD TO THE SOFTWARE, AND THE PROVISION OF OR FAILURE TO PROVIDE 
+SUPPORT OR OTHER SERVICES, INFORMATION, SOFTWARE, AND RELATED CONTENT 
+THROUGH THE SOFTWARE OR OTHERWISE ARISING OUT OF THE USE OF THE SOFTWARE.  
+THERE IS NO WARRANTY OR CONDITION OF TITLE, QUIET ENJOYMENT, QUIET 
+POSSESSION, CORRESPONDENCE TO DESCRIPTION OR NON-INFRINGEMENT WITH REGARD 
+TO THE SOFTWARE.
+
+IN NO EVENT, UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING, 
+WILL AUTHOR AND/OR ANY OTHER PARTY THAT PROVIDES THE SOFTWARE AS PERMITTED 
+HEREIN, BE LIABLE TO YOU FOR ANY DAMAGES, INCLUDING ANY GENERAL, SPECIAL, 
+CONSEQUENTIAL, INDIRECT OR SIMILAR DAMAGES, INCLUDING, BUT NOT LIMITED TO, 
+ANY ECONOMIC LOSS OR LOST DATA ARISING OUT OF THE USE OR INABILITY TO USE 
+THE SOFTWARE OR ANY DATA SUPPLIED THEREWITH OR ARISING FROM ANY BREACH OF 
+THIS AGREEMENT OR ANY OBLIGATIONS UNDER THIS AGREEMENT OR THE LICENSE 
+GRANTED, EVEN IF AUTHOR OR ANYONE ELSE HAS BEEN ADVISED OF THE POSSIBILITY 
+OF SUCH DAMAGES, EVEN IN THE EVENT OF FAULT, TORT (INCLUDING NEGLIGENCE), 
+MISREPRESENTATION, OR STRICT LIABILITY, OR FOR ANY CLAIM BY ANY OTHER PARTY.
+  
+If the disclaimer of warranty and limitation of liability provided herein 
+cannot be given local legal effect according to their terms, reviewing 
+courts shall apply the controlling law that most closely approximates 
+an absolute waiver of all civil liability in connection with the SOFTWARE.
+
+

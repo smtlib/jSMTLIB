@@ -1,0 +1,49 @@
+(set-option :print-success 0)
+                           ^
+(error "Expected true or false as the value of :print-success")
+(set-option :verbosity true)
+                       ^^^^
+(error "Expected a numeral as the value of :verbosity")
+(set-option :regular-output-channel true)
+                                    ^^^^
+(error "Expected a string as the value of :regular-output-channel")
+(set-option :diagnostic-output-channel false)
+                                       ^^^^^
+(error "Expected a string as the value of :diagnostic-output-channel")
+(set-option :expand-definitions 0)
+                                ^
+(error "Expected true or false as the value of :expand-definitions")
+(set-option :produce-proofs 0)
+                            ^
+(error "Expected true or false as the value of :produce-proofs")
+(set-option :produce-models 0)
+                            ^
+(error "Expected true or false as the value of :produce-models")
+(set-option :produce-assignments 0)
+                                 ^
+(error "Expected true or false as the value of :produce-assignments")
+(set-option :produce-unsat-cores 0)
+                                 ^
+(error "Expected true or false as the value of :produce-unsat-cores")
+(set-option :interactive-mode 0)
+                              ^
+(error "Expected true or false as the value of :interactive-mode")
+(set-option :random-seed true)
+                         ^^^^
+(error "Expected a numeral as the value of :random-seed")
+unsupported
+(set-option :zzz)
+                ^
+(error "Expected an attribute value here, instead of a )")
+(set-option)
+           ^
+(error "Expected a keyword (beginning with a colon) here, instead of a )")
+(set-option :zzz :zzz)
+                 ^^^^
+(error "Expected an attribute value here, instead of a keyword")
+(set-option :zzz x x)
+                   ^
+(error "Too many arguments or extraneous material after the command or missing right parenthesis")
+(set-option :random-seed -1)
+                         ^^
+(error "Expected a numeral as the value of :random-seed")

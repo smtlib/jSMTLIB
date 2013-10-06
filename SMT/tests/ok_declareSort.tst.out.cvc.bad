@@ -1,0 +1,5 @@
+success
+success
+(declare-sort B 2)
+^^^^^^^^^^^^^^^^^^
+(error "CVC adapter does not implement parameterized user-defined sorts")
