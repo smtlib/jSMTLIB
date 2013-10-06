@@ -101,6 +101,9 @@ public class SMT {
 		
 		/** The verbosity level of the SMT solver */
 		public int solverVerbosity = 0;
+
+		/** The timeout for a given query, if supported by the solver */
+		public double timeout = -1; // seconds, <=0 means infinity
 		
 		/** This field is set from the command-line and sets the initial state of the :print-success option
 		 * within a solver. */

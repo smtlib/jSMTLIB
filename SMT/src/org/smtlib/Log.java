@@ -40,7 +40,7 @@ public class Log {
 		/** Called when messages are logged to the normal output. */
 		public void logOut(String msg);
 		
-		/** Called when a response it logged to the normal output (it is expected that a line termination will be added);
+		/** Called when a response is logged to the normal output (it is expected that a line termination will be added);
 		 * the argument is converted to text using the defaultPrinter in the smt configuration. */
 		public void logOut(/*@ReadOnly*/ IResponse result);
 		
@@ -75,13 +75,13 @@ public class Log {
 			out.print(msg);
 		}
 		
-		/** Writes the given response to the out stream */
+		/** Writes the given response to the out stream, adding line termination */
 		@Override
 		public void logOut(/*@ReadOnly*/ IResponse response) {
 			out.println(smtConfig.defaultPrinter.toString(response));
 		}
 
-		/** Writes the message to the 'out' PrintStream */
+		/** Writes the message to the 'out' PrintStream, adding line termination */
 		@Override
 		public void logError(String msg) {
 			out.println(msg);

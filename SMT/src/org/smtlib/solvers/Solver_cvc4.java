@@ -14,6 +14,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -82,6 +83,13 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 			prompt = "\n";
 		}
 		cmds[0] = executable;
+		double timeout = smtConfig.timeout;
+		if (timeout > 0) {
+			List<String> args = new java.util.ArrayList<String>(cmds.length+1);
+			args.addAll(Arrays.asList(cmds));
+			args.add("--tlimit-per=" + Long.toString(Math.round(1000*timeout+0.5)));
+			cmds = args.toArray(new String[args.size()]);
+		}
 		solverProcess = new SolverProcess(cmds,prompt,"solver.out.cvc4") {
 			
 			@Override

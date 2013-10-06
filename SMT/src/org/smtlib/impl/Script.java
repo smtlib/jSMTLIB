@@ -100,15 +100,14 @@ public class Script implements IScript {
 			return smtConfig.responseFactory.error("INTERNAL ERROR: Unexpected null command list in a script");
 		}
 		Iterator<ICommand> iter = commands.iterator();
-		IResponse response = null;
-		while (iter.hasNext()) {
-			ICommand s = iter.next();
+		IResponse response = smtConfig.responseFactory.success();
+		ICommand s;
+		while (iter.hasNext() && !response.isError()) {
+			s = iter.next();
 			// TODO: should we typecheck the entire script before executing it?
-			IResponse r = s.execute(solver);
-			if (r.isError()) return r; // TODO: continue on - if so, how to return an error?
+			response = s.execute(solver);
 			// TODO: If we include this output, we need a way to control it via the API so OpenJML can control it
 			//if (!r.isOK()) smtConfig.log.logDiag(smtConfig.defaultPrinter.toString(r));
-			response = r;
 		}
 		return response;
 	}

@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -95,6 +96,14 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			cmds = cmds_unix;
 		}
 		cmds[0] = executable;
+		double timeout = smtConfig.timeout;
+		if (timeout > 0) {
+			List<String> args = new java.util.ArrayList<String>(cmds.length+1);
+			args.addAll(Arrays.asList(cmds));
+			if (isWindows) args.add("/t:" + Double.toString(timeout));
+			else           args.add("-t:" + Double.toString(timeout));
+			cmds = args.toArray(new String[args.size()]);
+		}
 		solverProcess = new SolverProcess(cmds,"\n","solver.out.z3");
 		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
 	}
