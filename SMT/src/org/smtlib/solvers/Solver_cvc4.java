@@ -165,6 +165,8 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 	
 	protected IResponse parseResponse(String response) {
 		try {
+		    int k = response.indexOf('\n');
+		    if (isMac && k >= 0 && k < response.length()-1) response = response.substring(k+1);
 			if (response.contains("Error") && response.charAt(0) != '(') {
 				return smtConfig.responseFactory.error(response);
 			}
