@@ -166,6 +166,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 				response = response.substring(0,mm.start()) + "#b" + bits + response.substring(mm.end(),response.length());
 				mm = oldbv.matcher(response);
 			}
+			if (isMac && response.startsWith("success")) return smtConfig.responseFactory.success(); // IFXME - this is just to avoid a problem with the Mac Z3 implementation
 			if (response.contains("error")) {
 				// Z3 returns an s-expr (always?)
 				// FIXME - (1) the {Print} also needs {Space}; (2) err_getValueTypes.tst returns a non-error s-expr and then an error s-expr - this fails for that case
