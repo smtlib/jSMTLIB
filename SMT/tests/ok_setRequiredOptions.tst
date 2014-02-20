@@ -9,5 +9,4 @@
 (get-option :diagnostic-output-channel)
 (set-option :diagnostic-output-channel "tempout")
 (get-option :diagnostic-output-channel)
-(set-option :print-success false)
-(get-option :print-success)
+; Skipping setting :print-success false because solvers differ on whether they then print success

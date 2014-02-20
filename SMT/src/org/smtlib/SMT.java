@@ -692,39 +692,42 @@ public class SMT {
 		// Find the adapter, executable, command
 		if (!solvername.equals(Utils.TEST_SOLVER)) {
 			adapterClassName = "org.smtlib.solvers.Solver_" + solvername;
-			//if (adapterClassName != null) {
-				try {
-					adapterClass = Class.forName(adapterClassName);
-				} catch (ClassNotFoundException e) {
-					adapterClass = null;
-				}
-			//}
+			try {
+				adapterClass = Class.forName(adapterClassName);
+			} catch (ClassNotFoundException e) {
+				adapterClass = null;
+			}
 				// But use this if it is specified
-			adapterClassName = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_ADAPTER_SUFFIX);
-			if (adapterClassName != null) {
-				try {
-					adapterClass = Class.forName(adapterClassName);
-				} catch (ClassNotFoundException e) {
-					adapterClass = null;
+			if (props != null) {
+				adapterClassName = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_ADAPTER_SUFFIX);
+				if (adapterClassName != null) {
+					try {
+						adapterClass = Class.forName(adapterClassName);
+					} catch (ClassNotFoundException e) {
+						adapterClass = null;
+					}
 				}
 			}
 			// But otherwise presume the solver is a standard smt solver
             if (adapterClass == null) adapterClass = org.smtlib.solvers.Solver_smt.class;
 		
 			String propName = Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_COMMAND_SUFFIX;
-			String commandString = props.getProperty(propName);
-			if (commandString != null && !commandString.isEmpty()) {
-				command = commandString.split(",");
-				if (command.length == 0) {
-					error("The command specified for " + propName + " appears to have no content");
-					usage();
-					return null;
+			String commandString = null;
+			if (props != null) {
+				commandString = props.getProperty(propName);
+				if (commandString != null && !commandString.isEmpty()) {
+					command = commandString.split(",");
+					if (command.length == 0) {
+						error("The command specified for " + propName + " appears to have no content");
+						usage();
+						return null;
+					}
 				}
 			}
 
-			if (executable == null ) {
+			if (executable == null && props != null) {
 				executable = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX);
-				if (executable != null && executable.isEmpty()) executable = null;
+				if (executable != null && executable.trim().isEmpty()) executable = null;
 			}
 			
 			if (command != null && executable != null) command[0] = executable;

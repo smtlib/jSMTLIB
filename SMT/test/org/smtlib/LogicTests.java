@@ -9,6 +9,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.runners.Parameterized.Parameters;
+import org.smtlib.IExpr.IKeyword;
+import org.smtlib.IParser.ParserException;
 
 
 public class LogicTests {
@@ -53,10 +55,22 @@ public class LogicTests {
 	public void checkResponse(IResponse res, /*@Nullable*/String result) {
 		if (res == null) {
 			Assert.assertTrue("Response is null",false);
-		} else if (result != null) {
+		} else if (result == null) {
+			if (res.isError()) Assert.assertTrue(((IResponse.IError)res).errorMsg(),false);
+		} else if (result.isEmpty() && res.isOK()) {
+			ISource source = smt.smtConfig.smtFactory.createSource(":print-success",null);
+			IParser p = smt.smtConfig.smtFactory.createParser(smt.smtConfig,source);
+			try {
+				IKeyword k = p.parseKeyword();
+				IResponse r = solver.get_option(k);
+				if (!r.toString().equals("false")) {
+					Assert.assertEquals(result,smt.smtConfig.defaultPrinter.toString(res));
+				}
+			} catch (ParserException e) {
+				Assert.assertTrue(e.toString(),false);
+			}
+		} else {
 			Assert.assertEquals(result,smt.smtConfig.defaultPrinter.toString(res));
-		} else if (res.isError()) {
-			Assert.assertTrue(((IResponse.IError)res).errorMsg(),false);
 		}
 	}
 	

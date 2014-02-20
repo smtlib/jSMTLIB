@@ -1,32 +1,25 @@
 success
-unsupported
-unsupported
-unsupported
-unsupported
-unsupported
-unsupported
-unsupported
-unsupported
-unsupported
-unsupported
-unsupported
-(set-info :x | 	
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.13: Error finding next token.
-")
-(set-info :x "0123456789~!@$%^&*_-+=<>.?/" )
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.14: Error finding next token.
-")
-unsupported
-unsupported
-unsupported
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+...
+success
+success
+success
+(set-info :x " 	
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.13: Error finding next token.")
 (set-info :x #b0101 )
 ^^^^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.13: Error finding next token.
-CVC4> Parse Error: <shell>:1.12: Error finding next token.
-")
+(error "Parse Error: <shell>:1.11: Unexpected token: '|';:{}[]()`,'.")
 (set-info :x #xabcdefABCDEF0123456789 )
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.18: Unexpected token: '#b0101'.
-")
+(error "Parse Error: <shell>:1.18: Unexpected token: '#b0101'.")

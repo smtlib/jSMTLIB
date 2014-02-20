@@ -14,8 +14,7 @@ Type 2: (_ BitVec 4)
 (error "expecting bit-vector terms")
 (assert (= (bvnot x y) #b1011))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.21: Expecting at most 1 arguments for operator 'BITVECTOR_NOT', found 2
-")
+(error "Parse Error: <shell>:1.21: Expecting at most 1 arguments for operator 'BITVECTOR_NOT', found 2")
 (assert (= (bvneg x) #b0111))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (error "Subexpressions must have a common base type:
@@ -25,8 +24,7 @@ Type 2: (_ BitVec 4)
 ")
 (assert (= (bvneg x y) #b0111))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.21: Expecting at most 1 arguments for operator 'BITVECTOR_NEG', found 2
-")
+(error "Parse Error: <shell>:1.21: Expecting at most 1 arguments for operator 'BITVECTOR_NEG', found 2")
 (assert (= (bvand true y) #b111))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (error "expecting bit-vector terms")
@@ -65,8 +63,7 @@ Type 2: (_ BitVec 4)
 (error "expecting bit-vector terms of the same width")
 (assert (bvult y))
 ^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.16: Expecting at least 2 arguments for operator 'BITVECTOR_ULT', found 1
-")
+(error "Parse Error: <shell>:1.16: Expecting at least 2 arguments for operator 'BITVECTOR_ULT', found 1")
 (assert (bvult true y))
 ^^^^^^^^^^^^^^^^^^^^^^^
 (error "expecting bit-vector terms")
@@ -82,19 +79,16 @@ Type 2: (_ BitVec 4)
 ")
 (assert (= (concat y) #xaa))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.20: Expecting at least 2 arguments for operator 'BITVECTOR_CONCAT', found 1
-")
+(error "Parse Error: <shell>:1.20: Expecting at least 2 arguments for operator 'BITVECTOR_CONCAT', found 1")
 (assert (= (concat x true) z))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.28: expecting bit-vector terms
-")
+(error "Parse Error: <shell>:1.28: expecting bit-vector terms")
 (assert (= ((_ extract 40 2) z) x))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (error "high extract index is bigger than the size of the bit-vector")
 (assert (= ((_ extract 1 2) z) x))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.32: high extract index is smaller than the low extract index
-")
+(error "Parse Error: <shell>:1.32: high extract index is smaller than the low extract index")
 (assert (= ((_ extract a 1) z) x))
                        ^
 (error "Expected a numeral here, instead of a symbol")
@@ -103,8 +97,7 @@ Type 2: (_ BitVec 4)
 (error "Expected a numeral here, instead of a )")
 (assert (= ((_ extract 1 2 3 ) z) x))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.28: Expected <invalid>, found '3'.
-")
+(error "Parse Error: <shell>:1.28: Expected <invalid>, found '3'.")
 (assert (= #b101 #b1010))
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 (error "Subexpressions must have a common base type:

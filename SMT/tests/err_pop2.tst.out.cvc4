@@ -1,9 +1,5 @@
 success
-( push 2)
-^^^^^^^^^
-(error "ParserException while parsing response: success
 success
- org.smtlib.IParser$ParserException: Token is not an S-expression token: class org.smtlib.sexpr.Lexer$LexSymbol")
 ( pop 0.0 )
       ^^^
 (error "Expected a numeral here, instead of a decimal")

@@ -1,6 +1,6 @@
-(:authors "This is CVC4 version 1.2
+(:authors "This is CVC4 version 1.3
 compiled with GCC version 4.2.1-sjlj (mingw32-2)
-on May  9 2013 21:30:26
+on Dec  6 2013 18:49:30
 
 Copyright (C) 2009, 2010, 2011, 2012, 2013
   New York University and The University of Iowa
@@ -15,5 +15,5 @@ See the file COPYING (distributed with the source code, and with all binaries)
 for the full CVC4 copyright, licensing, and (lack of) warranty information.
 " )
 (:name "cvc4" )
-(:version "1.2" )
-(:error-behavior immediate-exit )
+(:version "1.3" )
+(:error-behavior continued-execution )

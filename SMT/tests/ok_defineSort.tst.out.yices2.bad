@@ -1,0 +1,11 @@
+success
+(declare-sort Z 1)
+^^^^^^^^^^^^^^^^^^
+(error "Yices2 declare-sort command failed: Yices2 does not support defining parameterized types")
+success
+(define-sort B (X) (Z X))
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices2 define-sort command failed: Yices2 does not support defining parameterized types")
+(define-sort C () (Z A)) 
+                  ^^^^^
+(error "Yices2 define-sort command failed: Yices does not support user-defined parameterized sorts: (Z A)")

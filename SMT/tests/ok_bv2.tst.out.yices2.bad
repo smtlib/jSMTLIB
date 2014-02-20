@@ -1,0 +1,102 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(assert (= (bvshl x x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvshl is not implementetd in yices")
+(assert (= (bvlshr x x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvlshr is not implementetd in yices")
+(assert (= (bvudiv x x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvudiv is not implemented in yices")
+(assert (= (bvurem x x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvurem is not implemented in yices")
+success
+success
+(assert (= ((_ extract 4 2) z) x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: Unknown parameterized function symbol: extract")
+success
+success
+(assert (= (_ bv17 5) #b10001 ))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: Unsupported parameterized function symbol: bv17")
+(assert (= (bvnand x x) (bvneg x)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvnand is not implemented in yices")
+(assert (= (bvnor x x) (bvneg x)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvnor is not implemented in yices")
+(assert (= (bvsub x x) (_ bv0 3)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvsub is not implemented in yices")
+(assert (= (bvxor x x) (_ bv0 3)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvxor is not implemented in yices")
+(assert (= (bvxnor x x) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvxnor is not implemented in yices")
+(assert (= (bvcomp x x) #b1))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvcomp is not implemented in yices")
+(assert (= (bvsdiv x x) x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvsdiv is not implemented in yices")
+(assert (= (bvsrem x x) x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvsrem is not implemented in yices")
+(assert (= (bvsdiv x x) x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvsdiv is not implemented in yices")
+(assert (= (bvsmod x x) x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvsmod is not implemented in yices")
+(assert (bvule x x))
+^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvule is not implemented in yices")
+(assert (bvuge x x))
+^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvuge is not implemented in yices")
+(assert (not (bvugt x x)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvugt is not implemented in yices")
+(assert (bvsle x x))
+^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvsle is not implemented in yices")
+(assert (bvsge x x))
+^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvsge is not implemented in yices")
+(assert (not (bvslt x x)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvslt is not implemented in yices")
+(assert (not (bvsgt x x)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvsgt is not implemented in yices")
+(assert (= (bvashr x x) x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: The BitVector function bvashr is not implemented in yices")
+(assert (= ((_ repeat 2) #b10) #b1010))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: Unknown parameterized function symbol: repeat")
+(assert (= ((_ zero_extend 2) #b11) #b0011))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: Unknown parameterized function symbol: zero_extend")
+(assert (= ((_ sign_extend 2) #b10) #b1110))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: Unknown parameterized function symbol: sign_extend")
+(assert (= ((_ rotate_left 1) #b0010) #b0100))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: Unknown parameterized function symbol: rotate_left")
+(assert (= ((_ rotate_right 1) #b0011) #b1001))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Yices assert command failed: Unknown parameterized function symbol: rotate_right")

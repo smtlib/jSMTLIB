@@ -4,6 +4,6 @@ success
 success
 sat
 success
-(get-value (x))
+(get-value (x)) ; invalid because of the push
 ^^^^^^^^^^^^^^^
 (error "A get-value command is valid only after check-sat has returned sat or unknown")
