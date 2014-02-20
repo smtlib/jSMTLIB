@@ -404,7 +404,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	}
 
 	@Override
-	public IResponse get_option(IKeyword key) {
+	public IResponse get_option(IKeyword key) { // FIXME - use the solver?
 		String option = key.value();
 		IAttributeValue value = options.get(option);
 		if (value == null) return smtConfig.responseFactory.unsupported();

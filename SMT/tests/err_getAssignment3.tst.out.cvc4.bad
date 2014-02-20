@@ -1,9 +1,0 @@
-success
-success
-success
-sat
-success
-(get-assignment)
-^^^^^^^^^^^^^^^^
-(error "ParserException while parsing response: \"\"
- org.smtlib.IParser$ParserException: Token is not an S-expression token: class org.smtlib.sexpr.Lexer$LexStringLiteral")

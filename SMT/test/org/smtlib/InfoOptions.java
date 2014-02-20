@@ -57,7 +57,7 @@ public class InfoOptions  extends LogicTests {
 				: solvername.equals("yices") ? "1.0.28"
 				: solvername.equals("yices2") ? "2.1"
 				: solvername.equals("cvc") ? "2.2"
-				: solvername.equals("cvc4") ? "1.2"
+				: solvername.equals("cvc4") ? "1.3"
 				: solvername.equals("z3_4_3") ? "4.3"
 				: solvername.equals("z3_2_11") ? "2.11"
 				: "???" )
@@ -96,8 +96,7 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkSetAuthors() {
 		doCommand("(set-info :authors \"xx\")",
-				solvername.equals("cvc4")? "unsupported"
-						: "(error \"Setting the value of a pre-defined keyword is not permitted: :authors\")");
+				"(error \"Setting the value of a pre-defined keyword is not permitted: :authors\")");
 	}
 	
 	@Test
@@ -112,7 +111,7 @@ public class InfoOptions  extends LogicTests {
 		doCommand("(set-option :print-success false)", 
 				"");
 		doCommand("(get-option :print-success)", 
-				"true");
+				"false");
 		doCommand("(set-option :print-success true)", 
 				"success");
 		doCommand("(get-option :print-success)", 

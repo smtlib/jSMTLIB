@@ -2,11 +2,12 @@ success
 success
 success
 success
-success
+(declare-fun k () (_ BitVec 0))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.29: Illegal bitvector size: 0")
 (declare-fun k () (_ BitVecx 0))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.13: Symbol k previously declared as a variable
-")
+(error "Parse Error: <shell>:1.30: unknown indexed symbol `BitVecx'")
 (declare-fun k () (_ BitVec -1))
                             ^^
 (error "Expected a numeral here, instead of a symbol")
@@ -15,8 +16,7 @@ success
 (error "Expected a numeral here, instead of a )")
 (declare-fun k () (_ BitVec 1 2))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.13: Symbol k previously declared as a variable
-")
+(error "Parse Error: <shell>:1.31: Illegal bitvector type.")
 (assert (= x #b010 ))
 ^^^^^^^^^^^^^^^^^^^^^
 (error "Subexpressions must have a common base type:

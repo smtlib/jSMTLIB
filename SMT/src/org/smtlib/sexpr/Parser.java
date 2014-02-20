@@ -286,7 +286,7 @@ public class Parser extends Lexer implements IParser {
 	 */
 	// FIXME - should this log errors and return null instead of throwing an exception?
 	/*@Nullable*/
-	public Sexpr parseSexpr() throws ParserException {
+	public ISexpr parseSexpr() throws ParserException {
 		if (isEOD()) return null;
 		ILexToken t = getToken();
 		if (t.toString() == IPLexToken.RP) {
@@ -299,10 +299,10 @@ public class Parser extends Lexer implements IParser {
 			smtConfig.topLevel = saved; // FIXME - use a try-finally block?
 			return res;
 		} 
-		if (!(t instanceof Sexpr)) {
+		if (!(t instanceof ISexpr)) {
 			throw new ParserException("Token is not an S-expression token: " + t.getClass(),t.pos());
 		}
-		return (Sexpr)t;
+		return (ISexpr)t;
 	}
 	
 	/** Parses and adds Sexpr to a list until parseSexpr returns null (indicating
@@ -808,7 +808,7 @@ public class Parser extends Lexer implements IParser {
 				return null;
 			}
 		} else {
-			Sexpr value = parseSexpr();
+			ISexpr value = parseSexpr();
 			if (value == null) return null;
 			return value;
 		}
@@ -839,7 +839,7 @@ public class Parser extends Lexer implements IParser {
 					return null;
 				}
 			} else {
-				Sexpr value = parseSexpr();
+				ISexpr value = parseSexpr();
 				if (value == null) return null;
 				return setPos(smtConfig.exprFactory.attribute(keyword,value),pos(keyword.pos(),value.pos()));
 			}
@@ -956,7 +956,7 @@ public class Parser extends Lexer implements IParser {
 		if ("false".equals(response)) return smtConfig.exprFactory.symbol("false");
 		// FIXME - more - iterate over a list?
 		
-		Sexpr sexpr = parseSexpr();
+		ISexpr sexpr = parseSexpr();
 		if (sexpr instanceof ISexpr.ISeq) {
 			List<ISexpr> list = ((ISexpr.ISeq)sexpr).sexprs();
 			if (list.get(0).toString().equals("error") && list.get(1) instanceof IStringLiteral) {

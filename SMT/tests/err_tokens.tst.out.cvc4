@@ -54,14 +54,13 @@ Its type      : Int")
 (assert (! true :named |a\b| )) ; FIXME - needs a better error message
                          ^^^
 (error "Invalid token: \\b|")
-unsupported
+success
 (set-info :x 0a); 
              ^^
 (error "Invalid token: 0a")
 (assert .123)
 ^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.11: Symbol .123 not declared as a variable
-")
+(error "Parse Error: <shell>:1.11: Symbol .123 not declared as a variable")
 (assert , ) ; FIXME - in general change 'Invalid characters' erro rmessage to 'Invalid token'
         ^
 (error "Invalid token: ,")

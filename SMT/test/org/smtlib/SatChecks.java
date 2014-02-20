@@ -608,8 +608,10 @@ FFF		F				T				T *
 		doCommand("(exit)");
 	}
 
+	// FIXME - in these four, simplify does not implement ite
 	@Test
 	public void iteBoolBoolUnSat() {
+		if ("simplify".equals(solver)) return;
 		doCommand("(set-logic QF_LIA)");
 		doCommand("(declare-fun p () Bool)");
 		doCommand("(declare-fun x () Bool)");
@@ -621,6 +623,7 @@ FFF		F				T				T *
 	
 	@Test
 	public void iteTermSat() {
+		if ("simplify".equals(solver)) return;
 		doCommand("(set-logic QF_LIA)");
 		doCommand("(declare-fun p () Bool)");
 		doCommand("(declare-fun x () Int)");
@@ -632,6 +635,7 @@ FFF		F				T				T *
 	
 	@Test
 	public void iteTermSat2() {
+		if ("simplify".equals(solver)) return;
 		doCommand("(set-logic QF_LIA)");
 		doCommand("(declare-fun p () Bool)");
 		doCommand("(declare-fun x () Int)");
@@ -643,6 +647,7 @@ FFF		F				T				T *
 	
 	@Test
 	public void iteTermUnSat() {
+		if ("simplify".equals(solver)) return;
 		doCommand("(set-logic QF_LIA)");
 		doCommand("(declare-fun p () Bool)");
 		doCommand("(declare-fun x () Int)");

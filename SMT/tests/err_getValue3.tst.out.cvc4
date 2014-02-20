@@ -1,0 +1,9 @@
+success
+success
+success
+success
+sat
+success
+(get-value (x)) ; invalid because of the push
+^^^^^^^^^^^^^^^
+(error "Cannot get value unless immediately preceded by SAT/INVALID or UNKNOWN response.")

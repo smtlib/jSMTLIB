@@ -5,5 +5,4 @@ success
 success
 (assert y)
 ^^^^^^^^^^
-(error "Parse Error: <shell>:1.8: Symbol y not declared as a variable
-")
+(error "Parse Error: <shell>:1.8: Symbol y not declared as a variable")
