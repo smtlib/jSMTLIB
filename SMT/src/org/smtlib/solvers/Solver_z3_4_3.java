@@ -104,10 +104,31 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			else           args.add("-t:" + Double.toString(timeout));
 			cmds = args.toArray(new String[args.size()]);
 		}
-		solverProcess = new SolverProcess(cmds,"\n","solver.out.z3");
+		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile);
 		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
 	}
+
+	public IResponse sendCommand(ICommand cmd) {
+		String translatedCmd = null;
+		try {
+			translatedCmd = translate(cmd);
+			return parseResponse(solverProcess.sendAndListen(translatedCmd,"\n"));
+		} catch (IOException e) {
+			return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
+		} catch (IVisitor.VisitorException e) {
+			return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
+		}
+	}
 	
+	public IResponse sendCommand(String cmd) {
+		try {
+			return parseResponse(solverProcess.sendAndListen(cmd,"\n"));
+		} catch (IOException e) {
+			return smtConfig.responseFactory.error("Error writing to solver: " + cmd + " " + e);
+		}
+	}
+	
+
 	@Override
 	public IResponse start() {
 		try {
@@ -131,7 +152,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			solverProcess.sendAndListen("(exit)\n");
 			solverProcess.exit();
 			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Ended Z3 ");
-			return smtConfig.responseFactory.success();
+			return successOrEmpty(smtConfig);
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
 		}
@@ -268,9 +289,14 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			String s = solverProcess.sendAndListen("(check-sat)\n");
 			//smtConfig.log.logDiag("HEARD: " + s);  // FIXME - detect errors - parseResponse?
 			
-			if (s.contains("unsat")) res = smtConfig.responseFactory.unsat();
-			else if (s.contains("sat")) res = smtConfig.responseFactory.sat();
-			else res = smtConfig.responseFactory.unknown();
+			if (solverProcess.isRunning(false)) {
+				if (s.contains("unsat")) res = smtConfig.responseFactory.unsat();
+				else if (s.contains("sat")) res = smtConfig.responseFactory.sat();
+				else res = smtConfig.responseFactory.unknown();
+			} else {
+				res = smtConfig.responseFactory.error("Solver has unexpectedly terminated");
+			}
+
 			checkSatStatus = res;
 		} catch (IOException e) {
 			res = smtConfig.responseFactory.error("Failed to check-sat");
@@ -285,7 +311,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		}
 		if (number < 0) throw new SMT.InternalException("Internal bug: A pop command called with a negative argument: " + number);
 		if (number > pushesDepth) return smtConfig.responseFactory.error("The argument to a pop command is too large: " + number + " vs. a maximum of " + (pushesDepth));
-		if (number == 0) return smtConfig.responseFactory.success();
+		if (number == 0) return  successOrEmpty(smtConfig);
 		try {
 			checkSatStatus = null;
 			pushesDepth -= number;
@@ -307,7 +333,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			pushesDepth += number;
 			IResponse r = parseResponse(solverProcess.sendAndListen("(push ",new Integer(number).toString(),")\n"));
 			// FIXME - actually only see this problem on Linux
-			if (r.isError() && !isWindows) return smtConfig.responseFactory.success();
+			if (r.isError() && !isWindows) return successOrEmpty(smtConfig);
 			return r;
 		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
@@ -390,17 +416,16 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		}
 		// Save the options on our side as well
 		options.put(option,value);
+		IResponse r = checkPrintSuccess(smtConfig,key,value);
+		if (r != null) return r;
 
-		if (!Utils.PRINT_SUCCESS.equals(option)) {
-			try {
-				solverProcess.sendAndListen("(set-option ",option," ",value.toString(),")\n");// FIXME - detect errors
-			} catch (IOException e) {
-				return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
-			}
+		try {
+			solverProcess.sendAndListen("(set-option ",option," ",value.toString(),")\n");// FIXME - detect errors
+		} catch (IOException e) {
+			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
 		}
 		
-
-		return smtConfig.responseFactory.success();
+		return successOrEmpty(smtConfig);
 	}
 
 	@Override
@@ -412,27 +437,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	}
 
 	@Override
-	public IResponse get_info(IKeyword key) { // FIXME - use the solver? what types of results?
-		IKeyword option = key;
-		IAttributeValue lit;
-		if (Utils.ERROR_BEHAVIOR.equals(option)) {
-			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION);
-		} else if (Utils.NAME.equals(option)) {
-			lit = smtConfig.exprFactory.unquotedString(NAME_VALUE);
-		} else if (Utils.AUTHORS.equals(option)) {
-			lit = smtConfig.exprFactory.unquotedString(AUTHORS_VALUE);
-		} else if (Utils.VERSION.equals(option)) {
-			lit = smtConfig.exprFactory.unquotedString(VERSION_VALUE);
-			
-		} else if (Utils.REASON_UNKNOWN.equals(option)) {
-			return smtConfig.responseFactory.unsupported();
-		} else if (Utils.ALL_STATISTICS.equals(option)) {
-			return smtConfig.responseFactory.unsupported();
-		} else {
-			return smtConfig.responseFactory.unsupported();
-		}
-		IAttribute<?> attr = smtConfig.exprFactory.attribute(key,lit);
-		return smtConfig.responseFactory.get_info_response(attr);
+	public IResponse get_info(IKeyword key) {
+		return sendCommand("(get-info " + key + ")");
 	}
 	
 	@Override
@@ -441,8 +447,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			return smtConfig.responseFactory.error("Setting the value of a pre-defined keyword is not permitted: "+ 
 					smtConfig.defaultPrinter.toString(key),key.pos());
 		}
-		options.put(key.value(),value);
-		return smtConfig.responseFactory.success();
+		return sendCommand(new org.smtlib.command.C_set_info(key,value));
 	}
 
 

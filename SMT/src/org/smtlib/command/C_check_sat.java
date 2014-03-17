@@ -29,7 +29,9 @@ public class C_check_sat extends Command implements Icheck_sat {
 
 	/** The command name */
 	public static final String commandName = "check-sat";
+	
 	/** The command name */
+	@Override
 	public String commandName() { return commandName; }
 	
 	/** Writes the command in the syntax of the given printer */

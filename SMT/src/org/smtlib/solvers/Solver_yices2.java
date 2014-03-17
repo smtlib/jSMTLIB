@@ -46,6 +46,7 @@ import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.IResponse.IPair;
 import org.smtlib.impl.Pos;
+import org.smtlib.impl.Response;
 import org.smtlib.impl.SMTExpr.ParameterizedIdentifier;
 import org.smtlib.sexpr.ISexpr;
 
@@ -72,7 +73,7 @@ public class Solver_yices2 extends Solver_test implements ISolver {
 	public Solver_yices2(SMT.Configuration smtConfig, String executable) {
 		super(smtConfig,"");
 		cmds[0] = executable;
-		solverProcess = new SolverProcess(cmds,"yices> ","solver.out.yices2") {
+		solverProcess = new SolverProcess(cmds,"yices> ",smtConfig.logfile) {
 			@Override
 			public String listen() throws IOException {
 				// FIXME - need to put the two reads in parallel, otherwise one might block on a full buffer, preventing the other from completing
@@ -80,8 +81,8 @@ public class Solver_yices2 extends Solver_test implements ISolver {
 				String out = listenThru(fromProcess,null);
 				if (err.endsWith(endMarker)) err = err.substring(0,err.length()-endMarker.length());
 				if (log != null) {
-					if (!out.isEmpty()) { log.write("OUT: "); log.write(out); log.write(eol); } // input usually ends with a prompt and no line terminator
-					if (!err.isEmpty()) { log.write("ERR: "); log.write(err); } // input usually ends with a line terminator, we think
+					if (!out.isEmpty()) { log.write(";;OUT: "); log.write(out); log.write(eol); } // input usually ends with a prompt and no line terminator
+					if (!err.isEmpty()) { log.write(";;ERR: "); log.write(err); } // input usually ends with a line terminator, we think
 				}
 				return err.isEmpty() ? out : err;
 			}
@@ -94,8 +95,8 @@ public class Solver_yices2 extends Solver_test implements ISolver {
 		try {
 			solverProcess.start(true);
 			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Started yices2 " + (solverProcess!=null));
-			solverProcess.sendAndListen("(define mod :: (-> int int int))\n");
-			solverProcess.sendAndListen("(define div :: (-> int int int))\n");
+//			solverProcess.sendAndListen("(define mod :: (-> int int int))\n");
+//			solverProcess.sendAndListen("(define div :: (-> int int int))\n");
 			
 			return smtConfig.responseFactory.success();
 		} catch (Exception e) {
@@ -107,7 +108,7 @@ public class Solver_yices2 extends Solver_test implements ISolver {
 		try {
 			for (String s: solverCmds) solverProcess.sendNoListen(s);
 			String response = solverProcess.sendAndListen("\n");
-			if (response.contains(errorIndication)) {
+			if (response.contains(errorIndication) || response.contains("does not support quantifiers")) {
 				return smtConfig.responseFactory.error(response,pos);
 			}
 			return null;
@@ -208,6 +209,8 @@ public class Solver_yices2 extends Solver_test implements ISolver {
 			if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
 				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
 			}
+			// FIXME - improve the following line
+			((Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
 		}
 		if (Utils.INTERACTIVE_MODE.equals(option) || 
 				Utils.PRODUCE_MODELS.equals(option) ||
@@ -258,13 +261,13 @@ public class Solver_yices2 extends Solver_test implements ISolver {
 		return smtConfig.responseFactory.success();
 	}
 
-	@Override
-	public IResponse get_option(IKeyword key) {
-		String option = key.value();
-		IAttributeValue value = options.get(option);
-		if (value == null) return smtConfig.responseFactory.unsupported();
-		return value;
-	}
+//	@Override
+//	public IResponse get_option(IKeyword key) {
+//		String option = key.value();
+//		IAttributeValue value = options.get(option);
+//		if (value == null) return smtConfig.responseFactory.unsupported();
+//		return value;
+//	}
 
 	@Override
 	public IResponse get_info(IKeyword key) {
@@ -459,7 +462,7 @@ public class Solver_yices2 extends Solver_test implements ISolver {
 			String response = null;
 			List<IPair<IExpr,IExpr>> list = new LinkedList<IPair<IExpr,IExpr>>();
 			for (IExpr e: terms) {
-				String s = "(eval " + translate(terms[0]) + ")\n";
+				String s = "(eval " + translate(e) + ")\n";
 				response = solverProcess.sendAndListen(s);
 				if (response.contains(errorIndication)) {
 					return smtConfig.responseFactory.error(response);
@@ -858,32 +861,84 @@ public class Solver_yices2 extends Solver_test implements ISolver {
 		@Override
 		public String visit(IForall e) throws IVisitor.VisitorException {
 			StringBuffer sb = new StringBuffer();
-			sb.append("(forall (");
-			for (IDeclaration d: e.parameters()) {
-				sb.append(d.parameter().accept(this));
-				sb.append("::");
-				sb.append(d.sort().accept(this));
-				sb.append(" ");
+			boolean allBool = true;
+			long bits = 1; // FIXME - no more than 63 quantifiers
+			for (IDeclaration p: e.parameters()) {
+				if (!p.sort().isBool()) allBool = false;
+				bits = bits << 1;
 			}
-			sb.append(") ");
-			sb.append(e.expr().accept(this));
-			sb.append(")");
+			if (allBool) {
+				sb.append("(and ");
+				while (--bits >= 0) {
+					sb.append("(let (");
+					long k = bits;
+					for (IDeclaration p: e.parameters()) {
+						sb.append("(");
+						sb.append(p.parameter().accept(this));
+						sb.append(" ");
+						sb.append((k&1) == 1 ? "true" : "false");
+						sb.append(")");
+						k = k >>> 1;
+					}
+				    sb.append(") ");
+				    sb.append(e.expr().accept(this));
+				    sb.append(") ");
+				}
+				sb.append(")");
+			} else {
+				sb.append("(forall (");
+				for (IDeclaration d: e.parameters()) {
+					sb.append(d.parameter().accept(this));
+					sb.append("::");
+					sb.append(d.sort().accept(this));
+					sb.append(" ");
+				}
+				sb.append(") ");
+				sb.append(e.expr().accept(this));
+				sb.append(")");
+			}
 			return sb.toString();
 		}
 
 		@Override
 		public String visit(IExists e) throws IVisitor.VisitorException {
 			StringBuffer sb = new StringBuffer();
-			sb.append("(exists (");
-			for (IDeclaration d: e.parameters()) {
-				sb.append(d.parameter().accept(this));
-				sb.append("::");
-				sb.append(d.sort().accept(this));
-				sb.append(" ");
+			boolean allBool = true;
+			long bits = 1; // FIXME - no more than 63 quantifiers
+			for (IDeclaration p: e.parameters()) {
+				if (!p.sort().isBool()) allBool = false;
+				bits = bits << 1;
 			}
-			sb.append(") ");
-			sb.append(e.expr().accept(this));
-			sb.append(")");
+			if (allBool) {
+				sb.append("(or ");
+				while (--bits >= 0) {
+					sb.append("(let (");
+					long k = bits;
+					for (IDeclaration p: e.parameters()) {
+						sb.append("(");
+						sb.append(p.parameter().accept(this));
+						sb.append(" ");
+						sb.append((k&1) == 1 ? "true" : "false");
+						sb.append(")");
+						k = k >>> 1;
+					}
+				    sb.append(") ");
+				    sb.append(e.expr().accept(this));
+				    sb.append(") ");
+				}
+				sb.append(")");
+			} else {
+				sb.append("(exists (");
+				for (IDeclaration d: e.parameters()) {
+					sb.append(d.parameter().accept(this));
+					sb.append("::");
+					sb.append(d.sort().accept(this));
+					sb.append(" ");
+				}
+				sb.append(") ");
+				sb.append(e.expr().accept(this));
+				sb.append(")");
+			}
 			return sb.toString();
 		}
 

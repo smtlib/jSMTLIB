@@ -25,7 +25,7 @@ public interface IExpr extends IAccept, IPosable {
 		/** Creates a INumeral object; the argument must be a string of digits. */
 		INumeral numeral(String v);
 		/** Creates a INumeral object; the argument must be non-negative */
-		//@ requires v > 0;
+		//@ requires v >= 0;
 		INumeral numeral(long v);
 		/** Creates a IDecimal object; the argument must be a string of digits with just one decimal point */
 		IDecimal decimal(String v);
@@ -91,11 +91,11 @@ public interface IExpr extends IAccept, IPosable {
 		/*@ pure */
 		BigInteger value();
 		
+		//@ ensures value().compareTo(BigInteger.valueOf(Integer.INT_MAX)) <= 0 ==> value().intValue() == \result;
 		//@ ensures \result >= 0;
 		/*@ pure */
 		int intValue();
 		
-		//@ public invariant value().compareTo(BigInteger.valueOf(Integer.INT_MAX)) <= 0 ==> value().intValue() == intValue();
 	}
 	
 	/** This interface represents non-negative decimal numbers of arbitrary size
@@ -116,10 +116,8 @@ public interface IExpr extends IAccept, IPosable {
 
 		/** A printable String giving the original text of this symbol. */
 		//@ pure
+		@Override
 		String toString();
-		
-//		static public interface IParameter extends ISymbol {}
-//		static public interface ILetParameter extends ISymbol {}
 	}
 	
 	/** This interface represents SMT-LIB attribute and infoflag names. */
@@ -130,6 +128,7 @@ public interface IExpr extends IAccept, IPosable {
 		
 		/** The original textual representation of the keyword */
 		//@ pure
+		@Override
 		String toString();
 		
 		/** Helpful method that indicates the class of expression, used in human-readable messages. */
@@ -177,6 +176,7 @@ public interface IExpr extends IAccept, IPosable {
 		/** Returns a value with enclosing quotes and appropriate SMT-LIB escape sequences so that the String value
 		 * can be represented with SMT-LIB printable characters; the result may have explicit newline characters. */
 		//@ pure
+		@Override
 		String toString();
 	}
 	
@@ -202,6 +202,7 @@ public interface IExpr extends IAccept, IPosable {
 	/** This interface represents SMT-LIB identifiers (either ids or parameterized ids) */
 	static public interface IIdentifier extends IQualifiedIdentifier {
 		/** The head symbol of the identifier */
+		@Override
 		ISymbol headSymbol();
 
 	}
@@ -212,6 +213,7 @@ public interface IExpr extends IAccept, IPosable {
 		IIdentifier head();
 		
 		/** The head symbol of the identifier */
+		@Override
 		ISymbol headSymbol();
 
 		/** The Sort qualifier */
@@ -243,8 +245,9 @@ public interface IExpr extends IAccept, IPosable {
 		List<IAttribute<?>> attributes();
 	}
 	
-	/** This interface represents the general class of attribute values; in the
-	 * abstract syntax it has no particular structure, though it does include
+	/** This interface represents the general class of attribute values; 
+	 * that is, it is the super-interface of any class that may be an attribute value;
+	 * in the abstract syntax it has no particular structure, though it does include
 	 * true, false, string literals, numerals, and various pre-defined constants.
 	 */
 	static public interface IAttributeValue extends IResponse, IPos.IPosable {

@@ -22,8 +22,6 @@ import org.smtlib.sexpr.Printer;
 public class C_declare_sort extends Command implements Ideclare_sort {
 	/** The command name */
 	public static final String commandName = "declare-sort";
-	/** The command name */
-	public String commandName() { return commandName; }
 
 	/** The new sort symbol */
 	protected ISymbol sortSymbol;
@@ -31,6 +29,10 @@ public class C_declare_sort extends Command implements Ideclare_sort {
 	/** The arity of the sort symbol */
 	protected INumeral arity;
 	
+	/** The command name */
+	@Override
+	public String commandName() { return commandName; }
+
 	/** The arity of the sort symbol */
 	@Override
 	public INumeral arity() { return arity; }

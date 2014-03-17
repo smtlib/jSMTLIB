@@ -77,17 +77,17 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		symTable.push();
 		boolean errors = false;
 		try {
-			for (ISort.IParameter p : params) {
+            symTable.logicInUse.checkSortDeclaration(id,params,expr);
+			if (params != null) for (ISort.IParameter p : params) {
 				boolean b = symTable.addSortParameter(p.symbol());
 				if (!b) {
 					f.error("Duplicate sort parameters: " + p.symbol(),p.pos());
 					errors = true;
 				}
 			}
-			if (!errors) expr.accept(f);
-			symTable.logicInUse.checkSortDeclaration(id,params,expr);
+			if (!errors && expr != null) expr.accept(f);
 		} catch (IVisitor.VisitorException e) {
-			f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(),expr.pos());
+			f.error("Error while checking sort abbreviation: " + e.getMessage(),id.pos());
 		} catch (Exception e) {
 			f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(),expr.pos());
 		} finally {

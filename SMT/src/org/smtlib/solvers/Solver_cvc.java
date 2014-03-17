@@ -61,7 +61,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 	public Solver_cvc(SMT.Configuration smtConfig, String executable) {
 		super(smtConfig,"");
 		cmds[0] = executable;
-		solverProcess = new SolverProcess(cmds,"CVC> ","solver.out.cvc");
+		solverProcess = new SolverProcess(cmds,"CVC> ",smtConfig.logfile);
 	}
 	
 	@Override
@@ -231,6 +231,9 @@ public class Solver_cvc extends Solver_test implements ISolver {
 			}
 		}
 		options.put(option,value);
+		if (key.toString().equals(":print-success")) {
+			smtConfig.nosuccess = value.toString().equals("false");
+		}
 		return smtConfig.responseFactory.success();
 	}
 

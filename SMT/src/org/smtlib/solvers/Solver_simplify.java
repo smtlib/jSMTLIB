@@ -75,7 +75,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 	public Solver_simplify(SMT.Configuration smtConfig, String executable) {
 		super(smtConfig,"");
 		cmds[0] = executable;
-		solverProcess = new SolverProcess(cmds,">\t","solver.out.simplify");
+		solverProcess = new SolverProcess(cmds,">\t",smtConfig.logfile);
 	}
 	
 	@Override

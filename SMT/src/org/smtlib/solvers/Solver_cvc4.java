@@ -19,8 +19,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.smtlib.*;
 import org.smtlib.ICommand.Ideclare_fun;
@@ -47,9 +45,9 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 	
 	/** The command-line arguments for launching the solver */
 	protected String cmds[];
-	protected String cmds_win[] = new String[]{ "", "--smtlib-strict","--interactive"}; 
+	protected String cmds_win[] = new String[]{ "", "--smtlib-strict","--interactive","--no-full-saturate-quant"}; 
 	protected String cmds_mac[] = new String[]{ "", "--smtlib-strict","--interactive"}; 
-	protected String cmds_unix[] = new String[]{ "", "--smtlib-strict","--incremental"}; 
+	protected String cmds_unix[] = new String[]{ "", "--smtlib-strict","--incremental"}; // FIXME - probably is --interactive also
 
 	/** The object that interacts with external processes */
 	private SolverProcess solverProcess;
@@ -90,7 +88,7 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 			args.add("--tlimit-per=" + Long.toString(Math.round(1000*timeout+0.5)));
 			cmds = args.toArray(new String[args.size()]);
 		}
-		solverProcess = new SolverProcess(cmds,prompt,"solver.out.cvc4") {
+		solverProcess = new SolverProcess(cmds,prompt,smtConfig.logfile) {
 			
 			@Override
 			public String listen() throws IOException {
@@ -100,8 +98,8 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 				err = err + listenThru(errors,null);
 				if (out.endsWith(endMarker)) out = out.substring(0,out.length()-endMarker.length());
 				if (log != null) {
-					if (!out.isEmpty()) { log.write("OUT: "); log.write(out); log.write(eol); } // input usually ends with a prompt and no line terminator
-					if (!err.isEmpty()) { log.write("ERR: "); log.write(err); } // input usually ends with a line terminator, we think
+					if (!out.isEmpty()) { log.write(";OUT: "); log.write(out); log.write(eol); log.flush(); } // input usually ends with a prompt and no line terminator
+					if (!err.isEmpty()) { log.write(";ERR: "); log.write(err); log.flush(); } // input usually ends with a line terminator, we think
 				}
 				return err.isEmpty() ? out : err;
 			}};
@@ -258,7 +256,8 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 //			else if (s.contains("sat")) res = smtConfig.responseFactory.sat();
 //			else if (s.contains("unknown")) res = smtConfig.responseFactory.unknown();
 //			else 
-				res = parseResponse(s);
+			if (solverProcess.isRunning(false)) res = parseResponse(s);
+			else res = smtConfig.responseFactory.error("Solver has unexpectedly terminated");
 			checkSatStatus = res;
 		} catch (Exception e) {
 			res = smtConfig.responseFactory.error("Failed to check-sat");
@@ -335,6 +334,8 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 
 		options.put(option,value);
 
+		IResponse r = checkPrintSuccess(smtConfig,key,value);
+		if (r != null) return r;
 		return sendCommand(new org.smtlib.command.C_set_option(key,value));
 
 //		if (!Utils.PRINT_SUCCESS.equals(option)) {
@@ -346,6 +347,7 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 
 	@Override
 	public IResponse get_option(IKeyword key) {
+		if (printSuccess.equals(key)) return smtConfig.nosuccess ? Utils.FALSE : Utils.TRUE;
 		IResponse resp = sendCommand(new org.smtlib.command.C_get_option(key));
 		if (resp instanceof Response.Seq) {
 			// FIXME - this is an adjustment for CVC4's non-standard behavior
@@ -383,14 +385,16 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 	}
 
 	@Override
-	public IResponse get_info(IKeyword key) { // FIXME - use the solver? what types of results?
-		// Try passing in command
+	public IResponse get_info(IKeyword key) {
 		return sendCommand(new org.smtlib.command.C_get_info(key));
 	}
 	
 	@Override
 	public IResponse set_info(IKeyword key, IAttributeValue value) {
-		// Try passing in command
+		if (Utils.infoKeywords.contains(key)) {
+			return smtConfig.responseFactory.error("Setting the value of a pre-defined keyword is not permitted: "+ 
+					smtConfig.defaultPrinter.toString(key),key.pos());
+		}
 		return sendCommand(new org.smtlib.command.C_set_info(key,value));
 	}
 

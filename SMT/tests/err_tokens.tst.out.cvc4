@@ -60,7 +60,7 @@ success
 (error "Invalid token: 0a")
 (assert .123)
 ^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.11: Symbol .123 not declared as a variable")
+(error "Parse Error: <shell>:1.11: Symbol '.123' not declared as a variable")
 (assert , ) ; FIXME - in general change 'Invalid characters' erro rmessage to 'Invalid token'
         ^
 (error "Invalid token: ,")

@@ -1,11 +1,11 @@
 package org.smtlib;
 
-import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import tests.*;
 
-@RunWith(Parameterized.class)
+@RunWith(ParameterizedIgnorable.class)
 public class QuantTests extends LogicTests {
 
     public QuantTests(String solvername) {
@@ -19,7 +19,7 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void checkQuantifiedTransSat() {
-		if ("simplify".equals(solvername)) return; // FIXME - simplify does not implement Bool terms
+		Assume.assumeTrue(!"simplify".equals(solvername)); // FIXME - simplify does not implement Bool terms
 		String result = "simplify".equals(solvername) || "z3_4_3".equals(solvername) || "yices2".equals(solvername) ? "sat" : "unknown";
 		doCommand("(set-logic AUFLIA)");
 		doCommand("(declare-fun p () Bool)");
@@ -35,7 +35,8 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void checkQuantifiedTransUnsat() {
-		if ("simplify".equals(solvername)) return; // FIXME - simplify does not implement Bool terms
+		Assume.assumeTrue(!"simplify".equals(solvername)); // FIXME - simplify does not implement Bool terms
+		Assume.assumeTrue(!"yices2".equals(solvername)); // FIXME - yices2 has a bug here as of Feb 2014
 		doCommand("(set-logic AUFLIA)");
 		doCommand("(declare-fun p () Bool)");
 		doCommand("(declare-fun q () Bool)");
@@ -50,6 +51,7 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void checkQuantifiedTransSatNT() {
+		Assume.assumeTrue(!"yices2".equals(solvername)); // FIXME - yices2 does not implement quantifiers
 		String result = "simplify".equals(solvername) || "z3_4_3".equals(solvername)  || "yices2".equals(solvername) ? "sat" : "unknown";
 		doCommand("(set-logic AUFLIA)");
 		doCommand("(declare-sort B 0)");
@@ -66,6 +68,7 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void checkQuantifiedTransUnSatNT() {
+		Assume.assumeTrue(!"yices2".equals(solvername)); // FIXME - yices2 does not implement quantifiers as terms
 		String result = "test".equals(solvername) ? "unknown" : "unsat";
 		doCommand("(set-logic AUFLIA)");
 		doCommand("(declare-sort B 0)");
@@ -82,8 +85,9 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void checkQuantifiedTransBool() {
-		if ("yices2".equals(solvername)) Assert.fail(solvername + " crashes"); // FIXME - yices crashes
-		if ("simplify".equals(solvername)) return; // FIXME - simplify does not implement Bool terms
+		Assume.assumeTrue(!"simplify".equals(solvername)); // FIXME - simplify does not implement Bool terms
+		Assume.assumeTrue(!"yices2".equals(solvername));  // FIXME - yices crashes
+
 		String result = "simplify".equals(solvername) || "z3_4_3".equals(solvername) || "yices2".equals(solvername)? "sat" : "unknown";
 		String result2 = "unsat";
 		doCommand("(set-logic AUFLIA)");
@@ -105,6 +109,7 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void existsIntSat() {
+		Assume.assumeTrue(!"yices2".equals(solvername)); // FIXME - yices2 does not implement quantifiers
 		doCommand("(set-logic AUFLIA)");
 		doCommand("(assert (exists ((x Int)) (and (<= 1 x)(<= x 3))))");
 		doCommand("(check-sat)","sat");
@@ -113,6 +118,7 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void existsIntUnSat() {
+		Assume.assumeTrue(!"yices2".equals(solvername)); // FIXME - yices2 does not implement quantifiers
 		String result = "unsat";
 		doCommand("(set-logic AUFLIA)");
 		doCommand("(assert (exists ((x Int)) (and (<= 4 x) (<= x 3))  ))");
@@ -123,7 +129,8 @@ public class QuantTests extends LogicTests {
  
 	@Test
 	public void forallBoolUnSat() {
-		if ("simplify".equals(solvername)) return; // FIXME - simplify does not implement Bool terms
+		Assume.assumeTrue(!"simplify".equals(solvername)); // FIXME - simplify does not implement Bool terms
+		//Assume.assumeTrue(!"yices2".equals(solvername)); // FIXME - yices2 does not implement Boolean quantifiers
 		String result = solvername.equals("z3_2_11") 
 				|| solvername.equals("yices") 
 				|| solvername.equals("cvc4") 
@@ -136,7 +143,8 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void forallBoolSat2() {
-		if ("simplify".equals(solvername)) return; // FIXME - simplify does not implement Bool terms
+		Assume.assumeTrue(!"simplify".equals(solvername)); // FIXME - simplify does not implement Bool terms
+		Assume.assumeTrue(!"yices2".equals(solvername)); // FIXME - yices2 does not implement Boolean quantifiers
 		String result = "sat";
 		doCommand("(set-logic AUFLIA)");
 		doCommand("(declare-fun p () Bool)");
@@ -147,7 +155,7 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void forallBoolSat() {
-		if ("simplify".equals(solvername)) return; // FIXME - simplify does not implement Bool terms
+		Assume.assumeTrue(!"simplify".equals(solvername)); // FIXME - simplify does not implement Bool terms
 		String result = solvername.equals("cvc4") 
 				? "unknown" : "sat";
 		doCommand("(set-logic AUFLIA)");
@@ -158,7 +166,8 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void existsBoolSat() {
-		if ("simplify".equals(solvername)) return; // FIXME - simplify does not implement Bool terms
+		Assume.assumeTrue(!"simplify".equals(solvername)); // FIXME - simplify does not implement Bool terms
+		//Assume.assumeTrue(!"yices2".equals(solvername)); // FIXME - yices2 does not implement Boolean quantifiers
 		doCommand("(set-logic AUFLIA)");
 		doCommand("(assert (exists ((q Bool)) (not q)))");
 		doCommand("(check-sat)","sat");
@@ -168,7 +177,7 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void existsBoolUnSat() {
-		if ("simplify".equals(solvername)) return; // FIXME - simplify does not implement Bool terms
+		Assume.assumeTrue(!"simplify".equals(solvername)); // FIXME - simplify does not implement Bool terms
 		doCommand("(set-logic AUFLIA)");
 		doCommand("(assert (exists ((q Bool)) (and q (not q))))");
 		doCommand("(check-sat)","unsat");

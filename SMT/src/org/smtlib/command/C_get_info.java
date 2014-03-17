@@ -22,12 +22,14 @@ public class C_get_info extends Command implements Iget_info {
 	/** The command name */
 	public static final String commandName = "get-info";
 	/** The command name */
+	@Override
 	public String commandName() { return commandName; }
 
 	/** The keyword for the info item to fetch */
 	protected IKeyword option;
 
 	/** The keyword for the info item to fetch */
+	@Override
 	public IKeyword infoflag() { return option; }
 
 	/** Constructs a command instance given the keyword */

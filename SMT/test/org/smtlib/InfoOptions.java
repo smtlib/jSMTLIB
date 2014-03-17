@@ -3,15 +3,15 @@ package org.smtlib;
 import java.util.List;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.impl.Response;
 
-@RunWith(Parameterized.class)
+@RunWith(tests.ParameterizedIgnorable.class)
 public class InfoOptions  extends LogicTests {
 
 	boolean isTest;
@@ -57,7 +57,7 @@ public class InfoOptions  extends LogicTests {
 				: solvername.equals("yices") ? "1.0.28"
 				: solvername.equals("yices2") ? "2.1"
 				: solvername.equals("cvc") ? "2.2"
-				: solvername.equals("cvc4") ? "1.3"
+				: solvername.equals("cvc4") ? "1.4-prerelease"
 				: solvername.equals("z3_4_3") ? "4.3"
 				: solvername.equals("z3_2_11") ? "2.11"
 				: "???" )
@@ -73,7 +73,7 @@ public class InfoOptions  extends LogicTests {
 						: solvername.equals("yices2") ? "yices2"
 						: solvername.equals("cvc") ? "CVC3"
 						: solvername.equals("cvc4") ? "cvc4"
-						: solvername.equals("z3_4_3") ? "z3-4.3"
+						: solvername.equals("z3_4_3") ? "Z3"
 						: solvername.equals("z3_2_11") ? "z3-2.11"
 						: "???" );
 	}
@@ -89,8 +89,7 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkSetName() {
 		doCommand("(set-info :name \"xx\")",
-				solvername.equals("cvc4") ? "success"
-				: "(error \"Setting the value of a pre-defined keyword is not permitted: :name\")");
+				"(error \"Setting the value of a pre-defined keyword is not permitted: :name\")");
 	}
 	
 	@Test
@@ -267,6 +266,7 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkRandomSeed() {
+		Assume.assumeTrue(!"cvc4".equals(solvername)); // FIXME - cvc4 does not handle randome seed correctly
 		doCommand("(get-option :random-seed)", 
 				"0"
 				);
@@ -274,6 +274,7 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetRandomSeed() {
+		Assume.assumeTrue(!"cvc4".equals(solvername)); // FIXME - cvc4 does not handle randome seed correctly
 		doCommand("(set-option :random-seed 1)", "success");
 		doCommand("(get-option :random-seed)", 
 				"cvc4".equals(solvername) ? "0" :

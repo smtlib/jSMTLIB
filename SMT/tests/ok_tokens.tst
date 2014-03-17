@@ -1,4 +1,4 @@
-; ok tokens with all the cllowed characters
+; ok tokens with all the allowed characters
 (set-logic QF_LIA)
 (set-info :x 1234567890)
 (set-info :x 123456789.0123456789 )

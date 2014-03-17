@@ -1,10 +1,11 @@
 package org.smtlib;
 
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-@RunWith(Parameterized.class)
+@RunWith(tests.ParameterizedIgnorable.class)
 public class SatChecks extends LogicTests {
 
     public SatChecks(String solvername) {
@@ -156,9 +157,9 @@ public class SatChecks extends LogicTests {
 		doCommand("(exit)");
 	}
 
-	// FIXME// simplify can't handle this one correctly - says it is sat
 	@Test
 	public void checkLIADistinct3UnSat() {
+		Assume.assumeTrue(!"simplify".equals(solvername)); // FIXME - simplify gets this one wrong
 		doCommand("(set-logic QF_LIA)");
 		doCommand("(declare-fun x () Int)");
 		doCommand("(declare-fun y () Int)");
@@ -623,7 +624,7 @@ FFF		F				T				T *
 	
 	@Test
 	public void iteTermSat() {
-		if ("simplify".equals(solver)) return;
+		Assume.assumeTrue(!"simplify".equals(solvername)); // FIXME - simplify does not allow Boolean terms
 		doCommand("(set-logic QF_LIA)");
 		doCommand("(declare-fun p () Bool)");
 		doCommand("(declare-fun x () Int)");
@@ -635,7 +636,7 @@ FFF		F				T				T *
 	
 	@Test
 	public void iteTermSat2() {
-		if ("simplify".equals(solver)) return;
+		Assume.assumeTrue(!"simplify".equals(solvername)); // FIXME - simplify does not allow Boolean terms
 		doCommand("(set-logic QF_LIA)");
 		doCommand("(declare-fun p () Bool)");
 		doCommand("(declare-fun x () Int)");
@@ -647,7 +648,7 @@ FFF		F				T				T *
 	
 	@Test
 	public void iteTermUnSat() {
-		if ("simplify".equals(solver)) return;
+		Assume.assumeTrue(!"simplify".equals(solvername)); // FIXME - simplify does not allow Boolean terms
 		doCommand("(set-logic QF_LIA)");
 		doCommand("(declare-fun p () Bool)");
 		doCommand("(declare-fun x () Int)");

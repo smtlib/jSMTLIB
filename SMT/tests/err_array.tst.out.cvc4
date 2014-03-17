@@ -1,10 +1,10 @@
 success
 success
 success
+(declare-fun a () (Array I V))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.28: Symbol 'Array' not declared as a type")
 success
-(declare-fun a () I)
-^^^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.13: Symbol a previously declared as a variable")
 success
 success
 (assert (= v (select a i)))

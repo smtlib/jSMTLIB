@@ -1,7 +1,7 @@
 success
 (declare-sort Bool 0)
 ^^^^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.17: Symbol Bool previously declared as a type")
+(error "Parse Error: <shell>:1.17: Symbol 'Bool' previously declared as a type")
 success
 (declare-fun select () Bool)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

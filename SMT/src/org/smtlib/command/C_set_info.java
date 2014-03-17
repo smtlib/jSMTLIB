@@ -21,6 +21,7 @@ public class C_set_info extends Command implements Iset_option {
 	/** The command name */
 	public static final String commandName = "set-info";
 	/** The command name */
+	@Override
 	public String commandName() { return commandName; }
 	
 	/** The keyword for the option to set */
@@ -30,9 +31,11 @@ public class C_set_info extends Command implements Iset_option {
 	protected /*@Nullable*/IAttributeValue value;
 	
 	/** The keyword for the option to set */
+	@Override
 	public IKeyword option() { return option; }
 	
 	/** The value of the option, which in general can be any attribute value */
+	@Override
 	public IAttributeValue value() { return value; }
 
 	/** Construct an instance of the command */

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -87,6 +88,9 @@ public class FileTests  extends LogicTests {
     
 	@Test
 	public void checkFile() {
+		Assume.assumeTrue(!("err_namedExpr2.tst".equals(testfile) && "yices2".equals(solvername))); // FIXME - yices2 does not support Boolean quantifiers
+
+		
 		System.out.println("File: " + testfile + "  Solver: " + solvername);
 		String script = readFile("tests/" + testfile);
 		String outname = "tests/" + testfile + ".out";

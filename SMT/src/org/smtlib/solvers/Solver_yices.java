@@ -41,6 +41,7 @@ import org.smtlib.IExpr.IQualifiedIdentifier;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IVisitor.VisitorException;
+import org.smtlib.impl.Response;
 import org.smtlib.impl.SMTExpr.ParameterizedIdentifier;
 
 // FIXME - in some commands, like assert, push, pop, the effect in solver_test happens even if the effect in the 
@@ -67,7 +68,7 @@ public class Solver_yices extends Solver_test implements ISolver {
 	public Solver_yices(SMT.Configuration smtConfig, String executable) {
 		super(smtConfig,"");
 		cmds[0] = executable;
-		solverProcess = new SolverProcess(cmds,"yices > ","solver.out.yices");
+		solverProcess = new SolverProcess(cmds,"yices > ",smtConfig.logfile);
 	}
 	
 	@Override
@@ -75,6 +76,8 @@ public class Solver_yices extends Solver_test implements ISolver {
 		super.start();
 		try {
 			solverProcess.start(true);
+			solverProcess.sendAndListen("(define mod :: (-> int int int))\n");
+			solverProcess.sendAndListen("(define div :: (-> int int int))\n");
 			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Started yices " + (solverProcess!=null));
 			return smtConfig.responseFactory.success();
 		} catch (Exception e) {
@@ -187,6 +190,7 @@ public class Solver_yices extends Solver_test implements ISolver {
 			if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
 				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
 			}
+			((Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
 		}
 		if (logicSet && Utils.INTERACTIVE_MODE.equals(option)) {
 			return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");

@@ -18,5 +18,7 @@ public interface IPrinter {
 	 * but does not modify the receiver.
 	 */
 	public <T extends IAccept> String toString(T expr);
+	
+	public IPrinter newPrinter(java.io.Writer pw);
 
 }

@@ -26,12 +26,14 @@ public class C_get_value extends Command implements Iget_value {
 	/** The command name */
 	public static final String commandName = "get-value";
 	/** The command name */
+	@Override
 	public String commandName() { return commandName; }
 
 	/** The terms whose values are to be gotten */
 	protected List<IExpr> terms;
 	
 	/** The terms whose values are to be gotten */
+	@Override
 	public List<IExpr> exprs() { return terms; }
 	
 	/** Constructs a command instance */

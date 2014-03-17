@@ -20,7 +20,7 @@ public interface ISolver {
 	/** Returns the configuration object with which the solver is initialized */
 	SMT.Configuration smt();
 	
-	/** Current check-sat status */
+	/** Current check-sat status; returns sat, unsat, unknown, error, or null */ // TODO - be more specific
 	/*@Nullable*/ IResponse checkSatStatus();
 	
 	/** Starts the solver; this is not an SMT-LIB command, but it is convenient in some implementations
@@ -56,7 +56,7 @@ public interface ISolver {
 	
 	/** Asserts the given expression into the solver state (in the top stack frame);
 	 * the expression is expected to be already checked that it is a valid, well-formed and well-sorted
-	 * expression in the current logic. */
+	 * expression in the current logic; returns success or error */
 	IResponse assertExpr(IExpr expr); // Not named assert because that is a Java reserved word, though
 										// the SMT-LIB command is 'assert'
 	
@@ -65,16 +65,16 @@ public interface ISolver {
 	 */
 	IResponse check_sat();
 	
-	/** Defines a new uninterpreted constant or function*/
+	/** Defines a new uninterpreted constant or function; returns success or error*/
 	IResponse declare_fun(Ideclare_fun cmd);
 	
-	/** Declares a new basic sort */
+	/** Declares a new basic sort; returns success or error */
 	IResponse declare_sort(Ideclare_sort cmd);
 
-	/** Defines a new function */
+	/** Defines a new constant or function; returns success or error */
 	IResponse define_fun(Idefine_fun cmd);
 	
-	/** Defines a new sort abbreviation */
+	/** Defines a new sort abbreviation; returns success or error */
 	IResponse define_sort(Idefine_sort cmd);
 	
 	/** Sets an SMT-LIB option
@@ -129,14 +129,14 @@ public interface ISolver {
 	/** Gets the value of an SMT-LIB option
 	 * 
 	 * @param option the option whose value is desired
-	 * @return SUCCESS or an error or unsupported
+	 * @return TODO
 	 */
 	IResponse get_option(IKeyword option);
 
 	/** Gets the value of an SMT-LIB information topic
 	 * 
 	 * @param option the info option whose value is desired
-	 * @return SUCCESS or an error or unsupported
+	 * @return TODO
 	 */
 	IResponse get_info(IKeyword option);
 	
