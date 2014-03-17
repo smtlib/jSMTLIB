@@ -1,0 +1,23 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(set-info :x #b0101 )
+^^^^^^^^^^^^^^^^^^^^^
+(error "line 21 column 13: invalid option value")
+(set-info :x #xabcdefABCDEF0123456789 )
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 22 column 13: invalid option value")
