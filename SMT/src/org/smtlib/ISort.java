@@ -27,7 +27,7 @@ import org.smtlib.IVisitor.VisitorException;
  * Second, Sort expressions themselves, modeled by ISort:
  * <UL>
  * <LI>A ISort.IApplication, which is the application of an IDefinition to the appropriate number
- * (possible 0) of Sort expressions
+ * (possibly 0) of Sort expressions
  * <LI>A ISort.IParameter, which is a simple symbol designating the parameter of a parameterized abbreviation
  * <LI>A ISort.IFcnSort, an expression designating a function sort; this is not expressible in SMT-LIBv2, but is 
  * useful internally within jSMTLIB.
@@ -36,37 +36,47 @@ import org.smtlib.IVisitor.VisitorException;
 public interface ISort extends IAccept, IPosable {
 
 	/** Structural equality after expansion of abbreviations, but without any substitution of free parameters. */
+	//@ pure
+	@Override
 	boolean equals(Object o);
 
 	/** Structural equality after expansion of abbreviations (as looked up in the symbol table)
 	 * and substitution of free parameters according to the respective maps. 
 	 */
+	//@ pure
 	boolean equals(Map<IParameter,ISort> leftmap, ISort s, Map<IParameter,ISort> rightmap, SymbolTable symTable);
 
 	/** Returns true if the receiver designates the Bool pre-defined Sort. */
+	//@ pure
 	boolean isBool();
 	
 	/** Expands all abbreviations */
+	//@ pure
 	ISort expand();
 	
 	/** Returns a new sort with any parameters substituted */
-	ISort substitute(java.util.Map<IParameter,ISort> map); // FIXME - should use IParameter instead of IIdentifier?
+	//@ pure
+	ISort substitute(java.util.Map<IParameter,ISort> map);
 
 	/** Compares sort expressions without abbreviation expansion or parameter substitution */
+	//@ pure
 	boolean equalsNoExpand(ISort sort);
 	
 	/** A super-interface for definitions of new sort ids.
 	 */
 	static public interface IDefinition extends IAccept {
 		/** The identifier for the sort symbol */
+		//@ pure
 		IIdentifier identifier();
 		
 		/** A new sort expression that results from applying the sort symbol to a list of sort expressions */
 		//@ requires sorts.size() == intArity();
+		//@ pure
 		ISort eval(List<ISort> sorts);
 		
 		/** The arity of the symbol*/
 		//@ ensures \result >= 0;
+		//@ pure
 		int intArity();
 	}
 	
@@ -113,6 +123,7 @@ public interface ISort extends IAccept, IPosable {
 	 */
 	static public interface IFamily extends IDefinition {
 		/** The unique identifier for this sort symbol */
+		@Override
 		IIdentifier identifier();
 		
 		/** The arity of the sort symbol */
@@ -125,9 +136,12 @@ public interface ISort extends IAccept, IPosable {
 	 */
 	static public interface IAbbreviation extends IDefinition {
 		/** The identifier of the abbreviation */
+		@Override
 		IIdentifier identifier();
-		/** The list of parameters of the abbreviation (possible empty, but not null) */
+
+		/** The list of parameters of the abbreviation (possibly empty, but not null) */
 		List<IParameter> parameters();
+
 		/** The sort expression that the abbreviation represents, presumably using the given parameters */
 		ISort sortExpression();
 	}
@@ -151,9 +165,11 @@ public interface ISort extends IAccept, IPosable {
 		IDefinition definition();
 
 		/** Sets and returns the value of definition() for this object to the value that is the argument */
+		//@ ensures \result == definition;
 		IDefinition definition(IDefinition definition);
 		
 		/** Expands any head abbreviations, if any; requires definition() to be defined */
+		@Override
 		ISort expand();
 
 		@Override

@@ -29,6 +29,7 @@ public class C_exit extends Command implements Iexit {
 
 	public static final String commandName = "exit";
 	/** The command name */
+	@Override
 	public String commandName() { return commandName; }
 	
 	@Override

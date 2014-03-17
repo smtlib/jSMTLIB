@@ -21,6 +21,7 @@ public class C_get_option extends Command implements Iget_option {
 	/** The command name */
 	public static final String commandName = "get-option";
 	/** The command name */
+	@Override
 	public String commandName() { return commandName; }
 
 	/** The keyword for the option to fetch */

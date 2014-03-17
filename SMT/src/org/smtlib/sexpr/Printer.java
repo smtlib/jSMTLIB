@@ -45,10 +45,9 @@ import org.smtlib.ISort.IParameter;
 /** This class writes out SMT-LIB ASTs as concrete S-expression syntax; aside from white space
  * between tokens it should simply reverse what the Parser class does.  */
 public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void> {
-	//SMT smtConfig;  // FIXME - perhaps keep this just in case there are relevant options
 	
 	/** The writer to write text to */
-	protected Writer w;
+	/*@Nullable*/ protected Writer w;
 	
 	/** The writer to write text to */
 	public Writer writer() { return w; }
@@ -58,11 +57,16 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	/** Creates a printer object */
 	public Printer(Writer w) {
-		//this.smt = smtConfig;
 		this.w = w;
 	}
 	
+	@Override
+	public Printer newPrinter(Writer w) {
+		return new Printer(w);
+	}
+	
 	/** Prints the argument to the receiver */
+	@Override
 	public <T extends IAccept> void print(T expr) throws IVisitor.VisitorException {
 		expr.accept(this);
 	}
@@ -70,6 +74,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	/** Returns the argument as a String using a Printer of the same type as the receiver,
 	 * but does not modify the receiver.
 	 */
+	@Override
 	public <T extends IAccept> String toString(T expr) {
 		try {
 			StringWriter sw = new StringWriter();
@@ -109,12 +114,14 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	}
 
 	/*@Nullable*/
+	@Override
 	public Void visit(INumeral e) throws IVisitor.VisitorException {
 		try { w.append(e.value().toString()); } catch (IOException ex) { throw new IVisitor.VisitorException(ex); }
 		return null;
 	}
 
 	/*@Nullable*/
+	@Override
 	public Void visit(ISymbol e) throws IVisitor.VisitorException { // FIX - need s-expr representation of ids from anywhere
 		try { w.append(e.toString()); } catch (IOException ex) { throw new IVisitor.VisitorException(ex); }  
 		return null; // FIXME - need an encoding - this gives the original text
@@ -344,7 +351,6 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 				w.append("(");
 				w.append(eol);
 				for (ICommand c: commands) {
-					w.append((++n) + ": ");
 					c.accept(this);
 					w.append(eol);
 					w.flush();
@@ -357,6 +363,59 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 			throw exc(ex,null);
 		}
 		return null;
+	}
+	
+	public static class WithLines extends Printer {
+
+		/** Creates a printer object */
+		public WithLines(Writer w) {
+			super(w);
+		}
+
+		@Override
+		public WithLines newPrinter(Writer w) {
+			return new WithLines(w);
+		}
+		
+		/** Writes the given expression to the given stream */
+		static public <T extends IAccept> void write(PrintStream w, T e)  throws IVisitor.VisitorException {
+			Writer wr = new OutputStreamWriter(w);
+			e.accept(new Printer.WithLines(wr));
+			try { 
+				wr.flush(); w.flush(); 
+			} catch (IOException ex) { 
+				throw new IVisitor.VisitorException(ex); 
+			}
+		}
+
+		@Override
+		public Void visit(IScript e) throws IVisitor.VisitorException {
+			int n = 0;
+			try {
+				IStringLiteral filename = e.filename();
+				List<ICommand> commands = e.commands();
+				if (filename != null) {
+					filename.accept(this);
+				} else if (commands != null) {
+					w.append("(");
+					w.append(eol);
+					for (ICommand c: commands) {
+						w.append((++n) + ": ");
+						c.accept(this);
+						w.append(eol);
+						w.flush();
+					}
+					w.append(")");
+				} else {
+					w.append("\"<ERROR: Script has no content>\"");
+				}
+			} catch (IOException ex) {
+				throw exc(ex,null);
+			}
+			return null;
+		}
+		
+
 	}
 
 	@Override
@@ -630,6 +689,4 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 		} catch (IOException ex) { throw new IVisitor.VisitorException(ex); }
 		return null;
 	}
-
-
 }

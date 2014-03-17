@@ -12,6 +12,7 @@ import org.smtlib.ICommand.Idefine_sort;
 import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.SMT.Configuration;
+import org.smtlib.sexpr.Parser;
 
 
 /** This class implements all the operations of the org.smtlib.ISolver interface
@@ -30,6 +31,30 @@ public class AbstractSolver implements ISolver {
 	protected boolean isWindows = System.getProperty("os.name").contains("Wind");
 	protected boolean isMac = System.getProperty("os.name").contains("Mac");
 
+	final protected IKeyword printSuccess;
+	
+	public AbstractSolver() {
+		try {
+			SMT.Configuration c = new SMT.Configuration();
+			printSuccess = new Parser(c,c.smtFactory.createSource(":print-success",null)).parseKeyword();
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to create an AbstractSolver: " + e);
+		}
+	}
+	
+	public IResponse successOrEmpty(SMT.Configuration smtConfig) {
+		return smtConfig.nosuccess ? smtConfig.responseFactory.empty() : smtConfig.responseFactory.success();
+	}
+
+	
+	public IResponse checkPrintSuccess(SMT.Configuration smtConfig,IKeyword key, IAttributeValue value) {
+		if (key.equals(printSuccess)) {
+			smtConfig.nosuccess = !value.toString().equals("true");
+			return successOrEmpty(smtConfig);
+		}
+		return null;
+	}
+	
 	/** @see org.smtlib.ISolver#start() */
 	@Override
 	public IResponse start() {

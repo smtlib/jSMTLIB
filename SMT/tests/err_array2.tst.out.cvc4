@@ -1,7 +1,7 @@
 success
 (declare-fun a () Array)
 ^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.22: Symbol Array not declared as a type")
+(error "Parse Error: <shell>:1.22: Symbol 'Array' not declared as a type")
 (declare-fun a () (Array Bool))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (error "Parse Error: <shell>:1.29: Illegal array type.")

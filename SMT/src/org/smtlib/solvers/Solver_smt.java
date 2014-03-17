@@ -58,25 +58,25 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 	@Override
 	public /*@Nullable*/IResponse checkSatStatus() { return checkSatStatus; }
 
-	// FIXME - get rid of this?
-	/** Map that keeps current values of options */
-	protected Map<String,IAttributeValue> options = new HashMap<String,IAttributeValue>();
-	{ 
-		options.putAll(Utils.defaults);
-	}
+//	// FIXME - get rid of this?
+//	/** Map that keeps current values of options */
+//	protected Map<String,IAttributeValue> options = new HashMap<String,IAttributeValue>();
+//	{ 
+//		options.putAll(Utils.defaults);
+//	}
 	
 	/** Creates an instance of the solver */
 	public Solver_smt(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
 		this.smtConfig = smtConfig;
 		cmds = new String[] { executable };
-		solverProcess = new SolverProcess(cmds,"> ","solver.out.smt"); // FIXME - what prompt?
+		solverProcess = new SolverProcess(cmds,"> ",smtConfig.logfile); // FIXME - what prompt?
 		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
 	}
 	
 	public Solver_smt(SMT.Configuration smtConfig, /*@NonNull*/ String[] executable) {
 		this.smtConfig = smtConfig;
 		cmds = executable;
-		solverProcess = new SolverProcess(cmds,"> ","solver.out.smt"); // FIXME - what prompt?
+		solverProcess = new SolverProcess(cmds,"> ",smtConfig.logfile); // FIXME - what prompt?
 		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
 	}
 	
@@ -274,7 +274,7 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 			}
 		}
 		if (Utils.VERBOSITY.equals(option)) {
-			IAttributeValue v = options.get(option);
+			IAttributeValue v = value;
 			smtConfig.verbose = (v instanceof INumeral) ? ((INumeral)v).intValue() : 0;
 		} else if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
 			// Actually, v should never be anything but IStringLiteral - that should
@@ -309,9 +309,6 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 				}
 			}
 		}
-		// Save the options on our side as well
-
-		options.put(option,value);
 
 		if (!Utils.PRINT_SUCCESS.equals(option)) {
 			return sendCommand(new org.smtlib.command.C_set_option(key,value));
@@ -326,14 +323,12 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 	}
 
 	@Override
-	public IResponse get_info(IKeyword key) { // FIXME - use the solver? what types of results?
-		// Try passing in command
+	public IResponse get_info(IKeyword key) {
 		return sendCommand(new org.smtlib.command.C_get_info(key));
 	}
 	
 	@Override
 	public IResponse set_info(IKeyword key, IAttributeValue value) {
-		// Try passing in command
 		return sendCommand(new org.smtlib.command.C_set_info(key,value));
 	}
 
@@ -375,16 +370,11 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 
 	@Override 
 	public IResponse get_value(IExpr... terms) {
-		// Try passing in command FIXME
-		//return sendCommand(new org.smtlib.command.C_get_value(terms));
 		try {
 			solverProcess.sendNoListen("(get-value (");
 			for (IExpr e: terms) {
-				solverProcess.sendNoListen("(");
 				solverProcess.sendNoListen(" ",translate(e));
-				solverProcess.sendNoListen(")");
 			}
-			// FIXME - z3 does not make pairs of the result
 			String r = solverProcess.sendAndListen("))\n");
 			IResponse response = parseResponse(r);
 			return response;

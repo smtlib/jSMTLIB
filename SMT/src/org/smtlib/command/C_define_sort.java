@@ -26,6 +26,7 @@ public class C_define_sort extends Command implements Idefine_sort {
 	/** The command name */
 	public static final String commandName = "define-sort";
 	/** The command name */
+	@Override
 	public String commandName() { return commandName; }
 	
 	/** The name of the function being defined */
@@ -36,10 +37,13 @@ public class C_define_sort extends Command implements Idefine_sort {
 	protected ISort expression;
 	
 	/** The name of the function being defined */
+	@Override
 	public ISymbol sortSymbol() { return fcnName; }
 	/** The sorts of the arguments of the function being defined */
+	@Override
 	public List<IParameter> parameters() { return args; };
 	/** The defining expression for the function */
+	@Override
 	public ISort expression() { return expression; }
 	
 	/** Constructs a command instance */
@@ -75,11 +79,13 @@ public class C_define_sort extends Command implements Idefine_sort {
 			if (p.isEOD()) return null;
 			Symbol d = p.parseSymbol();
 			if (d == null) anyErrors = true;
-			else list.add(p.smt().sortFactory.createSortParameter(d));
-			if (!names.add(d)) {
-				error(p.smt(),"A name is duplicated in the parameter list: " + 
-						p.smt().defaultPrinter.toString(d), d.pos());
-				anyErrors = true;
+			else {
+				list.add(p.smt().sortFactory.createSortParameter(d));
+				if (!names.add(d)) {
+					error(p.smt(),"A name is duplicated in the parameter list: " + 
+							p.smt().defaultPrinter.toString(d), d.pos());
+					anyErrors = true;
+				}
 			}
 		}
 		p.parseRP();

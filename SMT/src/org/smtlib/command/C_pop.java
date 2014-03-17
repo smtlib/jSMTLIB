@@ -22,6 +22,7 @@ public class C_pop extends Command implements Ipop {
 	/** The command name */
 	public static final String commandName = "pop";
 	/** The command name */
+	@Override
 	public String commandName() { return commandName; }
 	
 	/** The (non-negative) number of stack frames to pop */
@@ -33,6 +34,7 @@ public class C_pop extends Command implements Ipop {
 	protected int number;
 	
 	/** The number of assertion set stack items to pop */
+	@Override
 	public INumeral number() { 
 		return numeral;
 	}

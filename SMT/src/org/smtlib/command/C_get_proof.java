@@ -30,6 +30,7 @@ public class C_get_proof extends Command implements Iget_proof {
 	/** The command name */
 	public static final String commandName = "get-proof";
 	/** The command name */
+	@Override
 	public String commandName() { return commandName; }
 	
 	/** Writes the command in the syntax of the given printer */

@@ -25,15 +25,19 @@ public class C_declare_fun extends Command implements Ideclare_fun {
 	
 	/** The command name */
 	public static final String commandName = "declare-fun";
-	/** The command name */
-	public String commandName() { return commandName; }
-	
+
 	/** The name of the function being declared */
 	protected ISymbol fcnName;
+
 	/** The sorts of the arguments of the function being declared */
 	protected List<ISort> argSorts;
+
 	/** The result sort of the function being declared */
 	protected ISort resultSort;
+	
+	/** The command name */
+	@Override
+	public String commandName() { return commandName; }
 	
 	@Override
 	public ISymbol symbol() { return fcnName; }

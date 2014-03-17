@@ -20,7 +20,6 @@ public interface ITheory extends IAccept {
 	//@ ensures \result.size() > 0;
 	Map<IKeyword,IExpr.IAttribute<?>> attributes();
 	
-	// TODO: Use IKeyword for String?
 	/** The value of an attribute; returns null if the attribute does not exist for this theory */
 	/*@Nullable*/IAttributeValue value(IKeyword keyword);
 	

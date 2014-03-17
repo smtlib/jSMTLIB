@@ -22,6 +22,7 @@ public class C_push extends Command implements Ipush {
 	/** The command name */
 	public static final String commandName = "push";
 	/** The command name */
+	@Override
 	public String commandName() { return commandName; }
 	
 	/** The (non-negative) number of stack frames to push */
@@ -33,6 +34,7 @@ public class C_push extends Command implements Ipush {
 	protected int number;
 	
 	/** The number of assertion set stack items to pop */
+	@Override
 	public INumeral number() { 
 		return numeral;
 	}

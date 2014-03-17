@@ -30,6 +30,7 @@ public class C_get_assertions extends Command implements Iget_assertions {
 	/** The command name */
 	public static final String commandName = "get-assertions";
 	/** The command name */
+	@Override
 	public String commandName() { return commandName; }
 	
 	/** Writes the command in the syntax of the given printer */

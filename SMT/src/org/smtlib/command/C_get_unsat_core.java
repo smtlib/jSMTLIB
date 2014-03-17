@@ -30,6 +30,7 @@ public class C_get_unsat_core extends Command implements Iget_unsat_core {
 	/** The command name */
 	public static final String commandName = "get-unsat-core";
 	/** The command name */
+	@Override
 	public String commandName() { return commandName; }
 	
 	/** Writes the command in the syntax of the given printer */

@@ -25,6 +25,7 @@ public class C_define_fun extends Command implements Idefine_fun {
 	/** The command name */
 	public static final String commandName = "define-fun";
 	/** The command name */
+	@Override
 	public String commandName() { return commandName; }
 	
 	/** The name of the function being defined */
@@ -86,11 +87,13 @@ public class C_define_fun extends Command implements Idefine_fun {
 			if (p.isEOD()) return null;
 			IDeclaration d = p.parseDeclaration();
 			if (d == null) anyErrors = true;
-			else list.add(d);
-			if (!names.add(d.parameter())) {
-				error(p.smt(),"A name is duplicated in the parameter list: " + 
-						p.smt().defaultPrinter.toString(d.parameter()), d.parameter().pos());
-				anyErrors = true;
+			else {
+				list.add(d);
+				if (!names.add(d.parameter())) {
+					error(p.smt(),"A name is duplicated in the parameter list: " + 
+							p.smt().defaultPrinter.toString(d.parameter()), d.parameter().pos());
+					anyErrors = true;
+				}
 			}
 		}
 		p.parseRP();

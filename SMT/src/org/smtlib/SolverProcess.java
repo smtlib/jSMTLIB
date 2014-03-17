@@ -62,7 +62,13 @@ public class SolverProcess {
 		setCmd(cmd);
 		this.endMarker = endMarker;
 		try {
-			if (logfile != null) log = new FileWriter(logfile);
+			if (logfile != null) {
+				log = new FileWriter(logfile);
+				// TODO: Might be nicer to escape any backslashes and enclose strings in quotes, in case arguments contain spaces or special characters
+				log.write(";; ");
+				for (String s: cmd) { log.write(s); log.write(" "); }
+				log.write(eol);
+			}
 		} catch (IOException e) {
 			System.out.println("Failed to create solver log file " + logfile + ": " + e); // FIXME - wwrite to somewhere better
 		}
@@ -98,10 +104,31 @@ public class SolverProcess {
 		String out = listenThru(fromProcess,endMarker);
 		err = err + listenThru(errors,null);
 		if (log != null) {
-			if (!out.isEmpty()) { log.write("OUT: "); log.write(out); log.write(eol); } // input usually ends with a prompt and no line terminator
-			if (!err.isEmpty()) { log.write("ERR: "); log.write(err); } // input usually ends with a line terminator, we think
+			if (!out.isEmpty()) { log.write(";OUT: "); log.write(out); log.write(eol); } // input usually ends with a prompt and no line terminator
+			if (!err.isEmpty()) { log.write(";ERR: "); log.write(err); } // input usually ends with a line terminator, we think
 		}
-		return err.isEmpty() ? out : err;
+		return err.isEmpty() || err.charAt(0) == ';' ? out : err; // Note: the guard against comments (starting with ;) is for Z3
+	}
+	
+	/** Returns true if the process is still running; this relies on exceptions
+	 * for control flow and may be a bit expensive.
+	 */
+	public boolean isRunning(boolean expectStopped) {
+		try {
+			process.exitValue();
+			if (!expectStopped) {
+				if (log != null) { 
+					try {
+						log.write("Solver has unexpectedly terminated"); log.write(eol); log.flush();
+					} catch (IOException e) {
+						// ignore
+					}
+				}	
+			}
+			return false;
+		} catch (IllegalThreadStateException e) {
+			return true;
+		}
 	}
 	
 	/** Aborts the process */
@@ -111,7 +138,7 @@ public class SolverProcess {
 		toProcess = null;
 		if (log != null) {
 			try {
-				log.write("Exiting solver"); 
+				log.write(";;Exiting solver"); 
 				log.write(eol);
 				log.flush();
 				log.close();

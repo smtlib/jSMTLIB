@@ -1,0 +1,9 @@
+(get-info :reason-unknown)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 2 column 10: state of the most recent check-sat command is not unknown")
+(:memory 0.10 )
+success
+(get-info :reason-unknown)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 5 column 10: state of the most recent check-sat command is not unknown")
+(:memory 0.10 )

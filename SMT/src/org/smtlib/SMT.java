@@ -128,6 +128,9 @@ public class SMT {
 		/** The path to the executable for the solver to use */
 		/*@Nullable*/ public String executable = null;
 		
+		/** The file to which to write the communication, for debugging or reference; null means default */
+		/*@Nullable*/ public String logfile = null;
+		
 		/** The files of SMT-LIB commands to process; if null or empty then the standard input is used */
 		/*@Nullable*/ public List<String> files = new LinkedList<String>();
 		
@@ -491,6 +494,8 @@ public class SMT {
 							}
 							p.abortLine();
 						}
+					} else if (result.toString().equals("success")) {  // FIXME need a better way to do this
+						if (!smtConfig.nosuccess) smtConfig.log.logOut(result);
 					} else if (!result.toString().isEmpty()) { // FIXME - is there a more abstract way to do this?
 						smtConfig.log.logOut(result);
 					}

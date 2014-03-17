@@ -23,6 +23,7 @@ public class C_set_logic extends Command implements Iset_logic {
 	/** The command name */
 	public final static String commandName = "set-logic";
 	/** The command name */
+	@Override
 	public String commandName() { return commandName; }
 
 	/** The name of the logic to set */

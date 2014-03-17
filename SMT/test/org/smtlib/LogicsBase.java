@@ -45,6 +45,7 @@ public class LogicsBase {
 		smt.smtConfig.log.clearListeners();
 		smt.smtConfig.log.addListener(listener);
 		smt.smtConfig.solvername = solvername;
+		smt.smtConfig.logfile = "solver.out." + solvername;
 		ISolver s = smt.startSolver(smt.smtConfig,solvername,null);
 		if (s == null) throw new RuntimeException("Failed to create or start solver");
 		solver = s;

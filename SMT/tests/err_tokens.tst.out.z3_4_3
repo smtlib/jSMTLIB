@@ -56,7 +56,7 @@ success
 (error "Invalid token: 0a")
 (assert .123)
 ^^^^^^^^^^^^^
-(error "line 5 column 8: unknown constant .123")
+(error "line 6 column 8: unknown constant .123")
 (assert , ) ; FIXME - in general change 'Invalid characters' erro rmessage to 'Invalid token'
         ^
 (error "Invalid token: ,")

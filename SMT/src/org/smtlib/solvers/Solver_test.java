@@ -418,12 +418,18 @@ public class Solver_test implements ISolver {
 		if (!logicSet) {
 			return smtConfig.responseFactory.error("The logic must be set before a declare-sort command is issued");
 		}
-		INumeral sortArity = cmd.arity();
-		boolean b = symTable.addSortDefinition(cmd.sortSymbol(),sortArity);
-		if (!b) return smtConfig.responseFactory.error("The identifier is already declared to be a sort: " + 
-				smtConfig.defaultPrinter.toString(cmd.sortSymbol()), cmd.sortSymbol().pos());
-		checkSatStatus = null;
-		return smtConfig.responseFactory.success();
+		List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable,cmd.sortSymbol(),null,null);
+		boolean b = list.isEmpty();
+		if (b) {
+			INumeral sortArity = cmd.arity();
+			b = symTable.addSortDefinition(cmd.sortSymbol(),sortArity);
+			if (!b) return smtConfig.responseFactory.error("The identifier is already declared to be a sort: " + 
+					smtConfig.defaultPrinter.toString(cmd.sortSymbol()), cmd.sortSymbol().pos());
+			checkSatStatus = null;
+			return smtConfig.responseFactory.success();
+		} else {
+			return list.get(0); // FIXME - return all errors?
+		}
 	}
 	
 	@Override

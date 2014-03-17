@@ -30,7 +30,7 @@ public interface ICommand extends IAccept {
 		/** This method finds a class that implements the ICommand interface for the given class name */
 		Class<? extends ICommand> findCommand(String name);
 	}
-
+	
 	/** Executes the command on the given solver; presumes that the command type-checked
 	 * successfully.
 	 * @param solver the instance of the solver to use (note that solvers have state)
