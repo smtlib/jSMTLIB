@@ -4,14 +4,14 @@ import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.impl.Response;
+import tests.ParameterizedIgnorable;
 
-@RunWith(tests.ParameterizedIgnorable.class)
+@RunWith(ParameterizedIgnorable.class)
 public class InfoOptions  extends LogicTests {
 
 	boolean isTest;
@@ -125,8 +125,9 @@ public class InfoOptions  extends LogicTests {
 				);
 	}
 	
-	@Test @Ignore
+	@Test
 	public void checkSetRegularOutput() {
+		Assume.assumeTrue(false);
 		doCommand("(set-option :regular-output-channel \"test-output\")", "success"); // FIXME - writes success to test-output? - hangs for z3_4_3 ?
 		doCommand("(get-option :regular-output-channel)", "\"test-output\"");
 		doCommand("(set-option :regular-output-channel \"stdout\")", "success");

@@ -27,3 +27,18 @@ syntax: regexp
 ^SMT/tempout$
 syntax: regexp
 ^SMT/xx$
+
+syntax: regexp
+\.stackdump$
+syntax: regexp
+^SMT/misccomm$
+syntax: regexp
+^SMT/jSMTLIB\.tar\.gz$
+syntax: regexp
+^SMT/doc$
+syntax: regexp
+^SMT/tests/tempout$
+syntax: regexp
+^SMT/solver\.out$
+syntax: regexp
+\.actual$

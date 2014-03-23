@@ -42,7 +42,7 @@ public interface IExpr extends IAccept, IPosable {
 		/** Creates a ISymbol object from a canonical String representation of the symbol */
 		ISymbol symbol(String v);
 		/** Creates an attribute with just a keyword and no attribute value */
-		IAttribute<?> attribute(IKeyword k); // FIXME _ should the template argument be Void
+		IAttribute<?> attribute(IKeyword k);
 		/** Creates an attribute with a keyword and a value */
 		<T extends IAttributeValue> IAttribute<T> attribute(IKeyword k, T value);
 		/** Creates an attributed expression (an expression with a positive number of attributes) */
