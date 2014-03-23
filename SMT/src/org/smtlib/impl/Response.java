@@ -116,9 +116,11 @@ public class Response {
 			return new Pair<T1,T2>(first,second);
 		}
 
-		// The response to get-option is a literal or symbol or s-expression  // FIXME
-//		@Override
-//		public IResponse get_option_response();
+		// The response to get-option is a literal or symbol or s-expression 
+		@Override
+		public IResponse get_option_response(IAttributeValue v) {
+			return v;
+		}
 		
 		@Override
 		public ProofResponse get_proof_response() { return new ProofResponse(); }

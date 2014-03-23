@@ -343,12 +343,6 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				error(" The select function should have two arguments",head.pos());
 				return null;
 			}
-			// FIXME - check that the first is an Array sort, and the others matches it
-			ISort s = argSorts.get(0);
-//			if (((ISort.IExpression)s).parameters().size() != 2) {
-//				error("Expected an expression of Array sort",e.args().get(0).pos());
-//				return null;
-//			}
 			// FIXME - this needs to be fully expanded of all definitions
 			ISort sort1 = argSorts.get(0);
 			if (sort1 instanceof ISort.IApplication) {
@@ -366,8 +360,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				return null;
 			}
 			// FIXME - this is just here until we get par types implemented; it also should depend on which theories are installed
-			s = ((ISort.IApplication)s).parameters().get(1);
-			return save(e,s);
+			sort1 = ((ISort.IApplication)sort1).parameters().get(1);
+			return save(e,sort1);
 		} 
 		boolean useext = true;
 		if (bvperhaps) {
@@ -603,7 +597,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		ISort.IApplication se = (ISort.IApplication)s;
 		if (!(se.family() instanceof IParameterizedIdentifier)) return false;
 		IParameterizedIdentifier pid = (IParameterizedIdentifier)se.family();
-		return pid.headSymbol().toString().equals("BitVec"); // FIXME - compare against a stored symbol?
+		return pid.headSymbol().toString().equals(Utils.BITVEC); // FIXME - compare against a stored symbol?
 	}
 
 	private int bitvecSize(ISort s) {
@@ -619,7 +613,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		List<INumeral> nums = new LinkedList<INumeral>();
 		nums.add(smtConfig.exprFactory.numeral(length));
 		// FIXME - use a pre-constructed symbol for BitVec when it does not have a position?
-		IIdentifier id = smtConfig.exprFactory.id(smtConfig.exprFactory.symbol("BitVec"),nums);
+		IIdentifier id = smtConfig.exprFactory.id(smtConfig.exprFactory.symbol(Utils.BITVEC),nums);
 		ISort s = smtConfig.sortFactory.createSortExpression(id, new ISort[0]);
 		s.accept(this);
 		return s;
@@ -668,7 +662,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		if (!symTable.bitVectorTheorySet) result.add(smtConfig.responseFactory.error("No sort specified for a hex literal",e.pos()));
 		List<INumeral> nums = new LinkedList<INumeral>();
 		nums.add(smtConfig.exprFactory.numeral(e.length()*4));
-		IIdentifier id = smtConfig.exprFactory.id(smtConfig.exprFactory.symbol("BitVec"),nums);
+		IIdentifier id = smtConfig.exprFactory.id(smtConfig.exprFactory.symbol(Utils.BITVEC),nums);
 		ISort s = smtConfig.sortFactory.createSortExpression(id, new ISort[0]);
 		s.accept(this);
 		return save(e,s);

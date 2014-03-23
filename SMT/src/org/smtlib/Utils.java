@@ -57,6 +57,9 @@ public class Utils {
 	/** Name of the Core theory */
 	public static final String CORE = "Core";
 
+	/** Name of the BitVector sort */
+	public static final String BITVEC = "BitVec";
+
 	/** The string designating an option item */
 	public static final String PRINT_SUCCESS = ":print-success";  // FIXME - change remainder of Strings to IKeywords
 

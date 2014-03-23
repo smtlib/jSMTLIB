@@ -58,12 +58,13 @@ public interface IResponse extends IAccept {
 		/** The argument has no SMT-LIB escapes and no enclosing quotes */
 		IResponse stringLiteral(String value);
 		IResponse numericLiteral(int value);
+		IResponse get_option_response(IAttributeValue v);
 		IResponse.IAttributeList get_info_response(IAttribute<?> attr);
 		IResponse.IAttributeList get_info_response(List<IAttribute<?>> attrList);
 		IResponse.IProofResponse get_proof_response();
 		IResponse.IValueResponse get_value_response(List<IPair<IExpr,IExpr>> values);
 		<T1,T2> IPair<T1,T2> pair(T1 first, T2 second);
-		IResponse.IAssignmentResponse get_assignment_response(List<IPair<IExpr.ISymbol,Boolean>> assignments); // FIXME - Boolean?
+		IResponse.IAssignmentResponse get_assignment_response(List<IPair<IExpr.ISymbol,Boolean>> assignments);
 		IResponse.IUnsatCoreResponse get_unsat_core_response(List<ISymbol> names);
 		IResponse.IAssertionsResponse get_assertions_response(List<IExpr> exprs);
 	}

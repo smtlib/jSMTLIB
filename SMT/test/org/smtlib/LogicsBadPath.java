@@ -2,10 +2,10 @@ package org.smtlib;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
+import tests.ParameterizedIgnorable;
 
-@RunWith(Parameterized.class)
+@RunWith(ParameterizedIgnorable.class)
 public class LogicsBadPath extends LogicTests {
 
 	@Override

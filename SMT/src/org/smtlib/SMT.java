@@ -17,6 +17,7 @@ import java.util.*;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IParser.AbortParseException;
 import org.smtlib.IParser.ParserException;
+import org.smtlib.IPos.IPosable;
 
 //import checkers.javari.quals.Mutable; NonNull
 
@@ -479,11 +480,11 @@ public class SMT {
 					result = command.execute(solver);
 					if (result.isError()) {
 						IResponse.IError eresult = (IResponse.IError)result;
-						if (eresult.pos() == null) {
+						if (eresult.pos() == null && command instanceof IPosable) {
 							// This is in case we omitted setting the position when the error
 							// was generated - we set it to the whole command.  However, we ought
 							// to root out all such omissions and correct them where possible.
-							eresult.setPos(((org.smtlib.impl.Command)command).pos()); // FIXME - casts needed?
+							eresult.setPos(((IPosable)command).pos());
 						}
 						smtConfig.log.logError(eresult);
 						retcode = 1;
