@@ -1,0 +1,29 @@
+success
+success
+( pop 0.0 )
+      ^^^
+(error "Expected a numeral here, instead of a decimal")
+( pop "asd")
+      ^^^^^
+(error "Expected a numeral here, instead of a string-literal")
+( pop #b1 )
+      ^^^
+(error "Expected a numeral here, instead of a binary")
+( pop #x0 )
+      ^^^
+(error "Expected a numeral here, instead of a hex-literal")
+( pop a )
+      ^
+(error "Expected a numeral here, instead of a symbol")
+( pop |A| )
+      ^^^
+(error "Expected a numeral here, instead of a symbol")
+( pop 1 2 3 )
+        ^
+(error "Too many arguments or extraneous material after the command or missing right parenthesis")
+( pop -1 )
+      ^^
+(error "Expected a numeral here, instead of a symbol")
+(pop)
+    ^
+(error "Expected a numeral here, instead of a )")

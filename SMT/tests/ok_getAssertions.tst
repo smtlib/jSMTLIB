@@ -1,0 +1,10 @@
+; tests whether get-assertions works correctly without push and pop
+(set-option :interactive-mode true)
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(get-assertions)
+(assert true)
+(assert p)
+(assert (or p p))
+(assert false)
+(get-assertions)

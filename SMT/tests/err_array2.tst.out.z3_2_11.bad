@@ -1,0 +1,47 @@
+success
+success
+(declare-fun a () (Array Bool))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 3 column 31: unknown; ERROR: Invalid array sort definition, invalid number of parameters.")
+success
+success
+success
+success
+success
+success
+(assert (= i (select i i)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 10 column 35: unknown; ERROR: Select requires as many arguments as the size of the domain")
+(assert (= i (select a a)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 11 column 35: unknown; ERROR: Domain sort array[Int:Int] and parameter Int do not match")
+(assert (= i (select a)))
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 12 column 33: unknown; ERROR: Select takes at least two arguments")
+(assert (= i (select a i i)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 13 column 37: unknown; ERROR: Select requires as many arguments as the size of the domain")
+(assert (= i (select a i)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 14 column 35: unknown; ERROR: Domain sort I and parameter Int do not match")
+(assert (= i (store a i v)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 15 column 36: unknown; ERROR: Domain sort I and parameter Int do not match")
+(assert (= i (store i v v)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 16 column 36: unknown; ERROR: Store expects the first argument sort 'I' to be an array.")
+(assert (= i (store a i v v)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 17 column 38: unknown; ERROR: Store expects the first argument sort 'array[Int:Int]' to be an array taking 3 arguments. Instead store it was passed 3 arguments.")
+(assert (= i (store a v v)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 18 column 36: unknown; ERROR: Domain sort V and parameter Int do not match")
+(assert (= i (store a i i)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 19 column 36: unknown; ERROR: Domain sort I and parameter Int do not match")
+success
+success
+success
+(assert (= aa (store aa i v)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 23 column 38: unknown; ERROR: Store expects the first argument sort 'A[I:V]' to be an array.")

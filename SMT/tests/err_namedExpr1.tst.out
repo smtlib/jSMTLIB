@@ -1,0 +1,19 @@
+success
+success
+success
+(assert (! p :named q)) ; conflicts with existing name
+                    ^
+(error "Symbol q is already defined")
+success
+(assert (! q :named P)) ; conflicts
+                    ^
+(error "Symbol P is already defined")
+(declare-fun P () Bool) ; conflicts
+             ^
+(error "Symbol P is already defined")
+(assert (and (! p :named PP) (! q :named P))) ; second conflicts, first should be withdrawn
+                                         ^
+(error "Symbol P is already defined")
+(assert PP) ; should not exist
+        ^^
+(error "Unknown constant symbol PP")

@@ -1,0 +1,12 @@
+(set-logic QF_BV)
+           ^^^^^
+(error "The simplify solver does not yet support the bit-vector theory")
+success
+success
+success
+(assert (= x #b0101 ))
+             ^^^^^^
+(error "Did not expect a Binary literal in an expression to be translated")
+(assert (= z #xa ))
+             ^^^
+(error "Did not expect a Hex literal in an expression to be translated")

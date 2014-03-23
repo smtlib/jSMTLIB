@@ -1,0 +1,5 @@
+(set-logic QF_AX)
+(declare-sort Bool 0)
+(declare-sort Array 1)
+(declare-fun select () Bool)
+(declare-fun store () Bool)

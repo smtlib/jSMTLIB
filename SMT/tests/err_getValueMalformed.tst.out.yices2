@@ -1,0 +1,21 @@
+success
+success
+success
+success
+sat
+(get-value)
+          ^
+(error "Expected a parenthesized list of terms beginning here")
+(get-value x)
+           ^
+(error "Expected a parenthesized list of terms beginning here")
+(get-value x y)
+           ^
+(error "Expected a parenthesized list of terms beginning here")
+((x false))
+(get-value (x) x)
+               ^
+(error "Too many arguments or extraneous material after the command or missing right parenthesis")
+(get-value () )
+           ^^
+(error "Expected a parenthesized list of at least one term")

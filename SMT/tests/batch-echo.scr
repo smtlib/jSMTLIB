@@ -1,0 +1,2 @@
+##EXITCODE 1
+java -cp ../bin org.smtlib.SMT --solver test --echo err_pop.tst

@@ -1,0 +1,4 @@
+(error "line 2 column 104: unrecognized command")
+(error "line 4 column 205: unrecognized command")
+success
+(error "line 6 column 302: unrecognized command")

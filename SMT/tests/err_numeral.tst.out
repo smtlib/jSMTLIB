@@ -1,0 +1,3 @@
+(push 00)
+      ^^
+(error "Incorrect format for a number - no leading zeros allowed: 00")

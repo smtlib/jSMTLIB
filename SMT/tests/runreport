@@ -1,0 +1,25 @@
+#! /bin/bash
+
+solvers="test cvcnew yices "
+
+echo SOLVERS $solvers
+source ../tests/solvers
+out=../results
+std=$out/stdoutput
+tex=$out/texfile
+temp=$out/temp
+
+cp ../../../texstuff/papers/SMTLIBAssessment/SMTLIBAssessment.template $tex
+for f in * ; do
+    res=`cat $f`
+    sed -e "s%ZZ_${f}_CMD%$res%" < $tex > $temp
+    mv $temp $tex
+	for solver in $solvers; do
+        echo RUNNING $solver $f
+        source ../tests/solvers
+        $SMT_EXE $f > $out/$f.$solver 2> $out/$f.$solver.err
+        res=`cat $out/$f.$solver $out/$f.$solver.err | tail -n 1`
+		sed -e "s%ZZ_${f}_${solver}%$res%" < $tex > $temp
+		mv $temp $tex
+    done
+done

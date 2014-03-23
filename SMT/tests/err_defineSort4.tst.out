@@ -1,0 +1,4 @@
+success
+(define-sort A () B)
+                  ^
+(error "No such sort symbol declared: B")

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="javadoc">
+    <target name="javadoc">
+        <javadoc access="protected" author="true" classpath="C:\cygwin\home\dcok\apps\eclipse-SDK-4.2.1-win32-x86_64\eclipse\plugins\org.hamcrest.core_1.1.0.v20090501071000.jar;C:\cygwin\home\dcok\apps\eclipse-SDK-4.2.1-win32-x86_64\eclipse\plugins\org.junit_4.10.0.v4_10_0_v20120426-0900\junit.jar" destdir="doc" doctitle="jSMTLIB" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="org.smtlib.impl,org.smtlib.command,org.smtlib.ext,org.smtlib.solvers,org.smtlib,org.smtlib.logic,org.smtlib.sexpr" source="1.7" sourcefiles="src/APIExample.java" sourcepath="test;logics;src" splitindex="true" use="true" version="true"/>
+    </target>
+</project>

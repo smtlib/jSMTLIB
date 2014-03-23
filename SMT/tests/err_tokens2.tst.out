@@ -1,0 +1,5 @@
+success
+(assert |a )
+        ^^^^^
+(error "Bar(|)-enclosed symbol is not terminated: |a )
+")

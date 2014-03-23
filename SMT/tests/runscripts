@@ -1,0 +1,35 @@
+#!/bin/bash
+
+source version.check
+
+for f in *.scr ; do
+    echo $f
+	expectedret=`grep EXITCODE $f | sed -e "s/##EXITCODE //" `
+    source ./$f 2> err > out
+    actualret=$?
+    if [ -e $f.out ]; then
+		diff out $f.out
+    else
+        echo Creating output file for $f
+		cat out
+        mv out $f.out
+    fi
+    if [ -e $f.err ]; then
+        diff err $f.err
+    else
+        echo Creating err file for $f
+        cat err
+        mv err $f.err
+    fi
+    source ./$f > out 2>&1
+    if [ -e $f.cmb ]; then
+		diff out $f.cmb
+    else
+        echo Creating output file for $f
+		cat out
+        mv out $f.cmb
+    fi
+    if [ "$actualret" != "$expectedret" ]; then
+		echo CODE = $actualret $expectedret
+	fi
+done

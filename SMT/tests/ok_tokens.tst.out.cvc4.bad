@@ -1,0 +1,25 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+...
+success
+success
+success
+(set-info :x " 	
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.13: Error finding next token.")
+(set-info :x #b0101 )
+^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.11: Unexpected token: '|';:{}[]()`,'.")
+(set-info :x #xabcdefABCDEF0123456789 )
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.18: Unexpected token: '#b0101'.")

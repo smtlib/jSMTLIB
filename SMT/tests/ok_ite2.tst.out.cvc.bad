@@ -1,0 +1,4 @@
+success
+(assert (= #b0 (ite true #b0 #b1)))
+               ^^^^^^^^^^^^^^^^^^
+(error "CVC only allows ite constructs at the formula level")

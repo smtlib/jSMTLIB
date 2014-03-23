@@ -1,0 +1,15 @@
+success
+success
+success
+(declare-fun a () (Array I V))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.28: Symbol 'Array' not declared as a type")
+success
+success
+success
+(assert (= v (select a i)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.24: Operator is not defined in the current logic: SELECT")
+(assert (= a (store a i v)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.25: Operator is not defined in the current logic: STORE")

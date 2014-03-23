@@ -1,0 +1,14 @@
+success
+(declare-sort Z 1)
+^^^^^^^^^^^^^^^^^^
+(error "CVC adapter does not implement parameterized user-defined sorts")
+success
+(define-sort B (X) (Z X))
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parameterized sort definitions not implemented")
+(define-sort C () (Z A)) 
+^^^^^^^^^^^^^^^^^^^^^^^^
+(error "*** Fatal exception:
+Parse Error: cannot resolve an identifier: \"UNKNOWN\"
+stdin:2: this is the location of the error
+")

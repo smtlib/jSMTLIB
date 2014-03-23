@@ -1,0 +1,14 @@
+success
+(assert (= ((as + Int) 4 3) 1)) ;; unneeded disambiguation
+           ^^^^^^^^^^^^^^^^
+(error "Unknown predicate symbol + with argument types Int Int")
+(assert (= ((as and Bool) true false) false)) ;; not overloaded
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Unknown predicate symbol and with argument types Bool Bool")
+(assert (= ((as zzz Bool) true false) false)) ;; unknown identifier
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Unknown predicate symbol zzz with argument types Bool Bool")
+success
+(assert (= ((as + S) 4 3) 1))  ;; not overloaded to S
+           ^^^^^^^^^^^^^^
+(error "Unknown predicate symbol + with argument types Int Int")

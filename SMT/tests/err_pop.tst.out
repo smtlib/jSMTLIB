@@ -1,0 +1,4 @@
+success
+(pop 1)
+^^^^^^^
+(error "The argument to a pop command is too large: 1 vs. a maximum of 0")

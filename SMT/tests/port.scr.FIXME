@@ -1,0 +1,17 @@
+#! /bin/bash
+
+PORT=8777
+
+EXE="java -cp ../bin org.smtlib.Driver --port ${PORT}"
+
+java -cp ../bin org.smtlib.SMT --port ${PORT} &
+
+${EXE} "(set-logic QF_UF)"
+${EXE} "(declare-fun x () Bool)"
+${EXE} "(xxx)"
+${EXE} "(declare-fun y () Bool)(yyy)"
+${EXE} "(exit)"
+
+
+
+

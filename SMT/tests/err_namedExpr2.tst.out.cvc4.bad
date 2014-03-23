@@ -1,0 +1,18 @@
+success
+success
+success
+(assert (forall ((r Bool)) (! r :named R))) ; error
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.40: :named annotations can only name terms that are closed; this one contains free variables: r")
+(assert (exists ((r Bool)) (! r :named R))) ; error
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.40: :named annotations can only name terms that are closed; this one contains free variables: r")
+success
+(assert (let ((r true)) (! r :named R))) ; error - R already defined
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.37: Symbol 'R' previously declared as a variable")
+success
+success
+(assert (forall ((q Bool)) (let ((r q)) (! r :named RRR)))) ; error - FIXME
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.56: :named annotations can only name terms that are closed; this one contains free variables: q")

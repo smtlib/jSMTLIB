@@ -1,0 +1,12 @@
+success
+success
+(assert (= x 1))
+^^^^^^^^^^^^^^^^
+(error "WARNING: Sort mismatch for argument 2 of decl x :: Real
+(= x 1::Int)
+
+Expected sort: Real
+Actual sort:   Int
+Function sort: (define = Real Real bool).
+ERROR: line 3 column 21: expression is not well sorted.")
+success

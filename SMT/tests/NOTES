@@ -1,0 +1,9 @@
+
+- syntax errors
+- need to quit the program on receiving the exit command
+- need to handle changes in the standard and diagnostic streams
+
+
+DIfferences:
+z3 does not put out a 'success' after (exit)
+z3 accepts leading zeros

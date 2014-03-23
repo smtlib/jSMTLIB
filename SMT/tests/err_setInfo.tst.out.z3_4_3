@@ -1,0 +1,29 @@
+(set-info :name "x")
+          ^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :name")
+(:name "Z3" )
+(set-info :authors "x")
+          ^^^^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :authors")
+(:authors "Leonardo de Moura and Nikolaj Bjorner" )
+(set-info :version "0")
+          ^^^^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :version")
+(:version "4.3" )
+(set-info :error-behavior x)
+          ^^^^^^^^^^^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :error-behavior")
+(get-info :error-behavior)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(:error-behavior continued-execution)
+")
+(set-info :all-statistics x)
+          ^^^^^^^^^^^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :all-statistics")
+(:memory 0.10 )
+(set-info :reason-unknown x)
+          ^^^^^^^^^^^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :reason-unknown")
+(get-info :reason-unknown)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 7 column 10: state of the most recent check-sat command is not unknown")

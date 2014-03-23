@@ -1,0 +1,95 @@
+success
+success
+success
+success
+success
+(assert (= a (+ b 1.0)))
+                  ^^^
+(error "The simplify solver cannot handle decimal literals")
+success
+(assert (= a (+ 1.0 b)))
+                ^^^
+(error "The simplify solver cannot handle decimal literals")
+success
+success
+(assert (= a (- b 1.0)))
+                  ^^^
+(error "The simplify solver cannot handle decimal literals")
+success
+(assert (= a (- 1.0 b)))
+                ^^^
+(error "The simplify solver cannot handle decimal literals")
+success
+success
+(assert (= a (- 1.0)))
+                ^^^
+(error "The simplify solver cannot handle decimal literals")
+success
+success
+(assert (>= a 1.0))
+              ^^^
+(error "The simplify solver cannot handle decimal literals")
+success
+(assert (>= 1.0 a))
+            ^^^
+(error "The simplify solver cannot handle decimal literals")
+success
+success
+(assert (<= a 1.0))
+              ^^^
+(error "The simplify solver cannot handle decimal literals")
+success
+(assert (<= 1.0 a))
+            ^^^
+(error "The simplify solver cannot handle decimal literals")
+success
+success
+(assert (> a 1.0))
+             ^^^
+(error "The simplify solver cannot handle decimal literals")
+success
+(assert (> 1.0 a))
+           ^^^
+(error "The simplify solver cannot handle decimal literals")
+success
+success
+(assert (< a 1.0))
+             ^^^
+(error "The simplify solver cannot handle decimal literals")
+success
+(assert (< 1.0 a))
+           ^^^
+(error "The simplify solver cannot handle decimal literals")
+(assert (distinct a b 1 1.0))
+                        ^^^
+(error "The simplify solver cannot handle decimal literals")
+success
+success
+success
+success
+success
+(assert (= a (* 20.0 b)))
+                ^^^^
+(error "The simplify solver cannot handle decimal literals")
+(assert (= a (* (- 20.0) b)))
+                   ^^^^
+(error "The simplify solver cannot handle decimal literals")
+success
+success
+success
+success
+success
+(assert (= (* 20.0 b) a))
+              ^^^^
+(error "The simplify solver cannot handle decimal literals")
+(assert (= (* (- 20.0) b) a))
+                 ^^^^
+(error "The simplify solver cannot handle decimal literals")
+(assert (= a (ite true b b)))
+                  ^^^^
+(error "Use of boolean in a term position is not yet implemented in the Simplify adapter")
+(assert (= a (ite true 1.0 1)))
+                  ^^^^
+(error "Use of boolean in a term position is not yet implemented in the Simplify adapter")
+success
+success

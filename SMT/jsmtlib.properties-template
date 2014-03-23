@@ -1,0 +1,33 @@
+# This file is a template - it lists all the properties that the jSMTLIB
+# application pays attention to.  You should customize the values for your
+# own system. The application looks for jsmtlib.properties in the working
+# directory first and then anywhere on the classpath.
+
+# The directory in which logic and theory definitions are found
+# (if not set, the files from the official distribution as distributed in
+#  the .jar file are used - there should be only a rare need to set this)
+# This value can also be set on the command-line by the --logics option.
+org.smtlib.logic_path=
+
+# The default solver to use. This can be overridden on the command-line with
+# the --solver option. If not set the default is to type-check only.
+##org.smtlib.default-solver= 
+
+# The adapter class to use for the solver. If not specified, then solver ZZZ
+# will use class org.smtlib.Solver_ZZZ. If that does not exist, the solver
+# is presumed to use the pure SMT adapter: org.smtlib.Solver_smt.
+# (Replace ZZZ with the solver name)
+##org.smtlib.solver_ZZZ.adapter=
+
+# A solver must have either an executable or a whole command-line specified.
+# The absolute path to the executable for each solver. This value is overridden
+# by any value specified on the command-line (--exec option)
+org.smtlib.solver_yices.exec=
+org.smtlib.solver_cvc.exec=
+org.smtlib.solver_z3_2_11.exec=
+org.smtlib.solver_z3_4_3.exec=
+org.smtlib.solver_simplify.exec=
+
+# A command (executable + arguments) is specified by a comma-separated list
+# of executable path and arguments, with no extraneous spaces, in the form
+##org.smtlib.solver_ZZZ.command=EXE,arg1,arg2

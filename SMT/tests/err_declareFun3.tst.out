@@ -1,0 +1,3 @@
+(declare-fun x () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "The logic must be set before a declare-fun command is issued")

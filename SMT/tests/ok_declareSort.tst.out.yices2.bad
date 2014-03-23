@@ -1,0 +1,5 @@
+success
+success
+(declare-sort B 2)
+^^^^^^^^^^^^^^^^^^
+(error "Yices2 declare-sort command failed: Yices2 does not support defining parameterized types")
