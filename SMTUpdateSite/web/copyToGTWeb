@@ -1,0 +1,77 @@
+#! /bin/bash
+
+## Put in the drive letter that maps to u1
+LOC="T:/webdev/new-site/resources/smt"
+
+
+
+echo checking tutorial...
+SRC=../../../texstuff/papers/SMTLIBTutorial/SMTLIBTutorial.pdf
+DEST=${LOC}/jSMTLIBTutorial.pdf
+( ( diff -q $SRC $DEST && echo ... unchanged ) || ( echo ... copying ; cp $SRC $DEST )) 
+DEST=${LOC}/SMTLIBTutorial.pdf
+( ( diff -q $SRC $DEST && echo ... unchanged ) || ( echo ... copying ; cp $SRC $DEST )) 
+
+echo checking user guide...
+SRC=../../../texstuff/papers/SMTLIBUserGuide/SMTLIBUserGuide.pdf
+DEST=${LOC}/jSMTLIBUserGuide.pdf
+
+( ( diff -q $SRC $DEST && echo ... unchanged ) || ( echo ... copying ; cp $SRC $DEST )) 
+
+echo checking index...
+SRC=index.html
+DEST=${LOC}/index.html
+( ( diff -q $SRC $DEST && echo ... unchanged ) || ( echo ... copying ; cp $SRC $DEST )) 
+
+echo checking tar file
+SRC=jSMTLIB.tar.gz
+DEST=${LOC}/jSMTLIB.tar.gz
+( ( diff -q $SRC $DEST && echo ... unchanged ) || ( echo ... copying ; cp $SRC $DEST )) 
+
+echo copying update site...
+
+cd ../SMTUpdateSite
+cp  *.jar *.xml ${LOC}/jSMTLIB-UpdateSite
+
+cd features
+ls ${LOC}/jSMTLIB-UpdateSite/features > /tmp/remotels
+files=`ls | diff - /tmp/remotels | grep "<" | sed -e "s/<//" `
+echo new features $files
+if [[ "$files" == "" ]]; then files=`ls -t *.jar | head -1`; fi
+echo copying features $files
+##cp  $files ${LOC}/jSMTLIB-UpdateSite/features
+for f in $files ; do
+echo $f
+SRC=$f
+DEST=${LOC}/jSMTLIB-UpdateSite/features/$f
+( ( diff -q $SRC $DEST && echo ... unchanged ) || ( echo ... copying ; cp $SRC $DEST )) 
+done
+
+cd ../plugins
+ls ${LOC}/jSMTLIB-UpdateSite/plugins > /tmp/remotels
+files=`ls | diff - /tmp/remotels | grep "<" | sed -e "s/<//" `
+echo new plugins $files
+if [[ "$files" == "" ]]; then files=`ls -t *.jar | head -2`; fi
+echo copying plugins $files
+##cp  $files ${LOC}/jSMTLIB-UpdateSite/plugins
+for f in $files ; do
+echo $f
+SRC=$f
+DEST=${LOC}/jSMTLIB-UpdateSite/plugins/$f
+( ( diff -q $SRC $DEST && echo ... unchanged ) || ( echo ... copying ; cp $SRC $DEST )) 
+done
+
+
+cd ..
+echo ls...
+ls -lR ${LOC}
+
+
+ssh green << HERE
+cd ../webdev/new-site/resources/smt
+svn add */*/* 2>&1 | grep -v "already under"
+svn commit -m "Updates as of `date`" 
+svn stat
+logout
+HERE
+echo done
