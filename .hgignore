@@ -42,3 +42,5 @@ syntax: regexp
 ^SMT/solver\.out$
 syntax: regexp
 \.actual$
+syntax: regexp
+^SMTUpdateSite/web/README$
