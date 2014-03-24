@@ -6,6 +6,10 @@
 ## Need the following for jar
 export JAVA_HOME=C:/cygwin/home/dcok/ProgramFiles/Java/jdk1.7.0_07
 
+version=`cat ../SMTFeature/feature.xml | head | grep -v encoding | grep "version=" | sed -e 's/ //g' -e 's/version=\"//' -e 's/\"//'`
+echo Building version $version
+cat src/org/smtlib/resources/version.template | sed -e "s/DEV/${version}/" > src/org/smtlib/resources/version.properties
+
 rm -rf temp
 mkdir temp
 echo "Manifest-Version: 1.0" > temp/manifest

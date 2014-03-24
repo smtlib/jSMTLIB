@@ -309,7 +309,7 @@ implements IWorkbenchPreferencePage {
 		addWidgets(solverConfig,solverComposite);
 
 		Composite composite0 = generalComposite;
-		new Label(composite0, SWT.CENTER).setText("SMT version: " + org.smtlib.Version.VERSION_ID);
+		new Label(composite0, SWT.CENTER).setText("SMT version: " + org.smtlib.Version.version());
 		new Label(composite0, SWT.CENTER)
 		.setText("These choices are workspace options that apply to every SMT-LIB project.");
 
