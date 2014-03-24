@@ -1,0 +1,4 @@
+success
+(pop 1)
+^^^^^^^
+(error "Parse Error: <shell>:1.5: Attempted to pop above the top stack frame.")

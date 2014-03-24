@@ -1,0 +1,2 @@
+(error "Expected true or false as the value of :interactive-mode")
+(error "A exit command takes no arguments")

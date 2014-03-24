@@ -1,0 +1,34 @@
+#! /bin/bash
+
+## TODO - this is not portable across build environments
+## COnvert this to ant
+
+## Need the following for jar
+export JAVA_HOME=C:/cygwin/home/dcok/ProgramFiles/Java/jdk1.7.0_07
+
+version=`cat ../SMTFeature/feature.xml | head | grep -v encoding | grep "version=" | sed -e 's/ //g' -e 's/version=\"//' -e 's/\"//'`
+echo Building version $version
+cat src/org/smtlib/resources/version.template | sed -e "s/DEV/${version}/" > src/org/smtlib/resources/version.properties
+cp src/org/smtlib/resources/version.properties bin/org/smtlib/resources/version.properties
+
+rm -rf temp
+mkdir temp
+echo "Manifest-Version: 1.0" > temp/manifest
+echo "Main-Class: org.smtlib.SMT" >> temp/manifest
+cd bin
+rm -f jsmtlib.properties
+$JAVA_HOME/bin/jar -cfm ../jSMTLIB.jar ../temp/manifest .
+cp ../jsmtlib.properties .
+cd ..
+cp ../../../texstuff/papers/SMTLIBUserGuide/SMTLIBUserGuide.pdf jSMTLIBUserGuide.pdf
+tar cf jSMTLIB.tar jSMTLIB.jar LICENSE jSMTLIBUserGuide.pdf jsmtlib.properties-template doc
+rm jSMTLIBUserGuide.pdf
+tar tvf jSMTLIB.tar
+rm jSMTLIB.tar.gz
+gzip jSMTLIB.tar
+
+echo Build complete
+
+if [ -e ../../OpenJML ] ; then cp jSMTLIB.jar ../../OpenJML ; else echo Copy failed ; fi
+if [ -e ../../OpenJMLUI ] ; then cp jSMTLIB.jar ../../OpenJMLUI ; else echo Copy failed; fi
+echo Copies complete

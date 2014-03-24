@@ -1,0 +1,597 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <!-- Defines a new editor
+        name = Name of the editor in list of editors (e.g. in setting File Associations)
+        extensions = the filename suffixes that are associated by default with this editor
+        icon = the icon associated with the editor and the suffix
+        contributorClass = ??? TODO
+        class = the class defining the editor
+        id = the unique id of the editor
+   -->
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            name="SMT Editor"
+            extensions="smt2"
+            icon="icons/smt_icon.gif"
+            class="org.smtlib.plugin.editor.SMTEditor"
+            contributorClass="org.eclipse.ui.editors.text.TextEditorActionContributor"
+            id="org.smtlib.plugin.editor.SMTEditor">
+      </editor>
+   </extension>
+
+<!-- This next section creates the needed menus for the plugin -->
+<extension
+         point="org.eclipse.ui.menus">
+      <!-- This adds the Display Warning Details menu to the Eclipse Problem View Menu -->
+<!--
+      <menuContribution
+            locationURI="menu:org.eclipse.ui.views.ProblemView">
+         <command
+               commandId="codesonar.commands.displayWarningDetails">
+         </command>
+      </menuContribution>
+-->
+      <!-- This adds the Display Warning Details menu to the Eclipse Problem View Context Menu -->
+<!--
+      <menuContribution
+            locationURI="popup:org.eclipse.ui.views.ProblemView">
+         <command
+               commandId="codesonar.commands.displayWarningDetails"> 
+         </command>
+      </menuContribution>
+-->
+      <!-- This adds the Lock Design Notes View menu option to the Design Notes View Menu -->
+<!--
+      <menuContribution
+            locationURI="menu:codesonar.views.CodeSonarView">
+         <command
+               commandId="codesonar.commands.lockDesignNotes">
+         </command>
+      </menuContribution>
+-->
+      <!-- These next few menus add CodeSonar Menu Options to the context menu for Projects
+           in the Eclipse Project Explorer. Menus are added to:
+               1. Activate CodeSonar
+               2. Deactivate CodeSonar
+               3. Start Visualization
+               4. Update Warning
+               5. Hide Warnings
+           These all work on the current project selected on the Project Explorer 
+           TODO possibly change the visibles to deactivated  -->
+<!--
+      <menuContribution
+         locationURI=
+         "popup:org.eclipse.ui.navigator.ProjectExplorer#PopupMenu?before=additions">
+         <menu
+               icon="icons/GrammaTech16.png"
+               label="CodeSonar">
+            <command
+                  commandId="codesonar.commands.activateCodesonar"
+                  icon="icons/GrammaTech16.png"
+                  label="%command.name.activateCodesonar"
+                  tooltip="%command.description.activateCodesonar">
+            </command>
+            <command
+                  commandId="codesonar.commands.deactivateCodesonar"
+                  icon="icons/GrammaTech16.png"
+                  label="%command.name.deactivateCodesonar"
+                  tooltip="%command.description.deactivateCodesonar">
+            </command>
+            <command
+                  commandId="codesonar.commands.startVisualization"
+                  icon="icons/GrammaTech16.png">
+            </command>
+            <command
+                  commandId="codesonar.commands.updateWarnings"
+                  icon="icons/GrammaTech16.png">
+            </command>
+            <command
+                  commandId="codesonar.commands.deleteWarnings"
+                  icon="icons/GrammaTech16.png">
+            </command>
+         </menu>
+      </menuContribution>
+-->
+      <!-- These next few menus add CodeSonar menu options to the Project Explorer Menu bar -->
+<!--      <menuContribution
+         locationURI=
+         "menu:org.eclipse.ui.navigator.ProjectExplorer?before=additions">
+         <menu
+               icon="icons/GrammaTech16.png"
+               label="CodeSonar">
+            <command
+                  commandId="codesonar.commands.activateCodesonar"
+                  icon="icons/GrammaTech16.png"
+                  label="%command.name.activateCodesonar"
+                  tooltip="%command.description.activateCodesonar">
+            </command>
+            <command
+                  commandId="codesonar.commands.deactivateCodesonar"
+                  icon="icons/GrammaTech16.png"
+                  label="%command.name.deactivateCodesonar"
+                  tooltip="%command.description.deactivateCodesonar">
+            </command>
+            <command
+                  commandId="codesonar.commands.startVisualization"
+                  icon="icons/GrammaTech16.png">
+            </command>
+            <command
+                  commandId="codesonar.commands.updateWarnings"
+                  icon="icons/GrammaTech16.png">
+            </command>
+            <command
+                  commandId="codesonar.commands.deleteWarnings"
+                  icon="icons/GrammaTech16.png">
+            </command>
+         </menu>
+      </menuContribution>
+      -->
+      <!-- These next few menus add CodeSonar menu options to the Main Menu for Eclipse --> 
+<!--
+      <menuContribution
+             allPopups="false"
+             locationURI="menu:org.eclipse.ui.main.menu">
+          <menu
+                label="%menu.label"
+                tooltip="%menu.tooltip">
+             <command
+                   commandId="codesonar.commands.updateWarnings"
+                   style="push"
+                   tooltip="%command.description.updateWarnings">
+             </command>
+             <command
+                   commandId="codesonar.commands.deleteWarnings"
+                   style="push"
+                   tooltip="%command.description.deleteWarnings">
+             </command>
+             <command
+                   commandId="codesonar.commands.deactivateCodesonar"
+                   style="push"
+                   tooltip="%command.description.deactivateCodesonar">
+             </command>
+             <command
+                   commandId="codesonar.commands.activateCodesonar"
+                   style="push"
+                   tooltip="%command.description.activateCodesonar">
+             </command>
+             <command
+                   commandId="codesonar.commands.startVisualization"
+                   style="push"
+                   tooltip="%command.description.startVisualization">
+             </command>
+          </menu>
+       </menuContribution>
+       -->
+ </extension>
+<!-- These extensions add menu items to the menubar and toolbar -->
+  <extension
+     point="org.eclipse.ui.actionSets">
+         
+         <!-- The actionSet defines a set of actions; the label does not seem to be used anywhere -->
+     <actionSet
+            label="SMT Actions"
+            visible="true"
+            id="org.smtlib.plugin.actionSet">
+         
+         <!-- Defines a new toplevel menu item, with the given text label;
+              the id is used by associated submenu items. The separators
+              (there can be more than one) define groups of submenu items
+              separated by a line, in the order in which they are to appear. 
+              It is not strictly necessary to include them, especially if there
+              is just one, since they are created implicitly when used by a submenu item. -->
+         <menu
+               label="SMT"
+               id="SMTMenu">
+            <separator
+                  name="SMTGroup">
+            </separator>
+         </menu>
+        
+         <!-- Adds a menu item, bottom one first -->
+         <!-- In each action
+                 label = label in the menu item
+                 class = the class whose run method will be called when the item is activated
+                 menubarPath = where to put the menu item: "X" will put it in the top-level
+                     menubar; "X/Y" will put it in a subgroup named Y under a top-level item
+                     with the id X.
+                 definitionId = the associated id from a org.eclipse.ui.commands extension
+                     that defines a Key binding for the action
+                 id = the unique id of this action
+         -->
+         <action
+               label="%Get.Value"
+               class="org.smtlib.plugin.MenuActions$GetValue"
+               menubarPath="SMTMenu/SMTGroup"
+               definitionId="org.smtlib.plugin.commands.GetValue"
+               id="org.smtlib.plugin.MenuActions.getValueAction">
+         </action>
+         <action
+               label="%View.Logic"
+               class="org.smtlib.plugin.MenuActions$ViewLogic"
+               menubarPath="SMTMenu/SMTGroup"
+               definitionId="org.smtlib.plugin.commands.ViewLogic"
+               id="org.smtlib.plugin.MenuActions.viewLogicAction">
+         </action>
+         <!-- Adds a menu item -->
+         <action
+               label="%Delete.SMT.Markers"
+               class="org.smtlib.plugin.MenuActions$DeleteMarkers"
+               menubarPath="SMTMenu/SMTGroup"
+               definitionId="org.smtlib.plugin.commands.DeleteMarkers"
+               id="org.smtlib.plugin.MenuActions.deleteMarkerAction">
+         </action>
+         <!-- Adds a menu item -->
+         <action
+               label="%Run.default.solver"
+               tooltip="Runs the default SMT solver"
+               class="org.smtlib.plugin.MenuActions$RunSolver"
+               menubarPath="SMTMenu/SMTGroup"
+               id="org.smtlib.plugin.MenuActions.RunSolver.default"
+               definitionId="org.smtlib.plugin.commands.RunSolver">
+               <!-- <dynamic class="org.smtlib.plugin.MenuActions$Solvers"
+                    id="org.smtlib.plugin.MenuActions,Solvers"/> -->
+         </action>
+         <!-- NOTE: for the following, the string following the last . of the id must be the name of the solver -->
+         <action
+               label="Z3-4.3"
+               tooltip="Runs the Z3-4.3 SMT solver"
+               class="org.smtlib.plugin.MenuActions$RunSolver"
+               menubarPath="SMTMenu/SMTSolvers"
+               id="org.smtlib.plugin.MenuActions.RunSolver.z3_4_3"
+               definitionId="org.smtlib.plugin.commands.RunZ3_4_3">
+         </action>
+         <action
+               label="Z3-2.11"
+               tooltip="Runs the Z3-2.11 SMT solver"
+               class="org.smtlib.plugin.MenuActions$RunSolver"
+               menubarPath="SMTMenu/SMTSolvers"
+               id="org.smtlib.plugin.MenuActions.RunSolver.z3_2_11"
+               definitionId="org.smtlib.plugin.commands.RunZ3_2_11">
+         </action>
+         <action
+               label="CVC"
+               tooltip="Runs the CVC SMT solver"
+               class="org.smtlib.plugin.MenuActions$RunSolver"
+               menubarPath="SMTMenu/SMTSolvers"
+               id="org.smtlib.plugin.MenuActions.RunSolver.cvc"
+               definitionId="org.smtlib.plugin.commands.RunCVC">
+         </action>
+         <action
+               label="Yices"
+               tooltip="Runs the Yices SMT solver"
+               class="org.smtlib.plugin.MenuActions$RunSolver"
+               menubarPath="SMTMenu/SMTSolvers"
+               id="org.smtlib.plugin.MenuActions.RunSolver.yices"
+               definitionId="org.smtlib.plugin.commands.RunYices">
+         </action>
+         <action
+               label="Simplify"
+               tooltip="Runs the Simplify SMT solver"
+               class="org.smtlib.plugin.MenuActions$RunSolver"
+               menubarPath="SMTMenu/SMTSolvers"
+               id="org.smtlib.plugin.MenuActions.RunSolver.simplify"
+               definitionId="org.smtlib.plugin.commands.RunSimplify">
+         </action>
+         <action
+               label="check"
+               tooltip="Type-checks the SMT-LIB script"
+               class="org.smtlib.plugin.MenuActions$RunSolver"
+               menubarPath="SMTMenu/SMTSolvers"
+               id="org.smtlib.plugin.MenuActions.RunSolver.test"
+               definitionId="org.smtlib.plugin.commands.RunCheck">
+         </action>
+         <action
+               label="%All"
+               tooltip="%Runs.All.Solvers"
+               class="org.smtlib.plugin.MenuActions$RunSolver"
+               menubarPath="SMTMenu/SMTSolvers"
+               id="org.smtlib.plugin.MenuActions.RunSolver.All"
+               definitionId="org.smtlib.plugin.commands.RunAll">
+         </action>
+         <!-- Adds a tool bar item -->
+         <action
+               label="SMT"
+               tooltip="%Toolbar.SMT.Tooltip"
+               class="org.smtlib.plugin.MenuActions$RunSolver"
+               toolbarPath="Normal/build.ext"
+               icon="icons/smt_icon.gif"
+               id="org.smtlib.plugin.ToolbarActions.RunSolver.default"
+               >
+         </action>
+     </actionSet>
+   </extension>
+   
+
+<!-- This extension adds popup menu items within the Project Explorer or Navigator  -->
+   <extension
+         point="org.eclipse.ui.popupMenus">
+      <objectContribution
+            objectClass="org.eclipse.core.resources.IResource"
+            id="SMTMenuItem.contribution1">
+         <!-- Defines a top-level menu item within the context menu; it is enabled when
+              an object of type given by objectClass above is selected. -->
+         <menu
+               label="SMT"
+               path="additions"
+               id="SMTContextMenuItem">
+            <separator
+                  name="group1">
+            </separator>
+         </menu>
+         <!-- Submenu items are in reverse order 
+              label = Human-readable text of the submenu item
+              class = The class whose run method is called when the item is activated
+              menubarPath = "X/Y" means put the submenu item in group Y of the menu item
+                  whose id is X
+              enablesFor = "1" means enable the submenu item when just 1 item is selected; 
+                           "+" means enable it when 1 or more items are selected
+              id = the unique id for this menu item
+         -->
+         <!-- Does not make sense to have the ViewLogic command here -->
+         <action
+               label="%Delete.SMT.Markers"
+               class="org.smtlib.plugin.ContextAction$DeleteMarkers"
+               menubarPath="SMTContextMenuItem/group1"
+               enablesFor="+"
+               id="SMTContextMenuItem.deleteMarkersAction">
+         </action>
+         <action
+               label="Run default solver"
+               class="org.smtlib.plugin.ContextAction$RunSolver"
+               menubarPath="SMTContextMenuItem/group1"
+               enablesFor="+"
+               id="SMTContextMenuItem.solverAction.default">
+         </action>
+         
+         <action
+               label="Z3-4.3"
+               class="org.smtlib.plugin.ContextAction$RunSolver"
+               menubarPath="SMTContextMenuItem/group2"
+               enablesFor="+"
+               id="SMTContextMenuItem.solverAction.z3_4_3">
+         </action>
+         <action
+               label="Z3-2.11"
+               class="org.smtlib.plugin.ContextAction$RunSolver"
+               menubarPath="SMTContextMenuItem/group2"
+               enablesFor="+"
+               id="SMTContextMenuItem.solverAction.z3_2_11">
+         </action>
+         <action
+               label="CVC"
+               class="org.smtlib.plugin.ContextAction$RunSolver"
+               menubarPath="SMTContextMenuItem/group2"
+               enablesFor="+"
+               id="SMTContextMenuItem.solverAction.cvc">
+         </action>
+          <action
+               label="yices"
+               class="org.smtlib.plugin.ContextAction$RunSolver"
+               menubarPath="SMTContextMenuItem/group2"
+               enablesFor="+"
+               id="SMTContextMenuItem.solverAction.yices">
+         </action>
+        <action
+               label="simplify"
+               class="org.smtlib.plugin.ContextAction$RunSolver"
+               menubarPath="SMTContextMenuItem/group2"
+               enablesFor="+"
+               id="SMTContextMenuItem.solverAction.simplify">
+         </action>
+         <action
+               label="check"
+               class="org.smtlib.plugin.ContextAction$RunSolver"
+               menubarPath="SMTContextMenuItem/group2"
+               enablesFor="+"
+               id="SMTContextMenuItem.solverAction.test">
+         </action>
+         <action
+               label="All"
+               class="org.smtlib.plugin.ContextAction$RunSolver"
+               menubarPath="SMTContextMenuItem/group2"
+               enablesFor="+"
+               id="SMTContextMenuItem.solverAction.All">
+         </action>
+         
+      </objectContribution>
+   </extension>
+   
+<!-- This extension adds the preference page.  The key items are
+     the page name = the label used in the list of preferences
+     the page class = the class that implements the preference page
+     the page category = the parent category under which to list this preference page
+           (if there is none, then this preference is listed at the top level; if you
+           want it nested under another category, you have to figure out that category's id)
+-->
+   <extension
+         id="org.smtlib.plugin.preferencesPage"
+         name="SMT Preferences"
+         point="org.eclipse.ui.preferencePages">
+      <page 
+         id="org.smtlib.plugin.preferences" 
+         name="SMT" 
+         class="org.smtlib.plugin.Preferences"
+         > 
+      </page>
+   </extension>
+            <!-- category="org.eclipse.jdt.ui.preferences.JavaBasePreferencePage" is id of Java page -->
+   
+   <!-- This extension adds a property tab to the file properties FIXME  not sure we need it
+   <extension
+         point="org.eclipse.ui.propertyPages">
+      <page
+            name="SMT"
+            nameFilter="*.*"
+            class="org.smtlib.plugin.SMTPropertyPage"
+            id="org.smtlib.plugin.SMTPropertyPage">
+         <enabledWhen>
+            <instanceof
+                  value="org.eclipse.core.resources.IFile">
+            </instanceof>
+         </enabledWhen>
+      </page>
+   </extension>  -->
+
+  <!-- This defines a new marker type -->
+  <!-- The id here is unusual.  It is specified here without a prefix of the plugin ID,
+       but when it is used, e.g. in the org.eclipse.ui.editors.annotationTypes extension
+       below, it has a prefix that is the plug-in id.
+  -->  
+  <extension
+         id="SMTProblem"
+         name="SMT Problem"
+         point="org.eclipse.core.resources.markers">
+    <super type="org.eclipse.core.resources.problemmarker"/>
+    <super type="org.eclipse.core.resources.textmarker"/>
+    <persistent value="true"/>
+  </extension>
+  
+    
+  <!-- This connects the markers to editor annotations  -->
+  <!--  NOTE: The marker type must match the marker id used for creating
+        and deleting the markers in the code, i.e.
+        PLUGIN_ID + ".SMTProblem" .
+        
+        The marker name must match the annotationType in the 
+        org.eclipse.ui.editors.markerAnnotationSpecification below.
+  -->
+  <!-- Note: The type declarations used to have an attribute
+            super="org.eclipse.ui.workbench.texteditor.error"
+       (there may be a corresponding one for warning as well).  With that
+       used, the following annotations would show up in the preference
+       page (General>>Editors>>TextEditors>>Annotations), but the display
+       would not respond to changes in the preferences.  The super line
+       needed to be removed for this behavior to get enabled.  I'm not
+       actually sure what benefit the super attribute provides (and thus
+       what functionality is broken by its removal. TODO) -->
+                
+  <extension
+         point="org.eclipse.ui.editors.annotationTypes"
+         id="SMTAnnotation">
+    <type
+            markerType="org.smtlib.plugin.SMTPlugin.SMTProblem"
+            name="org.smtlib.plugin.SMTProblemAnnotation"
+            markerSeverity="2"
+            >
+    </type>
+  </extension>
+            <!-- super="org.eclipse.ui.workbench.texteditor.error"-->
+
+
+  <!-- Provides the icon and other properties for the annotations  -->
+  <!-- NOTE: the annotationType must match the name, not the id, of the
+        annotationType defined above; the various Keys must be unique
+        (or if they are not, the presentation preferences are tied to
+        that key, wherever it is defined) -->
+        
+  <extension
+         point="org.eclipse.ui.editors.markerAnnotationSpecification">
+    <specification
+            annotationType="org.smtlib.plugin.SMTProblemAnnotation"
+            label="SMT Problem"
+            icon="icons/smt_problem.gif"
+            overviewRulerPreferenceKey="org.smtlib.plugin.orpeKey"
+            verticalRulerPreferenceKey="org.smtlib.plugin.vrpeKey"
+            highlightPreferenceKey="org.smtlib.plugin.hrpeKey"
+            textPreferenceKey="org.smtlib.plugin.trpeKey"
+            colorPreferenceKey="org.smtlib.plugin.crpeKey"
+            colorPreferenceValue="255,0,0"
+            textPreferenceValue="true"
+            overviewRulerPreferenceValue="true"
+            verticalRulerPreferenceValue="true"
+            highlightPreferenceValue="false"
+            presentationLayer="3"
+            >
+    </specification>
+  </extension> 
+ 
+<!-- The following creates commands that are referenced by
+    actions above via definitionID and can be mapped to keys -->      
+    
+  <extension
+    point="org.eclipse.ui.commands">
+      <category
+            name="SMT"
+            description="SMT related commands"
+            id="org.smtlib.plugin.SMTCommandCategory">
+      </category>
+      <command
+            name="Run Simplify"
+            description="Runs the Simplify SMT solver"
+            categoryId="org.smtlib.plugin.SMTCommandCategory"
+            id="org.smtlib.plugin.commands.RunSimplify">
+      </command> 
+      <command
+            name="Run Yices"
+            description="Runs the Yices SMT solver"
+            categoryId="org.smtlib.plugin.SMTCommandCategory"
+            id="org.smtlib.plugin.commands.RunYices">
+      </command> 
+      <command
+            name="Run CVC3"
+            description="Runs the CVC3 SMT solver"
+            categoryId="org.smtlib.plugin.SMTCommandCategory"
+            id="org.smtlib.plugin.commands.RunCVC">
+      </command> 
+      <command
+            name="Run Z3-4.3"
+            description="Runs the Z3-4.3 SMT solver"
+            categoryId="org.smtlib.plugin.SMTCommandCategory"
+            id="org.smtlib.plugin.commands.RunZ3_4_3">
+      </command> 
+      <command
+            name="Run Z3-2.11"
+            description="Runs the Z3-2.11 SMT solver"
+            categoryId="org.smtlib.plugin.SMTCommandCategory"
+            id="org.smtlib.plugin.commands.RunZ3_2_11">
+      </command> 
+      <command
+            name="Run type-checker"
+            description="Runs the SMT type-checker"
+            categoryId="org.smtlib.plugin.SMTCommandCategory"
+            id="org.smtlib.plugin.commands.RunCheck">
+      </command> 
+      <command
+            name="Run All Solvers"
+            description="Runs all solvers on selected files"
+            categoryId="org.smtlib.plugin.SMTCommandCategory"
+            id="org.smtlib.plugin.commands.RunAll">
+      </command> 
+      <command
+            name="%Run.SMT.Solver.Cmd"
+            description="%Run.SMT.Solver.Desc"
+            categoryId="org.smtlib.plugin.SMTCommandCategory"
+            id="org.smtlib.plugin.commands.RunSolver">
+      </command> 
+      <command
+            name="Delete SMT Markers"
+            description="Deletes SMT markers on the selected objects"
+            categoryId="org.smtlib.plugin.SMTCommandCategory"
+            id="org.smtlib.plugin.commands.DeleteMarkers">
+      </command> 
+      <command
+            name="View SMT-LIB Logic"
+            description="Shows SMT logic or theory file in an editor"
+            categoryId="org.smtlib.plugin.SMTCommandCategory"
+            id="org.smtlib.plugin.commands.ViewLogic">
+      </command> 
+      <command
+            name="Get Value of SMT-LIB expression"
+            description="Shows the value of an expression in a current satisfiable model"
+            categoryId="org.smtlib.plugin.SMTCommandCategory"
+            id="org.smtlib.plugin.commands.GetValue">
+      </command> 
+
+  </extension>
+  
+   <!-- This extension adds help information.
+    -->
+   <extension
+         point="org.eclipse.help.toc">
+      <toc file="html/SMTHelp.xml" primary="true" />
+   </extension>   
+   
+</plugin>

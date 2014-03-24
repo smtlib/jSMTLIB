@@ -1,0 +1,14 @@
+success
+(assert (= ((as + Int) 4 3) 1)) ;; unneeded disambiguation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.16: Unexpected token: 'as'.")
+(assert (= ((as and Bool) true false) false)) ;; not overloaded
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.18: Unexpected token: 'as'.")
+(assert (= ((as zzz Bool) true false) false)) ;; unknown identifier
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.18: Unexpected token: 'as'.")
+success
+(assert (= ((as + S) 4 3) 1))  ;; not overloaded to S
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.16: Unexpected token: 'as'.")

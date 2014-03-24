@@ -1,0 +1,7 @@
+success
+(get-proof)
+^^^^^^^^^^^
+(error "This build of CVC4 doesn't have proof support.")
+(get-proof xxx)
+           ^^^
+(error "A get-proof command takes no arguments")

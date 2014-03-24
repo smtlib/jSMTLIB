@@ -1,0 +1,7 @@
+(:authors "Leonardo de Moura and Nikolaj Bjorner" )
+(:name "Z3" )
+(:version "4.3" )
+(get-info :error-behavior)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(:error-behavior continued-execution)
+")

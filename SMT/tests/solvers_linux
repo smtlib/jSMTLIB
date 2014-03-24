@@ -1,0 +1,37 @@
+
+export JV="java -cp ../bin org.smtlib.SMT --logics ../logics --solver"
+
+export SMT_EXE_simplify="C:/cygwin/home/dcok/ESCJava-2.0.5-04-11-08-source/Escjava/release/master/bin/Simplify-1.5.4.exe"
+
+export SMT_EXE_yices=/home/dcok/mybin/yices -i
+export SMT_EXE_yices2=/home/dcok/mybin/yices2
+
+## Old smtlib format
+export SMT_EXE_cvc="C:/cygwin/home/dcok/apps/cvc3-2.2-win32-opt.exe"
+## New smtlib, partially
+export SMT_EXE_cvcnew=/home/dcok/mybin/cvc3 -lang smt2
+
+
+
+if [ "$solver" == "z3" ]; then
+    export SMT_EXE="$SMT_EXE_z3 "
+
+elif [ "$solver" == "yices" ] ; then
+    export SMT_EXE="$JV yices"
+elif [ "$solver" == "yices2" ] ; then
+    export SMT_EXE="$SMT_EXE_yices2"
+
+elif [ "$solver" == "simplify" ] ; then
+    export SMT_EXE="$JV simplify"
+
+elif [ "$solver" == "cvc" ] ; then
+    export SMT_EXE="$JV cvc"
+elif [ "$solver" == "cvcnew" ] ; then
+    export SMT_EXE="$SMT_EXE_cvcnew"
+
+elif [ "$solver" == "test" ] ; then
+    export SMT_EXE="$JV test"
+else
+    echo No match for $solver
+fi
+echo SOLVER $solver $SMT_EXE

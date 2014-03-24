@@ -1,0 +1,18 @@
+(set-info :name "x")
+          ^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :name")
+(set-info :authors "x")
+          ^^^^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :authors")
+(set-info :version "0")
+          ^^^^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :version")
+(set-info :error-behavior x)
+          ^^^^^^^^^^^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :error-behavior")
+(set-info :all-statistics x)
+          ^^^^^^^^^^^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :all-statistics")
+(set-info :reason-unknown x)
+          ^^^^^^^^^^^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :reason-unknown")

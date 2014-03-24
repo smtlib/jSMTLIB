@@ -1,0 +1,11 @@
+success
+(declare-sort Bool 0)
+^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.17: Symbol 'Bool' previously declared as a type")
+success
+(declare-fun select () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.18: Unexpected token: 'select'.")
+(declare-fun store () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.17: Unexpected token: 'store'.")

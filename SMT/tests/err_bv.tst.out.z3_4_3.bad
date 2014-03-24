@@ -1,0 +1,26 @@
+success
+success
+success
+success
+success
+(declare-fun k () (_ BitVecx 0))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 7 column 21: unknown sort 'BitVecx'")
+(declare-fun k () (_ BitVec -1))
+                            ^^
+(error "Expected a numeral here, instead of a symbol")
+(declare-fun k () (_ BitVec))
+                           ^
+(error "Expected a numeral here, instead of a )")
+(declare-fun k () (_ BitVec 1 2))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 8 column 31: expecting one integer parameter to bit-vector sort")
+(assert (= x #b010 ))
+^^^^^^^^^^^^^^^^^^^^^
+(error "line 9 column 18: unknown constant bv2")
+(assert (= z #xab ))
+^^^^^^^^^^^^^^^^^^^^
+(error "line 9 column 21: unexpected character; line 9 column 23: unexpected character; line 10 column 18: unknown constant bv171; line 10 column 23: unexpected character; line 10 column 25: unexpected character")
+(assert (= z y ))
+^^^^^^^^^^^^^^^^^
+(error "line 11 column 19: invalid function application, sort mismatch on argument at position 2")

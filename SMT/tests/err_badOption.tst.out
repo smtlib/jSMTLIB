@@ -1,0 +1,9 @@
+(get-option zzz)
+            ^^^
+(error "Expected a keyword (beginning with a colon) here, instead of a symbol")
+(get-option)
+           ^
+(error "Expected a keyword (beginning with a colon) here, instead of a )")
+(get-option :zzz :www)
+                 ^^^^
+(error "Too many arguments or extraneous material after the command or missing right parenthesis")

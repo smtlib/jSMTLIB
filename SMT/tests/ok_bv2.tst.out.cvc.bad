@@ -1,0 +1,72 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(assert (= (bvshl x x) #b111))
+           ^^^^^^^^^^^
+(error "SMT BitVector function bvshl is not implemented in cvc")
+(assert (= (bvlshr x x) #b111))
+           ^^^^^^^^^^^^
+(error "SMT BitVector function bvlshr is not implemented in cvc")
+(assert (= (bvudiv x x) #b111))
+           ^^^^^^^^^^^^
+(error "SMT BitVector function bvudiv is not implemented in cvc")
+(assert (= (bvurem x x) #b111))
+           ^^^^^^^^^^^^
+(error "SMT BitVector function bvurem is not implemented in cvc")
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(assert (= (bvcomp x x) #b1))
+           ^^^^^^^^^^^^
+(error "SMT BitVector function bvcomp is not implemented in cvc")
+(assert (= (bvsdiv x x) x))
+           ^^^^^^^^^^^^
+(error "SMT BitVector function bvsdiv is not implemented in cvc")
+(assert (= (bvsrem x x) x))
+           ^^^^^^^^^^^^
+(error "SMT BitVector function bvsrem is not implemented in cvc")
+(assert (= (bvsdiv x x) x))
+           ^^^^^^^^^^^^
+(error "SMT BitVector function bvsdiv is not implemented in cvc")
+(assert (= (bvsmod x x) x))
+           ^^^^^^^^^^^^
+(error "SMT BitVector function bvsmod is not implemented in cvc")
+success
+success
+success
+(assert (bvsle x x))
+        ^^^^^^^^^^^
+(error "SMT BitVector function bvsle is not implemented in cvc")
+(assert (bvsge x x))
+        ^^^^^^^^^^^
+(error "SMT BitVector function bvsge is not implemented in cvc")
+(assert (not (bvslt x x)))
+             ^^^^^^^^^^^
+(error "SMT BitVector function bvslt is not implemented in cvc")
+(assert (not (bvsgt x x)))
+             ^^^^^^^^^^^
+(error "SMT BitVector function bvsgt is not implemented in cvc")
+(assert (= (bvashr x x) x))
+           ^^^^^^^^^^^^
+(error "SMT BitVector function bvashr is not implemented in cvc")
+success
+success
+success
+success
+success

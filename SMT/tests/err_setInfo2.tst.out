@@ -1,0 +1,15 @@
+(set-info )
+          ^
+(error "Expected a keyword (beginning with a colon) here, instead of a )")
+(set-info x y)
+          ^
+(error "Expected a keyword (beginning with a colon) here, instead of a symbol")
+(set-info :x )
+             ^
+(error "Expected an attribute value here, instead of a )")
+(set-info :x :y )
+             ^^
+(error "Expected an attribute value here, instead of a keyword")
+(set-info :x y y)
+               ^
+(error "Too many arguments or extraneous material after the command or missing right parenthesis")

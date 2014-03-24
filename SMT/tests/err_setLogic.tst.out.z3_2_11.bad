@@ -1,0 +1,19 @@
+( set-logic 1)
+            ^
+(error "Expected a symbol here, not a numeral")
+(set-logic 1.1)
+           ^^^
+(error "Expected a symbol here, not a decimal")
+(set-logic #b0 )
+           ^^^
+(error "Expected a symbol here, not a binary")
+(set-logic #x1 )
+           ^^^
+(error "Expected a symbol here, not a hex-literal")
+(set-logic "QF_UF")
+           ^^^^^^^
+(error "Expected a symbol here, not a string-literal")
+(set-logic QF_UF 1)
+                 ^
+(error "Too many arguments or extraneous material after the command or missing right parenthesis")
+success

@@ -1,0 +1,15 @@
+success
+success
+success
+(declare-fun a () (Array I V))
+                   ^^^^^
+(error "No such sort symbol declared: Array")
+success
+success
+success
+(assert (= v (select a i)))
+             ^^^^^^^^^^^^
+(error "Unknown predicate symbol select with argument types I I")
+(assert (= a (store a i v)))
+             ^^^^^^^^^^^^^
+(error "Unknown predicate symbol store with argument types I I V")

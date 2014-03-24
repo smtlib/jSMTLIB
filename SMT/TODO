@@ -1,0 +1,104 @@
+Pieces:
+ - SMT-LIB checker
+ - Adapters to various solvers
+ - Network server/client
+ - Plugin
+ - Tutorial 
+ - User guide
+ - Java API
+ - validation suite
+ - extensibility
+
+Bug with simplify on copy.smt2
+
+Plugin:
+
+ set a time out on jobs
+ enabling problem navigation
+ reporting exception errors better
+ result matrix
+ cancelling running job, including long-running solver tasks
+ undocked progress monitor
+ finish moving strings to properties files
+ distinguish dirty files in the console
+ allow loading preferences from jsmtlib.properties file by button push
+ implement a way to easily add new solvers (either pure SMT or new adapters)
+ unsupported responses should be shown in the editor as markers
+ errors should be shown in the console window as well
+ have a progress monitor
+ put in a multipage editor with output to alternate page
+ output to a new popup widow
+ * expand the HELP document
+ * implement options
+ DONE - implement different solvers 
+ DONE - implement markers for errors
+ DONE ENOUGH - find out how repairing syntax coloring works
+ implement font differences along with coloring for syntax coloring
+ DONE - find out how to grab the current (dirty) content of a editor
+ implement connections to various solvers
+ DONE - fix the icons
+ DONE - editor: real-time checking; 
+ editor: customizing the syntax coloring
+ editor: allowing fonts for syntax coloring
+ editor: word-completion with reserved words
+ DONE - allow multiple selections in context menu
+ DONE - no tooltip information when hovering over a marker in an editor
+ DONE - plugin does not find logics in classpath
+ DONE - control-shift-S does not work to save all dirty SMT editors - NOTE: needs to be explicitly set in the Keys preferences
+ The list of logics updates when Apply is pushed ; can it update when the logic directory field is changed?
+ Can we make a menu of logics to view that is appropriately dynamic?
+ Can we make the default logic Path be a location within the plugin?
+ Would like to have the list of solvers (in preferences and in the menu) be dynamic
+ Hover information: e.g. type, value in current model
+ Symbolic execution given a model
+ Navigate to matching ( ); highlight matching ()
+ Change selection to left sibling, right sibling, first child, last child, parent
+ Find definition
+ Find references
+ Rename
+ Refactor to add, remove a let
+ Refactor to add, remove a sort or fcn definition
+ Combine or split asserts
+ Pretty print/reformat
+ showing markers on linked files that are not in the project
+ Enable/disable auto typechecking
+ Add an another tool bar button solely for type-checking
+ Help document
+ Show non-OK responses in a plug-in window
+ Show get-value responses as a tooltip
+ Show logic of the selected file, if no text is selected
+ 
+App
+ cleanup connection of configuration to solvers, e.g. verbosity, print success, logic
+ should other SMT options become app options?
+ textual error messages with locations indicated for batch processing
+ handle reading and checking "par" declarations
+ handle restrictions on attributes in logic and theory
+ tie sort and fcn parameters to their declarations - will need corresponding visitors
+* checking that expressions are valid in the logic
+ general handling of sort with parameterized identifiers
+ DONE - implement properties for solver executables and reading a properties file
+* implement strict smtlib behavior
+* refactor the implementation of bit-vector functions.  They are all hand-coded. 
+  Although SMT defines them all informally, we need a cleaner way to implement
+  and add to the set of functions within the software.
+Saw crashes when using the driver with multiple commands
+Pretty print mode
+Clean up the code for showing values, maintaining state
+
+
+Bugs
+ problem with showing error locations that span lines
+ expressions containing let-bound parameters bound to unclosed expressions are not recognized as unclosed
+ if properties file is to be read from the directory containing the .jar file, 
+    the .jar file must be named jSMTLIB.jar
+     
+Document
+ comment on strict smtlib behavior
+ 
+Adapters:
+** finish solver adapters
+** implement bitvector extensions
+ figure out how to handle sorts within Simplify
+ implement options and info in other solvers
+

@@ -1,0 +1,4 @@
+success
+(assert 1)
+        ^
+(error "Expected an expression with Bool sort, not Int")

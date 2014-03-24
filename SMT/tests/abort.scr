@@ -1,0 +1,3 @@
+### Tests whether the abort option aborts
+##EXITCODE 1
+java -cp ../bin org.smtlib.SMT --abort --text "(set-option :A) (set-option :B)" --solver simplify --exec C:/cygwin/home/dcok/mybin/simplify.exe

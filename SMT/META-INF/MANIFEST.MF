@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: jSMTLIB
+Bundle-SymbolicName: org.smtlib.SMT
+Bundle-Version: 0.9.10
+Export-Package: org.smtlib,
+ org.smtlib.command,
+ org.smtlib.impl
+Require-Bundle: org.junit

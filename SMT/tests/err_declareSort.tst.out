@@ -1,0 +1,16 @@
+success
+(declare-sort)
+             ^
+(error "Expected a symbol here, not a )")
+(declare-sort A)
+               ^
+(error "Expected a numeral here, instead of a )")
+(declare-sort A x)
+                ^
+(error "Expected a numeral here, instead of a symbol")
+(declare-sort 1)
+              ^
+(error "Expected a symbol here, not a numeral")
+(declare-sort A 1 2)
+                  ^
+(error "Too many arguments or extraneous material after the command or missing right parenthesis")

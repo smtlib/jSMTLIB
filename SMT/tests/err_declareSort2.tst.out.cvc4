@@ -1,0 +1,5 @@
+success
+success
+(declare-sort A 1)
+^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.14: Symbol 'A' previously declared as a type")

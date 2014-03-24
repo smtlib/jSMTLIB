@@ -1,0 +1,3 @@
+(declare-fun x () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.11: set-logic must appear before this point.")

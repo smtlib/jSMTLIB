@@ -1,0 +1,4 @@
+success
+(check-sat x)
+           ^
+(error "A check-sat command takes no arguments")

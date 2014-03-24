@@ -1,0 +1,6 @@
+success
+success
+success
+(declare-fun x () Bool)
+             ^
+(error "Symbol x is already defined")

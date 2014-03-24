@@ -1,0 +1,27 @@
+; tests mismatched sorts with arrray functions
+(set-logic QF_AX)
+(declare-fun a () Array)
+(declare-fun a () (Array Bool))
+(declare-fun a () (Array Bool Bool Bool))
+(declare-sort I 0)
+(declare-sort V 0)
+(declare-fun i () I)
+(declare-fun v () V)
+(declare-fun a () (Array I V ))
+
+(assert (= i (select i i)))
+(assert (= i (select a a)))
+(assert (= i (select a)))
+(assert (= i (select a i i)))
+(assert (= i (select a i)))
+
+(assert (= i (store a i v)))
+(assert (= i (store i v v)))
+(assert (= i (store a i v v)))
+(assert (= i (store a v v)))
+(assert (= i (store a i i)))
+
+(declare-sort A 2)
+(declare-fun aa () (A I V))
+(assert (= v (select aa i)))
+(assert (= aa (store aa i v)))

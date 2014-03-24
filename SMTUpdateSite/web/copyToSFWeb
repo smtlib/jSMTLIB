@@ -1,0 +1,78 @@
+#! /bin/bash
+
+SOURCEFORGE_USERNAME=davidcok
+
+## Need to : make the documents
+##         : perhaps copy the projectSet.psf file
+
+
+cd `dirname $BASH_SOURCE`
+## The following must put the pwd where SMT and SMTUpdateSite are elements of the working directory
+cd ../..
+
+WEB=SMTUpdateSite/web
+
+echo "Using sourceforge user name $SOURCEFORGE_USERNAME"
+
+cd SMTUpdateSite
+export version=`ls -t features/* | head -1 | sed -e sxfeatures/org.smtlib.SMTFeature_xx -e sx.jarxx`
+cd ..
+
+file=`ls -t SMT/*.tar.gz | head -1`
+##filedate=`echo $file | tr -d [a-zA-Z./] | tr -d '-'`
+echo The current version is $version
+echo The current version is $version | cat ${WEB}/README-root - > ${WEB}/README
+
+mkdir ${WEB}/tempfiles
+
+sftp $SOURCEFORGE_USERNAME,jsmtlib@web.sourceforge.net << HERE
+cd htdocs
+put ${WEB}/indexSF.html index.html
+put ${WEB}/book.css
+put ${WEB}/style.css
+put ../../texstuff/papers/SMTLIBTutorial/SMTLIBTutorial.pdf
+put ../../texstuff/papers/SMTLIBUserGuide/SMTLIBUserGuide.pdf jSMTLIBUserGuide.pdf
+put SMT/jSMTLIB.tar.gz
+cd jsmtlib-updatesite
+put ${WEB}/indexUS.html index.html
+put ${WEB}/book.css
+put ${WEB}/style.css
+lcd SMTUpdateSite
+put site.xml
+put content.jar
+put artifacts.jar
+put features/org.smtlib.SMTFeature_${version}.jar features
+put plugins/org.smtlib.*_${version}.jar plugins
+lcd ..
+cd /home/frs/project/j/js/jsmtlib
+put ${WEB}/README
+put ../../texstuff/papers/SMTLIBUserGuide/SMTLIBUserGuide.pdf jSMTLIBUserGuide.pdf
+put SMT/jSMTLIB.tar.gz
+
+lcd ${WEB}/tempfiles
+get README
+get jSMTLIBUserGuide.pdf
+get jSMTLIB.tar.gz
+quit
+HERE
+
+S=${WEB}/README
+D=${WEB}/tempfiles/README
+((cmp $S $D && rm $D) || cp $S $D )
+S=../../texstuff/papers/SMTLIBUserGuide/SMTLIBUserGuide.pdf
+D=${WEB}/tempfiles/jSMTLIBUserGuide.pdf
+((cmp $S $D && rm $D) || cp $S $D )
+S=SMT/jSMTLIB.tar.gz
+D=${WEB}/tempfiles/jSMTLIB.tar.gz
+((cmp $S $D && rm $D) || cp $S $D )
+
+sftp $SOURCEFORGE_USERNAME,jsmtlib@web.sourceforge.net << HERE
+cd /home/frs/project/j/js/jsmtlib
+lcd ${WEB}/tempfiles
+put * .
+quit
+HERE
+
+rm -rf ${WEB}/tempfiles
+echo "Transfer completed"
+exit

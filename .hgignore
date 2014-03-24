@@ -1,0 +1,51 @@
+
+syntax: regexp
+^SMT/bin$
+syntax: regexp
+^SMTPlugin/bin$
+syntax: regexp
+^SMT/temp$
+syntax: regexp
+^SMT/reports$
+syntax: regexp
+^SMT/results$
+syntax: regexp
+^SMT/logicsNew$
+syntax: regexp
+^SMT/copyToWeb$
+syntax: regexp
+^SMT/errout$
+syntax: regexp
+^SMT/jSMTLIB\.jar$
+syntax: regexp
+^SMT/jsmtlib\.properties$
+syntax: regexp
+^SMT/jSMTLIB\.tar$
+syntax: glob
+solver.out.*
+syntax: regexp
+^SMT/tempout$
+syntax: regexp
+^SMT/xx$
+syntax: regexp
+\.stackdump$
+syntax: regexp
+^SMT/misccomm$
+syntax: regexp
+^SMT/jSMTLIB\.tar\.gz$
+syntax: regexp
+^SMT/doc$
+syntax: regexp
+^SMT/tests/tempout$
+syntax: regexp
+^SMT/solver\.out$
+syntax: regexp
+\.actual$
+syntax: regexp
+^SMTUpdateSite/web/README$
+syntax: regexp
+^SMT/src/org/smtlib/resources/version\.properties$
+syntax: glob
+org.smtlib.SMTFeature*.jar
+syntax: glob
+org.smtlib.*.jar

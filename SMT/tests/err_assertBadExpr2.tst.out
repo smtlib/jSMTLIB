@@ -1,0 +1,4 @@
+success
+(assert)
+       ^
+(error "Expected an expression here")
