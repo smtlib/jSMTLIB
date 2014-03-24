@@ -617,7 +617,7 @@ public class SMT {
 				help();
 				return -1;
 			} else if ("--version".equals(s)) {
-				System.out.println(Version.VERSION_ID);
+				System.out.println(Version.version());
 				return -1;
 			} else if ("--echo".equals(s)) {
 				options.echo = true;
