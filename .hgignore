@@ -44,3 +44,9 @@ syntax: regexp
 \.actual$
 syntax: regexp
 ^SMTUpdateSite/web/README$
+syntax: regexp
+^SMT/src/org/smtlib/resources/version\.properties$
+syntax: glob
+org.smtlib.SMTFeature*.jar
+syntax: glob
+org.smtlib.*.jar
