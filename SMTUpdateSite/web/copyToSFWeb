@@ -45,6 +45,10 @@ put features/org.smtlib.SMTFeature_${version}.jar features
 put plugins/org.smtlib.*_${version}.jar plugins
 lcd ..
 cd /home/frs/project/j/js/jsmtlib
+put ${WEB}/README
+put ../../texstuff/papers/SMTLIBUserGuide/SMTLIBUserGuide.pdf jSMTLIBUserGuide.pdf
+put SMT/jSMTLIB.tar.gz
+
 lcd ${WEB}/tempfiles
 get README
 get jSMTLIBUserGuide.pdf

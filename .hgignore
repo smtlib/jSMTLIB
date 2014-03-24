@@ -27,7 +27,6 @@ syntax: regexp
 ^SMT/tempout$
 syntax: regexp
 ^SMT/xx$
-
 syntax: regexp
 \.stackdump$
 syntax: regexp
