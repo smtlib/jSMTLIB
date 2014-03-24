@@ -1,0 +1,33 @@
+
+## This script should be SOURCED, not executed
+## The pwd must be the OpenJML-UpdateSite directory
+
+## This script copies files from elsewhere into the 'web' subdirectory and creates the README file
+## It is a common setup file used by the various scripts that copy to sourceforge
+
+## Copy the current version of the UserGuide
+## Copy the current version of the .psf file
+## Remove old versions of the release
+## Copy the most current plug-in feature file
+## Create a current version of the README file
+## Sets the value of the 'version' variable
+
+# ?? Make the user guid
+# ?? make the tutorial
+
+cd SMTUpdateSite
+cd C:/cygwin/home/dcok/eprojects/OpenJML-UpdateSite
+cp ../OpenJML/documentation/OpenJMLUserGuide/OpenJMLUserGuide.pdf web/files
+cp ../projectSet.psf web/files/OpenJML-projectSet.psf
+web/convert-psf ../projectSet.psf ../svn_commands
+cp ../svn_commands web/files
+export version=`ls -t features/* | head -1 | sed -e sxfeatures/org.jmlspecs.openjml.OpenJMLFeature_xx -e sx.jarxx`
+file=`ls -t ../OpenJML/*.tar.gz | head -1`
+##filedate=`echo $file | tr -d [a-zA-Z./] | tr -d '-'`
+echo The current version is $version, file $file
+echo The current version is $version, file $file | cat web/README-root - > web/files/README
+
+cp $file web/files
+cp `echo "$file" | sed -e "s/tar.gz/zip/"`  web/files
+
+
