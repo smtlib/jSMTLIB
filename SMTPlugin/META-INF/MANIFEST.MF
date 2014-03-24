@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %Bundle-Name
 Bundle-SymbolicName: org.smtlib.plugin.SMTPlugin;singleton:=true
-Bundle-Version: 0.9.10
+Bundle-Version: 0.9.10.1
 Bundle-Activator: org.smtlib.plugin.Activator
 Bundle-Vendor: David Cok
 Require-Bundle: org.eclipse.ui,
