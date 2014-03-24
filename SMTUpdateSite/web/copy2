@@ -1,0 +1,15 @@
+
+sftp gramma11@vps8882.inmotionhosting.com << HERE
+cd public_html/resource/smt
+lcd C:/cygwin/home/dcok/
+put texstuff/papers/SMTLIBTutorial/SMTLIBTutorial.pdf SMTLIBTutorial.pdf
+put texstuff/papers/SMTLIBUserGuide/SMTLIBUserGuide.pdf jSMTLIBUserGuide.pdf
+put eprojects/SMTProjects/SMT/jSMTLIB.tar.gz jSMTLIB.tar.gz
+cd jSMTLIB-UpdateSite
+lcd eprojects/SMTProjects/SMTUpdateSite
+put artifacts.jar .
+put content.jar .
+mput features/* features
+mput plugins/* plugins
+exit
+HERE

@@ -1,0 +1,566 @@
+/*-------------------------------------------------------------*/
+/* Block Formatting */
+
+body {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 1em;
+  color: #000;
+  background-color: #FFF;
+  background-position: center;
+  background-repeat: repeat-y;
+  background-image: url("../images/jml-bg.png");
+  margin: 0px;
+}
+
+/*-------------------------------------------------------------*/
+/* Headings */
+
+h1 { 	
+  color: black;
+  background-color: transparent;
+  font-size: 2.2em;
+  font-weight: bold;
+  text-align: center;
+  padding: 1.25ex 1ex 1.25ex 1ex; /* top right bottom left */
+  margin: 0ex 0px 0px 0px; /* top right bottom left */
+}
+
+h2 { 	
+  color: #000099;
+  font-size: 1.5em;
+  font-weight: bold;
+  border-bottom: #611 2px solid;
+  padding-left: 8px;
+  margin: 1.7ex 0px 0px 0px; /* top right bottom left */
+}
+
+h3 { 	
+  font-size: 1.2em;
+  font-weight: bold;
+  text-align: left;
+  margin: 1.5ex 0px 0px 0px; /* top right bottom left */
+}
+
+h4 { 	
+  font-size: 1.0em;
+  font-style: italic;
+  font-weight: bold;
+  text-align: left;
+  margin: 1ex 0px 0px 0px; /* top right bottom left */
+}
+
+h5 { 
+  font-size: 1em;
+  color: #611;
+  background-color: transparent;
+  font-style: italic;
+  text-align: left;
+  margin: 1.5ex 8px 0px 8px; /* top right bottom left */
+}
+
+/*-------------------------------------------------------------*/
+/* Paragraphs */
+
+p { 	
+  margin-top: 1.5ex;
+  margin-bottom: 0ex;
+  margin-left: 8px;
+  margin-right: 8px;
+}
+
+.note {
+  font-size: .8em;
+  color: #888;
+  background-color: transparent;
+}
+
+/* a remark is like a note, but bigger */
+.remark { 
+  color: #888;
+  background-color: transparent;
+  font-weight: normal;
+}
+
+.modTime {
+  font-size: .8em;
+  color: #888;
+  clear: both;
+  background-color: transparent;
+  padding-bottom: 0.5ex;
+}
+
+p.newsdate {
+  color: #888;
+  background-color: transparent;
+  border-bottom: 1px solid #888;
+}
+
+p.version {
+  font-size: .8em;
+  padding: 2px;
+  border: thin solid #222;
+}
+
+p.signature {
+  margin-left: 65%;
+}
+
+p.question {
+  font-size: 1.2em;
+}
+
+p.answer {
+}
+
+p.indented { 
+  margin-top: 0em;
+  margin-left: 2em;
+  margin-right: 2em;
+}
+
+.right { 
+  text-align: right;
+}
+
+p.hanging1 {
+  text-indent: -2em;
+  margin-left: 2em;
+  margin-top: 1ex;
+  margin-bottom: 1ex;
+}
+
+p.hanging2 {
+  text-indent: -2em;
+  margin-left: 4em;
+  margin-top: 1ex;
+  margin-bottom: 1ex;
+}
+
+p.hanging3 {
+  text-indent: -2em;
+  margin-left: 6em;
+  margin-top: 1ex;
+  margin-bottom: 1ex;
+}
+
+p.hanging4 {
+  text-indent: -2em;
+  margin-left: 8em;
+  margin-top: 1ex;
+  margin-bottom: 1ex;
+}
+
+p.breaked {  
+  margin-top: 0ex;
+}
+
+code {
+  font-family: "Courier New", "Courier", monospaced, serif;
+}
+
+.center {
+  text-align: center;
+}
+
+.left { 
+  text-align: left;
+}
+
+pre { 	
+  font-size: 1.0em;
+  font-family: "Andale Mono", "Courier New", "Courier", monospaced, serif;
+  margin-top: 1.5ex;
+  margin-bottom: 0ex;
+  margin-left: 16px;
+  margin-right: 16px;
+  color: #161;
+  background-color: inherit;
+}
+
+/*---------------------------------------------------------------------
+   Tables
+   */
+
+table { 
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 1ex;
+}
+
+caption {
+  font-weight: bold;
+}
+
+tr.head { 
+  border-top: #00A 1px solid;
+  border-right: #00A 1px solid;
+}
+
+th, td.rowhead {
+  font-weight: bold;
+  color: #000;
+  background-color: #EEF;
+  text-align: left;
+  vertical-align: bottom;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-left:  #00A 5px solid;
+  margin: 0ex;
+}
+
+td { 	
+  vertical-align: top;
+  padding-left: 10px;
+}
+
+td.logo {
+  background-color: #dddddd;
+  text-align: center; 
+  vertical-align: middle; 
+}
+
+/*---------------------------------------------------------------------
+   Forms
+   */
+form {
+  font-size: 1em;
+  padding-bottom: 0px;
+  margin: 0ex;
+}
+
+/*---------------------------------------------------------------------
+   Text Formatting
+   */
+
+em {
+  font-style: italic;
+}
+
+kbd {
+  font-family: "Andale Mono", "Courier New", "Courier", monospaced, serif;
+  color: #161;
+}
+
+kbd.input {
+  color: #161;
+  background-color: #000;
+  font-weight: bold;
+}
+
+kbd.output {
+  color: #060;
+  background-color: #000;
+}
+
+kbd.sample {
+  color: #161;
+  background-color: #000;
+}
+
+strong { 	
+  font-weight: bold;
+  color: #611;
+  background-color: transparent;
+}
+
+sup {
+  font-size: 0.7em;
+}
+
+/*---------------------------------------------------------------------
+   Lists
+   */
+
+ol {
+  margin-top: 1ex;
+  margin-bottom: 1ex;
+}
+
+ul {
+  margin-top: 1ex;
+  margin-bottom: 1ex;
+}
+
+li.ref {
+  margin-top: 0.5ex;
+  margin-bottom: 0.5ex;
+}
+
+dl.ref {
+  margin-top: 1ex;
+  margin-bottom: 1ex;
+}
+
+/*-------------------------------------------------------------*/
+/* Image foo */
+
+img { 
+  background-color: transparent;
+}
+
+img.center {
+  position: inherit;
+}
+
+img.wrapRight { 
+  float: right;
+  padding: 0.5ex;
+}
+
+a img { border: none }
+
+/* ------------------------------------------------------------- */
+/* Layout foo */
+
+#banner { 
+  color: black;
+  border: 0;
+  background-color: #dddddd;
+  border-color: black;
+  text-align: center;
+}
+
+#rest { 
+  margin: 0px;
+}
+
+#content { 
+  color: #000;
+  background-color: transparent;
+  padding-top: 5px;
+  padding-left: 5px;
+  margin-top: 0ex;
+  margin-right: 0.5ex;
+  margin-bottom: 0ex;
+  margin-left: 206px;    /* should equal width of #menu */
+  border-bottom: #611 1px solid;
+}
+
+#menu { 
+  float: left;
+  width: 206px;			/* should equal margin-left of #content */
+  background-color: transparent;
+  padding-top: 5px;
+  padding-bottom: 5em;
+  margin: 0ex 0ex 0px 0px; /* top right bottom left */
+}
+
+#menu p {   
+  text-indent: 0em;
+  margin-top: 0.25ex;
+  margin-bottom: 0.25ex;
+}
+
+#menu p.gapBefore { 
+  margin-top: 3em;
+}
+
+#menu p.title { 
+  font-weight: bold;
+  color: #000099;
+  background-color: transparent;
+  padding-top: 1ex;
+  padding-left: 0.5ex;		/* match link padding in #menu A */
+  border-bottom: #611 1px solid;
+  margin-right: 1ex;
+}
+
+#menu a { 
+  padding-left: 1ex;
+  padding-right: 1ex;
+  display: block;
+}
+
+#footer { 
+  color: #000;
+  background-color: transparent;
+  padding: 0.1ex;
+}
+
+.jumpbar { 
+  font-size: 0.8em;
+  color: #222;
+  background-color: #EEF;
+/*   border-bottom: #00A 1px solid; */
+  margin: 1ex 0ex 0ex 0ex;
+}
+
+/* -------------------------------------------------------------
+ * These three column IDs go together.  Don't muck with one without
+ * checking the others.
+ */
+
+#leftcolumn { 
+  float: left;
+  width: 15em; /* see centercolumn margin-left */
+}
+
+#centercolumn {
+  margin-left: 16em; /* leftcolumn width + gap */
+  margin-right: 16em; /* rightcolumn width + gap */
+}
+
+#rightcolumn { /* right column content must preceed center in document */
+  float: right;
+  width: 15em; /* see centercolumn margin-right */
+}
+
+.column h2 { 
+  font-size: 1em;
+}
+
+.column p { 
+  margin-top: 0.25ex;
+  margin-bottom: 0.25ex;
+}
+
+.column a { 
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  display: block;
+}
+
+.column a.indented { 
+  padding-left: 1.5em;
+  display: block;
+}
+
+/* override block display of links when I want a form element on the
+same line */
+a.withform {
+  display: inline;
+}
+
+/* ------------------------------------------------------------- */
+/* OVERRIDES: These must be near the end of the page so they 
+   override any statements of equal specificity appearing above */
+
+a:link { 
+  text-decoration: none;
+  color: #0000ff;
+  background-color: inherit;
+}
+a:visited { 
+  text-decoration: none;
+  color: #0000ff;
+  background-color: inherit;
+}
+a:active {
+  border: 1px;
+}
+a:hover { 
+  color: #161; 
+  background-color: #FFB;
+}
+
+a.dead:link { 
+  color: #BBB;
+  background-color: inherit;
+}
+a.dead:visited { 
+  color: #BBB;
+  background-color: inherit;
+}
+a.dead:active { 
+  color: #BBB;
+  background-color: inherit;
+}
+a.dead:hover { 
+  color: #BBB;
+  background-color: #FFF;
+}
+
+a.target:link { 
+  color: inherit;
+  background-color: inherit;
+}
+a.target:visited { 
+  color: inherit;
+  background-color: inherit;
+}
+a.target:active { 
+  color: inherit;
+  background-color: inherit;
+}
+a.target:hover { 
+  color: inherit;
+  background-color: inherit;
+}
+
+.jumpbar a { 
+  display: block;
+  padding-left: 5px;
+}
+
+a.convenience:link { 
+  font-variant: inherit;
+  font-weight: inherit;
+  color: inherit;
+  background-color: inherit;
+}
+a.convenience:visited { 
+  font-variant: inherit;
+  font-weight: inherit;
+  color: inherit;
+  background-color: inherit;
+}
+a.convenience:hover { 
+  color: #A00; 
+  background-color: #FF8;
+}
+
+/* ------------------------------------------------------------- */
+/* Media Customizations, these are at the end of the page to get
+   "last crack" at the settings. */
+
+@media print { 
+  body { 
+    font-family: "Times New Roman", Times, serif;
+    color: #000;
+    background-color: #FFF;
+  }
+
+  #menu { 
+    position: fixed;
+    display: none;
+  }
+
+  #footer { 
+    display: none;
+  }
+
+  #content { 
+    text-align: justify;
+    margin-left: auto;
+    margin-right: auto;
+    border: none;
+  }
+
+  .jumpbar { 
+    display: none;
+  }
+
+  a:link { 
+    font-variant: normal;
+    font-weight: normal;
+    text-decoration: none;
+    color: black;
+    background-color: white;
+  }
+  a:visited { 
+    font-variant: normal;
+    font-weight: normal;
+    text-decoration: none;
+    color: black;
+    background-color: white;
+  }
+  a:active { 
+    font-variant: normal;
+    font-weight: normal;
+    text-decoration: none;
+    color: black;
+    background-color: white;
+  }
+}
+
+/* $Id: style.css,v 1.12 2009/08/07 17:19:14 leavens Exp $ */
