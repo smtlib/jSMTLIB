@@ -1,0 +1,4 @@
+
+cd `dirname $BASH_SOURCE`
+cp ../../../texstuff/papers/SMTLIBTutorial/SMTLIBTutorial.pdf .
+cp ../../../texstuff/papers/SMTLIBUserGuide/SMTLIBUserGuide.pdf jSMTLIBUserGuide.pdf
