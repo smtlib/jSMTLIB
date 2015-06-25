@@ -536,6 +536,8 @@ public class Solver_simplify extends Solver_test implements ISolver {
 					if (newName != null && logicNames.contains(newName)) {
 						// Propositional boolean item
 						this.isFormula = true;
+					} else if (e.args().size() <= 1) {
+						this.isFormula = false;
 					} else {
 						IExpr arg = e.args().get(1); // Use argument 1 for ite's sake
 						ISort sort = typemap.get(arg);

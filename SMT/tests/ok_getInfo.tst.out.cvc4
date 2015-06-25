@@ -1,6 +1,6 @@
-(:authors "This is CVC4 version 1.4-prerelease [subversion URL: https://github.com/CVC4/CVC4/trunk r3039 (with modifications)]
+(:authors "This is CVC4 version 1.4
 compiled with GCC version 4.2.1-sjlj (mingw32-2)
-on Mar  9 2014 08:59:47
+on Jul 13 2014 14:46:32
 
 Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014
   New York University and The University of Iowa
@@ -15,5 +15,5 @@ See the file COPYING (distributed with the source code, and with all binaries)
 for the full CVC4 copyright, licensing, and (lack of) warranty information.
 " )
 (:name "cvc4" )
-(:version "1.4-prerelease" )
+(:version "1.4" )
 (:error-behavior continued-execution )

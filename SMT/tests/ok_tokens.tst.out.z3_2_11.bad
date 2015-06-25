@@ -22,9 +22,9 @@ ERROR: line 6 column 21: ERROR: unexpected nesting of parenthesis: 3")
 (set-info :x |ABCDEFGHIJKLMNOPQRSTUVWXYZ| )
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (error "Error writing to solver: (set-info :x |ABCDEFGHIJKLMNOPQRSTUVWXYZ|) java.io.IOException: The pipe is being closed")
-(set-info :x | 	
+(set-info :x |     
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Error writing to solver: (set-info :x | 	
+(error "Error writing to solver: (set-info :x |     
 \"';:{}[]()`,#|) java.io.IOException: The pipe is being closed")
 (set-info :x "0123456789~!@$%^&*_-+=<>.?/" )
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -35,9 +35,9 @@ ERROR: line 6 column 21: ERROR: unexpected nesting of parenthesis: 3")
 (set-info :x "ABCDEFGHIJKLMNOPQRSTUVWXYZ" )
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (error "Error writing to solver: (set-info :x \"ABCDEFGHIJKLMNOPQRSTUVWXYZ\") java.io.IOException: The pipe is being closed")
-(set-info :x " 	
+(set-info :x "     
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Error writing to solver: (set-info :x \" 	
+(error "Error writing to solver: (set-info :x \"     
 |';:{}[]()`,\\\\#\") java.io.IOException: The pipe is being closed")
 (set-info :x #b0101 )
 ^^^^^^^^^^^^^^^^^^^^^

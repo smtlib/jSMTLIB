@@ -3,9 +3,9 @@ package org.smtlib;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import tests.ParameterizedIgnorable;
+import org.junit.runners.ParameterizedWithNames;
 
-@RunWith(ParameterizedIgnorable.class)
+@RunWith(ParameterizedWithNames.class)
 public class LetTests extends LogicTests {
 
     public LetTests(String solvername) {

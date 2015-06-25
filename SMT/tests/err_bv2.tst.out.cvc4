@@ -36,7 +36,7 @@ Type 2: (_ BitVec 4)
 (error "expecting bit-vector terms of the same width")
 (assert (= (bvand x y z) #b111))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "expecting bit-vector terms of the same width")
+(error "Parse Error: <shell>:1.23: Operator requires exact 2 arguments in strict SMT-LIB compliance mode: BITVECTOR_AND")
 (assert (= (bvor x y) #b111))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (error "expecting bit-vector terms of the same width")

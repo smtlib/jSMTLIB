@@ -13,10 +13,10 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.runners.ParameterizedWithNames;
 import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(Parameterized.class)
+@RunWith(ParameterizedWithNames.class)
 public class FileTests  extends LogicTests {
 
 	static Collection<String[]> data = datax();
@@ -44,14 +44,14 @@ public class FileTests  extends LogicTests {
     					) {
     				data.add(new String[]{"z3_4_3",ff.getName()}); // FIXME - z3 crashes or hangs or is non-deterministic 
     			}
-    			if (
-    					!ff.getName().equals("err_namedExpr2.tst")
-    					) {
-    				data.add(new String[]{"z3_2_11",ff.getName()}); // FIXME - z3 crashes 
-    			}
-    			data.add(new String[]{"cvc",ff.getName()}); 
-    			data.add(new String[]{"yices",ff.getName()});
-    			data.add(new String[]{"yices2",ff.getName()});
+//    			if (
+//    					!ff.getName().equals("err_namedExpr2.tst")
+//    					) {
+//    				data.add(new String[]{"z3_2_11",ff.getName()}); // FIXME - z3 crashes 
+//    			}
+//    			data.add(new String[]{"cvc",ff.getName()}); 
+//    			data.add(new String[]{"yices",ff.getName()});
+//    			data.add(new String[]{"yices2",ff.getName()});
     		}
     	}
 //    	data.clear();
@@ -91,10 +91,11 @@ public class FileTests  extends LogicTests {
 		Assume.assumeTrue(!("err_namedExpr2.tst".equals(testfile) && "yices2".equals(solvername))); // FIXME - yices2 does not support Boolean quantifiers
 
 		
-		System.out.println("File: " + testfile + "  Solver: " + solvername);
+//		System.out.println("File: " + testfile + "  Solver: " + solvername);
 		String script = readFile("tests/" + testfile);
 		String outname = "tests/" + testfile + ".out";
 		String altname = outname + "." + solvername;
+		Assume.assumeTrue(! (new File(altname + ".skip").exists()) );
 		if (new File(altname).isFile()) outname = altname;
 		else if (new File(altname.replace("z3_4_3", "z3")).isFile()) outname = altname.replace("z3_4_3", "z3");
 		else if (new File(altname.replace("z3_2_11", "z3")).isFile()) outname = altname.replace("z3_2_11", "z3");

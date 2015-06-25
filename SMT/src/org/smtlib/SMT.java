@@ -260,8 +260,8 @@ public class SMT {
 	 */
 	public Properties readProperties() {
 		Properties p = new Properties();
-		File f;
 		/*@Nullable @Mutable*/ Reader rdr = null;
+		File f;
 		// Find and read file on class path
 		URL url =  ClassLoader.getSystemResource(Utils.PROPS_FILE);
 		if (url != null) {
@@ -759,7 +759,7 @@ public class SMT {
 			IResponse res = solver.start();
 			if (res.isError()) {
 				smtConfig.log.logError((IResponse.IError)res);
-				error("ISolver failed to start: " + solvername);
+				error(solvername + " failed to start: " + ((IResponse.IError)res).errorMsg());
 				return null;
 			}
 		} catch (NoSuchMethodException e) {

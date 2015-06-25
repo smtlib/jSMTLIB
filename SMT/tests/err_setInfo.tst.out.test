@@ -14,11 +14,3 @@
           ^^^^^^^^^^^^^^^
 (error "Setting the value of a pre-defined keyword is not permitted: :error-behavior")
 (:error-behavior continued-execution )
-(set-info :all-statistics x)
-          ^^^^^^^^^^^^^^^
-(error "Setting the value of a pre-defined keyword is not permitted: :all-statistics")
-unsupported
-(set-info :reason-unknown x)
-          ^^^^^^^^^^^^^^^
-(error "Setting the value of a pre-defined keyword is not permitted: :reason-unknown")
-unsupported

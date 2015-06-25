@@ -7,7 +7,3 @@
 (get-info :version)
 (set-info :error-behavior x)
 (get-info :error-behavior)
-(set-info :all-statistics x)
-(get-info :all-statistics)
-(set-info :reason-unknown x)
-(get-info :reason-unknown)

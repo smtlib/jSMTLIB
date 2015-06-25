@@ -11,12 +11,12 @@
 (set-info :x |0123456789~!@$%^&*_-+=<>.?/| )
 (set-info :x |abcdefghijklmnopqrstuvwxyz| )
 (set-info :x |ABCDEFGHIJKLMNOPQRSTUVWXYZ| )
-(set-info :x | 	
+(set-info :x |     
 "';:{}[]()`,#| )
 (set-info :x "0123456789~!@$%^&*_-+=<>.?/" )
 (set-info :x "abcdefghijklmnopqrstuvwxyz" )
 (set-info :x "ABCDEFGHIJKLMNOPQRSTUVWXYZ" )
-(set-info :x " 	
+(set-info :x "     
 |';:{}[]()`,\#" )
 (set-info :x #b0101 )
 (set-info :x #xabcdefABCDEF0123456789 )

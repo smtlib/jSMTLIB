@@ -6,12 +6,13 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.*;
 import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.impl.Response;
 import tests.ParameterizedIgnorable;
 
-@RunWith(ParameterizedIgnorable.class)
+@RunWith(ParameterizedWithNames.class)
 public class InfoOptions  extends LogicTests {
 
 	boolean isTest;
@@ -57,7 +58,7 @@ public class InfoOptions  extends LogicTests {
 				: solvername.equals("yices") ? "1.0.28"
 				: solvername.equals("yices2") ? "2.1"
 				: solvername.equals("cvc") ? "2.2"
-				: solvername.equals("cvc4") ? "1.4-prerelease"
+				: solvername.equals("cvc4") ? "1.4"
 				: solvername.equals("z3_4_3") ? "4.3"
 				: solvername.equals("z3_2_11") ? "2.11"
 				: "???" )
