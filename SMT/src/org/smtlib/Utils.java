@@ -205,7 +205,7 @@ public class Utils {
 	static {
 		// Initializing all the standard smtConfig keywords
 		boolOptions.add(PRINT_SUCCESS);
-		boolOptions.add(EXPAND_DEFINITIONS);
+		//boolOptions.add(EXPAND_DEFINITIONS); // FIXME - this does belong in V2.0
 		boolOptions.add(INTERACTIVE_MODE);
 		boolOptions.add(PRODUCE_PROOFS);
 		boolOptions.add(PRODUCE_UNSAT_CORES);
@@ -216,7 +216,7 @@ public class Utils {
 		stringOptions.add(REGULAR_OUTPUT_CHANNEL);
 		stringOptions.add(DIAGNOSTIC_OUTPUT_CHANNEL);
 		defaults.put(PRINT_SUCCESS, TRUE);
-		defaults.put(EXPAND_DEFINITIONS, FALSE);
+		//defaults.put(EXPAND_DEFINITIONS, FALSE); // FIXME - this does belong in v 2.0
 		defaults.put(INTERACTIVE_MODE, FALSE);
 		defaults.put(PRODUCE_PROOFS, FALSE);
 		defaults.put(PRODUCE_UNSAT_CORES, FALSE);
@@ -261,37 +261,48 @@ public class Utils {
 	public static String quote(String msg) {
 		StringBuilder sb = new StringBuilder();
 		sb.append('"');
-		for (char c : msg.toCharArray()) {
-			// In SMT-LIB v2.0, the only escapes within strings are for " and \
-			// which are represented as \" and \\
-			if (c == '"')
-				sb.append("\\\"");
-			else if (c == '\\')
-				sb.append("\\\\");
-			else
-				sb.append(c);
+		if (false) { // Version 2.0
+			for (char c : msg.toCharArray()) {
+				// In SMT-LIB v2.0, the only escapes within strings are for " and \
+				// which are represented as \" and \\
+				if (c == '"')
+					sb.append("\\\"");
+				else if (c == '\\')
+					sb.append("\\\\");
+				else
+					sb.append(c);
 
-			// Use something like the following if we ever implement C-like
-			// escapes
-			// Will need to add UNICODE escapes
-			// if (c >= '!' && c <= '~') sb.append(c);
-			// else if (c == ' ') sb.append(c);
-			// else if (c == '\"') sb.append("\\\"");
-			// else if (c == '\\') sb.append("\\\\");
-			// else if (c == '\n') sb.append("\\n");
-			// else if (c == '\t') sb.append("\\t");
-			// else if (c == '\r') sb.append("\\r");
-			// else if (c == '\b') sb.append("\\b");
-			// else if (c == '\f') sb.append("\\f");
-			// else {
-			// sb.append('\\');
-			// sb.append((char)('0' + ((int)c)/64));
-			// sb.append((char)('0' + ((int)c)%64)/8);
-			// sb.append((char)('0' + ((int)c)%8));
-			// }
+				// Use something like the following if we ever implement C-like
+				// escapes
+				// Will need to add UNICODE escapes
+				// if (c >= '!' && c <= '~') sb.append(c);
+				// else if (c == ' ') sb.append(c);
+				// else if (c == '\"') sb.append("\\\"");
+				// else if (c == '\\') sb.append("\\\\");
+				// else if (c == '\n') sb.append("\\n");
+				// else if (c == '\t') sb.append("\\t");
+				// else if (c == '\r') sb.append("\\r");
+				// else if (c == '\b') sb.append("\\b");
+				// else if (c == '\f') sb.append("\\f");
+				// else {
+				// sb.append('\\');
+				// sb.append((char)('0' + ((int)c)/64));
+				// sb.append((char)('0' + ((int)c)%64)/8);
+				// sb.append((char)('0' + ((int)c)%8));
+				// }
+			}
+			sb.append('"');
+			return sb.toString();
+		} else { // Version 2.5ff\
+			for (char c : msg.toCharArray()) {
+				// In SMT-LIB v2.5ff, the only escapes within strings are for "
+				// which is represented as ""
+				if (c == '"') sb.append('"');
+			    sb.append(c);
+			}
+			sb.append('"');
+			return sb.toString();			
 		}
-		sb.append('"');
-		return sb.toString();
 	}
 
 	/**
@@ -304,56 +315,45 @@ public class Utils {
 		int k = 1;
 		int endPos = msg.length() - 1;
 		while (k < endPos) {
-			int kk = msg.indexOf('\\', k);
-			if (kk == -1) {
-				sb.append(msg.substring(k, endPos));
-				break;
-			} else {
-				if (k < kk) sb.append(msg.substring(k, kk));
-				char c = msg.charAt(kk + 1);
-				// In SMT-LIB v2, \\ is \ , \" is "
-				// and \x for some other x is \x (the \ is not special)
-				if (c == '\\' || c == '"') {
-					sb.append(c);
+			if (false) { // Version 2.0
+				int kk = msg.indexOf('\\', k);
+				if (kk == -1) {
+					sb.append(msg.substring(k, endPos));
+					break;
 				} else {
-					sb.append('\\');
-					sb.append(c);
+					if (k < kk) sb.append(msg.substring(k, kk));
+					char c = msg.charAt(kk + 1);
+					// In SMT-LIB v2, \\ is \ , \" is "
+					// and \x for some other x is \x (the \ is not special)
+					if (c == '\\' || c == '"') {
+						sb.append(c);
+					} else {
+						sb.append('\\');
+						sb.append(c);
+					}
+					k = kk + 2;
 				}
-				k = kk + 2;
-
-				// Use something like the following if we need to undo C-like
-				// escapes
-				// if (Character.isDigit(c)) {
-				// // octal escape
-				// int v = (c-'0') * 64 + (msg.charAt(kk+2)-'0') * 8 +
-				// (msg.charAt(kk+3)-'0');
-				// sb.append((char)v);
-				// k = kk+4;
-				// } else if (c == 'x') {
-				// // hex escape
-				// c = msg.charAt(kk+2);
-				// int v = c < 'a' ? (c - 'A') : ( c - 'a');
-				// c = msg.charAt(kk+3);
-				// v = (v*16) + (c < 'a' ? (c - 'A') : ( c - 'a'));
-				// sb.append((char)v);
-				// k = kk+4;
-				// } else {
-				// switch (c) {
-				// default:
-				// case '\\':
-				// case '"':
-				// case '\'': break;
-				// case 'r': c = '\r'; break;
-				// case 'n': c = '\n'; break;
-				// case 't': c = '\t'; break;
-				// case 'b': c = '\b'; break;
-				// case 'f': c = '\f'; break;
-				// case 'v': c = 11; break; // the \v C escape is not valid Java
-				// case 'a': c = 7; break; // the \a C escape is not valid Java
-				// }
-				// sb.append(c);
-				// k = kk+2;
-				// }
+			} else { // Version 2.5
+				int kk = msg.indexOf('"', k);
+				if (kk == -1) { // FIXME - there should always be a " at the end of the string
+					sb.append(msg.substring(k, endPos));
+					break;
+				} else if (kk == endPos) {
+					sb.append(msg.substring(k, kk));
+					k = endPos;
+					break;
+				} else {
+					if (k < kk) sb.append(msg.substring(k, kk));
+					char c = msg.charAt(kk + 1);
+					// In SMT-LIB v2, \\ is \ , \" is "
+					// and \x for some other x is \x (the \ is not special)
+					if (c == '"') {
+						sb.append(c);
+					} else {
+						// FIXME - invalid escape sequence
+					}
+					k = kk + 2;
+				}
 			}
 		}
 		return sb.toString();

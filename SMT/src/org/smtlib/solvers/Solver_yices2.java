@@ -188,7 +188,7 @@ public class Solver_yices2 extends Solver_test implements ISolver {
 
 	@Override
 	public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
-		boolean lSet = logicSet;
+		boolean lSet = logicSet != null;
 		IResponse status = super.set_logic(logicName,pos);
 		if (!status.isOK()) return status;
 
@@ -215,10 +215,10 @@ public class Solver_yices2 extends Solver_test implements ISolver {
 		if (Utils.INTERACTIVE_MODE.equals(option) || 
 				Utils.PRODUCE_MODELS.equals(option) ||
 				Utils.PRODUCE_UNSAT_CORES.equals(option)) {
-			if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
+			if (logicSet != null) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
 		} else if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 
 				Utils.PRODUCE_PROOFS.equals(option)) {
-			if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
+			if (logicSet != null) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
 			return smtConfig.responseFactory.unsupported();
 		}
 		if (Utils.VERBOSITY.equals(option)) {

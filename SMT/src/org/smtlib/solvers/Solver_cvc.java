@@ -184,14 +184,14 @@ public class Solver_cvc extends Solver_test implements ISolver {
 				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
 			}
 		}
-		if (logicSet && Utils.INTERACTIVE_MODE.equals(option)) {
+		if (logicSet != null && Utils.INTERACTIVE_MODE.equals(option)) {
 			return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
 		}
 		if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 
 				//Utils.PRODUCE_MODELS.equals(option) || 
 				Utils.PRODUCE_PROOFS.equals(option) ||
 				Utils.PRODUCE_UNSAT_CORES.equals(option)) {
-			if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
+			if (logicSet != null) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
 			return smtConfig.responseFactory.unsupported();
 		}
 		if (Utils.VERBOSITY.equals(option)) {

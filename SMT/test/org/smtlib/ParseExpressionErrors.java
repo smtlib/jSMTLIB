@@ -70,9 +70,14 @@ public class ParseExpressionErrors {
 		testExpr("|a ","Bar(|)-enclosed symbol is not terminated: |a ",0,3);
 	}
 
-	@Test
-	public void sexprStringError() throws Exception {
+	@Test @Ignore
+	public void sexprStringErrorV20() throws Exception {
 		testSExpr("\"asddfg","(error \"String literal is not terminated: \\\"asddfg\")");
+	}
+
+	@Test
+	public void sexprStringErrorV25() throws Exception {
+		testSExpr("\"asddfg","(error \"String literal is not terminated: \"\"asddfg\")");
 	}
 
 	@Test
@@ -115,9 +120,14 @@ public class ParseExpressionErrors {
 		testSExpr("{","(error \"Invalid token: {\")");
 	}
 
-	@Test
-	public void errorBadSymbol8() throws Exception {
+	@Test @Ignore
+	public void errorBadSymbol8V20() throws Exception {
 		testSExpr("\\","(error \"Invalid token: \\\\\")");
+	}
+
+	@Test
+	public void errorBadSymbol8V25() throws Exception {
+		testSExpr("\\","(error \"Invalid token: \\\")");
 	}
 
 	@Test
@@ -135,9 +145,14 @@ public class ParseExpressionErrors {
 		testSExpr(":","(error \"Invalid token: :\")");
 	}
 
-	@Test
-	public void errorBadSymbol12() throws Exception {
+	@Test @Ignore
+	public void errorBadSymbol12V20() throws Exception {
 		testSExpr("\"","(error \"String literal is not terminated: \\\"\")");
+	}
+
+	@Test
+	public void errorBadSymbol12V25() throws Exception {
+		testSExpr("\"","(error \"String literal is not terminated: \"\"\")");
 	}
 
 	@Test

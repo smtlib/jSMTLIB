@@ -96,14 +96,24 @@ public class ParseExpressions {
 		testExpr("#xaaaabbbb");
 	}
 
+	@Test @Ignore
+	public void stringLiteralV20() throws Exception {
+		testExpr("\"asd\""); // String content is a\\s\"d
+	}
+
+	@Test @Ignore
+	public void stringLiteralEscapesV20() throws Exception {
+		testExpr("\"a\\\\s\\\"d\""); // String content is a\\s\"d
+	}
+
 	@Test
 	public void stringLiteral() throws Exception {
-		testExpr("\"asd\""); // String content is a\\s\"d
+		testExpr("\"asd\""); 
 	}
 
 	@Test
 	public void stringLiteralEscapes() throws Exception {
-		testExpr("\"a\\\\s\\\"d\""); // String content is a\\s\"d
+		testExpr("\"a\\\"\"sd\""); // String content is a\"sd
 	}
 
 	@Test
@@ -156,9 +166,14 @@ public class ParseExpressions {
 		testSExpr("2.4");
 	}
 
+	@Test @Ignore
+	public void sexprStringV20() throws Exception {
+		testSExpr("\"asd\\\"sdf\\\\dfg\"");
+	}
+
 	@Test
 	public void sexprString() throws Exception {
-		testSExpr("\"asd\\\"sdf\\\\dfg\"");
+		testSExpr("\"\"asdsdfdfg");
 	}
 
 	@Test

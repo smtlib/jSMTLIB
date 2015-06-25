@@ -248,7 +248,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 	@Override
 	public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
 		// FIXME - discrimninate among logics
-		boolean lSet = logicSet;
+		boolean lSet = logicSet != null;
 		IResponse status = super.set_logic(logicName,pos);
 		if (!status.isOK()) return status;
 		if (logicName.contains("BV")) {

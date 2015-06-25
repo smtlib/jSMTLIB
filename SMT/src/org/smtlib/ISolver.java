@@ -5,6 +5,7 @@
  */
 package org.smtlib;
 
+import org.smtlib.ICommand.Ideclare_const;
 import org.smtlib.ICommand.Ideclare_fun;
 import org.smtlib.ICommand.Ideclare_sort;
 import org.smtlib.ICommand.Idefine_fun;
@@ -28,6 +29,16 @@ public interface ISolver {
 	 * @return success or error
 	 */
 	IResponse start();
+	
+	/** Reset the solver to the start state.
+	 * @return success or error
+	 */
+	IResponse reset();
+	
+	/** Remove asserted assertions, depending on the value of :global-declarations.
+	 * @return success or error
+	 */
+	IResponse reset_assertions();
 	
 	/** Terminate the solver; no further commands are permitted.
 	 * @return success or error
@@ -64,6 +75,14 @@ public interface ISolver {
 	 * @return sat, unsat, unknown or error
 	 */
 	IResponse check_sat();
+	
+	/** Checks whether the current state is satisfiable in the current logic, under specified assumptions.
+	 * @return sat, unsat, unknown or error
+	 */
+	IResponse check_sat_assuming();
+	
+	/** Defines a new uninterpreted constant; returns success or error*/
+	IResponse declare_const(Ideclare_const cmd); // FIXME - use ISymbol, ISort as arguments?
 	
 	/** Defines a new uninterpreted constant or function; returns success or error*/
 	IResponse declare_fun(Ideclare_fun cmd);

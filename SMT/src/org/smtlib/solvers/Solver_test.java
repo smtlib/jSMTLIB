@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.*;
 
+import org.smtlib.ICommand.Ideclare_const;
 import org.smtlib.ICommand.Ideclare_fun;
 import org.smtlib.ICommand.Ideclare_sort;
 import org.smtlib.ICommand.Idefine_fun;
@@ -40,8 +41,11 @@ public class Solver_test implements ISolver {
 	/** The data structure that maintains the solver's assertion set stack */
 	protected List<List<IExpr>> assertionSetStack = new LinkedList<List<IExpr>>();
 	
-	/** Internal state variable - set true once the logic is set. */
-	protected boolean logicSet = false;
+	/** Internal state variable - set non-null once the logic is set. */
+	protected String logicSet = null;
+	
+	/** Internal state variable - set to the value of :global-declarations */
+	protected boolean globalDeclarations = false;
 	
 	/** Internal state variable - set to sat, unsat, unknown when check-sat is run
 	 * and then to null whenever an additional push, popo, assert, declare- or define-
@@ -85,6 +89,40 @@ public class Solver_test implements ISolver {
 	}
 	
 	@Override
+	public IResponse reset() {
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#reset");
+		assertionSetStack.clear();
+		assertionSetStack.add(0,new LinkedList<IExpr>());
+		symTable.clear();
+		typemap.clear();
+		logicSet = null;
+		// Set all options and info to default values
+		options.putAll(Utils.defaults);
+		((Response.Factory)smtConfig.responseFactory).printSuccess = true;
+		smtConfig.verbose = 0;
+		smtConfig.log.out = System.out;
+		smtConfig.log.diag = System.err;
+		globalDeclarations = false;
+		checkSatStatus = null;
+
+		return smtConfig.responseFactory.success();
+	}
+
+	@Override
+	public IResponse reset_assertions() {
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#reset-assertions");
+		// Remove all pushed frames
+		IResponse r = pop(assertionSetStack.size()-1);
+		// Remove assertions, but necessarily global declarations
+		assertionSetStack.get(0).clear();
+		if (!globalDeclarations) {
+			symTable.clear();
+			r = smtConfig.utils.loadLogic(logicSet,symTable,null);
+		}
+		return r;
+	}
+
+	@Override
 	public IResponse exit() {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#exit");
 		return smtConfig.responseFactory.success();
@@ -93,7 +131,7 @@ public class Solver_test implements ISolver {
 	@Override
 	public IResponse assertExpr(IExpr expr) {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#assert " + expr);
-		if (!logicSet) {
+		if (logicSet == null) {
 			return smtConfig.responseFactory.error("The logic must be set before an assert command is issued");
 		}
 		List<IResponse> errs = TypeChecker.check(this.symTable,expr,typemap);
@@ -110,7 +148,7 @@ public class Solver_test implements ISolver {
 	
 	@Override
 	public IResponse get_assertions() {
-		if (!logicSet) {
+		if (logicSet == null) {
 			return smtConfig.responseFactory.error("The logic must be set before a get-assertions command is issued");
 		}
 		// FIXME - do we really want to call get-option here? it involves going to the solver?
@@ -140,8 +178,18 @@ public class Solver_test implements ISolver {
 	@Override
 	public IResponse check_sat() {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#check-sat");
-		if (!logicSet) {
+		if (logicSet == null) {
 			return smtConfig.responseFactory.error("The logic must be set before a check-sat command is issued");
+		}
+		checkSatStatus = smtConfig.responseFactory.unknown();
+		return checkSatStatus;
+	}
+	
+	@Override
+	public IResponse check_sat_assuming() {
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#check-sat-assuming");
+		if (logicSet == null) {
+			return smtConfig.responseFactory.error("The logic must be set before a check-sat-assuming command is issued");
 		}
 		checkSatStatus = smtConfig.responseFactory.unknown();
 		return checkSatStatus;
@@ -208,7 +256,7 @@ public class Solver_test implements ISolver {
 	@Override
 	public IResponse pop(int number) {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#pop " + number);
-		if (!logicSet) {
+		if (logicSet == null) {
 			return smtConfig.responseFactory.error("The logic must be set before a pop command is issued");
 		}
 		if (number < 0) throw new SMT.InternalException("Internal bug: A pop command called with a negative argument: " + number);
@@ -228,7 +276,7 @@ public class Solver_test implements ISolver {
 	@Override
 	public IResponse push(int number) {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#push " + number);
-		if (!logicSet) {
+		if (logicSet == null) {
 			return smtConfig.responseFactory.error("The logic must be set before a push command is issued");
 		}
 		if (number < 0) throw new SMT.InternalException("Internal bug: A push command called with a negative argument: " + number);
@@ -244,7 +292,7 @@ public class Solver_test implements ISolver {
 	@Override
 	public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#set-logic " + logicName);
-		if (logicSet) {
+		if (logicSet != null) {
 			if (!smtConfig.relax) return smtConfig.responseFactory.error("Logic is already set");
 			symTable.clear();
 			assertionSetStack.clear();
@@ -252,7 +300,7 @@ public class Solver_test implements ISolver {
 		}
 		IResponse res = smtConfig.utils.loadLogic(logicName,symTable,pos);
 		if (res != null) return res;
-		logicSet = true;
+		logicSet = logicName;
 		return smtConfig.responseFactory.success();
 	}
 	
@@ -266,7 +314,7 @@ public class Solver_test implements ISolver {
 			// FIXME - make this more abstract
 			((Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
 		}
-		if (logicSet && Utils.INTERACTIVE_MODE.equals(option)) {
+		if (logicSet != null && Utils.INTERACTIVE_MODE.equals(option)) {
 			return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
 		}
 //		if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 
@@ -365,8 +413,29 @@ public class Solver_test implements ISolver {
 	}
 
 	@Override 
+	public IResponse declare_const(Ideclare_const cmd) {
+		if (logicSet == null) {
+			return smtConfig.responseFactory.error("The logic must be set before a declare-const command is issued");// FIXME - position and on other similar statements
+		}
+		String encodedName = encode(cmd.symbol());
+		List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), new LinkedList<ISort>(), cmd.resultSort(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
+		if (list.isEmpty()) {
+			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(new ISort[0],cmd.resultSort());
+			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null);
+			if (symTable.add(entry,false)) { 
+				checkSatStatus = null;
+				return smtConfig.responseFactory.success();
+			} else {
+				return smtConfig.responseFactory.error("Symbol " + encodedName + " is already defined",cmd.symbol().pos());
+			}
+		} else {
+			return list.get(0); // FIXME - return all?
+		}
+	}
+
+	@Override 
 	public IResponse declare_fun(Ideclare_fun cmd) {
-		if (!logicSet) {
+		if (logicSet == null) {
 			return smtConfig.responseFactory.error("The logic must be set before a declare-fun command is issued");// FIXME - position and on other similar statements
 		}
 		String encodedName = encode(cmd.symbol());
@@ -374,7 +443,7 @@ public class Solver_test implements ISolver {
 		if (list.isEmpty()) {
 			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(cmd.argSorts().toArray(new ISort[cmd.argSorts().size()]),cmd.resultSort());
 			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null);
-			if (symTable.add(entry,!logicSet)) { 
+			if (symTable.add(entry,false)) { 
 				checkSatStatus = null;
 				return smtConfig.responseFactory.success();
 			} else {
@@ -387,7 +456,7 @@ public class Solver_test implements ISolver {
 
 	@Override
 	public IResponse define_fun(Idefine_fun cmd) {
-		if (!logicSet) {
+		if (logicSet == null) {
 			return smtConfig.responseFactory.error("The logic must be set before a define-fun command is issued");
 		}
 		String encodedName = encode(cmd.symbol());
@@ -415,7 +484,7 @@ public class Solver_test implements ISolver {
 	
 	@Override 
 	public IResponse declare_sort(Ideclare_sort cmd) {
-		if (!logicSet) {
+		if (logicSet == null) {
 			return smtConfig.responseFactory.error("The logic must be set before a declare-sort command is issued");
 		}
 		List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable,cmd.sortSymbol(),null,null);
@@ -434,7 +503,7 @@ public class Solver_test implements ISolver {
 	
 	@Override
 	public IResponse define_sort(Idefine_sort cmd) {
-		if (!logicSet) {
+		if (logicSet == null) {
 			return smtConfig.responseFactory.error("The logic must be set before a define-sort command is issued");
 		}
 		List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable,cmd.sortSymbol(),cmd.parameters(),cmd.expression());
