@@ -1,0 +1,16 @@
+success
+(declare-fun x Bool)
+               ^^^^
+(error "Expected a left parenthesis here, instead of a symbol")
+(declare-fun x () A)
+^^^^^^^^^^^^^^^^^^^^
+(error "at line 2, column 19: undefined sort: A")
+(declare-fun x (y z) Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 3, column 17: undefined sort: y")
+(declare-fun x ((y Bool)(y Bool)) Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 4, column 18: undefined sort constructor: y")
+(declare-fun x () A A)
+                    ^
+(error "Too many arguments or extraneous material after the command or missing right parenthesis")

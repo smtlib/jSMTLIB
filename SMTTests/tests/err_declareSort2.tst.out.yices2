@@ -1,0 +1,5 @@
+success
+success
+(declare-sort A 1)
+^^^^^^^^^^^^^^^^^^
+(error "at line 3, column 15: can't redefine sort: A")

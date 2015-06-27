@@ -1,57 +1,53 @@
 success
 (declare-fun a () Array)
-                  ^^^^^
-(error "The sort symbol Array expects 2 arguments, not 0")
+^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 2, column 19: not a sort identifier: Array")
 (declare-fun a () (Array Bool))
-                  ^^^^^^^^^^^^
-(error "The sort symbol Array expects 2 arguments, not 1")
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 3, column 20: wrong number of arguments in Array")
 (declare-fun a () (Array Bool Bool Bool))
-                  ^^^^^^^^^^^^^^^^^^^^^^
-(error "The sort symbol Array expects 2 arguments, not 3")
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 4, column 20: wrong number of arguments in Array")
 success
 success
 success
 success
 success
 (assert (= i (select i i)))
-             ^^^^^^^^^^^^
-(error "The first argument of the select function should be an Array sort, not I")
-(assert (= i (select a a)))
-             ^^^^^^^^^^^^
-(error "The second argument of the select function must match the array index sort: (Array I V) vs. I")
-(assert (= i (select a)))
-              ^^^^^^
-(error " The select function should have two arguments")
-(assert (= i (select a i i)))
-              ^^^^^^
-(error " The select function should have two arguments")
-(assert (= i (select a i)))
-        ^^^^^^^^^^^^^^^^^^
-(error "Mismatched sorts of arguments: I vs. V")
-(assert (= i (store a i v)))
-        ^^^^^^^^^^^^^^^^^^^
-(error "Mismatched sorts of arguments: I vs. (Array I V)")
-(assert (= i (store i v v)))
-             ^^^^^^^^^^^^^
-(error "The first argument of the store function should be an Array sort, not I")
-(assert (= i (store a i v v)))
-              ^^^^^
-(error " The store function should have three arguments")
-(assert (= i (store a v v)))
-             ^^^^^^^^^^^^^
-(error "The second argument of the store function must match the array index sort: V vs. I")
-(assert (= i (store a i i)))
-             ^^^^^^^^^^^^^
-(error "The third argument of the store function must match the array value sort: I vs. V")
-(declare-sort A 2)
-^^^^^^^^^^^^^^^^^^
-(error "Yices2 declare-sort command failed: Yices2 does not support defining parameterized types")
-(declare-fun aa () (A I V))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "declare-fun command failed: Yices does not support user-defined parameterized sorts: (A I V)")
+(error "at line 10, column 15: in select: argument is not a function")
+(assert (= i (select a a)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 11, column 15: in select: type error")
+(assert (= i (select a)))
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 12, column 15: wrong number of arguments in select")
+(assert (= i (select a i i)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 13, column 15: wrong number of arguments in select")
+(assert (= i (select a i)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 14, column 10: in equality: incompatible types")
+(assert (= i (store a i v)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 15, column 10: in equality: incompatible types")
+(assert (= i (store i v v)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 16, column 15: in store: argument is not a function")
+(assert (= i (store a i v v)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 17, column 15: wrong number of arguments in store")
+(assert (= i (store a v v)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 18, column 15: in store: type error")
+(assert (= i (store a i i)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 19, column 15: in store: type error")
+success
+success
 (assert (= v (select aa i)))
-             ^^^^^^^^^^^^^
-(error "The first argument of the select function should be an Array sort, not (A I V)")
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 22, column 15: in select: argument is not a function")
 (assert (= aa (store aa i v)))
-              ^^^^^^^^^^^^^^
-(error "The first argument of the store function should be an Array sort, not (A I V)")
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 23, column 16: in store: argument is not a function")

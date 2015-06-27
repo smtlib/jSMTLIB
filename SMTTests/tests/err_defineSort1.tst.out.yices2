@@ -1,0 +1,3 @@
+(define-sort A () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "no logic set")

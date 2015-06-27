@@ -1,0 +1,10 @@
+success
+success
+success
+(assert (= ((as zzz Bool) true false) false)) ;; unknown identifier
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 4, column 17: undefined term: zzz")
+success
+(assert (= ((as + S) 4 3) 1))  ;; not overloaded to S
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 6, column 14: invalid qualifier: types don't match")

@@ -25,34 +25,39 @@ public class FileTests  extends LogicTests {
     static public  Collection<String[]> datax() {
     	Collection<String[]> data = new ArrayList<String[]>(1000);
     	File f = new File("tests");
-    	File[] files = f.listFiles();
-    	for (File ff: files) { 
-    		if (ff.getName().endsWith(".tst")) {
-    			data.add(new String[]{"test",ff.getName()}); 
-    			if (
-    					!ff.getName().equals("err_getValueTypes.tst") // Crashes CVC4
-    					&& !ff.getName().equals("err_setLogic.tst")
-				) {
-    			data.add(new String[]{"cvc4",ff.getName()}); 
+    	String[] files = f.list();
+    	for (String ff: files) { 
+    		if (ff.endsWith(".tst")) {
+    			for (String[] s : solvers) {
+    				data.add(new String[]{s[0],ff});
     			}
-    			data.add(new String[]{"simplify",ff.getName()}); 
-    			if (
-    					!ff.getName().equals("ok_regularOutput.tst") &&
-    					!ff.getName().equals("err_bv2.tst") &&
-    					!ff.getName().equals("err_bv.tst") &&
-    					!ff.getName().equals("ok_bv2.tst") 
-    					) {
-    				data.add(new String[]{"z3_4_3",ff.getName()}); // FIXME - z3 crashes or hangs or is non-deterministic 
-    			}
-//    			if (
-//    					!ff.getName().equals("err_namedExpr2.tst")
-//    					) {
-//    				data.add(new String[]{"z3_2_11",ff.getName()}); // FIXME - z3 crashes 
-//    			}
-//    			data.add(new String[]{"cvc",ff.getName()}); 
-//    			data.add(new String[]{"yices",ff.getName()});
-//    			data.add(new String[]{"yices2",ff.getName()});
     		}
+//    		if (ff.getName().endsWith(".tst")) {
+//    			data.add(new String[]{"test",ff.getName()}); 
+//    			if (
+//    					!ff.getName().equals("err_getValueTypes.tst") // Crashes CVC4
+//    					&& !ff.getName().equals("err_setLogic.tst")
+//				) {
+//    			data.add(new String[]{"cvc4",ff.getName()}); 
+//    			}
+//    			data.add(new String[]{"simplify",ff.getName()}); 
+//    			if (
+//    					!ff.getName().equals("ok_regularOutput.tst") &&
+//    					!ff.getName().equals("err_bv2.tst") &&
+//    					!ff.getName().equals("err_bv.tst") &&
+//    					!ff.getName().equals("ok_bv2.tst") 
+//    					) {
+//    				data.add(new String[]{"z3_4_3",ff.getName()}); // FIXME - z3 crashes or hangs or is non-deterministic 
+//    			}
+////    			if (
+////    					!ff.getName().equals("err_namedExpr2.tst")
+////    					) {
+////    				data.add(new String[]{"z3_2_11",ff.getName()}); // FIXME - z3 crashes 
+////    			}
+////    			data.add(new String[]{"cvc",ff.getName()}); 
+////    			data.add(new String[]{"yices",ff.getName()});
+////    			data.add(new String[]{"yices2",ff.getName()});
+//    		}
     	}
 //    	data.clear();
 //		data.add(new String[]{"yices","ok_ite.tst"}); 
@@ -89,6 +94,7 @@ public class FileTests  extends LogicTests {
 	@Test
 	public void checkFile() {
 		Assume.assumeTrue(!("err_namedExpr2.tst".equals(testfile) && "yices2".equals(solvername))); // FIXME - yices2 does not support Boolean quantifiers
+		Assume.assumeTrue(!("ok_regularOutput.tst".equals(testfile))); // FIXME - appears to hang
 
 		
 //		System.out.println("File: " + testfile + "  Solver: " + solvername);

@@ -1,0 +1,97 @@
+success
+success
+success
+success
+(assert (= (bvnot x) #b1011))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 5, column 10: in equality: incompatible types")
+(assert (= (bvnot true) #b1011))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 6, column 13: in bvnot: argument is not a bit-vector term")
+(assert (= (bvnot x y) #b1011))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 7, column 13: wrong number of arguments in bvnot")
+(assert (= (bvneg x) #b0111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 8, column 10: in equality: incompatible types")
+(assert (= (bvneg x y) #b0111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 9, column 13: wrong number of arguments in bvneg")
+(assert (= (bvand true y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 10, column 13: in bvand: argument is not a bit-vector term")
+(assert (= (bvand x false) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 11, column 13: in bvand: argument is not a bit-vector term")
+(assert (= (bvand x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 12, column 21: bitvectors have incompatible sizes")
+(assert (= (bvand x y z) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 13, column 21: bitvectors have incompatible sizes")
+(assert (= (bvor x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 14, column 20: bitvectors have incompatible sizes")
+(assert (= (bvadd x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 15, column 21: bitvectors have incompatible sizes")
+(assert (= (bvmul x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 16, column 21: bitvectors have incompatible sizes")
+(assert (= (bvshl x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 17, column 13: in bvshl: incompatible types")
+(assert (= (bvlshr x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 18, column 13: in bvlshr: incompatible types")
+(assert (= (bvudiv x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 19, column 13: in bvudiv: incompatible types")
+(assert (= (bvurem x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 20, column 13: in bvurem: incompatible types")
+(assert (bvult x y))
+^^^^^^^^^^^^^^^^^^^^
+(error "at line 21, column 10: in bvult: incompatible types")
+(assert (bvult y))
+^^^^^^^^^^^^^^^^^^
+(error "at line 22, column 10: wrong number of arguments in bvult")
+(assert (bvult true y))
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 23, column 10: in bvult: argument is not a bit-vector term")
+(assert (bvult x false))
+^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 24, column 10: in bvult: argument is not a bit-vector term")
+(assert (= (concat x y) #xa))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 25, column 10: in equality: incompatible types")
+(assert (= (concat y) #xaa))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 26, column 10: in equality: incompatible types")
+(assert (= (concat x true) z))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 27, column 13: in concat: argument is not a bit-vector term")
+(assert (= ((_ extract 40 2) z) x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 28, column 16: in extract: invalid indices in bit-vector extract")
+(assert (= ((_ extract 1 2) z) x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 29, column 16: in extract: invalid indices in bit-vector extract")
+(assert (= ((_ extract a 1) z) x))
+                       ^
+(error "Expected a numeral here, instead of a symbol")
+(assert (= ((_ extract ) z) x))
+                       ^
+(error "Expected a numeral here, instead of a )")
+(assert (= ((_ extract 1 2 3 ) z) x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 30, column 16: wrong number of arguments in extract")
+(assert (= #b101 #b1010))
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 31, column 10: in equality: incompatible types")
+(assert (distinct #b1 #b10))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 32, column 10: in distinct: incompatible types")
+(assert (ite true #b0 #b11))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 33, column 10: in ite: incompatible types")

@@ -6,5 +6,5 @@ success
 success
 sat
 (get-value (x y (and x y) ))
-                ^^^^^^^^^
-(error "Unknown predicate symbol and with argument types A Bool")
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 8, column 19: in and: type error")

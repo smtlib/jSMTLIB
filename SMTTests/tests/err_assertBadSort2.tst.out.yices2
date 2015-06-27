@@ -1,0 +1,4 @@
+success
+(assert 1)
+^^^^^^^^^^
+(error "type error in assert: Boolean term required")

@@ -1,0 +1,13 @@
+success
+(declare-sort Bool 0)
+^^^^^^^^^^^^^^^^^^^^^
+(error "at line 2, column 15: can't redefine sort: Bool")
+(declare-sort Array 1)
+^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 3, column 15: can't redefine sort: Array")
+(declare-fun select () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 4, column 14: can't redefine term: select")
+(declare-fun store () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 5, column 14: can't redefine term: store")

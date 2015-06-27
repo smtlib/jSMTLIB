@@ -1,0 +1,4 @@
+success
+(define-sort A () B)
+^^^^^^^^^^^^^^^^^^^^
+(error "at line 2, column 19: undefined sort: B")
