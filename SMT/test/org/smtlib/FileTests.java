@@ -103,21 +103,34 @@ public class FileTests  extends LogicTests {
 		if (new File(altname).isFile()) outname = altname;
 		else if (new File(altname.replace("z3_4_3", "z3")).isFile()) outname = altname.replace("z3_4_3", "z3");
 		else if (new File(altname.replace("z3_2_11", "z3")).isFile()) outname = altname.replace("z3_2_11", "z3");
-		String output = readFile(outname).replace("\r\n","\n");
+		File actualFile = new File("tests/" + testfile + ".out." + solvername + ".actual");
 		String actual = doScript(script).replace("\r\n","\n");
-		if (!output.equals(actual)) {
+		if (!new File(outname).exists()) {
 			try {
-				File f = new File("tests/" + testfile + ".out." + solvername + ".actual");
-				BufferedWriter w = new BufferedWriter(new FileWriter(f));
+				BufferedWriter w = new BufferedWriter(new FileWriter(actualFile));
 				w.write(actual);
 				w.close();
 			} catch (IOException e) {
 				// ignore
 			}
+			Assert.fail("No output file found");
+		} else {
+			String output = readFile(outname).replace("\r\n","\n");
+			if (!output.equals(actual)) {
+				try {
+					BufferedWriter w = new BufferedWriter(new FileWriter(actualFile));
+					w.write(actual);
+					w.close();
+				} catch (IOException e) {
+					// ignore
+				}
+			} else {
+				if (actualFile.exists()) actualFile.delete();
+			}
+			output = testfile + " " + solvername + "\n" + output;
+			actual = testfile + " " + solvername + "\n" + actual;
+			Assert.assertEquals(output,actual);
 		}
-		output = testfile + " " + solvername + "\n" + output;
-		actual = testfile + " " + solvername + "\n" + actual;
-		Assert.assertEquals(output,actual);
 	}
 	
 }

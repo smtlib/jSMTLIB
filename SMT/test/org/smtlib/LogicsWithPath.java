@@ -4,7 +4,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 
-@RunWith(tests.ParameterizedIgnorable.class)
+@RunWith(org.junit.runners.ParameterizedWithNames.class)
 public class LogicsWithPath extends LogicsBase {
 
 	@Override

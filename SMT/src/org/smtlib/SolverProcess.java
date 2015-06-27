@@ -107,7 +107,12 @@ public class SolverProcess {
 			if (!out.isEmpty()) { log.write(";OUT: "); log.write(out); log.write(eol); } // input usually ends with a prompt and no line terminator
 			if (!err.isEmpty()) { log.write(";ERR: "); log.write(err); } // input usually ends with a line terminator, we think
 		}
-		return err.isEmpty() || err.charAt(0) == ';' ? out : err; // Note: the guard against comments (starting with ;) is for Z3
+		// In some cases (yices2) the prompt is on the error stream. Our heuristic is that then there is no line-termination
+		if (err.endsWith("\n") || out.isEmpty()) {
+			return err.isEmpty() || err.charAt(0) == ';' ? out : err; // Note: the guard against comments (starting with ;) is for Z3
+		} else {
+			return out;
+		}
 	}
 	
 	/** Returns true if the process is still running; this relies on exceptions

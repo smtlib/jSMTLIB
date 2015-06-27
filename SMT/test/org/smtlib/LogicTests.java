@@ -14,11 +14,16 @@ import org.smtlib.IParser.ParserException;
 
 
 public class LogicTests {
+	static final int v20 = 0;
+	static final int v25 = 1;
+	static final int v26 = 2;
+	
+	static int smtlib_version = v20;
 
     @Parameters
     public static Collection<String[]> data() {
             return Arrays.asList(new String[][] 
-                    {  { "test"}, { "z3_4_3" }, /*{ "z3_2_11" }, { "yices" }, { "yices2" },*/ {"cvc4"}, /* {"cvc"}, */{"simplify"} } );
+                    {  { "test"}, { "z3_4_3" }, { "z3_4_4" }, /*{ "z3_2_11" }, { "yices" },*/ { "yices2" }, {"cvc4"}, /* {"cvc"}, */{"simplify"} } );
     }
 
     String solvername;

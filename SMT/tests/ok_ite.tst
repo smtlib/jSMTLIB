@@ -1,5 +1,4 @@
-; checks ite as a term
+; checks ite as a formula
 (set-logic QF_UF)
-(declare-sort A 0)
-(declare-fun a () A)
-(assert (= a (ite true a a)))
+(declare-fun a () Bool)
+(assert (ite true a a))

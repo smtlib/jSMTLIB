@@ -693,29 +693,34 @@ public class SMT {
 		/*@NonNull*/ ISolver solver;
 		Class<? extends Object> adapterClass = null;
 		String[] command = null;
-		String adapterClassName = "";
+		String adapterClassName = null;
 		
 		// Find the adapter, executable, command
 		if (!solvername.equals(Utils.TEST_SOLVER)) {
-			adapterClassName = "org.smtlib.solvers.Solver_" + solvername;
-			try {
-				adapterClass = Class.forName(adapterClassName);
-			} catch (ClassNotFoundException e) {
-				adapterClass = null;
-			}
-				// But use this if it is specified
+			// But use this if it is specified
 			if (props != null) {
 				adapterClassName = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_ADAPTER_SUFFIX);
-				if (adapterClassName != null) {
-					try {
-						adapterClass = Class.forName(adapterClassName);
-					} catch (ClassNotFoundException e) {
-						adapterClass = null;
-					}
+				if (adapterClassName != null) try {
+					adapterClass = Class.forName(adapterClassName);
+				} catch (ClassNotFoundException e) {
+					adapterClass = null;
 				}
 			}
+
+			if (adapterClass == null) {
+				adapterClassName = "org.smtlib.solvers.Solver_" + solvername;
+				try {
+					adapterClass = Class.forName(adapterClassName);
+				} catch (ClassNotFoundException e) {
+					adapterClass = null;
+				}
+			}
+
 			// But otherwise presume the solver is a standard smt solver
-            if (adapterClass == null) adapterClass = org.smtlib.solvers.Solver_smt.class;
+            if (adapterClass == null) {
+            	adapterClass = org.smtlib.solvers.Solver_smt.class;
+            	adapterClassName = "org.smtlib.solvers.Solver_smt";
+            }
 		
 			String propName = Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_COMMAND_SUFFIX;
 			String commandString = null;
