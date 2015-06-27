@@ -47,7 +47,7 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 	String cmds[]; 
 
 	/** The object that interacts with external processes */
-	private SolverProcess solverProcess;
+	protected SolverProcess solverProcess;
 	
 	/** The parser that parses responses from the solver */
 	protected org.smtlib.sexpr.Parser responseParser;
@@ -68,16 +68,22 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 	/** Creates an instance of the solver */
 	public Solver_smt(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
 		this.smtConfig = smtConfig;
-		cmds = new String[] { executable };
-		solverProcess = new SolverProcess(cmds,"> ",smtConfig.logfile); // FIXME - what prompt?
+		solverProcess = new SolverProcess(cmd(executable),prompt(),smtConfig.logfile); // FIXME - what prompt?
 		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
 	}
 	
-	public Solver_smt(SMT.Configuration smtConfig, /*@NonNull*/ String[] executable) {
+	public Solver_smt(SMT.Configuration smtConfig, /*@NonNull*/ String[] args) {
 		this.smtConfig = smtConfig;
-		cmds = executable;
-		solverProcess = new SolverProcess(cmds,"> ",smtConfig.logfile); // FIXME - what prompt?
+		solverProcess = new SolverProcess(args,prompt(),smtConfig.logfile); // FIXME - what prompt?
 		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
+	}
+	
+	public String[] cmd(String exec) {
+		return new String[] { exec };
+	}
+	
+	public String prompt() {
+		return "\n";
 	}
 	
 	@Override

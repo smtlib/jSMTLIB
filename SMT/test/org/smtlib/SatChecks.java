@@ -3,10 +3,10 @@ package org.smtlib;
 import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.ParameterizedWithNames;
 
-import tests.ParameterizedIgnorable;
 
-@RunWith(ParameterizedIgnorable.class)
+@RunWith(ParameterizedWithNames.class)
 public class SatChecks extends LogicTests {
 
     public SatChecks(String solvername) {

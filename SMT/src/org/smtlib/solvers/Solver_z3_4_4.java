@@ -39,11 +39,10 @@ import org.smtlib.IExpr.IQualifiedIdentifier;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.impl.Pos;
-import org.smtlib.impl.Response;
 import org.smtlib.sexpr.Printer;
 
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into Z3 commands */
-public class Solver_yices2 extends Solver_smt implements ISolver {
+public class Solver_z3_4_4 extends Solver_smt implements ISolver {
 	
 //	protected String NAME_VALUE = "z3-4.3";
 //	protected String AUTHORS_VALUE = "Leonardo de Moura and Nikolaj Bjorner";
@@ -87,28 +86,9 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
 //	}
 	
 	/** Creates an instance of the Z3 solver */
-	public Solver_yices2(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
+	public Solver_z3_4_4(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
 		super(smtConfig, command);
 	}
-	
-	/** Creates an instance of the Z3 solver */
-	public Solver_yices2(SMT.Configuration smtConfig, /*@NonNull*/ String command) {
-		super(smtConfig, command);
-	}
-	
-//	public String prompt() {
-//		return "yices> ";
-//	}
-	
-	static String cmd[] = new String[]{ null, "--incremental", "--interactive" };
-	
-	public String[] cmd(String exec) {
-		cmd[0] = exec;
-		return cmd;
-	}
-	
-
-
 
 	@Override
 	public IResponse start() {
@@ -120,22 +100,11 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
 			// Can't turn off printing success, or we get no feedback
 //			solverProcess.sendAndListen("(set-option :print-success true)\n"); // Z3 4.4.0 needs this because it mistakenly has the default for :print-success as false
 			//if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Started yices2 ");
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Started Z3-4.4 ");
 			return smtConfig.responseFactory.success();
 		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
 		}
 	}
-
-	@Override
-	public IResponse get_option(IKeyword key) {
-		IResponse r = super.get_option(key);
-		if (r instanceof Response.Seq) {
-			// yices2 implements get-option incorrectly, hence this computation
-			return ((Response.Seq)r).attributes().get(0).attrValue();
-		}
-		return r;
-	}
-
-
+	
 }
