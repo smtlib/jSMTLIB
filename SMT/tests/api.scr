@@ -1,7 +1,0 @@
-#! /bin/bash
-##EXITCODE 0
-
-# THis is executed as a script, so we don't want to leave the
-# execution in a different directory
-(cd ..; ./buildRelease > /dev/null )
-(cd ..; java -cp "jSMTLIB.jar" APIExample )

@@ -1,3 +1,0 @@
-##EXITCODE 0
-## This test is platform-dependent - it has my path for simplify hard-coded
-java -cp ../bin org.smtlib.SMT --solver simplify --exec "C:/cygwin/home/dcok/mybin/simplify.exe" ok_sat.tst
