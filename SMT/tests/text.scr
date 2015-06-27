@@ -1,2 +1,0 @@
-##EXITCODE 1
-java -cp ../bin org.smtlib.SMT --solver test --text "(set-option :interactive-mode xxxx)(exit zz)"
