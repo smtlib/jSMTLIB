@@ -12,8 +12,6 @@ import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.impl.Response;
 
-import tests.ParameterizedIgnorable;
-
 @RunWith(ParameterizedWithNames.class)
 public class InfoOptions  extends LogicTests {
 

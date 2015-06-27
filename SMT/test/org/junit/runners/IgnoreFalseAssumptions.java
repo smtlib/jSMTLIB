@@ -1,4 +1,4 @@
-package tests;
+package org.junit.runners;
 
 import org.junit.Ignore;
 import org.junit.internal.AssumptionViolatedException;

@@ -1,4 +1,4 @@
-package tests;
+package org.junit.runners;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;

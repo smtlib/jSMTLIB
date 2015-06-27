@@ -4,7 +4,6 @@ import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.ParameterizedWithNames;
-import tests.*;
 
 @RunWith(ParameterizedWithNames.class)
 public class QuantTests extends LogicTests {
@@ -136,7 +135,7 @@ public class QuantTests extends LogicTests {
 		String result = solvername.equals("z3_2_11") 
 				|| solvername.equals("yices") 
 				|| solvername.equals("cvc4") 
-				? "unknown" : "unsat";
+				? "unknown" : "unsat";  // FIXME - unknown vs. unsat ?????
 		doCommand("(set-logic UF)");
 		doCommand("(assert (forall ((q Bool)) (not q)))");
 		doCommand("(check-sat)",result);
@@ -171,7 +170,6 @@ public class QuantTests extends LogicTests {
 	public void existsBoolSat() {
 		Assume.assumeTrue(!"simplify".equals(solvername)); // FIXME - simplify does not implement Bool terms
 		Assume.assumeTrue(!"yices2".equals(solvername)); // FIXME - yices2 does not implement quantifiers yet
-		//Assume.assumeTrue(!"yices2".equals(solvername)); // FIXME - yices2 does not implement Boolean quantifiers
 		doCommand("(set-logic UFLRA)");
 		doCommand("(assert (exists ((q Bool)) (not q)))");
 		doCommand("(check-sat)","sat");

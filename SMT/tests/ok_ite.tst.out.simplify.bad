@@ -1,6 +1,0 @@
-success
-success
-success
-(assert (= a (ite true a a)))
-                  ^^^^
-(error "Use of boolean in a term position is not yet implemented in the Simplify adapter")

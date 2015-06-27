@@ -7,17 +7,32 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.runners.Parameterized.Parameters;
+import org.smtlib.Utils.SMTLIBException;
 
 public class LogicsBase {
 
     @Parameters
     public static Collection<String[]> data() {
-            return Arrays.asList(new String[][]{ 
-            		{ "QF_UF" }, { "QF_LIA" }, {"QF_IDL"}, {"QF_RDL"} ,
-            		{ "QF_ABV" }, { "QF_AUFBV" }, {"QF_AUFLIA"}, {"QF_AX"} ,
-            		{ "QF_BV" }, { "QF_LRA" }, {"QF_NIA"}, {"QF_UFIDL"} ,
-            		{ "AUFLIA" }, { "AUFLIRA" }, {"AUFNIRA"}, {"LRA"} ,
+    	Collection<String[]> c = Arrays.asList(new String[][]{ 
+            		{ "ALIA" }, { "AUFLIA" }, { "AUFLIRA" }, { "AUFNIRA" },
+            		{ "BV" }, { "LIA" }, { "LRA" }, { "NIA" }, { "NRA" },
+            		{ "QF_ABV" }, { "QF_ALIA" }, { "QF_ANIA" }, 
+            		{ "QF_AUFBV" }, {"QF_AUFLIA"}, {"QF_AUFNIA"}, {"QF_AX"},
+            		{ "QF_BV" }, 
+            		{ "QF_IDL" }, {"QF_LIA"}, {"QF_LIRA"}, { "QF_LRA" }, 
+            		{ "QF_NIA" }, {"QF_NIRA" }, {"QF_NRA" },
+            		{ "QF_RDL" }, { "QF_UF" }, { "QF_UFBV" }, { "QF_UFIDL" }, 
+            		{ "QF_UFLIA" }, {"QF_UFLRA" }, { "QF_UFNIA" }, {"QF_UFNRA" },
+            		{ "UF" }, { "UFBV" }, { "UFIDL" }, 
+            		{ "UFLIA" }, {"UFLRA" }, { "UFNIA" }, // {"UFNRA" },
             		{ "ZZZ" } } );
+    	if (false) { // Version 2.5 // FIXME
+        	Collection<String[]> cc = Arrays.asList(new String[][]{ 
+        			 { "QF_BVFP" }, { "QF_FP" },
+        	});
+        	c.addAll(cc);
+    	}
+    	return c;
     }
     
     String solvername = "test";

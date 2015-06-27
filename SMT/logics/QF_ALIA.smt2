@@ -1,4 +1,4 @@
-(logic QF_AUFLIA
+(logic QF_ALIA
 
  :smt-lib-version 2.0
  :written_by "Cesare Tinelli"
