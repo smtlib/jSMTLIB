@@ -3,4 +3,4 @@ success
 success
 (get-value (x))
 ^^^^^^^^^^^^^^^
-(error "can't build a model. Call (check-sat) first")
+(error "line 4 column 15: model is not available")

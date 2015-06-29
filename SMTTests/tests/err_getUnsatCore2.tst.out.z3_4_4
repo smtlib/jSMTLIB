@@ -1,0 +1,5 @@
+success
+success
+(get-unsat-core)
+^^^^^^^^^^^^^^^^
+(error "line 3 column 15: unsat core is not available")

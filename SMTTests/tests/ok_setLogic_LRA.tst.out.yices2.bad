@@ -1,0 +1,3 @@
+(set-logic LRA )
+^^^^^^^^^^^^^^^^
+(error "logic LRA is not supported")

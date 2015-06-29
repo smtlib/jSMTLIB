@@ -5,4 +5,4 @@ success
 unsat
 (get-value (x))
 ^^^^^^^^^^^^^^^
-(error "the context is unsatisfiable")
+(error "line 6 column 15: model is not available")
