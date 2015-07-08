@@ -1,0 +1,5 @@
+success
+(
+error
+"Cannot query the current assertion list when not in produce-assertions mode."
+)

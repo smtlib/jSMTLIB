@@ -1,0 +1,4 @@
+success
+(assert x)
+^^^^^^^^^^
+(error "Parse Error: <shell>:1.8: Symbol 'x' not declared as a variable")

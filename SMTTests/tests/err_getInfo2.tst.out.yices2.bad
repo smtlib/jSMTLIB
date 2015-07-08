@@ -1,0 +1,9 @@
+(get-info :reason-unknown)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "no logic set")
+(:num-terms 3 )
+success
+(get-info :reason-unknown)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "can't tell until you call (check-sat)")
+(:num-terms 3 )

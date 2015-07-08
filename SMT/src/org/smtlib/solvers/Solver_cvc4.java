@@ -137,7 +137,7 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 	/** Translates an S-expression into standard SMT syntax */
 	protected String translateSMT(IAccept sexpr) throws IVisitor.VisitorException {
 		StringWriter sw = new StringWriter();
-		org.smtlib.sexpr.Printer.write(sw,sexpr);
+		org.smtlib.solvers.Printer.write(sw,sexpr);
 		return sw.toString();
 	}
 	

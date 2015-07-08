@@ -1,0 +1,7 @@
+success
+(get-unsat-core)
+^^^^^^^^^^^^^^^^
+(error "This build of CVC4 doesn't have proof support (required for unsat cores).")
+(get-unsat-core xxx)
+                ^^^
+(error "A get-unsat-core command takes no arguments")

@@ -1,0 +1,5 @@
+success
+success
+(get-value (x))
+^^^^^^^^^^^^^^^
+(error "Cannot get value when produce-models options is off.")

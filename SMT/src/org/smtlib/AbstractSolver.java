@@ -33,6 +33,8 @@ public class AbstractSolver implements ISolver {
 
 	final protected IKeyword printSuccess;
 	
+	protected boolean printSuccessResponse = true;
+	
 	public AbstractSolver() {
 		try {
 			SMT.Configuration c = new SMT.Configuration();

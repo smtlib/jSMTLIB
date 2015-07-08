@@ -1,0 +1,5 @@
+success
+(
+error
+"Parse Error: <shell>:1.14: set-logic must appear before this point."
+)

@@ -33,6 +33,7 @@ public class LogicTests {
             /*{ "z3_2_11" }, { "yices" },*/ 
             { "yices2" }, 
             {"cvc4"}, 
+            {"cvc4b"}, 
             /* {"cvc"}, */
             {"simplify"}, 
             } ;

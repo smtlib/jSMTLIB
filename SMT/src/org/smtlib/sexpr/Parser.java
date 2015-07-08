@@ -959,12 +959,14 @@ public class Parser extends Lexer implements IParser {
 		ISexpr sexpr = parseSexpr();
 		if (sexpr instanceof ISexpr.ISeq) {
 			List<ISexpr> list = ((ISexpr.ISeq)sexpr).sexprs();
-			if (list.get(0).toString().equals("error") && list.get(1) instanceof IStringLiteral) {
-				return f.error(((IStringLiteral)list.get(1)).value());
-			}
-			if (list.get(0) instanceof IKeyword) {
-	            IAttribute<?> attr = smtConfig.exprFactory.attribute((IKeyword)list.get(0),list.get(1));
-	            return f.get_info_response(attr);
+			if (list.size() >= 2) {
+				if (list.get(0).toString().equals("error") && list.get(1) instanceof IStringLiteral) {
+					return f.error(((IStringLiteral)list.get(1)).value());
+				}
+				if (list.get(0) instanceof IKeyword) {
+					IAttribute<?> attr = smtConfig.exprFactory.attribute((IKeyword)list.get(0),list.get(1));
+					return f.get_info_response(attr);
+				}
 			}
 		}
 		return sexpr;
