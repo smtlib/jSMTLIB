@@ -135,7 +135,7 @@ public class QuantTests extends LogicTests {
 		Assume.assumeTrue(!"yices2".equals(solvername)); // FIXME - yices2 does not implement quantifiers yet
 		String result = solvername.equals("z3_2_11") 
 				|| solvername.equals("yices") 
-				|| solvername.equals("cvc4") 
+//				|| solvername.equals("cvc4") 
 				? "unknown" : "unsat";  // FIXME - unknown vs. unsat ?????
 		doCommand("(set-logic UF)");
 		doCommand("(assert (forall ((q Bool)) (not q)))");
@@ -159,8 +159,7 @@ public class QuantTests extends LogicTests {
 	public void forallBoolSat() {
 		Assume.assumeTrue(!"simplify".equals(solvername)); // FIXME - simplify does not implement Bool terms
 		Assume.assumeTrue(!"yices2".equals(solvername)); // FIXME - yices2 does not implement quantifiers yet
-		String result = solvername.equals("cvc4") 
-				? "unknown" : "sat";
+		String result = "sat";
 		doCommand("(set-logic UFLRA)");
 		doCommand("(assert (forall ((q Bool)) (or q (not q))))");
 		doCommand("(check-sat)",result);

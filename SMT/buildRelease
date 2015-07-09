@@ -4,7 +4,7 @@
 ## COnvert this to ant
 
 ## Need the following for jar
-export JAVA_HOME=C:/cygwin/home/dcok/ProgramFiles/Java/jdk1.7.0_07
+export JAVA_HOME="C:/Program Files/Java/jdk1.7.0_67"
 
 version=`cat ../SMTFeature/feature.xml | head | grep -v encoding | grep "version=" | sed -e 's/ //g' -e 's/version=\"//' -e 's/\"//'`
 echo Building version $version
@@ -17,10 +17,11 @@ echo "Manifest-Version: 1.0" > temp/manifest
 echo "Main-Class: org.smtlib.SMT" >> temp/manifest
 cd bin
 rm -f jsmtlib.properties
-$JAVA_HOME/bin/jar -cfm ../jSMTLIB.jar ../temp/manifest .
+"$JAVA_HOME/bin/jar.exe" -cfm ../jSMTLIB.jar ../temp/manifest .
 cp ../jsmtlib.properties .
 cd ..
-cp ../../../texstuff/papers/SMTLIBUserGuide/SMTLIBUserGuide.pdf jSMTLIBUserGuide.pdf
+C:/cygwin/home/dcok/mybin/ant -f javadoc.xml
+cp ../../../../texstuff/papers/SMTLIBUserGuide/SMTLIBUserGuide.pdf jSMTLIBUserGuide.pdf
 tar cf jSMTLIB.tar jSMTLIB.jar LICENSE jSMTLIBUserGuide.pdf jsmtlib.properties-template doc
 rm jSMTLIBUserGuide.pdf
 tar tvf jSMTLIB.tar
@@ -29,6 +30,7 @@ gzip jSMTLIB.tar
 
 echo Build complete
 
-if [ -e ../../OpenJML ] ; then cp jSMTLIB.jar ../../OpenJML ; else echo Copy failed ; fi
-if [ -e ../../OpenJMLUI ] ; then cp jSMTLIB.jar ../../OpenJMLUI ; else echo Copy failed; fi
+export OPENJML=../../../../eworkspaces/OpenJMLgit/OpenJML
+if [ -e $OPENJML/OpenJML ] ; then cp jSMTLIB.jar $OPENJML/OpenJML ; else echo Copy failed ; fi
+if [ -e $OPENJML/OpenJMLUI ] ; then cp jSMTLIB.jar $OPENJML/OpenJMLUI ; else echo Copy failed; fi
 echo Copies complete

@@ -53,7 +53,7 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 	protected org.smtlib.sexpr.Parser responseParser;
 	
 	/** The checkSatStatus returned by check-sat, if sufficiently recent, otherwise null */
-	private /*@Nullable*/ IResponse checkSatStatus = null;
+	protected /*@Nullable*/ IResponse checkSatStatus = null;
 	
 	@Override
 	public /*@Nullable*/IResponse checkSatStatus() { return checkSatStatus; }

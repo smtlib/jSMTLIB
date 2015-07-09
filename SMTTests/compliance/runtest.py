@@ -200,6 +200,7 @@ def setModes(usestdin):
         global prompt
         exitOnError = False
         
+        prompt = None
         if usestdin and "cvc4" in solver:
             prompt = "CVC4> "
             
