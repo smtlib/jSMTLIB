@@ -1,0 +1,5 @@
+success
+success
+(define-sort A () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 3, column 14: can't redefine sort: A")

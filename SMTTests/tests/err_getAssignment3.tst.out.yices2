@@ -1,0 +1,8 @@
+success
+success
+success
+sat
+success
+(get-assignment)
+^^^^^^^^^^^^^^^^
+(error "can't build the assignment. Call (check-sat) first")

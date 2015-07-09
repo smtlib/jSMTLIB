@@ -1,93 +1,165 @@
-success
-success
-success
-success
-success
+(set-logic LRA)
+^^^^^^^^^^^^^^^
+(error "logic LRA is not supported")
+(declare-fun a () Real)
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 2, column 19: undefined sort: Real")
+(declare-fun b () Real)
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 3, column 19: undefined sort: Real")
+(assert (= a (+ a b)))
+^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 4, column 12: undefined term: a")
+(assert (= a (+ b 1)))
+^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 5, column 12: undefined term: a")
 (assert (= a (+ b 1.0)))
 ^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
-success
+(error "at line 6, column 12: undefined term: a")
+(assert (= a (+ 1 b)))
+^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 7, column 12: undefined term: a")
 (assert (= a (+ 1.0 b)))
 ^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
-success
-success
+(error "at line 8, column 12: undefined term: a")
+(assert (= a (- a b)))
+^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 9, column 12: undefined term: a")
+(assert (= a (- b 1)))
+^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 10, column 12: undefined term: a")
 (assert (= a (- b 1.0)))
 ^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
-success
+(error "at line 11, column 12: undefined term: a")
+(assert (= a (- 1 b)))
+^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 12, column 12: undefined term: a")
 (assert (= a (- 1.0 b)))
 ^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
-success
-success
+(error "at line 13, column 12: undefined term: a")
+(assert (= a (- b)))
+^^^^^^^^^^^^^^^^^^^^
+(error "at line 14, column 12: undefined term: a")
+(assert (= a (- 1)))
+^^^^^^^^^^^^^^^^^^^^
+(error "at line 15, column 12: undefined term: a")
 (assert (= a (- 1.0)))
 ^^^^^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
-success
-success
+(error "at line 16, column 12: undefined term: a")
+(assert (>= a b))
+^^^^^^^^^^^^^^^^^
+(error "at line 17, column 10: undefined term: >=")
+(assert (>= a 1))
+^^^^^^^^^^^^^^^^^
+(error "at line 18, column 10: undefined term: >=")
 (assert (>= a 1.0))
 ^^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
-success
+(error "at line 19, column 10: undefined term: >=")
+(assert (>= 1 a))
+^^^^^^^^^^^^^^^^^
+(error "at line 20, column 10: undefined term: >=")
 (assert (>= 1.0 a))
 ^^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
-success
-success
+(error "at line 21, column 10: undefined term: >=")
+(assert (<= a b))
+^^^^^^^^^^^^^^^^^
+(error "at line 22, column 10: undefined term: <=")
+(assert (<= a 1))
+^^^^^^^^^^^^^^^^^
+(error "at line 23, column 10: undefined term: <=")
 (assert (<= a 1.0))
 ^^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
-success
+(error "at line 24, column 10: undefined term: <=")
+(assert (<= 1 a))
+^^^^^^^^^^^^^^^^^
+(error "at line 25, column 10: undefined term: <=")
 (assert (<= 1.0 a))
 ^^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
-success
-success
+(error "at line 26, column 10: undefined term: <=")
+(assert (> a b))
+^^^^^^^^^^^^^^^^
+(error "at line 27, column 10: undefined term: >")
+(assert (> a 1))
+^^^^^^^^^^^^^^^^
+(error "at line 28, column 10: undefined term: >")
 (assert (> a 1.0))
 ^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
-success
+(error "at line 29, column 10: undefined term: >")
+(assert (> 1 a))
+^^^^^^^^^^^^^^^^
+(error "at line 30, column 10: undefined term: >")
 (assert (> 1.0 a))
 ^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
-success
-success
+(error "at line 31, column 10: undefined term: >")
+(assert (< a b))
+^^^^^^^^^^^^^^^^
+(error "at line 32, column 10: undefined term: <")
+(assert (< a 1))
+^^^^^^^^^^^^^^^^
+(error "at line 33, column 10: undefined term: <")
 (assert (< a 1.0))
 ^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
-success
+(error "at line 34, column 10: undefined term: <")
+(assert (< 1 a))
+^^^^^^^^^^^^^^^^
+(error "at line 35, column 10: undefined term: <")
 (assert (< 1.0 a))
 ^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
+(error "at line 36, column 10: undefined term: <")
 (assert (distinct a b 1 1.0))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
-success
-success
-success
-success
-success
+(error "at line 37, column 19: undefined term: a")
+(assert (= a (* b (/ 3 20))))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 38, column 12: undefined term: a")
+(assert (= a (* (/ 3 20) b)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 39, column 12: undefined term: a")
+(assert (= a (* (/ (- 3) 20) b)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 40, column 12: undefined term: a")
+(assert (= a (* (- 20) b)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 41, column 12: undefined term: a")
+(assert (= a (* 20 b)))
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 42, column 12: undefined term: a")
 (assert (= a (* 20.0 b)))
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
+(error "at line 43, column 12: undefined term: a")
 (assert (= a (* (- 20.0) b)))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
-success
-success
-success
-success
-success
+(error "at line 44, column 12: undefined term: a")
+(assert (= (* b (/ 3 20)) a))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 45, column 13: undefined term: *")
+(assert (= (* (/ 3 20) b) a))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 46, column 13: undefined term: *")
+(assert (= (* (/ (- 3) 20) b) a))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 47, column 13: undefined term: *")
+(assert (= (* (- 20) b) a))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 48, column 13: undefined term: *")
+(assert (= (* 20 b) a))
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 49, column 13: undefined term: *")
 (assert (= (* 20.0 b) a))
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
+(error "at line 50, column 13: undefined term: *")
 (assert (= (* (- 20.0) b) a))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
-success
+(error "at line 51, column 13: undefined term: *")
+(assert (= a (ite true b b)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 52, column 12: undefined term: a")
 (assert (= a (ite true 1.0 1)))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Yices assert command failed: The yices2 solver cannot handle decimal literals")
-success
-success
+(error "at line 53, column 12: undefined term: a")
+(assert (forall ((a Real)(c Real)) (=> (> a c) (> (+ a 1) c))))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 54, column 21: undefined sort: Real")
+(assert (exists ((c Real)) (= a c )))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 55, column 21: undefined sort: Real")

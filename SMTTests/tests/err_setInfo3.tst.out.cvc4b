@@ -1,0 +1,9 @@
+(set-info :all-statistics x)
+          ^^^^^^^^^^^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :all-statistics")
+(set-info :reason-unknown x)
+          ^^^^^^^^^^^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :reason-unknown")
+(get-info :reason-unknown)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Can't get-info :reason-unknown when the last result wasn't unknown!")

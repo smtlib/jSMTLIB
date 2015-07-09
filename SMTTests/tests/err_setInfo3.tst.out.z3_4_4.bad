@@ -1,0 +1,5 @@
+success
+success
+(get-info :reason-unknown)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 3 column 10: state of the most recent check-sat command is not unknown")

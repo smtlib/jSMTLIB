@@ -59,24 +59,30 @@ public class SolverProcess {
 	 * @param logfile if not null, the name of a file to log communications to, for diagnostic purposes
 	 */
 	public SolverProcess(String[] cmd, String endMarker, /*@Nullable*/String logfile) {
-		setCmd(cmd);
 		this.endMarker = endMarker;
 		try {
 			if (logfile != null) {
 				log = new FileWriter(logfile);
+			}
+		} catch (IOException e) {
+			System.out.println("Failed to create solver log file " + logfile + ": " + e); // FIXME - wwrite to somewhere better
+		}
+		setCmd(cmd);
+	}
+	
+	/** Enables changing the command-line; must be called prior to start() */
+	public void setCmd(String[] cmd) {
+		this.app = cmd;
+		try {
+			if (log != null && cmd != null) {
 				// TODO: Might be nicer to escape any backslashes and enclose strings in quotes, in case arguments contain spaces or special characters
 				log.write(";; ");
 				for (String s: cmd) { log.write(s); log.write(" "); }
 				log.write(eol);
 			}
 		} catch (IOException e) {
-			System.out.println("Failed to create solver log file " + logfile + ": " + e); // FIXME - wwrite to somewhere better
+			System.out.println("Failed to write to solver log file : " + e); // FIXME - wwrite to somewhere better
 		}
-	}
-	
-	/** Enables changing the command-line; must be called prior to start() */
-	public void setCmd(String[] cmd) {
-		this.app = cmd;
 	}
 	
 	/** Starts the process; if the argument is true, then also listens to its output until a prompt is read. */
@@ -107,6 +113,8 @@ public class SolverProcess {
 			if (!out.isEmpty()) { log.write(";OUT: "); log.write(out); log.write(eol); } // input usually ends with a prompt and no line terminator
 			if (!err.isEmpty()) { log.write(";ERR: "); log.write(err); } // input usually ends with a line terminator, we think
 		}
+//		System.out.println("OUT: " + out.replace('\r', '@').replace('\n', '@'));
+//		System.out.println("ERR: " + err.replace('\r', '@').replace('\n', '@'));
 		// In some cases (yices2) the prompt is on the error stream. Our heuristic is that then there is no line-termination
 		if (err.endsWith("\n") || out.isEmpty()) {
 			return err.isEmpty() || err.charAt(0) == ';' ? out : err; // Note: the guard against comments (starting with ;) is for Z3
@@ -157,9 +165,11 @@ public class SolverProcess {
 	public /*@Nullable*/ String send(boolean listen, String ... args) throws IOException {
 		if (toProcess == null) throw new ProverException("The solver has not been started");
 		for (String arg: args) {
+//			System.out.print(arg);
 			if (log != null) log.write(arg);
 			toProcess.write(arg);
 		}
+//		System.out.println();
 		if (log != null) log.flush();
 		toProcess.flush();
 		if (listen) return listen();

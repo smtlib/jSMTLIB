@@ -1,0 +1,7 @@
+unsupported
+success
+success
+sat
+(get-proof)
+^^^^^^^^^^^
+(error "get-proof is not supported")

@@ -53,7 +53,7 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 	protected org.smtlib.sexpr.Parser responseParser;
 	
 	/** The checkSatStatus returned by check-sat, if sufficiently recent, otherwise null */
-	private /*@Nullable*/ IResponse checkSatStatus = null;
+	protected /*@Nullable*/ IResponse checkSatStatus = null;
 	
 	@Override
 	public /*@Nullable*/IResponse checkSatStatus() { return checkSatStatus; }
@@ -110,7 +110,7 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 	/** Translates an S-expression into standard SMT syntax */
 	protected String translateSMT(IAccept sexpr) throws IVisitor.VisitorException {
 		StringWriter sw = new StringWriter();
-		org.smtlib.sexpr.Printer.write(sw,sexpr);
+		org.smtlib.solvers.Printer.write(sw,sexpr);
 		return sw.toString();
 	}
 	

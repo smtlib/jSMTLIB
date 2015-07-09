@@ -1,0 +1,28 @@
+success
+success
+success
+success
+(declare-fun k () (_ BitVec 0))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 5, column 29: size must be positive in BitVec")
+(declare-fun k () (_ BitVecx 0))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 6, column 22: undefined identifier: BitVecx")
+(declare-fun k () (_ BitVec -1))
+                            ^^
+(error "Expected a numeral here, instead of a symbol")
+(declare-fun k () (_ BitVec))
+                           ^
+(error "Expected a numeral here, instead of a )")
+(declare-fun k () (_ BitVec 1 2))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 7, column 22: wrong number of arguments in BitVec")
+(assert (= x #b010 ))
+^^^^^^^^^^^^^^^^^^^^^
+(error "at line 8, column 10: in equality: incompatible types")
+(assert (= z #xab ))
+^^^^^^^^^^^^^^^^^^^^
+(error "at line 9, column 10: in equality: incompatible types")
+(assert (= z y ))
+^^^^^^^^^^^^^^^^^
+(error "at line 10, column 10: in equality: incompatible types")

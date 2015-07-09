@@ -1,0 +1,15 @@
+success
+success
+success
+(declare-fun a () (Array I V))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 4, column 20: undefined sort constructor: Array")
+success
+success
+success
+(assert (= v (select a i)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 8, column 15: undefined term: select")
+(assert (= a (store a i v)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 9, column 15: undefined term: store")

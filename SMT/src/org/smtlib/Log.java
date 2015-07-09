@@ -94,7 +94,8 @@ public class Log {
 		public void logError(/*@ReadOnly*/IResponse.IError result) {
 			IPos pos = result.pos();
 			if (pos != null && pos.source() != null && !smtConfig.noshow) {
-				out.println(locationIndication(pos,prompt,smtConfig));
+				diag.println(locationIndication(pos,prompt,smtConfig));
+				diag.flush();
 			}
 			// Print the actual response
 			out.println(smtConfig.defaultPrinter.toString(result));

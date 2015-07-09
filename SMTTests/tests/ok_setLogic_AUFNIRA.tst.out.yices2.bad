@@ -1,0 +1,3 @@
+(set-logic AUFNIRA )
+^^^^^^^^^^^^^^^^^^^^
+(error "logic AUFNIRA is not supported")

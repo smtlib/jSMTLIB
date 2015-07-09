@@ -1,0 +1,19 @@
+(set-info :name "x")
+^^^^^^^^^^^^^^^^^^^^
+(error "can't overwrite :name")
+(:name "Yices" )
+(set-info :authors "x")
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "can't overwrite :authors")
+(:authors "Bruno Dutertre" )
+(set-info :version "0")
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "can't overwrite :version")
+(:version "2.3.1" )
+(set-info :error-behavior x)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "can't overwrite :error-behavior")
+(get-info :error-behavior)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(:error-behavior immediate-exit)
+")

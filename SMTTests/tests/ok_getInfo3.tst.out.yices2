@@ -1,0 +1,7 @@
+(get-info :zzz)
+^^^^^^^^^^^^^^^
+(error "no info for :zzz")
+success
+(:zzz 5 )
+success
+(:zzz ( + a s ) )

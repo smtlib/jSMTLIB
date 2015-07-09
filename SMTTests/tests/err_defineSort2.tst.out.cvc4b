@@ -1,0 +1,5 @@
+success
+success
+(define-sort A () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.13: Symbol 'A' previously declared as a type")

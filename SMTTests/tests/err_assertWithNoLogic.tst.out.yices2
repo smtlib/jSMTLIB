@@ -1,0 +1,3 @@
+(assert true)
+^^^^^^^^^^^^^
+(error "no logic set")

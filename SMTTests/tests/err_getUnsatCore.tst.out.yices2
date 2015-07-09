@@ -1,0 +1,7 @@
+success
+(get-unsat-core)
+^^^^^^^^^^^^^^^^
+(error "get-unsat-core is not supported")
+(get-unsat-core xxx)
+                ^^^
+(error "A get-unsat-core command takes no arguments")

@@ -1,0 +1,17 @@
+success
+success
+success
+(assert (! p :named q)) ; conflicts with existing name
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 4, column 12: invalid :named attribute (name is already used)")
+success
+(assert (! q :named P)) ; conflicts
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 6, column 12: invalid :named attribute (name is already used)")
+(declare-fun P () Bool) ; conflicts
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 7, column 14: can't redefine term: P")
+(assert (and (! p :named PP) (! q :named P))) ; second conflicts, first should be withdrawn
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 8, column 33: invalid :named attribute (name is already used)")
+success

@@ -1,0 +1,8 @@
+success
+success
+success
+sat
+success
+(get-assignment)
+^^^^^^^^^^^^^^^^
+(error "line 6 column 15: model is not available")

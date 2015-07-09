@@ -1,0 +1,3 @@
+(set-logic QF_NIA )
+^^^^^^^^^^^^^^^^^^^
+(error "logic QF_NIA is not supported")

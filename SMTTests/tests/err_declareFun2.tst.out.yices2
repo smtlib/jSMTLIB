@@ -1,0 +1,6 @@
+success
+success
+success
+(declare-fun x () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "at line 4, column 14: can't redefine term: x")

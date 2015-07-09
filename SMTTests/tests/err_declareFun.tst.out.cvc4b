@@ -1,0 +1,16 @@
+success
+(declare-fun x Bool)
+               ^^^^
+(error "Expected a left parenthesis here, instead of a symbol")
+(declare-fun x () A)
+^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.18: Symbol 'A' not declared as a type")
+(declare-fun x (y z) Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.16: Symbol 'y' not declared as a type")
+(declare-fun x ((y Bool)(y Bool)) Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.23: Symbol 'y' not declared as a type")
+(declare-fun x () A A)
+                    ^
+(error "Too many arguments or extraneous material after the command or missing right parenthesis")

@@ -1,0 +1,9 @@
+(set-info :all-statistics x)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "can't overwrite :all-statistics")
+(set-info :reason-unknown x)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "can't overwrite :reason-unknown")
+(get-info :reason-unknown)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "no logic set")

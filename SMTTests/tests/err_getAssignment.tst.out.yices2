@@ -1,0 +1,7 @@
+success
+(get-assignment)
+^^^^^^^^^^^^^^^^
+(error "can't build the assignment. Call (check-sat) first")
+(get-assignment xxx)
+                ^^^
+(error "A get-assignment command takes no arguments")

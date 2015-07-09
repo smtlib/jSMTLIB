@@ -1,0 +1,5 @@
+success
+success
+(get-value (x))
+^^^^^^^^^^^^^^^
+(error "line 3 column 15: model is not available")

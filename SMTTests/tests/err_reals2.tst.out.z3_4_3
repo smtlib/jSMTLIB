@@ -1,6 +1,0 @@
-success
-success
-(assert (= x 1))
-^^^^^^^^^^^^^^^^
-(error "line 4 column 14: invalid function application, sort mismatch on argument at position 2")
-success

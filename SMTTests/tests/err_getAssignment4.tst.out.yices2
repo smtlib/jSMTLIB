@@ -1,0 +1,7 @@
+success
+success
+success
+unsat
+(get-assignment)
+^^^^^^^^^^^^^^^^
+(error "the context is unsatisfiable")

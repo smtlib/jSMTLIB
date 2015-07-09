@@ -28,10 +28,12 @@ import org.smtlib.sexpr.Parser;
  */
 public class AbstractSolver implements ISolver {
 
-	protected boolean isWindows = System.getProperty("os.name").contains("Wind");
-	protected boolean isMac = System.getProperty("os.name").contains("Mac");
+	protected static boolean isWindows = System.getProperty("os.name").contains("Wind");
+	protected static boolean isMac = System.getProperty("os.name").contains("Mac");
 
 	final protected IKeyword printSuccess;
+	
+	protected boolean printSuccessResponse = true;
 	
 	public AbstractSolver() {
 		try {

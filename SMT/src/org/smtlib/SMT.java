@@ -697,6 +697,7 @@ public class SMT {
 		
 		// Find the adapter, executable, command
 		if (!solvername.equals(Utils.TEST_SOLVER)) {
+			String solvernameNormalized = solvername.replace('-','_').replace('.', '_');
 			// But use this if it is specified
 			if (props != null) {
 				adapterClassName = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_ADAPTER_SUFFIX);
@@ -708,7 +709,7 @@ public class SMT {
 			}
 
 			if (adapterClass == null) {
-				adapterClassName = "org.smtlib.solvers.Solver_" + solvername;
+				adapterClassName = "org.smtlib.solvers.Solver_" + solvernameNormalized;
 				try {
 					adapterClass = Class.forName(adapterClassName);
 				} catch (ClassNotFoundException e) {
@@ -780,6 +781,7 @@ public class SMT {
 			usage();
 			return null;
 		} catch (InvocationTargetException e) {
+			e.printStackTrace();
 			error("Could not invoke the constructor of " + adapterClassName + ": " + e);
 			usage();
 			return null;
