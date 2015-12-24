@@ -68,8 +68,8 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
 //	/** The parser that parses responses from the solver */
 //	protected org.smtlib.sexpr.Parser responseParser;
 //	
-//	/** Set to true once a set-logic command has been executed */
-//	private boolean logicSet = false;
+	/** Set to true once a set-logic command has been executed */
+	private boolean logicSet = false;
 //	
 //	/** The checkSatStatus returned by check-sat, if sufficiently recent, otherwise null */
 //	protected /*@Nullable*/ IResponse checkSatStatus = null;
@@ -85,6 +85,8 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
 //	{ 
 //		options.putAll(Utils.defaults);
 //	}
+	
+	String errorIndication = "ERRORYICES"; // FIXME
 	
 	/** Creates an instance of the Z3 solver */
 	public Solver_yices2(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
@@ -135,6 +137,395 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
 			return ((Response.Seq)r).attributes().get(0).attrValue();
 		}
 		return r;
+	}
+
+	@Override
+	public IResponse check_sat() {
+		IResponse res = super.check_sat();
+		if (res.isError()) return res;
+
+		try {
+			String s = solverProcess.sendAndListen("(check)\r\n");
+			if (s.contains(errorIndication)) {
+				return smtConfig.responseFactory.error(s);
+			}
+			//System.out.println("HEARD: " + s);
+			if (s.contains("unsat")) res = smtConfig.responseFactory.unsat();
+			else if (s.contains("sat")) res = smtConfig.responseFactory.sat();
+			else res = smtConfig.responseFactory.unknown();
+			checkSatStatus = res;
+		} catch (IOException e) {
+			res = smtConfig.responseFactory.error("Failed to check-sat");
+		}
+		return res;
+	}
+
+//	@Override
+//	public IResponse pop(int number) {
+//		IResponse status = super.pop(number);
+//		if (status.isError()) return status;
+//		while (number-- > 0) {
+//			IResponse response = solverProcess.sendAndListen(null,"(pop)");
+//			if (response != null) return response;
+//		}
+//		return smtConfig.responseFactory.success();
+//	}
+//
+//	@Override
+//	public IResponse push(int number) {
+//		IResponse status = super.push(number);
+//		if (status.isError()) return status;
+//		while (number-- > 0) {
+//			IResponse response = send(null,"(push)");
+//			if (response != null) return response;
+//		}
+//		return smtConfig.responseFactory.success();
+//	}
+//
+//	@Override
+//	public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
+//		boolean lSet = logicSet != null;
+//		IResponse status = super.set_logic(logicName,pos);
+//		if (!status.isOK()) return status;
+//
+//		// FIXME - discrimninate among logics
+//
+//		if (lSet) {
+//			if (!smtConfig.relax) return smtConfig.responseFactory.error("Logic is already set");
+//			IResponse response = send(pos,"(reset)");
+//			if (response != null) return response;
+//		}
+//		return status;
+//	}
+
+//	@Override
+//	public IResponse set_option(IKeyword key, IAttributeValue value) {
+//		String option = key.value();
+//		if (Utils.PRINT_SUCCESS.equals(option)) {
+//			if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
+//				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
+//			}
+//			// FIXME - improve the following line
+//			((Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
+//		}
+//		if (Utils.INTERACTIVE_MODE.equals(option) || 
+//				Utils.PRODUCE_MODELS.equals(option) ||
+//				Utils.PRODUCE_UNSAT_CORES.equals(option)) {
+//			if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
+//		} else if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 
+//				Utils.PRODUCE_PROOFS.equals(option)) {
+//			if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
+//			return smtConfig.responseFactory.unsupported();
+//		}
+//		if (Utils.VERBOSITY.equals(option)) {
+//			IAttributeValue v = options.get(option);
+//			smtConfig.verbose = (v instanceof INumeral) ? ((INumeral)v).intValue() : 0;
+//		} else if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
+//			// Actually, v should never be anything but IStringLiteral - that should
+//			// be checked during parsing
+//			String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : "stderr";
+//			if (name.equals("stdout")) {
+//				smtConfig.log.diag = System.out;
+//			} else if (name.equals("stderr")) {
+//				smtConfig.log.diag = System.err;
+//			} else {
+//				try {
+//					FileOutputStream f = new FileOutputStream(name,true); // append
+//					smtConfig.log.diag = new PrintStream(f);
+//				} catch (java.io.IOException e) {
+//					return smtConfig.responseFactory.error("Failed to open or write to the diagnostic output " + e.getMessage(),value.pos());
+//				}
+//			}
+//		} else if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
+//			// Actually, v should never be anything but IStringLiteral - that should
+//			// be checked during parsing
+//			String name = (value instanceof IStringLiteral)?((IStringLiteral)value).value() : "stdout";
+//			if (name.equals("stdout")) {
+//				smtConfig.log.out = System.out;
+//			} else if (name.equals("stderr")) {
+//				smtConfig.log.out = System.err;
+//			} else {
+//				try {
+//					FileOutputStream f = new FileOutputStream(name,true); // append
+//					smtConfig.log.out = new PrintStream(f);
+//				} catch (java.io.IOException e) {
+//					return smtConfig.responseFactory.error("Failed to open or write to the regular output " + e.getMessage(),value.pos());
+//				}
+//			}
+//		}
+//		options.put(option,value);
+//		return smtConfig.responseFactory.success();
+//	}
+
+//	@Override
+//	public IResponse get_option(IKeyword key) {
+//		String option = key.value();
+//		IAttributeValue value = options.get(option);
+//		if (value == null) return smtConfig.responseFactory.unsupported();
+//		return value;
+//	}
+
+	@Override
+	public IResponse get_info(IKeyword key) {
+		String option = key.value();
+		IAttributeValue lit;
+		if (":error-behavior".equals(option)) {
+			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION); // FIXME
+		} else if (":status".equals(option)) {
+			return checkSatStatus==null ? smtConfig.responseFactory.unsupported() : checkSatStatus; 
+		} else if (":all-statistics".equals(option)) {
+			return smtConfig.responseFactory.unsupported(); // FIXME
+		} else if (":reason-unknown".equals(option)) {
+			return smtConfig.responseFactory.unsupported(); // FIXME
+		} else if (":authors".equals(option)) {
+			lit = smtConfig.exprFactory.unquotedString("SRI");
+		} else if (":version".equals(option)) {
+			lit = smtConfig.exprFactory.unquotedString("2.1");
+		} else if (":name".equals(option)) {
+			lit = smtConfig.exprFactory.unquotedString("yices2");
+		} else {
+			return smtConfig.responseFactory.unsupported();
+		}
+		IAttribute<?> attr = smtConfig.exprFactory.attribute(key,lit);
+		return smtConfig.responseFactory.get_info_response(attr);
+	}
+	
+//	@Override
+//	public IResponse declare_fun(Ideclare_fun cmd) {
+//		try {
+//			IResponse status = super.declare_fun(cmd);
+//			if (!status.isOK()) return status;
+//
+//			String name = translate(cmd.symbol());
+//			String yicescmd;
+//			if (cmd.argSorts().size() == 0) {
+//				yicescmd = "(define " + name + "::" + translate(cmd.resultSort()) + ")";
+//			} else {
+//				yicescmd = "(define " + name + "::(->";
+//				for (ISort s: cmd.argSorts()) {
+//					yicescmd = yicescmd + " " + translate(s);
+//				}
+//				yicescmd = yicescmd + " " + translate(cmd.resultSort()) + "))";
+//				
+//			}
+//			IResponse response = send(null,yicescmd);
+//			if (response != null) return response;
+//			return status;
+//		} catch (IVisitor.VisitorException e) {
+//			return smtConfig.responseFactory.error("declare-fun command failed: " + e.getMessage());
+//		}
+//	}
+//
+//	@Override
+//	public IResponse define_fun(Idefine_fun cmd) {
+//		try {
+//			IResponse status = super.define_fun(cmd);
+//			if (!status.isOK()) return status;
+//			
+//			String name = translate(cmd.symbol());
+//			StringBuilder yicescmd = new StringBuilder();;
+//			if (cmd.parameters().size() == 0) {
+//				yicescmd.append("(define " + name + "::" + translate(cmd.resultSort()) + " " 
+//								+ translate(cmd.expression()));
+//			} else {
+//				yicescmd.append("(define " + name + "::(->");
+//				for (IDeclaration d: cmd.parameters()) {
+//					yicescmd.append(" " + translate(d.sort()));
+//				}
+//				yicescmd.append(" " + translate(cmd.resultSort()) + ") ");
+//				yicescmd.append("(lambda (");
+//				for (IDeclaration d: cmd.parameters()) {
+//					yicescmd.append(translate(d.parameter()));
+//					yicescmd.append("::");
+//					yicescmd.append(translate(d.sort()));
+//					yicescmd.append(" ");
+//				}
+//				yicescmd.append(") ");
+//				yicescmd.append(translate(cmd.expression()));
+//				yicescmd.append(")");
+//			}
+//			yicescmd.append(")");
+//			IResponse response = send(null,yicescmd.toString());
+//			if (response != null) return response;
+//			return status;
+//
+//		} catch (IVisitor.VisitorException e) {
+//			return smtConfig.responseFactory.error("assert command failed: " + e.getMessage());
+//		}
+//
+//	}
+//
+//	@Override
+//	public IResponse declare_sort(Ideclare_sort cmd) {
+//		try {
+//			IResponse status = super.declare_sort(cmd);
+//			if (!status.isOK()) return status;
+//			
+//			if (cmd.arity().intValue() == 0) {
+//				IResponse response = send(cmd.sortSymbol().pos(),"(define-type " + translate(cmd.sortSymbol()) + ")");
+//				if (response != null) return response;
+//			} else {
+//				throw new IVisitor.VisitorException("Yices2 does not support defining parameterized types",null);
+//			}
+//			return status;
+//			
+//			// FIXME - Yices does not seem to allow creating arbitrary new types
+//			// Besides Yices uses structural equivalence.
+//
+//		} catch (IVisitor.VisitorException e) {
+//			return smtConfig.responseFactory.error("Yices2 declare-sort command failed: " + e.getMessage(),e.pos());
+//		}
+//
+//	}
+//
+//	@Override
+//	public IResponse define_sort(Idefine_sort cmd) {
+//		try {
+//			IResponse status = super.define_sort(cmd);
+//			if (!status.isOK()) return status;
+//
+//			if (cmd.parameters().size() == 0) {
+//				String msg = "(define-type " + translate(cmd.sortSymbol()) + " ";
+//				msg = msg + translate(cmd.expression()) + ")";
+//				IResponse response = send(cmd.sortSymbol().pos(),msg);
+//				if (response != null) return response;
+//			} else {
+//				throw new IVisitor.VisitorException("Yices2 does not support defining parameterized types",null);
+//			}
+//			return status;
+//
+//			// FIXME - Yices does not seem to allow creating arbitrary new types
+//				// Besides Yices uses structural equivalence.
+//
+//		} catch (IVisitor.VisitorException e) {
+//			return smtConfig.responseFactory.error("Yices2 define-sort command failed: " + e.getMessage(),e.pos());
+//		}
+//
+//	}
+//
+//	@Override 
+//	public IResponse get_proof() {
+//		IResponse status = super.get_proof();
+//		if (status.isError()) return status;
+//		try {
+//			String response = solverProcess.sendAndListen("(get-proof)\n");
+//			if (response.contains(errorIndication)) {
+//				return smtConfig.responseFactory.error(response);
+//			}
+//			return smtConfig.responseFactory.unsupported(); // FIXME - need to return the proof
+//		} catch (IOException e) {
+//			return smtConfig.responseFactory.error("Error writing to Yices2 solver: " + e);
+//		}
+//	}
+//
+//	@Override 
+//	public IResponse get_unsat_core() {
+//		IResponse status = super.get_unsat_core();
+//		if (status.isError()) return status;
+//		try {
+//			String response = solverProcess.sendAndListen("(get-unsat-core)\n");
+//			if (response.contains(errorIndication)) {
+//				return smtConfig.responseFactory.error(response);
+//			}
+//			return smtConfig.responseFactory.unsupported(); // FIXME - need to return the unsat core
+//		} catch (IOException e) {
+//			return smtConfig.responseFactory.error("Error writing to Yices2 solver: " + e);
+//		}
+//	}
+//
+//	@Override 
+//	public IResponse get_assignment() {
+//		IResponse status = super.get_assignment();
+//		if (status.isError()) return status;
+//		try {
+//			String response = solverProcess.sendAndListen("(get-assignment)\n");
+//			if (response.contains(errorIndication)) {
+//				return smtConfig.responseFactory.error(response);
+//			}
+//			return smtConfig.responseFactory.unsupported(); // FIXME - need to return the assignment
+//		} catch (IOException e) {
+//			return smtConfig.responseFactory.error("Error writing to Yices2 solver: " + e);
+//		}
+//	}
+//
+//	@Override 
+//	public IResponse get_value(IExpr... terms) {
+//		IResponse status = super.get_value(terms);
+//		if (status.isError()) return status;
+//		try {
+//			// FIMXE - only one term at a time
+//			IResponse.IFactory factory = smtConfig.responseFactory;
+//			String response = null;
+//			List<IPair<IExpr,IExpr>> list = new LinkedList<IPair<IExpr,IExpr>>();
+//			for (IExpr e: terms) {
+//				String s = "(eval " + translate(e) + ")\n";
+//				response = solverProcess.sendAndListen(s);
+//				if (response.contains(errorIndication)) {
+//					return smtConfig.responseFactory.error(response);
+//				}
+//				IExpr r = parseYicesResponse(response);
+//				if (r == null) return factory.error("Don't know how to parse " + response);
+//
+//				IPair<IExpr,IExpr>  p = factory.pair(e,r);
+//				list.add(p);
+//			}
+//			return factory.get_value_response(list);
+//		} catch (IOException e) {
+//			return smtConfig.responseFactory.error("Error writing to Yices2 solver: " + e);
+//		} catch (IVisitor.VisitorException e) {
+//			return smtConfig.responseFactory.error("Error translating for Yices2: " + e.getMessage());
+//		}
+//	}
+	
+	protected IExpr parseYicesResponse(String response) {
+//		try {
+			response = response.trim();
+			IResponse.IFactory factory = smtConfig.responseFactory;
+			IExpr.IFactory f = smtConfig.exprFactory;
+			if ("true".equals(response) || "false".equals(response)) {
+				return f.symbol(response);
+			}
+			try {
+				Integer i = Integer.valueOf(response);
+				return f.numeral(i);
+			} catch (Exception e) {
+				// continue
+			}
+			if (response.contains("stdin")) return null;
+			if (response.charAt(0) != '(' && !response.contains(" ")) return f.symbol(response);
+			
+//			Pattern oldbv = Pattern.compile("bv([0-9]+)\\[([0-9]+)\\]");
+//			Matcher mm = oldbv.matcher(response);
+//			while (mm.find()) {
+//				long val = Long.parseLong(mm.group(1));
+//				int base = Integer.parseInt(mm.group(2));
+//				String bits = "";
+//				for (int i=0; i<base; i++) { bits = ((val&1)==0 ? "0" : "1") + bits; val = val >>> 1; }
+//				response = response.substring(0,mm.start()) + "#b" + bits + response.substring(mm.end(),response.length());
+//				mm = oldbv.matcher(response);
+//			}
+//			if (response.contains("error")) {
+//				// is this right for Yices2?
+//				// FIXME - (1) the {Print} also needs {Space}; (2) err_getValueTypes.tst returns a non-error s-expr and then an error s-expr - this fails for that case
+//				//Pattern p = Pattern.compile("\\p{Space}*\\(\\p{Blank}*error\\p{Blank}+\"(([\\p{Space}\\p{Print}^[\\\"\\\\]]|\\\\\")*)\"\\p{Blank}*\\)\\p{Space}*");
+//				Pattern p = Pattern.compile("\\p{Space}*\\(\\p{Blank}*error\\p{Blank}+\"(([\\p{Print}\\p{Space}&&[^\"\\\\]]|\\\\\")*)\"\\p{Blank}*\\)");
+//				Matcher m = p.matcher(response);
+//				String concat = "";
+//				while (m.lookingAt()) {
+//					if (!concat.isEmpty()) concat = concat + "; ";
+//					String matched = m.group(1);
+//					concat = concat + matched;
+//					m.region(m.end(0),m.regionEnd());
+//				}
+//				if (!concat.isEmpty()) response = concat;
+//				return smtConfig.responseFactory.error(response);
+//			}
+//			org.smtlib.sexpr.Parser responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source(response,null));
+//			return responseParser.parseResponse(response);
+			return null;
+//		} catch (ParserException e) {
+//			return smtConfig.responseFactory.error("ParserException while parsing response: " + response + " " + e);
+//		}
 	}
 
 

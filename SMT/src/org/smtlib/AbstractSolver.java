@@ -5,6 +5,7 @@
  */
 package org.smtlib;
 
+import org.smtlib.ICommand.Ideclare_const;
 import org.smtlib.ICommand.Ideclare_fun;
 import org.smtlib.ICommand.Ideclare_sort;
 import org.smtlib.ICommand.Idefine_fun;
@@ -75,6 +76,18 @@ public class AbstractSolver implements ISolver {
 		throw new UnsupportedOperationException("AbstractSolver.set_logic");
 	}
 
+	/** @see org.smtlib.ISolver#reset() */
+	@Override
+	public IResponse reset() {
+		throw new UnsupportedOperationException("AbstractSolver.reset");
+	}
+
+	/** @see org.smtlib.ISolver#reset_assertions() */
+	@Override
+	public IResponse reset_assertions() {
+		throw new UnsupportedOperationException("AbstractSolver.reset_assertions");
+	}
+
 	/** @see org.smtlib.ISolver#push(int) */
 	@Override
 	public IResponse push(int number) {
@@ -99,10 +112,22 @@ public class AbstractSolver implements ISolver {
 		throw new UnsupportedOperationException("AbstractSolver.check_sat");
 	}
 
+	/** @see org.smtlib.ISolver#check_sat_assuming()*/
+	@Override
+	public IResponse check_sat_assuming() {
+		throw new UnsupportedOperationException("AbstractSolver.check_sat_assuming");
+	}
+
 	/** @see org.smtlib.ISolver#define_fun(ICommand.Idefine_fun)  */
 	@Override
 	public IResponse define_fun(Idefine_fun cmd) {
 		throw new UnsupportedOperationException("AbstractSolver.define_fun");
+	}
+
+	/** @see org.smtlib.ISolver#declare_const(ICommand.Ideclare_const)  */
+	@Override
+	public IResponse declare_const(Ideclare_const cmd) {
+		throw new UnsupportedOperationException("AbstractSolver.declare_const");
 	}
 
 	/** @see org.smtlib.ISolver#declare_fun(ICommand.Ideclare_fun)  */

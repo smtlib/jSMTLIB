@@ -118,6 +118,16 @@ public interface ICommand extends IAccept {
 	static public interface Icheck_sat extends ICommand {
 	}
 	
+	/** Interface to be implemented by all objects representing SMT-LIB check-sat-assuming commands. */
+	static public interface Icheck_sat_assuming extends ICommand {
+	}
+	
+	/** Interface to be implemented by all objects representing SMT-LIB declare-const commands. */
+	static public interface Ideclare_const extends ICommand {
+		ISymbol symbol();
+		ISort resultSort();
+	}
+	
 	/** Interface to be implemented by all objects representing SMT-LIB declare-fun commands. */
 	static public interface Ideclare_fun extends ICommand {
 		ISymbol symbol();
@@ -172,6 +182,10 @@ public interface ICommand extends IAccept {
 	static public interface Iget_proof extends ICommand {
 	}
 	
+	/** Interface to be implemented by all objects representing SMT-LIB get-unsat-assumptions commands. */
+	static public interface Iget_unsat_assumptions extends ICommand {
+	}
+
 	/** Interface to be implemented by all objects representing SMT-LIB get-unsat-core commands. */
 	static public interface Iget_unsat_core extends ICommand {
 	}
@@ -192,6 +206,14 @@ public interface ICommand extends IAccept {
 	static public interface Ipush extends ICommand {
 		//@ ensures \result.intValue() >= 0;
 		INumeral number();
+	}
+	
+	/** Interface to be implemented by all objects representing SMT-LIB reset commands. */
+	static public interface Ireset extends ICommand {
+	}
+	
+	/** Interface to be implemented by all objects representing SMT-LIB reset-assertions commands. */
+	static public interface Ireset_assertions extends ICommand {
 	}
 	
 	/** Interface to be implemented by all objects representing SMT-LIB set-logic commands. */
