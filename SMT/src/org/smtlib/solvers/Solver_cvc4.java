@@ -47,7 +47,7 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 	protected String cmds[];
 	protected String cmds_win[] = new String[]{ "", "--smtlib-strict","--interactive","--no-full-saturate-quant"}; 
 	protected String cmds_mac[] = new String[]{ "", "--smtlib-strict","--interactive"}; 
-	protected String cmds_unix[] = new String[]{ "", "--smtlib-strict","--incremental"}; // FIXME - probably is --interactive also
+	protected String cmds_unix[] = new String[]{ "", "--smtlib-strict","--incremental", "--interactive"};
 
 	/** The object that interacts with external processes */
 	private SolverProcess solverProcess;
@@ -78,7 +78,6 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 			cmds = cmds_mac;
 		} else {
 			cmds = cmds_unix;
-			prompt = "\n";
 		}
 		cmds[0] = executable;
 		double timeout = smtConfig.timeout;
