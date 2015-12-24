@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: jSMTLIB-Tests
+Bundle-SymbolicName: org.smtlib.SMTTests
+Bundle-Version: 0.9.10.1
+Export-Package: 
+Require-Bundle: org.junit

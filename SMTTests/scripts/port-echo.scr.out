@@ -1,0 +1,12 @@
+SMT: success
+EX 0
+SMT: success
+EX 0
+SMT: (xxx)
+SMT:  ^^^
+SMT: (error "Unknown command: xxx")
+EX 10
+SMT: success
+EX 0
+SMT: success
+EX 0

@@ -1,0 +1,6 @@
+success
+success
+(set-logic QF_UF)(declare-sort A 0)(AAA)(exit)
+                                    ^^^
+(error "Unknown command: AAA")
+success

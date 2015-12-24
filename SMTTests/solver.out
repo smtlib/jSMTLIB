@@ -1,0 +1,2 @@
+;; C:/cygwin/home/dcok/mybin/z3-4.3.exe /smt2 /in SMTLIB2_COMPLIANT=true 
+(set-option :print-success true)

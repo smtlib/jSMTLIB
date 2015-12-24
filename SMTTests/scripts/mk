@@ -1,0 +1,5 @@
+#!/bin/bash
+
+nm=$1
+echo "; testing loading " $nm > ok_setLogic_$nm.tst
+echo "(set-logic $nm )" >> ok_setLogic_$nm.tst
