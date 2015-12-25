@@ -97,7 +97,7 @@ public class SMT {
 		public Set<String> reservedWords = new HashSet<String>();
 
 		/** The version of SMT-LIB to be supported; default (null) is the most recent version */
-		public String smtlib = null;
+		public static String smtlib = null;
 		public static enum SMTLIB {
 			V20("V2.0"),
 			V25("V2.5"),
@@ -106,6 +106,11 @@ public class SMT {
 			private SMTLIB(String id) { this.id = id; }
 			public String toString() { return id; }
 			public static SMTLIB find(String id) { for (SMTLIB e: SMTLIB.values()) { if (e.id.equals(id)) return e; } return null; } 
+		}
+		
+		public static boolean isVersion(SMTLIB version) {
+			if (smtlib == null && version == SMTLIB.V25) return true;
+			return version.toString().equals(smtlib);
 		}
 		
 		/** True to emit diagnostic output through the SMT-LIB diagnostic channel */

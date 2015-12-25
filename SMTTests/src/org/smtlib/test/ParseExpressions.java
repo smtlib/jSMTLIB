@@ -14,10 +14,12 @@ import org.smtlib.IParser.ParserException;
 public class ParseExpressions {
 
 	static JUnitListener listener;
+	String version;
 	
 	@Before
 	public void init() {
 		listener = new JUnitListener(); 
+		version = null;
 	}
 
 	@After
@@ -32,6 +34,7 @@ public class ParseExpressions {
 	
 	public void testExpr(String input, String output) throws Exception {
 		SMT.Configuration config = new SMT.Configuration();
+		config.smtlib = version;
 		ISource source = config.smtFactory.createSource(input,null);
 		IParser p = new org.smtlib.sexpr.Parser(config,source);
 		IExpr e = p.parseExpr();
@@ -48,6 +51,7 @@ public class ParseExpressions {
 	public void testSExpr(String input, String output) throws Exception {
 		try {
 			SMT.Configuration config = new SMT.Configuration();
+			config.smtlib = version;
 			ISource source = config.smtFactory.createSource(input,null);
 			IParser p = new org.smtlib.sexpr.Parser(config,source);
 			IAttributeValue e = p.parseAttributeValue();
@@ -105,9 +109,15 @@ public class ParseExpressions {
 		testExpr("\"asd\""); // String content is a\\s\"d
 	}
 
+	@Test // FIXME - improve and check these tests on string literals
+	public void stringLiteralEscapes20() throws Exception {
+		version = "V2.0";
+		testExpr("\"a\\\\s\\\"d\""); // String content is a\\s\"d
+	}
+
 	@Test
 	public void stringLiteralEscapes() throws Exception {
-		testExpr("\"a\\\\s\\\"d\""); // String content is a\\s\"d
+		testExpr("\"a\\\\s\\\"\"d\"","\"a\\\\s\\\"\"d\""); // String content is a\\s\"d
 	}
 
 	@Test
@@ -160,9 +170,15 @@ public class ParseExpressions {
 		testSExpr("2.4");
 	}
 
+	@Test  // FIXME - improve and check these tests on string literals
+	public void sexprString20() throws Exception {
+		version = "V2.0";
+		testSExpr("\"asd\\\"sdf\\\\dfg\"");
+	}
+
 	@Test
 	public void sexprString() throws Exception {
-		testSExpr("\"asd\\\"sdf\\\\dfg\"");
+		testSExpr("\"asd\\\"\"sdf\\\\dfg\"","\"asd\\\"\"sdf\\\\dfg\"");
 	}
 
 	@Test

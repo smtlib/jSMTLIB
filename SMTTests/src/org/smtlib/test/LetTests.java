@@ -8,7 +8,7 @@ import org.smtlib.IResponse;
 @RunWith(ParameterizedWithNames.class)
 public class LetTests extends LogicTests {
 
-    public LetTests(String solvername) {
+    public LetTests(String solvername, String version) {
     	this.solvername = solvername;
     }
     

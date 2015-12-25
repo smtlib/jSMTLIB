@@ -400,26 +400,20 @@ public class Lexer {
 				int begin = matcher.start(k); // position of the initial quote
 				int p = begin;
 				try {
-					if (false) { // Version 2.0
+					if (smtConfig.isVersion(SMT.Configuration.SMTLIB.V25)) { // Version 2.5ff
 						while (true) {
 							p++;
 							int c = csr.charAt(p);
-							if (c == '\\') {
-								c = csr.charAt(++p);
-								// \\ is translated to \ and \" to "
-								// \x for anything else is just \x
-								//							if (c == '\\' || c == '"') {
-								//								continue;
-								//							} else {
-								//								smtConfig.log.logError(smtConfig.responseFactory.error("Invalid escape sequence " + (char)c + " (decimal ASCII = " + (int)c + ")",
-								//										pos(p,p+1)));
-								//							}
-							} else if (c == '"') {
-								end = p+1;
-								matched = csr.subSequence(begin,end).toString();
-								pos = pos(begin,end);
-								token = setPos(new LexStringLiteral(matched,true),pos);
-								break;
+							if (c == '"') {
+								if (p+1 < csr.length() && csr.charAt(p+1) == '"') {
+									p++;
+								} else {
+									end = p+1;
+									matched = csr.subSequence(begin,end).toString();
+									pos = pos(begin,end);
+									token = setPos(new LexStringLiteral(matched,true),pos);
+									break;
+								}
 							} else {
 								if (c >= ' ' && c <= '~') continue;
 								if (c == '\t' || c == '\r' || c == '\n') continue;
@@ -436,20 +430,26 @@ public class Lexer {
 								continue;
 							}
 						}
-					} else { // Version 2.5ff
+					} else if (SMT.Configuration.SMTLIB.V20.toString().equals(smtConfig.smtlib)) { // Version 2.0
 						while (true) {
 							p++;
 							int c = csr.charAt(p);
-							if (c == '"') {
-								if (p+1 < csr.length() && csr.charAt(p+1) == '"') {
-									p++;
-								} else {
-									end = p+1;
-									matched = csr.subSequence(begin,end).toString();
-									pos = pos(begin,end);
-									token = setPos(new LexStringLiteral(matched,true),pos);
-									break;
-								}
+							if (c == '\\') {
+								c = csr.charAt(++p);
+								// \\ is translated to \ and \" to "
+								// \x for anything else is just \x
+								//								if (c == '\\' || c == '"') {
+								//									continue;
+								//								} else {
+								//									smtConfig.log.logError(smtConfig.responseFactory.error("Invalid escape sequence " + (char)c + " (decimal ASCII = " + (int)c + ")",
+								//											pos(p,p+1)));
+								//								}
+							} else if (c == '"') {
+								end = p+1;
+								matched = csr.subSequence(begin,end).toString();
+								pos = pos(begin,end);
+								token = setPos(new LexStringLiteral(matched,true),pos);
+								break;
 							} else {
 								if (c >= ' ' && c <= '~') continue;
 								if (c == '\t' || c == '\r' || c == '\n') continue;

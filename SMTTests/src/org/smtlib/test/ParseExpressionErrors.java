@@ -16,6 +16,7 @@ import org.smtlib.IParser.ParserException;
 public class ParseExpressionErrors {
 	
 	static JUnitListener listener;
+	String version;
 	
 	@Before
 	public void init() {
@@ -24,6 +25,7 @@ public class ParseExpressionErrors {
 
 	public void testExpr(String input, String msg, int start, int end) throws Exception {
 		SMT.Configuration config = new SMT.Configuration();
+		config.smtlib = version;
 		config.log.clearListeners();
 		config.log.addListener(listener);
 		ISource source = config.smtFactory.createSource(input,null);
@@ -40,6 +42,7 @@ public class ParseExpressionErrors {
 	public void testSExpr(String input, String output) throws Exception {
 		try {
 			SMT.Configuration config = new SMT.Configuration();
+			config.smtlib = version;
 			config.log.clearListeners();
 			config.log.addListener(listener);
 			ISource source = config.smtFactory.createSource(input,null);
@@ -78,6 +81,11 @@ public class ParseExpressionErrors {
 
 	@Test
 	public void sexprStringError() throws Exception {
+		testSExpr("\"asddfg","(error \"String literal is not terminated: \"\"asddfg\")");
+	}
+	@Test
+	public void sexprStringErrorA() throws Exception {
+		version = "V2.0";
 		testSExpr("\"asddfg","(error \"String literal is not terminated: \\\"asddfg\")");
 	}
 
@@ -123,6 +131,11 @@ public class ParseExpressionErrors {
 
 	@Test
 	public void errorBadSymbol8() throws Exception {
+		testSExpr("\\","(error \"Invalid token: \\\")");
+	}
+	@Test
+	public void errorBadSymbol8a() throws Exception {
+		version = "V2.0";
 		testSExpr("\\","(error \"Invalid token: \\\\\")");
 	}
 
@@ -143,6 +156,11 @@ public class ParseExpressionErrors {
 
 	@Test
 	public void errorBadSymbol12() throws Exception {
+		testSExpr("\"","(error \"String literal is not terminated: \"\"\")");
+	}
+	@Test
+	public void errorBadSymbol12a() throws Exception {
+		version = "V2.0";
 		testSExpr("\"","(error \"String literal is not terminated: \\\"\")");
 	}
 

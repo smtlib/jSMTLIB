@@ -17,12 +17,13 @@ import java.util.Set;
 import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.ISymbol;
+import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.impl.Factory;
 import org.smtlib.impl.SMTExpr;
 
 /** A class of static utility methods and constants for the SMT-LIB package. */
 public class Utils {
-
+	
 	/** The name of the properties file read by jSMTLIB */
 	static final public String PROPS_FILE = "jsmtlib.properties";
 	
@@ -205,7 +206,7 @@ public class Utils {
 	static {
 		// Initializing all the standard smtConfig keywords
 		boolOptions.add(PRINT_SUCCESS);
-		//boolOptions.add(EXPAND_DEFINITIONS); // FIXME - this does belong in V2.0
+		if (SMT.Configuration.isVersion(SMTLIB.V20)) boolOptions.add(EXPAND_DEFINITIONS);
 		boolOptions.add(INTERACTIVE_MODE);
 		boolOptions.add(PRODUCE_PROOFS);
 		boolOptions.add(PRODUCE_UNSAT_CORES);
@@ -216,7 +217,7 @@ public class Utils {
 		stringOptions.add(REGULAR_OUTPUT_CHANNEL);
 		stringOptions.add(DIAGNOSTIC_OUTPUT_CHANNEL);
 		defaults.put(PRINT_SUCCESS, TRUE);
-		//defaults.put(EXPAND_DEFINITIONS, FALSE); // FIXME - this does belong in v 2.0
+		if (SMT.Configuration.isVersion(SMTLIB.V20)) defaults.put(EXPAND_DEFINITIONS, FALSE); 
 		defaults.put(INTERACTIVE_MODE, FALSE);
 		defaults.put(PRODUCE_PROOFS, FALSE);
 		defaults.put(PRODUCE_UNSAT_CORES, FALSE);
@@ -261,7 +262,7 @@ public class Utils {
 	public static String quote(String msg) {
 		StringBuilder sb = new StringBuilder();
 		sb.append('"');
-		if (false) { // Version 2.0
+		if (SMT.Configuration.isVersion(SMTLIB.V20)) { // Version 2.0
 			for (char c : msg.toCharArray()) {
 				// In SMT-LIB v2.0, the only escapes within strings are for " and \
 				// which are represented as \" and \\
@@ -315,7 +316,7 @@ public class Utils {
 		int k = 1;
 		int endPos = msg.length() - 1;
 		while (k < endPos) {
-			if (false) { // Version 2.0
+			if (SMT.Configuration.isVersion(SMTLIB.V20)) { // Version 2.0
 				int kk = msg.indexOf('\\', k);
 				if (kk == -1) {
 					sb.append(msg.substring(k, endPos));
@@ -333,7 +334,7 @@ public class Utils {
 					}
 					k = kk + 2;
 				}
-			} else { // Version 2.5
+			} else if (SMT.Configuration.isVersion(SMTLIB.V25)) { // Version 2.5
 				int kk = msg.indexOf('"', k);
 				if (kk == -1) { // FIXME - there should always be a " at the end of the string
 					sb.append(msg.substring(k, endPos));

@@ -2,8 +2,10 @@ package org.smtlib.test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -26,21 +28,26 @@ public class LogicTests {
 	
 	static int smtlib_version = v20;
 
-	public static final String[][] solvers = new String[][] {
-            { "test"}, 
-            { "z3_4_3" }, 
-            { "z3_4_4" }, 
-            /*{ "z3_2_11" }, { "yices" },*/ 
-            //{ "yices2" }, 
-            {"cvc4"}, 
-            {"cvc4b"}, 
-            /* {"cvc"}, */
-            {"simplify"}, 
+	public static final String[] solvers = new String[] {
+            "test", 
+            "z3_4_3", 
+            "z3_4_4", 
+            /*"z3_2_11", "yices",*/ 
+            //"yices2", 
+            "cvc4", 
+            "cvc4b", 
+            /*"cvc"}, */
+            "simplify", 
             } ;
 	
     @Parameters
     public static Collection<String[]> data() {
-            return Arrays.asList(solvers);
+    	List<String[]> list = new ArrayList<>(solvers.length * 3);
+    	for (String solver: solvers) {
+    		list.add(new String[]{solver, "V2.0"});
+    		list.add(new String[]{solver, "V2.5"});
+    	}
+        return list;
     }
 
     String solvername;
@@ -48,6 +55,7 @@ public class LogicTests {
 	ISolver solver;
 	SMT smt;
 	JUnitListener listener;
+	String version;
 	
 	@Before
 	public void setup() {
@@ -69,6 +77,7 @@ public class LogicTests {
 		smt.smtConfig.log.addListener(listener);
 		smt.smtConfig.solvername = solvername;
 		smt.smtConfig.logfile = "solver.out";
+		smt.smtConfig.smtlib = version;
 		ISolver s = smt.startSolver(smt.smtConfig,solvername,null);
 		if (s == null) throw new RuntimeException("Failed to create or start solver");
 		solver = s;

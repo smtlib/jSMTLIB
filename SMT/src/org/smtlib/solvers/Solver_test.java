@@ -22,6 +22,7 @@ import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IPos.IPosable;
+import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.impl.Response;
 
 /** This class is a Solver implementation that simply type-checks formulae and checks that
@@ -367,6 +368,7 @@ public class Solver_test implements ISolver {
 	@Override
 	public IResponse get_option(IKeyword key) {
 		IAttributeValue value = options.get(key.value());
+		//if (smtConfig.isVersion(SMTLIB.V20))
 		if (value == null) return smtConfig.responseFactory.unsupported();
 		return value;
 	}

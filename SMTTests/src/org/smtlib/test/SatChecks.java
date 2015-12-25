@@ -10,7 +10,7 @@ import org.smtlib.IResponse;
 @RunWith(ParameterizedWithNames.class)
 public class SatChecks extends LogicTests {
 
-    public SatChecks(String solvername) {
+    public SatChecks(String solvername, String version) {
     	this.solvername = solvername;
     }
 

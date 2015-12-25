@@ -28,8 +28,8 @@ public class FileTests  extends LogicTests {
     	String[] files = f.list();
     	for (String ff: files) { 
     		if (ff.endsWith(".tst")) {
-    			for (String[] s : solvers) {
-    				data.add(new String[]{s[0],ff});
+    			for (String s : solvers) {
+    				data.add(new String[]{s,ff});
     			}
     		}
 //    		if (ff.getName().endsWith(".tst")) {
@@ -90,9 +90,15 @@ public class FileTests  extends LogicTests {
 			if (r != null) try { r.close(); } catch (IOException ee) {}
 		}
 	}
+	
+	static String shortname(String name) {
+		if (name.startsWith("z3")) return "z3";
+		return name;
+	}
     
 	@Test
 	public void checkFile() {
+		if ("err_tokens.tst".equals(testfile)) Assert.fail();
 		Assume.assumeTrue(!("err_namedExpr2.tst".equals(testfile) && "yices2".equals(solvername))); // FIXME - yices2 does not support Boolean quantifiers
 		Assume.assumeTrue(!("ok_regularOutput.tst".equals(testfile))); // FIXME - appears to hang
 
@@ -101,15 +107,14 @@ public class FileTests  extends LogicTests {
 		String script = readFile("tests/" + testfile);
 		String outname = "tests/" + testfile + ".out";
 		String altname = outname + "." + solvername;
+		String altname2 = outname + "." + shortname(solvername);
 		Assume.assumeTrue(! (new File(altname + ".skip").exists()) );
-		if (new File(altname).isFile()) outname = altname;
-		else if (new File(altname.replace("z3_4_3", "z3")).isFile()) outname = altname.replace("z3_4_3", "z3");
-		else if (new File(altname.replace("z3_2_11", "z3")).isFile()) outname = altname.replace("z3_2_11", "z3");
-		altname = altname + ".bad";
-		if (new File(altname).isFile()) outname = altname;
-		else if (new File(altname.replace("z3_4_3", "z3")).isFile()) outname = altname.replace("z3_4_3", "z3");
-		else if (new File(altname.replace("z3_2_11", "z3")).isFile()) outname = altname.replace("z3_2_11", "z3");
-		File actualFile = new File("tests/" + testfile + ".out." + solvername + ".actual");
+		String[] names = new String[]{ altname + "." + version + ".bad", altname + ".bad", outname + "." + version + ".bad", outname + ".bad", altname + "." + version, altname2 + "." + version, altname, altname2, outname  + "." + version, outname};
+		for (String name: names) {
+			if (new File(name).exists()) { outname = name; break; }
+		}
+
+		File actualFile = new File("tests/" + testfile + ".out." + solvername + "." + version + ".actual");
 		String actual = doScript(script).replace("\r\n","\n");
 		if (!new File(outname).exists()) {
 			try {
@@ -138,5 +143,4 @@ public class FileTests  extends LogicTests {
 			Assert.assertEquals(output,actual);
 		}
 	}
-	
 }

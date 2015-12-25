@@ -5,12 +5,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.ParameterizedWithNames;
 import org.smtlib.IResponse;
+import org.smtlib.SMT;
+import org.smtlib.SMT.Configuration.SMTLIB;
 
 @RunWith(ParameterizedWithNames.class)
 public class QuantTests extends LogicTests {
 
-    public QuantTests(String solvername) {
+    public QuantTests(String solvername, String version) {
     	this.solvername = solvername;
+    	this.version = version;
     }
     
 	@Override
@@ -37,8 +40,10 @@ public class QuantTests extends LogicTests {
 
 	@Test
 	public void checkQuantifiedTransUnsat() {
+		String result = "unsat";
 		Assume.assumeTrue(!"simplify".equals(solvername)); // FIXME - simplify does not implement Bool terms
 		Assume.assumeTrue(!"yices2".equals(solvername)); // FIXME - yices2 has a bug here as of Feb 2014
+		if ("z3_4_4".equals(solvername)) result = "unknown"; // FIXME - problem with Z3 4.4
 		doCommand("(set-logic AUFLIA)");
 		doCommand("(declare-fun p () Bool)");
 		doCommand("(declare-fun q () Bool)");
@@ -47,7 +52,7 @@ public class QuantTests extends LogicTests {
 		doCommand("(assert (forall ((x Bool)(y Bool)(z Bool)) (=> (and (f x y) (f y z)) (f x z))))");
 		doCommand("(assert (and (f p q) (f q r)))");
 		doCommand("(assert (not (f p r)))");
-		doCommand("(check-sat)","unsat");
+		doCommand("(check-sat)",result);
 		doCommand("(exit)");
 	}
 
@@ -72,6 +77,7 @@ public class QuantTests extends LogicTests {
 	public void checkQuantifiedTransUnSatNT() {
 		Assume.assumeTrue(!"yices2".equals(solvername)); // FIXME - yices2 does not implement quantifiers as terms
 		String result = "test".equals(solvername) ? "unknown" : "unsat";
+		if ("z3_4_4".equals(solvername)) result = "unknown"; // FIXME - Z3 4.4 problem
 		doCommand("(set-logic AUFLIA)");
 		doCommand("(declare-sort B 0)");
 		doCommand("(declare-fun p () B)");
@@ -90,8 +96,11 @@ public class QuantTests extends LogicTests {
 		Assume.assumeTrue(!"simplify".equals(solvername)); // FIXME - simplify does not implement Bool terms
 		Assume.assumeTrue(!"yices2".equals(solvername));  // FIXME - yices crashes
 
-		String result = "simplify".equals(solvername) || "z3_4_3".equals(solvername) || "yices2".equals(solvername)? "sat" : "unknown";
+		String result = "sat";
 		String result2 = "unsat";
+		if ("test".equals(solvername)) result = result2 = "unknown";
+		if ("cvc4".equals(solvername)) result =  "unknown";
+		if ("cvc4b".equals(solvername)) result = "unknown";
 		doCommand("(set-logic AUFLIA)");
 		doCommand("(declare-fun p () Bool)");
 		doCommand("(declare-fun q () Bool)");

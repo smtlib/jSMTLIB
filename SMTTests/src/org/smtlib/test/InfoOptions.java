@@ -8,6 +8,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.*;
 import org.smtlib.IResponse;
+import org.smtlib.SMT;
+import org.smtlib.SMT.Configuration.SMTLIB;
+import org.smtlib.Utils;
 import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.impl.Response;
@@ -17,8 +20,9 @@ public class InfoOptions  extends LogicTests {
 
 	boolean isTest;
 	
-    public InfoOptions(String solvername) {
+    public InfoOptions(String solvername, String version) {
     	this.solvername = solvername; 
+    	this.version = version;
     	this.isTest = "test".equals(solvername);
     }
     
@@ -289,39 +293,25 @@ public class InfoOptions  extends LogicTests {
 				"false");
 	}
 	
-	@Test // V2.0 only
+	@Test
 	public void checkExpandDefinitions() {
-		Assume.assumeTrue(smtlib_version <= v20);
-		boolean supported = !solvername.equals("z3_4_4") && !solvername.equals("yices2");
+		boolean supported = smt.smtConfig.isVersion(SMT.Configuration.SMTLIB.V20) && !solvername.equals("z3_4_4") && !solvername.equals("yices2");
 		doCommand("(get-option :expand-definitions)", 
 				supported ? "false" : "unsupported"
 				);
 	}
-	
+		
 	@Test
-	public void checkExpandDefinitions2() {
-		Assume.assumeTrue(smtlib_version >= v25);
-		boolean supported = false; //solvername.startsWith("z3") || solvername.startsWith("test");
-		doCommand("(get-option :expand-definitions)", 
-				 supported ? "false" : "unsupported"
-				);
-	}
-	
-	@Test // V2.0 only
 	public void checkSetExpandDefinitions() {
-		Assume.assumeTrue(smtlib_version <= v20);
+		boolean supported = smt.smtConfig.isVersion(SMT.Configuration.SMTLIB.V20) && !solvername.equals("yices2") && !solvername.equals("z3_4_4");
 		doCommand("(set-option :expand-definitions true)", 
-				solvername.equals("yices2") || solvername.equals("z3_4_4") ? "unsupported" :
-				"success");
+				!supported ? "unsupported" : "success");
 		doCommand("(get-option :expand-definitions)", 
-				solvername.equals("yices2") || solvername.equals("z3_4_4") ? "unsupported" :
-				"true");
+				!supported ? "unsupported" : "true");
 		doCommand("(set-option :expand-definitions false)", 
-				solvername.equals("yices2") || solvername.equals("z3_4_4") ? "unsupported" :
-				"success");
+				!supported ? "unsupported" : "success");
 		doCommand("(get-option :expand-definitions)", 
-				solvername.equals("yices2") || solvername.equals("z3_4_4") ? "unsupported" :
-				"false");
+				!supported ? "unsupported" : "false");
 	}
 	
 	@Test
