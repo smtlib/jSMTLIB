@@ -139,7 +139,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			// Can't turn off printing success, or we get no feedback
 			solverProcess.sendAndListen("(set-option :print-success true)\n"); // Z3 4.3.0 needs this because it mistakenly has the default for :print-success as false
 			//if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Started Z3-4.3 ");
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Started "+NAME_VALUE+" ");
 			return smtConfig.responseFactory.success();
 		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
