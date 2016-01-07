@@ -33,4 +33,7 @@ echo Build complete
 export OPENJML=../../../../eworkspaces/OpenJMLgit/OpenJML
 if [ -e $OPENJML/OpenJML ] ; then cp jSMTLIB.jar $OPENJML/OpenJML ; else echo Copy failed ; fi
 if [ -e $OPENJML/OpenJMLUI ] ; then cp jSMTLIB.jar $OPENJML/OpenJMLUI ; else echo Copy failed; fi
+export OPENJML=../../../../../OpenJML-git-java8/OpenJML
+if [ -e $OPENJML/OpenJML ] ; then cp jSMTLIB.jar $OPENJML/OpenJML ; else echo Copy failed ; fi
+if [ -e $OPENJML/OpenJMLUI ] ; then cp jSMTLIB.jar $OPENJML/OpenJMLUI ; else echo Copy failed; fi
 echo Copies complete
