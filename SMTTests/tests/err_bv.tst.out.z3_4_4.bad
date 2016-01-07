@@ -4,10 +4,10 @@ success
 success
 (declare-fun k () (_ BitVec 0))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 5 column 29: bit-vector size must be greater than zero")
+(error "line 6 column 29: bit-vector size must be greater than zero")
 (declare-fun k () (_ BitVecx 0))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 6 column 21: unknown sort 'BitVecx'")
+(error "line 7 column 21: unknown sort 'BitVecx'")
 (declare-fun k () (_ BitVec -1))
                             ^^
 (error "Expected a numeral here, instead of a symbol")
@@ -16,7 +16,7 @@ success
 (error "Expected a numeral here, instead of a )")
 (declare-fun k () (_ BitVec 1 2))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 7 column 31: expecting one integer parameter to bit-vector sort")
+(error "line 8 column 31: expecting one integer parameter to bit-vector sort")
 success
 success
 success

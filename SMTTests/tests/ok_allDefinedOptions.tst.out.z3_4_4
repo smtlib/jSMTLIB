@@ -4,8 +4,8 @@ unsupported
 false
 false
 false
-true
 false
-stdout
-stderr
+false
+"stdout"
+"stderr"
 0

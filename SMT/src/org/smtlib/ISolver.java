@@ -12,6 +12,7 @@ import org.smtlib.ICommand.Idefine_fun;
 import org.smtlib.ICommand.Idefine_sort;
 import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.IKeyword;
+import org.smtlib.IExpr.IStringLiteral;
 
 
 /** This is the interface to be implemented by any solver adapter;
@@ -44,6 +45,12 @@ public interface ISolver {
 	 * @return success or error
 	 */
 	IResponse exit();
+	
+	/** Echo the argument */
+	IResponse echo(IStringLiteral arg);
+	
+	/** Send comment text - the argument must be white-space + legitimate comment text */
+	void comment(String comment);
 	
 	/** Sets the logic the solver should use; the position argument is
 	 * just used for position information in error messages.
@@ -79,7 +86,7 @@ public interface ISolver {
 	/** Checks whether the current state is satisfiable in the current logic, under specified assumptions.
 	 * @return sat, unsat, unknown or error
 	 */
-	IResponse check_sat_assuming();
+	IResponse check_sat_assuming(IExpr...  exprs);
 	
 	/** Defines a new uninterpreted constant; returns success or error*/
 	IResponse declare_const(Ideclare_const cmd); // FIXME - use ISymbol, ISort as arguments?
@@ -125,6 +132,9 @@ public interface ISolver {
 	 * @return error or success or unsupported (if proof production is not supported) or a proof
 	 */
 	IResponse get_proof();
+	
+	/** Returns a model of current satisfiable state */
+	IResponse get_model();
 	
 	/** Returns a list of the names of formulae in the unsat core of the current (unsatisfiable) state.
 	 * May only be issued if :produce-unsat-core is enabled.

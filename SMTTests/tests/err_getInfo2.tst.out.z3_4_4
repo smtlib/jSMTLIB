@@ -1,9 +1,9 @@
 (get-info :reason-unknown)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 1 column 11: state of the most recent check-sat command is not unknown")
+(error "line 2 column 11: state of the most recent check-sat command is not unknown")
 ( )
 success
 (get-info :reason-unknown)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 4 column 10: state of the most recent check-sat command is not unknown")
+(error "line 5 column 10: state of the most recent check-sat command is not unknown")
 ( )

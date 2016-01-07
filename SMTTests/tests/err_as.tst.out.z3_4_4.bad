@@ -3,6 +3,6 @@ success
 success
 (assert (= ((as zzz Bool) true false) false)) ;; unknown identifier
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 4 column 36: unknown function/constant zzz")
+(error "line 5 column 36: unknown function/constant zzz")
 success
 success

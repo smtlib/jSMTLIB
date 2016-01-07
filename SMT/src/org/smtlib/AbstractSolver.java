@@ -5,6 +5,8 @@
  */
 package org.smtlib;
 
+import java.io.IOException;
+
 import org.smtlib.ICommand.Ideclare_const;
 import org.smtlib.ICommand.Ideclare_fun;
 import org.smtlib.ICommand.Ideclare_sort;
@@ -12,6 +14,7 @@ import org.smtlib.ICommand.Idefine_fun;
 import org.smtlib.ICommand.Idefine_sort;
 import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.IKeyword;
+import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.SMT.Configuration;
 import org.smtlib.sexpr.Parser;
 
@@ -70,6 +73,15 @@ public class AbstractSolver implements ISolver {
 		throw new UnsupportedOperationException("AbstractSolver.exit");
 	}
 
+	@Override
+	public IResponse echo(IStringLiteral arg) {
+		throw new UnsupportedOperationException("AbstractSolver.echo");
+	}
+
+	@Override public void comment(String comment) {
+		// No action
+	}
+
 	/** @see org.smtlib.ISolver#set_logic(String,IPos) */
 	@Override
 	public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
@@ -114,7 +126,7 @@ public class AbstractSolver implements ISolver {
 
 	/** @see org.smtlib.ISolver#check_sat_assuming()*/
 	@Override
-	public IResponse check_sat_assuming() {
+	public IResponse check_sat_assuming(IExpr ... exprs) {
 		throw new UnsupportedOperationException("AbstractSolver.check_sat_assuming");
 	}
 
@@ -170,6 +182,12 @@ public class AbstractSolver implements ISolver {
 	@Override
 	public IResponse get_proof(){
 		throw new UnsupportedOperationException("AbstractSolver.get_proof");
+	}
+
+	/** @see org.smtlib.ISolver#get_proof()*/
+	@Override
+	public IResponse get_model(){
+		throw new UnsupportedOperationException("AbstractSolver.get_model");
 	}
 
 	/** @see org.smtlib.ISolver#get_unsat_core()*/

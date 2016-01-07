@@ -162,6 +162,7 @@ public class Parser extends Lexer implements IParser {
 						do { getToken(); } while (!isLP() && !isEOD());
 						return null;
 					}
+					String prefixText = prefixCommentText;
 					smtConfig.topLevel = false;
 					Symbol sym = parseSymbolOrReservedWord("Expected a symbol here, not a #");
 					if (sym == null) {
@@ -223,6 +224,7 @@ public class Parser extends Lexer implements IParser {
 					}
 					if (command != null) {
 						setPos(command,pos(savedlp.pos(),rp.pos()));
+						command.prefixText = prefixText;
 					}
 				} catch (AbortParseException e) {
 					smtConfig.log.logOut("Input aborted\n");

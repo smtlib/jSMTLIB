@@ -1,7 +1,7 @@
 success
 (get-assignment)
 ^^^^^^^^^^^^^^^^
-(error "line 2 column 15: model is not available")
+(error "The get-assignment command is only valid if :produce-assignments has been enabled")
 (get-assignment xxx)
                 ^^^
 (error "A get-assignment command takes no arguments")

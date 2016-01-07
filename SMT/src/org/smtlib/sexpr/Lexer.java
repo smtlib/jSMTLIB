@@ -109,6 +109,9 @@ public class Lexer {
 	/** The Matcher used to do lexical scanning */
 	final protected Matcher matcher;
 	
+	/** Any comment text found before the current token */
+	public String prefixCommentText;
+	
 	/** The source of input used in this lexer; typically a different
 	 * lexer object will be used for each source (e.g. different file, string,
 	 * port, etc.) of input data.
@@ -189,7 +192,7 @@ public class Lexer {
 	 * scan the string by hand and adjust the matcher position afterwards.
 	 */
 	public static Pattern combined = Pattern.compile(
-			"(" + rgxWhiteSpace + "|" + rgxComment + ")*((" // first skip all whitespace and comments
+			"((?:" + rgxWhiteSpace + "|" + rgxComment + ")*)((" // first skip all whitespace and comments
 				+ "\\(" + ")|("        	// group 3: left parenthesis
 				+ "\\)" + ")|("			// group 4: right parenthesis
 				+ rgxNumeral + ")" + trailer + "|("	// group 5: numeral
@@ -368,6 +371,12 @@ public class Lexer {
 	protected ILexToken getToken(Matcher matcher) throws ParserException {
 		ILexToken token = null;
 		if (matcher.lookingAt()) {
+			prefixCommentText = null;
+			if (matcher.groupCount() >= 1 && matcher.end(1) != matcher.start(1)) {
+				prefixCommentText = matcher.group(1);
+				if (prefixCommentText.startsWith("\n")) prefixCommentText = prefixCommentText.substring(1);
+				else if (prefixCommentText.startsWith("\r\n")) prefixCommentText = prefixCommentText.substring(2);
+			}
 			int end = matcher.end(2);
 			//			System.out.println("MATCHED RANGE " + matcher.start() + " " + matcher.end() + " !" + matcher.group() + "!");
 			//			for (int i=3; i<=matcher.groupCount(); i++) {

@@ -17,6 +17,8 @@ public abstract class Command implements ICommand, IPosable {
 		pos = null;
 	}
 	
+	public /*@Nullable*//*@ReadOnly*/ String prefixText; 
+	
 	/** The textual position of the command, if any */
 	protected /*@Nullable*//*@ReadOnly*/IPos pos;
 	

@@ -3,20 +3,16 @@ success
 success
 (assert (forall ((r Bool)) (! r :named R))) ; error
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 4 column 74: named expression already defined")
+(error "line 5 column 40: invalid named expression, expression contains free variables")
 (assert (exists ((r Bool)) (! r :named R))) ; error
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 5 column 40: named expression already defined")
-(assert (forall ((r Bool)) (and r (! q :named R)))) ; OK
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 6 column 48: named expression already defined")
+(error "line 6 column 40: invalid named expression, expression contains free variables")
+success
 (assert (let ((r true)) (! r :named R))) ; error - R already defined
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 7 column 37: named expression already defined")
+(error "line 8 column 37: named expression already defined")
 success
-(assert (forall ((r Bool)) (let ((r true)) (! r :named RR)))) ; OK
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 9 column 110: named expression already defined")
+success
 (assert (forall ((q Bool)) (let ((r q)) (! r :named RRR)))) ; error - FIXME
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 10 column 105: named expression already defined")
+(error "line 11 column 54: invalid named expression, expression contains free variables")

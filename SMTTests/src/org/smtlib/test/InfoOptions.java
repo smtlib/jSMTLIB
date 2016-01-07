@@ -98,16 +98,15 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkSetName() {
 		doCommand("(set-info :name \"xx\")",
-				solvername.equals("z3_4_4") ? "success" :
-						solvername.equals("yices2") ?
-				"(error \"can't overwrite :name\")" :
+//				solvername.equals("z3_4_4") ? "success" :
+				solvername.equals("yices2") ? "(error \"can't overwrite :name\")" :
 				"(error \"Setting the value of a pre-defined keyword is not permitted: :name\")");
 	}
 	
 	@Test
 	public void checkSetAuthors() {
 		doCommand("(set-info :authors \"xx\")",
-				solvername.equals("z3_4_4") ? "success" :
+//				solvername.equals("z3_4_4") ? "success" :
 				solvername.equals("yices2") ?
 				"(error \"can't overwrite :authors\")" :
 				"(error \"Setting the value of a pre-defined keyword is not permitted: :authors\")");
@@ -134,10 +133,10 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkRegularOutput() {
+		// The correct result is a quote-delimited string
 		doCommand("(get-option :regular-output-channel)", 
 				solvername.startsWith("cvc4")? "unsupported" :
-				solvername.equals("z3_4_4")? "stdout"
-						: "\"stdout\""
+						"\"stdout\""
 				);
 	}
 	
@@ -152,10 +151,11 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkDiagnosticOutput() {
+		// The correct result is a quote-delimited string
 		doCommand("(get-option :diagnostic-output-channel)", 
 				solvername.startsWith("cvc4")? "unsupported" :
-				solvername.equals("z3_4_4")? "stderr"
-						: "\"stderr\""
+//				solvername.equals("z3_4_4")? "stderr" :
+						"\"stderr\""
 				);
 	}
 	
@@ -203,15 +203,15 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkSetProduceProofs() {
 		doCommand("(set-option :produce-proofs true)", 
-				isTest || solvername.equals("z3_4_4")? "success" 
+				isTest ? "success" 
 						: solvername.startsWith("cvc4")? "(error \"Error in option parsing: option `produce-proofs' requires a proofs-enabled build of CVC4; this binary was not built with proof support\")"
 						:  "unsupported");
 		doCommand("(get-option :produce-proofs)", 
-				isTest || solvername.equals("z3_4_4")? "true"
+				isTest ? "true"
 			    : solvername.equals("yices2") ? "unsupported"
 				:  "false");
 		doCommand("(set-option :produce-proofs false)", 
-				isTest || solvername.equals("z3_4_4")? "success" 
+				isTest ? "success" 
 						: solvername.startsWith("cvc4")? "success"
 						:  "unsupported");
 		doCommand("(get-option :produce-proofs)", 
@@ -251,7 +251,7 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceAssignments() {
-		boolean supported = isTest || solvername.startsWith("cvc4") || solvername.equals("yices2") || solvername.equals("z3_4_4");
+		boolean supported = isTest || solvername.startsWith("cvc4") || solvername.equals("yices2") ;
 		
 		doCommand("(set-option :produce-assignments true)",
 					supported? "success" 
@@ -276,7 +276,7 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceUnsatCores() {
-		boolean supported = isTest || solvername.equals("z3_4_4");
+		boolean supported = isTest;
 		doCommand("(set-option :produce-unsat-cores true)",
 				supported ? "success" 
 						:  "unsupported");
@@ -295,7 +295,7 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkExpandDefinitions() {
-		boolean supported = smt.smtConfig.isVersion(SMT.Configuration.SMTLIB.V20) && !solvername.equals("z3_4_4") && !solvername.equals("yices2");
+		boolean supported = smt.smtConfig.isVersion(SMT.Configuration.SMTLIB.V20) && !solvername.equals("yices2");
 		doCommand("(get-option :expand-definitions)", 
 				supported ? "false" : "unsupported"
 				);

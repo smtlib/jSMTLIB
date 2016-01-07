@@ -1,7 +1,0 @@
-success
-success
-success
-sat
-(get-proof)
-^^^^^^^^^^^
-(error "line 5 column 10: proof is not available")

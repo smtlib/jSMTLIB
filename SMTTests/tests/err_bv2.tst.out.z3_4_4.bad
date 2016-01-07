@@ -5,13 +5,13 @@ success
 success
 (assert (= (bvnot true) #b1011))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 6 column 22: operator is applied to arguments of the wrong sort")
+(error "line 7 column 22: operator is applied to arguments of the wrong sort")
 success
 success
 success
 (assert (= (bvand true y) #b111))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 10 column 24: operator is applied to arguments of the wrong sort")
+(error "line 11 column 24: operator is applied to arguments of the wrong sort")
 success
 success
 success
@@ -26,19 +26,19 @@ success
 success
 (assert (bvult true y))
 ^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 23 column 21: operator is applied to arguments of the wrong sort")
+(error "line 24 column 21: operator is applied to arguments of the wrong sort")
 success
 success
 success
 (assert (= (concat x true) z))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 27 column 25: invalid concat application")
+(error "line 28 column 25: invalid concat application")
 (assert (= ((_ extract 40 2) z) x))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 28 column 30: invalid extract application")
+(error "line 29 column 30: invalid extract application")
 (assert (= ((_ extract 1 2) z) x))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 29 column 29: invalid extract application")
+(error "line 30 column 29: invalid extract application")
 (assert (= ((_ extract a 1) z) x))
                        ^
 (error "Expected a numeral here, instead of a symbol")
@@ -47,11 +47,11 @@ success
 (error "Expected a numeral here, instead of a )")
 (assert (= ((_ extract 1 2 3 ) z) x))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 30 column 31: invalid extract application")
+(error "line 31 column 31: invalid extract application")
 success
 (assert (distinct #b1 #b10))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 32 column 26: Sort mismatch between first argument and argument 2")
+(error "line 33 column 26: Sort mismatch between first argument and argument 2")
 (assert (ite true #b0 #b11))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 33 column 27: invalid assert command, term is not Boolean")
+(error "line 34 column 27: invalid assert command, term is not Boolean")

@@ -71,6 +71,7 @@ public class C_set_option extends Command implements Iset_option {
 	
 	@Override
 	public IResponse execute(ISolver solver) {
+		if (prefixText != null) solver.comment(prefixText);
 		return solver.set_option(option,value);
 	}
 

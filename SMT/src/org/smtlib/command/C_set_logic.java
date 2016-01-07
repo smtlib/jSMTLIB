@@ -54,6 +54,7 @@ public class C_set_logic extends Command implements Iset_logic {
 
 	@Override
 	public IResponse execute(ISolver solver) {
+		if (prefixText != null) solver.comment(prefixText);
 		return solver.set_logic(logicName.value(),logicName.pos());
 	}
 

@@ -108,6 +108,14 @@ public class Solver_yices extends Solver_test implements ISolver {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("Ended yices ");
 		return smtConfig.responseFactory.success();
 	}
+	
+	@Override public void comment(String comment) {
+		try {
+			solverProcess.sendNoListen(comment);
+		} catch (IOException e) {
+			// FIXME;
+		}
+	}
 
 	@Override
 	public IResponse assertExpr(IExpr sexpr) {

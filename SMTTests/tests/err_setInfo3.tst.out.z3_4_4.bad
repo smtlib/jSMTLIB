@@ -1,5 +1,9 @@
-success
-success
+(set-info :all-statistics x)
+          ^^^^^^^^^^^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :all-statistics")
+(set-info :reason-unknown x)
+          ^^^^^^^^^^^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :reason-unknown")
 (get-info :reason-unknown)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 3 column 10: state of the most recent check-sat command is not unknown")
+(error "line 5 column 10: state of the most recent check-sat command is not unknown")

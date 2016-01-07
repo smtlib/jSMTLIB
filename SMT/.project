@@ -11,8 +11,13 @@
 			</arguments>
 		</buildCommand>
 		<buildCommand>
-			<name>checkers.eclipse.checkerbuilder</name>
+			<name>org.eclipse.ui.externaltools.ExternalToolBuilder</name>
+			<triggers>full,incremental,</triggers>
 			<arguments>
+				<dictionary>
+					<key>LaunchConfigHandle</key>
+					<value>&lt;project&gt;/.externalToolBuilders/checkers.eclipse.checkerbuilder.launch</value>
+				</dictionary>
 			</arguments>
 		</buildCommand>
 		<buildCommand>

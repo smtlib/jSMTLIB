@@ -1,7 +1,0 @@
-success
-success
-success
-sat
-(get-unsat-core)
-^^^^^^^^^^^^^^^^
-(error "line 5 column 15: unsat core is not available")

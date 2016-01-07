@@ -49,6 +49,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	protected String VERSION_VALUE = "4.3";
 	
 
+	protected int linesOffset = 0;
+	
 	/** A reference to the SMT configuration */
 	protected SMT.Configuration smtConfig;
 
@@ -68,7 +70,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	protected org.smtlib.sexpr.Parser responseParser;
 	
 	/** Set to true once a set-logic command has been executed */
-	private boolean logicSet = false;
+	protected boolean logicSet = false;
 	
 	/** The checkSatStatus returned by check-sat, if sufficiently recent, otherwise null */
 	protected /*@Nullable*/ IResponse checkSatStatus = null;
@@ -138,6 +140,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 //			if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
 			// Can't turn off printing success, or we get no feedback
 			solverProcess.sendAndListen("(set-option :print-success true)\n"); // Z3 4.3.0 needs this because it mistakenly has the default for :print-success as false
+			linesOffset ++; 
 			//if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
 			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Started "+NAME_VALUE+" ");
 			return smtConfig.responseFactory.success();
@@ -155,6 +158,15 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			return successOrEmpty(smtConfig);
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+		}
+	}
+
+	@Override 
+	public void comment(String comment) {
+		try {
+			solverProcess.sendNoListen(comment);
+		} catch (IOException e) {
+			// FIXME;
 		}
 	}
 
@@ -198,6 +210,18 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 				while (m.lookingAt()) {
 					if (!concat.isEmpty()) concat = concat + "; ";
 					String matched = m.group(1);
+					String prefix = "line ";
+					int offset = prefix.length();
+					if (matched.startsWith(prefix)) {
+						int k = matched.indexOf(' ',offset);
+						String number = matched.substring(offset, k);
+						try {
+							int n = Integer.parseInt(number);
+							matched = prefix + (n-linesOffset) + matched.substring(k);
+						} catch (NumberFormatException e) {
+							// Just continue
+						}
+					}
 					concat = concat + matched;
 					m.region(m.end(0),m.regionEnd());
 				}
@@ -315,7 +339,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		try {
 			checkSatStatus = null;
 			pushesDepth -= number;
-			return parseResponse(solverProcess.sendAndListen("(pop ",new Integer(number).toString(),")\n"));
+			return parseResponse(solverProcess.sendAndListen("(pop ",Integer.toString(number),")\n"));
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
 		}
@@ -331,7 +355,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		if (number == 0) return smtConfig.responseFactory.success();
 		try {
 			pushesDepth += number;
-			IResponse r = parseResponse(solverProcess.sendAndListen("(push ",new Integer(number).toString(),")\n"));
+			IResponse r = parseResponse(solverProcess.sendAndListen("(push ",Integer.toString(number),")\n"));
 			// FIXME - actually only see this problem on Linux
 			if (r.isError() && !isWindows) return successOrEmpty(smtConfig);
 			return r;

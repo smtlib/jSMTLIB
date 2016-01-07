@@ -17,6 +17,7 @@ import org.smtlib.ICommand.Idefine_sort;
 import org.smtlib.*;
 import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IAttributeValue;
+import org.smtlib.IExpr.IFcnExpr;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.INumeral;
@@ -109,6 +110,10 @@ public class Solver_test implements ISolver {
 		return smtConfig.responseFactory.success();
 	}
 
+	@Override public void comment(String comment) {
+		// No action
+	}
+	
 	@Override
 	public IResponse reset_assertions() {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#reset-assertions");
@@ -127,6 +132,11 @@ public class Solver_test implements ISolver {
 	public IResponse exit() {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#exit");
 		return smtConfig.responseFactory.success();
+	}
+	
+	@Override
+	public IResponse echo(IStringLiteral arg) {
+		return arg;
 	}
 
 	@Override
@@ -187,11 +197,33 @@ public class Solver_test implements ISolver {
 	}
 	
 	@Override
-	public IResponse check_sat_assuming() {
+	public IResponse check_sat_assuming(IExpr ... exprs) {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#check-sat-assuming");
 		if (logicSet == null) {
 			return smtConfig.responseFactory.error("The logic must be set before a check-sat-assuming command is issued");
 		}
+		for (IExpr e: exprs) {
+			if (e instanceof IFcnExpr && ((IFcnExpr)e).args().size() != 0) {
+				IFcnExpr f = (IFcnExpr)e;
+				if (f.args().size() != 1 || !f.head().toString().equals("not")) {
+					return smtConfig.responseFactory.error("Each element of a check-sat-assuming command must be either p or (not p), where p is a Bool constant");
+				}
+				e = f.args().get(0);
+			}
+			if (!(e instanceof IIdentifier)) {
+				return smtConfig.responseFactory.error("Expected a simple identifier: " + e); // FIXME - use pretty printer?
+			}
+			List<IResponse> responses = TypeChecker.check(symTable, e);
+			if (!responses.isEmpty()) return responses.get(0); // FIXME - return all?
+			List<SymbolTable.Entry> entries = symTable.lookup((IIdentifier)e).get(0);
+			if (entries.size() != 1) {
+				return smtConfig.responseFactory.error("No zero-arity declaration of symbol " + e); // FIXME - use pretty printer?
+			}
+			if (!entries.get(0).sort.isBool()) {
+				return smtConfig.responseFactory.error("Expected a Bool symbol: " + e + " has sort " + entries.get(0).sort); // FIXME - use pretty printer?
+			}
+		}
+		
 		checkSatStatus = smtConfig.responseFactory.unknown();
 		return checkSatStatus;
 	}
@@ -208,7 +240,6 @@ public class Solver_test implements ISolver {
 		} finally {
 			if (!tc.result.isEmpty()) return tc.result.get(0); // FIXME - report all errors?
 		}
-		// FIXME - do we really want to call get-option here? it involves going to the solver?
 		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
 			return smtConfig.responseFactory.error("The get-value command is only valid if :produce-models has been enabled");
 		}
@@ -220,7 +251,6 @@ public class Solver_test implements ISolver {
 
 	@Override
 	public IResponse get_assignment() {
-		// FIXME - do we really want to call get-option here? it involves going to the solver?
 		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSIGNMENTS)))) {
 			return smtConfig.responseFactory.error("The get-assignment command is only valid if :produce-assignments has been enabled");
 		}
@@ -232,7 +262,6 @@ public class Solver_test implements ISolver {
 	
 	@Override
 	public IResponse get_proof() {
-		// FIXME - do we really want to call get-option here? it involves going to the solver?
 		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_PROOFS)))) {
 			return smtConfig.responseFactory.error("The get-proof command is only valid if :produce-proofs has been enabled");
 		}
@@ -243,8 +272,18 @@ public class Solver_test implements ISolver {
 	}
 
 	@Override
+	public IResponse get_model() {
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
+			return smtConfig.responseFactory.error("The get-model command is only valid if :produce-models has been enabled");
+		}
+		if (checkSatStatus != smtConfig.responseFactory.sat()) {
+			return smtConfig.responseFactory.error("The get-model command is only valid immediately after check-sat returned sat or unknown");
+		}
+		return smtConfig.responseFactory.unsupported();
+	}
+
+	@Override
 	public IResponse get_unsat_core() {
-		// FIXME - do we really want to call get-option here? it involves going to the solver?
 		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_UNSAT_CORES)))) {
 			return smtConfig.responseFactory.error("The get-unsat-core command is only valid if :produce-unsat-cores has been enabled");
 		}

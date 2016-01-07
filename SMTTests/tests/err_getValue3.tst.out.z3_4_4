@@ -6,4 +6,4 @@ sat
 success
 (get-value (x)) ; invalid because of the push
 ^^^^^^^^^^^^^^^
-(error "line 7 column 15: model is not available")
+(error "line 9 column 15: model is not available")

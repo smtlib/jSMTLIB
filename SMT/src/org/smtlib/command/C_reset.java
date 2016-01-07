@@ -9,9 +9,11 @@ import java.io.IOException;
 
 import org.smtlib.ICommand.Iexit;
 import org.smtlib.IParser.ParserException;
+import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.IResponse;
 import org.smtlib.ISolver;
 import org.smtlib.IVisitor;
+import org.smtlib.SMT;
 import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
@@ -24,7 +26,10 @@ public class C_reset extends Command implements Iexit {
 	
 	/** Parses the arguments of the command, producing a new command instance */
 	static public /*@Nullable*/ C_reset parse(Parser p) throws ParserException {
-		// FIXME - check for V2.5ff
+		if (SMT.Configuration.isVersion(SMTLIB.V20)) {
+			p.error("The reset command is not valid in V2.0", p.peekToken().pos());
+			return null;
+		}
 		return p.checkNoArg() ? new C_reset() : null;
 	}
 
