@@ -1,7 +1,7 @@
 #! /bin/bash
 
 ## TODO - this is not portable across build environments
-## COnvert this to ant
+## Convert this to ant
 
 ## Need the following for jar
 export JAVA_HOME="C:/Program Files/Java/jdk1.7.0_67"
@@ -23,9 +23,9 @@ cd ..
 C:/cygwin/home/dcok/mybin/ant -f javadoc.xml
 cp ../../../../texstuff/papers/SMTLIBUserGuide/SMTLIBUserGuide.pdf jSMTLIBUserGuide.pdf
 tar cf jSMTLIB.tar jSMTLIB.jar LICENSE jSMTLIBUserGuide.pdf jsmtlib.properties-template doc
-rm jSMTLIBUserGuide.pdf
+rm -f jSMTLIBUserGuide.pdf
 tar tvf jSMTLIB.tar
-rm jSMTLIB.tar.gz
+rm -f jSMTLIB.tar.gz
 gzip jSMTLIB.tar
 
 echo Build complete

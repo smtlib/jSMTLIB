@@ -235,10 +235,15 @@ public class SolverProcess {
 		try {
 			int len = end != null ? end.length() : 0;
 			int p = 0; // Number of characters read
+			int parens = 0;
 			while (end != null || r.ready()) {
 				//System.out.println("ABOUT TO READ " + p);
 				int i = r.read(buf,p,buf.length-p);
 				if (i == -1) break; // End of Input
+				for (int ii=0; ii<i; ++ii) {
+					if (buf[p+ii] == '(') ++parens; 
+					else if (buf[p+ii] == ')') --parens;
+				}
 				p += i;
 				//System.out.println("HEARD: " + new String(buf,0,p));
 				if (end != null && p >= len) {
@@ -249,7 +254,7 @@ public class SolverProcess {
 					for (int j=0; j<len; j++) {
 						if (end.charAt(j) != buf[k++]) { match = false; break; }
 					}
-					if (match) break; // stopping string matched
+					if (match && (!"\n".equals(end) || parens == 0)) break; // stopping string matched
 				}
 				if (p == buf.length) { // expand the buffer
 					char[] nbuf = new char[2*buf.length];
