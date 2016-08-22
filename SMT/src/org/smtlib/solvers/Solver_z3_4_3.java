@@ -102,8 +102,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		if (timeout > 0) {
 			List<String> args = new java.util.ArrayList<String>(cmds.length+1);
 			args.addAll(Arrays.asList(cmds));
-			if (isWindows) args.add("/t:" + Double.toString(timeout));
-			else           args.add("-t:" + Double.toString(timeout));
+			if (isWindows) args.add("/t:" + Integer.toString((int)timeout));
+			else           args.add("-t:" + Integer.toString((int)timeout));
 			cmds = args.toArray(new String[args.size()]);
 		}
 		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile);
