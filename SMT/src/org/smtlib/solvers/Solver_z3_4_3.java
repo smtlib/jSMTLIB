@@ -79,7 +79,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	public /*@Nullable*/IResponse checkSatStatus() { return checkSatStatus; }
 
 	/** The number of pushes less the number of pops so far */
-	private int pushesDepth = 0;
+	protected int pushesDepth = 0;
 	
 	/** Map that keeps current values of options */
 	protected Map<String,IAttributeValue> options = new HashMap<String,IAttributeValue>();
@@ -355,16 +355,10 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		if (number == 0) return smtConfig.responseFactory.success();
 		try {
 			pushesDepth += number;
-			// This odd invocation is to correct a bug in Z3 4.3.2, where (push) can print out more than one success message.
-			solverProcess.sendNoListen("(push ",Integer.toString(number),")\n");
-			solverProcess.sendNoListen("(echo \"<<DONE>>\")\n");
-			String s;
-			do {
-				s = solverProcess.listen();
-			} while (!s.contains("<<DONE>>"));
-			// FIXME: If an error occurs, this will loop forever.
-			// We can't use parseResponse to see if it an error, as the function does not expect Z3's buggy output.
-			return successOrEmpty(smtConfig);
+			IResponse r = parseResponse(solverProcess.sendAndListen("(push ",Integer.toString(number),")\n"));
+			// FIXME - actually only see this problem on Linux
+			if (r.isError() && !isWindows) return successOrEmpty(smtConfig);
+			return r;
 		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
 		}
