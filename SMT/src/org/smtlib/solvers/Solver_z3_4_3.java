@@ -79,7 +79,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	public /*@Nullable*/IResponse checkSatStatus() { return checkSatStatus; }
 
 	/** The number of pushes less the number of pops so far */
-	private int pushesDepth = 0;
+	protected int pushesDepth = 0;
 	
 	/** Map that keeps current values of options */
 	protected Map<String,IAttributeValue> options = new HashMap<String,IAttributeValue>();
@@ -102,8 +102,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		if (timeout > 0) {
 			List<String> args = new java.util.ArrayList<String>(cmds.length+1);
 			args.addAll(Arrays.asList(cmds));
-			if (isWindows) args.add("/t:" + Double.toString(timeout));
-			else           args.add("-t:" + Double.toString(timeout));
+			if (isWindows) args.add("/t:" + Integer.toString((int)timeout));
+			else           args.add("-t:" + Integer.toString((int)timeout));
 			cmds = args.toArray(new String[args.size()]);
 		}
 		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile);
