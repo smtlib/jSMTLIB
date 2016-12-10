@@ -40,7 +40,7 @@ public interface IParser {
 	/*@Nullable*/IExpr.IAttribute<?> parseAttribute() throws ParserException;
 
 	/** Parses a value for an attribute, returning null with error messages if an error occurs */
-	/*@Nullable*/IExpr.IAttributeValue parseAttributeValue() throws ParserException;
+	/*@Nullable*/IAttributeValue parseAttributeValue() throws ParserException;
 
 	/** Parses an SMT-LIB command, if the parser is looking at text representing
 	 * a valid SMT-LIB command; returns null and logs errors if the text is not a

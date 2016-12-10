@@ -19,10 +19,6 @@ import org.smtlib.ICommand.IScript;
 import org.smtlib.ICommand.Ideclare_fun;
 import org.smtlib.*;
 import org.smtlib.ICommand.Idefine_fun;
-import org.smtlib.IExpr.IAsIdentifier;
-import org.smtlib.IExpr.IAttribute;
-import org.smtlib.IExpr.IAttributeValue;
-import org.smtlib.IExpr.IAttributedExpr;
 import org.smtlib.IResponse.IAssertionsResponse;
 import org.smtlib.IResponse.IAssignmentResponse;
 import org.smtlib.IResponse.IAttributeList;
@@ -36,6 +32,7 @@ import org.smtlib.ISort.IFcnSort;
 import org.smtlib.ISort.IParameter;
 import org.smtlib.IExpr.*;
 import org.smtlib.IVisitor.VisitorException;
+import org.smtlib.SMT.Configuration.SMTLIB;
 
 // Note - simplify appears to have problems if the set of assertions pushed
 // via BG_PUSH are not consistent.  At least, it does not produce counterexample
@@ -264,10 +261,12 @@ public class Solver_simplify extends Solver_test implements ISolver {
 
 	@Override
 	public IResponse set_option(IKeyword option, IAttributeValue value) {
-		if (option.value().equals(":produce-assignments")) return smtConfig.responseFactory.unsupported();
-		if (option.value().equals(":produce-models")) return smtConfig.responseFactory.unsupported();
-		if (option.value().equals(":produce-proofs")) return smtConfig.responseFactory.unsupported();
-		if (option.value().equals(":produce-unsat-cores")) return smtConfig.responseFactory.unsupported();
+		if (option.value().equals(Utils.PRODUCE_ASSIGNMENTS)) return smtConfig.responseFactory.unsupported();
+		if (option.value().equals(Utils.PRODUCE_MODELS)) return smtConfig.responseFactory.unsupported();
+		if (option.value().equals(Utils.PRODUCE_PROOFS)) return smtConfig.responseFactory.unsupported();
+		if (option.value().equals(Utils.PRODUCE_UNSAT_CORES)) return smtConfig.responseFactory.unsupported();
+//		if (option.value().equals(":expand-definitions") && smtConfig.atLeastVersion(SMTLIB.V25)) return smtConfig.responseFactory.unsupported();
+
 		return super.set_option(option,value);
 	}
 
@@ -279,6 +278,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 	@Override
 	public IResponse get_option(IKeyword key) {
 		String option = key.value();
+		if (Utils.INTERACTIVE_MODE.equals(option) && !smtConfig.isVersion(SMTLIB.V20)) option = Utils.PRODUCE_ASSERTIONS;
 		IAttributeValue value = options.get(option);
 		if (value == null) return smtConfig.responseFactory.unsupported();
 		return value;

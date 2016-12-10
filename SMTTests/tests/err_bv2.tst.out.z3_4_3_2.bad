@@ -1,0 +1,95 @@
+success
+success
+success
+success
+(assert (= (bvnot x) #b1011))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 6 column 27: invalid function application for =, sort mismatch on argument at position 2, expected (_ BitVec 3) but given (_ BitVec 4)")
+(assert (= (bvnot true) #b1011))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 7 column 22: operator is applied to arguments of the wrong sort")
+(assert (= (bvnot x y) #b1011))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 8 column 21: invalid function application, wrong number of arguments")
+(assert (= (bvneg x) #b0111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 9 column 27: invalid function application for =, sort mismatch on argument at position 2, expected (_ BitVec 3) but given (_ BitVec 4)")
+(assert (= (bvneg x y) #b0111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 10 column 21: invalid function application, wrong number of arguments")
+(assert (= (bvand true y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 11 column 24: operator is applied to arguments of the wrong sort")
+(assert (= (bvand x false) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 12 column 25: invalid function application for bvand, sort mismatch on argument at position 2, expected (_ BitVec 3) but given Bool")
+(assert (= (bvand x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 13 column 21: invalid function application for bvand, sort mismatch on argument at position 2, expected (_ BitVec 3) but given (_ BitVec 5)")
+(assert (= (bvand x y z) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 14 column 23: invalid function application for bvand, sort mismatch on argument at position 2, expected (_ BitVec 3) but given (_ BitVec 5)")
+(assert (= (bvor x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 15 column 20: invalid function application for bvor, sort mismatch on argument at position 2, expected (_ BitVec 3) but given (_ BitVec 5)")
+(assert (= (bvadd x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 16 column 21: invalid function application for bvadd, sort mismatch on argument at position 2, expected (_ BitVec 3) but given (_ BitVec 5)")
+(assert (= (bvmul x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 17 column 21: invalid function application for bvmul, sort mismatch on argument at position 2, expected (_ BitVec 3) but given (_ BitVec 5)")
+(assert (= (bvshl x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 18 column 21: invalid function application for bvshl, sort mismatch on argument at position 2, expected (_ BitVec 3) but given (_ BitVec 5)")
+(assert (= (bvlshr x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 19 column 22: invalid function application for bvlshr, sort mismatch on argument at position 2, expected (_ BitVec 3) but given (_ BitVec 5)")
+(assert (= (bvudiv x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 20 column 22: invalid function application for bvudiv, sort mismatch on argument at position 2, expected (_ BitVec 3) but given (_ BitVec 5)")
+(assert (= (bvurem x y) #b111))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 21 column 22: invalid function application for bvurem, sort mismatch on argument at position 2, expected (_ BitVec 3) but given (_ BitVec 5)")
+(assert (bvult x y))
+^^^^^^^^^^^^^^^^^^^^
+(error "line 22 column 18: invalid function application for bvult, sort mismatch on argument at position 2, expected (_ BitVec 3) but given (_ BitVec 5)")
+(assert (bvult y))
+^^^^^^^^^^^^^^^^^^
+(error "line 23 column 16: invalid function application, wrong number of arguments")
+(assert (bvult true y))
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 24 column 21: operator is applied to arguments of the wrong sort")
+(assert (bvult x false))
+^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 25 column 22: invalid function application for bvult, sort mismatch on argument at position 2, expected (_ BitVec 3) but given Bool")
+(assert (= (concat x y) #xa))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 26 column 27: invalid function application for =, sort mismatch on argument at position 2, expected (_ BitVec 8) but given (_ BitVec 4)")
+(assert (= (concat y) #xaa))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 27 column 26: invalid function application for =, sort mismatch on argument at position 2, expected (_ BitVec 5) but given (_ BitVec 8)")
+(assert (= (concat x true) z))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 28 column 25: invalid concat application")
+(assert (= ((_ extract 40 2) z) x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 29 column 30: invalid extract application")
+(assert (= ((_ extract 1 2) z) x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 30 column 29: invalid extract application")
+(assert (= ((_ extract a 1) z) x))
+                       ^
+(error "Expected a numeral here, instead of a symbol")
+(assert (= ((_ extract ) z) x))
+                       ^
+(error "Expected a numeral here, instead of a )")
+(assert (= ((_ extract 1 2 3 ) z) x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 31 column 31: invalid extract application")
+(assert (= #b101 #b1010))
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 32 column 23: invalid function application for =, sort mismatch on argument at position 2, expected (_ BitVec 3) but given (_ BitVec 4)")
+success
+(assert (ite true #b0 #b11))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 34 column 26: invalid function application for if, sort mismatch on argument at position 3, expected (_ BitVec 1) but given (_ BitVec 2)")

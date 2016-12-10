@@ -258,7 +258,7 @@ public class Lexer {
 		public boolean isError() { return false; }
 	}
 
-	private static class LexError extends org.smtlib.impl.SMTExpr.Error implements ILexToken, ISexpr.IToken<String> {
+	private class LexError extends org.smtlib.impl.SMTExpr.Error implements ILexToken, ISexpr.IToken<String> {
 		public LexError(String n) { super(n); }
 
 		@Override
@@ -269,7 +269,7 @@ public class Lexer {
 		
 		/** For debugging only - not general printing */
 		@Override
-		public String toString() { return "Error: " + Utils.quote(value()); }
+		public String toString() { return "Error: " + smtConfig.utils.quote(value()); }
 	}
 
 	/** A static helper method that sets the position of an AST node, but returns the same type */
@@ -426,6 +426,7 @@ public class Lexer {
 							} else {
 								if (c >= ' ' && c <= '~') continue;
 								if (c == '\t' || c == '\r' || c == '\n') continue;
+								if (c >= 128) continue; // Version 2.5, but only within comments, string literals, quoted symbols
 								if (c == 25) {
 									end = p;
 									matched = csr.subSequence(begin,end).toString();

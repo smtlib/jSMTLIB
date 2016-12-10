@@ -1,0 +1,19 @@
+(set-info :name "x")
+          ^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :name")
+(:name "Z3" )
+(set-info :authors "x")
+          ^^^^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :authors")
+(:authors "Leonardo de Moura and Nikolaj Bjorner" )
+(set-info :version "0")
+          ^^^^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :version")
+(:version "4.4.0" )
+(set-info :error-behavior x)
+          ^^^^^^^^^^^^^^^
+(error "Setting the value of a pre-defined keyword is not permitted: :error-behavior")
+(get-info :error-behavior)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "(:error-behavior continued-execution)
+")

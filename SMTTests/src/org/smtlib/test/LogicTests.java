@@ -31,6 +31,7 @@ public class LogicTests {
 	public static final String[] solvers = new String[] {
             "test", 
             "z3_4_3", 
+            "z3_4_3_2", 
             "z3_4_4", 
             /*"z3_2_11", "yices",*/ 
             //"yices2", 
@@ -68,6 +69,7 @@ public class LogicTests {
 	}
 	
 	public void init() {
+		SMT.Configuration.smtlib = version;
 		smt = new SMT();
 		// We're not reading the command-line so we have to set items ourselves
 		// Executable paths are taken from the properties
@@ -77,7 +79,7 @@ public class LogicTests {
 		smt.smtConfig.log.addListener(listener);
 		smt.smtConfig.solvername = solvername;
 		smt.smtConfig.logfile = "solver.out";
-		smt.smtConfig.smtlib = version;
+		smt.smtConfig.smtlib = version; // FIXME - is this needed?
 		ISolver s = smt.startSolver(smt.smtConfig,solvername,null);
 		if (s == null) throw new RuntimeException("Failed to create or start solver");
 		solver = s;
@@ -132,6 +134,7 @@ public class LogicTests {
 		if (command == null) throw new RuntimeException("Failed to create command");
 		IResponse r;
 		checkResponse(r=command.execute(solver),result);
+		
 		return r;
 	}
 	

@@ -1,0 +1,8 @@
+success
+success
+success
+success
+true
+(assert a)  ; not defined - ERROR
+^^^^^^^^^^
+(error "The logic must be set before an assert command is issued")

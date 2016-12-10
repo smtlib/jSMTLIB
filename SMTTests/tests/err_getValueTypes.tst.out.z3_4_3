@@ -7,4 +7,4 @@ success
 sat
 (get-value (x y (and x y) ))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 10 column 25: invalid function application, sort mismatch on argument at position 1")
+(error "line 9 column 25: invalid function application, sort mismatch on argument at position 1")

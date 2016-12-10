@@ -7,7 +7,6 @@ package org.smtlib;
 
 import java.util.List;
 
-import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.IDeclaration;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.IKeyword;

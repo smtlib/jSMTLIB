@@ -66,6 +66,7 @@ public class InfoOptions  extends LogicTests {
 				: solvername.equals("cvc4") ? "1.4"
 				: solvername.equals("cvc4b") ? "1.5-prerelease"
 				: solvername.equals("z3_4_3") ? "4.3"
+				: solvername.equals("z3_4_3_2") ? "4.3.2"
 				: solvername.equals("z3_4_4") ? "4.4.0"
 				: solvername.equals("z3_2_11") ? "2.11"
 				: "???" )
@@ -81,9 +82,8 @@ public class InfoOptions  extends LogicTests {
 						: solvername.equals("yices2") ? "Yices"
 						: solvername.equals("cvc") ? "CVC3"
 						: solvername.startsWith("cvc4") ? "cvc4"
-						: solvername.equals("z3_4_3") ? "Z3"
-						: solvername.equals("z3_4_4") ? "Z3"
 						: solvername.equals("z3_2_11") ? "z3-2.11"
+						: solvername.startsWith("z3") ? "Z3"
 						: "???" );
 	}
     
@@ -276,6 +276,7 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceUnsatCores() {
+		Assume.assumeTrue(!solvername.equals("cvc4b"));
 		boolean supported = isTest;
 		doCommand("(set-option :produce-unsat-cores true)",
 				supported ? "success" 
@@ -295,7 +296,9 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkExpandDefinitions() {
-		boolean supported = smt.smtConfig.isVersion(SMT.Configuration.SMTLIB.V20) && !solvername.equals("yices2");
+		//boolean supported = smt.smtConfig.isVersion(SMT.Configuration.SMTLIB.V20) && !solvername.equals("yices2");
+		boolean supported = !solvername.equals("yices2");
+		supported |= solvername.startsWith("cvc4"); // cvc4 supports option in V2.5
 		doCommand("(get-option :expand-definitions)", 
 				supported ? "false" : "unsupported"
 				);
@@ -304,6 +307,7 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkSetExpandDefinitions() {
 		boolean supported = smt.smtConfig.isVersion(SMT.Configuration.SMTLIB.V20) && !solvername.equals("yices2") && !solvername.equals("z3_4_4");
+		supported = true; // FIXME - it is optional, but it is permitted to set
 		doCommand("(set-option :expand-definitions true)", 
 				!supported ? "unsupported" : "success");
 		doCommand("(get-option :expand-definitions)", 

@@ -1,0 +1,8 @@
+success
+success
+(reset-assertions)
+^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.16: SMT-LIB 2.5 commands are not permitted while operating in strict compliance mode and in SMT-LIB 2.0 mode.")
+(assert a)  ; not yet defined - ERROR
+^^^^^^^^^^
+(error "Parse Error: <shell>:1.8: Symbol 'a' not declared as a variable")

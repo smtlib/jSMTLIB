@@ -1,2 +1,2 @@
 ; testing loading  AUFLIA
-(set-logic AUFLIA )
+(set-logic AUFLIA)

@@ -16,7 +16,6 @@ import org.smtlib.ICommand.Idefine_fun;
 import org.smtlib.ICommand.Idefine_sort;
 import org.smtlib.*;
 import org.smtlib.IExpr.IAttribute;
-import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.IFcnExpr;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.IKeyword;
@@ -46,9 +45,6 @@ public class Solver_test implements ISolver {
 	/** Internal state variable - set non-null once the logic is set. */
 	protected String logicSet = null;
 	
-	/** Internal state variable - set to the value of :global-declarations */
-	protected boolean globalDeclarations = false;
-	
 	/** Internal state variable - set to sat, unsat, unknown when check-sat is run
 	 * and then to null whenever an additional push, popo, assert, declare- or define-
 	 * command is executed.  This is used in checking those commands that depend on the
@@ -65,9 +61,6 @@ public class Solver_test implements ISolver {
 	
 	/** The data structure that maintains the current values of options and info items for this solver. */
 	protected Map<String,IAttributeValue> options = new HashMap<String,IAttributeValue>();
-	{ 
-		options.putAll(Utils.defaults);
-	}
 	
 	
 	
@@ -79,6 +72,7 @@ public class Solver_test implements ISolver {
 	 */
 	public Solver_test(SMT.Configuration smtConfig, String exec) {
 		this.smtConfig = smtConfig;
+		options.putAll(smt().utils.defaults);
 		this.symTable = new SymbolTable(smtConfig);
 		checkSatStatus = null;
 	}
@@ -95,16 +89,16 @@ public class Solver_test implements ISolver {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#reset");
 		assertionSetStack.clear();
 		assertionSetStack.add(0,new LinkedList<IExpr>());
-		symTable.clear();
+		symTable.clear(false);
 		typemap.clear();
 		logicSet = null;
 		// Set all options and info to default values
-		options.putAll(Utils.defaults);
+		options.putAll(smt().utils.defaults);
 		((Response.Factory)smtConfig.responseFactory).printSuccess = true;
 		smtConfig.verbose = 0;
 		smtConfig.log.out = System.out;
 		smtConfig.log.diag = System.err;
-		globalDeclarations = false;
+		smtConfig.globalDeclarations = false;
 		checkSatStatus = null;
 
 		return smtConfig.responseFactory.success();
@@ -119,11 +113,11 @@ public class Solver_test implements ISolver {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#reset-assertions");
 		// Remove all pushed frames
 		IResponse r = pop(assertionSetStack.size()-1);
-		// Remove assertions, but necessarily global declarations
+		// Remove assertions, but not necessarily global declarations
 		assertionSetStack.get(0).clear();
-		if (!globalDeclarations) {
-			symTable.clear();
-			r = smtConfig.utils.loadLogic(logicSet,symTable,null);
+		if (!smt().globalDeclarations) {
+			symTable.clear(true);
+			// FIXME - should we do anything with typemap? In general isn't typemap a big leaky thing?
 		}
 		return r;
 	}
@@ -163,8 +157,11 @@ public class Solver_test implements ISolver {
 			return smtConfig.responseFactory.error("The logic must be set before a get-assertions command is issued");
 		}
 		// FIXME - do we really want to call get-option here? it involves going to the solver?
-		if (!smtConfig.relax && !Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.INTERACTIVE_MODE)))) {
-			return smtConfig.responseFactory.error("The get-assertions command is only valid if :interactive-mode has been enabled");
+		if (!smtConfig.relax && !Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSERTIONS)))) {
+			String key;
+			if (smtConfig.atLeastVersion(SMTLIB.V25)) key = ":produce-assertions";
+			else key = ":interactive-mode";
+			return smtConfig.responseFactory.error("The get-assertions command is only valid if " + key + " has been enabled");
 		}
 		List<IExpr> combined = new LinkedList<IExpr>();
 		Iterator<List<IExpr>> iter = assertionSetStack.listIterator();
@@ -276,7 +273,7 @@ public class Solver_test implements ISolver {
 		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
 			return smtConfig.responseFactory.error("The get-model command is only valid if :produce-models has been enabled");
 		}
-		if (checkSatStatus != smtConfig.responseFactory.sat()) {
+		if (checkSatStatus == smtConfig.responseFactory.unsat()) {
 			return smtConfig.responseFactory.error("The get-model command is only valid immediately after check-sat returned sat or unknown");
 		}
 		return smtConfig.responseFactory.unsupported();
@@ -334,7 +331,7 @@ public class Solver_test implements ISolver {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#set-logic " + logicName);
 		if (logicSet != null) {
 			if (!smtConfig.relax) return smtConfig.responseFactory.error("Logic is already set");
-			symTable.clear();
+			symTable.clear(false);
 			assertionSetStack.clear();
 			assertionSetStack.add(0,new LinkedList<IExpr>());
 		}
@@ -349,12 +346,14 @@ public class Solver_test implements ISolver {
 		String option = key.value();
 		if (Utils.PRINT_SUCCESS.equals(option)) {
 			if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
-				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
+				// This message is duplicated in the C_set_option constructor
+//				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
+			} else {
+				// FIXME - make this more abstract
+				((Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
 			}
-			// FIXME - make this more abstract
-			((Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
 		}
-		if (logicSet != null && Utils.INTERACTIVE_MODE.equals(option)) {
+		if (logicSet != null && (Utils.INTERACTIVE_MODE.equals(option)||Utils.PRODUCE_ASSERTIONS.equals(option))) {
 			return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
 		}
 //		if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 
@@ -399,14 +398,19 @@ public class Solver_test implements ISolver {
 					return smtConfig.responseFactory.error("Failed to open or write to the regular output " + e.getMessage(),value.pos());
 				}
 			}
+		} else if (Utils.GLOBAL_DECLARATIONS.equals(option)) {
+			smtConfig.globalDeclarations = Utils.TRUE.equals(value);
 		}
+		if (Utils.INTERACTIVE_MODE.equals(option) && !smtConfig.isVersion(SMTLIB.V20)) option = Utils.PRODUCE_ASSERTIONS;
 		options.put(option,value);
 		return smtConfig.responseFactory.success();
 	}
 
 	@Override
 	public IResponse get_option(IKeyword key) {
-		IAttributeValue value = options.get(key.value());
+		String v = key.value();
+		if (Utils.INTERACTIVE_MODE.equals(v) && !smtConfig.isVersion(SMTLIB.V20)) v = Utils.PRODUCE_ASSERTIONS;
+		IAttributeValue value = options.get(v);
 		//if (smtConfig.isVersion(SMTLIB.V20))
 		if (value == null) return smtConfig.responseFactory.unsupported();
 		return value;

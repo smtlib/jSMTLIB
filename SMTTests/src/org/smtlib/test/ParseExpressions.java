@@ -3,11 +3,11 @@ package org.smtlib.test;
 import java.io.StringWriter;
 
 import org.junit.*;
+import org.smtlib.IAttributeValue;
 import org.smtlib.IExpr;
 import org.smtlib.IParser;
 import org.smtlib.ISource;
 import org.smtlib.SMT;
-import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IParser.ParserException;
 
 /** Tests parsing valid expressions without invoking solvers */

@@ -130,12 +130,12 @@ public class SymbolTable {
 	/** Constructs an empty symbol table */
 	public SymbolTable(SMT.Configuration smtConfig) {
 		this.smtConfig = smtConfig;
-		clear();
+		clear(false);
 	}
 	
 	/** Makes a copy of the symbol table */
 	public SymbolTable(SymbolTable s) {
-		clear();
+		clear(false);
 		this.smtConfig = s.smtConfig;
 		sortStack = new LinkedList<Map<IIdentifier,ISort.IDefinition>>();
 		symStack = new LinkedList<Map<IIdentifier,Map<Integer,List<Entry>>>>();
@@ -151,11 +151,16 @@ public class SymbolTable {
 	}
 	
 	/** Initializes the symbol table with an empty background frame and one empty frame. */
-	public void clear() {
-		sortStack = new LinkedList<Map<IIdentifier,ISort.IDefinition>>();
-		symStack = new LinkedList<Map<IIdentifier,Map<Integer,List<Entry>>>>();
-		push(); // an empty background frame
-		push(); // an empty primary frame
+	public void clear(boolean keepBackground) {
+		if (keepBackground) {
+			while (sortStack.size() > 1) sortStack.remove(0);
+			while (symStack.size() > 1) symStack.remove(0);
+		} else {
+			sortStack = new LinkedList<Map<IIdentifier,ISort.IDefinition>>();
+			symStack = new LinkedList<Map<IIdentifier,Map<Integer,List<Entry>>>>();
+			push(); // an empty background frame
+			push(); // an empty primary frame
+		}
 	}
 
 	/** Adds a new empty frame on the top of the symbol table stack. */
@@ -428,11 +433,14 @@ public class SymbolTable {
 	 * @param entry the Entry to add
 	 */
 	public void add(Entry entry) {
-
-		Map<Integer,List<Entry>> arityMap = names.get(entry.name);
+		Map<IIdentifier,Map<Integer,List<Entry>>> lnames = names;
+		if (smtConfig.globalDeclarations) {
+			lnames = symStack.get(symStack.size()-1);
+		}
+		Map<Integer,List<Entry>> arityMap = lnames.get(entry.name);
 		if (arityMap == null) {
 			arityMap = new HashMap<Integer,List<Entry>>();
-			names.put(entry.name,arityMap);
+			lnames.put(entry.name,arityMap);
 		}
 		List<Entry> entrylist = arityMap.get(entry.sort.argSorts().length);
 		if (entrylist == null) {

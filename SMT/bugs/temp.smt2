@@ -1,15 +1,11 @@
-; Submitted as a bug in that QF_LIA should not support declaring new sorts
-; From Morgan Deters, 3/15/2014
-(set-logic QF_LIA)
-(set-info :smt-lib-version 2.0)
-(set-info :category "unknown")
-(set-info :status unknown)
-(declare-sort S1 0)
-(declare-fun f1 () S1)
-(declare-fun f2 () S1)
-(declare-fun f3 () Int)
-(declare-fun f4 () Int)
-(assert (not (= f1 f2)))
-(assert (not (and (<= 0 (ite (< f3 0) (* (- 2) f3) (* 2 f3))) (<= 0 (ite (< f4 0) (* (- 2) f4) (* 2 f4))))))
-(check-sat)
-(exit)
+(set-option :produce-models true)
+(set-logic ALL)
+(declare-const yyy Bool)
+
+; quantifiers and patterns
+(declare-sort S 0)
+(declare-fun le (S S) Bool)
+(declare-fun zz () S)
+(assert (forall ((x S)(y S)(z S)) (=> (and (le x y)(le y z)) (le x z))))
+(assert (exists ((x S)(y S)(z S)) (=> (and (le x y)(le y z)) (le x z))))
+(assert (forall ((x S)(y S)(z S)) (! (=> (and (le x y)(le y z)) (le x z))  :pattern ((le x zz)) :pattern ((le y zz) (le zz z)) )))

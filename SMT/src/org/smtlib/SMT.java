@@ -18,6 +18,7 @@ import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IParser.AbortParseException;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.IPos.IPosable;
+import org.smtlib.solvers.Printer;
 
 //import checkers.javari.quals.Mutable; NonNull
 
@@ -41,6 +42,14 @@ import org.smtlib.IPos.IPosable;
  * </UL> 
  */
 public class SMT {
+	
+//	public SMT() {
+//		this(Utils.SMTLIB_VERSION_CURRENT);
+//	}
+//	
+//	public SMT(String version) {
+//		Configuration.smtlib = version;
+//	}
 	
 	public Properties props;
 	
@@ -73,6 +82,9 @@ public class SMT {
 			// method called by reflection
 			org.smtlib.impl.Factory.initFactories(this);
 			org.smtlib.sexpr.Factory.initFactories(this);
+			Printer.smtConfig = this;
+			org.smtlib.impl.Response.smtConfig = this;
+			org.smtlib.impl.SMTExpr.smtConfig = this;
 		}
 		
 		/** Makes a copy (using reference copy on objects) of the configuration */ 
@@ -108,9 +120,14 @@ public class SMT {
 			public static SMTLIB find(String id) { for (SMTLIB e: SMTLIB.values()) { if (e.id.equals(id)) return e; } return null; } 
 		}
 		
-		public static boolean isVersion(SMTLIB version) {
+		public boolean isVersion(SMTLIB version) {
 			if (smtlib == null && version == SMTLIB.V25) return true;
 			return version.toString().equals(smtlib);
+		}
+		
+		public boolean atLeastVersion(SMTLIB version) {
+			if (smtlib == null && version == SMTLIB.V25) return true;
+			return version.toString().compareTo(smtlib) <= 0;
 		}
 		
 		/** True to emit diagnostic output through the SMT-LIB diagnostic channel */
@@ -138,6 +155,9 @@ public class SMT {
 		 * as if the first command were the corresponding set-logic command.
 		 */
 		/*@Nullable*/ public String logic;
+		
+		/** Whether declarations are global */
+		public boolean globalDeclarations;
 		
 		/** The solver to use */
 		/*@Nullable*/ public String solvername = null;

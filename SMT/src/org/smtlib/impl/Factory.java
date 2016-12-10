@@ -15,7 +15,6 @@ import org.smtlib.*;
 import org.smtlib.ICommand.IScript;
 import org.smtlib.IExpr.IAsIdentifier;
 import org.smtlib.IExpr.IAttribute;
-import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.IAttributedExpr;
 import org.smtlib.IExpr.IBinaryLiteral;
 import org.smtlib.IExpr.IBinding;

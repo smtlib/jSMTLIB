@@ -1,0 +1,8 @@
+success
+success
+success
+(reset)
+^^^^^^^
+(error "Parse Error: <shell>:1.5: expected SMT-LIBv2 command, got `reset'.")
+true
+success

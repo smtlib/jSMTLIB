@@ -7,13 +7,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import org.smtlib.IExpr;
 import org.smtlib.IExpr.IDecimal;
 import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.command.*;
 import org.smtlib.impl.Pos;
-import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.*;
 
 //FIXME - review asSort, find/load logic/theory, checkOptionType
@@ -114,7 +112,7 @@ public class Utils extends org.smtlib.Utils {
 		IAttributeValue version = logicExpr.value(SMTLIB_VERSION);
 		if (version == null) return smtConfig.responseFactory.error("Logic definition for " + logicName + " is missing the " + SMTLIB_VERSION + " attribute");
 		if (!(version instanceof IDecimal)) return smtConfig.responseFactory.error("The value of " + SMTLIB_VERSION + " must be expressed as a decimal");
-		if (!version.toString().equals(SMTLIB_VERSION_20)) return smtConfig.responseFactory.error("Only implemented version 2.0 of smtConfig-lib, not " + version);
+		if (version.toString().compareTo(SMTLIB_VERSION_CURRENT) > 0) return smtConfig.responseFactory.error("Only implemented version " + SMTLIB_VERSION_CURRENT + " of smtConfig-lib, not " + version);
 		
 		// Get the list of theories for this logic
 		IAttributeValue o = logicExpr.value(THEORIES);
@@ -158,7 +156,7 @@ public class Utils extends org.smtlib.Utils {
 		IAttributeValue version = theory.value(SMTLIB_VERSION);
 		if (version == null) return smtConfig.responseFactory.error("Theory definition for " + theoryName + " is missing the " + SMTLIB_VERSION + " attribute");
 		if (!(version instanceof IDecimal)) return smtConfig.responseFactory.error("The value of " + SMTLIB_VERSION + " must be expressed as a decimal");
-		if (!version.toString().equals(SMTLIB_VERSION_20)) return smtConfig.responseFactory.error("Only implemented version 2.0 of smtConfig-lib, not " + version);
+		if (version.toString().compareTo(SMTLIB_VERSION_CURRENT) > 0) return smtConfig.responseFactory.error("Only implemented version " + SMTLIB_VERSION_CURRENT + " of smtConfig-lib, not " + version);
 
 		// Find and install any Sorts the theory defines
 		Object o = theory.value(SORTS);

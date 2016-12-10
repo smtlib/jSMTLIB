@@ -26,10 +26,10 @@ public class C_check_sat_assuming extends Command implements Icheck_sat {
 	
 	/** Parses the arguments of the command, producing a new command instance */
 	static public /*@Nullable*/ C_check_sat_assuming parse(Parser p) throws ParserException {
-		if (SMT.Configuration.isVersion(SMTLIB.V20)) {
-			p.error("The check-sat-assuming command is not valid in V2.0", p.peekToken().pos());
-			return null;
-		}
+//		if (SMT.Configuration.isVersion(SMTLIB.V20)) {
+//			p.error("The check-sat-assuming command is not valid in V2.0", p.peekToken().pos());
+//			return null;
+//		}
 		return p.checkNoArg() ? new C_check_sat_assuming() : null;
 	}
 

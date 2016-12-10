@@ -1,0 +1,6 @@
+success
+success
+success
+success
+false
+(error "The logic must be set before an assert command is issued")

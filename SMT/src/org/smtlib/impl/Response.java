@@ -12,7 +12,6 @@ import java.util.List;
 
 import org.smtlib.*;
 import org.smtlib.IExpr.IAttribute;
-import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
@@ -23,6 +22,7 @@ import org.smtlib.IResponse.IPair;
 
 /** This class holds subclasses that are implementations of the various IResponse interfaces. */
 public class Response {
+	static public SMT.Configuration smtConfig;
 	
 	final static String ERROR = "error";
 	final static String OK = "success";
@@ -173,7 +173,7 @@ public class Response {
 		
 		@Override
 		public String toString() {
-			return "(error " + Utils.quote(msg) + ")";
+			return "(error " + smtConfig.utils.quote(msg) + ")";
 		}
 		
 		@Override

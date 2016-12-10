@@ -13,7 +13,7 @@ import org.smtlib.ICommand.IScript;
 import org.smtlib.IPos.IPosable;
 
 /** This interface represents the functionality for any class implementing an SMT-LIB term or formula */
-public interface IExpr extends IAccept, IPosable {
+public interface IExpr extends IAccept, IPosable, IAttributeValue {
 	
 	/** Helpful method that indicates the class of expression, used in human-readable messages. */
 	//@ pure
@@ -243,14 +243,6 @@ public interface IExpr extends IAccept, IPosable {
 		//@ ensures \result.size() > 0;
 		//@ pure
 		List<IAttribute<?>> attributes();
-	}
-	
-	/** This interface represents the general class of attribute values; 
-	 * that is, it is the super-interface of any class that may be an attribute value;
-	 * in the abstract syntax it has no particular structure, though it does include
-	 * true, false, string literals, numerals, and various pre-defined constants.
-	 */
-	static public interface IAttributeValue extends IResponse, IPos.IPosable {
 	}
 	
 	/** This interface represents an SMT-LIB attribute-value pair */

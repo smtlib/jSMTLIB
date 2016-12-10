@@ -14,7 +14,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.SMT.Configuration.SMTLIB;
@@ -23,6 +22,7 @@ import org.smtlib.impl.SMTExpr;
 
 /** A class of static utility methods and constants for the SMT-LIB package. */
 public class Utils {
+	
 	
 	/** The name of the properties file read by jSMTLIB */
 	static final public String PROPS_FILE = "jsmtlib.properties";
@@ -66,6 +66,12 @@ public class Utils {
 
 	/** The string designating an option item */
 	public static final String INTERACTIVE_MODE = ":interactive-mode";
+
+	/** The string designating an option item */
+	public static final String PRODUCE_ASSERTIONS = ":produce-assertions";
+
+	/** The string designating an option item */
+	public static final String GLOBAL_DECLARATIONS = ":global-declarations";
 
 	/** The string designating an option item */
 	public static final String RANDOM_SEED = ":random-seed";
@@ -130,6 +136,8 @@ public class Utils {
 
 	/** The version of SMT-LIB that is expected of theory and logic definitions */
 	public static final String SMTLIB_VERSION_20 = "2.0";
+	public static final String SMTLIB_VERSION_25 = "2.5";
+	public static       String SMTLIB_VERSION_CURRENT = SMTLIB_VERSION_25;
 
 	/** The attribute tag for defining sorts in a theory */
 	public static final IKeyword SORTS = new Factory().keyword(":sorts");
@@ -185,51 +193,26 @@ public class Utils {
 	/** The String for the stderr predefined string */
 	public static final String STDERR = "stderr";
 
-	/** The set of standard options with boolean values */
-	static final public Set<String> boolOptions = new HashSet<String>();
-
-	/** The set of standard options with numeric values */
-	static final public Set<String> numericOptions = new HashSet<String>();
-
-	/** The set of standard options with string values */
-	static final public Set<String> stringOptions = new HashSet<String>();
-
-	/** The set of default values for all standard options */
-	static final public Map<String, IAttributeValue> defaults = new HashMap<String, IAttributeValue>();
-
 	/** String constant for boolean true. */
 	static public final ISymbol TRUE = new SMTExpr.Symbol("true".intern());
 
 	/** String constant for boolean false. */
 	static public final ISymbol FALSE = new SMTExpr.Symbol("false".intern());
 
-	static {
-		// Initializing all the standard smtConfig keywords
-		boolOptions.add(PRINT_SUCCESS);
-		if (SMT.Configuration.isVersion(SMTLIB.V20)) boolOptions.add(EXPAND_DEFINITIONS);
-		boolOptions.add(INTERACTIVE_MODE);
-		boolOptions.add(PRODUCE_PROOFS);
-		boolOptions.add(PRODUCE_UNSAT_CORES);
-		boolOptions.add(PRODUCE_MODELS);
-		boolOptions.add(PRODUCE_ASSIGNMENTS);
-		numericOptions.add(RANDOM_SEED);
-		numericOptions.add(VERBOSITY);
-		stringOptions.add(REGULAR_OUTPUT_CHANNEL);
-		stringOptions.add(DIAGNOSTIC_OUTPUT_CHANNEL);
-		defaults.put(PRINT_SUCCESS, TRUE);
-		if (SMT.Configuration.isVersion(SMTLIB.V20)) defaults.put(EXPAND_DEFINITIONS, FALSE); 
-		defaults.put(INTERACTIVE_MODE, FALSE);
-		defaults.put(PRODUCE_PROOFS, FALSE);
-		defaults.put(PRODUCE_UNSAT_CORES, FALSE);
-		defaults.put(PRODUCE_MODELS, FALSE);
-		defaults.put(PRODUCE_ASSIGNMENTS, FALSE);
-		defaults.put(RANDOM_SEED, new SMTExpr.Numeral(0));
-		defaults.put(VERBOSITY, new SMTExpr.Numeral(0));
-		defaults.put(REGULAR_OUTPUT_CHANNEL, new SMTExpr.StringLiteral(STDOUT,
-				false));
-		defaults.put(DIAGNOSTIC_OUTPUT_CHANNEL, new SMTExpr.StringLiteral(
-				STDERR, false));
-	}
+	// The following are not static, because they depend on the version
+	
+	/** The set of standard options with boolean values */
+	final public Set<String> boolOptions = new HashSet<String>();
+
+	/** The set of standard options with numeric values */
+	final public Set<String> numericOptions = new HashSet<String>();
+
+	/** The set of standard options with string values */
+	final public Set<String> stringOptions = new HashSet<String>();
+
+	/** The set of default values for all standard options */
+	final public Map<String, IAttributeValue> defaults = new HashMap<String, IAttributeValue>();
+
 
 	static final public HashSet<IKeyword> infoKeywords = new HashSet<IKeyword>();
 	static {
@@ -259,10 +242,10 @@ public class Utils {
 	 *            String to quote
 	 * @return the quoted string
 	 */
-	public static String quote(String msg) {
+	public String quote(String msg) {
 		StringBuilder sb = new StringBuilder();
 		sb.append('"');
-		if (SMT.Configuration.isVersion(SMTLIB.V20)) { // Version 2.0
+		if (smtConfig.isVersion(SMTLIB.V20)) { // Version 2.0
 			for (char c : msg.toCharArray()) {
 				// In SMT-LIB v2.0, the only escapes within strings are for " and \
 				// which are represented as \" and \\
@@ -311,12 +294,12 @@ public class Utils {
 	 * sequence of ASCII characters, undoing any SMT-LIBv2 escape sequences, and without
 	 * the enclosing quotes
 	 */
-	public static String unescape(String msg) {
+	public String unescape(String msg) {
 		StringBuilder sb = new StringBuilder();
 		int k = 1;
 		int endPos = msg.length() - 1;
 		while (k < endPos) {
-			if (SMT.Configuration.isVersion(SMTLIB.V20)) { // Version 2.0
+			if (smtConfig.isVersion(SMTLIB.V20)) { // Version 2.0
 				int kk = msg.indexOf('\\', k);
 				if (kk == -1) {
 					sb.append(msg.substring(k, endPos));
@@ -334,7 +317,7 @@ public class Utils {
 					}
 					k = kk + 2;
 				}
-			} else if (SMT.Configuration.isVersion(SMTLIB.V25)) { // Version 2.5
+			} else if (smtConfig.isVersion(SMTLIB.V25)) { // Version 2.5
 				int kk = msg.indexOf('"', k);
 				if (kk == -1) { // FIXME - there should always be a " at the end of the string
 					sb.append(msg.substring(k, endPos));
@@ -368,6 +351,37 @@ public class Utils {
 	/** Creates a Utils instance for the given configuration */
 	public Utils(SMT.Configuration smtConfig) {
 		this.smtConfig = smtConfig;
+		{
+			// Initializing all the standard smtConfig keywords
+			boolOptions.add(PRINT_SUCCESS);
+			boolOptions.add(EXPAND_DEFINITIONS); // Is deprecated in V2.5, but we keep it anyway
+			boolOptions.add(INTERACTIVE_MODE);
+			if (smtConfig.atLeastVersion(SMTLIB.V25)) boolOptions.add(PRODUCE_ASSERTIONS);
+			if (smtConfig.atLeastVersion(SMTLIB.V25)) boolOptions.add(GLOBAL_DECLARATIONS);
+			boolOptions.add(PRODUCE_PROOFS);
+			boolOptions.add(PRODUCE_UNSAT_CORES);
+			boolOptions.add(PRODUCE_MODELS);
+			boolOptions.add(PRODUCE_ASSIGNMENTS);
+			numericOptions.add(RANDOM_SEED);
+			numericOptions.add(VERBOSITY);
+			stringOptions.add(REGULAR_OUTPUT_CHANNEL);
+			stringOptions.add(DIAGNOSTIC_OUTPUT_CHANNEL);
+			defaults.put(PRINT_SUCCESS, TRUE);
+			defaults.put(EXPAND_DEFINITIONS, FALSE); 
+			defaults.put(INTERACTIVE_MODE, FALSE);
+			if (smtConfig.atLeastVersion(SMTLIB.V25)) defaults.put(PRODUCE_ASSERTIONS, FALSE);
+			if (smtConfig.atLeastVersion(SMTLIB.V25)) defaults.put(GLOBAL_DECLARATIONS, FALSE);
+			defaults.put(PRODUCE_PROOFS, FALSE);
+			defaults.put(PRODUCE_UNSAT_CORES, FALSE);
+			defaults.put(PRODUCE_MODELS, FALSE);
+			defaults.put(PRODUCE_ASSIGNMENTS, FALSE);
+			defaults.put(RANDOM_SEED, new SMTExpr.Numeral(0));
+			defaults.put(VERBOSITY, new SMTExpr.Numeral(0));
+			defaults.put(REGULAR_OUTPUT_CHANNEL, new SMTExpr.StringLiteral(STDOUT,
+					false));
+			defaults.put(DIAGNOSTIC_OUTPUT_CHANNEL, new SMTExpr.StringLiteral(
+					STDERR, false));
+		}
 	}
 
 	/**
@@ -530,7 +544,11 @@ public class Utils {
 							+ sx.logicName().value(), sx.logicName().pos());
 		}
 
-		return loadLogic(sx, symTable);
+		boolean g = smtConfig.globalDeclarations;
+		smtConfig.globalDeclarations = false;
+		IResponse b = loadLogic(sx, symTable);
+		smtConfig.globalDeclarations = g;
+		return b;
 	}
 
 	/**

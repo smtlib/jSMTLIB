@@ -16,6 +16,7 @@ import org.smtlib.*;
 /** This class defines a number of subclasses that implement the SMT-LIB abstract AST;
  * they are used by commands and expressions. */
 public abstract class SMTExpr implements IExpr {
+	static public SMT.Configuration smtConfig;
 	
 	/** Just a convenient base class to provide some method implementations */
 	static abstract public class Literal<T> extends Pos.Posable {
@@ -79,12 +80,12 @@ public abstract class SMTExpr implements IExpr {
 		 * any escape sequences should be replaced by the actual characters.
 		 */
 		public StringLiteral(String value, boolean quoted) {
-			super(quoted ? Utils.unescape(value) : value);
+			super(quoted ? smtConfig.utils.unescape(value) : value);
 		}
 		
 		/** For a StringLiteral, toString produces a properly escaped and quoted string */
 		@Override
-		public String toString() { return Utils.quote(value); }
+		public String toString() { return smtConfig.utils.quote(value); }
 
 		@Override
 		public String kind() { return "string-literal"; }
@@ -209,6 +210,11 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public String toString() { return org.smtlib.sexpr.Printer.write(this); }
 
+		@Override
+		public boolean isOK() { throw new RuntimeException(); } // FIXME - should never be called
+
+		@Override
+		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
 	
 	/** This class represents an SMT parameterized-identifier AST */
@@ -263,6 +269,11 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public String toString() { return org.smtlib.sexpr.Printer.write(this); }
 
+		@Override
+		public boolean isOK() { throw new RuntimeException(); } // FIXME - should never be called
+
+		@Override
+		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
 	
 	/** This class represents an SMT Symbol */
@@ -358,6 +369,11 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public String toString() { return org.smtlib.sexpr.Printer.write(this); }
 
+		@Override
+		public boolean isOK() { throw new RuntimeException(); } // FIXME - should never be called
+
+		@Override
+		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
 
 	static public class BinaryLiteral extends Literal<String>  implements IBinaryLiteral {
@@ -451,7 +467,12 @@ public abstract class SMTExpr implements IExpr {
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
-		
+
+		@Override
+		public boolean isOK() { throw new RuntimeException(); } // FIXME - should never be called
+
+		@Override
+		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
 
 	static public class Exists extends Pos.Posable implements IExists {
@@ -477,6 +498,12 @@ public abstract class SMTExpr implements IExpr {
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+
+		@Override
+		public boolean isOK() { throw new RuntimeException(); } // FIXME - should never be called
+
+		@Override
+		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
 
 	static public class Forall extends Pos.Posable implements IForall {
@@ -502,6 +529,12 @@ public abstract class SMTExpr implements IExpr {
 		public String kind() {
 			return "forall";
 		}
+
+		@Override
+		public boolean isOK() { throw new RuntimeException(); } // FIXME - should never be called
+
+		@Override
+		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
 
 	static public class Declaration extends Pos.Posable implements IDeclaration {
@@ -624,6 +657,12 @@ public abstract class SMTExpr implements IExpr {
 			for (IAttribute<?> a: attributes) s = s + " " + a.toString();
 			return s + ")";
 		}
+
+		@Override
+		public boolean isOK() { throw new RuntimeException(); } // FIXME - should never be called
+
+		@Override
+		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
 	
 	static public class Logic implements ILogic {
@@ -734,6 +773,12 @@ public abstract class SMTExpr implements IExpr {
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+
+		@Override
+		public boolean isOK() { throw new RuntimeException(); } // FIXME - should never be called
+
+		@Override
+		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
 	
 

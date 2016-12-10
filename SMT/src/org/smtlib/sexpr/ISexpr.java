@@ -8,7 +8,7 @@ package org.smtlib.sexpr;
 import java.util.List;
 
 import org.smtlib.IAccept;
-import org.smtlib.IExpr.IAttributeValue;
+import org.smtlib.IAttributeValue;
 import org.smtlib.IPos.IPosable;
 
 /** This interface represents S-expressions as used in SMT-LIB;

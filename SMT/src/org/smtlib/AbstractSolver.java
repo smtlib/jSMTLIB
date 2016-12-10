@@ -5,14 +5,11 @@
  */
 package org.smtlib;
 
-import java.io.IOException;
-
 import org.smtlib.ICommand.Ideclare_const;
 import org.smtlib.ICommand.Ideclare_fun;
 import org.smtlib.ICommand.Ideclare_sort;
 import org.smtlib.ICommand.Idefine_fun;
 import org.smtlib.ICommand.Idefine_sort;
-import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.SMT.Configuration;

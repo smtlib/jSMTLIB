@@ -22,7 +22,6 @@ import org.smtlib.sexpr.ISexpr;
 import org.smtlib.sexpr.Sexpr;
 import org.smtlib.ICommand.Idefine_fun;
 import org.smtlib.IExpr.IAttribute;
-import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.IAttributedExpr;
 import org.smtlib.IExpr.IBinaryLiteral;
 import org.smtlib.IExpr.IBinding;
@@ -42,6 +41,7 @@ import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.ISort.IApplication;
 import org.smtlib.IVisitor.VisitorException;
+import org.smtlib.SMT.Configuration.SMTLIB;
 
 /** This class implements the adapter of SMTv2 to old CVC commands. */ 
 public class Solver_cvc extends Solver_test implements ISolver {
@@ -184,7 +184,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
 			}
 		}
-		if (logicSet != null && Utils.INTERACTIVE_MODE.equals(option)) {
+		if (logicSet != null && (Utils.INTERACTIVE_MODE.equals(option)||Utils.PRODUCE_ASSERTIONS.equals(option))) {
 			return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
 		}
 		if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 
@@ -229,6 +229,8 @@ public class Solver_cvc extends Solver_test implements ISolver {
 					return smtConfig.responseFactory.error("Failed to open or write to the regular output " + e.getMessage(),value.pos());
 				}
 			}
+		} else if (Utils.INTERACTIVE_MODE.equals(option) && smtConfig.isVersion(SMTLIB.V20)) {
+			option = Utils.PRODUCE_ASSERTIONS;
 		}
 		options.put(option,value);
 		if (key.toString().equals(":print-success")) {

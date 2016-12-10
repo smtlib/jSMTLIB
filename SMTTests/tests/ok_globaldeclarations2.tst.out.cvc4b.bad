@@ -1,0 +1,9 @@
+success
+success
+(reset-assertions)
+^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.16: SMT-LIB 2.5 commands are not permitted while operating in strict compliance mode and in SMT-LIB 2.0 mode.")
+(declare-fun a () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.21: Symbol 'Bool' not declared as a type")
+sat

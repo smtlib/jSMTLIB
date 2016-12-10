@@ -30,7 +30,6 @@ import org.smtlib.ICommand.Ideclare_sort;
 import org.smtlib.ICommand.Idefine_fun;
 import org.smtlib.ICommand.Idefine_sort;
 import org.smtlib.IExpr.IAttribute;
-import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.IFcnExpr;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.IKeyword;
@@ -38,6 +37,7 @@ import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.IQualifiedIdentifier;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IParser.ParserException;
+import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.impl.Pos;
 import org.smtlib.sexpr.Printer;
 
@@ -83,9 +83,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	
 	/** Map that keeps current values of options */
 	protected Map<String,IAttributeValue> options = new HashMap<String,IAttributeValue>();
-	{ 
-		options.putAll(Utils.defaults);
-	}
 	
 	/** Creates an instance of the Z3 solver */
 	public Solver_z3_4_3(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
@@ -98,6 +95,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			cmds = cmds_unix;
 		}
 		cmds[0] = executable;
+		options.putAll(smtConfig.utils.defaults);
 		double timeout = smtConfig.timeout;
 		if (timeout > 0) {
 			List<String> args = new java.util.ArrayList<String>(cmds.length+1);
@@ -262,7 +260,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			return smtConfig.responseFactory.error("The logic must be set before a get-assertions command is issued");
 		}
 		// FIXME - do we really want to call get-option here? it involves going to the solver?
-		if (!smtConfig.relax && !Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.INTERACTIVE_MODE)))) {
+		if (!smtConfig.relax && !Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSERTIONS)))) {
 			return smtConfig.responseFactory.error("The get-assertions command is only valid if :interactive-mode has been enabled");
 		}
 		try {
@@ -327,6 +325,17 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		}
 		return res;
 	}
+	
+	@Override
+	public IResponse reset() {
+		logicSet = false;
+	    return sendCommand("(reset)");
+	}
+
+	@Override
+	public IResponse reset_assertions() {
+	    return sendCommand("(reset-assertions)");
+	}
 
 	@Override
 	public IResponse pop(int number) {
@@ -390,7 +399,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
 			}
 		}
-		if (logicSet && Utils.INTERACTIVE_MODE.equals(option)) {
+		if (logicSet && (smtConfig.utils.INTERACTIVE_MODE.equals(option)||smtConfig.utils.PRODUCE_ASSERTIONS.equals(option))) {
 			return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
 		}
 		if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 
@@ -439,7 +448,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			}
 		}
 		// Save the options on our side as well
-		options.put(option,value);
+		options.put(Utils.INTERACTIVE_MODE.equals(option) && !smtConfig.isVersion(SMTLIB.V20) ? Utils.PRODUCE_ASSERTIONS : option,value);
 		IResponse r = checkPrintSuccess(smtConfig,key,value);
 		if (r != null) return r;
 
@@ -455,7 +464,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	@Override
 	public IResponse get_option(IKeyword key) { // FIXME - use the solver?
 		String option = key.value();
-		IAttributeValue value = options.get(option);
+		IAttributeValue value = options.get(Utils.INTERACTIVE_MODE.equals(option) && !smtConfig.isVersion(SMTLIB.V20)? Utils.PRODUCE_ASSERTIONS : option);
 		if (value == null) return smtConfig.responseFactory.unsupported();
 		return value;
 	}

@@ -109,7 +109,7 @@ public class FileTests  extends LogicTests {
 		String altname = outname + "." + solvername;
 		String altname2 = outname + "." + shortname(solvername);
 		Assume.assumeTrue(! (new File(altname + ".skip").exists()) );
-		String[] names = new String[]{ altname + "." + version + ".bad", altname + ".bad", outname + "." + version + ".bad", outname + ".bad", altname + "." + version, altname2 + "." + version, altname, altname2, outname  + "." + version, outname};
+		String[] names = new String[]{ altname + "." + version + ".bad", altname + ".bad", altname + "." + version, altname2 + "." + version, altname2 + ".bad", altname, altname2, outname + "." + version + ".bad", outname + ".bad", outname  + "." + version, outname};
 		for (String name: names) {
 			if (new File(name).exists()) { outname = name; break; }
 		}

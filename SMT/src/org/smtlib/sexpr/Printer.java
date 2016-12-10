@@ -14,7 +14,6 @@ import org.smtlib.*;
 import org.smtlib.ICommand.IScript;
 import org.smtlib.IExpr.IAsIdentifier;
 import org.smtlib.IExpr.IAttribute;
-import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.IAttributedExpr;
 import org.smtlib.IExpr.IBinaryLiteral;
 import org.smtlib.IExpr.IBinding;
@@ -45,6 +44,8 @@ import org.smtlib.ISort.IParameter;
 /** This class writes out SMT-LIB ASTs as concrete S-expression syntax; aside from white space
  * between tokens it should simply reverse what the Parser class does.  */
 public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void> {
+	
+	static public SMT.Configuration smtConfig;
 	
 	/** The writer to write text to */
 	/*@Nullable*/ protected Writer w;
@@ -176,7 +177,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	public Void visit(org.smtlib.IExpr.IError e) throws IVisitor.VisitorException {
 		try { 
 			w.append("(error ");
-			w.append(Utils.quote(e.value())); 
+			w.append(smtConfig.utils.quote(e.value())); 
 			w.append(")");
 		} catch (IOException ex) { throw new IVisitor.VisitorException(ex); }
 		return null;
@@ -564,7 +565,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	
 	/** Utility function to print error messages in this printer's format */
 	public String error(String message) {
-		return "(error " + Utils.quote(message) + ")";
+		return "(error " + smtConfig.utils.quote(message) + ")";
 	}
 
 	@Override

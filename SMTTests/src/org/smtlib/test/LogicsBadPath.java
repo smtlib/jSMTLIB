@@ -25,7 +25,7 @@ public class LogicsBadPath extends LogicTests {
 	public void testLogic() {
 		doCommand("(set-logic QF_UF)",
 				solvername.startsWith("z3") || solvername.startsWith("cvc4") || solvername.startsWith("yices2") || solvername.startsWith("z3_4_4")? "success" : // FIXME
-				SMT.Configuration.isVersion(SMTLIB.V20) ? "(error \"No logic file found for QF_UF on path \\\"xxx\\\"\")"
+				smt.smtConfig.isVersion(SMTLIB.V20) ? "(error \"No logic file found for QF_UF on path \\\"xxx\\\"\")"
 		                                                : "(error \"No logic file found for QF_UF on path \"\"xxx\"\"\")");
 	}
 }

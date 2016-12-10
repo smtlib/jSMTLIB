@@ -22,7 +22,6 @@ import org.smtlib.ICommand.Idefine_fun;
 import org.smtlib.ICommand.Idefine_sort;
 import org.smtlib.IExpr.IAsIdentifier;
 import org.smtlib.IExpr.IAttribute;
-import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.IAttributedExpr;
 import org.smtlib.IExpr.IBinaryLiteral;
 import org.smtlib.IExpr.IBinding;
@@ -61,7 +60,7 @@ public class Solver_yices extends Solver_test implements ISolver {
 	/** Records the values of options */
 	protected Map<String,IAttributeValue> options = new HashMap<String,IAttributeValue>();
 	{ 
-		options.putAll(Utils.defaults);
+		options.putAll(smtConfig.utils.defaults);
 	}
 	
 	/** Creates but does not start a solver instance */
@@ -200,7 +199,7 @@ public class Solver_yices extends Solver_test implements ISolver {
 			}
 			((Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
 		}
-		if (logicSet != null && Utils.INTERACTIVE_MODE.equals(option)) {
+		if (logicSet != null && (smtConfig.utils.INTERACTIVE_MODE.equals(option)||smtConfig.utils.PRODUCE_ASSERTIONS.equals(option))) {
 			return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
 		}
 		if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 

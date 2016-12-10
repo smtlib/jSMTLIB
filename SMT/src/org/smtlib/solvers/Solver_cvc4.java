@@ -21,15 +21,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.smtlib.*;
+import org.smtlib.ICommand.Ideclare_const;
 import org.smtlib.ICommand.Ideclare_fun;
 import org.smtlib.ICommand.Ideclare_sort;
 import org.smtlib.ICommand.Idefine_fun;
 import org.smtlib.ICommand.Idefine_sort;
-import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IParser.ParserException;
+import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.impl.Pos;
 import org.smtlib.impl.Response;
 
@@ -48,6 +49,9 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 	protected String cmds_win[] = new String[]{ "", "--smtlib-strict","--interactive","--no-full-saturate-quant"}; 
 	protected String cmds_mac[] = new String[]{ "", "--smtlib-strict","--interactive"}; 
 	protected String cmds_unix[] = new String[]{ "", "--smtlib-strict","--incremental", "--interactive"};
+	protected String cmds_win_nostrict[] = new String[]{ "", "--interactive","--no-full-saturate-quant"}; 
+	protected String cmds_mac_nostrict[] = new String[]{ "", "--interactive"}; 
+	protected String cmds_unix_nostrict[] = new String[]{ "", "--incremental", "--interactive"};
 
 	/** The object that interacts with external processes */
 	private SolverProcess solverProcess;
@@ -64,9 +68,6 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 	// FIXME - get rid of this?
 	/** Map that keeps current values of options */
 	protected Map<String,IAttributeValue> options = new HashMap<String,IAttributeValue>();
-	{ 
-		options.putAll(Utils.defaults);
-	}
 	
 	/** Creates an instance of the solver */
 	public Solver_cvc4(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
@@ -80,6 +81,7 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 			cmds = cmds_unix;
 		}
 		cmds[0] = executable;
+		options.putAll(smtConfig.utils.defaults);
 		double timeout = smtConfig.timeout;
 		if (timeout > 0) {
 			List<String> args = new java.util.ArrayList<String>(cmds.length+1);
@@ -144,6 +146,7 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 		String translatedCmd = null;
 		try {
 			translatedCmd = translate(cmd);
+			if (cmd instanceof Ideclare_const) translatedCmd = "(declare-fun " + ((Ideclare_const)cmd).symbol() + " () " + ((Ideclare_const)cmd).resultSort() + ")";
 			return parseResponse(solverProcess.sendAndListen(translatedCmd,"\n"));
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
@@ -265,6 +268,16 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 	}
 
 	@Override
+	public IResponse reset() {
+	    return sendCommand("(reset)");
+	}
+
+	@Override
+	public IResponse reset_assertions() {
+	    return sendCommand("(reset-assertions)");
+	}
+
+	@Override
 	public IResponse pop(int number) {
 	    return sendCommand("(pop " + number + ")");
 	}
@@ -279,6 +292,7 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 		// FIXME - discrimninate among logics
 		
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#set-logic " + logicName);
+		if (logicName.equals("ALL")) logicName = "ALL_SUPPORTED";
 		return sendCommand("(set-logic " + logicName + ")");
 	}
 

@@ -40,12 +40,7 @@ public class C_declare_const extends C_declare_fun implements Ideclare_const {
 	public void write(Printer p) throws IOException, IVisitor.VisitorException {
 		p.writer().append("(" + commandName + " ");
 		symbol().accept(p);
-		p.writer().append(" (");
-		for (ISort s: argSorts()) {
-			s.accept(p);
-			p.writer().append(" ");
-		}
-		p.writer().append(") ");
+		p.writer().append(" ");
 		resultSort().accept(p);
 		p.writer().append(")");
 		

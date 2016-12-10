@@ -26,10 +26,10 @@ public class C_get_model extends Command implements Iget_proof {
 	
 	/** Parses the command, producing a new command instance */
 	static public /*@Nullable*/ C_get_model parse(Parser p) throws ParserException {
-		if (SMT.Configuration.isVersion(SMTLIB.V20)) {
-			p.error("The get-model command is not valid in V2.0", p.peekToken().pos());
-			return null;
-		}
+//		if (SMT.Configuration.isVersion(SMTLIB.V20)) {
+//			p.error("The get-model command is not valid in V2.0", p.peekToken().pos());
+//			return null;
+//		}
 		return p.checkNoArg() ? new C_get_model() : null;
 	}
 

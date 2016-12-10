@@ -1,0 +1,6 @@
+success
+success
+success
+(assert a)  ; not yet defined - ERROR
+        ^
+(error "Unknown constant symbol a")

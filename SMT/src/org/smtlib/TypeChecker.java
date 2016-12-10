@@ -8,12 +8,16 @@ package org.smtlib;
 
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import org.smtlib.IExpr.*;
 import org.smtlib.ISort.*;
+import org.smtlib.impl.SMTExpr;
+import org.smtlib.sexpr.ISexpr;
+import org.smtlib.sexpr.ISexpr.ISeq;
 
 /** This class is a visitor that type-checks a formula */
 public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
@@ -734,7 +738,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		try {
 			resultSort = save(e,e.expr().accept(this));
 			for (IAttribute<?> a: e.attributes()) {
-				if (a.keyword().value().equals(":named")) { // FIXME - use a canonical representation
+				String name = a.keyword().value();
+				if (name.equals(":named")) { // FIXME - use a canonical representation
 					IAttributeValue v = a.attrValue();
 					if (!(v instanceof ISymbol)) {
 						result.add(smtConfig.responseFactory.error("Expected a symbol after :named",v==null?a.keyword().pos():v.pos()));
@@ -750,6 +755,17 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 						result.add(smtConfig.responseFactory.error("The expression being named is not closed - this symbol is a variable: " + smtConfig.defaultPrinter.toString(isClosed),isClosed.pos()));
 						errors = true;
 					}
+				} else if (name.equals(":pattern")) {
+					IAttributeValue v = a.attrValue();
+					if (!(v instanceof ISeq)) {
+						result.add(smtConfig.responseFactory.error("Expected a sequence after :pattern",v==null?a.keyword().pos():v.pos()));
+						errors = true;
+					} else {
+						for (ISexpr ee: ((ISeq)v).sexprs()) {
+							IExpr ex = convert(ee);
+							ex.accept(this);
+						}
+					}
 				}
 			}
 		} finally {
@@ -757,6 +773,24 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		}
 		if (errors) return null;
 		return resultSort;
+	}
+	
+	public IExpr convert(ISexpr s) { // FIXME - use a factory? do typechecking here?
+		if (s instanceof ISexpr.ISeq) {
+			Iterator<ISexpr> sexprs = ((ISeq)s).sexprs().iterator();
+			ISexpr first = sexprs.next();
+			List<IExpr> args = new LinkedList<IExpr>();
+			while (sexprs.hasNext()) {
+				IExpr arg = convert(sexprs.next());
+				args.add(arg);
+			}
+			ISymbol id = (ISymbol)first;
+			return new SMTExpr.FcnExpr(id,args);
+		} else if (s instanceof ISymbol) {
+			return (ISymbol)s;
+		} else {
+			throw new RuntimeException();
+		}
 	}
 
 	protected Map<ISymbol,Variable> currentScope = new HashMap<ISymbol,Variable>();

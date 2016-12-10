@@ -7,7 +7,6 @@ package org.smtlib;
 
 import java.util.Map;
 
-import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IExpr.IKeyword;
 

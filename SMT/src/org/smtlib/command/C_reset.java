@@ -19,17 +19,17 @@ import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
 
 /** Implements the reset command */
-public class C_reset extends Command implements Iexit {
+public class C_reset extends Command {
 	/** Constructs an instance of the command */
 	public C_reset() {
 	}
 	
 	/** Parses the arguments of the command, producing a new command instance */
 	static public /*@Nullable*/ C_reset parse(Parser p) throws ParserException {
-		if (SMT.Configuration.isVersion(SMTLIB.V20)) {
-			p.error("The reset command is not valid in V2.0", p.peekToken().pos());
-			return null;
-		}
+//		if (SMT.Configuration.isVersion(SMTLIB.V20)) {
+//			p.error("The reset command is not valid in V2.0", p.peekToken().pos());
+//			return null;
+//		}
 		return p.checkNoArg() ? new C_reset() : null;
 	}
 

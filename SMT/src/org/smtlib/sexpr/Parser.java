@@ -15,7 +15,6 @@ import org.smtlib.*;
 import org.smtlib.ICommand.IScript;
 import org.smtlib.IExpr.IAsIdentifier;
 import org.smtlib.IExpr.IAttribute;
-import org.smtlib.IExpr.IAttributeValue;
 import org.smtlib.IExpr.IBinaryLiteral;
 import org.smtlib.IExpr.IBinding;
 import org.smtlib.IExpr.IDecimal;
@@ -785,7 +784,7 @@ public class Parser extends Lexer implements IParser {
 	 * if an error occurs.
 	 */
 	@Override
-	public /*@Nullable*/IExpr.IAttributeValue parseAttributeValue() throws ParserException {
+	public /*@Nullable*/IAttributeValue parseAttributeValue() throws ParserException {
 		if (!isLP()) {
 			if (isRP()) {
 				smtConfig.log.logError(smtConfig.responseFactory.error("Expected an attribute value here, instead of a )",
@@ -821,7 +820,7 @@ public class Parser extends Lexer implements IParser {
 	 */
 	@Override
 	public /*@Nullable*/IExpr.IAttribute<?> parseAttribute() throws ParserException {
-		Keyword keyword = parseKeyword();
+		IKeyword keyword = parseKeyword();
 		if (keyword == null) return null;
 		if (isRP() || isEOD()) {
 			return setPos(smtConfig.exprFactory.attribute(keyword),keyword.pos());
@@ -840,6 +839,13 @@ public class Parser extends Lexer implements IParser {
 							smtConfig.defaultPrinter.toString(keyword) + " is not a legal attribute value"));
 					return null;
 				}
+//			} else if (keyword.toString().equals(":pattern")) {
+//				parseLP();
+//				IExpr value = parseExpr();
+//				if (value == null) return null;
+//				parseRP();
+//				// FIXME - value should be a list of IExpr
+//				return setPos(smtConfig.exprFactory.attribute(keyword,value),pos(keyword.pos(),value.pos()));
 			} else {
 				ISexpr value = parseSexpr();
 				if (value == null) return null;

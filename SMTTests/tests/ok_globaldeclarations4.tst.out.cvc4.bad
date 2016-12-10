@@ -1,0 +1,10 @@
+unsupported
+success
+success
+success
+sat
+(reset-assertions)
+^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.16: expected SMT-LIBv2 command, got `reset-assertions'.")
+success
+unsat

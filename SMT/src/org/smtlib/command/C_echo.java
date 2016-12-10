@@ -31,10 +31,10 @@ public class C_echo extends Command implements Iexit {
 	
 	/** Parses the arguments of the command, producing a new command instance */
 	static public /*@Nullable*/ C_echo parse(Parser p) throws ParserException {
-		if (SMT.Configuration.isVersion(SMTLIB.V20)) {
-			p.error("The echo command is not valid in V2.0", p.peekToken().pos());
-			return null;
-		}
+//		if (SMT.Configuration.isVersion(SMTLIB.V20)) {
+//			p.error("The echo command is not valid in V2.0", p.peekToken().pos());
+//			return null;
+//		}
 		IStringLiteral expr = p.parseStringLiteral();
 		if (expr == null) return null;
 		return new C_echo(expr);
