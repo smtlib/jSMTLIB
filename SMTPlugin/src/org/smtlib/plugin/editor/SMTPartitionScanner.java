@@ -82,13 +82,15 @@ public class SMTPartitionScanner extends RuleBasedScanner implements IPartitionT
 	public final static IToken smtInvalid = token(ISMTColorConstants.SMT_INVALID);
 
 
+	// FIXME - would be nice if this list could be created automatically 
 	final static public String[] _reservedWords = {
 		"_", "!", "as", "NUMERAL", "DECIMAL", "STRING", "forall", "exists", "let", "par",
-		"assert", "check-sat", 
-		"declare-fun", "define-fun", "declare-sort", "define-sort",
-		"exit", "get-info", "get-option", 
-		"get-proof", "get-assignment", "get-assertions", "get-unsat-core", "get-value",
-		"push", "pop",
+		"assert", "check-sat", "check-sat-assuming",
+		"declare-const", "declare-fun", "define-fun", "declare-sort", "define-sort",
+		"echo", "exit", "get-info", "get-option", 
+		"get-proof", "get-assertions", "get-assignment", "get-info", "get-model", 
+		"get-option", "get-proof", "get-unsat-core", "get-value",
+		"push", "pop", "reset-assertions", "reset",
 		"set-logic", "set-info", "set-option"};
 
 	final static public Set<String> reservedWords = new HashSet<String>();
@@ -132,6 +134,8 @@ public class SMTPartitionScanner extends RuleBasedScanner implements IPartitionT
 	
 	// FIXME - some performance improvement could be done here
 
+	// FIXME - this needs to be expanded to include UNICODE characters, which are now allowed.
+	
 	/* Define a bunch of useful character classes */
 	public final static String whitespace = " \t\r\n";
 	public final static String digits = "0123456789";
@@ -260,7 +264,7 @@ public class SMTPartitionScanner extends RuleBasedScanner implements IPartitionT
 		
 	}
 
-	/** This detector identifiers a reserved word or unquoted symbol. */
+	/** This detector identifies a reserved word or unquoted symbol. */
 	static private class SymbolRWRule implements IRule {
 		private IToken symbolToken;
 		private IToken reservedWordToken;

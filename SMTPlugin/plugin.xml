@@ -244,12 +244,12 @@
                definitionId="org.smtlib.plugin.commands.RunZ3_4_3">
          </action>
          <action
-               label="Z3-2.11"
-               tooltip="Runs the Z3-2.11 SMT solver"
+               label="Z3-4.4"
+               tooltip="Runs the Z3-4.4 SMT solver"
                class="org.smtlib.plugin.MenuActions$RunSolver"
                menubarPath="SMTMenu/SMTSolvers"
-               id="org.smtlib.plugin.MenuActions.RunSolver.z3_2_11"
-               definitionId="org.smtlib.plugin.commands.RunZ3_2_11">
+               id="org.smtlib.plugin.MenuActions.RunSolver.z3_4_4"
+               definitionId="org.smtlib.plugin.commands.RunZ3_4_4">
          </action>
          <action
                label="CVC"
@@ -543,10 +543,10 @@
             id="org.smtlib.plugin.commands.RunZ3_4_3">
       </command> 
       <command
-            name="Run Z3-2.11"
-            description="Runs the Z3-2.11 SMT solver"
+            name="Run Z3-4.4"
+            description="Runs the Z3-4.4 SMT solver"
             categoryId="org.smtlib.plugin.SMTCommandCategory"
-            id="org.smtlib.plugin.commands.RunZ3_2_11">
+            id="org.smtlib.plugin.commands.RunZ3_4_4">
       </command> 
       <command
             name="Run type-checker"

@@ -146,8 +146,8 @@ implements IWorkbenchPreferencePage {
 		
 		public AbstractPreference.ChoiceOption logic = dynamicLogicList(logicKey, logics.getValue());
 
-		/** Names of defaultSolver to include; test must be first */
-		public static final String[] solverNames = new String[]{org.smtlib.Utils.TEST_SOLVER,"simplify","yices","cvc","z3_2_11","z3_4_3"};
+		/** Names of solvers to include; test must be first */
+		public static final String[] solverNames = new String[]{org.smtlib.Utils.TEST_SOLVER,"simplify","yices2","cvc4","z3_4_4","z3_4_3"};
 		
 		public AbstractPreference.ChoiceOption defaultSolver = 
 			new AbstractPreference.ChoiceOption(defaultSolverKey,
