@@ -1,0 +1,15 @@
+success
+success
+success
+success
+success
+(assert (= n  ((_ bv2int 32) b)))
+              ^^^^^^^^^^^^^^^^^
+(error "Unknown predicate symbol (_ bv2int 32) with argument types (_ BitVec 32)")
+success
+(assert (= nn ((_ bv2int 32) bb)))
+              ^^^^^^^^^^^^^^^^^^
+(error "Unknown predicate symbol (_ bv2int 32) with argument types (_ BitVec 32)")
+success
+success
+success

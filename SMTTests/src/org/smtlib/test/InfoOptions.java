@@ -50,6 +50,7 @@ public class InfoOptions  extends LogicTests {
 				: solvername.equals("cvc") ? "Clark Barrett, Cesare Tinelli, and others"
 				: solvername.equals("cvc4") ? null // Long text that we don't check // TODO
 				: solvername.equals("cvc4b") ? null // Long text that we don't check // TODO
+				: solvername.equals("z3_4_5") ? "Leonardo de Moura, Nikolaj Bjorner and Christoph Wintersteiger"
 				: solvername.startsWith("z3") ? "Leonardo de Moura and Nikolaj Bjorner"
 				: "???" )
 				);
@@ -68,6 +69,7 @@ public class InfoOptions  extends LogicTests {
 				: solvername.equals("z3_4_3") ? "4.3"
 				: solvername.equals("z3_4_3_2") ? "4.3.2"
 				: solvername.equals("z3_4_4") ? "4.4.0"
+				: solvername.equals("z3_4_5") ? "4.5.0"
 				: solvername.equals("z3_2_11") ? "2.11"
 				: "???" )
 				);
@@ -202,16 +204,17 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceProofs() {
+		boolean supported = isTest || solvername.equals("z3_4_5");
 		doCommand("(set-option :produce-proofs true)", 
-				isTest ? "success" 
+				supported ? "success" 
 						: solvername.startsWith("cvc4")? "(error \"Error in option parsing: option `produce-proofs' requires a proofs-enabled build of CVC4; this binary was not built with proof support\")"
 						:  "unsupported");
 		doCommand("(get-option :produce-proofs)", 
-				isTest ? "true"
+				supported ? "true"
 			    : solvername.equals("yices2") ? "unsupported"
 				:  "false");
 		doCommand("(set-option :produce-proofs false)", 
-				isTest ? "success" 
+				supported ? "success" 
 						: solvername.startsWith("cvc4")? "success"
 						:  "unsupported");
 		doCommand("(get-option :produce-proofs)", 
@@ -251,7 +254,7 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceAssignments() {
-		boolean supported = isTest || solvername.startsWith("cvc4") || solvername.equals("yices2") ;
+		boolean supported = isTest || solvername.startsWith("cvc4") || solvername.equals("yices2") || solvername.equals("z3_4_5") ;
 		
 		doCommand("(set-option :produce-assignments true)",
 					supported? "success" 
@@ -277,7 +280,7 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkSetProduceUnsatCores() {
 		Assume.assumeTrue(!solvername.equals("cvc4b"));
-		boolean supported = isTest;
+		boolean supported = isTest || solvername.equals("z3_4_5");
 		doCommand("(set-option :produce-unsat-cores true)",
 				supported ? "success" 
 						:  "unsupported");
@@ -306,7 +309,7 @@ public class InfoOptions  extends LogicTests {
 		
 	@Test
 	public void checkSetExpandDefinitions() {
-		boolean supported = smt.smtConfig.isVersion(SMT.Configuration.SMTLIB.V20) && !solvername.equals("yices2") && !solvername.equals("z3_4_4");
+		boolean supported = smt.smtConfig.isVersion(SMT.Configuration.SMTLIB.V20) && !solvername.equals("yices2") && !solvername.equals("z3_4_4") && !solvername.equals("z3_4_5");
 		supported = true; // FIXME - it is optional, but it is permitted to set
 		doCommand("(set-option :expand-definitions true)", 
 				!supported ? "unsupported" : "success");

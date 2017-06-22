@@ -5,6 +5,8 @@
  */
 package org.smtlib;
 
+import java.io.IOException;
+
 import org.smtlib.ICommand.Ideclare_const;
 import org.smtlib.ICommand.Ideclare_fun;
 import org.smtlib.ICommand.Ideclare_sort;
@@ -35,7 +37,16 @@ public class AbstractSolver implements ISolver {
 	final protected IKeyword printSuccess;
 	
 	protected boolean printSuccessResponse = true;
+
+	/** The object that interacts with external processes */
+	protected SolverProcess solverProcess;
 	
+	@Override
+	public void forceExit() {
+		if (solverProcess != null) solverProcess.exit();
+	}
+
+
 	public AbstractSolver() {
 		try {
 			SMT.Configuration c = new SMT.Configuration();
@@ -69,6 +80,7 @@ public class AbstractSolver implements ISolver {
 	public IResponse exit() {
 		throw new UnsupportedOperationException("AbstractSolver.exit");
 	}
+	
 
 	@Override
 	public IResponse echo(IStringLiteral arg) {

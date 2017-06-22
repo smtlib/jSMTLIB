@@ -129,6 +129,11 @@ public class Solver_test implements ISolver {
 	}
 	
 	@Override
+	public void forceExit() {
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#forceexit");
+	}
+	
+	@Override
 	public IResponse echo(IStringLiteral arg) {
 		return arg;
 	}

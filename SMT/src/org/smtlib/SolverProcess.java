@@ -127,6 +127,7 @@ public class SolverProcess {
 	 * for control flow and may be a bit expensive.
 	 */
 	public boolean isRunning(boolean expectStopped) {
+		if (process == null) return false;
 		try {
 			process.exitValue();
 			if (!expectStopped) {
@@ -144,8 +145,9 @@ public class SolverProcess {
 		}
 	}
 	
-	/** Aborts the process */
+	/** Aborts the process; returns immediately if already stopped */
 	public void exit() {
+		if (process == null) return;
 		process.destroy();
 		process = null;
 		toProcess = null;
@@ -246,6 +248,9 @@ public class SolverProcess {
 				}
 				p += i;
 				//System.out.println("HEARD: " + new String(buf,0,p));
+				if (p>100 && len == 1) {
+					len = len;
+				}
 				if (end != null && p >= len) {
 					// Need to compare a String to a part of a char array - we iterate by
 					// hand to avoid creating a new String or CharBuffer object
@@ -254,7 +259,7 @@ public class SolverProcess {
 					for (int j=0; j<len; j++) {
 						if (end.charAt(j) != buf[k++]) { match = false; break; }
 					}
-					if (match && (!"\n".equals(end) || parens == 0)) break; // stopping string matched
+					if (match && (badFormat || parens == 0)) break; // stopping string matched
 				}
 				if (p == buf.length) { // expand the buffer
 					char[] nbuf = new char[2*buf.length];
@@ -267,4 +272,6 @@ public class SolverProcess {
 			putBuffer(buf);
 		}
 	}
+	
+	public static boolean badFormat = false;
 }

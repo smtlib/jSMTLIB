@@ -31,14 +31,15 @@ public class LogicTests {
 	public static final String[] solvers = new String[] {
             "test", 
             "z3_4_3", 
-            "z3_4_3_2", 
-            "z3_4_4", 
+//            "z3_4_5", 
+//            "z3_4_3_2", 
+//            "z3_4_4", 
             /*"z3_2_11", "yices",*/ 
             //"yices2", 
             "cvc4", 
-            "cvc4b", 
+//            "cvc4b", 
             /*"cvc"}, */
-            "simplify", 
+//            "simplify", 
             } ;
 	
     @Parameters

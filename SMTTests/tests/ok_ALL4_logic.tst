@@ -1,0 +1,12 @@
+; Using ALL logic with bit-vectors and integers
+(set-option :produce-models true)
+(set-logic ALL)
+(declare-fun n () Int )
+(declare-fun b () (_ BitVec 32))
+(assert ( = b ((_ int2bv 32) n)))
+(define-fun bb () (_ BitVec 32) (bvneg (bvand (bvneg b) #xfffffff0)))
+(declare-fun nn () Int  )
+(assert (= nn ((_ bv2int 32) bb)))
+(assert (bvslt bb #x7ffffff0))
+(assert (not (and (>= nn n) (>= (+ n 15) nn) (= (mod nn 16) 0) )))
+(check-sat)

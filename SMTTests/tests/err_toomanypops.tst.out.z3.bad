@@ -1,6 +1,0 @@
-success
-success
-(pop 3)
-^^^^^^^
-(error "The argument to a pop command is too large: 3 vs. a maximum of 2")
-success

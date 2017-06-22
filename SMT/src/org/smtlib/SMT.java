@@ -562,6 +562,7 @@ public class SMT {
 			error("Out of memory while processing input");
 			retcode = 2;
 		}
+		solver.forceExit();  // Just in case the solver was not explicitly exited
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("Exiting program");
 		return retcode;
 	}

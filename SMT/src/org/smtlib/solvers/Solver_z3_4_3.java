@@ -62,9 +62,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	protected String cmds_win[] = new String[]{ "", "/smt2","/in","SMTLIB2_COMPLIANT=true"}; 
 	protected String cmds_mac[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true"}; 
 	protected String cmds_unix[] = new String[]{ "", "-smt2","-in"}; 
-
-	/** The object that interacts with external processes */
-	protected SolverProcess solverProcess;
 	
 	/** The parser that parses responses from the solver */
 	protected org.smtlib.sexpr.Parser responseParser;
@@ -95,6 +92,23 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			cmds = cmds_unix;
 		}
 		cmds[0] = executable;
+		options.putAll(smtConfig.utils.defaults);
+		double timeout = smtConfig.timeout;
+		if (timeout > 0) {
+			List<String> args = new java.util.ArrayList<String>(cmds.length+1);
+			args.addAll(Arrays.asList(cmds));
+			if (isWindows) args.add("/t:" + Integer.toString((int)timeout));
+			else           args.add("-t:" + Integer.toString((int)timeout));
+			cmds = args.toArray(new String[args.size()]);
+		}
+		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile);
+		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
+	}
+
+	/** Creates an instance of the Z3 solver */
+	public Solver_z3_4_3(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
+		this.smtConfig = smtConfig;
+		cmds = command;
 		options.putAll(smtConfig.utils.defaults);
 		double timeout = smtConfig.timeout;
 		if (timeout > 0) {
@@ -157,6 +171,12 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
 		}
+	}
+	
+	@Override
+	public void forceExit() {
+		if (solverProcess != null) solverProcess.exit();
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("Ended Z3 forcibly");
 	}
 
 	@Override 
@@ -375,7 +395,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
 	@Override
 	public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
-		// FIXME - discrimninate among logics
+		// FIXME - discriminate among logics
 		
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#set-logic " + logicName);
 		if (logicSet) {
@@ -384,7 +404,9 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		}
 		pushesDepth++;
 		logicSet = true;
-		try {
+		if (logicName.equals("ALL")) {
+			return smtConfig.responseFactory.success();
+		} else try {
 			return parseResponse(solverProcess.sendAndListen("(set-logic ",logicName,")\n"));
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e,pos);

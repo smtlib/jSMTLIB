@@ -26,7 +26,7 @@ public class QuantTests extends LogicTests {
 	public void checkQuantifiedTransSat() {
 		Assume.assumeTrue(!"simplify".equals(solvername)); // FIXME - simplify does not implement Bool terms
 		Assume.assumeTrue(!"yices2".equals(solvername)); // FIXME - yices2 does not implement quantifiers yet
-		String result = "simplify".equals(solvername) || "z3_4_3".equals(solvername) || "z3_4_4".equals(solvername) || "yices2".equals(solvername) ? "sat" : "unknown";
+		String result = "simplify".equals(solvername) || solvername.startsWith("z3_4") || "yices2".equals(solvername) ? "sat" : "unknown";
 		doCommand("(set-logic UFLRA)");
 		doCommand("(declare-fun p () Bool)");
 		doCommand("(declare-fun q () Bool)");
@@ -60,7 +60,7 @@ public class QuantTests extends LogicTests {
 	@Test
 	public void checkQuantifiedTransSatNT() {
 		Assume.assumeTrue(!"yices2".equals(solvername)); // FIXME - yices2 does not implement quantifiers
-		String result = "simplify".equals(solvername) || "z3_4_3".equals(solvername) || "z3_4_4".equals(solvername)  || "yices2".equals(solvername) ? "sat" : "unknown";
+		String result = "simplify".equals(solvername) || solvername.startsWith("z3_4") || "yices2".equals(solvername) ? "sat" : "unknown";
 		doCommand("(set-logic AUFLIA)");
 		doCommand("(declare-sort B 0)");
 		doCommand("(declare-fun p () B)");

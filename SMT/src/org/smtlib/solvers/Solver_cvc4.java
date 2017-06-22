@@ -46,16 +46,13 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 	
 	/** The command-line arguments for launching the solver */
 	protected String cmds[];
-	protected String cmds_win[] = new String[]{ "", "--smtlib-strict","--interactive","--no-full-saturate-quant"}; 
-	protected String cmds_mac[] = new String[]{ "", "--smtlib-strict","--interactive"}; 
-	protected String cmds_unix[] = new String[]{ "", "--smtlib-strict","--incremental", "--interactive"};
-	protected String cmds_win_nostrict[] = new String[]{ "", "--interactive","--no-full-saturate-quant"}; 
-	protected String cmds_mac_nostrict[] = new String[]{ "", "--interactive"}; 
-	protected String cmds_unix_nostrict[] = new String[]{ "", "--incremental", "--interactive"};
+	protected String cmds_win[] = new String[]{ "", "--smtlib","--interactive","--no-full-saturate-quant"}; 
+	protected String cmds_mac[] = new String[]{ "", "--smtlib","--interactive","--interactive","--produce-models"}; 
+	protected String cmds_unix[] = new String[]{ "", "--smtlib","--incremental", "--interactive"};
+//	protected String cmds_win_nostrict[] = new String[]{ "", "--interactive","--no-full-saturate-quant"}; 
+//	protected String cmds_mac_nostrict[] = new String[]{ "", "--interactive"}; 
+//	protected String cmds_unix_nostrict[] = new String[]{ "", "--incremental", "--interactive"};
 
-	/** The object that interacts with external processes */
-	private SolverProcess solverProcess;
-	
 	/** The parser that parses responses from the solver */
 	protected org.smtlib.sexpr.Parser responseParser;
 	

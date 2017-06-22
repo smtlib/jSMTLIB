@@ -177,6 +177,13 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 			solverProcess = null;
 			return response;
 	}
+	
+	public void forceExit() {
+		if (solverProcess != null) solverProcess.exit();
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("Ended Z3 forcibly");
+	}
+
+
 
 	@Override
 	public IResponse assertExpr(IExpr sexpr) {

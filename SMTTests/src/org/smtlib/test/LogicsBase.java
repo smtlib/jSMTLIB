@@ -31,6 +31,7 @@ public class LogicsBase {
             		{ "QF_UFLIA" }, {"QF_UFLRA" }, { "QF_UFNIA" }, {"QF_UFNRA" },
             		{ "UF" }, { "UFBV" }, { "UFIDL" }, 
             		{ "UFLIA" }, {"UFLRA" }, { "UFNIA" }, // {"UFNRA" },
+            		{ "ALL" },
             		{ "ZZZ" } } );
     	if (false) { // Version 2.5 // FIXME
         	Collection<String[]> cc = Arrays.asList(new String[][]{ 

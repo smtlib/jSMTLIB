@@ -1,5 +1,6 @@
-;; C:/cygwin/home/dcok/mybin/simplify.exe 
-;OUT: >	
-(BG_PUSH (FORALL (B X Y) (IMPLIES (EQ B |@true|) (EQ (_ITE B X Y) X))))
-;OUT: >	
-(BG_PUSH (FORALL (B X Y) (IMPLIES (NEQ B |@true|) (EQ (_ITE B X Y) Y))))
+;; /Users/davidcok/cok/mybin/solvers/mac/cvc4pre --smtlib --interactive --interactive --produce-models 
+;OUT: cvc4 0.0prerelease [subversion trunk r4460] assertions:off
+
+(set-logic QF_UF)
+;OUT: success
+

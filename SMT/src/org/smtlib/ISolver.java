@@ -45,6 +45,10 @@ public interface ISolver {
 	 */
 	IResponse exit();
 	
+	/** Terminate the solver forcibly, without using commands
+	 */
+	void forceExit();
+	
 	/** Echo the argument */
 	IResponse echo(IStringLiteral arg);
 	
