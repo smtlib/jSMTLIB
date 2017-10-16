@@ -21,8 +21,16 @@ import java.util.List;
  * @author David Cok
  */
 public class SolverProcess {
+    
+    static public int sleepTime = 1;
+    static public boolean useNotifyWait = true;
+    static public boolean useShutdownHooks = true;
+    static public boolean useMultiThreading = true;
 	
 	final static protected String eol = System.getProperty("line.separator");
+	
+	protected StreamGobbler standardOut;
+	protected StreamGobbler errorOut;
 	
 	/** Wraps an exception thrown because of a failure in the prover */
 	public static class ProverException extends RuntimeException {
@@ -85,19 +93,53 @@ public class SolverProcess {
 		}
 	}
 	
+	protected Thread shutdownThread = null;
+	
 	/** Starts the process; if the argument is true, then also listens to its output until a prompt is read. */
     public void start(boolean listen) throws ProverException {
     	try {
     		process = Runtime.getRuntime().exec(app);
+    		if (useShutdownHooks) {
+    		    shutdownThread = new Thread() { public void run() { process.destroyForcibly(); }};
+    		    Runtime.getRuntime().addShutdownHook( shutdownThread );
+    		}
     		toProcess = new OutputStreamWriter(process.getOutputStream());
-    		fromProcess = new BufferedReader(new InputStreamReader(process.getInputStream()));
-    		errors = new InputStreamReader(process.getErrorStream());
+    		if (useMultiThreading) {
+                errorOut = new StreamGobbler(process.getErrorStream(), null);
+                standardOut = new StreamGobbler(process.getInputStream(), s->endsWith(s,endMarker));
+                errorOut.start();
+                standardOut.start();
+    		} else {
+    		    fromProcess = new BufferedReader(new InputStreamReader(process.getInputStream()));
+    		    errors = new InputStreamReader(process.getErrorStream());
+    		}
     		if (listen) listen();
     	} catch (IOException e) {
     		throw new ProverException(e.getMessage());
     	} catch (RuntimeException e) {
     		throw new ProverException(e.getMessage());
     	}
+    }
+    
+    boolean endsWith(StringBuilder sb, String endMarker) {
+        int sblen = sb.length();
+        int len = endMarker.length();
+        int i = len;
+        while (i > 0 && endMarker.charAt(len-i) == sb.charAt(sblen-i)) --i;
+        if (i != 0) return false;
+        // In some cases, the endMarker is just an eol, but the ojutput can be a long
+        // S-expression broken up with eols. SO we must recognize an end of input only
+        // if the parentheses are balanced.
+        i = sb.indexOf("(");
+        if (i < 0) return true;
+        int count = 1;
+        i++;
+        for (; i < sblen; ++i) {
+            char c = sb.charAt(i);
+            if (c == '(') count++;
+            else if (c == ')') count--;
+        }
+        return count == 0;
     }
 
     /** Listens to the process's standard output until the designated endMarker is read 
@@ -106,20 +148,37 @@ public class SolverProcess {
      */
 	public String listen() throws IOException {
 		// FIXME - need to put the two reads in parallel, otherwise one might block on a full buffer, preventing the other from completing
-		String err = listenThru(errors,null);
-		String out = listenThru(fromProcess,endMarker);
-		err = err + listenThru(errors,null);
-		if (log != null) {
-			if (!out.isEmpty()) { log.write(";OUT: "); log.write(out); log.write(eol); } // input usually ends with a prompt and no line terminator
-			if (!err.isEmpty()) { log.write(";ERR: "); log.write(err); } // input usually ends with a line terminator, we think
-		}
-//		System.out.println("OUT: " + out.replace('\r', '@').replace('\n', '@'));
-//		System.out.println("ERR: " + err.replace('\r', '@').replace('\n', '@'));
-		// In some cases (yices2) the prompt is on the error stream. Our heuristic is that then there is no line-termination
-		if (err.endsWith("\n") || out.isEmpty()) {
-			return err.isEmpty() || err.charAt(0) == ';' ? out : err; // Note: the guard against comments (starting with ;) is for Z3
+		if (!useMultiThreading) {
+		    String err = listenThru(errors,null);
+	        String out = listenThru(fromProcess,endMarker);
+	        err = err + listenThru(errors,null);
+	        if (log != null) {
+	            if (!out.isEmpty()) { log.write(";OUT: "); log.write(out); log.write(eol); } // input usually ends with a prompt and no line terminator
+	            if (!err.isEmpty()) { log.write(";ERR: "); log.write(err); } // input usually ends with a line terminator, we think
+	        }
+//	      System.out.println("OUT: " + out.replace('\r', '@').replace('\n', '@'));
+//	      System.out.println("ERR: " + err.replace('\r', '@').replace('\n', '@'));
+	        // In some cases (yices2) the prompt is on the error stream. Our heuristic is that then there is no line-termination
+	        if (err.endsWith("\n") || out.isEmpty()) {
+	            return err.isEmpty() || err.charAt(0) == ';' ? out : err; // Note: the guard against comments (starting with ;) is for Z3
+	        } else {
+	            return out;
+	        }
 		} else {
-			return out;
+		    // FIXME - should not have to busy wait with sleep command and the watsch on a field in another thread
+            String out;
+            if (useNotifyWait) {
+                out = standardOut.getString();  // may block until output is available
+            } else {
+                try { do { Thread.sleep(sleepTime); } while (standardOut.output == null && process.isAlive()); } catch (InterruptedException e) {}
+                out = standardOut.getString();
+            }
+		    String err = errorOut.getString(); // errorOut is set up to not block -- presuming error output is ready if standard out has completed, since there is no indication when the error output is completed
+            if (err.endsWith("\n") || out.isEmpty()) {
+                return err.isEmpty() || err.charAt(0) == ';' ? out : err; // Note: the guard against comments (starting with ;) is for Z3
+            } else {
+                return out;
+            }
 		}
 	}
 	
@@ -148,6 +207,8 @@ public class SolverProcess {
 	/** Aborts the process; returns immediately if already stopped */
 	public void exit() {
 		if (process == null) return;
+		if (shutdownThread != null) Runtime.getRuntime().removeShutdownHook(shutdownThread);
+		shutdownThread = null;
 		process.destroy();
 		process = null;
 		toProcess = null;
@@ -167,7 +228,7 @@ public class SolverProcess {
 	public /*@Nullable*/ String send(boolean listen, String ... args) throws IOException {
 		if (toProcess == null) throw new ProverException("The solver has not been started");
 		for (String arg: args) {
-//			System.out.print(arg);
+			//System.out.println("IN: " + arg);
 			if (log != null) log.write(arg);
 			toProcess.write(arg);
 		}
@@ -233,45 +294,123 @@ public class SolverProcess {
 	 * @throws IOException if an IO failure occurs
 	 */
 	static public /*@NonNull*/String listenThru(/*@NonNull*/Reader r, /*@Nullable*/ String end) throws IOException {
-		char[] buf = getBuffer();
-		try {
-			int len = end != null ? end.length() : 0;
-			int p = 0; // Number of characters read
-			int parens = 0;
-			while (end != null || r.ready()) {
-				//System.out.println("ABOUT TO READ " + p);
-				int i = r.read(buf,p,buf.length-p);
-				if (i == -1) break; // End of Input
-				for (int ii=0; ii<i; ++ii) {
-					if (buf[p+ii] == '(') ++parens; 
-					else if (buf[p+ii] == ')') --parens;
-				}
-				p += i;
-				//System.out.println("HEARD: " + new String(buf,0,p));
-				if (p>100 && len == 1) {
-					len = len;
-				}
-				if (end != null && p >= len) {
-					// Need to compare a String to a part of a char array - we iterate by
-					// hand to avoid creating a new String or CharBuffer object
-					boolean match = true;
-					int k = p-len;
-					for (int j=0; j<len; j++) {
-						if (end.charAt(j) != buf[k++]) { match = false; break; }
-					}
-					if (match && (badFormat || parens == 0)) break; // stopping string matched
-				}
-				if (p == buf.length) { // expand the buffer
-					char[] nbuf = new char[2*buf.length];
-					System.arraycopy(buf,0,nbuf,0,p);
-					buf = nbuf;
-				}
-			}
-			return new String(buf,0,p);
-		} finally {
-			putBuffer(buf);
-		}
+	    if (!useMultiThreading) {
+	        char[] buf = getBuffer();
+	        try {
+	            int len = end != null ? end.length() : 0;
+	            int p = 0; // Number of characters read
+	            int parens = 0;
+	            while (end != null || r.ready()) {
+	                //System.out.println("ABOUT TO READ " + p);
+	                int i = r.read(buf,p,buf.length-p);
+	                if (i == -1) break; // End of Input
+	                for (int ii=0; ii<i; ++ii) {
+	                    if (buf[p+ii] == '(') ++parens; 
+	                    else if (buf[p+ii] == ')') --parens;
+	                }
+	                p += i;
+	                //System.out.println("HEARD: " + new String(buf,0,p));
+	                if (p>100 && len == 1) {
+	                    len = len;
+	                }
+	                if (end != null && p >= len) {
+	                    // Need to compare a String to a part of a char array - we iterate by
+	                    // hand to avoid creating a new String or CharBuffer object
+	                    boolean match = true;
+	                    int k = p-len;
+	                    for (int j=0; j<len; j++) {
+	                        if (end.charAt(j) != buf[k++]) { match = false; break; }
+	                    }
+	                    if (match && (badFormat || parens == 0)) break; // stopping string matched
+	                }
+	                if (p == buf.length) { // expand the buffer
+	                    char[] nbuf = new char[2*buf.length];
+	                    System.arraycopy(buf,0,nbuf,0,p);
+	                    buf = nbuf;
+	                }
+	            }
+	            return new String(buf,0,p);
+	        } finally {
+	            putBuffer(buf);
+	        }
+	    } else {
+	        return null;
+	    }
 	}
 	
 	public static boolean badFormat = false;
+	
+	public static class StreamGobbler extends Thread {
+	    
+	    /*@ non_null */java.io.InputStream is;
+        /*@ non_null */StringBuilder accumulator;
+        /*@ nullable */String output;
+	    /*@ nullable */ java.util.function.Function<StringBuilder,Boolean> endRecognizer;
+	    
+	    char[] buf = new char[10000];
+	    
+	    public StreamGobbler(/*@ non_null */java.io.InputStream is, 
+	                            /*@ nullable */ java.util.function.Function<StringBuilder,Boolean> endRecognizer) {
+	        this.is = is;
+	        this.endRecognizer = endRecognizer;
+	        accumulator = new StringBuilder();
+	    }
+	    
+	    public void run()
+	    {
+	        try (
+	            InputStreamReader isr = new InputStreamReader(is);
+	            BufferedReader br = new BufferedReader(isr); ){
+	            int n;
+	            while ((n = br.read(buf)) > 0) {
+	                accumulator.append(buf,0,n);
+	                //System.out.println("OUT/ERR: " + accumulator.toString());
+	                if (endRecognizer != null && endRecognizer.apply(accumulator)) {
+	                    putString();
+	                }
+	            }
+	            // if n == -1 then end of stream has been reached and the StreamGobbler exits
+	        } catch (IOException ioe) {
+	            throw new RuntimeException(ioe);
+	        }
+	    }
+	    
+	    public synchronized void putString() {
+	        output = accumulator.toString();
+	        accumulator.setLength(0);
+            if (useNotifyWait) notifyAll();
+	    }
+	    
+	    public synchronized /*@ nullable */ String getString() {
+	        if (useNotifyWait) {
+	            if (endRecognizer == null) {
+                    String s = accumulator.toString();
+                    accumulator.setLength(0);
+                    return s;
+	            } else {
+	                while (output == null) {
+	                    try {
+	                        wait();
+	                    } catch (InterruptedException e) {}
+	                }
+	                String out = output;
+	                output = null;
+	                return out;
+	            }
+	            
+	        } else {
+	            if (output == null) {
+	                synchronized(accumulator) {
+	                    String s = accumulator.toString();
+	                    accumulator.setLength(0);
+	                    return s;
+	                }
+	            } else {
+	                String s = output;
+	                output = null;
+	                return s;
+	            }
+	        }
+	    }
+	}
 }
