@@ -1,6 +1,3 @@
-;; /Users/davidcok/cok/mybin/solvers/mac/cvc4pre --smtlib --interactive --interactive --produce-models 
-;OUT: cvc4 0.0prerelease [subversion trunk r4460] assertions:off
-
+;; /Users/davidcok/cok/apps/z3-4.6.0-x64-osx-10.11.6/bin/z3 -smt2 -in SMTLIB2_COMPLIANT=true 
+(set-option :print-success true)
 (set-logic QF_UF)
-;OUT: success
-

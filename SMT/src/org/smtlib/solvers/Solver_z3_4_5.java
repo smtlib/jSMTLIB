@@ -44,9 +44,7 @@ import org.smtlib.sexpr.Printer;
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into Z3 commands */
 public class Solver_z3_4_5 extends AbstractSolver implements ISolver {
 	
-	protected String NAME_VALUE = "z3-4.3";
-	protected String AUTHORS_VALUE = "Leonardo de Moura and Nikolaj Bjorner";
-	protected String VERSION_VALUE = "4.3";
+	protected String NAME_VALUE = "z3-4.3"; // FIXME - should get rid of this
 	
 
 	protected int linesOffset = 0;

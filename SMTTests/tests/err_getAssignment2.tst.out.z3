@@ -1,5 +1,5 @@
-unsupported
+success
 success
 (get-assignment)
 ^^^^^^^^^^^^^^^^
-(error "The get-assignment command is only valid if :produce-assignments has been enabled")
+(error "line 4 column 15: model is not available")

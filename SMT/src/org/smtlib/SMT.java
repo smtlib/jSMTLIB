@@ -481,6 +481,10 @@ public class SMT {
 		boolean checkMode = Utils.TEST_SOLVER.equals(smtConfig.solvername);
 		boolean abortMode = smtConfig.abort && !checkMode;
 
+		if (restart && solver != null) {
+		    solver.exit();
+		    solver = null;
+		}
 		if (restart || solver == null) solver = startSolver(smtConfig, smtConfig.solvername, smtConfig.executable);
 		if (solver == null) return 1;
 		IKeyword printSuccessKW = smtConfig.exprFactory.keyword(Utils.PRINT_SUCCESS);

@@ -66,11 +66,14 @@ public class SolverProcess {
 	 * prompt for new input
 	 * @param logfile if not null, the name of a file to log communications to, for diagnostic purposes
 	 */
+	static java.io.PrintWriter pw = null;
 	public SolverProcess(String[] cmd, String endMarker, /*@Nullable*/String logfile) {
 		this.endMarker = endMarker;
 		try {
 			if (logfile != null) {
 				log = new FileWriter(logfile);
+			} else {
+//			    log = pw == null ? (pw = new java.io.PrintWriter(System.out)) : pw;
 			}
 		} catch (IOException e) {
 			System.out.println("Failed to create solver log file " + logfile + ": " + e); // FIXME - wwrite to somewhere better
@@ -98,7 +101,13 @@ public class SolverProcess {
 	/** Starts the process; if the argument is true, then also listens to its output until a prompt is read. */
     public void start(boolean listen) throws ProverException {
     	try {
-    		process = Runtime.getRuntime().exec(app);
+    	    String path = System.getenv("PATH");
+    	    if (path != null) {
+    	        String[] envp = new String[] { "PATH=" + path };
+    	        process = Runtime.getRuntime().exec(app,envp);
+    	    } else {
+                process = Runtime.getRuntime().exec(app);
+    	    }
     		if (useShutdownHooks) {
     		    shutdownThread = new Thread() { public void run() { process.destroyForcibly(); }};
     		    Runtime.getRuntime().addShutdownHook( shutdownThread );
@@ -153,7 +162,7 @@ public class SolverProcess {
 	        String out = listenThru(fromProcess,endMarker);
 	        err = err + listenThru(errors,null);
 	        if (log != null) {
-	            if (!out.isEmpty()) { log.write(";OUT: "); log.write(out); log.write(eol); } // input usually ends with a prompt and no line terminator
+	            if (!out.isEmpty()) { log.write(";OUT: "); log.write(out); log.write(eol); log.flush(); } // input usually ends with a prompt and no line terminator
 	            if (!err.isEmpty()) { log.write(";ERR: "); log.write(err); } // input usually ends with a line terminator, we think
 	        }
 //	      System.out.println("OUT: " + out.replace('\r', '@').replace('\n', '@'));

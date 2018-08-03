@@ -8,16 +8,21 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
+import org.junit.Rule;
+import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.ParameterizedWithNames;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(ParameterizedWithNames.class)
 public class FileTestsOK  extends LogicTests {
+
+    @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES); // limit on entire test, not on each proof attempt
 
 	static Collection<String[]> data = datax();
 	
@@ -67,8 +72,8 @@ public class FileTestsOK  extends LogicTests {
     protected String testfile;
     
     public FileTestsOK(String solvername, String testfile) {
-    	this.solvername = solvername;
-    	this.testfile = testfile;
+        this.solvername = solvername;
+        this.testfile = testfile;
     }
   
     /** Reads a file into a String */
@@ -103,6 +108,7 @@ public class FileTestsOK  extends LogicTests {
 		Assert.assertFalse("err_namedExpr2.tst".equals(testfile) && "yices2".equals(solvername)); // FIXME - yices2 does not support Boolean quantifiers
 		Assert.assertFalse("ok_regularOutput.tst".equals(testfile) && solvername.startsWith("z3")); // FIXME - appears to hang
 		Assert.assertFalse("err_declareFun.tst".equals(testfile) && "z3_4_5".equals(solvername)); // FIXME - appears to hang
+// TYhe above hang probably because no ojtput is sent to listen to
 		
 //		System.out.println("File: " + testfile + "  Solver: " + solvername);
 		String script = readFile("tests/" + testfile);

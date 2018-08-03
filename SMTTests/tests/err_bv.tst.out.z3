@@ -1,0 +1,28 @@
+success
+success
+success
+success
+(declare-fun k () (_ BitVec 0))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 6 column 29: bit-vector size must be greater than zero")
+(declare-fun k () (_ BitVecx 0))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 7 column 21: unknown sort 'BitVecx'")
+(declare-fun k () (_ BitVec -1))
+                            ^^
+(error "Expected a numeral here, instead of a symbol")
+(declare-fun k () (_ BitVec))
+                           ^
+(error "Expected a numeral here, instead of a )")
+(declare-fun k () (_ BitVec 1 2))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 8 column 31: expecting one integer parameter to bit-vector sort")
+(assert (= x #b010 ))
+^^^^^^^^^^^^^^^^^^^^^
+(error "line 9 column 18: Sorts (_ BitVec 4) and (_ BitVec 3) are incompatible")
+(assert (= z #xab ))
+^^^^^^^^^^^^^^^^^^^^
+(error "line 10 column 17: Sorts (_ BitVec 4) and (_ BitVec 8) are incompatible")
+(assert (= z y ))
+^^^^^^^^^^^^^^^^^
+(error "line 11 column 14: Sorts (_ BitVec 4) and (_ BitVec 1) are incompatible")

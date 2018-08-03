@@ -98,10 +98,15 @@ public class FileTests  extends LogicTests {
     
 	@Test
 	public void checkFile() {
-		Assert.assertFalse("ok_getInfo2.tst".equals(testfile) && "z3_4_5".equals(solvername));
-		Assert.assertFalse("err_getInfo2.tst".equals(testfile) && "z3_4_5".equals(solvername));
-		Assert.assertFalse("err_setInfo3.tst".equals(testfile) && "z3_4_5".equals(solvername));
-		Assert.assertFalse("err_tokens.tst".equals(testfile));
+        Assert.assertFalse("ok_getInfo2.tst".equals(testfile) && "z3_4_5".equals(solvername));
+        Assert.assertFalse("ok_getInfo2.tst".equals(testfile) && "z3_4_6".equals(solvername));
+        Assert.assertFalse("err_getInfo2.tst".equals(testfile) && "z3_4_5".equals(solvername));
+        Assert.assertFalse("err_getInfo2.tst".equals(testfile) && "z3_4_6".equals(solvername));
+        Assert.assertFalse("err_setInfo3.tst".equals(testfile) && "z3_4_5".equals(solvername));
+        Assert.assertFalse("err_setInfo3.tst".equals(testfile) && "z3_4_6".equals(solvername));
+		Assert.assertFalse("err_tokens.tst".equals(testfile) && "z3_4_3".equals(solvername));
+
+	    Assert.assertFalse("err_declareFun.tst".equals(testfile) && "z3_4_6".equals(solvername));  // FIXME - hangs
 
 		Assume.assumeTrue(!("err_namedExpr2.tst".equals(testfile) && "yices2".equals(solvername))); // FIXME - yices2 does not support Boolean quantifiers
 		Assume.assumeTrue(!("ok_regularOutput.tst".equals(testfile))); // FIXME - appears to hang

@@ -5,4 +5,4 @@ success
 unsat
 (get-value (x))
 ^^^^^^^^^^^^^^^
-(error "A get-value command is valid only after check-sat has returned sat or unknown")
+(error "line 7 column 15: model is not available")
