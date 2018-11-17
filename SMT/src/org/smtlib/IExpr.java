@@ -68,10 +68,12 @@ public interface IExpr extends IAccept, IPosable, IAttributeValue {
 		IDeclaration declaration(ISymbol symbol, ISort sort);
 		/** Creates a Forall expression */
 		//@ requires params.size() > 0;
-		IForall forall(List<IDeclaration> params, IExpr e);
+        IForall forall(List<IDeclaration> params, IExpr e);
+        IForall forall(List<IDeclaration> params, IExpr e, List<IExpr> patterns);
 		/** Creates a Exists expression */
 		//@ requires params.size() > 0;
-		IExists exists(List<IDeclaration> params, IExpr e);
+        IExists exists(List<IDeclaration> params, IExpr e);
+        IExists exists(List<IDeclaration> params, IExpr e, List<IExpr> patterns);
 
 		/** Creates a command script from a file of commands or a list of commands */
 		IScript script(/*@Nullable*/IStringLiteral filename, /*@Nullable*/List<ICommand> commands);

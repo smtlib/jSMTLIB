@@ -246,15 +246,39 @@ public class Factory implements IExpr.IFactory, ISort.IFactory {
 		return new Declaration(symbol,sort);
 	}
 	
-	@Override
-	public IForall forall(List<IDeclaration> params, IExpr e) {
-		return new Forall(params,e);
-	}
+    @Override
+    public IForall forall(List<IDeclaration> params, IExpr e) {
+        return new Forall(params,e);
+    }
 
-	@Override
-	public IExists exists(List<IDeclaration> params, IExpr e) {
-		return new Exists(params,e);
-	}
+    @Override
+    public IForall forall(List<IDeclaration> params, IExpr e, List<IExpr> patterns) {
+        if (patterns != null) {
+            List<IAttribute<?>> attributes = new LinkedList<>();
+            for (IExpr p: patterns) {
+                attributes.add(attribute(keyword(":pattern"),p));
+            }
+            e = attributedExpr(e, attributes);
+        }
+        return new Forall(params,e);
+    }
+
+    @Override
+    public IExists exists(List<IDeclaration> params, IExpr e) {
+        return new Exists(params,e);
+    }
+
+    @Override
+    public IExists exists(List<IDeclaration> params, IExpr e, List<IExpr> patterns) {
+        if (patterns != null) {
+            List<IAttribute<?>> attributes = new LinkedList<>();
+            for (IExpr p: patterns) {
+                attributes.add(attribute(keyword(":pattern"),p));
+            }
+            e = attributedExpr(e, attributes);
+        }
+        return new Exists(params,e);
+    }
 
 	@Override
 	public IError error(String text) {
