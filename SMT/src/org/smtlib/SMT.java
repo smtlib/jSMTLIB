@@ -954,6 +954,9 @@ public class SMT {
 					File f = new File(d + File.separator + name + org.smtlib.Utils.SUFFIX);
 					if (f.exists()) return new FileInputStream(f);
 				}
+				if (this.getClass().getClassLoader().getResource(name + org.smtlib.Utils.SUFFIX) != null) {
+					return this.getClass().getClassLoader().getResourceAsStream(name + org.smtlib.Utils.SUFFIX);
+				}
 				throw new Utils.SMTLIBException(smtConfig.responseFactory.error("No logic file found for " + name + " on path \"" + path + "\"", pos));
 			}
 		}
