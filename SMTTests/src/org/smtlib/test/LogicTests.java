@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -29,8 +30,8 @@ public class LogicTests {
 	static int smtlib_version = v20;
 
 	public static final String[] solvers = new String[] {
-            "test", 
-          "z3_4_3", 
+            "test",
+            "z3_4_8_5",
 //           "z3_4_5", 
 //          "z3_4_6", 
 //          "z3_4_7", 
@@ -65,13 +66,52 @@ public class LogicTests {
 	@After
 	public void teardown() {
 	}
-	
-	public void init() {
+
+	private void loadSimplifyBinary(Properties props) {
+		final String os = System.getProperty("os.name").toLowerCase();
+		final String solver_binary_location;
+		final ClassLoader loader = this.getClass().getClassLoader();
+
+		if (os.contains("win")) {
+			solver_binary_location = loader.getResource("windows/Simplify-1.5.4.exe").getPath();
+		} else if (os.contains("mac")) {
+			solver_binary_location = loader.getResource("mac/Simplify-1.5.5.macosx").getPath();
+		} else {
+			solver_binary_location = loader.getResource("linux/Simplify-1.5.4.linux").getPath();
+		}
+		props.setProperty("org.smtlib.solver_simplify.exec", solver_binary_location);
+	}
+
+	private void loadZ3Binary(Properties props) {
+		final String os = System.getProperty("os.name").toLowerCase();
+		final String solver_binary_location;
+		final ClassLoader loader = this.getClass().getClassLoader();
+
+		if (os.contains("win")) {
+			solver_binary_location = loader.getResource("windows/z3-4.8.5/z3-4.8.5.exe").getPath();
+		} else if (os.contains("mac")) {
+			solver_binary_location = loader.getResource("mac/z3-4.8.5/z3-4.8.5.macosx").getPath();
+		} else {
+			solver_binary_location = loader.getResource("linux/z3-4.8.5/z3-4.8.5.linux").getPath();
+		}
+		props.setProperty("org.smtlib.solver_z3_4_8_5.exec", solver_binary_location);
+	}
+
+	private Properties readPropertiesAndAddDefaults(SMT smt) {
+		Properties props = smt.readProperties();
+		if (props.isEmpty()) {
+			loadSimplifyBinary(props);
+			loadZ3Binary(props);
+		}
+		return props;
+	}
+
+    public void init() {
 		SMT.Configuration.smtlib = version;
 		smt = new SMT();
 		// We're not reading the command-line so we have to set items ourselves
 		// Executable paths are taken from the properties
-		smt.props = smt.readProperties();
+		smt.props = readPropertiesAndAddDefaults(smt);
 		listener = new JUnitListener();
 		smt.smtConfig.log.clearListeners();
 		smt.smtConfig.log.addListener(listener);
@@ -143,7 +183,7 @@ public class LogicTests {
 		System.setOut(new PrintStream(ba));
 		try {
 			SMT smt = new SMT();
-			smt.props = smt.readProperties();
+			smt.props = readPropertiesAndAddDefaults(smt);
 			smt.smtConfig.text = input;
 			smt.smtConfig.log.out = new PrintStream(ba);
 			smt.smtConfig.log.diag = smt.smtConfig.log.out;
