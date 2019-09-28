@@ -144,6 +144,13 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
 		if (res.isError()) return res;
 
 		try {
+			if (smtConfig.timeout>0) {
+				String sq = solverProcess.sendAndListen("(set-timeout "+(int)smtConfig.timeout+")\r\n");
+				if (sq.contains(errorIndication)) {
+					return smtConfig.responseFactory.error(sq);
+				}
+				
+			}
 			String s = solverProcess.sendAndListen("(check)\r\n");
 			if (s.contains(errorIndication)) {
 				return smtConfig.responseFactory.error(s);
