@@ -196,6 +196,29 @@ public class Factory implements IExpr.IFactory, ISort.IFactory {
 			List<IAttribute<?>> attributes) {
 		return new AttributedExpr(e,attributes);
 	}
+	
+	static class AttributeList<T> implements IAttributeValue {
+	    public List<T> list;
+	    public AttributeList(List<T> list) {this.list = list; }
+        public IPos pos() { return null; }
+        public void setPos(IPos p) {  }
+        @Override
+        public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+
+        // For debugging only
+        @Override
+        public String toString() {
+            String s = "(" ;
+            for (T t: list) s = s + " " + t.toString();
+            return s + " )";
+        }
+
+        @Override
+        public boolean isOK() { throw new RuntimeException(); } // FIXME - should never be called
+
+        @Override
+        public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
+	}
 
 	@Override
 	public <T extends IAttributeValue> IAttributedExpr attributedExpr(IExpr e,

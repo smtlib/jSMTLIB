@@ -23,13 +23,17 @@ public class FileTests  extends LogicTests {
 
 	private static File findTestsFolder() {
 		//This is slightly hacked, as it relies on the existence of 'err_array.tst' to reach the right directory.
-		String resource = FileTests.class.getClassLoader().getResource("err_array.tst").getPath();
-		if (resource == null) {
-			resource = "tests/";
-		} else {
-			resource = new File(resource).getParent();
-		}
-		return new File(resource);
+	    try {
+	        String resource = FileTests.class.getClassLoader().getResource("err_array.tst").getPath();
+	        if (resource == null) {
+	            resource = "tests/";
+	        } else {
+	            resource = new File(resource).getParent();
+	        }
+	        return new File(resource);
+	    } catch (Exception e) {
+	        return new File ("/Users/davidcok/cok/projects/jSMTLIB/SMTTests/tests");
+	    }
 	}
 
 	@Parameters

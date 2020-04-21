@@ -33,6 +33,7 @@ import org.smtlib.IParser.ParserException;
 import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.impl.Pos;
 import org.smtlib.impl.Response;
+import org.smtlib.sexpr.Utils;
 
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into SMT commands */
 public class Solver_cvc4 extends AbstractSolver implements ISolver {
@@ -74,8 +75,16 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 			cmds = cmds_win;
 		} else if (isMac) {
 			cmds = cmds_mac;
+            if (smtConfig.seed != 0) {
+                cmds = new String[cmds.length+1];
+                cmds = Utils.cat(cmds,"--seed",""+smtConfig.seed);
+            }
 		} else {
 			cmds = cmds_unix;
+            if (smtConfig.seed != 0) {
+                cmds = new String[cmds.length+1];
+                cmds = Utils.cat(cmds,"--seed",""+smtConfig.seed);
+            }
 		}
 		cmds[0] = executable;
 		options.putAll(smtConfig.utils.defaults);

@@ -9,6 +9,7 @@ package org.smtlib;
 // FIXME - needs more separation of concrete syntax
 
 import java.io.InputStream;
+import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -623,5 +624,25 @@ public class Utils {
 			this.errorResponse = err;
 		}
 	}
+	
+    public static <T> T[] cat(T[] ... arrays) {
+        int n = 0;
+        for (T[] a: arrays) n += a.length;
+        T[] r = (T[])Array.newInstance(arrays[0].getClass(), n);
+        int k = 0;
+        for (T[] a: arrays) {
+            System.arraycopy(a,  0,  r,  k, a.length);
+            k += a.length;
+        }
+        return r;
+    }
+
+    public static <T> T[] cat(T[] aa, T ... rest) {
+        int n = aa.length + rest.length;
+        T[] r = (T[])Array.newInstance(aa[0].getClass(), n);
+        System.arraycopy(aa,  0,  r,  0, aa.length);
+        System.arraycopy(rest,  0,  r,  aa.length, rest.length);
+        return r;
+    }
 
 }

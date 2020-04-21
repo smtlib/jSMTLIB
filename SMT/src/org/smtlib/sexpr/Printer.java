@@ -286,10 +286,12 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 		try {
 			/*@Nullable*/IAttributeValue o;
 			e.keyword().accept(this);
+			if (e.keyword().toString().equals(":pattern")) w.append(" (");
 			if ((o=e.attrValue()) != null) {
 				w.append(" ");
 				o.accept(this);
 			}
+            if (e.keyword().toString().equals(":pattern")) w.append(" )");
 		} catch (IOException ex) {
 			throw new IVisitor.VisitorException(ex,e.pos());
 		}

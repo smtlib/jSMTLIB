@@ -40,6 +40,7 @@ import org.smtlib.IParser.ParserException;
 import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.impl.Pos;
 import org.smtlib.sexpr.Printer;
+import org.smtlib.sexpr.Utils;
 
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into Z3 commands */
 public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
@@ -59,7 +60,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	
 	/** The command-line arguments for launching the Z3 solver */
 	protected String cmds[];
-	protected String cmds_win[] = new String[]{ "", "/smt2","/in","SMTLIB2_COMPLIANT=true"}; 
+	protected String cmds_win[] = new String[]{ "", "/smt2","/in","SMTLIB2_COMPLIANT=true","/rs:42"}; 
 	protected String cmds_mac[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true"}; 
 	protected String cmds_unix[] = new String[]{ "", "-smt2","-in"}; 
 	
@@ -88,8 +89,14 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			cmds = cmds_win;
 		} else if (isMac) {
 			cmds = cmds_mac;
+			if (smtConfig.seed != 0) {
+			    cmds = Utils.cat(cmds,"-rs:"+smtConfig.seed);
+			}
 		} else {
 			cmds = cmds_unix;
+            if (smtConfig.seed != 0) {
+                cmds = Utils.cat(cmds,"-rs:"+smtConfig.seed);
+            }
 		}
 		cmds[0] = executable;
 		options.putAll(smtConfig.utils.defaults);
@@ -110,6 +117,10 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		this.smtConfig = smtConfig;
 		cmds = command;
 		options.putAll(smtConfig.utils.defaults);
+        if (smtConfig.seed != 0) {
+            if (isWindows) cmds = Utils.cat(cmds,"/rs:"+smtConfig.seed);
+            else           cmds = Utils.cat(cmds,"-rs:"+smtConfig.seed);
+        }
 		double timeout = smtConfig.timeout;
 		if (timeout > 0) {
 			List<String> args = new java.util.ArrayList<String>(cmds.length+1);

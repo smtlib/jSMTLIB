@@ -176,9 +176,12 @@ public class SMT {
 		 */
 		/*@Nullable*/ public String text = null;
 		
-		/** If true, then information about the position of an error is not shown */
-		public boolean noshow = false;
-		
+        /** If true, then information about the position of an error is not shown */
+        public boolean noshow = false;
+        
+        /** If non-zero, a seed to pass to the solver to initialize its random number generator */
+        public int seed = 0;
+        
 		/** FIXME */
 		/*@Nullable*/ public String out = null;
 		/*@Nullable*/ public String diag = null;
@@ -668,8 +671,24 @@ public class SMT {
 				options.abort = true;
 			} else if ("--relax".equals(s)) {
 				options.relax = true;
-			} else if ("--noshow".equals(s)) {
-				options.noshow = true;
+            } else if ("--noshow".equals(s)) {
+                options.noshow = true;
+            } else if ("--seed".equals(s)) {
+                options.seed = 0;
+                if (i >= args.length) {
+                    error("The --seed option expects an argument");
+                    usage();
+                    return 1;
+                }
+                String a = args[i];
+                try {
+                    options.seed = Integer.parseInt(a);
+                    i++;
+                } catch (NumberFormatException e) {
+                    error("The --seed option expects an integer value: " + a);
+                    usage();
+                    return 1;
+                }
 			} else if (s.startsWith("-")) {
 				error("Unknown option: " + s);
 				usage();
