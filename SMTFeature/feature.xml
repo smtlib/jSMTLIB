@@ -2,7 +2,7 @@
 <feature
       id="org.smtlib.SMTFeature"
       label="jSMTLIB Feature"
-      version="0.9.10.2"
+      version="0.9.10.3"
       provider-name="David R. Cok">
 
    <description>
@@ -118,14 +118,14 @@ This Agreement is governed by the laws of the State of New York and the intellec
          id="org.smtlib.plugin.SMTPlugin"
          download-size="0"
          install-size="0"
-         version="0.9.10.2"
+         version="0.9.10.3"
          unpack="false"/>
 
    <plugin
          id="org.smtlib.SMT"
          download-size="0"
          install-size="0"
-         version="0.9.10.2"
+         version="0.9.10.3"
          unpack="false"/>
 
 </feature>
