@@ -123,7 +123,6 @@ public class SolverProcess {
     		    errors = new InputStreamReader(process.getErrorStream());
     		}
     		Thread.sleep(1000);
-            System.out.println("Status after starting: " + process.isAlive());
     		if (listen) listen();
     	} catch (IOException e) {
     		throw new ProverException(e.getMessage());
@@ -238,19 +237,13 @@ public class SolverProcess {
 	/** Sends all the given text arguments, then (if listen is true) listens for the designated end marker text */
 	public /*@Nullable*/ String send(boolean listen, String ... args) throws IOException {
 		if (toProcess == null) throw new ProverException("The solver has not been started");
-        System.out.println("Status before sending: " + process.isAlive());
 		for (String arg: args) {
-			//System.out.println("IN: " + arg);
 			if (log != null) log.write(arg);
 			toProcess.write(arg);
 		}
-//		System.out.println();
 		if (log != null) log.flush();
-        System.out.println("Status before flush: " + process.isAlive());
 		toProcess.flush();
-        System.out.println("Status after flush: " + process.isAlive());
 		if (listen) return listen();
-        System.out.println("Status after listen: " + process.isAlive());
 		return null;
 	}
 
