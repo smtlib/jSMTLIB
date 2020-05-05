@@ -23,7 +23,7 @@ import java.util.List;
 public class SolverProcess {
     
     static public int sleepTime = 1;
-    static public boolean useNotifyWait = true;
+    static public boolean useNotifyWait = false; // TOOD: Not sure that true works
     static public boolean useShutdownHooks = true;
     static public boolean useMultiThreading = true;
 	
@@ -102,16 +102,16 @@ public class SolverProcess {
     public void start(boolean listen) throws ProverException {
     	try {
     	    String path = System.getenv("PATH");
-    	    if (path != null) {
+    	    if (false && path != null) {
     	        String[] envp = new String[] { "PATH=" + path };
     	        process = Runtime.getRuntime().exec(app,envp);
     	    } else {
                 process = Runtime.getRuntime().exec(app);
     	    }
-    		if (useShutdownHooks) {
-    		    shutdownThread = new Thread() { public void run() { process.destroyForcibly(); }};
-    		    Runtime.getRuntime().addShutdownHook( shutdownThread );
-    		}
+//    		if (useShutdownHooks) {
+//    		    shutdownThread = new Thread() { public void run() { process.destroyForcibly(); }};
+//    		    Runtime.getRuntime().addShutdownHook( shutdownThread );
+//    		}
     		toProcess = new OutputStreamWriter(process.getOutputStream());
     		if (useMultiThreading) {
                 errorOut = new StreamGobbler(process.getErrorStream(), null);
@@ -122,10 +122,12 @@ public class SolverProcess {
     		    fromProcess = new BufferedReader(new InputStreamReader(process.getInputStream()));
     		    errors = new InputStreamReader(process.getErrorStream());
     		}
+    		Thread.sleep(1000);
+            System.out.println("Status after starting: " + process.isAlive());
     		if (listen) listen();
     	} catch (IOException e) {
     		throw new ProverException(e.getMessage());
-    	} catch (RuntimeException e) {
+    	} catch (RuntimeException|InterruptedException e) {
     		throw new ProverException(e.getMessage());
     	}
     }
@@ -236,6 +238,7 @@ public class SolverProcess {
 	/** Sends all the given text arguments, then (if listen is true) listens for the designated end marker text */
 	public /*@Nullable*/ String send(boolean listen, String ... args) throws IOException {
 		if (toProcess == null) throw new ProverException("The solver has not been started");
+        System.out.println("Status before sending: " + process.isAlive());
 		for (String arg: args) {
 			//System.out.println("IN: " + arg);
 			if (log != null) log.write(arg);
@@ -243,8 +246,11 @@ public class SolverProcess {
 		}
 //		System.out.println();
 		if (log != null) log.flush();
+        System.out.println("Status before flush: " + process.isAlive());
 		toProcess.flush();
+        System.out.println("Status after flush: " + process.isAlive());
 		if (listen) return listen();
+        System.out.println("Status after listen: " + process.isAlive());
 		return null;
 	}
 
@@ -420,6 +426,39 @@ public class SolverProcess {
 	                return s;
 	            }
 	        }
+	    }
+	}
+	
+	public static void main(String ... args) {
+        java.util.Scanner in = new java.util.Scanner(System.in); 
+        SolverProcess.useMultiThreading = true;
+	    SolverProcess sp = new SolverProcess(args, "\n", null);
+	    sp.start(false);
+	    while (true) {
+            String s = in.nextLine(); 
+            System.out.println("READ " + s);
+            try {
+                System.out.println("WRITING " + s);
+//                sp.toProcess.write(s);
+//                sp.toProcess.write("\n");
+//                sp.toProcess.flush();
+                String out = sp.sendAndListen(s + "\n");
+                System.out.println("HEARD: " + out);
+            } catch (java.io.IOException e) {
+                System.out.println("FAILED TO WRITE INPUT " + e);
+            }
+            try { Thread.sleep(100); } catch (Exception e) {}
+//            if (SolverProcess.useMultiThreading) { 
+//                System.out.println("OUT: " + sp.standardOut.getString());
+//                System.out.println("ERR: " + sp.errorOut.getString());
+//            } else {
+//                try {
+//                    System.out.println("OUT: " + ((BufferedReader)sp.fromProcess).readLine());
+//                    System.out.println("ERR: " + ((InputStreamReader)sp.errors).read());
+//                } catch (java.io.IOException e) {
+//                    System.out.println("FAILED TO READ FROM PROCESS " + e);
+//                }
+//            }
 	    }
 	}
 }
