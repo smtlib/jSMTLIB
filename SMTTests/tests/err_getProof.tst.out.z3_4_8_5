@@ -1,0 +1,7 @@
+success
+(get-proof)
+^^^^^^^^^^^
+(error "line 3 column 10: proof is not available")
+(get-proof xxx)
+           ^^^
+(error "A get-proof command takes no arguments")

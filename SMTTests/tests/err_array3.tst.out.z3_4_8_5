@@ -1,0 +1,9 @@
+success
+(declare-sort Bool 0)
+^^^^^^^^^^^^^^^^^^^^^
+(error "line 2 column 19: sort already defined Bool")
+(declare-sort Array 1)
+^^^^^^^^^^^^^^^^^^^^^^
+(error "line 3 column 14: invalid sort declaration, sort already declared/defined")
+success
+success

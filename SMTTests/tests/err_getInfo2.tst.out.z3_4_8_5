@@ -1,0 +1,12 @@
+(:reason-unknown "state of the most recent check-sat command is not known")
+(:max-memory  0.16
+ :memory      0.15
+ :mk-bool-var 1
+ :num-allocs  694)
+(error "line 4 column 11: logic must be set before initialization")
+(:reason-unknown "state of the most recent check-sat command is not known")
+(:max-memory  2.86
+ :memory      2.86
+ :mk-bool-var 1
+ :num-allocs  13873)
+ 
