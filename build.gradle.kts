@@ -12,7 +12,7 @@ plugins {
 
 allprojects {
     apply(plugin = "java-library")
-    version = "0.9.10.1"
+    version = "0.9.10.4"
     repositories {
         jcenter()
         mavenCentral()
