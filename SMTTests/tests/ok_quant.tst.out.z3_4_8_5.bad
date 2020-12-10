@@ -1,0 +1,8 @@
+success
+success
+success
+success
+success
+(assert (forall ((x Int)(y Int)(z Int)) (! (=> (and (le x y)(le y z)) (le x z))  :pattern ((le x zz)) :pattern ((le y zz) (le zz z)) )))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 7 column 99: invalid qualified/indexed identifier, '_' or 'as' expected")
