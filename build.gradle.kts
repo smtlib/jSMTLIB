@@ -17,27 +17,37 @@ allprojects {
         jcenter()
         mavenCentral()
     }
-    dependencies{
+    dependencies {
         // Use JUnit test framework
         testImplementation("junit:junit:4.12")
     }
 }
-
 sourceSets {
     main {
         java {
             setSrcDirs(listOf("SMT/src/"))
         }
         resources {
-            setSrcDirs(listOf("SMT/logics", "SMT/solvers"))
+            setSrcDirs(listOf("SMT/logics"))
         }
     }
     test {
-        java{
+        java {
             setSrcDirs(listOf("SMTTests/src", "SMT/test"))
         }
         resources {
             setSrcDirs(listOf("SMTTests/tests"))
         }
     }
+    create("solvers") {
+        resources {
+            setSrcDirs(listOf("SMT/solvers"))
+        }
+    }
+}
+
+tasks.register<Jar>("jarWithSolvers") {
+    archiveClassifier.set("with-solvers")
+    dependsOn("solversClasses", "classes")
+    from(sourceSets.main.get().output, sourceSets.getByName("solvers").output.resourcesDir)
 }
