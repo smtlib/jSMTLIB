@@ -10,6 +10,12 @@ plugins {
     `java`
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
+}
+
 allprojects {
     apply(plugin = "java-library")
     version = "0.9.10.4"
