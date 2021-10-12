@@ -32,7 +32,7 @@ public class LogicTests {
 	public static final String[] solvers = new String[] {
             "test",
           "z3_4_3",
-//          "z3_4_8_5",
+          "z3_4_8",
 //           "z3_4_5", 
 //          "z3_4_6", 
 //          "z3_4_7", 

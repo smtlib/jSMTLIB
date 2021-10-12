@@ -73,6 +73,7 @@ public class InfoOptions  extends LogicTests {
 				: solvername.equals("z3_4_5") ? "4.5.0"
 				: solvername.equals("z3_4_6") ? "4.6.0"
 				: solvername.equals("z3_4_7") ? "4.7.1"
+				: solvername.equals("z3_4_8") ? "4.8.12"
 				: solvername.equals("z3_2_11") ? "2.11"
 				: "???" )
 				);

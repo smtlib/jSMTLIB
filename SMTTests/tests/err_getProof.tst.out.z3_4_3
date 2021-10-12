@@ -1,0 +1,7 @@
+success
+(get-proof)
+^^^^^^^^^^^
+(error "The get-proof command is only valid if :produce-proofs has been enabled")
+(get-proof xxx)
+           ^^^
+(error "A get-proof command takes no arguments")
