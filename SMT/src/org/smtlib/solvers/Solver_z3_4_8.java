@@ -8,20 +8,20 @@ import org.smtlib.impl.Pos;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Solver_z3_4_8_5 extends Solver_z3_4_5 {
-	protected String NAME_VALUE = "z3-4.8.5";
+public class Solver_z3_4_8 extends Solver_z3_4_5 {
+	protected String NAME_VALUE = "z3-4.8";
 
 	/**
 	 * Creates an instance of the Z3 solver
 	 */
-	public Solver_z3_4_8_5(final SMT.Configuration smtConfig, /*@NonNull*/ final String executable) {
+	public Solver_z3_4_8(final SMT.Configuration smtConfig, /*@NonNull*/ final String executable) {
 		super(smtConfig, executable);
 	}
 
 	/**
 	 * Creates an instance of the Z3 solver
 	 */
-	public Solver_z3_4_8_5(final SMT.Configuration smtConfig, /*@NonNull*/ final String[] command) {
+	public Solver_z3_4_8(final SMT.Configuration smtConfig, /*@NonNull*/ final String[] command) {
 		super(smtConfig, command);
 	}
 }

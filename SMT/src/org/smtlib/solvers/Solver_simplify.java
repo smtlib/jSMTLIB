@@ -422,7 +422,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 
 	/* Simplify ids:
 	 * 		a) sequence of alpha, digits, underscore, beginning with alpha
-	 * 		b) sequence of ! # $ % & ∗  + − . / : < = > ? @ [ ] ^ _ { } ∼
+	 * 		b) sequence of ! # $ % & ∗ + − . / : < = > ? @ [ ] ^ _ { } ∼
 	 *               excludes | ( ) ` \ ; " ' , 
 	 * 		c) printable characters and space except \ |, surrounded by |
 	 *           - also allows undocumented 'escape sequences'
