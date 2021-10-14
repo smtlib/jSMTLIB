@@ -2,6 +2,6 @@
 (set-option :global-declarations true)
 (set-logic QF_UF)
 (declare-fun a () Bool)
-(reset-assertions)
+(reset-assertions) ; keeps declaration
 (assert a)
 (check-sat)  ; sat

@@ -48,8 +48,7 @@ public class InfoOptions  extends LogicTests {
 				: solvername.equals("simplify") ? "David Detlefs and Greg Nelson and James B. Saxe"
 				: solvername.startsWith("yices") ? "Bruno Dutertre"
 				: solvername.equals("cvc") ? "Clark Barrett, Cesare Tinelli, and others"
-				: solvername.equals("cvc4") ? null // Long text that we don't check // TODO
-				: solvername.equals("cvc4b") ? null // Long text that we don't check // TODO
+				: solvername.startsWith("cvc") ? null // Long text that we don't check // TODO
 				: solvername.startsWith("z3_4_3") ? "Leonardo de Moura and Nikolaj Bjorner"
 				: solvername.startsWith("z3_") ? "Leonardo de Moura, Nikolaj Bjorner and Christoph Wintersteiger"
 				: solvername.startsWith("z3") ? "Leonardo de Moura and Nikolaj Bjorner"
@@ -64,9 +63,8 @@ public class InfoOptions  extends LogicTests {
 				: solvername.equals("simplify") ? "1.5.4"
 				: solvername.equals("yices") ? "1.0.28"
 				: solvername.equals("yices2") ? "2.3.1"
-				: solvername.equals("cvc") ? "2.2"
-				: solvername.equals("cvc4") ? "1.4"
-				: solvername.equals("cvc4b") ? "1.5-prerelease"
+				: solvername.equals("cvc4") ? "1.8"
+				: solvername.equals("cvc5") ? "0.0.2"
 				: solvername.equals("z3_4_3") ? "4.3"
 				: solvername.equals("z3_4_3_2") ? "4.3.2"
 				: solvername.equals("z3_4_4") ? "4.4.0"
@@ -88,6 +86,7 @@ public class InfoOptions  extends LogicTests {
 						: solvername.equals("yices2") ? "Yices"
 						: solvername.equals("cvc") ? "CVC3"
 						: solvername.startsWith("cvc4") ? "cvc4"
+						: solvername.startsWith("cvc5") ? "cvc5"
 						: solvername.equals("z3_2_11") ? "z3-2.11"
 						: solvername.startsWith("z3") ? "Z3"
 						: "???" );
@@ -141,7 +140,6 @@ public class InfoOptions  extends LogicTests {
 	public void checkRegularOutput() {
 		// The correct result is a quote-delimited string
 		doCommand("(get-option :regular-output-channel)", 
-				solvername.startsWith("cvc4")? "unsupported" :
 						"\"stdout\""
 				);
 	}
@@ -159,8 +157,7 @@ public class InfoOptions  extends LogicTests {
 	public void checkDiagnosticOutput() {
 		// The correct result is a quote-delimited string
 		doCommand("(get-option :diagnostic-output-channel)", 
-				solvername.startsWith("cvc4")? "unsupported" :
-//				solvername.equals("z3_4_4")? "stderr" :
+//				solvername.startsWith("cvc4")? "unsupported" :
 						"\"stderr\""
 				);
 	}
@@ -174,30 +171,59 @@ public class InfoOptions  extends LogicTests {
 		doCommand("(get-option :regular-diagnostic-channel)", "\"stderr\"");
 	}
 	
-	@Test
-	public void checkInteractiveMode() {
-		boolean supported = !solvername.equals("yices2");
-		doCommand("(get-option :interactive-mode)", 
-				!supported ? "unsupported" : "cvc4".equals(solvername) ? "true" : "false"
-				);
-	}
-	
-	@Test
-	public void checkSetInteractiveMode() {
-		doCommand("(set-option :interactive-mode true)", 
-			    solvername.equals("yices2") ? "unsupported" :
-				"success");
-		doCommand("(get-option :interactive-mode)", 
-			    solvername.equals("yices2") ? "unsupported" :
-				"true");
-		doCommand("(set-option :interactive-mode false)", 
-			    solvername.equals("yices2") ? "unsupported" :
-				"success");
-		doCommand("(get-option :interactive-mode)", 
-			    solvername.equals("yices2") ? "unsupported" :
-				"false");
-	}
-	
+    @Test
+    public void checkInteractiveMode() {
+        Assume.assumeTrue(version.equals("V2.0")||version.equals("V2.5"));
+        boolean supported = !solvername.equals("yices2") && !solvername.equals("cvc5");
+        doCommand("(get-option :interactive-mode)", 
+                !supported ? "unsupported" : "false"
+                );
+    }
+    
+    @Test
+    public void checkProduceAssertions() {
+        Assume.assumeTrue(!version.equals("V2.0")&&!version.equals("V2.5"));
+        boolean supported = !solvername.equals("yices2");
+        doCommand("(get-option :produce-assertions)", 
+                !supported ? "unsupported" : "false" 
+                );
+    }
+    
+    @Test
+    public void checkSetInteractiveMode() {
+        Assume.assumeTrue(version.equals("V2.0")||version.equals("V2.5"));
+        boolean supported = !solvername.equals("yices2") && !solvername.equals("cvc5");
+        doCommand("(set-option :interactive-mode true)", 
+                !supported ? "unsupported" :
+                "success");
+        doCommand("(get-option :interactive-mode)", 
+                !supported ? "unsupported" :
+                "true");
+        doCommand("(set-option :interactive-mode false)", 
+                !supported ? "unsupported" :
+                "success");
+        doCommand("(get-option :interactive-mode)", 
+                !supported ? "unsupported" :
+                "false");
+    }
+    
+    @Test
+    public void checkSetProduceAssertions() {
+        Assume.assumeTrue(!version.equals("V2.0")&&!version.equals("V2.5"));
+        doCommand("(set-option :produce-assertions true)", 
+                solvername.equals("yices2") ? "unsupported" :
+                "success");
+        doCommand("(get-option :produce-assertions)", 
+                solvername.equals("yices2") ? "unsupported" :
+                "true");
+        doCommand("(set-option :produce-assertions false)", 
+                solvername.equals("yices2") ? "unsupported" :
+                "success");
+        doCommand("(get-option :produce-assertions)", 
+                solvername.equals("yices2") ? "unsupported" :
+                "false");
+    }
+    
 	@Test
 	public void checkProduceProofs() {
 		boolean supported = !solvername.equals("yices2");
@@ -208,10 +234,11 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceProofs() {
-		boolean supported = isTest ||  (!solvername.equals("z3_4_3") && solvername.startsWith("z3_") );
+		boolean supported = isTest ||  (!solvername.equals("z3_4_3") && solvername.startsWith("z3_") )
+		                        || solvername.startsWith("cvc");
 		doCommand("(set-option :produce-proofs true)", 
 				supported ? "success" 
-						: solvername.startsWith("cvc4")? "(error \"Error in option parsing: option `produce-proofs' requires a proofs-enabled build of CVC4; this binary was not built with proof support\")"
+						: solvername.startsWith("cvc4")? "success"
 						:  "unsupported");
 		doCommand("(get-option :produce-proofs)", 
 				supported ? "true"
@@ -228,14 +255,15 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkProduceModels() {
-		doCommand("(get-option :produce-models)", 
+		doCommand("(get-option :produce-models)",
+		        solvername.startsWith("cvc") ? "true" : // FIXME - is this automatically true?
 				"false"
 				);
 	}
 	
 	@Test
 	public void checkSetProduceModels() {
-		boolean support = isTest || solvername.startsWith("z3") || "cvc".equals(solvername) || "cvc4".equals(solvername)  || "cvc4b".equals(solvername) || "yices2".equals(solvername);
+		boolean support = isTest || solvername.startsWith("z3") || solvername.startsWith("cvc") || "yices2".equals(solvername);
 		doCommand("(set-option :produce-models true)", 
 				support? "success" 
 						: "unsupported");
@@ -258,7 +286,7 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceAssignments() {
-		boolean supported = isTest || solvername.startsWith("cvc4") || solvername.equals("yices2") || (!solvername.equals("z3_4_3") && solvername.startsWith("z3_") ) ;
+		boolean supported = isTest || solvername.startsWith("cvc") || solvername.equals("yices2") || (!solvername.equals("z3_4_3") && solvername.startsWith("z3_") ) ;
 		
 		doCommand("(set-option :produce-assignments true)",
 					supported? "success" 
@@ -284,7 +312,7 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkSetProduceUnsatCores() {
 		Assume.assumeTrue(!solvername.equals("cvc4b"));
-		boolean supported = isTest ||  (!solvername.equals("z3_4_3") && solvername.startsWith("z3_") );
+		boolean supported = !solvername.equals("z3_4_3") && !solvername.startsWith("yices");
 		doCommand("(set-option :produce-unsat-cores true)",
 				supported ? "success" 
 						:  "unsupported");
@@ -294,11 +322,10 @@ public class InfoOptions  extends LogicTests {
 						: "false");
 		doCommand("(set-option :produce-unsat-cores false)",
 				supported? "success" 
-						: solvername.startsWith("cvc4") ? "success"
 						:  "unsupported");
 		doCommand("(get-option :produce-unsat-cores)", 
-				solvername.equals("yices2") ? "unsupported" :
-				"false");
+				supported ? "false"  : "unsupported"
+				);
 	}
 	
 	@Test
@@ -360,6 +387,7 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkVerbosity() {
 		doCommand("(get-option :verbosity)", 
+		        "cvc4".equals(solvername) ? "-1" : // FIXME - why this difference
 				"0"
 				);
 	}
