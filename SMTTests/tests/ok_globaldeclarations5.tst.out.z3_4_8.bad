@@ -1,0 +1,8 @@
+success
+success
+success
+unsupported
+(declare-fun a () Bool) ; OK
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "line 5 column 22: invalid declaration, constant 'a' (with the given signature) already declared")
+sat
