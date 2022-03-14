@@ -38,9 +38,10 @@ public class C_assert_not extends Command implements Iassert {
 
   /** Writes out the command in S-expression syntax using the given printer */
   public void write(final Printer p) throws IOException, IVisitor.VisitorException {
-    p.writer().append("(" + commandName + " ");
+    // p.writer().append("(" + commandName + " ");
+    p.writer().append("//@ maintain ");
     formula.accept(p);
-    p.writer().append(")");
+    p.writer().append(";");
   }
 
   /** Parses the arguments of the command, producing a new command instance */
