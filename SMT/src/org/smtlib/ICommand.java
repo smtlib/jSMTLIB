@@ -154,11 +154,6 @@ public interface ICommand extends IAccept {
     INumeral arity();
   }
 
-  /** Interface to be implemented by all objects representing SMT-LIB declare-datatypes commands. */
-  static public interface Ideclare_datatypes extends ICommand {
-    ISymbol symbol();
-  }
-
   /** Interface to be implemented by all objects representing SMT-LIB define-fun commands. */
   static public interface Idefine_fun extends ICommand {
     ISymbol symbol();
