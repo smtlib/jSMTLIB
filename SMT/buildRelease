@@ -35,9 +35,9 @@ cd ..
 echo Build complete
 
 export OPENJML=../../OpenJMLB/OpenJML
-if [ -e $OPENJML/OpenJML ] ; then cp jSMTLIB.jar $OPENJML/OpenJML ; else echo Copy failed ; fi
+if [ -e $OPENJML/OpenJML ] ; then cp jSMTLIB.jar $OPENJML/OpenJMLsrc ; else echo Copy failed ; fi
 if [ -e $OPENJML/OpenJMLUI ] ; then cp jSMTLIB.jar $OPENJML/OpenJMLUI ; else echo Copy failed; fi
 export OPENJML=../../OpenJMLA/OpenJML
-if [ -e $OPENJML/OpenJML ] ; then cp jSMTLIB.jar $OPENJML/OpenJML ; else echo Copy failed ; fi
+if [ -e $OPENJML/OpenJML ] ; then cp jSMTLIB.jar $OPENJML/OpenJMLsrc ; else echo Copy failed ; fi
 if [ -e $OPENJML/OpenJMLUI ] ; then cp jSMTLIB.jar $OPENJML/OpenJMLUI ; else echo Copy failed; fi
 echo Copies complete
