@@ -1,2 +1,2 @@
 ##EXITCODE 1
-java -cp ../../SMT/bin org.smtlib.SMT --solver test ../tests/err_pop.tst
+$SMT_CMD --solver test ../tests/err_pop.tst

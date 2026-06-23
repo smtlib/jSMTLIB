@@ -1,0 +1,2 @@
+export SMT_JAR=../../SMT/jSMTLIB.jar
+export SMT_CMD="java -jar $SMT_JAR"
