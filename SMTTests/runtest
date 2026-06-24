@@ -22,6 +22,25 @@ if [ ! -e "$test" ]; then
 fi
 source solvers
 
+### Portable per-test timeout (exit 124 = timed out)
+TEST_TIMEOUT=${TEST_TIMEOUT:-30}
+if command -v timeout &>/dev/null; then
+    _timeout() { timeout "$1" "${@:2}"; }
+elif command -v gtimeout &>/dev/null; then
+    _timeout() { gtimeout "$1" "${@:2}"; }
+else
+    _timeout() {
+        local secs=$1; shift
+        "$@" &
+        local pid=$! wdpid
+        ( sleep "$secs"; kill -TERM "$pid" 2>/dev/null; sleep 2; kill -KILL "$pid" 2>/dev/null ) &
+        wdpid=$!
+        wait "$pid"; local st=$?
+        kill "$wdpid" 2>/dev/null; wait "$wdpid" 2>/dev/null
+        return $st
+    }
+fi
+
 ### Check for skip marker (exit 77 = skipped, not a failure)
 if [ -e ${test}.skip.$solver.$PLATFORM ]; then
     echo "SKIP $solver $test: $(cat ${test}.skip.$solver.$PLATFORM)"
@@ -40,7 +59,12 @@ fi
 rm -f ${test}.out.actual ${test}.err.actual
 echo Running $solver $test
 
-$SMT_EXE $test > ${test}.out.actual 2> ${test}.err.actual
+_timeout "$TEST_TIMEOUT" $SMT_EXE $test > ${test}.out.actual 2> ${test}.err.actual
+_exit=$?
+if [ $_exit -eq 124 ]; then
+    echo "TIMEOUT (${TEST_TIMEOUT}s) $solver $test"
+    exit 1
+fi
 
 ### Check the error output
 if [ -e ${test}.err.$solver.$PLATFORM ]; then
