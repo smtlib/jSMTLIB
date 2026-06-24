@@ -6,3 +6,12 @@ export TESTS=$(cd tests && pwd)
 export SCRIPTS=$(cd scripts && pwd)
 # Platform-specific directory containing solver executables (z3-4.3.1, cvc4-1.6, etc.)
 export SOLVERS=${SOLVERS:-/Users/davidcok/projects/OpenJML21/Solvers/Solvers-macos}
+# Normalized platform name used to select platform-specific golden files
+_p=$(uname -s | tr '[:upper:]' '[:lower:]')
+case "$_p" in
+  darwin*)   PLATFORM=macos ;;
+  linux*)    PLATFORM=linux ;;
+  mingw*|msys*|cygwin*) PLATFORM=windows ;;
+  *)         PLATFORM="$_p" ;;
+esac
+export PLATFORM

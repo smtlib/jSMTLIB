@@ -23,8 +23,14 @@ fi
 source solvers
 
 ### Check for skip marker (exit 77 = skipped, not a failure)
-if [ -e ${test}.skip.$solver ]; then
+if [ -e ${test}.skip.$solver.$PLATFORM ]; then
+    echo "SKIP $solver $test: $(cat ${test}.skip.$solver.$PLATFORM)"
+    exit 77
+elif [ -e ${test}.skip.$solver ]; then
     echo "SKIP $solver $test: $(cat ${test}.skip.$solver)"
+    exit 77
+elif [ -e ${test}.skip.$PLATFORM ]; then
+    echo "SKIP $solver $test: $(cat ${test}.skip.$PLATFORM)"
     exit 77
 elif [ -e ${test}.skip ]; then
     echo "SKIP $solver $test: $(cat ${test}.skip)"
@@ -37,8 +43,14 @@ echo Running $solver $test
 $SMT_EXE $test > ${test}.out.actual 2> ${test}.err.actual
 
 ### Check the error output
-if [ -e ${test}.err.$solver ]; then
+if [ -e ${test}.err.$solver.$PLATFORM ]; then
+    diff ${test}.err.actual ${test}.err.${solver}.${PLATFORM}
+    errok=$?
+elif [ -e ${test}.err.$solver ]; then
     diff ${test}.err.actual ${test}.err.${solver}
+    errok=$?
+elif [ -e ${test}.err.$PLATFORM ]; then
+    diff ${test}.err.actual ${test}.err.${PLATFORM}
     errok=$?
 elif [ -e ${test}.err ]; then
     diff ${test}.err.actual ${test}.err
@@ -53,7 +65,11 @@ fi
 
 ### Check the regular output
 comparison=""
-if [ -e ${test}.out.$solver ]; then
+if [ -e ${test}.out.$solver.$PLATFORM ]; then
+    diff -b ${test}.out.actual ${test}.out.${solver}.${PLATFORM}
+    diffresult=$?
+    comparison=${test}.out.$solver.$PLATFORM
+elif [ -e ${test}.out.$solver ]; then
     diff -b ${test}.out.actual ${test}.out.${solver}
     diffresult=$?
     comparison=${test}.out.$solver
@@ -61,6 +77,10 @@ elif [ -e ${test}.out.$solver.bad ]; then
     diff -b ${test}.out.actual ${test}.out.${solver}.bad
     diffresult=$?
     comparison=${test}.out.$solver.bad
+elif [ -e ${test}.out.$PLATFORM ]; then
+    diff -b ${test}.out.actual ${test}.out.${PLATFORM}
+    diffresult=$?
+    comparison=${test}.out.$PLATFORM
 elif [ ! -e ${test}.out ]; then
     echo No output file, creating one
     cat ${test}.out.actual
