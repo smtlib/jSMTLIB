@@ -35,4 +35,5 @@ cd ..
 ##rm -f jSMTLIB.tar.gz
 ##gzip jSMTLIB.tar
 
+rm -rf temp
 echo Build complete
