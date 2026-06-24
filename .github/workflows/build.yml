@@ -76,7 +76,15 @@ jobs:
         echo "Created release $ver with id $id"
 
   build:
-    runs-on: macos-14
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: macos-14
+            label: macos
+          - os: ubuntu-24.04
+            label: linux
+      fail-fast: false
 
     steps:
     ## Sparse checkout of this repo — needed only to get the composite actions
@@ -106,6 +114,8 @@ jobs:
       uses: ./ACTIONS/.github/actions/jsmtlib-test/
 
     - name: Upload github artifact
+      ## The JAR is pure Java — only upload once, from the linux runner
+      if: matrix.label == 'linux'
       uses: actions/upload-artifact@v7
       with:
         name: jsmtlib-release-${{ github.run_id }}
@@ -117,9 +127,9 @@ jobs:
       if: steps.test.outcome == 'failure'
       shell: bash
       run: |
-        echo "### ⚠️ Tests failed on macos-14" >> $GITHUB_STEP_SUMMARY
-        echo "The build artifact was uploaded despite test failures. Review the **Test jSMTLIB** step above." >> $GITHUB_STEP_SUMMARY
-        echo "::error::Tests failed — artifact uploaded but job is marked failed"
+        echo "### ⚠️ Tests failed on ${{ matrix.label }}" >> $GITHUB_STEP_SUMMARY
+        echo "Review the **Test jSMTLIB** step above." >> $GITHUB_STEP_SUMMARY
+        echo "::error::Tests failed on ${{ matrix.label }} — job is marked failed"
         exit 1
 
   ## Upload the release artifact into the GitHub draft release (master only)
