@@ -48,6 +48,7 @@ runs:
         CVC4=$(exec_if_exists $SOLVERS/cvc4-1.6$EXE)
         {
           echo "org.smtlib.logic_path="
+          echo "org.smtlib.solver_z3.exec=$Z3_4_3"
           echo "org.smtlib.solver_z3_4_3.exec=$Z3_4_3"
           echo "org.smtlib.solver_z3_4_8.adapter=org.smtlib.solvers.Solver_z3_4_8"
           echo "org.smtlib.solver_z3_4_8.exec=$Z3_4_8"
