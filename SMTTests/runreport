@@ -3,7 +3,7 @@
 solvers="test cvcnew yices "
 
 echo SOLVERS $solvers
-source ../tests/solvers
+source solvers
 out=../results
 std=$out/stdoutput
 tex=$out/texfile
@@ -16,7 +16,7 @@ for f in * ; do
     mv $temp $tex
     for solver in $solvers; do
         echo RUNNING $solver $f
-        source ../tests/solvers
+        source solvers
         $SMT_EXE $f > $out/$f.$solver 2> $out/$f.$solver.err
         res=`cat $out/$f.$solver $out/$f.$solver.err | tail -n 1`
         sed -e "s%ZZ_${f}_${solver}%$res%" < $tex > $temp

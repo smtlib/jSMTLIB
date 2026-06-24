@@ -1,7 +1,7 @@
 .PHONY: test
 
 test:
-	cd scripts && ./runboth
+	./runboth
 
 build:
 	$(MAKE) -C ../SMT build
