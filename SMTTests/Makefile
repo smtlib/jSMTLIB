@@ -1,7 +1,14 @@
-.PHONY: test clean
+.PHONY: test clean script-tests smt-tests build
 
 test:
-	./runboth
+	$(MAKE) script-tests
+	$(MAKE) smt-tests
+
+script-tests:
+	./runscripts
+
+smt-tests:
+	./runtests
 
 clean:
 	rm -f tempout scripts/tempout
