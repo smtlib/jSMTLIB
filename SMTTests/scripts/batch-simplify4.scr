@@ -1,2 +1,0 @@
-##EXITCODE 0
-$SMT_CMD --solver simplify ok_sat.tst

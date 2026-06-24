@@ -1,5 +1,6 @@
 #! /bin/bash
 
+cd "$(dirname "$0")" || exit 1
 rm -f tempout
 if [ $# -eq 0 ]; then
     solvers="test simplify yices cvc z3 "
@@ -12,7 +13,7 @@ echo SOLVERS $solvers
 count=0
 ok=0
 for solver in $solvers; do
-    for f in *.tst ; do
+    for f in ../tests/*.tst ; do
         (( count++ ))
         ./runtest $solver $f
         if [ $? == 0 ]; then (( ok ++ )) ; fi

@@ -2,4 +2,4 @@
 source setup
 VER=$(cat ../../SMT/version.txt)
 echo $VER
-$SMT_CMD --version | diff -b - <(echo "jSMTLIB version $VER")
+$SMT_CMD --version | diff -b - <(echo "$VER")

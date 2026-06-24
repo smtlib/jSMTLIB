@@ -1,11 +1,27 @@
 #!/bin/bash
 
+cd "$(dirname "$0")" || exit 1
 source setup
 source version.check
 
-for f in *.scr ; do
-    echo $f
+if [ $# -eq 0 ]; then
+    files=( *.scr )
+else
+    files=( "$@" )
+fi
+for f in "${files[@]}" ; do
+    echo SCRIPT $f
     expectedret=`grep EXITCODE $f | sed -e "s/##EXITCODE //" `
+
+    # SMT-LIB defines two output channels: the regular output channel (stdout)
+    # carries formal responses such as (error "..."), while the diagnostic
+    # channel (stderr) carries contextual information such as the source-text
+    # excerpt and caret(s) showing where in the input an error occurred.
+    # We therefore test all three views:
+    #   .out  — regular output only  (stdout)
+    #   .err  — diagnostic output only (stderr)
+    #   .cmb  — both streams merged (2>&1), so error context and message appear together
+
     source ./$f 2> err > out
     actualret=$?
     if [ -e $f.out ]; then
@@ -22,14 +38,17 @@ for f in *.scr ; do
         cat err
         mv err $f.err
     fi
-    source ./$f > out 2>&1
+
+    # Combined test: re-run merging stderr into stdout
+    source ./$f > cmb 2>&1
     if [ -e $f.cmb ]; then
-        diff out $f.cmb
+        diff cmb $f.cmb
     else
-        echo Creating output file for $f
-        cat out
-        mv out $f.cmb
+        echo Creating combined output file for $f
+        cat cmb
+        mv cmb $f.cmb
     fi
+
     if [ "$actualret" != "$expectedret" ]; then
         echo CODE = $actualret $expectedret
     fi

@@ -1,2 +1,2 @@
 ##EXITCODE 1
-$SMT_CMD --solver test --noshow err_pop.tst
+$SMT_CMD --solver test --noshow $TESTS/err_pop.tst

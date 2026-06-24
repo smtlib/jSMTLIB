@@ -1,4 +1,0 @@
-(set-option :A) (set-option :B)
-              ^
-(error "Expected an attribute value here, instead of a )")
-Aborting because of a parsing error

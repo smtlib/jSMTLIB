@@ -9,6 +9,9 @@ public class APIExample {
 
 	public static void main(String... args) {
 		SMT smt = new SMT();
+		String solvers = System.getenv("SOLVERS");
+		if (solvers == null) solvers = "/Users/davidcok/projects/OpenJML21/Solvers/Solvers-macos";
+		String z3exec = solvers + "/z3-4.3.1";
 		
 		
 		try {
@@ -51,7 +54,7 @@ public class APIExample {
 			script.commands().add(command4);
 			
 			// Execute the script
-			ISolver solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,"C:/cygwin/home/dcok/mybin/z3-4.3.exe");
+			ISolver solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,z3exec);
 			solver.start();
 			IResponse response = script.execute(solver);
 			System.out.println(printer.toString(response));
@@ -63,32 +66,34 @@ public class APIExample {
 			script.commands().add(command2);
 			script.commands().add(new org.smtlib.command.C_assert(q));
 			script.commands().add(command4);			
-			solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,"C:/cygwin/home/dcok/mybin/z3-4.3.exe");
+			solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,z3exec);
 			solver.start();
 			response = script.execute(solver);
 			System.out.println(printer.toString(response));
-			
+			solver.forceExit(); // script stopped at error before exit command ran
+
 			// Execute commands directly
 			// THIS API WILL BE CHANGING
 			ISort.IFactory sortfactory = smt.smtConfig.sortFactory;
 			ISort boolsort = sortfactory.createSortExpression(efactory.symbol("Bool"));
-			solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,"C:/cygwin/home/dcok/mybin/z3-4.3.exe");
+			solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,z3exec);
 			solver.start();
 			IResponse r = solver.set_logic("QF_UF",null);
 			r = solver.declare_fun(new C_declare_fun(p,new java.util.LinkedList<ISort>(),boolsort));
 			r = solver.assertExpr(and);
 			r = solver.check_sat();
 			System.out.println(printer.toString(r));
+			solver.exit(); // no exit command in this script
 			// solver.start()?  solver.exit()????, restarting solver?
 			// comment on toString directly on ASTs?t
-			
+
 			// typechecking?
 
 			// Bit-vector and model example
 			List<IExpr.INumeral> nums = new LinkedList<IExpr.INumeral>();
 			nums.add(efactory.numeral(32)); // TODO - room for improvement in ease of use here...
 			ISort bv32 = sortfactory.createSortExpression(efactory.id(efactory.symbol("BitVec"),nums));
-			solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,"C:/cygwin/home/dcok/mybin/z3-4.3.exe");
+			solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,z3exec);
 			solver.start();
 			solver.set_option(efactory.keyword(":produce-models"),efactory.symbol("true"));
 			r = solver.set_logic("QF_BV",null);

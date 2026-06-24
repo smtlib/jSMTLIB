@@ -11,10 +11,15 @@ export JAVA_HOME=$(/usr/libexec/java_home)
 version=$(cat version.txt)
 echo Building version $version
 sed -e "s/DEV/${version}/" src/org/smtlib/resources/version.template > src/org/smtlib/resources/version.properties
-cp src/org/smtlib/resources/version.properties bin/org/smtlib/resources/version.properties
 
 rm -rf temp
 mkdir temp
+
+echo Compiling sources
+find src -name "*.java" > temp/sources.txt
+"$JAVA_HOME/bin/javac" -d bin @temp/sources.txt
+cp src/org/smtlib/resources/version.properties bin/org/smtlib/resources/version.properties
+cp logics/*.smt2 bin/
 echo "Manifest-Version: 1.0" > temp/manifest
 echo "Main-Class: org.smtlib.SMT" >> temp/manifest
 cd bin || { echo "Cannot cd to bin"; exit 1; }

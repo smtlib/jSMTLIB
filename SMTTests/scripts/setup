@@ -1,2 +1,7 @@
-export SMT_JAR=../../SMT/jSMTLIB.jar
-export SMT_CMD="java -jar $SMT_JAR"
+SMT_DIR=$(cd ../../SMT && pwd)
+export SMT_JAR=$SMT_DIR/jSMTLIB.jar
+# Use -cp (not -jar) so that SMT_DIR is on the classpath and jsmtlib.properties is found there
+export SMT_CMD="java -cp $SMT_JAR:$SMT_DIR org.smtlib.SMT"
+export TESTS=$(cd ../tests && pwd)
+# Platform-specific directory containing solver executables (z3-4.3.1, cvc4-1.6, etc.)
+export SOLVERS=/Users/davidcok/projects/OpenJML21/Solvers/Solvers-macos

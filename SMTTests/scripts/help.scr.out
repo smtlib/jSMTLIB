@@ -19,8 +19,8 @@ The recognized options are these:
         The argument is the pathname of the executable for the named solver
     -L, --logics <path>: the directory containing SMT-LIB logic and theory 
               definitions (default is to use the internal, built-in definitions)
-        --out <file or 'stdout' or 'stderr'>: where to send normal and error output
-        --diag <file or 'stdout' or 'stderr'>: where to send verbose (diagnostic) output
+        --out <filename or 'stdout' or 'stderr'>: where to send normal and error output
+        --diag <filename or 'stdout' or 'stderr'>: where to send verbose (diagnostic) output
         --port <number>: which port to use for client-server communication
         --text: text to process (ignoring file and port input)
         --echo: if enabled, commands are echoed to diagnostic output when successfully parsed

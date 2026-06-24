@@ -5,6 +5,7 @@ PORT=8777
 EXE="java -cp $SMT_JAR org.smtlib.Driver --port ${PORT}"
 
 $SMT_CMD --port ${PORT} --echo &
+sleep 1
 
 ${EXE} "(set-logic QF_UF)"
 echo EX $?

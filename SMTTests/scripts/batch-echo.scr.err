@@ -1,2 +1,4 @@
 (set-logic QF_UF)
 (pop 1)
+(pop 1)
+^^^^^^^
