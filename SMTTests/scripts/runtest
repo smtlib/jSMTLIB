@@ -2,30 +2,41 @@
 
 ## Note: Files ending in .tst are test scripts
 ##       Files ending in .tst.out are the corresponding expected outputs
-##       Files ending in .tst.actual are the actual output if the test fails
+##       Files ending in .tst.out.actual are the actual stdout if the test fails
 ##       Files ending in .tst.err are the expected err output if non-empty
+##       Files ending in .tst.err.actual are the actual stderr if the test fails
 
+if [ $# -lt 2 ]; then
+    echo "Usage: runtest <solver> <testfile>"
+    exit 1
+fi
 solver=$1
 test=$2
+if [ ! -e "$test" ] && [ -e "$test.tst" ]; then
+    test="$test.tst"
+fi
+if [ ! -e "$test" ]; then
+    echo "ERROR: test file not found: $test"
+    exit 1
+fi
 source solvers
 
+rm -f ${test}.out.actual ${test}.err.actual
+echo Running $solver $test
 
-rm -f ${test}.actual
-echo Running $test $solver
-
-$SMT_EXE $test > output 2> erroutput
+$SMT_EXE $test > ${test}.out.actual 2> ${test}.err.actual
 
 ### Check the error output
 if [ -e ${test}.err.$solver ]; then
-    diff erroutput ${test}.err.${solver}
+    diff ${test}.err.actual ${test}.err.${solver}
     errok=$?
 elif [ -e ${test}.err ]; then
-    diff erroutput ${test}.err
+    diff ${test}.err.actual ${test}.err
     errok=$?
-elif [ -s erroutput ]; then
+elif [ -s ${test}.err.actual ]; then
     errok=1
     echo ERROR OUTPUT was expected to be empty
-    cat erroutput
+    cat ${test}.err.actual
 else
     errok=0
 fi
@@ -33,25 +44,26 @@ fi
 ### Check the regular output
 comparison=""
 if [ -e ${test}.out.$solver ]; then
-    diff -b output ${test}.out.${solver}
+    diff -b ${test}.out.actual ${test}.out.${solver}
     diffresult=$?
     comparison=${test}.out.$solver
 elif [ -e ${test}.out.$solver.bad ]; then
-    diff -b output ${test}.out.${solver}.bad
+    diff -b ${test}.out.actual ${test}.out.${solver}.bad
     diffresult=$?
     comparison=${test}.out.$solver.bad
-elif [ ! -e ${test}.out ]; then 
+elif [ ! -e ${test}.out ]; then
     echo No output file, creating one
-    cat output
-    mv output ${test}.out
+    cat ${test}.out.actual
+    mv ${test}.out.actual ${test}.out
     diffresult=1
-else 
-    diff -b output ${test}.out 
+else
+    diff -b ${test}.out.actual ${test}.out
     diffresult=$?
 fi
 
     if [ $diffresult == 0 ] ; then
         if [ $errok == 0 ]; then
+            rm -f ${test}.out.actual ${test}.err.actual
             echo SUCCESS "                               " ${comparison}
             exit 0
         else
@@ -60,6 +72,5 @@ fi
         fi
     else
         echo FAILURE - mismatched regular output
-        if [ -e output ]; then mv output ${test}.actual ; fi
     fi
 exit 1

@@ -1,21 +1,38 @@
 #! /bin/bash
 
 cd "$(dirname "$0")" || exit 1
+source setup
 rm -f tempout
+solvers="test z3"
+
+while [[ $# -gt 0 && "$1" == --* ]]; do
+    case "$1" in
+        --solvers) solvers="$2"; shift 2 ;;
+        *) echo "Unknown option: $1" >&2; exit 1 ;;
+    esac
+done
+
 if [ $# -eq 0 ]; then
-    solvers="test simplify yices cvc z3 "
+    tests=( "$TESTS"/*.tst )
 else
-    solvers="$@"
+    tests=()
+    for arg in "$@"; do
+        if [[ "$arg" != */* ]]; then
+            tests+=( "$TESTS/$arg" )
+        else
+            tests+=( "$arg" )
+        fi
+    done
 fi
 
 echo SOLVERS $solvers
 
 count=0
 ok=0
-for solver in $solvers; do
-    for f in ../tests/*.tst ; do
+for f in "${tests[@]}" ; do
+    for solver in $solvers; do
         (( count++ ))
-        ./runtest $solver $f
+        ./runtest $solver "$f"
         if [ $? == 0 ]; then (( ok ++ )) ; fi
     done
 done

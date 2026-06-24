@@ -1,7 +1,3 @@
 *.tst.out
-cmb
-err
-erroutput
-out
-output
+*.actual
 tempout
