@@ -1,12 +1,11 @@
 #! /bin/bash
 set -e
 
-## For Mac or linux perhaps
-PATH=/Users/davidcok/.opam/system/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Library/TeX/texbin:/opt/local/bin:/opt/local/sbin
-export JAVA_HOME=$(/usr/libexec/java_home)
-
-## TODO - this is not portable across build environments
-## Convert this to ant
+## Set JAVA_HOME only if not already set in the environment (e.g. by CI setup-java)
+if [ -z "$JAVA_HOME" ] && command -v /usr/libexec/java_home > /dev/null 2>&1; then
+  export JAVA_HOME=$(/usr/libexec/java_home)
+fi
+[ -z "$JAVA_HOME" ] && { echo "ERROR: JAVA_HOME is not set and /usr/libexec/java_home is not available"; exit 1; }
 
 version=$(cat version.txt)
 echo Building version $version
@@ -16,6 +15,7 @@ rm -rf temp
 mkdir temp
 
 echo Compiling sources
+mkdir -p bin
 find src -name "*.java" > temp/sources.txt
 "$JAVA_HOME/bin/javac" -d bin @temp/sources.txt
 cp src/org/smtlib/resources/version.properties bin/org/smtlib/resources/version.properties

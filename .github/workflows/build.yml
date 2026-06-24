@@ -1,0 +1,172 @@
+name: Build jSMTLIB
+
+## This workflow builds and creates a new jSMTLIB release.
+## The release number is taken from the SMT/version.txt file.
+## The workflow clones the jSMTLIB repo and the OpenJML Solvers repo, builds jSMTLIB.jar,
+## runs the test suite, and uploads jSMTLIB.jar to a draft GitHub release.
+## If a published release with the current version already exists, the workflow fails.
+## If an existing draft release with that version exists, the workflow reuses it.
+## The build manager must review, edit release notes, and manually publish the release.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master, dev ]
+
+env:
+  ## The github branch that was pushed
+  BRANCH: ${{ github.ref_name }}
+
+jobs:
+  prepare:
+    if: github.ref_name == 'master'
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v6
+      with:
+        sparse-checkout: 'SMT/version.txt'
+
+    - name: Determine version
+      id: version
+      run: |
+        export ver=$(cat SMT/version.txt)
+        echo "Building release $ver"
+        echo "version=$ver" >> "$GITHUB_OUTPUT"
+
+    - name: Check most recent release
+      id: check_release
+      run: |
+        export ver=${{ steps.version.outputs.version }}
+        status=$(curl --silent "https://api.github.com/repos/smtlib/jSMTLIB/releases" \
+          --header 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' | python3 -c "
+        import json,sys,os
+        ver = os.environ['ver']
+        for r in json.load(sys.stdin):
+            if r['name'] == 'jSMTLIB ' + ver:
+                print('draft' if r['draft'] else 'published')
+                sys.exit(0)
+        print('none')
+        ")
+        echo "release_status=$status" >> "$GITHUB_OUTPUT"
+        if [ "$status" = "published" ]; then
+          echo "Version $ver already has a published release — cannot overwrite"
+          exit 1
+        elif [ "$status" = "draft" ]; then
+          echo "Version $ver has an existing draft release — it will be reused and any existing assets overwritten"
+        else
+          echo "No prior release found for version $ver"
+        fi
+
+    - name: Create the GitHub release
+      ## Skipped if a draft release already exists (will be reused by the upload job).
+      if: steps.check_release.outputs.release_status == 'none'
+      run: |
+        export ver=${{ steps.version.outputs.version }}
+        echo "Version $ver from branch $BRANCH"
+        export resp=$(curl -sf -X POST \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -d "{\"tag_name\":\"$ver\",\"target_commitish\":\"$BRANCH\",\"name\":\"jSMTLIB $ver\",\"draft\":true,\"body\":\"Publishing release $ver\"}" \
+          "https://api.github.com/repos/smtlib/jSMTLIB/releases")
+        export id=$(echo "$resp" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+        [[ -z "$id" ]] && { echo "ERROR: release creation failed; response: $resp"; exit 1; }
+        echo "Created release $ver with id $id"
+
+  build:
+    runs-on: macos-14
+
+    steps:
+    ## Sparse checkout of this repo — needed only to get the composite actions
+    - name: Checkout repo
+      uses: actions/checkout@v6
+      with:
+        sparse-checkout: ./.github
+        path: ACTIONS
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v5
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: Checkout jSMTLIB
+      uses: ./ACTIONS/.github/actions/jsmtlib-checkout/
+      with:
+        branch: ${{ env.BRANCH }}
+
+    - name: Build jSMTLIB
+      uses: ./ACTIONS/.github/actions/jsmtlib-build/
+
+    - name: Test jSMTLIB
+      id: test
+      continue-on-error: true
+      uses: ./ACTIONS/.github/actions/jsmtlib-test/
+
+    - name: Upload github artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: jsmtlib-release-${{ github.run_id }}
+        path: 'jSMTLIB.jar'
+        overwrite: true
+        retention-days: 1
+
+    - name: Fail job if tests failed
+      if: steps.test.outcome == 'failure'
+      shell: bash
+      run: |
+        echo "### ⚠️ Tests failed on macos-14" >> $GITHUB_STEP_SUMMARY
+        echo "The build artifact was uploaded despite test failures. Review the **Test jSMTLIB** step above." >> $GITHUB_STEP_SUMMARY
+        echo "::error::Tests failed — artifact uploaded but job is marked failed"
+        exit 1
+
+  ## Upload the release artifact into the GitHub draft release (master only)
+  upload:
+    if: github.ref_name == 'master'
+    needs: [ prepare, build ]
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Download github artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: jsmtlib-release-${{ github.run_id }}
+
+    - name: Copy jSMTLIB.jar into GitHub release
+      shell: bash
+      run: |
+        export ver=${{ needs.prepare.outputs.version }}
+        export f=jSMTLIB-${ver}.jar
+        cp jSMTLIB.jar $f
+        export id=$(curl --silent --fail \
+          "https://api.github.com/repos/smtlib/jSMTLIB/releases?per_page=10" \
+          --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" | \
+          python3 -c "import json,sys,os; r=next(r for r in json.load(sys.stdin) if r['tag_name']==os.environ['ver']); print(r['id'])")
+        [[ -z "$id" ]] && { echo "ERROR: could not find release id for version $ver"; exit 1; }
+        export upload_url="https://uploads.github.com/repos/smtlib/jSMTLIB/releases/$id/assets"
+        existing_asset_id=$(curl --silent --fail \
+          "https://api.github.com/repos/smtlib/jSMTLIB/releases/$id/assets" \
+          --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" | \
+          python3 -c "
+        import json,sys,os
+        for a in json.load(sys.stdin):
+            if a['name'] == os.environ['f']:
+                print(a['id']); sys.exit(0)
+        print('')
+        ")
+        if [[ -n "$existing_asset_id" ]]; then
+          echo "Deleting existing asset $f (id=$existing_asset_id)"
+          curl -sf -X DELETE \
+            "https://api.github.com/repos/smtlib/jSMTLIB/releases/assets/$existing_asset_id" \
+            --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            || { echo "ERROR: failed to delete existing asset $f"; exit 1; }
+        fi
+        echo "Uploading $f to release $ver (id=$id)"
+        curl -sf -X POST \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Content-Type: application/java-archive" \
+          --data-binary @$f \
+          "$upload_url?name=$f&label=$f" \
+          || { echo "ERROR: upload of $f failed"; exit 1; }

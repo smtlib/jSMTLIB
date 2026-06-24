@@ -1,0 +1,16 @@
+name: 'jSMTLIB Build'
+description: 'A composite action that builds jSMTLIB.jar from an existing checkout'
+
+## Presumes jSMTLIB/ exists in the current working directory (from jsmtlib-checkout).
+## Produces jSMTLIB/SMT/jSMTLIB.jar and copies it to the workspace root.
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Build jSMTLIB.jar
+      shell: bash
+      run: |
+        cd jSMTLIB/SMT
+        ./buildRelease
+        cp jSMTLIB.jar $GITHUB_WORKSPACE/jSMTLIB.jar
+        echo "Built jSMTLIB.jar ($(wc -c < jSMTLIB.jar) bytes)"
