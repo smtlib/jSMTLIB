@@ -47,3 +47,6 @@ else
     echo "$fail FAILURES out of $((count - skip)) tests${skip:+, $skip skipped}"
 fi
 source version.check
+vercheck=$?
+[ $fail -gt 0 ] || [ $vercheck -ne 0 ] && exit 1
+exit 0

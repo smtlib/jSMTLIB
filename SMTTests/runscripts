@@ -16,6 +16,7 @@ else
         fi
     done
 fi
+fail=0
 for f in "${files[@]}" ; do
     if [ ! -e "$f" ] && [ -e "$f.scr" ]; then
         f="$f.scr"
@@ -40,7 +41,7 @@ for f in "${files[@]}" ; do
     actualret=$?
     if [ -e $f.out ]; then
         diff $f.out.actual $f.out
-        if [ $? -eq 0 ]; then rm -f $f.out.actual; fi
+        if [ $? -eq 0 ]; then rm -f $f.out.actual; else (( fail++ )); fi
     else
         echo Creating output file for $f
         cat $f.out.actual
@@ -48,7 +49,7 @@ for f in "${files[@]}" ; do
     fi
     if [ -e $f.err ]; then
         diff $f.err.actual $f.err
-        if [ $? -eq 0 ]; then rm -f $f.err.actual; fi
+        if [ $? -eq 0 ]; then rm -f $f.err.actual; else (( fail++ )); fi
     else
         echo Creating err file for $f
         cat $f.err.actual
@@ -59,7 +60,7 @@ for f in "${files[@]}" ; do
     source "$f" > $f.cmb.actual 2>&1
     if [ -e $f.cmb ]; then
         diff $f.cmb.actual $f.cmb
-        if [ $? -eq 0 ]; then rm -f $f.cmb.actual; fi
+        if [ $? -eq 0 ]; then rm -f $f.cmb.actual; else (( fail++ )); fi
     else
         echo Creating combined output file for $f
         cat $f.cmb.actual
@@ -68,5 +69,13 @@ for f in "${files[@]}" ; do
 
     if [ "$actualret" != "$expectedret" ]; then
         echo CODE = $actualret $expectedret
+        (( fail++ ))
     fi
 done
+if [ $fail -eq 0 ]; then
+    echo "All script tests SUCCEEDED"
+else
+    echo "$fail script test FAILURES"
+fi
+[ $fail -gt 0 ] && exit 1
+exit 0
