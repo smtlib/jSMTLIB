@@ -1,8 +1,10 @@
 .PHONY: test clean script-tests smt-tests build
 
 test:
-	$(MAKE) script-tests
-	$(MAKE) smt-tests
+	@result=0; \
+	$(MAKE) script-tests || result=1; \
+	$(MAKE) smt-tests || result=1; \
+	exit $$result
 
 script-tests:
 	./runscripts

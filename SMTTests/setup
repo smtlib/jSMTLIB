@@ -5,4 +5,4 @@ export SMT_CMD="java -cp $SMT_JAR:$SMT_DIR org.smtlib.SMT"
 export TESTS=$(cd tests && pwd)
 export SCRIPTS=$(cd scripts && pwd)
 # Platform-specific directory containing solver executables (z3-4.3.1, cvc4-1.6, etc.)
-export SOLVERS=/Users/davidcok/projects/OpenJML21/Solvers/Solvers-macos
+export SOLVERS=${SOLVERS:-/Users/davidcok/projects/OpenJML21/Solvers/Solvers-macos}

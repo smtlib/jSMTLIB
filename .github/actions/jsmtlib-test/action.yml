@@ -23,6 +23,7 @@ runs:
           Windows) SOLVERS=$GITHUB_WORKSPACE/Solvers/Solvers-windows ;;
           *) echo "ERROR: unsupported runner OS: ${{ runner.os }}"; exit 1 ;;
         esac
+        echo "SOLVERS=$SOLVERS" >> $GITHUB_ENV
         chmod +x $SOLVERS/z3-* 2>/dev/null || true
         {
           echo "org.smtlib.logic_path="

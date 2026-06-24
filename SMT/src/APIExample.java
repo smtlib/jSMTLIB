@@ -10,7 +10,14 @@ public class APIExample {
 	public static void main(String... args) {
 		SMT smt = new SMT();
 		String solvers = System.getenv("SOLVERS");
-		if (solvers == null) solvers = "/Users/davidcok/projects/OpenJML21/Solvers/Solvers-macos";
+		if (solvers == null) {
+			System.err.println("ERROR: SOLVERS environment variable is not set");
+			System.exit(1);
+		}
+		if (!new java.io.File(solvers).isDirectory()) {
+			System.err.println("ERROR: SOLVERS directory does not exist: " + solvers);
+			System.exit(1);
+		}
 		String z3exec = solvers + "/z3-4.3.1";
 		
 		
