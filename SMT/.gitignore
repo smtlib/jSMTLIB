@@ -1,7 +1,5 @@
 /bin
 /src/org/smtlib/resources/version.properties
-/solver.out
-/tempout
 /doc/
 /jSMTLIB.tar.gz
 /jSMTLIB.jar
