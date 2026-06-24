@@ -1,6 +1,5 @@
 /bin
 /src/org/smtlib/resources/version.properties
-/jsmtlib.properties
 /solver.out
 /tempout
 /doc/
