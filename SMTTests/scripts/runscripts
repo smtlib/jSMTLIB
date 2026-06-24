@@ -10,6 +10,13 @@ else
     files=( "$@" )
 fi
 for f in "${files[@]}" ; do
+    if [ ! -e "$f" ] && [ -e "$f.scr" ]; then
+        f="$f.scr"
+    fi
+    if [ ! -e "$f" ]; then
+        echo "SKIP $f: file not found"
+        continue
+    fi
     echo SCRIPT $f
     expectedret=`grep EXITCODE $f | sed -e "s/##EXITCODE //" `
 
