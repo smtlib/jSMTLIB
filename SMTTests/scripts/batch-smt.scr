@@ -1,0 +1,2 @@
+##EXITCODE 0
+$SMT_CMD --solver z3_4_3 $TESTS/ok_sat.tst

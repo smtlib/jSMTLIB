@@ -1,0 +1,5 @@
+#!/bin/bash
+##EXITCODE 0
+
+source setup
+java -cp $SMT_JAR APIExample
