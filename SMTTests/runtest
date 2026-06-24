@@ -5,6 +5,7 @@
 ##       Files ending in .tst.out.actual are the actual stdout if the test fails
 ##       Files ending in .tst.err are the expected err output if non-empty
 ##       Files ending in .tst.err.actual are the actual stderr if the test fails
+##       Files ending in .tst.skip.<solver> or .tst.skip skip this test (content is the reason)
 
 if [ $# -lt 2 ]; then
     echo "Usage: runtest <solver> <testfile>"
@@ -20,6 +21,15 @@ if [ ! -e "$test" ]; then
     exit 1
 fi
 source solvers
+
+### Check for skip marker (exit 77 = skipped, not a failure)
+if [ -e ${test}.skip.$solver ]; then
+    echo "SKIP $solver $test: $(cat ${test}.skip.$solver)"
+    exit 77
+elif [ -e ${test}.skip ]; then
+    echo "SKIP $solver $test: $(cat ${test}.skip)"
+    exit 77
+fi
 
 rm -f ${test}.out.actual ${test}.err.actual
 echo Running $solver $test

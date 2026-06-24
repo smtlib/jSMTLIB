@@ -29,17 +29,21 @@ echo SOLVERS $solvers
 
 count=0
 ok=0
+skip=0
 for f in "${tests[@]}" ; do
     for solver in $solvers; do
         (( count++ ))
         ./runtest $solver "$f"
-        if [ $? == 0 ]; then (( ok ++ )) ; fi
+        ret=$?
+        if   [ $ret == 0  ]; then (( ok++ ))
+        elif [ $ret == 77 ]; then (( skip++ ))
+        fi
     done
 done
-(( fail = $count - $ok ))
+(( fail = count - ok - skip ))
 if [ $fail == 0 ]; then
-    echo All $count tests SUCCEEDED
+    echo "All $((count - skip)) tests SUCCEEDED${skip:+, $skip skipped}"
 else
-    echo $fail FAILURES out of $count tests
+    echo "$fail FAILURES out of $((count - skip)) tests${skip:+, $skip skipped}"
 fi
 source version.check
