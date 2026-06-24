@@ -1,2 +1,2 @@
 ##EXITCODE 1
-$SMT_CMD < oneline.scrtst
+$SMT_CMD < $SCRIPTS/oneline.scrtst
