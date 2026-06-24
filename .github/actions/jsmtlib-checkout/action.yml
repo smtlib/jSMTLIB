@@ -1,10 +1,7 @@
 name: 'jSMTLIB Checkout'
-description: 'A composite action that checks out the repos needed to build and test jSMTLIB'
+description: 'A composite action that checks out the jSMTLIB repo'
 
-## Clones jSMTLIB and the OpenJML Solvers repo into the current working directory.
-## After this action:
-##   jSMTLIB/   — full jSMTLIB clone (contains SMT/, SMTTests/, etc.)
-##   Solvers/   — full clone of OpenJML/Solvers (contains Solvers-macos/, Solvers-linux/, etc.)
+## Clones jSMTLIB into jSMTLIB/ in the current working directory.
 
 inputs:
   branch:
@@ -14,9 +11,8 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Checkout jSMTLIB and Solvers repos
+    - name: Checkout jSMTLIB repo
       shell: bash
       run: |
         git config --global core.autocrlf input
         git clone -b ${{ inputs.branch }} --depth 1 https://github.com/smtlib/jSMTLIB
-        git clone -b master --depth 1 https://github.com/OpenJML/Solvers

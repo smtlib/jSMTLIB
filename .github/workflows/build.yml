@@ -7,6 +7,10 @@ name: Build jSMTLIB
 ## If a published release with the current version already exists, the workflow fails.
 ## If an existing draft release with that version exists, the workflow reuses it.
 ## The build manager must review, edit release notes, and manually publish the release.
+##
+## Branch behaviour:
+##   dev    — build + test only
+##   master — build + test + create draft release + upload jSMTLIB.jar
 
 on:
   workflow_dispatch:
@@ -75,19 +79,12 @@ jobs:
         [[ -z "$id" ]] && { echo "ERROR: release creation failed; response: $resp"; exit 1; }
         echo "Created release $ver with id $id"
 
+  ## Build jSMTLIB.jar on a single runner and upload as a shared artifact.
+  ## The JAR is pure Java so one build serves all test runners and the release upload.
   build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: macos-14
-            label: macos
-          - os: ubuntu-24.04
-            label: linux
-      fail-fast: false
+    runs-on: ubuntu-24.04
 
     steps:
-    ## Sparse checkout of this repo — needed only to get the composite actions
     - name: Checkout repo
       uses: actions/checkout@v6
       with:
@@ -108,20 +105,56 @@ jobs:
     - name: Build jSMTLIB
       uses: ./ACTIONS/.github/actions/jsmtlib-build/
 
-    - name: Test jSMTLIB
-      id: test
-      continue-on-error: true
-      uses: ./ACTIONS/.github/actions/jsmtlib-test/
-
     - name: Upload github artifact
-      ## The JAR is pure Java — only upload once, from the linux runner
-      if: matrix.label == 'linux'
       uses: actions/upload-artifact@v7
       with:
         name: jsmtlib-release-${{ github.run_id }}
         path: 'jSMTLIB.jar'
         overwrite: true
         retention-days: 1
+
+  ## Test the shared JAR across OS runners
+  test:
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: macos-14
+            label: macos
+      fail-fast: false
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v6
+      with:
+        sparse-checkout: ./.github
+        path: ACTIONS
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v5
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: Download github artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: jsmtlib-release-${{ github.run_id }}
+
+    - name: Checkout jSMTLIB
+      uses: ./ACTIONS/.github/actions/jsmtlib-checkout/
+      with:
+        branch: ${{ env.BRANCH }}
+
+    - name: Place JAR for tests
+      shell: bash
+      run: cp jSMTLIB.jar jSMTLIB/SMT/jSMTLIB.jar
+
+    - name: Test jSMTLIB
+      id: test
+      continue-on-error: true
+      uses: ./ACTIONS/.github/actions/jsmtlib-test/
 
     - name: Fail job if tests failed
       if: steps.test.outcome == 'failure'
@@ -135,7 +168,7 @@ jobs:
   ## Upload the release artifact into the GitHub draft release (master only)
   upload:
     if: github.ref_name == 'master'
-    needs: [ prepare, build ]
+    needs: [ prepare, build, test ]
     runs-on: ubuntu-24.04
 
     steps:

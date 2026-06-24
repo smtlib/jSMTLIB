@@ -10,6 +10,10 @@ description: 'A composite action that runs the jSMTLIB test suite on an existing
 runs:
   using: 'composite'
   steps:
+    - name: Clone Solvers repo
+      shell: bash
+      run: git clone -b master --depth 1 https://github.com/OpenJML/Solvers
+
     - name: Configure solver paths for CI
       shell: bash
       run: |
@@ -33,7 +37,7 @@ runs:
           echo "org.smtlib.solver_z3_4_8.command=$SOLVERS/z3-4.8.12,-smt2,-in,SMTLIB2_COMPLIANT=true"
           echo "org.smtlib.solver_cvc4.exec=$SOLVERS/cvc4-1.6"
           echo "org.smtlib.solver_simplify.exec="
-        } > jSMTLIB/SMT/jsmtlib.properties
+        } > jSMTLIB/SMTTests/jsmtlib.properties
 
     - name: Run jSMTLIB tests
       shell: bash
