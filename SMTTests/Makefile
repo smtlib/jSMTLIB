@@ -31,10 +31,10 @@ local-setup:
 	fi
 
 script-tests:
-	./runscripts
+	bash ./runscripts
 
 smt-tests:
-	./runtests
+	bash ./runtests
 
 clean:
 	rm -f tempout scripts/tempout

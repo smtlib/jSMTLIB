@@ -23,10 +23,11 @@ fi
 source solvers
 
 ### Portable per-test timeout (exit 124 = timed out)
+### On Windows the system 'timeout' has incompatible syntax; use the bash fallback there.
 TEST_TIMEOUT=${TEST_TIMEOUT:-30}
-if command -v timeout &>/dev/null; then
+if [[ "$PLATFORM" != "windows" ]] && command -v timeout &>/dev/null; then
     _timeout() { timeout "$1" "${@:2}"; }
-elif command -v gtimeout &>/dev/null; then
+elif [[ "$PLATFORM" != "windows" ]] && command -v gtimeout &>/dev/null; then
     _timeout() { gtimeout "$1" "${@:2}"; }
 else
     _timeout() {
