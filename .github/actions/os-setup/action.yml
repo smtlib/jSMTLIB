@@ -1,0 +1,19 @@
+name: 'jSMTLIB OS setup'
+description: 'A composite action that prepares each OS for running jSMTLIB tests'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: macOS additions
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        ## Install Rosetta 2 so that x86_64 solver binaries in Solvers-macos run on ARM runners.
+        softwareupdate --install-rosetta --agree-to-license || true
+
+    - name: Windows additions
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        ## GNU make is not pre-installed on Windows runners; the test suite requires it.
+        choco install make --no-progress -y

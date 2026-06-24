@@ -1,11 +1,12 @@
 name: 'jSMTLIB Test'
 description: 'A composite action that runs the jSMTLIB test suite on an existing build'
 
-## Presumes jSMTLIB/ and Solvers/ exist in the current working directory (from jsmtlib-checkout),
-## and that jSMTLIB/SMT/jSMTLIB.jar has been built (by jsmtlib-build).
+## Presumes jSMTLIB/ exists in the current working directory (from jsmtlib-checkout),
+## and that jSMTLIB/SMT/jSMTLIB.jar has been placed there (by the test job).
 ##
-## Writes a CI-appropriate jsmtlib.properties to jSMTLIB/SMT/ pointing at the cloned Solvers.
-## The test runner (SMTTests/setup) puts SMT/ on the Java classpath, so properties are found there.
+## Clones the Solvers repo, selects the platform-appropriate subdirectory, writes a
+## CI-appropriate jsmtlib.properties, and runs the test suite.
+## Only solvers whose binaries are present in the selected subdirectory are enabled.
 
 runs:
   using: 'composite'
@@ -17,26 +18,41 @@ runs:
     - name: Configure solver paths for CI
       shell: bash
       run: |
-        case "${{ runner.os }}" in
-          macOS)   SOLVERS=$GITHUB_WORKSPACE/Solvers/Solvers-macos ;;
-          Linux)   SOLVERS=$GITHUB_WORKSPACE/Solvers/Solvers-linux ;;
-          Windows) SOLVERS=$GITHUB_WORKSPACE/Solvers/Solvers-windows ;;
-          *) echo "ERROR: unsupported runner OS: ${{ runner.os }}"; exit 1 ;;
+        ## Select the Solvers subdirectory matching this runner's OS and architecture.
+        case "${{ runner.os }}-${{ runner.arch }}" in
+          macOS-ARM64)  SOLVERS_DIR=Solvers-macos-arm64 ;;
+          macOS-X64)    SOLVERS_DIR=Solvers-macos ;;
+          Linux-ARM64)  SOLVERS_DIR=Solvers-linux-arm64 ;;
+          Linux-X64)    SOLVERS_DIR=Solvers-linux ;;
+          Windows-X64)  SOLVERS_DIR=Solvers-windows ;;
+          *) echo "ERROR: unsupported runner OS/arch: ${{ runner.os }}-${{ runner.arch }}"; exit 1 ;;
         esac
+
+        SOLVERS=$GITHUB_WORKSPACE/Solvers/$SOLVERS_DIR
         echo "SOLVERS=$SOLVERS" >> $GITHUB_ENV
-        chmod +x $SOLVERS/z3-* 2>/dev/null || true
+
+        ## Windows executables carry a .exe suffix; other platforms do not.
+        EXE=""
+        if [[ "${{ runner.os }}" == "Windows" ]]; then EXE=".exe"; fi
+
+        ## Make solver binaries executable (no-op on Windows).
+        if [[ "${{ runner.os }}" != "Windows" ]]; then
+          chmod +x $SOLVERS/z3-* $SOLVERS/cvc4-* 2>/dev/null || true
+        fi
+
+        ## Write jsmtlib.properties, enabling only solvers whose binaries exist on this platform.
+        ## A solver whose .exec is empty is treated as absent by jSMTLIB.
+        exec_if_exists() { [[ -f "$1" ]] && echo "$1" || echo ""; }
+        Z3_4_3=$(exec_if_exists $SOLVERS/z3-4.3.1$EXE)
+        Z3_4_8=$(exec_if_exists $SOLVERS/z3-4.8.12$EXE)
+        CVC4=$(exec_if_exists $SOLVERS/cvc4-1.6$EXE)
         {
           echo "org.smtlib.logic_path="
-          echo "org.smtlib.solver_z3.exec=$SOLVERS/z3-4.3.1"
-          echo "org.smtlib.solver_z3_4_3.exec=$SOLVERS/z3-4.3.1"
-          echo "org.smtlib.solver_z3_4_5.exec=$SOLVERS/z3-4.5.0"
-          echo "org.smtlib.solver_z3_4_6.adapter=org.smtlib.solvers.Solver_z3_4_5"
-          echo "org.smtlib.solver_z3_4_6.exec=$SOLVERS/z3-4.6.0"
-          echo "org.smtlib.solver_z3_4_6.command=$SOLVERS/z3-4.6.0,-smt2,-in,SMTLIB2_COMPLIANT=true"
+          echo "org.smtlib.solver_z3_4_3.exec=$Z3_4_3"
           echo "org.smtlib.solver_z3_4_8.adapter=org.smtlib.solvers.Solver_z3_4_8"
-          echo "org.smtlib.solver_z3_4_8.exec=$SOLVERS/z3-4.8.12"
-          echo "org.smtlib.solver_z3_4_8.command=$SOLVERS/z3-4.8.12,-smt2,-in,SMTLIB2_COMPLIANT=true"
-          echo "org.smtlib.solver_cvc4.exec=$SOLVERS/cvc4-1.6"
+          echo "org.smtlib.solver_z3_4_8.exec=$Z3_4_8"
+          echo "org.smtlib.solver_z3_4_8.command=${Z3_4_8:+$Z3_4_8,-smt2,-in,SMTLIB2_COMPLIANT=true}"
+          echo "org.smtlib.solver_cvc4.exec=$CVC4"
           echo "org.smtlib.solver_simplify.exec="
         } > jSMTLIB/SMTTests/jsmtlib.properties
 
