@@ -1,4 +1,2 @@
 success
-(assert true false)
-             ^^^^^
 (error "Too many arguments or extraneous material after the command or missing right parenthesis")

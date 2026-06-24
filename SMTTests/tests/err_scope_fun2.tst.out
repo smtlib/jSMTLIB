@@ -3,6 +3,4 @@ success
 success
 success
 success
-(assert y)
-        ^
 (error "Unknown constant symbol y")

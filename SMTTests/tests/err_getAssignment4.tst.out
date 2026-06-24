@@ -1,7 +1,5 @@
+success
+success
+success
+unknown
 unsupported
-success
-success
-unsat
-(get-assignment)
-^^^^^^^^^^^^^^^^
-(error "The get-assignment command is only valid if :produce-assignments has been enabled")

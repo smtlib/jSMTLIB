@@ -2,6 +2,4 @@ success
 success
 success
 success
-(declare-fun a () Bool)  ; duplicate - ERROR
-             ^
 (error "Symbol a is already defined")

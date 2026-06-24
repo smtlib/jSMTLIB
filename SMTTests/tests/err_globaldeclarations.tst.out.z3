@@ -2,6 +2,4 @@ success
 success
 success
 unsupported
-(declare-fun a () Bool)  ; duplicate - ERROR
-^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 6 column 22: invalid declaration, constant 'a' (with the given signature) already declared")
+(error "line 5 column 22: invalid declaration, constant 'a' (whith the given signature) already declared")

@@ -1,5 +1,3 @@
 success
-(assert "asd )
-        ^^^^^^^
 (error "String literal is not terminated: ""asd )
 ")

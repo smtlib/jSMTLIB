@@ -1,0 +1,6 @@
+(get-option zzz)
+            ^^^
+(get-option)
+           ^
+(get-option :zzz :www)
+                 ^^^^

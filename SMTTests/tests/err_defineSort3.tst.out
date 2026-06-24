@@ -1,4 +1,2 @@
 success
-(define-sort A (X X) Bool)
-                  ^
 (error "A name is duplicated in the parameter list: X")

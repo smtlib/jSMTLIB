@@ -1,7 +1,5 @@
-unsupported
 success
 success
-sat
-(get-unsat-core)
-^^^^^^^^^^^^^^^^
-(error "The get-unsat-core command is only valid if :produce-unsat-cores has been enabled")
+success
+unknown
+(error "The get-unsat-core command is only valid immediately after check-sat returned unsat")

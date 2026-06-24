@@ -1,3 +1,1 @@
-(push 0)
-^^^^^^^^
 (error "The logic must be set before a push command is issued")

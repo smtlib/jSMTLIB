@@ -1,0 +1,10 @@
+(declare-sort)
+             ^
+(declare-sort A)
+               ^
+(declare-sort A x)
+                ^
+(declare-sort 1)
+              ^
+(declare-sort A 1 2)
+                  ^

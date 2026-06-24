@@ -1,5 +1,3 @@
 success
 success
-(get-proof)
-^^^^^^^^^^^
 (error "The get-proof command is only valid immediately after check-sat returned unsat")

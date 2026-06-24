@@ -1,5 +1,3 @@
 success
 success
-(get-value (x))
-^^^^^^^^^^^^^^^
 (error "line 4 column 15: model is not available")

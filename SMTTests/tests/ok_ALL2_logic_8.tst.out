@@ -3,9 +3,9 @@ success
 success
 success
 success
+(error "Unknown predicate symbol (_ bv2int 8) with argument types (_ BitVec 8)")
+success
+(error "Unknown predicate symbol (_ bv2int 8) with argument types (_ BitVec 8)")
 success
 success
-success
-success
-success
-unsat
+unknown
