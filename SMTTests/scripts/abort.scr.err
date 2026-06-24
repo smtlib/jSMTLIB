@@ -1,1 +1,4 @@
-Aborting because of a parsing error
+(set-option :A) (set-option :B)
+              ^
+(set-option :A) (set-option :B)
+                              ^

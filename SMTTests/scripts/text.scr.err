@@ -1,0 +1,4 @@
+(set-option :interactive-mode xxxx)(exit zz)
+                              ^^^^
+(set-option :interactive-mode xxxx)(exit zz)
+                                         ^^

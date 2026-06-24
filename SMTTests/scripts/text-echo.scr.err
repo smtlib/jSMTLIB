@@ -1,0 +1,5 @@
+(set-option :interactive-mode xxxx)(set-logic QF_UF)(exit zz)
+                              ^^^^
+(set-logic QF_UF)
+(set-option :interactive-mode xxxx)(set-logic QF_UF)(exit zz)
+                                                          ^^

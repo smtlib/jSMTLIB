@@ -1,6 +1,4 @@
 success
 success
 success
-(declare-fun x () Bool)
-^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 5 column 22: invalid declaration, constant 'x' (with the given signature) already declared")
+(error "line 5 column 22: invalid declaration, constant 'x' (whith the given signature) already declared")

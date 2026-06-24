@@ -876,7 +876,6 @@ public class Parser extends Lexer implements IParser {
 	 * with error messages if it fails; only part of the checking of the contents is
 	 * performed in this call (the rest is done in loadLogic).
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public /*@Nullable*/ ILogic parseLogic() throws ParserException {
 		ILexToken lp = parseLP();
@@ -899,6 +898,7 @@ public class Parser extends Lexer implements IParser {
 		}
 		String clazzName = "org.smtlib.logic." + name;
 		try {
+			@SuppressWarnings("unchecked")
 			Class<? extends ILogic> clazz = (Class<? extends ILogic>)Class.forName(clazzName);
 			Constructor<? extends ILogic> con = clazz.getConstructor(ISymbol.class,Collection.class);
 			return con.newInstance(name,attributes);

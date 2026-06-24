@@ -15,7 +15,6 @@ import org.smtlib.IParser.ParserException;
 import org.smtlib.IParser.SyntaxException;
 import org.smtlib.*;
 import org.smtlib.IPos.IPosable;
-import org.smtlib.SMT.Configuration;
 import org.smtlib.impl.*;
 import org.smtlib.impl.SMTExpr.BinaryLiteral;
 import org.smtlib.impl.SMTExpr.Decimal;
@@ -141,7 +140,7 @@ public class Lexer {
 	/** Pattern regular expression for SMT-LIB whitespace */
 	private final static String rgxWhiteSpace = "[\\p{Space}]+"; // includes line termination
 	/** Pattern regular expression for SMT-LIB comment */
-	private final static String rgxComment = ";.*";              // be sure dot does not include line termination
+	private final static String rgxComment = ";[^\\n\\031]*";     // exclude newline and endChar (char 25) so matching stops at end-of-line
 	/** Pattern regular expression for SMT-LIB numeral */
 	private final static String rgxNumeral = "0|[1-9][0-9]*";
 	/** Pattern regular expression for an invalid SMT-LIB numeral or decimal (that has leading zeros) */
@@ -169,7 +168,7 @@ public class Lexer {
 	/** Pattern regular expression for SMT-LIB sequence of non-white space */
 	private final static String rgxAnyNonWS = "[\\S&&[^;\\(\\)]][\\S&&[^;\\(\\)]]*"; // Any sequence of non-whitespace, not beginning with ( ) ;
 	/** Pattern regular expression for detecting the end of input */
-	private final static String rgxEndOfInput = "\\z|\\031|\\004"; // FIXME - use CharSequenceReader.endChar
+	private final static String rgxEndOfInput = "\\z|\\031|\\004"; // char 25 (\\031) = CharSequenceInfinite.endChar
 	/** Pattern regular expression for checking that a sequence of digits is not followed by other non-white space, non-comment, non-parenthesis characters */
 	private final static String trailer = "(?:[\\s\\(\\);]|$)";
 
@@ -441,7 +440,7 @@ public class Lexer {
 								continue;
 							}
 						}
-					} else if (SMT.Configuration.SMTLIB.V20.toString().equals(Configuration.smtlib)) { // Version 2.0
+					} else if (SMT.Configuration.SMTLIB.V20.toString().equals(smtConfig.smtlib)) { // Version 2.0
 						while (true) {
 							p++;
 							char c = csr.charAt(p);

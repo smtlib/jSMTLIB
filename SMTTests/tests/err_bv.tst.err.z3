@@ -1,0 +1,14 @@
+(declare-fun k () (_ BitVecx 0))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun k () (_ BitVec -1))
+                            ^^
+(declare-fun k () (_ BitVec))
+                           ^
+(declare-fun k () (_ BitVec 1 2))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (= x #b010 ))
+^^^^^^^^^^^^^^^^^^^^^
+(assert (= z #xab ))
+^^^^^^^^^^^^^^^^^^^^
+(assert (= z y ))
+^^^^^^^^^^^^^^^^^

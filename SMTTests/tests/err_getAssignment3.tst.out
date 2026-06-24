@@ -1,8 +1,6 @@
-unsupported
 success
 success
-sat
 success
-(get-assignment)
-^^^^^^^^^^^^^^^^
-(error "The get-assignment command is only valid if :produce-assignments has been enabled")
+unknown
+success
+(error "The get-assignment command is only valid immediately after check-sat returned sat or unknown")

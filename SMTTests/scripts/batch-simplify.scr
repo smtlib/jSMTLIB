@@ -1,2 +1,0 @@
-##EXITCODE 0
-java -cp ../../SMT/bin org.smtlib.SMT --solver simplify ok_sat.tst

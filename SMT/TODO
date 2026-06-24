@@ -1,3 +1,12 @@
+Recent:
+-- edit this TODO
+-- merge SMT/solvers with Solvers?
+-- should jsmtlib.properties be in github?
+-- clean up version number
+-- Cleanup SMTUI -- connect with SMT
+-- fix javadoc.xml, doc folder
+-- cleanup launch configurations
+
 Pieces:
  - SMT-LIB checker
  - Adapters to various solvers

@@ -5,6 +5,4 @@ success
 success
 success
 unknown
-(get-value (x y (and x y) ))
-                ^^^^^^^^^
 (error "Unknown predicate symbol and with argument types A Bool")

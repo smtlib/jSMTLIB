@@ -8,10 +8,13 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.ParameterizedWithNames;
 import org.junit.runners.Parameterized.Parameters;
@@ -20,6 +23,8 @@ import org.junit.runners.Parameterized.Parameters;
 public class FileTests  extends LogicTests {
 
 	static Collection<String[]> data = datax();
+
+    @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES); // limit on entire test, not on each proof attempt
 
 	private static File findTestsFolder() {
 		//This is slightly hacked, as it relies on the existence of 'err_array.tst' to reach the right directory.
@@ -39,7 +44,7 @@ public class FileTests  extends LogicTests {
 	@Parameters
     static public  Collection<String[]> datax() {
     	Collection<String[]> data = new ArrayList<String[]>(1000);
-		File f = findTestsFolder();
+		File f = new File("/Users/davidcok/projects/jSMTLIB/SMTTests/tests"); // findTestsFolder();
     	String[] files = f.list();
     	for (String ff: files) { 
     		if (ff.endsWith(".tst") && !ff.startsWith("ok")) {

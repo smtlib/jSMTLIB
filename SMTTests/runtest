@@ -1,0 +1,86 @@
+#!/bin/bash
+
+## Note: Files ending in .tst are test scripts
+##       Files ending in .tst.out are the corresponding expected outputs
+##       Files ending in .tst.out.actual are the actual stdout if the test fails
+##       Files ending in .tst.err are the expected err output if non-empty
+##       Files ending in .tst.err.actual are the actual stderr if the test fails
+##       Files ending in .tst.skip.<solver> or .tst.skip skip this test (content is the reason)
+
+if [ $# -lt 2 ]; then
+    echo "Usage: runtest <solver> <testfile>"
+    exit 1
+fi
+solver=$1
+test=$2
+if [ ! -e "$test" ] && [ -e "$test.tst" ]; then
+    test="$test.tst"
+fi
+if [ ! -e "$test" ]; then
+    echo "ERROR: test file not found: $test"
+    exit 1
+fi
+source solvers
+
+### Check for skip marker (exit 77 = skipped, not a failure)
+if [ -e ${test}.skip.$solver ]; then
+    echo "SKIP $solver $test: $(cat ${test}.skip.$solver)"
+    exit 77
+elif [ -e ${test}.skip ]; then
+    echo "SKIP $solver $test: $(cat ${test}.skip)"
+    exit 77
+fi
+
+rm -f ${test}.out.actual ${test}.err.actual
+echo Running $solver $test
+
+$SMT_EXE $test > ${test}.out.actual 2> ${test}.err.actual
+
+### Check the error output
+if [ -e ${test}.err.$solver ]; then
+    diff ${test}.err.actual ${test}.err.${solver}
+    errok=$?
+elif [ -e ${test}.err ]; then
+    diff ${test}.err.actual ${test}.err
+    errok=$?
+elif [ -s ${test}.err.actual ]; then
+    errok=1
+    echo ERROR OUTPUT was expected to be empty
+    cat ${test}.err.actual
+else
+    errok=0
+fi
+
+### Check the regular output
+comparison=""
+if [ -e ${test}.out.$solver ]; then
+    diff -b ${test}.out.actual ${test}.out.${solver}
+    diffresult=$?
+    comparison=${test}.out.$solver
+elif [ -e ${test}.out.$solver.bad ]; then
+    diff -b ${test}.out.actual ${test}.out.${solver}.bad
+    diffresult=$?
+    comparison=${test}.out.$solver.bad
+elif [ ! -e ${test}.out ]; then
+    echo No output file, creating one
+    cat ${test}.out.actual
+    mv ${test}.out.actual ${test}.out
+    diffresult=1
+else
+    diff -b ${test}.out.actual ${test}.out
+    diffresult=$?
+fi
+
+    if [ $diffresult == 0 ] ; then
+        if [ $errok == 0 ]; then
+            rm -f ${test}.out.actual ${test}.err.actual
+            echo SUCCESS "                               " ${comparison}
+            exit 0
+        else
+            ### Failing because the error output did not match
+            echo FAILURE - mismatched error output
+        fi
+    else
+        echo FAILURE - mismatched regular output
+    fi
+exit 1

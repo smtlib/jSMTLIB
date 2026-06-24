@@ -1,0 +1,7 @@
+unsupported
+success
+success
+sat
+(get-proof)
+^^^^^^^^^^^
+(error "The get-proof command is only valid if :produce-proofs has been enabled")

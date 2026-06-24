@@ -1,0 +1,52 @@
+#! /bin/bash
+
+cd "$(dirname "$0")" || exit 1
+source setup
+rm -f tempout
+solvers="test z3"
+
+while [[ $# -gt 0 && "$1" == --* ]]; do
+    case "$1" in
+        --solvers) solvers="$2"; shift 2 ;;
+        *) echo "Unknown option: $1" >&2; exit 1 ;;
+    esac
+done
+
+if [ $# -eq 0 ]; then
+    tests=( "$TESTS"/*.tst )
+else
+    tests=()
+    for arg in "$@"; do
+        if [[ "$arg" != */* ]]; then
+            tests+=( "$TESTS/$arg" )
+        else
+            tests+=( "$arg" )
+        fi
+    done
+fi
+
+echo SOLVERS $solvers
+
+count=0
+ok=0
+skip=0
+for f in "${tests[@]}" ; do
+    for solver in $solvers; do
+        (( count++ ))
+        ./runtest $solver "$f"
+        ret=$?
+        if   [ $ret == 0  ]; then (( ok++ ))
+        elif [ $ret == 77 ]; then (( skip++ ))
+        fi
+    done
+done
+(( fail = count - ok - skip ))
+if [ $fail == 0 ]; then
+    echo "All $((count - skip)) tests SUCCEEDED${skip:+, $skip skipped}"
+else
+    echo "$fail FAILURES out of $((count - skip)) tests${skip:+, $skip skipped}"
+fi
+source version.check
+vercheck=$?
+[ $fail -gt 0 ] || [ $vercheck -ne 0 ] && exit 1
+exit 0

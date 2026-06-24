@@ -1,0 +1,4 @@
+(get-unsat-core)
+^^^^^^^^^^^^^^^^
+(get-unsat-core xxx)
+                ^^^

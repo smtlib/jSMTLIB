@@ -1,0 +1,2 @@
+(get-value (x y (and x y) ))
+                ^^^^^^^^^

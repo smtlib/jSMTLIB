@@ -1,5 +1,4 @@
 success
 success
-                                    ^^^
 (error "Unknown command: AAA")
 success

@@ -1,6 +1,4 @@
 success
 success
 success
-(get-value (x))
-^^^^^^^^^^^^^^^
-(error "A get-value command is valid only after check-sat has returned sat or unknown")
+(error "line 5 column 15: model is not available")

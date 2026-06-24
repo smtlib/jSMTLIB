@@ -101,8 +101,7 @@ public class QuantTests extends LogicTests {
 		String result2 = "unsat";
 		if ("test".equals(solvername)) result = result2 = "unknown";
 		//if ("z3_4_4".equals(solvername) && Configuration.isVersion(SMTLIB.V20)) result =  "unknown"; // FIXME - this case is non-deterministic
-		if ("cvc4".equals(solvername)) result =  "unknown";
-		if ("cvc4b".equals(solvername)) result = "unknown";
+		if (solvername.startsWith("cvc")) result =  "unknown";
 		doCommand("(set-logic AUFLIA)");
 		doCommand("(declare-fun p () Bool)");
 		doCommand("(declare-fun q () Bool)");

@@ -2,7 +2,7 @@
 
 PORT=8777
 
-EXE="java -cp ../../SMT/bin org.smtlib.Driver --port ${PORT}"
+EXE="java -cp $SMT_JAR org.smtlib.Driver --port ${PORT}"
 
 
 ${EXE} "(set-logic QF_UF)"

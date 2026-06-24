@@ -1,4 +1,2 @@
 success
-(get-assertions)
-^^^^^^^^^^^^^^^^
 (error "The logic must be set before a get-assertions command is issued")

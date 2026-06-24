@@ -1,0 +1,8 @@
+success
+success
+success
+success
+(declare-fun a () Bool) ; duplicate
+^^^^^^^^^^^^^^^^^^^^^^^
+(error "Parse Error: <shell>:1.21: Cannot bind a to symbol of type Bool, maybe the symbol has already been defined?")
+sat

@@ -1,16 +1,8 @@
-(set-info :name "x")
-          ^^^^^
 (error "Setting the value of a pre-defined keyword is not permitted: :name")
 (:name "test" )
-(set-info :authors "x")
-          ^^^^^^^^
 (error "Setting the value of a pre-defined keyword is not permitted: :authors")
 (:authors "David R. Cok" )
-(set-info :version "0")
-          ^^^^^^^^
 (error "Setting the value of a pre-defined keyword is not permitted: :version")
 (:version "0.0" )
-(set-info :error-behavior x)
-          ^^^^^^^^^^^^^^^
 (error "Setting the value of a pre-defined keyword is not permitted: :error-behavior")
 (:error-behavior continued-execution )

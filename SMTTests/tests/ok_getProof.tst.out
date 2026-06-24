@@ -1,7 +1,5 @@
-unsupported
 success
 success
-unsat
-(get-proof)
-^^^^^^^^^^^
-(error "The get-proof command is only valid if :produce-proofs has been enabled")
+success
+unknown
+(error "The get-proof command is only valid immediately after check-sat returned unsat")

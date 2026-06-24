@@ -1,4 +1,6 @@
 (set-logic QF_UF)
 (declare-fun x () Bool)
+(xxx)
+ ^^^
 (declare-fun y () Bool)
 (exit)

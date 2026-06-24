@@ -1,10 +1,8 @@
-unsupported
 success
 success
 success
 success
 success
-sat
-(get-value (x y (and x y) ))
-                ^^^^^^^^^
+success
+unknown
 (error "Unknown predicate symbol and with argument types A Bool")

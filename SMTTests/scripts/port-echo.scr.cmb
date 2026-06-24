@@ -4,8 +4,8 @@ EX 0
 (declare-fun x () Bool)
 SMT: success
 EX 0
-SMT: (xxx)
-SMT:  ^^^
+(xxx)
+ ^^^
 SMT: (error "Unknown command: xxx")
 EX 10
 (declare-fun y () Bool)

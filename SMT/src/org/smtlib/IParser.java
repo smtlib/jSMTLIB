@@ -147,8 +147,9 @@ public interface IParser {
 	/** An exception thrown if parsing is to be aborted. */
 	public static class ParserException extends Exception {
 		private static final long serialVersionUID = 1L;
-		
+
 		/** The location of the parsing problem */
+		@SuppressWarnings("serial")
 		protected /*@Nullable*//*@ReadOnly*/ IPos pos;
 
 		/** Creates a parse exception from the given error message and problem location */

@@ -2,4 +2,5 @@ success
 success
 success
 success
-sat
+(error "Symbol a is already defined")
+unknown

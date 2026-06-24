@@ -1,0 +1,14 @@
+(set-option :produce-models true)
+(error "Expected an expression here")
+BAD COMMAND
+(and p (not p))
+(set-logic QF_UF)
+(assert (and p (not p)))
+success
+(error "line 3 column 8: unknown constant q")
+unsat
+sat
+( ( pb #x00002000 ) ( pc #xffffdfff ) )
+sat
+( ( pb #x4a5294a7 ) ( pc #xb5ad6b58 ) )
+END
