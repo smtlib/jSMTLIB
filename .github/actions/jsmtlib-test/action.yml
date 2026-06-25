@@ -39,17 +39,17 @@ runs:
 
         ## Make solver binaries executable (no-op on Windows).
         if [[ "${{ runner.os }}" != "Windows" ]]; then
-          chmod +x $SOLVERS/z3-* $SOLVERS/cvc4-* 2>/dev/null || true
+          chmod +x "$SOLVERS"/z3-* "$SOLVERS"/cvc5-* 2>/dev/null || true
         fi
 
         ## Write jsmtlib.properties, enabling only solvers whose binaries exist on this platform.
         ## A solver whose .exec is empty is treated as absent by jSMTLIB.
         exec_if_exists() { [[ -f "$1" ]] && echo "$1" || echo ""; }
         ## Prefer z3-4.3.1 where available; fall back to z3-4.3.2 (Windows ships 4.3.2)
-        Z3_4_3=$(exec_if_exists $SOLVERS/z3-4.3.1$EXE)
-        [[ -z "$Z3_4_3" ]] && Z3_4_3=$(exec_if_exists $SOLVERS/z3-4.3.2$EXE)
-        Z3_4_8=$(exec_if_exists $SOLVERS/z3-4.8.12$EXE)
-        CVC4=$(exec_if_exists $SOLVERS/cvc4-1.6$EXE)
+        Z3_4_3=$(exec_if_exists "$SOLVERS/z3-4.3.1$EXE")
+        [[ -z "$Z3_4_3" ]] && Z3_4_3=$(exec_if_exists "$SOLVERS/z3-4.3.2$EXE")
+        Z3_4_8=$(exec_if_exists "$SOLVERS/z3-4.8.12$EXE")
+        CVC5=$(exec_if_exists "$SOLVERS/cvc5-1.6$EXE")
         {
           echo "org.smtlib.logic_path="
           echo "org.smtlib.solver_z3.exec=$Z3_4_3"
@@ -57,7 +57,7 @@ runs:
           echo "org.smtlib.solver_z3_4_8.adapter=org.smtlib.solvers.Solver_z3_4_8"
           echo "org.smtlib.solver_z3_4_8.exec=$Z3_4_8"
           echo "org.smtlib.solver_z3_4_8.command=${Z3_4_8:+$Z3_4_8,-smt2,-in,SMTLIB2_COMPLIANT=true}"
-          echo "org.smtlib.solver_cvc4.exec=$CVC4"
+          echo "org.smtlib.solver_cvc5.exec=$CVC5"
           echo "org.smtlib.solver_simplify.exec="
         } > jSMTLIB/SMTTests/jsmtlib.properties
 

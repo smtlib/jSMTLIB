@@ -63,7 +63,7 @@ public class InfoOptions  extends LogicTests {
 				: solvername.equals("simplify") ? "1.5.4"
 				: solvername.equals("yices") ? "1.0.28"
 				: solvername.equals("yices2") ? "2.3.1"
-				: solvername.equals("cvc4") ? "1.8"
+				: solvername.equals("cvc5") ? "1.8"
 				: solvername.equals("cvc5") ? "0.0.2"
 				: solvername.equals("z3_4_3") ? "4.3"
 				: solvername.equals("z3_4_3_2") ? "4.3.2"
@@ -85,7 +85,7 @@ public class InfoOptions  extends LogicTests {
 						: solvername.equals("yices") ? "yices"
 						: solvername.equals("yices2") ? "Yices"
 						: solvername.equals("cvc") ? "CVC3"
-						: solvername.startsWith("cvc4") ? "cvc4"
+						: solvername.startsWith("cvc5") ? "cvc5"
 						: solvername.startsWith("cvc5") ? "cvc5"
 						: solvername.equals("z3_2_11") ? "z3-2.11"
 						: solvername.startsWith("z3") ? "Z3"
@@ -157,7 +157,7 @@ public class InfoOptions  extends LogicTests {
 	public void checkDiagnosticOutput() {
 		// The correct result is a quote-delimited string
 		doCommand("(get-option :diagnostic-output-channel)", 
-//				solvername.startsWith("cvc4")? "unsupported" :
+//				solvername.startsWith("cvc5")? "unsupported" :
 						"\"stderr\""
 				);
 	}
@@ -238,7 +238,7 @@ public class InfoOptions  extends LogicTests {
 		                        || solvername.startsWith("cvc");
 		doCommand("(set-option :produce-proofs true)", 
 				supported ? "success" 
-						: solvername.startsWith("cvc4")? "success"
+						: solvername.startsWith("cvc5")? "success"
 						:  "unsupported");
 		doCommand("(get-option :produce-proofs)", 
 				supported ? "true"
@@ -246,7 +246,7 @@ public class InfoOptions  extends LogicTests {
 				:  "false");
 		doCommand("(set-option :produce-proofs false)", 
 				supported ? "success" 
-						: solvername.startsWith("cvc4")? "success"
+						: solvername.startsWith("cvc5")? "success"
 						:  "unsupported");
 		doCommand("(get-option :produce-proofs)", 
 			    solvername.equals("yices2") ? "unsupported" :
@@ -311,7 +311,7 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceUnsatCores() {
-		Assume.assumeTrue(!solvername.equals("cvc4b"));
+		Assume.assumeTrue(!solvername.equals("cvc5b"));
 		boolean supported = !solvername.equals("z3_4_3") && !solvername.startsWith("yices");
 		doCommand("(set-option :produce-unsat-cores true)",
 				supported ? "success" 
@@ -332,7 +332,7 @@ public class InfoOptions  extends LogicTests {
 	public void checkExpandDefinitions() {
 		//boolean supported = smt.smtConfig.isVersion(SMT.Configuration.SMTLIB.V20) && !solvername.equals("yices2");
 		boolean supported = !solvername.equals("yices2");
-		supported |= solvername.startsWith("cvc4"); // cvc4 supports option in V2.5
+		supported |= solvername.startsWith("cvc5"); // cvc5 supports option in V2.5
 		doCommand("(get-option :expand-definitions)", 
 				supported ? "false" : "unsupported"
 				);
@@ -365,7 +365,7 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkRandomSeed() {
-		Assume.assumeTrue(!"cvc4".equals(solvername)); // FIXME - cvc4 does not handle randome seed correctly
+		Assume.assumeTrue(!"cvc5".equals(solvername)); // FIXME - cvc5 does not handle random seed correctly
 		doCommand("(get-option :random-seed)", 
 				"0"
 				);
@@ -373,21 +373,21 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetRandomSeed() {
-		Assume.assumeTrue(!"cvc4".equals(solvername)); // FIXME - cvc4 does not handle randome seed correctly
+		Assume.assumeTrue(!"cvc5".equals(solvername)); // FIXME - cvc5 does not handle random seed correctly
 		doCommand("(set-option :random-seed 1)", "success");
 		doCommand("(get-option :random-seed)", 
-				"cvc4".equals(solvername) ? "0" :
+				"cvc5".equals(solvername) ? "0" :
 				"1");
 		doCommand("(set-option :random-seed 2)", "success");
 		doCommand("(get-option :random-seed)", 
-				"cvc4".equals(solvername) ? "0" :
+				"cvc5".equals(solvername) ? "0" :
 				"2");
 	}
 	
 	@Test
 	public void checkVerbosity() {
 		doCommand("(get-option :verbosity)", 
-		        "cvc4".equals(solvername) ? "-1" : // FIXME - why this difference
+		        "cvc5".equals(solvername) ? "-1" : // FIXME - why this difference
 				"0"
 				);
 	}

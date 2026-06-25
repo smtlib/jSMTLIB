@@ -33,13 +33,13 @@ public class LogicTests {
             "test",
           "z3_4_3",
           "z3_4_8",
-          "cvc4", // 1.8
+          "cvc5", // 1.8
           "cvc5", // 0.0.2
 //           "z3_4_5", 
 //          "z3_4_6", 
 //          "z3_4_7", 
             //"yices", 
-//            "cvc4", 
+//            "cvc5", 
 //            "simplify", 
             } ;
 	

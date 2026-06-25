@@ -2,8 +2,9 @@ SMT_DIR=$(cd ../SMT && pwd)
 export SMT_JAR=$SMT_DIR/jSMTLIB.jar
 export TESTS=$(cd tests && pwd)
 export SCRIPTS=$(cd scripts && pwd)
-# Platform-specific directory containing solver executables (z3-4.3.1, cvc4-1.6, etc.)
-export SOLVERS=${SOLVERS:-/Users/davidcok/projects/OpenJML21/Solvers/Solvers-macos}
+# Platform-specific directory containing solver executables (z3-4.3.1, cvc5-1.6, etc.).
+# Must be set externally; the Makefile local-setup target reads jsmtlib.properties to discover it.
+export SOLVERS=${SOLVERS:-}
 
 # Normalized platform name used to select platform-specific golden files
 _p=$(uname -s | tr '[:upper:]' '[:lower:]')

@@ -40,10 +40,10 @@ public class FileTestsOK  extends LogicTests {
 //    		if (ff.getName().endsWith(".tst")) {
 //    			data.add(new String[]{"test",ff.getName()}); 
 //    			if (
-//    					!ff.getName().equals("err_getValueTypes.tst") // Crashes CVC4
+//    					!ff.getName().equals("err_getValueTypes.tst") // Crashes CVC5
 //    					&& !ff.getName().equals("err_setLogic.tst")
 //				) {
-//    			data.add(new String[]{"cvc4",ff.getName()}); 
+//    			data.add(new String[]{"cvc5",ff.getName()}); 
 //    			}
 //    			data.add(new String[]{"simplify",ff.getName()}); 
 //    			if (

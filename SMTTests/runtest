@@ -43,30 +43,30 @@ else
 fi
 
 ### Check for skip marker (exit 77 = skipped, not a failure)
-if [ -e ${test}.skip.$solver.$PLATFORM_ARCH ]; then
-    echo "SKIP $solver $test: $(cat ${test}.skip.$solver.$PLATFORM_ARCH)"
+if [ -e "${test}.skip.$solver.$PLATFORM_ARCH" ]; then
+    echo "SKIP $solver $test: $(cat "${test}.skip.$solver.$PLATFORM_ARCH")"
     exit 77
-elif [ -e ${test}.skip.$solver.$PLATFORM ]; then
-    echo "SKIP $solver $test: $(cat ${test}.skip.$solver.$PLATFORM)"
+elif [ -e "${test}.skip.$solver.$PLATFORM" ]; then
+    echo "SKIP $solver $test: $(cat "${test}.skip.$solver.$PLATFORM")"
     exit 77
-elif [ -e ${test}.skip.$solver ]; then
-    echo "SKIP $solver $test: $(cat ${test}.skip.$solver)"
+elif [ -e "${test}.skip.$solver" ]; then
+    echo "SKIP $solver $test: $(cat "${test}.skip.$solver")"
     exit 77
-elif [ -e ${test}.skip.$PLATFORM_ARCH ]; then
-    echo "SKIP $solver $test: $(cat ${test}.skip.$PLATFORM_ARCH)"
+elif [ -e "${test}.skip.$PLATFORM_ARCH" ]; then
+    echo "SKIP $solver $test: $(cat "${test}.skip.$PLATFORM_ARCH")"
     exit 77
-elif [ -e ${test}.skip.$PLATFORM ]; then
-    echo "SKIP $solver $test: $(cat ${test}.skip.$PLATFORM)"
+elif [ -e "${test}.skip.$PLATFORM" ]; then
+    echo "SKIP $solver $test: $(cat "${test}.skip.$PLATFORM")"
     exit 77
-elif [ -e ${test}.skip ]; then
-    echo "SKIP $solver $test: $(cat ${test}.skip)"
+elif [ -e "${test}.skip" ]; then
+    echo "SKIP $solver $test: $(cat "${test}.skip")"
     exit 77
 fi
 
-rm -f ${test}.out.actual ${test}.err.actual
+rm -f "${test}.out.actual" "${test}.err.actual"
 echo Running $solver $test
 
-_timeout "$TEST_TIMEOUT" $SMT_EXE $test > ${test}.out.actual 2> ${test}.err.actual
+_timeout "$TEST_TIMEOUT" $SMT_EXE "$test" > "${test}.out.actual" 2> "${test}.err.actual"
 _exit=$?
 if [ $_exit -eq 124 ]; then
     echo "TIMEOUT (${TEST_TIMEOUT}s) $solver $test"
@@ -75,76 +75,76 @@ fi
 
 ### Strip Windows CR so Unix golden files match
 if [[ "$PLATFORM" == "windows" ]]; then
-    tr -d '\r' < ${test}.out.actual > ${test}.out.actual.tmp && mv ${test}.out.actual.tmp ${test}.out.actual
-    tr -d '\r' < ${test}.err.actual > ${test}.err.actual.tmp && mv ${test}.err.actual.tmp ${test}.err.actual
+    tr -d '\r' < "${test}.out.actual" > "${test}.out.actual.tmp" && mv "${test}.out.actual.tmp" "${test}.out.actual"
+    tr -d '\r' < "${test}.err.actual" > "${test}.err.actual.tmp" && mv "${test}.err.actual.tmp" "${test}.err.actual"
 fi
 
 ### Check the error output
-if [ -e ${test}.err.$solver.$PLATFORM_ARCH ]; then
-    diff ${test}.err.actual ${test}.err.${solver}.${PLATFORM_ARCH}
+if [ -e "${test}.err.$solver.$PLATFORM_ARCH" ]; then
+    diff "${test}.err.actual" "${test}.err.${solver}.${PLATFORM_ARCH}"
     errok=$?
-elif [ -e ${test}.err.$solver.$PLATFORM ]; then
-    diff ${test}.err.actual ${test}.err.${solver}.${PLATFORM}
+elif [ -e "${test}.err.$solver.$PLATFORM" ]; then
+    diff "${test}.err.actual" "${test}.err.${solver}.${PLATFORM}"
     errok=$?
-elif [ -e ${test}.err.$solver ]; then
-    diff ${test}.err.actual ${test}.err.${solver}
+elif [ -e "${test}.err.$solver" ]; then
+    diff "${test}.err.actual" "${test}.err.${solver}"
     errok=$?
-elif [ -e ${test}.err.$PLATFORM_ARCH ]; then
-    diff ${test}.err.actual ${test}.err.${PLATFORM_ARCH}
+elif [ -e "${test}.err.$PLATFORM_ARCH" ]; then
+    diff "${test}.err.actual" "${test}.err.${PLATFORM_ARCH}"
     errok=$?
-elif [ -e ${test}.err.$PLATFORM ]; then
-    diff ${test}.err.actual ${test}.err.${PLATFORM}
+elif [ -e "${test}.err.$PLATFORM" ]; then
+    diff "${test}.err.actual" "${test}.err.${PLATFORM}"
     errok=$?
-elif [ -e ${test}.err ]; then
-    diff ${test}.err.actual ${test}.err
+elif [ -e "${test}.err" ]; then
+    diff "${test}.err.actual" "${test}.err"
     errok=$?
-elif [ -s ${test}.err.actual ]; then
+elif [ -s "${test}.err.actual" ]; then
     errok=1
     echo ERROR OUTPUT was expected to be empty
-    cat ${test}.err.actual
+    cat "${test}.err.actual"
 else
     errok=0
 fi
 
 ### Check the regular output
 comparison=""
-if [ -e ${test}.out.$solver.$PLATFORM_ARCH ]; then
-    diff -b ${test}.out.actual ${test}.out.${solver}.${PLATFORM_ARCH}
+if [ -e "${test}.out.$solver.$PLATFORM_ARCH" ]; then
+    diff -b "${test}.out.actual" "${test}.out.${solver}.${PLATFORM_ARCH}"
     diffresult=$?
-    comparison=${test}.out.$solver.$PLATFORM_ARCH
-elif [ -e ${test}.out.$solver.$PLATFORM ]; then
-    diff -b ${test}.out.actual ${test}.out.${solver}.${PLATFORM}
+    comparison="${test}.out.$solver.$PLATFORM_ARCH"
+elif [ -e "${test}.out.$solver.$PLATFORM" ]; then
+    diff -b "${test}.out.actual" "${test}.out.${solver}.${PLATFORM}"
     diffresult=$?
-    comparison=${test}.out.$solver.$PLATFORM
-elif [ -e ${test}.out.$solver ]; then
-    diff -b ${test}.out.actual ${test}.out.${solver}
+    comparison="${test}.out.$solver.$PLATFORM"
+elif [ -e "${test}.out.$solver" ]; then
+    diff -b "${test}.out.actual" "${test}.out.${solver}"
     diffresult=$?
-    comparison=${test}.out.$solver
-elif [ -e ${test}.out.$solver.bad ]; then
-    diff -b ${test}.out.actual ${test}.out.${solver}.bad
+    comparison="${test}.out.$solver"
+elif [ -e "${test}.out.$solver.bad" ]; then
+    diff -b "${test}.out.actual" "${test}.out.${solver}.bad"
     diffresult=$?
-    comparison=${test}.out.$solver.bad
-elif [ -e ${test}.out.$PLATFORM_ARCH ]; then
-    diff -b ${test}.out.actual ${test}.out.${PLATFORM_ARCH}
+    comparison="${test}.out.$solver.bad"
+elif [ -e "${test}.out.$PLATFORM_ARCH" ]; then
+    diff -b "${test}.out.actual" "${test}.out.${PLATFORM_ARCH}"
     diffresult=$?
-    comparison=${test}.out.$PLATFORM_ARCH
-elif [ -e ${test}.out.$PLATFORM ]; then
-    diff -b ${test}.out.actual ${test}.out.${PLATFORM}
+    comparison="${test}.out.$PLATFORM_ARCH"
+elif [ -e "${test}.out.$PLATFORM" ]; then
+    diff -b "${test}.out.actual" "${test}.out.${PLATFORM}"
     diffresult=$?
-    comparison=${test}.out.$PLATFORM
-elif [ ! -e ${test}.out ]; then
+    comparison="${test}.out.$PLATFORM"
+elif [ ! -e "${test}.out" ]; then
     echo No output file, creating one
-    cat ${test}.out.actual
-    mv ${test}.out.actual ${test}.out
+    cat "${test}.out.actual"
+    mv "${test}.out.actual" "${test}.out"
     diffresult=1
 else
-    diff -b ${test}.out.actual ${test}.out
+    diff -b "${test}.out.actual" "${test}.out"
     diffresult=$?
 fi
 
     if [ $diffresult == 0 ] ; then
         if [ $errok == 0 ]; then
-            rm -f ${test}.out.actual ${test}.err.actual
+            rm -f "${test}.out.actual" "${test}.err.actual"
             echo SUCCESS "                               " ${comparison}
             exit 0
         else
