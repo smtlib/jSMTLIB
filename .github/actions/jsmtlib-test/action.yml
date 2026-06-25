@@ -43,7 +43,9 @@ runs:
         ## Write jsmtlib.properties, enabling only solvers whose binaries exist on this platform.
         ## A solver whose .exec is empty is treated as absent by jSMTLIB.
         exec_if_exists() { [[ -f "$1" ]] && echo "$1" || echo ""; }
+        ## Prefer z3-4.3.1 where available; fall back to z3-4.3.2 (Windows ships 4.3.2)
         Z3_4_3=$(exec_if_exists $SOLVERS/z3-4.3.1$EXE)
+        [[ -z "$Z3_4_3" ]] && Z3_4_3=$(exec_if_exists $SOLVERS/z3-4.3.2$EXE)
         Z3_4_8=$(exec_if_exists $SOLVERS/z3-4.8.12$EXE)
         CVC4=$(exec_if_exists $SOLVERS/cvc4-1.6$EXE)
         {

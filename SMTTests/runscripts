@@ -53,22 +53,24 @@ for f in "${files[@]}" ; do
         tr -d '\r' < $f.out.actual > $f.out.actual.tmp && mv $f.out.actual.tmp $f.out.actual
         tr -d '\r' < $f.err.actual > $f.err.actual.tmp && mv $f.err.actual.tmp $f.err.actual
     fi
-    if [ -e $f.out ]; then
-        diff $f.out.actual $f.out
-        if [ $? -eq 0 ]; then rm -f $f.out.actual; else (( fail++ )); fi
-    else
-        echo Creating output file for $f
-        cat $f.out.actual
-        mv $f.out.actual $f.out
-    fi
-    if [ -e $f.err ]; then
-        diff $f.err.actual $f.err
-        if [ $? -eq 0 ]; then rm -f $f.err.actual; else (( fail++ )); fi
-    else
-        echo Creating err file for $f
-        cat $f.err.actual
-        mv $f.err.actual $f.err
-    fi
+    _cmp_golden() {
+        local actual="$1" base="$2" label="$3"
+        local golden
+        if   [ -e "${base}.$PLATFORM_ARCH" ]; then golden="${base}.$PLATFORM_ARCH"
+        elif [ -e "${base}.$PLATFORM" ];      then golden="${base}.$PLATFORM"
+        elif [ -e "${base}" ];                then golden="${base}"
+        else golden=""; fi
+        if [ -n "$golden" ]; then
+            diff "$actual" "$golden"
+            if [ $? -eq 0 ]; then rm -f "$actual"; else (( fail++ )); fi
+        else
+            echo "Creating $label file for $f"
+            cat "$actual"
+            mv "$actual" "${base}"
+        fi
+    }
+    _cmp_golden $f.out.actual $f.out "output"
+    _cmp_golden $f.err.actual $f.err "err"
 
     # Combined test: re-run merging stderr into stdout
     source "$f" > $f.cmb.actual 2>&1
@@ -76,14 +78,7 @@ for f in "${files[@]}" ; do
     if [[ "$PLATFORM" == "windows" ]]; then
         tr -d '\r' < $f.cmb.actual > $f.cmb.actual.tmp && mv $f.cmb.actual.tmp $f.cmb.actual
     fi
-    if [ -e $f.cmb ]; then
-        diff $f.cmb.actual $f.cmb
-        if [ $? -eq 0 ]; then rm -f $f.cmb.actual; else (( fail++ )); fi
-    else
-        echo Creating combined output file for $f
-        cat $f.cmb.actual
-        mv $f.cmb.actual $f.cmb
-    fi
+    _cmp_golden $f.cmb.actual $f.cmb "combined output"
 
     if [ "$actualret" != "$expectedret" ]; then
         echo CODE = $actualret $expectedret
