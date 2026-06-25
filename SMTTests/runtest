@@ -43,11 +43,17 @@ else
 fi
 
 ### Check for skip marker (exit 77 = skipped, not a failure)
-if [ -e ${test}.skip.$solver.$PLATFORM ]; then
+if [ -e ${test}.skip.$solver.$PLATFORM_ARCH ]; then
+    echo "SKIP $solver $test: $(cat ${test}.skip.$solver.$PLATFORM_ARCH)"
+    exit 77
+elif [ -e ${test}.skip.$solver.$PLATFORM ]; then
     echo "SKIP $solver $test: $(cat ${test}.skip.$solver.$PLATFORM)"
     exit 77
 elif [ -e ${test}.skip.$solver ]; then
     echo "SKIP $solver $test: $(cat ${test}.skip.$solver)"
+    exit 77
+elif [ -e ${test}.skip.$PLATFORM_ARCH ]; then
+    echo "SKIP $solver $test: $(cat ${test}.skip.$PLATFORM_ARCH)"
     exit 77
 elif [ -e ${test}.skip.$PLATFORM ]; then
     echo "SKIP $solver $test: $(cat ${test}.skip.$PLATFORM)"
@@ -68,11 +74,17 @@ if [ $_exit -eq 124 ]; then
 fi
 
 ### Check the error output
-if [ -e ${test}.err.$solver.$PLATFORM ]; then
+if [ -e ${test}.err.$solver.$PLATFORM_ARCH ]; then
+    diff ${test}.err.actual ${test}.err.${solver}.${PLATFORM_ARCH}
+    errok=$?
+elif [ -e ${test}.err.$solver.$PLATFORM ]; then
     diff ${test}.err.actual ${test}.err.${solver}.${PLATFORM}
     errok=$?
 elif [ -e ${test}.err.$solver ]; then
     diff ${test}.err.actual ${test}.err.${solver}
+    errok=$?
+elif [ -e ${test}.err.$PLATFORM_ARCH ]; then
+    diff ${test}.err.actual ${test}.err.${PLATFORM_ARCH}
     errok=$?
 elif [ -e ${test}.err.$PLATFORM ]; then
     diff ${test}.err.actual ${test}.err.${PLATFORM}
@@ -90,7 +102,11 @@ fi
 
 ### Check the regular output
 comparison=""
-if [ -e ${test}.out.$solver.$PLATFORM ]; then
+if [ -e ${test}.out.$solver.$PLATFORM_ARCH ]; then
+    diff -b ${test}.out.actual ${test}.out.${solver}.${PLATFORM_ARCH}
+    diffresult=$?
+    comparison=${test}.out.$solver.$PLATFORM_ARCH
+elif [ -e ${test}.out.$solver.$PLATFORM ]; then
     diff -b ${test}.out.actual ${test}.out.${solver}.${PLATFORM}
     diffresult=$?
     comparison=${test}.out.$solver.$PLATFORM
@@ -102,6 +118,10 @@ elif [ -e ${test}.out.$solver.bad ]; then
     diff -b ${test}.out.actual ${test}.out.${solver}.bad
     diffresult=$?
     comparison=${test}.out.$solver.bad
+elif [ -e ${test}.out.$PLATFORM_ARCH ]; then
+    diff -b ${test}.out.actual ${test}.out.${PLATFORM_ARCH}
+    diffresult=$?
+    comparison=${test}.out.$PLATFORM_ARCH
 elif [ -e ${test}.out.$PLATFORM ]; then
     diff -b ${test}.out.actual ${test}.out.${PLATFORM}
     diffresult=$?

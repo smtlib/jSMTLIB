@@ -15,3 +15,13 @@ case "$_p" in
   *)         PLATFORM="$_p" ;;
 esac
 export PLATFORM
+
+# Architecture suffix for finer-grained platform discrimination (e.g. linux-arm64)
+_a=$(uname -m)
+case "$_a" in
+  x86_64|amd64|i686) ARCH=x64 ;;
+  arm64|aarch64)      ARCH=arm64 ;;
+  *)                  ARCH="$_a" ;;
+esac
+export ARCH
+export PLATFORM_ARCH="$PLATFORM-$ARCH"
