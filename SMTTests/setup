@@ -1,7 +1,14 @@
 SMT_DIR=$(cd ../SMT && pwd)
 export SMT_JAR=$SMT_DIR/jSMTLIB.jar
-# Use -cp (not -jar) so that SMT_DIR is on the classpath and jsmtlib.properties is found there
-export SMT_CMD="java -cp $SMT_JAR:$SMT_DIR org.smtlib.SMT"
+# Use -cp (not -jar) so that SMT_DIR is on the classpath and jsmtlib.properties is found there.
+# On Windows, Java requires ; as the classpath separator and Windows-style paths.
+if [[ "$(uname -s)" == MINGW* ]] || [[ "$(uname -s)" == MSYS* ]] || [[ "$(uname -s)" == CYGWIN* ]]; then
+    _w_jar=$(cygpath -w "$SMT_JAR")
+    _w_dir=$(cygpath -w "$SMT_DIR")
+    export SMT_CMD="java -cp \"${_w_jar};${_w_dir}\" org.smtlib.SMT"
+else
+    export SMT_CMD="java -cp $SMT_JAR:$SMT_DIR org.smtlib.SMT"
+fi
 export TESTS=$(cd tests && pwd)
 export SCRIPTS=$(cd scripts && pwd)
 # Platform-specific directory containing solver executables (z3-4.3.1, cvc4-1.6, etc.)
