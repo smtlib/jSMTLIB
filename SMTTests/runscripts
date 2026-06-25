@@ -48,6 +48,11 @@ for f in "${files[@]}" ; do
 
     source "$f" 2> $f.err.actual > $f.out.actual
     actualret=$?
+    ### Strip Windows CR so Unix golden files match
+    if [[ "$PLATFORM" == "windows" ]]; then
+        tr -d '\r' < $f.out.actual > $f.out.actual.tmp && mv $f.out.actual.tmp $f.out.actual
+        tr -d '\r' < $f.err.actual > $f.err.actual.tmp && mv $f.err.actual.tmp $f.err.actual
+    fi
     if [ -e $f.out ]; then
         diff $f.out.actual $f.out
         if [ $? -eq 0 ]; then rm -f $f.out.actual; else (( fail++ )); fi
@@ -67,6 +72,10 @@ for f in "${files[@]}" ; do
 
     # Combined test: re-run merging stderr into stdout
     source "$f" > $f.cmb.actual 2>&1
+    ### Strip Windows CR so Unix golden files match
+    if [[ "$PLATFORM" == "windows" ]]; then
+        tr -d '\r' < $f.cmb.actual > $f.cmb.actual.tmp && mv $f.cmb.actual.tmp $f.cmb.actual
+    fi
     if [ -e $f.cmb ]; then
         diff $f.cmb.actual $f.cmb
         if [ $? -eq 0 ]; then rm -f $f.cmb.actual; else (( fail++ )); fi

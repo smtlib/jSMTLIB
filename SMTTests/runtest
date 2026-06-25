@@ -73,6 +73,12 @@ if [ $_exit -eq 124 ]; then
     exit 1
 fi
 
+### Strip Windows CR so Unix golden files match
+if [[ "$PLATFORM" == "windows" ]]; then
+    tr -d '\r' < ${test}.out.actual > ${test}.out.actual.tmp && mv ${test}.out.actual.tmp ${test}.out.actual
+    tr -d '\r' < ${test}.err.actual > ${test}.err.actual.tmp && mv ${test}.err.actual.tmp ${test}.err.actual
+fi
+
 ### Check the error output
 if [ -e ${test}.err.$solver.$PLATFORM_ARCH ]; then
     diff ${test}.err.actual ${test}.err.${solver}.${PLATFORM_ARCH}

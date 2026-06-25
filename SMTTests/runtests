@@ -3,7 +3,14 @@
 cd "$(dirname "$0")" || exit 1
 source setup
 rm -f tempout
-solvers="test z3"
+
+### Auto-detect which solvers are configured; --solvers overrides
+_z3_exec=$(grep "^org.smtlib.solver_z3\.exec=" jsmtlib.properties 2>/dev/null | cut -d= -f2-)
+if [[ -n "$_z3_exec" ]]; then
+    solvers="test z3"
+else
+    solvers="test"
+fi
 
 while [[ $# -gt 0 && "$1" == --* ]]; do
     case "$1" in
