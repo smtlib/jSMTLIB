@@ -124,8 +124,6 @@ jobs:
             label: macos-arm64
           - os: macos-15-intel
             label: macos-15-x86_64
-          - os: macos-13
-            label: macos-x86_64
           - os: ubuntu-24.04
             label: ubuntu
           - os: ubuntu-24.04-arm
