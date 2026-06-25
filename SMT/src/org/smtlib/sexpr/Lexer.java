@@ -440,7 +440,7 @@ public class Lexer {
 								continue;
 							}
 						}
-					} else if (SMT.Configuration.SMTLIB.V20.toString().equals(smtConfig.smtlib)) { // Version 2.0
+					} else if (SMT.Configuration.SMTLIB.V20.toString().equals(SMT.Configuration.smtlib)) { // Version 2.0
 						while (true) {
 							p++;
 							char c = csr.charAt(p);
