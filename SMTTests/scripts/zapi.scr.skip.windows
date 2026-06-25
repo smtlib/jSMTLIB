@@ -1,1 +1,1 @@
-z3-4.3.1 not available on Windows
+zapi uses z3-specific APIs not yet validated on Windows

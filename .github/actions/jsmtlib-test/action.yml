@@ -29,6 +29,8 @@ runs:
         esac
 
         SOLVERS=$GITHUB_WORKSPACE/Solvers/$SOLVERS_DIR
+        ## Normalize backslashes to forward slashes so Java .properties parser doesn't mangle the path
+        SOLVERS="${SOLVERS//\\/\/}"
         echo "SOLVERS=$SOLVERS" >> $GITHUB_ENV
 
         ## Windows executables carry a .exe suffix; other platforms do not.
