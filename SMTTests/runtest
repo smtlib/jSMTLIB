@@ -153,5 +153,8 @@ fi
         fi
     else
         echo FAILURE - mismatched regular output
+        echo "=== ACTUAL STDOUT ==="
+        cat "${test}.out.actual"
+        echo "=== END ACTUAL STDOUT ==="
     fi
 exit 1
