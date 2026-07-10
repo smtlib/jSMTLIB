@@ -176,6 +176,52 @@ jobs:
         echo "::error::Tests failed on ${{ matrix.label }} — job is marked failed"
         exit 1
 
+  ## Generate javadoc and publish to the gh-pages site under api/ (master only)
+  javadoc:
+    if: github.ref_name == 'master'
+    needs: [ prepare, test ]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v6
+      with:
+        sparse-checkout: ./.github
+        path: ACTIONS
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v5
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: Checkout jSMTLIB
+      uses: ./ACTIONS/.github/actions/jsmtlib-checkout/
+      with:
+        branch: ${{ env.BRANCH }}
+
+    - name: Generate javadoc
+      uses: ./ACTIONS/.github/actions/jsmtlib-javadoc/
+
+    - name: Deploy to gh-pages
+      run: |
+        ver=${{ needs.prepare.outputs.version }}
+        git clone --branch gh-pages \
+          https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/smtlib/jSMTLIB.git gh-pages-dir
+        rm -rf gh-pages-dir/api
+        cp -r jSMTLIB/SMT/doc gh-pages-dir/api
+        cd gh-pages-dir
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        if ! grep -q 'HREF="api/"' index.html; then
+          sed -i 's|<LI><A HREF="jSMTLIBUserGuide.pdf">|<LI><A HREF="api/">API documentation for the jSMTLIB library.</A>\n<LI><A HREF="jSMTLIBUserGuide.pdf">|' index.html
+        fi
+        git add api/ index.html
+        git diff --cached --quiet || git commit -m "Update API docs for version $ver"
+        git push
+
   ## Upload the release artifact into the GitHub draft release (master only)
   upload:
     if: github.ref_name == 'master'

@@ -1,3 +1,125 @@
+Claude:
+
+Code Review — SMT/src
+
+  Bugs
+
+  C_echo.java:24 — Wrong interface implementation
+  public class C_echo extends Command implements Iexit {
+  C_echo implements Iexit instead of Iecho. Any visitor or dispatcher that branches on instanceof Iexit will treat echo commands as exit commands. The class-level
+  Javadoc also still says "exit command" — copied from C_exit.java and never updated.
+  
+  C_check_sat_assuming.java:33 — Stub that silently drops its arguments
+  return p.checkNoArg() ? new C_check_sat_assuming() : null;
+  check-sat-assuming requires a list of proposition literals per SMT-LIB 2.5. This parses zero arguments (rejects any), and execute() calls plain check_sat(). Any
+  input using check-sat-assuming will either fail to parse or silently fall back to unconditional check_sat, with no error or warning.
+  
+  SolverProcess.endsWith() line 141 — Negative array index
+  while (i > 0 && endMarker.charAt(len-i) == sb.charAt(sblen-i)) --i;
+  If sblen < len (the buffer hasn't accumulated as many characters as the end marker), sb.charAt(sblen - i) produces a negative index → IndexOutOfBoundsException.
+  Missing guard: if (sblen < len) return false;.
+  
+  Lexer.abortLine() line 44 — No bounds check at end of input
+  while ((c=csr.charAt(i)) != '\r' && c != '\n') ++i;
+  If the input ends without a line terminator, this walks off the end of the CharSequence and throws IndexOutOfBoundsException. Needs i < csr.length() in the loop
+  condition.
+
+  Parser.parseAttributeSequence() line 866 — Error silently discarded
+  smtConfig.responseFactory.error("Unexpected end of data while parsing attributes",
+          pos(currentPos()-1,currentPos()));
+  return null;
+  The error response is created but never passed to smtConfig.log.logError(...). Compare every other error site in this file. The caller gets null but no message is
+  emitted to the user.
+  
+  SolverProcess.listenThru() line 351 — Returns null despite @NonNull contract
+  } else {
+      return null;  // multithreading path
+  }   
+  The method is annotated @NonNull and callers in listen() treat the result as a non-null String. In the useMultiThreading == true path, it returns null — but listen()
+   takes the else branch (lines 182–198) before calling this, so the null is never actually returned to a caller at runtime. However, the dead multithreading path in
+  listenThru is unreachable nonsense and should be removed entirely. 
+  
+  SolverProcess.start() line 133 — InterruptedException swallowed
+  } catch (RuntimeException|InterruptedException e) {
+      throw new ProverException(e.getMessage()); 
+  }   
+  Catching InterruptedException without restoring the interrupt flag (Thread.currentThread().interrupt()) breaks the interruption protocol. Also, wrapping in
+  ProverException(e.getMessage()) silently drops the original cause and stack trace (same for the RuntimeException arm).
+
+  ---
+  Design / Correctness Issues
+  
+  SolverProcess.java:125 — Unconditional 1-second sleep after process launch
+  Thread.sleep(1000);
+  if (listen) listen();
+  Every solver launch waits a full second regardless of whether the solver is ready. This is too long for local solvers and may not be enough for slow ones. A better
+  approach: have listen() itself block until the prompt arrives (which it already does via StreamGobbler).
+  
+  SolverProcess.badFormat line 355 — Public static mutable state, no synchronisation
+  public static boolean badFormat = false;
+  Read at line 338 inside listenThru() without synchronisation. If multiple solvers run concurrently, this shared flag produces a data race.
+  
+  SolverProcess.getString() lines 416–421 — Redundant inner lock
+  The method is synchronized on this, but then acquires synchronized(accumulator) in the else branch. Since this is already held, the inner lock is a no-op for thread
+  safety but adds confusion. Remove the inner block.
+
+  TypeChecker.java:241, 651, 677 — Repeated allocation of throwaway symbols
+  symTable.lookup(0, smtConfig.exprFactory.symbol("NUMERAL"))   // line 241
+  symTable.lookup(0, smtConfig.exprFactory.symbol("DECIMAL"))   // line 651
+  symTable.lookup(0, smtConfig.exprFactory.symbol("STRING"))    // line 677
+  These create a new ISymbol object on every call to visit(INumeral), visit(IDecimal), and visit(IStringLiteral). Cache them as static or per-instance constants.
+  
+  SymbolTable.lookup(name, argSorts, resultSort) lines 382–384
+  if (resultSort != null && found != null && !foundMatchButNotOnResult) {
+      // FIXME - should report unneeded disambiguation
+      return null;
+  }   
+  When only one match exists and the caller supplies an as-qualifier that matches it exactly, the method returns null (not found). This means unnecessary but harmless
+  as-qualifiers cause a type error. The FIXME has been here a while; this should either be fixed or deliberately documented as a restriction. 
+  
+  SolverProcess.endsWith() — Paren counting ignores string literals
+  The method counts ( and ) characters to detect end-of-response (lines 149–155). It doesn't skip over SMT-LIB string literals, so a response containing "text with 
+  (unmatched parens" will throw off the count and fail to recognise the end of output.
+
+  ---
+  Dead / Abandoned Code
+  
+  ┌──────────────────────────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │           Location           │                                                       Issue                                                        │
+  ├──────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ SolverProcess.java:69        │ static java.io.PrintWriter pw = null; — referenced only in a commented-out line; should be removed                 │
+  ├──────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ SolverProcess.java:105       │ if (false && path != null) — PATH environment variable propagation permanently dead; either enable it or remove it │
+  ├──────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Lexer.java:328               │ len = len; — no-op debug artifact                                                                                  │
+  ├──────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ SolverProcess.java:431–461   │ main() method is heavily commented-out scaffolding code                                                            │
+  ├──────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Lexer.java:200–201, 397, 402 │ Commented-out factory calls (//token = factory.symbol(...)) are stale design notes                                 │
+  └──────────────────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  ---
+  Minor / Style
+  
+  - SolverProcess.java:26 — typo TOOD (should be TODO)
+  - SolverProcess.java:79,95 — typo wwrite
+  - Parser.java:915,919 — typo occured
+  - Parser.java:295,298,321,326 — == for String comparison works here only because the strings are interned; this is fragile and should be equals() or documented as an
+   intentional intern-based optimisation
+  - SolverProcess.useNotifyWait = false with comment "Not sure that true works" — the true path is exercised in StreamGobbler.getString() but has never apparently been
+   validated; the comment should say what symptom was observed
+
+  ---
+  Summary by Priority
+  
+  Fix now: C_echo/Iexit mismatch, endsWith negative-index crash, abortLine bounds, parseAttributeSequence silent error loss, InterruptedException swallowed without
+  flag restore.
+
+  Fix soon: C_check_sat_assuming stub (document as unimplemented or implement it), badFormat synchronisation, TypeChecker symbol allocation in hot paths, listenThru
+  null/@NonNull contradiction.
+
+  Clean up: all dead-code blocks, the 1-second startup sleep, stale typos.
+
 Recent:
 -- edit this TODO
 -- merge SMT/solvers with Solvers?

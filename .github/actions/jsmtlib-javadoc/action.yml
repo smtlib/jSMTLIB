@@ -1,0 +1,24 @@
+name: 'jSMTLIB Javadoc'
+description: 'A composite action that generates javadoc for jSMTLIB into jSMTLIB/SMT/doc/'
+
+## Presumes jSMTLIB/ exists in the current working directory (from jsmtlib-checkout).
+## Produces jSMTLIB/SMT/doc/.
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Generate javadoc
+      shell: bash
+      run: |
+        cd jSMTLIB/SMT
+        mkdir -p doc
+        "$JAVA_HOME/bin/javadoc" \
+          -protected -author -version \
+          -d doc \
+          -doctitle "jSMTLIB API documentation" \
+          -sourcepath src \
+          -subpackages org.smtlib \
+          -source 21 \
+          -splitindex -use \
+          src/APIExample.java
+        echo "Generated javadoc ($(find doc -name '*.html' | wc -l) HTML files)"
