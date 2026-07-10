@@ -80,31 +80,29 @@ if [[ "$PLATFORM" == "windows" ]]; then
 fi
 
 ### Check the error output
-if [ -e "${test}.err.$solver.$PLATFORM_ARCH" ]; then
-    diff "${test}.err.actual" "${test}.err.${solver}.${PLATFORM_ARCH}"
-    errok=$?
-elif [ -e "${test}.err.$solver.$PLATFORM" ]; then
-    diff "${test}.err.actual" "${test}.err.${solver}.${PLATFORM}"
-    errok=$?
-elif [ -e "${test}.err.$solver" ]; then
-    diff "${test}.err.actual" "${test}.err.${solver}"
-    errok=$?
-elif [ -e "${test}.err.$PLATFORM_ARCH" ]; then
-    diff "${test}.err.actual" "${test}.err.${PLATFORM_ARCH}"
-    errok=$?
-elif [ -e "${test}.err.$PLATFORM" ]; then
-    diff "${test}.err.actual" "${test}.err.${PLATFORM}"
-    errok=$?
-elif [ -e "${test}.err" ]; then
-    diff "${test}.err.actual" "${test}.err"
-    errok=$?
-elif [ -s "${test}.err.actual" ]; then
+errok=0
+while true; dp
+    for f in "${test}.err.$solver.$PLATFORM_ARCH" "${test}.err.$solver.$PLATFORM" "${test}.err.$solver" "${test}.err.$PLATFORM_ARCH" "${test}.err.$PLATFORM" "${test}.err" ; do
+      if [ -e "$f" ]; then
+        diff "${test}.err.actual" "${test}.err.${solver}.${PLATFORM_ARCH}"
+        errok=$?
+        if [ $errok == 0 ]; then
+          rm -f "${test}.err.actual"
+        else
+          echo FAILURE - mismatched error output "$f"
+          echo "=== ACTUAL STDERR ===" $solver $PLATFORM_ARCH $PLATFORM $comparison
+          cat "${test}.err.actual"
+          echo "=== END ACTUAL STDERR ==="
+        fi
+        break 2;
+      fi
+    done
     errok=1
     echo ERROR OUTPUT was expected to be empty
     cat "${test}.err.actual"
-else
-    errok=0
-fi
+    break
+done
+        
 
 ### Check the regular output
 comparison=""
@@ -132,32 +130,22 @@ elif [ -e "${test}.out.$PLATFORM" ]; then
     diff -b "${test}.out.actual" "${test}.out.${PLATFORM}"
     diffresult=$?
     comparison="${test}.out.$PLATFORM"
-elif [ ! -e "${test}.out" ]; then
+elif [ -e "${test}.out" ]; then
+    diff -b "${test}.out.actual" "${test}.out"
+    diffresult=$?
+    comparison="${test}.out"
+else
     echo No output file, creating one
     cat "${test}.out.actual"
     mv "${test}.out.actual" "${test}.out"
     diffresult=1
-else
-    diff -b "${test}.out.actual" "${test}.out"
-    diffresult=$?
-    comparison="${test}.out"
 fi
 
-    if [ $diffresult != 0 ] ; then
-        echo FAILURE - mismatched regular output
-        echo "=== ACTUAL STDOUT ===" $solver $PLATFORM_ARCH $PLATFORM
-        cat "${test}.out.actual"
-        echo "=== END ACTUAL STDOUT ==="
-        exit 1
-    fi
-    if [ $errok == 0 ]; then
-        rm -f "${test}.err.actual"
-        exit 0
-    else
-        ### Failing because the error output did not match
-        echo FAILURE - mismatched error output
-        echo "=== ACTUAL STDERR ===" $solver $PLATFORM_ARCH $PLATFORM $comparison
-        cat "${test}.err.actual"
-        echo "=== END ACTUAL STDERR ==="
-    fi
-exit 1
+if [ $diffresult != 0 ] ; then
+    echo FAILURE - mismatched regular output $comparison
+    echo "=== ACTUAL STDOUT ===" $solver $PLATFORM_ARCH $PLATFORM
+    cat "${test}.out.actual"
+    echo "=== END ACTUAL STDOUT ==="
+    exit 1
+fi
+exit $errok
