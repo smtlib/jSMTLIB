@@ -1,9 +1,18 @@
 (logic QF_LRA
 
- :smt-lib-version 2.0
- :written_by "Cesare Tinelli"
+ :smt-lib-version 2.7
+ :smt-lib-release "2024-07-21"
+ :written-by "Cesare Tinelli"
  :date "2010-04-14"
- 
+ :last-updated "2024-07-21"
+ :update-history
+ "Note: history only accounts for content changes, not release changes.
+  2024-07-21 Updated to Version 2.7.
+  2015-04-25 Updated to Version 2.5. 
+  2011-06-03 Replaced ''(* c x), or (* x c)'' with ''c, (* c x), or (* x c)'' 
+             in :extensions. (The missing case had been left out unintentionally.)
+ "
+
  :theories (Reals)
 
  :language 
@@ -15,7 +24,7 @@
 
  :extensions
  "Terms with _concrete_ coefficients are also allowed, that is, terms
-  of the form (* c x), or (* x c)  where x is a free constant and 
+  of the form c, (* c x), or (* x c)  where x is a free constant and 
   c is an integer or rational coefficient. 
   - An integer coefficient is a term of the form m or (- m) for some
     numeral m.

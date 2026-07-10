@@ -1,8 +1,18 @@
 (theory Reals_Ints
 
- :smt-lib-version 2.0
- :written_by "Cesare Tinelli"
+ :smt-lib-version 2.7
+ :smt-lib-release "2024-07-21"
+ :written-by "Cesare Tinelli"
  :date "2010-04-17"
+ :last-updated "2024-07-21"
+ :update-history
+ "Note: history only accounts for content changes, not release changes.
+  2024-07-21 Updated to Version 2.7.
+  2017-11-24 Added abstract values for irrational numbers to set of Real values,
+             consistently with the Reals theory (the omission of such values
+             was an oversight).
+  2015-04-25 Updated to Version 2.5.
+ "
  
  :sorts ((Int 0) (Real 0))
 
@@ -33,7 +43,7 @@
         (is_int Real Bool)
        )
 
- :funs_description
+ :funs-description
  "All ranked function symbols of the form
     ((_ divisible n) Int Bool)
   where n is a positive numeral.
@@ -45,6 +55,7 @@
   - all terms of the form (- n) where n is a numeral other than 0.
 
   The set of values for the sort Real consists of 
+  - an abstract value for each irrational algebraic number
   - all terms of the form (/ (to_real m) (to_real n)) or 
     (/ (- (to_real m)) (to_real n)) where 
     - m is a numeral,
@@ -80,9 +91,9 @@
  "
 
  :notes
-  "By definition of to_int, (to_int (- 1.3)) is equivalent to (- 2), not
+ "By definition of to_int, (to_int (- 1.3)) is equivalent to (- 2), not
    (- 1).
-  "
+ "
 
  :notes
  "For each instance T of Reals_Ints, all models of T satisfy the sentence:

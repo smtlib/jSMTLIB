@@ -1,11 +1,14 @@
 (theory FloatingPoint
 
- :smt-lib-version 2.5
+ :smt-lib-version 2.7
+ :smt-lib-release "2024-07-21"
  :written-by "Cesare Tinelli and Martin Brain"
  :date "2014-05-27"
- :last-updated "2015-04-25"
- :update-history 
- "2015-04-25 Updated to Version 2.5.
+ :last-updated "2024-07-21"
+ :update-history
+ "Note: history only accounts for content changes, not release changes.
+  2024-07-21 Updated to Version 2.7.
+  2015-04-25 Updated to Version 2.5.
              Updated reference to tech report.
  "
  
@@ -38,7 +41,7 @@
            (http://smt-lib.org/papers/BTRW15.pdf)
 
   The following additional people provided substantial feedback and directions:
-  François Bobot, David Cok, Alberto Griggio, Florian Lapschies, Leonardo de 
+  FranÃ§ois Bobot, David Cok, Alberto Griggio, Florian Lapschies, Leonardo de 
   Moura, Gabriele Paganelli, Cody Roux, Christoph Wintersteiger.
  "
  
@@ -49,19 +52,19 @@
  :sorts ((RoundingMode 0) (Real 0))
 
  ; Bit vector sorts, indexed by vector size
- :sorts_description "All sort symbols of the form
+ :sorts-description "All sort symbols of the form
     (_ BitVec m)
   where m is a numeral greater than 0."
 
  ; Floating point sort, indexed by the length of the exponent and significand
  ; components of the number
- :sorts_description "All nullary sort symbols of the form 
+ :sorts-description "All nullary sort symbols of the form 
  
     (_ FloatingPoint eb sb),
 
   where eb and sb are numerals greater than 1."
   
- :note
+ :notes
  "eb defines the number of bits in the exponent;
   sb defines the number of bits in the significand, *including* the hidden bit.
  " 
@@ -69,7 +72,7 @@
 ; Short name for common floating point sorts
 :sort ((Float16 0) (Float32 0) (Float64 0) (Float128 0))
 
- :note "
+ :notes "
   -  Float16 is a synonym for (_ FloatingPoint  5  11)
   -  Float32 is a synonym for (_ FloatingPoint  8  24)
   -  Float64 is a synonym for (_ FloatingPoint 11  53)
@@ -95,7 +98,7 @@
 ;--------------------
 
  ; Bitvector literals
- :funs_description "
+ :funs-description "
     All binaries #bX of sort (_ BitVec m) where m is the number of digits in X.
     All hexadecimals #xX of sort (_ BitVec m) where m is 4 times the number of
     digits in X.    
@@ -103,21 +106,21 @@
 
  ; FP literals as bit string triples, with the leading bit for the significand
  ; not represented (hidden bit)
- :funs_description "All function symbols with declaration of the form
+ :funs-description "All function symbols with declaration of the form
 
    (fp (_ BitVec 1) (_ BitVec eb) (_ BitVec i) (_ FloatingPoint eb sb))
 
    where eb and sb are numerals greater than 1 and i = sb - 1."
 
  ; Plus and minus infinity
- :funs_description "All function symbols with declaration of the form 
+ :funs-description "All function symbols with declaration of the form 
  
    ((_ +oo eb sb) (_ FloatingPoint eb sb))
    ((_ -oo eb sb) (_ FloatingPoint eb sb))
 
   where eb and sb are numerals greater than 1."
    
- :note
+ :notes
  "Semantically, for each eb and sb, there is exactly one +infinity value and 
   exactly one -infinity value in the set denoted by (_ FloatingPoint eb sb), 
   in agreement with the IEEE 754-2008 standard.
@@ -127,7 +130,7 @@
  "
  
  ; Plus and minus zero
- :funs_description "All function symbols with declaration of the form 
+ :funs-description "All function symbols with declaration of the form 
  
    ((_ +zero eb sb) (_ FloatingPoint eb sb))
    ((_ -zero eb sb) (_ FloatingPoint eb sb))
@@ -141,13 +144,13 @@
  "
 
  ; Non-numbers
- :funs_description "All function symbols with declaration of the form
+ :funs-description "All function symbols with declaration of the form
 
    ((_ NaN eb sb) (_ FloatingPoint eb sb))
  
   where eb and sb are numerals greater than 1."
   
- :note
+ :notes
  "For each eb and sb, there is exactly one NaN in the set denoted by 
   (_ FloatingPoint eb sb), in agreeement with Level 2 of IEEE 754-2008
   (floating-point data). There is no distinction in this theory between 
@@ -161,7 +164,7 @@
 ; Operators
 ;-----------
 
- :funs_description "All function symbols with declarations of the form below
+ :funs-description "All function symbols with declarations of the form below
    where eb and sb are numerals greater than 1.
 
    ; absolute value 
@@ -224,8 +227,8 @@
  "
 
  :note
- "(fq.eq x y) evaluates to true if x evaluates to -zero and y to +zero, or vice versa.
-  fq.eq and all the other comparison operators evaluate to false if one of their
+ "(fp.eq x y) evaluates to true if x evaluates to -zero and y to +zero, or vice versa.
+  fp.eq and all the other comparison operators evaluate to false if one of their
   arguments is NaN.
  "
 
@@ -234,7 +237,7 @@
 ; Conversions from other sorts
 ;------------------------------
 
- :funs_description "All function symbols with declarations of the form below
+ :funs-description "All function symbols with declarations of the form below
    where m is a numerals greater than 0 and eb, sb, mb and nb are numerals
    greater than 1.
 
@@ -260,7 +263,7 @@
 ; Conversions to other sorts
 ;----------------------------
 
- :funs_description "All function symbols with declarations of the form below
+ :funs-description "All function symbols with declarations of the form below
    where m is a numeral greater than 0 and  eb and sb are numerals greater than 1.
 
    ; to unsigned machine integer, represented as a bit vector
@@ -272,7 +275,7 @@
    ; to real
    (fp.to_real (_ FloatingPoint eb sb) Real)
  "
- :note
+ :notes
  "All fp.to_* functions are unspecified for NaN and infinity input values.
   In addition, fp.to_ubv and fp.to_sbv are unspecified for finite number inputs
   that are out of range (which includes all negative numbers for fp.to_ubv).
@@ -312,7 +315,7 @@
   The set of values for RoundingMode is {RNE, RNA, RTP, RTN, RTZ}.
  "
 
- :note
+ :notes
  "No values are specified for the sorts Real and (_ BitVec n) in this theory.
   They are specified in the theory declarations Reals and FixedSizeBitVectors,
   respectively.
@@ -529,3 +532,4 @@
   o all the other function symbols are interpreted as described in [BTRW15].
  "
 )
+
