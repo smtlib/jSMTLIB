@@ -140,21 +140,24 @@ elif [ ! -e "${test}.out" ]; then
 else
     diff -b "${test}.out.actual" "${test}.out"
     diffresult=$?
+    comparison="${test}.out"
 fi
 
-    if [ $diffresult == 0 ] ; then
-        if [ $errok == 0 ]; then
-            rm -f "${test}.out.actual" "${test}.err.actual"
-            echo SUCCESS "                               " ${comparison}
-            exit 0
-        else
-            ### Failing because the error output did not match
-            echo FAILURE - mismatched error output
-        fi
-    else
+    if [ $diffresult != 0 ] ; then
         echo FAILURE - mismatched regular output
-        echo "=== ACTUAL STDOUT ==="
+        echo "=== ACTUAL STDOUT ===" $solver $PLATFORM_ARCH $PLATFORM
         cat "${test}.out.actual"
         echo "=== END ACTUAL STDOUT ==="
+        exit 1
+    fi
+    if [ $errok == 0 ]; then
+        rm -f "${test}.err.actual"
+        exit 0
+    else
+        ### Failing because the error output did not match
+        echo FAILURE - mismatched error output
+        echo "=== ACTUAL STDERR ===" $solver $PLATFORM_ARCH $PLATFORM $comparison
+        cat "${test}.err.actual"
+        echo "=== END ACTUAL STDERR ==="
     fi
 exit 1
