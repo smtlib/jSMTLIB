@@ -1,0 +1,23 @@
+## Sets up JaCoCo coverage when COV is set (to any value, including empty).
+## Must be sourced, not executed.
+## Usage: source setup-coverage <rootname>
+##   <rootname> is the base name for the .exec output file (e.g. "smt")
+
+if [ "$0" = "$BASH_SOURCE" ]; then
+    echo "Error: setup-coverage must be sourced, not executed"
+    exit 1
+fi
+if [ -z "$1" ]; then
+    echo "setup-coverage requires one argument (output file rootname)"
+    exit 1
+fi
+
+FILE=$(realpath "$BASH_SOURCE")
+TEST=$(dirname "$FILE")
+
+export COV_AGENT=
+
+if [ -n "${COV++}" ]; then
+    mkdir -p "$TEST/cov"
+    export COV_AGENT="-javaagent:$TEST/jacoco/lib/jacocoagent.jar=destfile=$TEST/cov/$1.exec"
+fi

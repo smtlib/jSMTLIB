@@ -1,8 +1,14 @@
 SHELL = /bin/bash
 
-.PHONY: test clean script-tests smt-tests build local-setup
+## Class files used for both the JaCoCo runtime agent and the report step.
+## Must be the same in both places so that JaCoCo's CRC checks pass at report time.
+## Default is the jar; override on the command line if you need .class files instead:
+##   make cov-test cov-report COV_CLASSES=../SMT/bin
+COV_CLASSES ?= ../SMT/jSMTLIB.jar
 
-test: local-setup
+.PHONY: test clean script-tests smt-tests build local-setup cov-test cov-clean cov-report cov-show
+
+tests: local-setup
 	@result=0; \
 	$(MAKE) script-tests || result=1; \
 	$(MAKE) smt-tests || result=1; \
@@ -42,4 +48,25 @@ clean:
 
 build:
 	$(MAKE) -C ../SMT build
-	
+
+## Run SMT tests with JaCoCo coverage instrumentation
+cov-test: local-setup
+	COV_CLASSES=$(COV_CLASSES) COV= bash ./runtests
+
+## Remove collected coverage data
+cov-clean:
+	rm -rf cov
+
+## Merge .exec files and generate HTML + XML report
+cov-report:
+	java -jar jacoco/lib/jacococli.jar merge cov/*.exec --destfile cov/merged.exec
+	java -jar jacoco/lib/jacococli.jar report cov/merged.exec \
+		--classfiles $(COV_CLASSES) \
+		--sourcefiles ../SMT/src \
+		--html cov/html \
+		--xml cov/coverage.xml
+
+## Open the HTML coverage report in the default browser
+cov-show:
+	open cov/html/index.html
+
