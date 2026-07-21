@@ -948,6 +948,12 @@ public class Solver_simplify extends Solver_test implements ISolver {
 			return null;
 		}
 
+        @Override
+        public String visit(IDatatype e) throws VisitorException {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
 
 //		@Override
 //		public String visit(IScript e) throws IVisitor.VisitorException {

@@ -62,6 +62,10 @@ public interface ISort extends IAccept, IPosable {
 	//@ pure
 	boolean equalsNoExpand(ISort sort);
 	
+	static public interface IDatatype extends IAccept {
+	    // FIXME
+	}
+	
 	/** A super-interface for definitions of new sort ids.
 	 */
 	static public interface IDefinition extends IAccept {

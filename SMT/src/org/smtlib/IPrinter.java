@@ -19,6 +19,7 @@ public interface IPrinter {
 	 */
 	public <T extends IAccept> String toString(T expr);
 	
+	// FIXME
 	public IPrinter newPrinter(java.io.Writer pw);
 
 }

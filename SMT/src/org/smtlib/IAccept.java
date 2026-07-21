@@ -11,7 +11,7 @@ package org.smtlib;
  * @author David Cok
  */
 public interface IAccept {
-	/** The accept method corresponding the IVisitor, to be implemented in each subclass
+	/** The accept method corresponding to IVisitor, to be implemented in each subclass
 	 * as { return v.visit(this); }
 	 * @param <T> the return type desired from the visit methods
 	 * @param v the visitor class

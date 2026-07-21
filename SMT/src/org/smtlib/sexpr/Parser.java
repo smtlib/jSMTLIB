@@ -5,6 +5,7 @@
  */
 package org.smtlib.sexpr;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -17,6 +18,7 @@ import org.smtlib.IExpr.IAsIdentifier;
 import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IBinaryLiteral;
 import org.smtlib.IExpr.IBinding;
+import org.smtlib.IExpr.IDatatype;
 import org.smtlib.IExpr.IDecimal;
 import org.smtlib.IExpr.IDeclaration;
 import org.smtlib.IExpr.IHexLiteral;
@@ -33,7 +35,6 @@ import org.smtlib.impl.SMTExpr.Numeral;
 import org.smtlib.impl.SMTExpr.StringLiteral;
 import org.smtlib.impl.SMTExpr.Symbol;
 
-//import checkers.nullness.quals.Nullable;
 /** Parses the standard SMT-LIB concrete syntax to produce ASTs of objects that
  * are instances of the org.smtlib.* interfaces.
  */
@@ -73,7 +74,7 @@ public class Parser extends Lexer implements IParser {
 	 */
 	public /*@Nullable*/ IPos pos(int start, int end) { 
 		return new Pos(start,end,source()); 
-	} // Use factory instead of new Pos?
+	} // FIXME Use factory instead of new Pos?
 	
 	/** Creates a Parser using an SMT configuration object and a source for
 	 * characters; ordinarily use a factory to obtain a parser.
@@ -88,6 +89,7 @@ public class Parser extends Lexer implements IParser {
 	// See the documentation in the interface
 	@Override
 	public /*@Nullable*/ICommand.IScript parseScript() {
+	    // FIXME - review/fix the following comment
 		// NOTE: interactive is set false here because it is only ever used for parsing exec scripts
 		// if it is used to parse top-level scripts, we have to pass in the appropriate value
 		boolean interactive = smtConfig.interactive;
@@ -197,7 +199,6 @@ public class Parser extends Lexer implements IParser {
 							if (command != null) {
 								if (!isRP()) {
 									lastError = error("Too many arguments or extraneous material after the command or missing right parenthesis",
-											//pos(currentPos()-1,currentPos()));
 											peekToken().pos());
 								} else {
 									rp = parseRP();
@@ -205,6 +206,7 @@ public class Parser extends Lexer implements IParser {
 							}
 						}
 					} catch (InvocationTargetException ex) {
+                        ex.printStackTrace(System.out);
 						if (ex.getTargetException() instanceof StackOverflowError) {
 							lastError = error("Stack overflow occurred while parsing input", sym.pos());
 							throw new ParserException(null,null);
@@ -213,6 +215,7 @@ public class Parser extends Lexer implements IParser {
 							throw new ParserException(null,null);
 						} else {
 							lastError = error(ex.getTargetException().toString(),sym.pos());
+	                        ex.getTargetException().printStackTrace(System.out);
 						}
 					}
 					if (command == null) {
@@ -554,7 +557,15 @@ public class Parser extends Lexer implements IParser {
 		if (rp == null) { skipThruRP(); return null; }
 		return decls;
 	}
+	
+	   /** Parses a datatype declaration, returning null with error messages if an error occurs */
+    public /*@Nullable*/ IDatatype parseDatatype() throws IOException, ParserException {
+        // FIXME
+        return null;
+    }
+    
 
+	
 	/** Parses a declaration "(id sort)", returning null with error messages if an error occurs */
 	@Override
 	public /*@Nullable*/IDeclaration parseDeclaration() throws ParserException {
@@ -626,6 +637,7 @@ public class Parser extends Lexer implements IParser {
 	public /*@Nullable*/ILiteral parseLiteral() throws ParserException {
 		ILexToken token = getToken();
 		if (token instanceof ILiteral) return (ILiteral)token;
+		// FIXME - what sort of Error is this? Should we print it?
 		if (!(token instanceof SMTExpr.Error)) error("Expected a literal here, instead of a " + token.kind(),token.pos());
 		return null;
 	}
@@ -1028,7 +1040,4 @@ public class Parser extends Lexer implements IParser {
 		if (description == LexToken.LP) description = "sequence";
 		smtConfig.log.logError(smtConfig.responseFactory.error(msg.replace("#",description),token.pos()));
 	}
-
-	
-	
 }

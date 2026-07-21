@@ -64,7 +64,8 @@ public interface IResponse extends IAccept {
 		IResponse.IValueResponse get_value_response(List<IPair<IExpr,IExpr>> values);
 		<T1,T2> IPair<T1,T2> pair(T1 first, T2 second);
 		IResponse.IAssignmentResponse get_assignment_response(List<IPair<IExpr.ISymbol,Boolean>> assignments);
-		IResponse.IUnsatCoreResponse get_unsat_core_response(List<ISymbol> names);
+        IResponse.IUnsatAssumptionsResponse get_unsat_assumptions_response(List<ISymbol> names);
+        IResponse.IUnsatCoreResponse get_unsat_core_response(List<ISymbol> names);
 		IResponse.IAssertionsResponse get_assertions_response(List<IExpr> exprs);
 	}
 	
@@ -80,9 +81,13 @@ public interface IResponse extends IAccept {
 		public List<IPair<IExpr,IExpr>> values();
 	}
 
-	static public interface IUnsatCoreResponse extends IResponse {
-		public List<IExpr.ISymbol> names();
-	}
+    static public interface IUnsatCoreResponse extends IResponse {
+        public List<IExpr.ISymbol> names();
+    }
+
+    static public interface IUnsatAssumptionsResponse extends IResponse {
+        public List<IExpr.ISymbol> names(); // FIXME
+    }
 
 	static public interface IAssertionsResponse extends IResponse {
 		public List<IExpr> assertions();

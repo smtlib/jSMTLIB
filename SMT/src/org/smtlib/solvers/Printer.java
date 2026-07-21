@@ -116,7 +116,4 @@ public class Printer extends org.smtlib.sexpr.Printer {
 			return super.visit(e);
 		}
 	}
-
-
-
 }

@@ -6,7 +6,6 @@
 package org.smtlib.command;
 
 import java.io.IOException;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.smtlib.ICommand.Iget_value;
@@ -43,26 +42,7 @@ public class C_get_value extends Command implements Iget_value {
 	
 	/** Parses the command, producing a new command instance */
 	static public /*@Nullable*/ C_get_value parse(Parser p) throws ParserException {
-		List<IExpr> list = new LinkedList<IExpr>();
-		boolean anyErrors = false;
-		if (!p.isLP()) {
-			error(p.smt(),"Expected a parenthesized list of terms beginning here",
-					p.pos(p.currentPos()-1,p.currentPos()));
-			return null;
-		}
-		ILexToken lp = p.parseLP();
-		while (!p.isRP() && !p.isEOD()) {
-			IExpr e = p.parseExpr();
-			if (e == null) anyErrors = true;
-			else list.add(e);
-		}
-		ILexToken rp = p.parseRP();
-		if (anyErrors) { return null; }
-		if (list.isEmpty()) {
-			error(p.smt(),"Expected a parenthesized list of at least one term",
-					p.pos(lp.pos().charStart(),rp.pos().charEnd()));
-			return null;
-		}
+		List<IExpr> list = p.parseListTerms(p);
 		return new C_get_value(list);
 	}
 

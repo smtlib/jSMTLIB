@@ -10,35 +10,11 @@ package org.smtlib;
 // FIXME - do a review of all of the visit methods to be sure we have the structure correct
 
 import org.smtlib.ICommand.IScript;
-import org.smtlib.IExpr.IAsIdentifier;
-import org.smtlib.IExpr.IAttribute;
-import org.smtlib.IExpr.IAttributedExpr;
-import org.smtlib.IExpr.IBinaryLiteral;
-import org.smtlib.IExpr.IBinding;
-import org.smtlib.IExpr.IDecimal;
-import org.smtlib.IExpr.IDeclaration;
+import org.smtlib.IExpr.*;
+import org.smtlib.IExpr.IDatatype;
 import org.smtlib.IExpr.IError;
-import org.smtlib.IExpr.IExists;
-import org.smtlib.IExpr.IFcnExpr;
-import org.smtlib.IExpr.IForall;
-import org.smtlib.IExpr.IHexLiteral;
-import org.smtlib.IExpr.IKeyword;
-import org.smtlib.IExpr.ILet;
-import org.smtlib.IExpr.INumeral;
-import org.smtlib.IExpr.IParameterizedIdentifier;
-import org.smtlib.IExpr.IStringLiteral;
-import org.smtlib.IExpr.ISymbol;
-import org.smtlib.IResponse.IAssertionsResponse;
-import org.smtlib.IResponse.IAssignmentResponse;
-import org.smtlib.IResponse.IAttributeList;
-import org.smtlib.IResponse.IProofResponse;
-import org.smtlib.IResponse.IUnsatCoreResponse;
-import org.smtlib.IResponse.IValueResponse;
-import org.smtlib.ISort.IAbbreviation;
-import org.smtlib.ISort.IApplication;
-import org.smtlib.ISort.IFamily;
-import org.smtlib.ISort.IFcnSort;
-import org.smtlib.ISort.IParameter;
+import org.smtlib.IResponse.*;
+import org.smtlib.ISort.*;
 
 /** This is a visitor interface for visitors over IExpr ASTs. Each AST class implements
  * an accept method that calls the appropriate element of the IVisitor class. An implementation
@@ -62,7 +38,8 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 	public /*@Nullable*/T visit(ILet e) throws VisitorException;
 	//public /*@Nullable*/T visit(ILiteral e) throws VisitorException;
 	public /*@Nullable*/T visit(INumeral e) throws VisitorException;
-	public /*@Nullable*/T visit(IDeclaration e) throws VisitorException;
+    public /*@Nullable*/T visit(IExpr.IDatatype e) throws VisitorException;// FIXME - or ISort.IDatatype
+    public /*@Nullable*/T visit(IDeclaration e) throws VisitorException;
 	public /*@Nullable*/T visit(IParameterizedIdentifier e) throws VisitorException;
 	public /*@Nullable*/T visit(IAsIdentifier e) throws VisitorException;
 	public /*@Nullable*/T visit(IStringLiteral e) throws VisitorException;
@@ -275,6 +252,11 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 		public T visit(IAttributeList e) throws VisitorException {
 			return null;
 		}
+
+        @Override
+        public T visit(IDatatype e) throws VisitorException {
+            return null;
+        }
 
 	}
 	
@@ -523,6 +505,12 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 			}
 			return null;
 		}
+
+        @Override
+        public T visit(IDatatype e) throws VisitorException {
+            // TODO Auto-generated method stub
+            return null;
+        }
 
 	}
 

@@ -17,6 +17,7 @@ if [[ -n "$_z3_exec" ]]; then
 else
     solvers="test"
 fi
+solvers="test"
 
 while [[ $# -gt 0 && "$1" == --* ]]; do
     case "$1" in

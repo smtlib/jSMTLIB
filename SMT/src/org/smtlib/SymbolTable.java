@@ -203,6 +203,7 @@ public class SymbolTable {
 		names = symStack.get(0);
 	}
 	
+	// FIXME _ why is this needed?
 	/** Removes the previous background frame, then removes the top frame and 
 	 * inserts it as the bottom (background) frame. */
 	public void moveToBackground() {

@@ -62,11 +62,7 @@ public class C_declare_sort extends Command implements Ideclare_sort {
 		if (id == null) return null;
 		/*@Nullable*/INumeral numeral = p.parseNumeral();
 		if (numeral == null) return null;
-		String v = id.value();
-		if (v.length() > 0 && (v.charAt(0) == '@' || v.charAt(0) == '.')) {
-			error(p.smt(),"User-defined symbols may not begin with . or @",id.pos());
-			return null;
-		}
+        if (!p.checkUserId(id)) return null;
 		return new C_declare_sort(id,numeral);
 	}
 

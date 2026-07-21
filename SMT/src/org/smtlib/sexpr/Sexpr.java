@@ -138,6 +138,5 @@ public abstract class Sexpr extends Pos.Posable implements ISexpr {
 		public String toString() {
 			return expr.toString();
 		}
-		
 	}
 }

@@ -116,6 +116,7 @@ public class Pos implements IPos {
 			return this.chars.charAt(pos);
 		}
 		
+		// FIXME - what about empty lines
 		@Override
 		public int lineBeginning(int pos) {
 			int p = pos;

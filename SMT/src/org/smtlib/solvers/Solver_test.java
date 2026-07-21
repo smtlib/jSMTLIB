@@ -9,18 +9,9 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.*;
 
-import org.smtlib.ICommand.Ideclare_const;
-import org.smtlib.ICommand.Ideclare_fun;
-import org.smtlib.ICommand.Ideclare_sort;
-import org.smtlib.ICommand.Idefine_fun;
-import org.smtlib.ICommand.Idefine_sort;
 import org.smtlib.*;
-import org.smtlib.IExpr.IAttribute;
-import org.smtlib.IExpr.IFcnExpr;
-import org.smtlib.IExpr.IIdentifier;
-import org.smtlib.IExpr.IKeyword;
-import org.smtlib.IExpr.INumeral;
-import org.smtlib.IExpr.IStringLiteral;
+import org.smtlib.ICommand.*;
+import org.smtlib.IExpr.*;
 import org.smtlib.IPos.IPosable;
 import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.impl.Response;
@@ -284,16 +275,27 @@ public class Solver_test implements ISolver {
 		return smtConfig.responseFactory.unsupported();
 	}
 
-	@Override
-	public IResponse get_unsat_core() {
-		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_UNSAT_CORES)))) {
-			return smtConfig.responseFactory.error("The get-unsat-core command is only valid if :produce-unsat-cores has been enabled");
-		}
-		if (checkSatStatus != smtConfig.responseFactory.unsat()) {
-			return smtConfig.responseFactory.error("The get-unsat-core command is only valid immediately after check-sat returned unsat");
-		}
-		return smtConfig.responseFactory.unsupported();
-	}
+    @Override
+    public IResponse get_unsat_assumptions() {
+        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_UNSAT_CORES)))) { // FIXME - is this corrrect?
+            return smtConfig.responseFactory.error("The get-unsat-assumptions command is only valid if :produce-unsat-cores has been enabled");
+        }
+        if (checkSatStatus != smtConfig.responseFactory.unsat()) {
+            return smtConfig.responseFactory.error("The get-unsat-assumptions command is only valid immediately after check-sat-assumptions returned unsat");
+        }
+        return smtConfig.responseFactory.unsupported();
+    }
+
+    @Override
+    public IResponse get_unsat_core() {
+        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_UNSAT_CORES)))) {
+            return smtConfig.responseFactory.error("The get-unsat-core command is only valid if :produce-unsat-cores has been enabled");
+        }
+        if (checkSatStatus != smtConfig.responseFactory.unsat()) {
+            return smtConfig.responseFactory.error("The get-unsat-core command is only valid immediately after check-sat returned unsat");
+        }
+        return smtConfig.responseFactory.unsupported();
+    }
 
 	@Override
 	public IResponse pop(int number) {
@@ -532,25 +534,50 @@ public class Solver_test implements ISolver {
 		}
 	}
 	
-	@Override 
-	public IResponse declare_sort(Ideclare_sort cmd) {
-		if (logicSet == null) {
-			return smtConfig.responseFactory.error("The logic must be set before a declare-sort command is issued");
-		}
-		List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable,cmd.sortSymbol(),null,null);
-		boolean b = list.isEmpty();
-		if (b) {
-			INumeral sortArity = cmd.arity();
-			b = symTable.addSortDefinition(cmd.sortSymbol(),sortArity);
-			if (!b) return smtConfig.responseFactory.error("The identifier is already declared to be a sort: " + 
-					smtConfig.defaultPrinter.toString(cmd.sortSymbol()), cmd.sortSymbol().pos());
-			checkSatStatus = null;
-			return smtConfig.responseFactory.success();
-		} else {
-			return list.get(0); // FIXME - return all errors?
-		}
-	}
-	
+    @Override
+    public IResponse define_fun_rec(Idefine_fun_rec cmd) {
+        // FIXME
+        return null;
+    }
+    
+    @Override
+    public IResponse define_funs_rec(Idefine_funs_rec cmd) {
+        // FIXME
+        return null;
+    }
+    
+    @Override 
+    public IResponse declare_sort(Ideclare_sort cmd) {
+        if (logicSet == null) {
+            return smtConfig.responseFactory.error("The logic must be set before a declare-sort command is issued");
+        }
+        List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable,cmd.sortSymbol(),null,null);
+        boolean b = list.isEmpty();
+        if (b) {
+            INumeral sortArity = cmd.arity();
+            b = symTable.addSortDefinition(cmd.sortSymbol(),sortArity);
+            if (!b) return smtConfig.responseFactory.error("The identifier is already declared to be a sort: " + 
+                    smtConfig.defaultPrinter.toString(cmd.sortSymbol()), cmd.sortSymbol().pos());
+            checkSatStatus = null;
+            return smtConfig.responseFactory.success();
+        } else {
+            return list.get(0); // FIXME - return all errors?
+        }
+    }
+    
+    @Override 
+    public IResponse declare_sort_parameter(Ideclare_sort_parameter cmd) {
+        if (logicSet == null) {
+            return smtConfig.responseFactory.error("The logic must be set before a declare-sort-parameter command is issued");
+        }
+        boolean b = symTable.lookupSort(cmd.sortSymbol()) != null;
+        if (b) return smtConfig.responseFactory.error("The identifier is already declared to be a sort: " + 
+                                smtConfig.defaultPrinter.toString(cmd.sortSymbol()), cmd.sortSymbol().pos());
+        symTable.addSortParameter(cmd.sortSymbol());
+        checkSatStatus = null;
+        return smtConfig.responseFactory.success();
+    }
+    
 	@Override
 	public IResponse define_sort(Idefine_sort cmd) {
 		if (logicSet == null) {
@@ -570,5 +597,17 @@ public class Solver_test implements ISolver {
 			return list.get(0); // FIXME - return all errors?
 		}
 	}
+
+    @Override
+    public IResponse declare_datatype(Ideclare_datatype cmd) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public IResponse declare_datatypes(Ideclare_datatypes cmd) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 	
 }

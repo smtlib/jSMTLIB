@@ -7,6 +7,7 @@ package org.smtlib;
 //FIXME-NOW - SMT needs more review and documentation
 // FIXME - check that this uses interfaces as much as possible
 
+// FIXME - REVIEW
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -205,7 +206,8 @@ public class SMT {
 		 * replaced by underscore) is appended to the prefix to obtain a fully-qualified class name that
 		 * implements the command.
 		 */
-		public String[] commandExtensionPrefixes = { "org.smtlib.command.C_","org.smtlib.ext.C_"};
+        public String[] commandExtensionPrefixes = { "org.smtlib.command.C_","org.smtlib.ext.C_"};
+        public String[] strictCommandExtensionPrefixes = { "org.smtlib.command.C_" };
 		
 		/** The path on which to find logic and theory definitions - currently a single directory */
 		public /*@Nullable*/ String logicPath = null;
@@ -245,16 +247,16 @@ public class SMT {
 		public /*@Nullable*/ ICommand.IFinder commandFinder = new ICommand.IFinder() {
 			@Override
 			public Class<? extends ICommand> findCommand(String name) {
-				Class<? extends ICommand> clazz = commands.get(name);
+				Class<? extends ICommand> clazz = commands.get(name);   // FIXME - 'commands' is not used -- always empty
 				if (relax && clazz != null) return clazz;
-				for (String prefix: relax ? commandExtensionPrefixes : new String[]{commandExtensionPrefixes[0]}) {
+				for (String prefix: relax ? commandExtensionPrefixes : strictCommandExtensionPrefixes ) {
 					String className = prefix + name.replace('-','_');
 					try {
 						Class<?> clazzz = Class.forName(className);
 						if (clazzz == null) continue; // This won't happen - exception is thrown instead
-						if (!ICommand.class.isAssignableFrom(clazzz)) continue; // FIXME - message?
+						if (!ICommand.class.isAssignableFrom(clazzz)) continue; // FIXME - message? -- returned class is not an ICommand
 						@SuppressWarnings("unchecked") // FIXME - do better on checking typing
-						var cl = (Class<? extends ICommand>)clazzz; // Check for this - implementation may be wrong
+						Class<? extends ICommand> cl = (Class<? extends ICommand>)clazzz; // Check for this - implementation may be wrong
 						return cl;
 					} catch (ClassNotFoundException e) {
 						continue;

@@ -16,6 +16,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+// FIXME - REVIEW
+
 /** This class implements launching, writing to, and reading responses from a 
  * launched process (in particular, solver processes).
  * @author David Cok

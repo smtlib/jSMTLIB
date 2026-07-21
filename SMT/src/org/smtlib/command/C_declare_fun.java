@@ -88,11 +88,7 @@ public class C_declare_fun extends Command implements Ideclare_fun {
 
 		/*@Nullable*/ ISort result = p.parseSort(null);
 		if (result == null) return null;
-		String v = symbol.value();
-		if (v.length() > 0 && (v.charAt(0) == '@' || v.charAt(0) == '.')) {
-			error(p.smt(),"User-defined symbols may not begin with . or @",symbol.pos());
-			return null;
-		}
+        if (!p.checkUserId(symbol)) return null;
 		return new C_declare_fun(symbol,argSorts,result);
 	}
 

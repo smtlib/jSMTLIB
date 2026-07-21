@@ -81,65 +81,57 @@ fi
 
 ### Check the error output
 errok=0
-while true; dp
+while true; do ## The while true is just to allow a break from the inner test loop
     for f in "${test}.err.$solver.$PLATFORM_ARCH" "${test}.err.$solver.$PLATFORM" "${test}.err.$solver" "${test}.err.$PLATFORM_ARCH" "${test}.err.$PLATFORM" "${test}.err" ; do
       if [ -e "$f" ]; then
-        diff "${test}.err.actual" "${test}.err.${solver}.${PLATFORM_ARCH}"
+        diff "${test}.err.actual" "$f"
         errok=$?
         if [ $errok == 0 ]; then
           rm -f "${test}.err.actual"
         else
           echo FAILURE - mismatched error output "$f"
           echo "=== ACTUAL STDERR ===" $solver $PLATFORM_ARCH $PLATFORM $comparison
-          cat "${test}.err.actual"
+          if [ -s "${test}.err.actual" ]; then
+              cat "${test}.err.actual"
+          else 
+              echo "Actual error output is empty"
+          fi
           echo "=== END ACTUAL STDERR ==="
         fi
         break 2;
       fi
     done
-    errok=1
-    echo ERROR OUTPUT was expected to be empty
-    cat "${test}.err.actual"
+    ## None of the named output files (for error output) exist
+    ## That is OK if there is no error output
+    if [ -s "${test}.err.actual" ]; then
+      errok=1
+      echo "No expected output for error output"
+      cat "${test}.err.actual"
+    else
+      rm -rf "${test}.err.actual"
+    fi
     break
 done
         
 
 ### Check the regular output
 comparison=""
-if [ -e "${test}.out.$solver.$PLATFORM_ARCH" ]; then
-    diff -b "${test}.out.actual" "${test}.out.${solver}.${PLATFORM_ARCH}"
-    diffresult=$?
-    comparison="${test}.out.$solver.$PLATFORM_ARCH"
-elif [ -e "${test}.out.$solver.$PLATFORM" ]; then
-    diff -b "${test}.out.actual" "${test}.out.${solver}.${PLATFORM}"
-    diffresult=$?
-    comparison="${test}.out.$solver.$PLATFORM"
-elif [ -e "${test}.out.$solver" ]; then
-    diff -b "${test}.out.actual" "${test}.out.${solver}"
-    diffresult=$?
-    comparison="${test}.out.$solver"
-elif [ -e "${test}.out.$solver.bad" ]; then
-    diff -b "${test}.out.actual" "${test}.out.${solver}.bad"
-    diffresult=$?
-    comparison="${test}.out.$solver.bad"
-elif [ -e "${test}.out.$PLATFORM_ARCH" ]; then
-    diff -b "${test}.out.actual" "${test}.out.${PLATFORM_ARCH}"
-    diffresult=$?
-    comparison="${test}.out.$PLATFORM_ARCH"
-elif [ -e "${test}.out.$PLATFORM" ]; then
-    diff -b "${test}.out.actual" "${test}.out.${PLATFORM}"
-    diffresult=$?
-    comparison="${test}.out.$PLATFORM"
-elif [ -e "${test}.out" ]; then
-    diff -b "${test}.out.actual" "${test}.out"
-    diffresult=$?
-    comparison="${test}.out"
-else
-    echo No output file, creating one
-    cat "${test}.out.actual"
-    mv "${test}.out.actual" "${test}.out"
+while true; do ## The while true is just to allow a break from the inner test loop
+    for f in "${test}.out.$solver.$PLATFORM_ARCH" "${test}.out.$solver.$PLATFORM" "${test}.out.$solver" "${test}.out.$solver.bad" "${test}.out.$PLATFORM_ARCH" "${test}.out.$PLATFORM" "${test}.out" ; do
+      if [ -e "$f" ]; then
+        diff -b "${test}.out.actual" "$f"
+        diffresult=$?
+        comparison="$f"
+        break 2
+      fi
+    done
+    echo "No expected output for regular output"
     diffresult=1
-fi
+    
+    #echo No output file, creating one
+    #mv "${test}.out.actual" "${test}.out"
+    break
+done
 
 if [ $diffresult != 0 ] ; then
     echo FAILURE - mismatched regular output $comparison
@@ -147,5 +139,7 @@ if [ $diffresult != 0 ] ; then
     cat "${test}.out.actual"
     echo "=== END ACTUAL STDOUT ==="
     exit 1
+else
+	rm -rf "${test}.out.actual"
 fi
 exit $errok

@@ -12,14 +12,19 @@ import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.ISymbol;
+import org.smtlib.IParser.ParserException;
 import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.impl.Factory;
 import org.smtlib.impl.SMTExpr;
+import org.smtlib.sexpr.ILexToken;
+import org.smtlib.sexpr.Parser;
 
 /** A class of static utility methods and constants for the SMT-LIB package. */
 public class Utils {
@@ -66,7 +71,7 @@ public class Utils {
 	public static final String PRINT_SUCCESS = ":print-success";  // FIXME - change remainder of Strings to IKeywords
 
 	/** The string designating an option item */
-	public static final String INTERACTIVE_MODE = ":interactive-mode";
+	public static final String INTERACTIVE_MODE = ":interactive-mode";  // FIXME - name changed
 
 	/** The string designating an option item */
 	public static final String PRODUCE_ASSERTIONS = ":produce-assertions";
@@ -137,8 +142,9 @@ public class Utils {
 
 	/** The version of SMT-LIB that is expected of theory and logic definitions */
 	public static final String SMTLIB_VERSION_20 = "2.0";
-	public static final String SMTLIB_VERSION_25 = "2.5";
-	public static       String SMTLIB_VERSION_CURRENT = SMTLIB_VERSION_25;
+    public static final String SMTLIB_VERSION_25 = "2.5";
+    public static final String SMTLIB_VERSION_27 = "2.7";
+	public static       String SMTLIB_VERSION_CURRENT = SMTLIB_VERSION_27;
 
 	/** The attribute tag for defining sorts in a theory */
 	public static final IKeyword SORTS = new Factory().keyword(":sorts");
@@ -318,7 +324,7 @@ public class Utils {
 					}
 					k = kk + 2;
 				}
-			} else if (smtConfig.isVersion(SMTLIB.V25)) { // Version 2.5
+			} else { // Version 2.5ff
 				int kk = msg.indexOf('"', k);
 				if (kk == -1) { // FIXME - there should always be a " at the end of the string
 					sb.append(msg.substring(k, endPos));

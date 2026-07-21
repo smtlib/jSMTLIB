@@ -1,7 +1,0 @@
-unsupported
-success
-success
-unsat
-(get-unsat-core)
-^^^^^^^^^^^^^^^^
-(error "get-unsat-core is not supported")

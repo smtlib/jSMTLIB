@@ -139,6 +139,7 @@ public abstract class CharSequenceInfinite implements CharSequence {
 	private void expandBuffer(int newSize) {
 		int newlength = buf.length;
 		do {
+		    // FIXME - the following computation is not good enough
 			int k = (int) Math.ceil(newlength*sizeMultiple+sizeIncrease);
 			newlength = (k <= newlength) ? newlength+100 : k; // check for both bad parameters and for integer overflow
 		} while (newSize > newlength);
@@ -167,8 +168,7 @@ public abstract class CharSequenceInfinite implements CharSequence {
 	 */
 	@Override
 	public CharSequence subSequence(int start, int end) {
-		charAt(end-1); // Just to be sure it has been read
+		charAt(end-1); // Just to be sure it has been read  // FIXME - what if start == end == 0, or values are negative
 		return CharBuffer.wrap(buf,start,end-start);
 	}
-	
 }

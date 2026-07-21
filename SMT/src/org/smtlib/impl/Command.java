@@ -33,6 +33,7 @@ public abstract class Command implements ICommand, IPosable {
 	/** The command name */
 	abstract public String commandName();
 	
+	// FIXME - move this
 	/** Utility method for logging errors */
 	static public void error(SMT.Configuration smt, String msg, IPos pos) {
 		smt.log.logError(smt.responseFactory.error(msg,pos));

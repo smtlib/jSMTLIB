@@ -54,7 +54,6 @@ public class C_set_info extends Command implements Iset_option {
 
 	}
 
-
 	/** Writes the command in the syntax of the given printer */
 	public void write(Printer p) throws IOException, IVisitor.VisitorException {
 		p.writer().append("(" + commandName + " ");
@@ -69,8 +68,6 @@ public class C_set_info extends Command implements Iset_option {
 		if (prefixText != null) solver.comment(prefixText);
 		return solver.set_info(option,value);
 	}
-
-
 
 	@Override
 	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {

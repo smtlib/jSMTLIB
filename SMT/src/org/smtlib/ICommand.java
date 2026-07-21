@@ -7,6 +7,7 @@ package org.smtlib;
 
 import java.util.List;
 
+import org.smtlib.IExpr.IDatatype;
 import org.smtlib.IExpr.IDeclaration;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.IKeyword;
@@ -45,24 +46,42 @@ public interface ICommand extends IAccept {
 		/** Creates an assert command object, asserting the given expression */
 		Iassert assertCommand(IExpr expr);
 		
-		/** Creates a check-sat command object */
-		Icheck_sat check_sat();
-		
+        /** Creates a check-sat command object */
+        Icheck_sat check_sat();
+        
+        /** Creates a check-sat-assuming command object */
+        Icheck_sat_assuming check_sat_assuming();
+        
 		/** Creates a declare-fun command object */
 		Ideclare_fun declare_fun(IIdentifier id, List<ISort> argSorts, ISort resultSort);
 		
-		/** Creates a declare-sort command object. */
-		Ideclare_sort declare_sort(ISymbol sym, INumeral arity);
-		
-		/** Creates a define-fun command object */
-		Idefine_fun define_fun(IIdentifier id, List<IDeclaration> declarations, ISort resultSort, IExpr expression);
-		
+        /** Creates a declare-sort command object. */
+        Ideclare_sort declare_sort(ISymbol sym, INumeral arity);
+        
+        /** Creates a declare-sort-parameter command object. */
+        Ideclare_sort declare_sort_parameter(ISymbol sym);
+        
+        /** Creates a define-const command object */
+        Idefine_fun define_const(IIdentifier id, ISort resultSort, IExpr expression);
+        
+        /** Creates a define-fun command object */
+        Idefine_fun define_fun(IIdentifier id, List<IDeclaration> declarations, ISort resultSort, IExpr expression);
+        
+        /** Creates a define-fun-rec command object */
+        Idefine_fun define_fun_rec(IIdentifier id, List<IDeclaration> declarations, ISort resultSort, IExpr expression);
+        
+        /** Creates a define-funs-rec command object */   // FIXME
+        Idefine_fun define_funs_rec(IIdentifier id, List<IDeclaration> declarations, ISort resultSort, IExpr expression);
+        
 		/** Creates a define-sort command object. */
 		Idefine_sort define_sort(IIdentifier id, List<IParameter> parameters, ISort.IApplication expression);
 		
-		/** Creates an exit command object. */
-		Iexit exit();
-		
+        /** Creates an echo command object. */
+        Iecho echo(); // FIXME - needs striong literal
+        
+        /** Creates an exit command object. */
+        Iexit exit();
+        
 		/** Creates a get-assertions command object. */
 		Iget_assertions get_assertions();
 		
@@ -78,18 +97,27 @@ public interface ICommand extends IAccept {
 		/** Creates a get-proof command object. */
 		Iget_proof get_proof();
 		
-		/** Creates a get-unsat-core command object. */
-		Iget_unsat_core get_unsat_core();
-		
+        /** Creates a get-unsat-assumptions command object. */
+        Iget_unsat_assumptions get_unsat_assumptions();
+        
+        /** Creates a get-unsat-core command object. */
+        Iget_unsat_core get_unsat_core();
+        
 		/** Creates a get-value command object. */
 		Iget_value get_value(List<IExpr> exprs);
 		
 		/** Creates a push command object. */
 		Ipush push(INumeral number);
 		
-		/** Creates a pop command object. */
-		Ipop pop(INumeral number);
-		
+        /** Creates a pop command object. */
+        Ipop pop(INumeral number);
+        
+        /** Creates a reset command object. */
+        Ireset reset();
+        
+        /** Creates a reset-assertions command object. */
+        Ireset reset_assertions();
+        
 		/** Creates a set-logic command object */
 		Iset_logic set_logic(ISymbol logic);
 		
@@ -101,7 +129,7 @@ public interface ICommand extends IAccept {
 	}
 	
 	/** Interface to be implemented by all objects representing SMT-LIB scripts. A script may consist of a file or an explicit list of commands. */
-	
+	// FIXME - move to org.smtlib?
 	static public interface IScript extends IAccept {
 		/*@Nullable*/ IStringLiteral filename();
 		/*@Nullable*/ List<ICommand> commands();
@@ -119,14 +147,28 @@ public interface ICommand extends IAccept {
 	
 	/** Interface to be implemented by all objects representing SMT-LIB check-sat-assuming commands. */
 	static public interface Icheck_sat_assuming extends ICommand {
+        List<IExpr> exprs();
 	}
 	
-	/** Interface to be implemented by all objects representing SMT-LIB declare-const commands. */
-	static public interface Ideclare_const extends ICommand {
-		ISymbol symbol();
-		ISort resultSort();
-	}
-	
+    /** Interface to be implemented by all objects representing SMT-LIB declare-const commands. */
+    static public interface Ideclare_const extends ICommand {
+        ISymbol symbol();
+        ISort resultSort();
+        // FIXME;
+    }
+    
+    /** Interface to be implemented by all objects representing SMT-LIB declare-datatype commands. */
+    static public interface Ideclare_datatypes extends ICommand {
+        List<ISymbol> symbols();
+        List<IDatatype> datatypes();
+    }
+    
+    /** Interface to be implemented by all objects representing SMT-LIB declare-datatypes commands. */
+    static public interface Ideclare_datatype extends ICommand {
+        ISymbol symbol();
+        IDatatype datatype();
+    }
+    
 	/** Interface to be implemented by all objects representing SMT-LIB declare-fun commands. */
 	static public interface Ideclare_fun extends ICommand {
 		ISymbol symbol();
@@ -134,20 +176,49 @@ public interface ICommand extends IAccept {
 		ISort resultSort();
 	}
 	
-	/** Interface to be implemented by all objects representing SMT-LIB declare-sort commands. */
-	static public interface Ideclare_sort extends ICommand {
-		ISymbol sortSymbol();
-		INumeral arity();
-	}
-	
-	/** Interface to be implemented by all objects representing SMT-LIB define-fun commands. */
-	static public interface Idefine_fun extends ICommand {
-		ISymbol symbol();
-		List<IDeclaration> parameters();
-		ISort resultSort();
-		IExpr expression();
-	}
-	
+    /** Interface to be implemented by all objects representing SMT-LIB declare-sort commands. */
+    static public interface Ideclare_sort extends ICommand {
+        ISymbol sortSymbol();
+        INumeral arity();
+    }
+    
+    /** Interface to be implemented by all objects representing SMT-LIB declare-sort commands. */
+    static public interface Ideclare_sort_parameter extends ICommand {
+        ISymbol sortSymbol();
+    }
+    
+    /** Interface to be implemented by all objects representing SMT-LIB define-const commands. */
+    static public interface Idefine_const extends ICommand {
+        ISymbol symbol();
+        ISort resultSort();
+        IExpr expression();
+    }
+    
+    /** Interface to be implemented by all objects representing SMT-LIB define-fun commands. */
+    static public interface Idefine_fun extends ICommand {
+        ISymbol symbol();
+        List<IDeclaration> parameters();
+        ISort resultSort();
+        IExpr expression();
+    }
+    
+    /** Interface to be implemented by all objects representing SMT-LIB define-fun-rec commands. */
+    static public interface Idefine_fun_rec extends ICommand {
+        ISymbol symbol();
+        List<IDeclaration> parameters();
+        ISort resultSort();
+        IExpr expression();
+    }
+    
+    /** Interface to be implemented by all objects representing SMT-LIB define-fun-rec commands. */
+    static public interface Idefine_funs_rec extends ICommand {
+//        ISymbol symbol();
+//        List<IDeclaration> parameters();
+//        ISort resultSort();
+//        IExpr expression();
+        // FIXME
+    }
+    
 	/** Interface to be implemented by all objects representing SMT-LIB define-sort commands. */
 	static public interface Idefine_sort extends ICommand {
 		ISymbol sortSymbol();
@@ -155,10 +226,15 @@ public interface ICommand extends IAccept {
 		ISort expression();
 	}
 	
-	/** Interface to be implemented by all objects representing SMT-LIB exit commands. */
-	static public interface Iexit extends ICommand {
-	}
-	
+    /** Interface to be implemented by all objects representing SMT-LIB exit commands. */
+    static public interface Iecho extends ICommand {
+        IStringLiteral arg();
+    }
+    
+    /** Interface to be implemented by all objects representing SMT-LIB exit commands. */
+    static public interface Iexit extends ICommand {
+    }
+    
 	/** Interface to be implemented by all objects representing SMT-LIB get-assertions commands. */
 	static public interface Iget_assertions extends ICommand {
 	}

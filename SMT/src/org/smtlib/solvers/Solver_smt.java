@@ -64,7 +64,7 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 //		options.putAll(Utils.defaults);
 //	}
 	
-	/** Creates an instance of the solver */
+	/** Creates an instance of the adapter */
 	public Solver_smt(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
 		this.smtConfig = smtConfig;
 		cmds = cmd(executable);

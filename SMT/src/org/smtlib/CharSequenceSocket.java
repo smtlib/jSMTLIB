@@ -24,6 +24,8 @@ import java.net.Socket;
  * @author David R. Cok
  *
  */
+
+// FIXME - review
 public class CharSequenceSocket extends CharSequenceInfinite {
 
 	/** The socket from which characters are read */

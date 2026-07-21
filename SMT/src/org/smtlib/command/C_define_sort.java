@@ -29,8 +29,8 @@ public class C_define_sort extends Command implements Idefine_sort {
 	@Override
 	public String commandName() { return commandName; }
 	
-	/** The name of the function being defined */
-	protected ISymbol fcnName;
+	/** The name of the sort being defined */
+	protected ISymbol sortName;
 	/** The sorts of the arguments of the function being defined */
 	protected List<IParameter> args;
 	/** The defining expression for the function */
@@ -38,7 +38,7 @@ public class C_define_sort extends Command implements Idefine_sort {
 	
 	/** The name of the function being defined */
 	@Override
-	public ISymbol sortSymbol() { return fcnName; }
+	public ISymbol sortSymbol() { return sortName; }
 	/** The sorts of the arguments of the function being defined */
 	@Override
 	public List<IParameter> parameters() { return args; };
@@ -48,7 +48,7 @@ public class C_define_sort extends Command implements Idefine_sort {
 	
 	/** Constructs a command instance */
 	public C_define_sort(ISymbol id, List<IParameter> parameters, ISort expr) {
-		this.fcnName = id;
+		this.sortName = id;
 		this.args = parameters;
 		this.expression = expr;
 	}
@@ -92,11 +92,7 @@ public class C_define_sort extends Command implements Idefine_sort {
 		if (anyErrors) return null;
 		ISort expr = p.parseSort(list);
 		if (expr == null) return null;
-		String v = name.value();
-		if (v.length() > 0 && (v.charAt(0) == '@' || v.charAt(0) == '.')) {
-			error(p.smt(),"User-defined symbols may not begin with . or @",name.pos());
-			return null;
-		}
+		if (!p.checkUserId(name)) return null;
 		return new C_define_sort(name,list,expr);
 	}
 

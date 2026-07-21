@@ -7,11 +7,7 @@ package org.smtlib;
 
 import java.io.IOException;
 
-import org.smtlib.ICommand.Ideclare_const;
-import org.smtlib.ICommand.Ideclare_fun;
-import org.smtlib.ICommand.Ideclare_sort;
-import org.smtlib.ICommand.Idefine_fun;
-import org.smtlib.ICommand.Idefine_sort;
+import org.smtlib.ICommand.*;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.SMT.Configuration;
@@ -139,11 +135,25 @@ public class AbstractSolver implements ISolver {
 		throw new UnsupportedOperationException("AbstractSolver.check_sat_assuming");
 	}
 
-	/** @see org.smtlib.ISolver#define_fun(ICommand.Idefine_fun)  */
-	@Override
-	public IResponse define_fun(Idefine_fun cmd) {
-		throw new UnsupportedOperationException("AbstractSolver.define_fun");
-	}
+    /** @see org.smtlib.ISolver#define_fun(ICommand.Idefine_fun)  */
+    @Override
+    public IResponse define_fun(Idefine_fun cmd) {
+        throw new UnsupportedOperationException("AbstractSolver.define_fun");
+    }
+    
+    /** @see org.smtlib.ISolver#define_fun_rec(ICommand.Idefine_fun_rec)  */
+    @Override
+    public IResponse define_fun_rec(Idefine_fun_rec cmd) {
+        throw new UnsupportedOperationException("AbstractSolver.define_fun_rec");
+    }
+    
+    /** @see org.smtlib.ISolver#define_funs_rec(ICommand.Idefine_funs_rec)  */
+    @Override
+    public IResponse define_funs_rec(Idefine_funs_rec cmd) {
+        throw new UnsupportedOperationException("AbstractSolver.define_funs_rec");
+    }
+    
+	// FIXME - define_fun_rec define_funs_rec
 
 	/** @see org.smtlib.ISolver#declare_const(ICommand.Ideclare_const)  */
 	@Override
@@ -163,11 +173,17 @@ public class AbstractSolver implements ISolver {
 		throw new UnsupportedOperationException("AbstractSolver.define_sort");
 	}
 
-	/** @see org.smtlib.ISolver#declare_sort(ICommand.Ideclare_sort)  */
-	@Override
-	public IResponse declare_sort(Ideclare_sort cmd) {
-		throw new UnsupportedOperationException("AbstractSolver.declare_sort");
-	}
+    /** @see org.smtlib.ISolver#declare_sort(ICommand.Ideclare_sort)  */
+    @Override
+    public IResponse declare_sort(Ideclare_sort cmd) {
+        throw new UnsupportedOperationException("AbstractSolver.declare_sort");
+    }
+
+    /** @see org.smtlib.ISolver#declare_sort_parameter(ICommand.Ideclare_sort_parameter)  */
+    @Override
+    public IResponse declare_sort_parameter(Ideclare_sort_parameter cmd) {
+        throw new UnsupportedOperationException("AbstractSolver.declare_sort_parameter");
+    }
 
 	/** @see org.smtlib.ISolver#set_option(IExpr.IKeyword,IExpr.IAttributeValue)  */
 	@Override
@@ -199,11 +215,17 @@ public class AbstractSolver implements ISolver {
 		throw new UnsupportedOperationException("AbstractSolver.get_model");
 	}
 
-	/** @see org.smtlib.ISolver#get_unsat_core()*/
-	@Override
-	public IResponse get_unsat_core(){
-		throw new UnsupportedOperationException("AbstractSolver.get_unsat_core");
-	}
+    /** @see org.smtlib.ISolver#get_unsat_assertions()*/
+    @Override
+    public IResponse get_unsat_assumptions(){
+        throw new UnsupportedOperationException("AbstractSolver.get_unsat_assumptions");
+    }
+
+    /** @see org.smtlib.ISolver#get_unsat_core()*/
+    @Override
+    public IResponse get_unsat_core(){
+        throw new UnsupportedOperationException("AbstractSolver.get_unsat_core");
+    }
 
 	/** @see org.smtlib.ISolver#get_value(IExpr... )*/
 	@Override
@@ -240,4 +262,16 @@ public class AbstractSolver implements ISolver {
 	public IResponse checkSatStatus() {
 		throw new UnsupportedOperationException("AbstractSolver.checkSatStatus");
 	}
+
+
+    @Override
+    public IResponse declare_datatype(Ideclare_datatype cmd) {
+        throw new UnsupportedOperationException("AbstractSolver.declare_datatype");
+    }
+
+
+    @Override
+    public IResponse declare_datatypes(Ideclare_datatypes cmd) {
+        throw new UnsupportedOperationException("AbstractSolver.declare_datatypes");
+    }
 }

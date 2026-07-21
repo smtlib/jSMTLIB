@@ -17,6 +17,7 @@ import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IAttributedExpr;
 import org.smtlib.IExpr.IBinaryLiteral;
 import org.smtlib.IExpr.IBinding;
+import org.smtlib.IExpr.IDatatype;
 import org.smtlib.IExpr.IDecimal;
 import org.smtlib.IExpr.IDeclaration;
 import org.smtlib.IExpr.IExists;
@@ -79,7 +80,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	public <T extends IAccept> String toString(T expr) {
 		try {
 			StringWriter sw = new StringWriter();
-			expr.accept(new Printer(sw));
+			expr.accept(new Printer(sw)); // FIXME = should be same type as receiver
 			return sw.toString();
 		} catch (IVisitor.VisitorException e) {
 			return "<<ERROR: " + e.getMessage() + ">>";
@@ -692,4 +693,10 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 		} catch (IOException ex) { throw new IVisitor.VisitorException(ex); }
 		return null;
 	}
+
+    @Override
+    public Void visit(IDatatype e) throws VisitorException {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

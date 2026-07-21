@@ -32,7 +32,7 @@ public abstract class Sort extends Pos.Posable implements ISort {
 		return Bool;
 	}
 	
-	/** Concrete syntax for the pre-defined Bool sort */  // FIXME - do we want concrete syntax here?
+	/** Concrete syntax for the pre-defined Bool sort */
 	static final private String BOOL = "Bool";
 	
 	/** A cached instance of the pre-defined Bool sort */
@@ -89,7 +89,7 @@ public abstract class Sort extends Pos.Posable implements ISort {
 		}
 	}
 	
-	/** Implements a Sort abbreviation (parameterized definition) */
+	/** Implements a Sort abbreviation (parameterized definition, possibly with no parameters) */
 	static public class Abbreviation implements IAbbreviation {
 		
 		private IIdentifier identifier;
@@ -129,6 +129,8 @@ public abstract class Sort extends Pos.Posable implements ISort {
 			}
 			return sortExpression.substitute(map);
 		}
+		
+		// FIXME - equals and hasCode should consider parameters and sort expression
 
 		@Override
 		public boolean equals(Object o) {

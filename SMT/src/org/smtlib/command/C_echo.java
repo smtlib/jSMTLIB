@@ -7,7 +7,7 @@ package org.smtlib.command;
 
 import java.io.IOException;
 
-import org.smtlib.ICommand.Iexit;
+import org.smtlib.ICommand.Iecho;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.IExpr;
 import org.smtlib.IExpr.IStringLiteral;
@@ -21,8 +21,12 @@ import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
 
 /** Implements the exit command */
-public class C_echo extends Command implements Iexit {
+public class C_echo extends Command implements Iecho {
 	protected IStringLiteral arg;
+	
+	public IStringLiteral arg() {
+	    return arg;
+	}
 	
 	/** Constructs an instance of the command */
 	public C_echo(IStringLiteral arg) {

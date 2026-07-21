@@ -5,11 +5,7 @@
  */
 package org.smtlib;
 
-import org.smtlib.ICommand.Ideclare_const;
-import org.smtlib.ICommand.Ideclare_fun;
-import org.smtlib.ICommand.Ideclare_sort;
-import org.smtlib.ICommand.Idefine_fun;
-import org.smtlib.ICommand.Idefine_sort;
+import org.smtlib.ICommand.*;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.IStringLiteral;
 
@@ -91,18 +87,33 @@ public interface ISolver {
 	 */
 	IResponse check_sat_assuming(IExpr...  exprs);
 	
-	/** Defines a new uninterpreted constant; returns success or error*/
-	IResponse declare_const(Ideclare_const cmd); // FIXME - use ISymbol, ISort as arguments?
-	
+    /** Defines a new uninterpreted constant; returns success or error*/
+    IResponse declare_const(Ideclare_const cmd); // FIXME - use ISymbol, ISort as arguments?
+    
+    /** Defines a new datatype sort; returns success or error*/
+    IResponse declare_datatype(Ideclare_datatype cmd); // FIXME - use ISymbol, ISort as arguments?
+    
+    /** Defines mutual datatype sorts; returns success or error*/
+    IResponse declare_datatypes(Ideclare_datatypes cmd); // FIXME - use ISymbol, ISort as arguments?
+    
 	/** Defines a new uninterpreted constant or function; returns success or error*/
 	IResponse declare_fun(Ideclare_fun cmd);
 	
-	/** Declares a new basic sort; returns success or error */
-	IResponse declare_sort(Ideclare_sort cmd);
+    /** Declares a new basic sort; returns success or error */
+    IResponse declare_sort(Ideclare_sort cmd);
 
-	/** Defines a new constant or function; returns success or error */
-	IResponse define_fun(Idefine_fun cmd);
-	
+    /** Declares a new sort parameter; returns success or error */
+    IResponse declare_sort_parameter(Ideclare_sort_parameter cmd);
+
+    /** Defines a new constant or function; returns success or error */
+    IResponse define_fun(Idefine_fun cmd);
+    
+    /** Defines a new recursive function; returns success or error */
+    IResponse define_fun_rec(Idefine_fun_rec cmd);
+    
+    /** Defines new mutually recursive functions; returns success or error */
+    IResponse define_funs_rec(Idefine_funs_rec cmd);
+    
 	/** Defines a new sort abbreviation; returns success or error */
 	IResponse define_sort(Idefine_sort cmd);
 	
@@ -139,6 +150,10 @@ public interface ISolver {
 	/** Returns a model of current satisfiable state */
 	IResponse get_model();
 	
+	// FIXME
+	IResponse get_unsat_assumptions();
+
+	
 	/** Returns a list of the names of formulae in the unsat core of the current (unsatisfiable) state.
 	 * May only be issued if :produce-unsat-core is enabled.
 	 * @return unsupported or error or a list of names (as ids)
@@ -171,5 +186,4 @@ public interface ISolver {
 	 * @return TODO
 	 */
 	IResponse get_info(IKeyword option);
-	
 }

@@ -3,6 +3,9 @@
 	<name>SMTUpdateSite</name>
 	<comment></comment>
 	<projects>
+		<project>SMTFeature</project>
+		<project>SMTPlugin</project>
+		<project>SMT</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

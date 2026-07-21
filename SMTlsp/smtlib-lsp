@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+## Launch the SMT-LIB 2 LSP server.
+## Communicates with the editor client via stdin/stdout.
+## Invoke from your editor's LSP client configuration, e.g.:
+##   "command": ["path/to/smtlib-lsp"]
+
+set -e
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+LOG="${SMTLIB_LSP_LOG:-/tmp/smtlib-lsp-debug.log}"
+echo "$(date): smtlib-lsp invoked, args: $*" > "$LOG"
+exec 2>>"$LOG"
+
+LSP4J_VERSION=1.0.0
+
+SMTLIB_JAR="$DIR/../SMT/jSMTLIB.jar"
+JARFILE="$DIR/build/smtlib-lsp.jar"
+LSP4J_CP="$DIR/libs/org.eclipse.lsp4j-${LSP4J_VERSION}.jar:$DIR/libs/org.eclipse.lsp4j.jsonrpc-${LSP4J_VERSION}.jar:$DIR/libs/gson-2.11.0.jar"
+
+[ -f "$SMTLIB_JAR" ] || { echo "ERROR: missing $SMTLIB_JAR — run 'make' in the SMT directory first" >&2; exit 1; }
+[ -f "$JARFILE" ]    || { echo "ERROR: missing $JARFILE — run 'make' in SMTlsp first" >&2; exit 1; }
+
+exec java \
+     -cp "$JARFILE:$SMTLIB_JAR:$LSP4J_CP" \
+     org.smtlib.lsp.ServerLauncher "$@"

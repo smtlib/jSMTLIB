@@ -71,7 +71,7 @@ public abstract class SMTExpr implements IExpr {
 	}
 	
 	/** This class represents an SMT String literal expression or syntax token */
-	static public class StringLiteral extends Literal<String>  implements IStringLiteral {
+	static public class StringLiteral extends Literal<String> implements IStringLiteral {
 		
 		// The 'value' field holds an unquoted string
 		
@@ -131,7 +131,7 @@ public abstract class SMTExpr implements IExpr {
 	}
 	
 	/** This class represents an SMT Keyword syntax token */
-	static public class Keyword extends Pos.Posable  implements IKeyword {
+	static public class Keyword extends Pos.Posable implements IKeyword {
 		protected String value; // Keyword string with leading colon (TODO - check this)
 		
 		public Keyword(String v) {
@@ -277,7 +277,7 @@ public abstract class SMTExpr implements IExpr {
 	}
 	
 	/** This class represents an SMT Symbol */
-	static public class Symbol extends Pos.Posable  implements ISymbol {
+	static public class Symbol extends Pos.Posable implements ISymbol {
 		
 		 // FIXME - this incorporates some concrete syntax
 		
@@ -376,7 +376,7 @@ public abstract class SMTExpr implements IExpr {
 		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
 
-	static public class BinaryLiteral extends Literal<String>  implements IBinaryLiteral {
+	static public class BinaryLiteral extends Literal<String> implements IBinaryLiteral {
 		
 		public BinaryLiteral(String unquotedValue) {
 			super(unquotedValue);
@@ -410,7 +410,7 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 	
-	static public class HexLiteral extends Literal<String>  implements IHexLiteral {
+	static public class HexLiteral extends Literal<String> implements IHexLiteral {
 		
 		public HexLiteral(String unquotedValue) {
 			super(unquotedValue);
@@ -444,7 +444,7 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 	
-	static public class Let extends Pos.Posable  implements ILet {
+	static public class Let extends Pos.Posable implements ILet {
 		
 		protected List<IBinding> bindings;
 		protected IExpr expression;
@@ -749,7 +749,7 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 	
-	static public class Error extends Pos.Posable  implements IError {
+	static public class Error extends Pos.Posable implements IError {
 		protected String message;
 		
 		public Error(String msg) {

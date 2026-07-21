@@ -7,7 +7,6 @@ package org.smtlib.command;
 
 import java.io.IOException;
 
-import org.smtlib.ICommand.Iexit;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.IResponse;

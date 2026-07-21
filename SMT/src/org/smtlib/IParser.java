@@ -7,13 +7,18 @@ package org.smtlib;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.smtlib.IExpr.IBinding;
+import org.smtlib.IExpr.IDatatype;
 import org.smtlib.IExpr.IDeclaration;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.IQualifiedIdentifier;
+import org.smtlib.IExpr.ISymbol;
 import org.smtlib.impl.Sort;
+import org.smtlib.sexpr.ILexToken;
+import org.smtlib.sexpr.Parser;
 import org.smtlib.IPrinter;
 
 /** This is the interface to a parser for SMT-LIB.  The interface is independent
@@ -115,6 +120,9 @@ public interface IParser {
 	/** Parses a binding "(id expression)", returning null with error messages if an error occurs */
 	/*@Nullable*/ IBinding parseBinding() throws IOException, ParserException;
 
+	/** Parses a datatype declaration, returning null with error messages if an error occurs */
+	/*@Nullable*/ IDatatype parseDatatype() throws IOException, ParserException;
+	
 	/** Parses a declaration "(id sort)", returning null with error messages if an error occurs */
 	/*@Nullable*/ IDeclaration parseDeclaration() throws IOException, ParserException;
 	
@@ -178,4 +186,66 @@ public interface IParser {
 		/** Creates an exception that intentionally aborts the current parse */
 		public AbortParseException() { super("",null); }
 	}
+	
+    public default List<IExpr> parseListTerms(Parser p) throws ParserException {
+        List<IExpr> list = new LinkedList<IExpr>();
+        boolean anyErrors = false;
+        if (!p.isLP()) {
+            org.smtlib.impl.Command.error(p.smt(),"Expected a parenthesized list of terms beginning here",
+                                    p.pos(p.currentPos()-1,p.currentPos()));
+            return null;
+        }
+        ILexToken lp = p.parseLP();
+        while (!p.isRP() && !p.isEOD()) {
+            IExpr e = p.parseExpr();
+            if (e == null) anyErrors = true;
+            else list.add(e);
+        }
+        ILexToken rp = p.parseRP();
+        if (anyErrors) { return null; }
+        if (list.isEmpty()) {
+            org.smtlib.impl.Command.error(p.smt(),"Expected a parenthesized list of at least one term",
+                                    p.pos(lp.pos().charStart(),rp.pos().charEnd()));
+            return null;
+        }
+        return list;
+    }
+    
+    public default List<IDatatype> parseListDatatypes(Parser p) throws ParserException {
+        List<IDatatype> list = new LinkedList<IDatatype>();
+        boolean anyErrors = false;
+        if (!p.isLP()) {
+            org.smtlib.impl.Command.error(p.smt(),"Expected a parenthesized list of terms beginning here",
+                                    p.pos(p.currentPos()-1,p.currentPos()));
+            return null;
+        }
+        ILexToken lp = p.parseLP();
+        try {
+            while (!p.isRP() && !p.isEOD()) {
+                IDatatype e = p.parseDatatype();
+                if (e == null) anyErrors = true;
+                else list.add(e);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(); // FIXME new ParseException(e);
+        }
+        ILexToken rp = p.parseRP();
+        if (anyErrors) { return null; }
+        if (list.isEmpty()) {
+            org.smtlib.impl.Command.error(p.smt(),"Expected a parenthesized list of at least one datatype declaration",
+                                    p.pos(lp.pos().charStart(),rp.pos().charEnd()));
+            return null;
+        }
+        return list;
+    }
+    
+	public default boolean checkUserId(ISymbol id) {
+	    String v = id.value();
+	    if (v.length() > 0 && (v.charAt(0) == '@' || v.charAt(0) == '.')) {
+	        org.smtlib.impl.Command.error(this.smt(),"User-defined symbols may not begin with . or @",id.pos());
+	        return false;
+	    }
+	    return true;
+	}
+
 }

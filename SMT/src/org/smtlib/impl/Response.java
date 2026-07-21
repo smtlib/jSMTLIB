@@ -16,12 +16,11 @@ import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IPos.IPosable;
-import org.smtlib.IResponse.IAttributeList;
-import org.smtlib.IResponse.IError;
-import org.smtlib.IResponse.IPair;
+import org.smtlib.IResponse.*;
+import org.smtlib.IVisitor.VisitorException;
 
 /** This class holds subclasses that are implementations of the various IResponse interfaces. */
-public class Response {
+public class Response implements IResponse {
 	static public SMT.Configuration smtConfig;
 	
 	final static String ERROR = "error";
@@ -135,11 +134,16 @@ public class Response {
 			return new AssignmentResponse(assignments);
 		}
 		
-		@Override
-		public UnsatCoreResponse get_unsat_core_response(List<ISymbol> names) {
-			return new UnsatCoreResponse(names);
-		}
-		
+        @Override
+        public UnsatAssumptionsResponse get_unsat_assumptions_response(List<ISymbol> names) {
+            return new UnsatAssumptionsResponse(names);
+        }
+        
+        @Override
+        public UnsatCoreResponse get_unsat_core_response(List<ISymbol> names) {
+            return new UnsatCoreResponse(names);
+        }
+        
 		@Override
 		public AssertionsResponse get_assertions_response(List<IExpr> exprs) {
 			return new AssertionsResponse(exprs);
@@ -250,26 +254,47 @@ public class Response {
 		}
 	}
 
-	/** Implements the IResponse.IUnsatCoreResponse interface */
-	static public class UnsatCoreResponse implements IResponse.IUnsatCoreResponse {
-		private List<ISymbol> names = new LinkedList<ISymbol>();
-		@Override 
-		public List<ISymbol> names() { return names; }
-		
-		public UnsatCoreResponse(List<ISymbol> names) {
-			this.names = names;
-		}
+    /** Implements the IResponse.IUnsatCoreResponse interface */
+    static public class UnsatAssumptionsResponse implements IResponse.IUnsatAssumptionsResponse {
+        private List<ISymbol> names = new LinkedList<ISymbol>();
+        @Override 
+        public List<ISymbol> names() { return names; }
+        
+        public UnsatAssumptionsResponse(List<ISymbol> names) {
+            this.names = names;
+        }
 
-		@Override
-		public boolean isOK() { return false; }
-		@Override
-		public boolean isError() { return false; }
+        @Override
+        public boolean isOK() { return false; }
+        @Override
+        public boolean isError() { return false; }
 
-		@Override
-		public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-			return v.visit(this);
-		}
-	}
+        @Override
+        public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+            return v.visit(this);
+        }
+    }
+
+    /** Implements the IResponse.IUnsatCoreResponse interface */
+    static public class UnsatCoreResponse implements IResponse.IUnsatCoreResponse {
+        private List<ISymbol> names = new LinkedList<ISymbol>();
+        @Override 
+        public List<ISymbol> names() { return names; }
+        
+        public UnsatCoreResponse(List<ISymbol> names) {
+            this.names = names;
+        }
+
+        @Override
+        public boolean isOK() { return false; }
+        @Override
+        public boolean isError() { return false; }
+
+        @Override
+        public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+            return v.visit(this);
+        }
+    }
 
 	/** Implements the IResponse.IProofResponse interface */
 	static public class ProofResponse implements IResponse.IProofResponse {
@@ -286,6 +311,7 @@ public class Response {
 		}
 	}
 
+	// FIXME - what is this for
 	static public class Seq extends Pos.Posable implements IAttributeList {
 		List<IAttribute<? extends IAttributeValue>> list = new LinkedList<IAttribute<? extends IAttributeValue>>();
 
@@ -323,6 +349,24 @@ public class Response {
 		
 		// FIXME - equals, hashCode
 	}
+
+    @Override
+    public <T> T accept(IVisitor<T> v) throws VisitorException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean isOK() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean isError() {
+        // TODO Auto-generated method stub
+        return false;
+    }
 	
 
 }

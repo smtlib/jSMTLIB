@@ -41,7 +41,7 @@ public class Lexer {
 	public void abortLine() {
 		int i = matcher.regionStart();
 		char c;
-		while ((c=csr.charAt(i))!= '\r' && c != '\n') ++i;
+		while ((c=csr.charAt(i))!= '\r' && c != '\n') ++i; // FIXME  - what about end of input?
 		matcher.region(i,csr.length());
 	}
 	
@@ -127,7 +127,7 @@ public class Lexer {
 	/** The CharSequence corresponding to the source object */
 	final protected CharSequence csr;
 	
-	// These are regular expressions (of the sort used by Pattern) for 
+	// These are regular expressions (as used by Pattern) for 
 	// scanning the input text into the SMT-LIB concrete syntax tokens.
 	// Note that backslashes are doubled because Java uses them as escape
 	// characters; they are also used by Pattern as escape characters.
@@ -140,7 +140,7 @@ public class Lexer {
 	/** Pattern regular expression for SMT-LIB whitespace */
 	private final static String rgxWhiteSpace = "[\\p{Space}]+"; // includes line termination
 	/** Pattern regular expression for SMT-LIB comment */
-	private final static String rgxComment = ";[^\\n\\031]*";     // exclude newline and endChar (char 25) so matching stops at end-of-line
+	private final static String rgxComment = ";.*";              // be sure dot does not include line termination
 	/** Pattern regular expression for SMT-LIB numeral */
 	private final static String rgxNumeral = "0|[1-9][0-9]*";
 	/** Pattern regular expression for an invalid SMT-LIB numeral or decimal (that has leading zeros) */
@@ -168,7 +168,7 @@ public class Lexer {
 	/** Pattern regular expression for SMT-LIB sequence of non-white space */
 	private final static String rgxAnyNonWS = "[\\S&&[^;\\(\\)]][\\S&&[^;\\(\\)]]*"; // Any sequence of non-whitespace, not beginning with ( ) ;
 	/** Pattern regular expression for detecting the end of input */
-	private final static String rgxEndOfInput = "\\z|\\031|\\004"; // char 25 (\\031) = CharSequenceInfinite.endChar
+	private final static String rgxEndOfInput = "\\z|\\031|\\004"; // FIXME - use CharSequenceReader.endChar
 	/** Pattern regular expression for checking that a sequence of digits is not followed by other non-white space, non-comment, non-parenthesis characters */
 	private final static String trailer = "(?:[\\s\\(\\);]|$)";
 
@@ -567,6 +567,7 @@ public class Lexer {
 			}
 			if (csr != null) matcher.region(end,csr.length());
 		} else {
+		    // The matcher did not find a match starting at matcher.regionStart()
 			// FIXME - there is a problem if we have spaces at the very beginning of a file, prior to the LP
 			// the matcher does not match???
 			int b = matcher.regionStart();

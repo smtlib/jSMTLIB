@@ -102,11 +102,7 @@ public class C_define_fun extends Command implements Idefine_fun {
 		if (resultSort == null) return null;
 		IExpr expr = p.parseExpr();
 		if (expr == null) return null;
-		String v = name.value();
-		if (v.length() > 0 && (v.charAt(0) == '@' || v.charAt(0) == '.')) {
-			error(p.smt(),"User-defined symbols may not begin with . or @",name.pos());
-			return null;
-		}
+        if (!p.checkUserId(name)) return null;
 		return new C_define_fun(name,list,resultSort,expr);
 	}
 

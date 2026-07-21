@@ -18,6 +18,7 @@ import java.io.Reader;
  * @author David R. Cok
  *
  */
+//FIXME - review
 public class CharSequenceReader extends CharSequenceInfinite implements CharSequence {
 
 	/** Constructor for a new instance

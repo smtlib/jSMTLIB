@@ -15,6 +15,8 @@ import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
 
+// FIXME - there already is a C_get_model
+
 /** Implements the get-model command */
 public class C_get_model extends Command implements Iget_model {
 	/** Constructs a command instance */

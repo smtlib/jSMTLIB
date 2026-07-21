@@ -8,5 +8,6 @@
 (set-option :diagnostic-output-channel "stdout")
 (get-option :diagnostic-output-channel)
 (set-option :diagnostic-output-channel "tempout")
-(get-option :diagnostic-output-channel)
+(get-option :diagnostic-output-channel) ; should print to tempout
 ; Skipping setting :print-success false because solvers differ on whether they then print success
+(exit)

@@ -12,6 +12,8 @@ import java.util.List;
 import org.smtlib.ICommand.IScript;
 import org.smtlib.IPos.IPosable;
 
+// FIXME - any new s-expressions
+
 /** This interface represents the functionality for any class implementing an SMT-LIB term or formula */
 public interface IExpr extends IAccept, IPosable, IAttributeValue {
 	
@@ -122,8 +124,12 @@ public interface IExpr extends IAccept, IPosable, IAttributeValue {
 		String toString();
 	}
 	
+	static public interface IDatatype extends IAccept, IPosable {
+	    // FIXME
+	}
+	
 	/** This interface represents SMT-LIB attribute and infoflag names. */
-	static public interface IKeyword extends IAccept, IPosable{
+	static public interface IKeyword extends IAccept, IPosable {
 		/** A canonical representation of keyword key */
 		//@ pure
 		String value();
