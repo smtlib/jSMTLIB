@@ -1,0 +1,17 @@
+(error "Unknown option: --zzz")
+Usage: java org.smtlib.SMT [args] [file]
+       --help [-h]
+       --version
+       --verbose [-v] <int>
+       --solver [-s] <solvername>
+       --exec   [-e] <path>
+       --logics [-L] <path>
+       --out         <filename or 'stdout' or 'stderr'>
+       --diag        <filename or 'stdout' or 'stderr'>
+       --port        <int>
+       --text        <string>
+       --echo   [-e]
+       --abort
+       --noshow
+       --nosuccess   [-q]
+       --relax  [-r]

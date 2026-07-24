@@ -6,7 +6,7 @@ The command-line arguments are typical options and files.
 If no files are present, commands are read from standard input
     until a control-D is read, indicating end of input.
 If files are listed on the command-line they are processed
-    after all options are read and in the order the fies are listed.
+    after all options are read and in the order the files are listed.
 Option names have a long version, beginning with --
     and an abbreviated version, beginning with a single -.
 The recognized options are these:
@@ -28,5 +28,5 @@ The recognized options are these:
         --noshow: if enabled, error location information is not shown
     -q, --nosuccess: if enabled, 'success' responses are suppressed
         --relax: if enabled, extensions to strict SMT-LIB are permitted
-This software is Copyright 2010 by David R. Cok. The accompanying LICENSE 
+This software is Copyright 2010-2027 by David R. Cok. The accompanying LICENSE 
     file describes the conditions under which it may be used.

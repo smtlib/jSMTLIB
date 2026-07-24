@@ -1,0 +1,6 @@
+(exec zzz)
+ ^^^^
+(error "Unknown command: exec")
+(exec zzz)
+      ^^^
+(error "Expected a string literal here, instead of a symbol")

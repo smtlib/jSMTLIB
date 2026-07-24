@@ -1,0 +1,6 @@
+##EXITCODE 1
+echo "zzzzz" > ~/jsmtlib.properties
+$SMT_CMD --solver test --text "(exit)"
+EX=$?
+rm ~/jsmtlib.properties
+exit $EX
