@@ -1,6 +1,5 @@
 ##EXITCODE 0
-echo "zzzzz" > ~/jsmtlib.properties
-chmod ugo-r ~/jsmtlib.properties
+printf 'key=\\u00ZZ\n' > ~/jsmtlib.properties
 $SMT_CMD --solver test --text "(exit)"
 EX=$?
 rm ~/jsmtlib.properties

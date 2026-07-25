@@ -1,0 +1,4 @@
+### Tests whether the abort option aborts on a parse error
+##EXITCODE 1
+$SMT_CMD --solver test zzz
+$SMT_CMD -v --solver test zzz

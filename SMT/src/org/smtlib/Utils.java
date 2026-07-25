@@ -656,5 +656,11 @@ public class Utils {
         System.arraycopy(rest,  0,  r,  aa.length, rest.length);
         return r;
     }
+    
+    public static void jacocoNeverExecuted() {
+        RuntimeException e = new RuntimeException("Utils.jacocoNeverExecuted is unexpectedly called");
+        System.out.println(e.getMessage());
+        e.printStackTrace(System.out);
+    }
 
 }

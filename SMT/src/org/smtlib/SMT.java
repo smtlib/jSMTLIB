@@ -114,7 +114,7 @@ public class SMT {
 		public static enum SMTLIB {
 			V20("V2.0"),
 			V25("V2.5"),
-			V26("V2.6");
+			V27("V2.7");
 			public String id;
 			private SMTLIB(String id) { this.id = id; }
 			public String toString() { return id; }
@@ -144,8 +144,7 @@ public class SMT {
 		 * within a solver. */
 		public boolean nosuccess = false;
 		
-		/** If true, command processing in a solver (not in check mode) aborts
-		 * on the first error
+		/** If true, command processing in a solver aborts on the first error
 		 */
 		public boolean abort = false;
 		
@@ -247,16 +246,24 @@ public class SMT {
 		public /*@Nullable*/ ICommand.IFinder commandFinder = new ICommand.IFinder() {
 			@Override
 			public Class<? extends ICommand> findCommand(String name) {
-				Class<? extends ICommand> clazz = commands.get(name);   // FIXME - 'commands' is not used -- always empty
-				if (relax && clazz != null) return clazz;
+				Class<? extends ICommand> clazz = commands.get(name);
+				if (clazz != null) return clazz;
 				for (String prefix: relax ? commandExtensionPrefixes : strictCommandExtensionPrefixes ) {
 					String className = prefix + name.replace('-','_');
 					try {
 						Class<?> clazzz = Class.forName(className);
-						if (clazzz == null) continue; // This won't happen - exception is thrown instead
-						if (!ICommand.class.isAssignableFrom(clazzz)) continue; // FIXME - message? -- returned class is not an ICommand
+						if (clazzz == null) { // This won't happen - exception is thrown instead
+						    Utils.jacocoNeverExecuted(); continue;
+						}
+						if (!ICommand.class.isAssignableFrom(clazzz)) { // Check that the returned class is an ICommand -- implementation bug if it is not
+						    Utils.jacocoNeverExecuted(); // This branch only occurs if there is a bug in writing a derived command class.
+						    // FIXME - can we use logDiag?  Need a handle on smtCOnfig
+						    System.err.println("Command " + className + " is supposed to inherit from " + ICommand.class);
+						    continue;
+						}
 						@SuppressWarnings("unchecked") // FIXME - do better on checking typing
 						Class<? extends ICommand> cl = (Class<? extends ICommand>)clazzz; // Check for this - implementation may be wrong
+						commands.put(name, cl);
 						return cl;
 					} catch (ClassNotFoundException e) {
 						continue;
@@ -303,24 +310,16 @@ public class SMT {
 	 */
 	public Properties readProperties() {
 		Properties p = new Properties();
-		/*@Nullable @Mutable*/ Reader rdr = null;
 		File f;
 		// Find and read file on class path
 		URL url =  ClassLoader.getSystemResource(Utils.PROPS_FILE);
 		if (url != null) {
 			f = new File(url.getFile());
-			try {
+            try (FileReader rdr = new FileReader(f);) {
 				if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (class path) from " + f);
-				rdr = new FileReader(f);
 				p.load(rdr);
-			} catch (IOException e) {
+			} catch (IOException|IllegalArgumentException e) {
 				smtConfig.log.logDiag("IOException " + e); // FIXME - is this how to report this error
-			} finally {
-				try {
-					if (rdr != null) rdr.close();
-				} catch (Exception ee) {
-					smtConfig.log.logDiag("Failed to close reader " + f); // FIXME - is this how to report this error
-				} // Ignore
 			}
 		}
 		// Find and read file in the directory that contains
@@ -335,15 +334,10 @@ public class SMT {
 				s = s + Utils.PROPS_FILE;
 				f = new File(s);
 				if (f.isFile()) {
-					try {
+					try (FileReader rdr = new FileReader(f);) {
 						if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (class path dir) from " + f);
-						rdr = new FileReader(f);
 						p.load(rdr);
-					} catch (IOException e) {
-					} finally {
-						try {
-							if (rdr != null) rdr.close();
-						} catch (Exception ee) {} // Ignore
+					} catch (IOException|IllegalArgumentException e) {
 					}
 				}
 			}
@@ -352,29 +346,19 @@ public class SMT {
 		String home = System.getProperty("user.home");
 		f = new File(home,Utils.PROPS_FILE);
 		if (f.isFile()) {
-			try {
+            try (FileReader rdr = new FileReader(f);) {
 				if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (user home) from " + f);
-				rdr = new FileReader(f);
 				p.load(rdr);
-			} catch (IOException e) {
-			} finally {
-				try {
-					if (rdr != null) rdr.close();
-				} catch (Exception ee) {} // Ignore
+			} catch (IOException|IllegalArgumentException e) {
 			}
 		}
 		// Find and read file in current working directory
 		f = new File(Utils.PROPS_FILE);
 		if (f.isFile()) {
-			try {
+            try (FileReader rdr = new FileReader(f);) {
 				if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (current dir) from " + f);
-				rdr = new FileReader(f);
 				p.load(rdr);
-			} catch (IOException e) {
-			} finally {
-				try {
-					if (rdr != null) rdr.close();
-				} catch (Exception ee) {} // Ignore
+			} catch (IOException|IllegalArgumentException e) {
 			}
 		}
 		return p;
@@ -426,7 +410,7 @@ public class SMT {
 			try {
 				serverSocket = new ServerSocket(smtConfig.port);
 			} catch (IOException e) {
-				System.out.println("Could not listen on port: " + smtConfig.port);
+				System.out.println("Could not listen on port: " + smtConfig.port + " " + e.getMessage());
 				return 1;
 			}
 
@@ -462,6 +446,7 @@ public class SMT {
 					if (e != 0) retcode = e;
 				} catch (FileNotFoundException e) {
 					smtConfig.log.logError("Could not find file: " + file + " Exception: " + e);
+					retcode = 1;
 				}
 			}
 			return retcode;
@@ -486,7 +471,7 @@ public class SMT {
 	
 	protected int doParser(IParser p, boolean restart) { 
 		boolean checkMode = Utils.TEST_SOLVER.equals(smtConfig.solvername);
-		boolean abortMode = smtConfig.abort && !checkMode;
+		boolean abortMode = smtConfig.abort;
 
 		if (restart && solver != null) {
 		    solver.exit();
@@ -642,24 +627,26 @@ public class SMT {
 				}
 				options.text = args[i++];
 
-			} else if ("--verbose".equals(s) || "-v".equals(s)) {
-				if (i >= args.length) {
-					error("The --verbose option expects an integer argument");
-					usage();
-					return 1;
-				}
-				try {
-					options.verbose = Integer.valueOf(args[i++]);
-				} catch (NumberFormatException e) {
-					error("The --verbose option expects an integer argument");
-					usage();
-					return 1;
-				}
-				if (options.verbose < 0) {
-					error("The argument to --verbose must be non-negative");
-					usage();
-					return 1;
-				}
+            } else if ("-v".equals(s)) {
+                options.verbose = 1;
+            } else if ("--verbose".equals(s)) {
+                if (i >= args.length) {
+                    error("The --verbose option expects an integer argument");
+                    usage();
+                    return 1;
+                }
+                try {
+                    options.verbose = Integer.valueOf(args[i++]);
+                } catch (NumberFormatException e) {
+                    error("The --verbose option expects an integer argument");
+                    usage();
+                    return 1;
+                }
+                if (options.verbose < 0) {
+                    error("The argument to --verbose must be non-negative");
+                    usage();
+                    return 1;
+                }
 
 			} else if ("--help".equals(s) || "-h".equals(s)) {
 				help();
@@ -895,7 +882,7 @@ public class SMT {
 		System.out.println("If no files are present, commands are read from standard input");
 		System.out.println("    until a control-D is read, indicating end of input.");
 		System.out.println("If files are listed on the command-line they are processed");
-		System.out.println("    after all options are read and in the order the fies are listed.");
+		System.out.println("    after all options are read and in the order the files are listed.");
 		System.out.println("Option names have a long version, beginning with --");
 		System.out.println("    and an abbreviated version, beginning with a single -.");
 		System.out.println("The recognized options are these:");
@@ -919,7 +906,7 @@ public class SMT {
 		System.out.println("        --noshow: if enabled, error location information is not shown");
 		System.out.println("    -q, --nosuccess: if enabled, 'success' responses are suppressed");
 		System.out.println("        --relax: if enabled, extensions to strict SMT-LIB are permitted");
-		System.out.println("This software is Copyright 2010 by David R. Cok. The accompanying LICENSE ");
+		System.out.println("This software is Copyright 2010-2027 by David R. Cok. The accompanying LICENSE ");
 		System.out.println("    file describes the conditions under which it may be used.");
 	}
 	

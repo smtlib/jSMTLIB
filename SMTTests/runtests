@@ -1,6 +1,7 @@
 #! /bin/bash
 
 cd "$(dirname "$0")" || exit 1
+trap 'exit 130' INT
 if [ -n "${COV++}" ]; then
     source ./setup-coverage smt
 fi

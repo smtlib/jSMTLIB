@@ -1,6 +1,13 @@
 #!/bin/bash
 
 cd "$(dirname "$0")" || exit 1
+INSTALL=$(cd ../SMT && pwd)
+
+
+trap 'exit 130' INT
+if [ -n "${COV++}" ]; then
+    source ./setup-coverage scripts
+fi
 source setup
 source version.check
 
@@ -46,7 +53,7 @@ for f in "${files[@]}" ; do
     #   .err  — diagnostic output only (stderr)
     #   .cmb  — both streams merged (2>&1), so error context and message appear together
 
-    source "$f" 2> "$f.err.actual" > "$f.out.actual"
+    ( source "$f" ) 2> "$f.err.actual" > "$f.out.actual"
     actualret=$?
     ### Strip Windows CR so Unix golden files match
     if [[ "$PLATFORM" == "windows" ]]; then
@@ -61,7 +68,7 @@ for f in "${files[@]}" ; do
         elif [ -e "${base}" ];                then golden="${base}"
         else golden=""; fi
         if [ -n "$golden" ]; then
-            diff "$actual" "$golden"
+            sed -e "s@\$INSTALL@$INSTALL@" < "$golden" | diff "$actual" -
             if [ $? -eq 0 ]; then rm -f "$actual"; else (( fail++ )); fi
         else
             echo "Creating $label file for $f"
@@ -73,7 +80,7 @@ for f in "${files[@]}" ; do
     _cmp_golden "$f.err.actual" "$f.err" "err"
 
     # Combined test: re-run merging stderr into stdout
-    source "$f" > "$f.cmb.actual" 2>&1
+    ( source "$f" ) > "$f.cmb.actual" 2>&1
     ### Strip Windows CR so Unix golden files match
     if [[ "$PLATFORM" == "windows" ]]; then
         tr -d '\r' < "$f.cmb.actual" > "$f.cmb.actual.tmp" && mv "$f.cmb.actual.tmp" "$f.cmb.actual"

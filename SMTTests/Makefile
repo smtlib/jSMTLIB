@@ -49,9 +49,12 @@ clean:
 build:
 	$(MAKE) -C ../SMT build
 
-## Run SMT tests with JaCoCo coverage instrumentation
+## Run SMT tests and script tests with JaCoCo coverage instrumentation
 cov-test: local-setup
-	COV_CLASSES=$(COV_CLASSES) COV= bash ./runtests
+	@result=0; \
+	COV_CLASSES=$(COV_CLASSES) COV= bash ./runscripts; ret=$$?; [ $$ret -gt 128 ] && exit $$ret; [ $$ret -ne 0 ] && result=1; \
+	COV_CLASSES=$(COV_CLASSES) COV= bash ./runtests;   ret=$$?; [ $$ret -gt 128 ] && exit $$ret; [ $$ret -ne 0 ] && result=1; \
+	exit $$result
 
 ## Remove collected coverage data
 cov-clean:
@@ -70,3 +73,6 @@ cov-report:
 cov-show:
 	open cov/html/index.html
 
+cov-all:
+	-$(MAKE) cov-clean cov-test
+	-$(MAKE) cov-report cov-show

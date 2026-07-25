@@ -104,7 +104,6 @@ public class Utils extends org.smtlib.Utils {
 	 * @param symTable the symbol table into which to load the ids defined by the logic
 	 * @return null (if all is well) or error responses
 	 */
-	@Override
 	public /*@Nullable*/IResponse loadLogic(ILogic logicExpr, SymbolTable symTable) {
 		String logicName = logicExpr.logicName().value(); // FIXME = canonical value or some representation?
 		
@@ -147,7 +146,6 @@ public class Utils extends org.smtlib.Utils {
 	 * @param symTable the symbol table into which to load the ids defined by the theory
 	 * @return null (if all is well) or an error response
 	 */
-	@Override
 	public /*@Nullable*/IResponse loadTheory(ITheory theory, SymbolTable symTable) {
 		String theoryName = theory.theoryName().value();
 		

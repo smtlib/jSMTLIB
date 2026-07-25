@@ -1,0 +1,4 @@
+Could not find file: zzz Exception: java.io.FileNotFoundException: zzz (No such file or directory)
+#reading properties (class path) from $INSTALL/jsmtlib.properties
+#reading properties (current dir) from jsmtlib.properties
+Could not find file: zzz Exception: java.io.FileNotFoundException: zzz (No such file or directory)

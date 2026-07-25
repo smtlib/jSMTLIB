@@ -1,0 +1,6 @@
+##EXITCODE 0
+echo "# verbose test" > ~/jsmtlib.properties
+$SMT_CMD --verbose 1 --solver test --text "(exit)" 2>/dev/null
+EX=$?
+rm ~/jsmtlib.properties
+exit $EX

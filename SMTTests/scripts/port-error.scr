@@ -1,0 +1,12 @@
+##EXITCODE 1
+PORT=8798
+
+$SMT_CMD --port ${PORT} &
+SERVER_PID=$!
+trap 'kill $SERVER_PID 2>/dev/null; wait $SERVER_PID 2>/dev/null' EXIT
+sleep 1
+
+$SMT_CMD --port ${PORT}
+EX=$?
+
+exit $EX

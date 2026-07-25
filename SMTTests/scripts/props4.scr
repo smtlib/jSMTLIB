@@ -1,0 +1,8 @@
+##EXITCODE 0
+_tmpdir=$(mktemp -d)
+echo "# test" > "$_tmpdir/jsmtlib.properties"
+chmod a-r "$_tmpdir/jsmtlib.properties"
+(cd "$_tmpdir" && $SMT_CMD --solver test --text "(exit)")
+EX=$?
+rm -rf "$_tmpdir"
+exit $EX
