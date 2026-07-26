@@ -1,0 +1,30 @@
+##EXITCODE 0
+EXE="$SMT_DRIVER"
+
+# No port specified
+${EXE} "(set-logic QF_UF)"
+echo EX $?
+
+# --port without a value
+${EXE} --port
+echo EX $?
+
+# --port with non-integer value
+${EXE} --port abc
+echo EX $?
+
+# Unknown option
+${EXE} --unknown-option
+echo EX $?
+
+# -p form (short for --port) with negative port (covers -p branch, hits port<=0 check)
+${EXE} -p -1
+echo EX $?
+
+# --help
+${EXE} --help
+echo EX $?
+
+# -h form (short for --help)
+${EXE} -h
+echo EX $?

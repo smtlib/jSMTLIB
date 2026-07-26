@@ -2,7 +2,7 @@
 
 PORT=8777
 
-EXE="java ${COV_AGENT:-} -cp $SMT_JAR org.smtlib.Driver --port ${PORT}"
+EXE="$SMT_DRIVER --port ${PORT}"
 
 $SMT_CMD --port ${PORT} --echo &
 SERVER_PID=$!

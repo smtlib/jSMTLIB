@@ -1,0 +1,10 @@
+SMT: success
+EX 0
+SMT: sat
+EX 2
+SMT: success
+EX 0
+SMT: unsat
+EX 3
+SMT: success
+EX 0

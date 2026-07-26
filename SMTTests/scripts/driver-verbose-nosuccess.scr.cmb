@@ -1,0 +1,29 @@
+send: (set-logic QF_UF)
+(set-logic QF_UF)
+SMT: success
+exitcode = 0
+EX 0
+send: (check-sat)
+(check-sat)
+SMT: unknown
+exitcode = 4
+EX 4
+(declare-fun x () Bool)
+EX 0
+(xxx)
+ ^^^
+SMT: (error "Unknown command: xxx")
+EX 10
+(declare-fun y () Bool)
+EX 0
+(get-info :name)
+SMT: (:name "test" )
+EX 5
+send: (declare-fun z () Bool)
+(declare-fun z () Bool)
+SMT: success
+exitcode = 0
+EX 0
+(exit)
+SMT: success
+EX 0

@@ -1,0 +1,48 @@
+##EXITCODE 0
+PORT=8778
+
+# Minimal mock server: serves a fixed sequence of canned responses, one per
+# connection.  Uses a ready-file so the shell waits without consuming a slot.
+_READY=/tmp/driver-sat-unsat-ready-$$
+rm -f "$_READY"
+python3 -c "
+import socket, sys
+PORT = $PORT
+READY = sys.argv[1]
+responses = [b'success\n', b'sat\n', b'success\n', b'unsat\n', b'success\n']
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+s.bind(('127.0.0.1', PORT))
+s.listen(5)
+open(READY, 'w').close()
+for resp in responses:
+    conn, _ = s.accept()
+    conn.recv(4096)
+    conn.sendall(resp)
+    conn.close()
+s.close()
+" "$_READY" &
+SERVER_PID=$!
+trap 'kill $SERVER_PID 2>/dev/null; wait $SERVER_PID 2>/dev/null; rm -f "$_READY"' EXIT
+for _i in $(seq 50); do [ -f "$_READY" ] && break; sleep 0.1; done
+rm -f "$_READY"
+
+# success response
+$SMT_DRIVER --port $PORT "(set-logic QF_UF)"
+echo EX $?
+
+# sat response — covers EX_SMT_SAT branch in Driver
+$SMT_DRIVER --port $PORT "(check-sat)"
+echo EX $?
+
+# success response
+$SMT_DRIVER --port $PORT "(declare-fun p () Bool)"
+echo EX $?
+
+# unsat response — covers EX_SMT_UNSAT branch in Driver
+$SMT_DRIVER --port $PORT "(check-sat)"
+echo EX $?
+
+# success response
+$SMT_DRIVER --port $PORT "(exit)"
+echo EX $?

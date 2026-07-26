@@ -237,15 +237,9 @@ public class Parser extends Lexer implements IParser {
 					smtConfig.topLevel = true;
 					continue;
 				} catch (ParserException e) {
-					Matcher m = skipThroughEndOfLine.matcher(csr);
-					m.region(matcher.regionStart(),matcher.regionEnd());
+				    // FIXME - is an RP a good recovery token? -- used to be end of line
 					if (e.getMessage() != null) lastError = smtConfig.log.logError(smtConfig.responseFactory.error(e.getMessage(),e.pos()));
-					if (m.lookingAt()) {
-						//smtConfig.log.logOut("SKIPPED " + m.start() + " " + m.end());
-						matcher.region(m.end(),matcher.regionEnd());
-					} else {
-						//smtConfig.log.logOut("NOTHING TO SKIP");
-					} // If the match fails, there was nothing left before the end of the line
+					try { skipThruRP(); } catch (ParserException ex) { /* already recovering */ }
 				}
 				break;
 			}

@@ -1,0 +1,40 @@
+##EXITCODE 0
+PORT=8775
+
+EXE="$SMT_DRIVER --port ${PORT}"
+
+$SMT_CMD --port ${PORT} --echo &
+SERVER_PID=$!
+trap 'kill $SERVER_PID 2>/dev/null; wait $SERVER_PID 2>/dev/null' EXIT
+sleep 1
+
+# --verbose: prints "send:", "SMT: ...", "exitcode = ..."
+${EXE} --verbose "(set-logic QF_UF)"
+echo EX $?
+
+# -v form: covers -v branch; check-sat returns unknown
+${EXE} -v "(check-sat)"
+echo EX $?
+
+# --nosuccess: suppresses "SMT: success" output
+${EXE} --nosuccess "(declare-fun x () Bool)"
+echo EX $?
+
+# -q form with error: error output is still shown with -q
+${EXE} -q "(xxx)"
+echo EX $?
+
+# -q form with success: suppressed
+${EXE} -q "(declare-fun y () Bool)"
+echo EX $?
+
+# -p form: covers -p branch; get-info returns "other" response (not success/sat/unsat/unknown/error)
+$SMT_DRIVER -p ${PORT} "(get-info :name)"
+echo EX $?
+
+# --verbose --nosuccess: verbose=true overrides to quiet=true; covers !quiet=false, verbose=true branch
+${EXE} --verbose --nosuccess "(declare-fun z () Bool)"
+echo EX $?
+
+${EXE} "(exit)"
+echo EX $?

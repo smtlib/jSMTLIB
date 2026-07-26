@@ -1,0 +1,9 @@
+(set-logic QF_UF)
+(check-sat)
+(declare-fun x () Bool)
+(xxx)
+ ^^^
+(declare-fun y () Bool)
+(get-info :name)
+(declare-fun z () Bool)
+(exit)

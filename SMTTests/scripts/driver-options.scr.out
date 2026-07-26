@@ -1,0 +1,32 @@
+Error: no port is specified
+EX 11
+--port option must have an integer value
+EX 11
+java.lang.NumberFormatException: For input string: "abc"
+EX 11
+Unknown option: --unknown-option
+EX 11
+Error: no port is specified
+EX 11
+java org.smtlib.Driver [options] commands
+  -h or --help : prints out the usage information
+  -v or --verbose : enables printing of detailed progress information
+  -q or --nosuccess : disables printing the 'success' reponses
+  -p <number> or --port <number> : (required) specifies the port to which to send commands
+    The port must match the port on which the server process is listening
+  This process sends SMT-LIB commands (as specified on the command-line) to a
+  server process, which must be on the local host, and is started by 
+  'java org.smtlib.SMT --port <number>' 
+  Each SMT command is a (quoted) single command-line argument.
+EX 0
+java org.smtlib.Driver [options] commands
+  -h or --help : prints out the usage information
+  -v or --verbose : enables printing of detailed progress information
+  -q or --nosuccess : disables printing the 'success' reponses
+  -p <number> or --port <number> : (required) specifies the port to which to send commands
+    The port must match the port on which the server process is listening
+  This process sends SMT-LIB commands (as specified on the command-line) to a
+  server process, which must be on the local host, and is started by 
+  'java org.smtlib.SMT --port <number>' 
+  Each SMT command is a (quoted) single command-line argument.
+EX 0

@@ -39,6 +39,8 @@ if [[ "$PLATFORM" == "windows" ]]; then
     _w_dir=$(cygpath -w "$SMT_DIR")
     _w_classes=${COV_CLASSES:+$(cygpath -w "$COV_CLASSES")}
     export SMT_CMD="java ${COV_AGENT:-} -cp ${_w_classes:-$_w_jar};${_w_dir} org.smtlib.SMT"
+    export SMT_DRIVER="java ${COV_AGENT:-} -cp ${_w_classes:-$_w_jar} org.smtlib.Driver"
 else
     export SMT_CMD="java ${COV_AGENT:-} -cp ${COV_CLASSES:-$SMT_JAR}:$SMT_DIR org.smtlib.SMT"
+    export SMT_DRIVER="java ${COV_AGENT:-} -cp ${COV_CLASSES:-$SMT_JAR} org.smtlib.Driver"
 fi

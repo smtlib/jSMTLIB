@@ -78,12 +78,16 @@ public class Driver {
 			return EX_CMD_LINE_ERROR;
 		}
 		try {
-			return send();
-		} catch (java.io.IOException e) {
+			exitCode = send();
+		} catch (Throwable e) {
+		    // Not likely to be called by anything but still here as a defensive check
+		    // in case of a bug (that causes an NPE for example)
+		    Utils.jacocoNeverExecuted();
 			System.out.println(e);
 			e.printStackTrace(System.out);
+			exitCode = EX_EXCEPTION;
 		}
-		return EX_EXCEPTION;
+		return exitCode;
 	}
 	
 	/** Sets the fields of the class according to the command-line */
@@ -139,16 +143,9 @@ public class Driver {
 	/** Sends the options and commands to the port; returns the exit code corresponding to the response
 	 * from the last command. */
 	public int send() throws IOException {
-
-		/*@Mutable*/ Socket serverSocket = null;
-		/*@Mutable*/ PrintWriter out = null;
-		/*@Mutable*/ BufferedReader in = null;
-
-		try {
-			serverSocket = new Socket(InetAddress.getLoopbackAddress(), port);
-			out = new PrintWriter(serverSocket.getOutputStream(), true);
-			in = new BufferedReader(new InputStreamReader(
-					serverSocket.getInputStream()));
+		try (Socket serverSocket = new Socket(InetAddress.getLoopbackAddress(), port);
+			 PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
+			 BufferedReader in = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()))) {
 
 			int exitcode = -1;
 			for (String command: commands) {
@@ -162,22 +159,15 @@ public class Driver {
 					else if ("unknown".equals(answer)) exitcode = EX_SMT_UNKNOWN;
 					else if (answer.indexOf("error") != -1) exitcode = EX_SMT_ERROR;
 					else exitcode = EX_SMT_OTHER;
-					if (!quiet || verbose || exitcode != EX_SUCCESS) System.out.println("SMT: " + answer );
+					if (!quiet || verbose || exitcode != EX_SUCCESS) System.out.println("SMT: " + answer);
 				} while (in.ready());
 			}
 
 			if (verbose) System.out.println("exitcode = " + exitcode);
 			return exitcode;
-		} catch (UnknownHostException e) {
-			System.err.println("Failure to connect to local host: " + e);
-			return EX_EXCEPTION;
 		} catch (IOException e) {
 			System.err.println("Couldn't get I/O from the socket connection: " + e);
 			return EX_EXCEPTION;
-		} finally {
-			if (out != null) out.close();
-			if (in != null) in.close();
-			if (serverSocket != null) serverSocket.close();
 		}
 	}
 }
