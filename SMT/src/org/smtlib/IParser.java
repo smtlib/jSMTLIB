@@ -191,9 +191,8 @@ public interface IParser {
         List<IExpr> list = new LinkedList<IExpr>();
         boolean anyErrors = false;
         if (!p.isLP()) {
-            org.smtlib.impl.Command.error(p.smt(),"Expected a parenthesized list of terms beginning here",
+            throw new ParserException("Expected a parenthesized list of terms beginning here",
                                     p.pos(p.currentPos()-1,p.currentPos()));
-            return null;
         }
         ILexToken lp = p.parseLP();
         while (!p.isRP() && !p.isEOD()) {
@@ -202,11 +201,10 @@ public interface IParser {
             else list.add(e);
         }
         ILexToken rp = p.parseRP();
-        if (anyErrors) { return null; }
+        if (anyErrors) { throw new ParserException(null, null); }
         if (list.isEmpty()) {
-            org.smtlib.impl.Command.error(p.smt(),"Expected a parenthesized list of at least one term",
+            throw new ParserException("Expected a parenthesized list of at least one term",
                                     p.pos(lp.pos().charStart(),rp.pos().charEnd()));
-            return null;
         }
         return list;
     }
@@ -241,7 +239,10 @@ public interface IParser {
     
 	public default boolean checkUserId(ISymbol id) {
 	    String v = id.value();
-	    if (v.length() > 0 && (v.charAt(0) == '@' || v.charAt(0) == '.')) {
+	    if (v.length() == 0) {
+            org.smtlib.impl.Command.error(this.smt(),"User-defined symbols may not be empty strings",id.pos());
+            return false;
+	    } else if (v.charAt(0) == '@' || v.charAt(0) == '.') {
 	        org.smtlib.impl.Command.error(this.smt(),"User-defined symbols may not begin with . or @",id.pos());
 	        return false;
 	    }

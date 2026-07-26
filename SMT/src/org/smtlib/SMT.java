@@ -389,7 +389,7 @@ public class SMT {
 			// If 'text' is set, use it as the input
 			smtConfig.interactive = false;
 			Reader rdr = new StringReader(smtConfig.text);
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Start parsing text input");
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Start parsing text input");
 			// In the case of text input, the file name, if specified, is used just as an
 			// indicator of where the text came from. The name is not used to open or read
 			// from the file. This is used particularly when called from the plug-in; in that
@@ -416,7 +416,7 @@ public class SMT {
 
 			CharSequenceSocket csq = new CharSequenceSocket(smtConfig,serverSocket,100000,0,2);
 			csq.prompter = new Prompter(smtConfig);
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Start parsing");
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Start parsing");
 			src = smtConfig.smtFactory.createSource(csq, null);
 			p = smtConfig.smtFactory.createParser(smtConfig,src);
 			return doParser(p);
@@ -425,7 +425,7 @@ public class SMT {
 			// No files listed - use standard input
 			smtConfig.interactive = true;
 			Reader rdr = new BufferedReader(new InputStreamReader(System.in));
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Start parsing standard input");
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Start parsing standard input");
 			CharSequenceReader csr = new CharSequenceReader(rdr,100000,0,2);
 			csr.prompter = new Prompter(smtConfig);
 			src = smtConfig.smtFactory.createSource(csr, null);
@@ -441,7 +441,7 @@ public class SMT {
 					CharSequenceReader csr = new CharSequenceReader(rdr,100000,0,2);
 					src = smtConfig.smtFactory.createSource(csr, file);
 					p = smtConfig.smtFactory.createParser(smtConfig,src);
-					if (smtConfig.verbose != 0) smtConfig.log.logDiag("Starting file " + file);
+					if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Starting file " + file);
 					int e = doParser(p);
 					if (e != 0) retcode = e;
 				} catch (FileNotFoundException e) {
@@ -456,7 +456,7 @@ public class SMT {
 	public int execCommand(String cmd) {
 		ISource src = smtConfig.smtFactory.createSource(cmd,null);
 		IParser p = smtConfig.smtFactory.createParser(smtConfig,src);
-		if (smtConfig.verbose != 0) smtConfig.log.logDiag("Command " + cmd);
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Command " + cmd);
 		int e = doParser(p,false);
 		return e;
 	}
@@ -508,7 +508,7 @@ public class SMT {
 					if (smtConfig.echo) {
 						smtConfig.log.logDiag(smtConfig.defaultPrinter.toString(command));
 					}
-					else if (smtConfig.verbose != 0) smtConfig.log.logDiag("Command to execute: " +  command);
+					else if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Command to execute: " +  command);
 					result = command.execute(solver);
 					if (result.isError()) {
 						IResponse.IError eresult = (IResponse.IError)result;
@@ -559,7 +559,7 @@ public class SMT {
 			retcode = 2;
 		}
 		solver.forceExit();  // Just in case the solver was not explicitly exited
-		if (smtConfig.verbose != 0) smtConfig.log.logDiag("Exiting program");
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Exiting program");
 		return retcode;
 	}
 	

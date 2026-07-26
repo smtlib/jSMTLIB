@@ -2,9 +2,11 @@
 
 PORT=8777
 
-EXE="java -cp $SMT_JAR org.smtlib.Driver --port ${PORT}"
+EXE="java ${COV_AGENT:-} -cp $SMT_JAR org.smtlib.Driver --port ${PORT}"
 
 $SMT_CMD --port ${PORT} --echo &
+SERVER_PID=$!
+trap 'kill $SERVER_PID 2>/dev/null; wait $SERVER_PID 2>/dev/null' EXIT
 sleep 1
 
 ${EXE} "(set-logic QF_UF)"

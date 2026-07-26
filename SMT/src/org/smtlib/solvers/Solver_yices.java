@@ -78,7 +78,7 @@ public class Solver_yices extends Solver_test implements ISolver {
 			solverProcess.start(true);
 			solverProcess.sendAndListen("(define mod :: (-> int int int))\n");
 			solverProcess.sendAndListen("(define div :: (-> int int int))\n");
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Started yices " + (solverProcess!=null));
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started yices " + (solverProcess!=null));
 			return smtConfig.responseFactory.success();
 		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
@@ -105,7 +105,7 @@ public class Solver_yices extends Solver_test implements ISolver {
 		IResponse r = send(null,"(exit)");
 		if (r != null) return r;
 		solverProcess.exit();
-		if (smtConfig.verbose != 0) smtConfig.log.logDiag("Ended yices ");
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended yices ");
 		return smtConfig.responseFactory.success();
 	}
 	

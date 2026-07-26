@@ -1,0 +1,6 @@
+(set-logic ALL)
+(declare-sort |@zzz| 0)
+(declare-sort |.zzz| 0)
+(declare-fun |@yyy| () Bool)
+(declare-fun |.yyy| () Bool)
+(declare-sort || 0)

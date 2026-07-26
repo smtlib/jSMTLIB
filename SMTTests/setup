@@ -26,6 +26,11 @@ esac
 export ARCH
 export PLATFORM_ARCH="$PLATFORM-$ARCH"
 
+# Resolve COV_CLASSES to an absolute path — scripts that cd to a temp dir would break otherwise.
+if [[ -n "${COV_CLASSES:-}" && "${COV_CLASSES}" != /* ]]; then
+    COV_CLASSES="$(pwd)/${COV_CLASSES}"
+fi
+
 # Use -cp (not -jar) so that SMT_DIR is on the classpath and jsmtlib.properties is found there.
 # On Windows, Java requires ; as the classpath separator and Windows-style paths;
 # cygpath (bundled with Git for Windows) converts POSIX paths to Windows form.

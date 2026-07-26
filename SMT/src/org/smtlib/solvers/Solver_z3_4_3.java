@@ -165,7 +165,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			solverProcess.sendAndListen("(set-option :print-success true)\n"); // Z3 4.3.0 needs this because it mistakenly has the default for :print-success as false
 			linesOffset ++; 
 			//if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Started "+NAME_VALUE+" ");
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started "+NAME_VALUE+" ");
 			return smtConfig.responseFactory.success();
 		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
@@ -177,7 +177,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		try {
 			solverProcess.sendAndListen("(exit)\n");
 			solverProcess.exit();
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Ended Z3 ");
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended Z3 ");
 			return successOrEmpty(smtConfig);
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
@@ -187,7 +187,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	@Override
 	public void forceExit() {
 		if (solverProcess != null) solverProcess.exit();
-		if (smtConfig.verbose != 0) smtConfig.log.logDiag("Ended Z3 forcibly");
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended Z3 forcibly");
 	}
 
 	@Override 

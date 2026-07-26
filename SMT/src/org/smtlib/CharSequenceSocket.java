@@ -86,7 +86,7 @@ public class CharSequenceSocket extends CharSequenceInfinite {
 				if (nread == -1) {
 					break;
 				}
-				if (smtConfig.verbose != 0) smtConfig.log.logDiag("SOCKET READ " + nread + ":" + new String(buf,amountRead,nread));
+				if (smtConfig.verbose != 0) smtConfig.log.logDiag("#SOCKET READ " + nread + ":" + new String(buf,amountRead,nread));
 				amountRead += nread;
 			} while (amountRead < buf.length && nnrdr.ready());
 

@@ -130,7 +130,7 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 			//if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
 			// Can't turn off printing success, or we get no feedback
 			solverProcess.sendAndListen("(set-option :print-success true)");
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Started CVC4 ");
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started CVC4 ");
 			return smtConfig.responseFactory.success();
 		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
@@ -194,7 +194,7 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 	public IResponse exit() {
 			IResponse response = sendCommand("(exit)");
 			solverProcess.exit();
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Ended SMT ");
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended SMT ");
 			solverProcess = null;
 			return response;
 	}

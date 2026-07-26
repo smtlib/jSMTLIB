@@ -1,1 +1,10 @@
+#reading properties (class path) from $INSTALL/jsmtlib.properties
+#reading properties (user home) from $HOME/jsmtlib.properties
+#reading properties (current dir) from jsmtlib.properties
+#Start parsing text input
+#start
+#Command to execute: (exit)
+#exit
 success
+#forceexit
+#Exiting program

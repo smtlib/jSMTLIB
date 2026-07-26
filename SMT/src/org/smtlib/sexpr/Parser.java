@@ -120,7 +120,7 @@ public class Parser extends Lexer implements IParser {
 				scr = new Script(null,res); // FIXME - use a factory, set position
 				// FIXME set pos pos(lp.pos(),rp.pos(),source);
 			}
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Completed input");
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Completed input");
 		} catch (ParserException e) {
 			smtConfig.log.logError(smt().responseFactory.error(
 					"A failure occurred while parsing a command: " + e,
@@ -206,16 +206,20 @@ public class Parser extends Lexer implements IParser {
 							}
 						}
 					} catch (InvocationTargetException ex) {
+						Throwable target = ex.getTargetException();
+						if (target instanceof ParserException) {
+							throw (ParserException) target;
+						}
                         ex.printStackTrace(System.out);
-						if (ex.getTargetException() instanceof StackOverflowError) {
+						if (target instanceof StackOverflowError) {
 							lastError = error("Stack overflow occurred while parsing input", sym.pos());
 							throw new ParserException(null,null);
-						} else if (ex.getTargetException() instanceof OutOfMemoryError) {
+						} else if (target instanceof OutOfMemoryError) {
 							lastError = error("Out of memory error occurred while parsing input", sym.pos());
 							throw new ParserException(null,null);
 						} else {
-							lastError = error(ex.getTargetException().toString(),sym.pos());
-	                        ex.getTargetException().printStackTrace(System.out);
+							lastError = error(target.toString(),sym.pos());
+	                        target.printStackTrace(System.out);
 						}
 					}
 					if (command == null) {

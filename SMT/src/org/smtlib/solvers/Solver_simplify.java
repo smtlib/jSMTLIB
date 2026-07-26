@@ -80,7 +80,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 		super.start();
 		solverProcess.start(true);
 		try {
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Started simplify");
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started simplify");
 			solverProcess.sendAndListen("(BG_PUSH (FORALL (B X Y) (IMPLIES (EQ B |@true|) (EQ (" + ite_term + " B X Y) X))))\n");
 			solverProcess.sendAndListen("(BG_PUSH (FORALL (B X Y) (IMPLIES (NEQ B |@true|) (EQ (" + ite_term + " B X Y) Y))))\n");
 		} catch (IOException e) {
@@ -92,7 +92,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 	@Override
 	public IResponse exit() {
 		solverProcess.exit();
-		if (smtConfig.verbose != 0) smtConfig.log.logDiag("Ended simplify ");
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended simplify ");
 		//process = null;
 		return super.exit();
 	}

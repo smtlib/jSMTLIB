@@ -73,7 +73,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 //			if (response.contains(errorIndication)) {
 //				return smtConfig.responseFactory.error(response);
 //			}
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("Started cvc " );
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started cvc " );
 			return smtConfig.responseFactory.success();
 		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
@@ -84,7 +84,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 	public IResponse exit() {
 		super.exit();
 		solverProcess.exit();
-		if (smtConfig.verbose != 0) smtConfig.log.logDiag("Ended CVC ");
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended CVC ");
 		return smtConfig.responseFactory.success();
 	}
 

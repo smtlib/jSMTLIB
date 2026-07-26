@@ -68,7 +68,7 @@ for f in "${files[@]}" ; do
         elif [ -e "${base}" ];                then golden="${base}"
         else golden=""; fi
         if [ -n "$golden" ]; then
-            sed -e "s@\$INSTALL@$INSTALL@" < "$golden" | diff "$actual" -
+            sed -e "s@\$INSTALL@$INSTALL@" -e "s@\$HOME@$HOME@" < "$golden" | diff "$actual" -
             if [ $? -eq 0 ]; then rm -f "$actual"; else (( fail++ )); fi
         else
             echo "Creating $label file for $f"
