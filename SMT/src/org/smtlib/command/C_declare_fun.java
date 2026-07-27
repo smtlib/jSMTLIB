@@ -69,24 +69,17 @@ public class C_declare_fun extends Command implements Ideclare_fun {
 	}
 
 	/** Parses the arguments of the command, producing a new command instance */
-	static public /*@Nullable*/ C_declare_fun parse(Parser p) throws ParserException {
-		/*@Nullable*/ ISymbol symbol = p.parseSymbol();
-		if (symbol == null) return null;
+	static public C_declare_fun parse(Parser p) throws ParserException {
+		ISymbol symbol = p.parseSymbol();
 		List<ISort> argSorts = new LinkedList<ISort>();
-		boolean anyErrors = false;
-		if (p.parseLP() == null) return null;
+		p.parseLP();
 		while (!p.isRP()) {
-			if (p.isEOD()) return null;
-			ISort s = p.parseSort(null);
-			if (s == null) anyErrors = true;
-			else argSorts.add(s);
+			if (p.isEOD()) throw new ParserException("Unexpected end of input in declare-fun argument list", p.pos(p.currentPos()-1, p.currentPos()));
+			argSorts.add(p.parseSort(null));
 		}
 		p.parseRP();
-		if (anyErrors) return null;
-
-		/*@Nullable*/ ISort result = p.parseSort(null);
-		if (result == null) return null;
-        if (!p.checkUserId(symbol)) return null;
+		ISort result = p.parseSort(null);
+		p.checkUserId(symbol);
 		return new C_declare_fun(symbol,argSorts,result);
 	}
 

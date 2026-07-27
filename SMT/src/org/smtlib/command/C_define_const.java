@@ -45,13 +45,10 @@ public class C_define_const extends C_declare_fun implements Ideclare_const {
 	}
 
 	/** Parses the arguments of the command, producing a new command instance */
-	static public /*@Nullable*/ C_define_const parse(Parser p) throws ParserException {
-		/*@Nullable*/ ISymbol symbol = p.parseSymbol();
-		if (symbol == null) return null;
-
-		/*@Nullable*/ ISort result = p.parseSort(null);
-		if (result == null) return null;
-		if (!p.checkUserId(symbol)) return null;
+	static public C_define_const parse(Parser p) throws ParserException {
+		ISymbol symbol = p.parseSymbol();
+		ISort result = p.parseSort(null);
+		p.checkUserId(symbol);
 		return new C_define_const(symbol,result);
 	}
 

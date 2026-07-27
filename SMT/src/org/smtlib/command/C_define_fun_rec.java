@@ -75,33 +75,24 @@ public class C_define_fun_rec extends Command implements Idefine_fun_rec {
 	}
 	
 	/** Parses the command arguments and creates a command instance */
-	static public /*@Nullable*/ C_define_fun_rec parse(Parser p) throws ParserException {
+	static public C_define_fun_rec parse(Parser p) throws ParserException {
 		ISymbol name = p.parseSymbol();
-		if (name == null) return null;
-		if (p.parseLP() == null) return null;
+		p.parseLP();
 		List<IDeclaration> list = new LinkedList<IDeclaration>();
 		Set<ISymbol> names = new HashSet<ISymbol>();
-		boolean anyErrors = false;
 		while (!p.isRP()) {
-			if (p.isEOD()) return null;
+			if (p.isEOD()) throw new ParserException("Unexpected end of input in define-fun-rec parameter list", p.pos(p.currentPos()-1, p.currentPos()));
 			IDeclaration d = p.parseDeclaration();
-			if (d == null) anyErrors = true;
-			else {
-				list.add(d);
-				if (!names.add(d.parameter())) {
-					error(p.smt(),"A name is duplicated in the parameter list: " + 
-							p.smt().defaultPrinter.toString(d.parameter()), d.parameter().pos());
-					anyErrors = true;
-				}
+			list.add(d);
+			if (!names.add(d.parameter())) {
+				throw error(p.smt(), "A name is duplicated in the parameter list: " +
+						p.smt().defaultPrinter.toString(d.parameter()), d.parameter().pos());
 			}
 		}
 		p.parseRP();
-		if (anyErrors) return null;
 		ISort resultSort = p.parseSort(null);
-		if (resultSort == null) return null;
 		IExpr expr = p.parseExpr();
-		if (expr == null) return null;
-        if (!p.checkUserId(name)) return null;
+		p.checkUserId(name);
 		return new C_define_fun_rec(name,list,resultSort,expr);
 	}
 

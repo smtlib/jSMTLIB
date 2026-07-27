@@ -38,9 +38,8 @@ public class C_get_info extends Command implements Iget_info {
 	}
 	
 	/** Creates a command instance by parsing the concrete S-expression syntax */
-	static public /*@Nullable*/ C_get_info parse(Parser p) throws ParserException {
+	static public C_get_info parse(Parser p) throws ParserException {
 		IKeyword key = p.parseKeyword();
-		if (key == null) return null;
 		return new C_get_info(key);
 	}
 	

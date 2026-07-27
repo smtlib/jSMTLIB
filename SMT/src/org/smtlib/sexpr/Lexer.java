@@ -10,7 +10,7 @@ import java.math.BigInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.smtlib.IParser.AbortParseException;
+import org.smtlib.IParser.AbortInputException;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.IParser.SyntaxException;
 import org.smtlib.*;
@@ -535,7 +535,7 @@ public class Lexer {
 			} else if ((matched = matcher.group(k=19)) != null) {
 				//System.out.println("Killed");
 				matcher.region(end,csr.length());
-				throw new AbortParseException();
+				throw new AbortInputException();
 			} else if ((matched = matcher.group(k=20)) != null) {
 				pos = pos(matcher.start(k),matcher.end(k));
 				//token = factory.error(matched,pos);

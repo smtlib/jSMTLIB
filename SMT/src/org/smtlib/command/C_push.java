@@ -46,9 +46,8 @@ public class C_push extends Command implements Ipush {
 	}
 	
 	/** Parses the arguments of the command, producing a new command instance */
-	static public /*@Nullable*/ C_push parse(Parser p) throws ParserException {
+	static public C_push parse(Parser p) throws ParserException {
 		INumeral num = p.parseNumeral();
-		if (num == null) return null;
 		return new C_push(num);
 	}
 

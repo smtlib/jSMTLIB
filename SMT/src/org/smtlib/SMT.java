@@ -16,7 +16,7 @@ import java.net.URL;
 import java.util.*;
 
 import org.smtlib.IExpr.IKeyword;
-import org.smtlib.IParser.AbortParseException;
+import org.smtlib.IParser.AbortInputException;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.IPos.IPosable;
 import org.smtlib.solvers.Printer;
@@ -533,7 +533,7 @@ public class SMT {
 						smtConfig.log.logOut(result);
 					}
 					lastResponse = result;
-				} catch (AbortParseException e) {
+				} catch (AbortInputException e) {
 					smtConfig.topLevel = true;
 					if (abortMode) {
 						if (!smtConfig.interactive) {

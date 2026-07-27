@@ -45,13 +45,10 @@ public class C_set_info extends Command implements Iset_option {
 	}
 	
 	/** Creates a command instance by parsing the concrete S-expression syntax */
-	static public /*@Nullable*/ C_set_info parse(Parser p) throws ParserException  {
+	static public C_set_info parse(Parser p) throws ParserException  {
 		IKeyword key = p.parseKeyword();
-		if (key == null) return null;
 		IAttributeValue value = p.parseAttributeValue();
-		if (value == null) return null;
 		return new C_set_info(key,value);
-
 	}
 
 	@Override

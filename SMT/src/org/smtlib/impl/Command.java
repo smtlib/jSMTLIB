@@ -9,6 +9,7 @@ package org.smtlib.impl;
 import java.io.IOException;
 
 import org.smtlib.*;
+import org.smtlib.IParser;
 import org.smtlib.IPos.IPosable;
 import org.smtlib.sexpr.Printer;
 
@@ -47,10 +48,9 @@ public abstract class Command implements ICommand, IPosable {
 		p.writer().append(")");
 	}
 	
-	// FIXME - move this
-	/** Utility method for logging errors */
-	static public void error(SMT.Configuration smt, String msg, IPos pos) {
-		smt.log.logError(smt.responseFactory.error(msg,pos));
+	/** Creates a ParserException with the given message and position. */
+	static public IParser.ParserException error(SMT.Configuration smt, String msg, IPos pos) {
+		return new IParser.ParserException(msg, pos);
 	}
 
 	/** For debugging only - use a Printer for real printing */

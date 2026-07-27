@@ -67,31 +67,23 @@ public class C_define_sort extends Command implements Idefine_sort {
 	}
 	
 	/** Parses the command arguments and creates a command instance */
-	static public /*@Nullable*/ C_define_sort parse(Parser p) throws ParserException {
+	static public C_define_sort parse(Parser p) throws ParserException {
 		ISymbol name = p.parseSymbol();
-		if (name == null) return null;
-		if (p.parseLP() == null) return null;
+		p.parseLP();
 		List<IParameter> list = new LinkedList<IParameter>();
 		Set<Symbol> names = new HashSet<Symbol>();
-		boolean anyErrors = false;
 		while (!p.isRP()) {
-			if (p.isEOD()) return null;
+			if (p.isEOD()) throw new ParserException("Unexpected end of input in define-sort parameter list", p.pos(p.currentPos()-1, p.currentPos()));
 			Symbol d = p.parseSymbol();
-			if (d == null) anyErrors = true;
-			else {
-				list.add(p.smt().sortFactory.createSortParameter(d));
-				if (!names.add(d)) {
-					error(p.smt(),"A name is duplicated in the parameter list: " + 
-							p.smt().defaultPrinter.toString(d), d.pos());
-					anyErrors = true;
-				}
+			list.add(p.smt().sortFactory.createSortParameter(d));
+			if (!names.add(d)) {
+				throw error(p.smt(), "A name is duplicated in the parameter list: " +
+						p.smt().defaultPrinter.toString(d), d.pos());
 			}
 		}
 		p.parseRP();
-		if (anyErrors) return null;
 		ISort expr = p.parseSort(list);
-		if (expr == null) return null;
-		if (!p.checkUserId(name)) return null;
+		p.checkUserId(name);
 		return new C_define_sort(name,list,expr);
 	}
 

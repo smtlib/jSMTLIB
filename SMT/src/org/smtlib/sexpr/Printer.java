@@ -330,6 +330,12 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	}
 
 	@Override
+	public Void visit(IExpr.IFunctionDeclaration e) throws IVisitor.VisitorException {
+		// FIXME
+		return null;
+	}
+
+	@Override
 	public Void visit(IBinding e) throws IVisitor.VisitorException {
 		try {
 			w.append("(");

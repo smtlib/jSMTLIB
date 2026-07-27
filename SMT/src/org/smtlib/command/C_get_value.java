@@ -41,7 +41,7 @@ public class C_get_value extends Command implements Iget_value {
 	}
 	
 	/** Parses the command, producing a new command instance */
-	static public /*@Nullable*/ C_get_value parse(Parser p) throws ParserException {
+	static public C_get_value parse(Parser p) throws ParserException {
 		List<IExpr> list = p.parseListTerms(p);
 		return new C_get_value(list);
 	}

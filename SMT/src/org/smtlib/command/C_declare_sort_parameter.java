@@ -45,10 +45,9 @@ public class C_declare_sort_parameter extends Command implements Ideclare_sort_p
 	}
 
 	/** Parses the arguments of the command, producing a new command instance */
-	static public /*@Nullable*/C_declare_sort_parameter parse(Parser p) throws IOException, ParserException {
-		/*@Nullable*/ISymbol id = p.parseSymbol();
-		if (id == null) return null;
-		if (!p.checkUserId(id)) return null;
+	static public C_declare_sort_parameter parse(Parser p) throws IOException, ParserException {
+		ISymbol id = p.parseSymbol();
+		p.checkUserId(id);
 		return new C_declare_sort_parameter(id);
 	}
 

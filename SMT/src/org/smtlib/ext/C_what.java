@@ -47,22 +47,17 @@ public class C_what extends Command implements Iwhat {
 	}
 	
 	/** Parses the input concrete S-expression syntax to produce a command instance */
-	static public /*@Nullable*/C_what parse(Parser p) throws IOException, ParserException {
+	static public C_what parse(Parser p) throws IOException, ParserException {
 		if (!p.smt().relax) {
-			error(p.smt(),"Invalid SMT-LIB command: " + commandName, p.commandName.pos());
-			return null;
+			throw error(p.smt(),"Invalid SMT-LIB command: " + commandName, p.commandName.pos());
 		}
 		List<IIdentifier> ids = new LinkedList<IIdentifier>();
 		while (!p.isRP()) {
 			if (p.isEOD()) {
-				p.smt().log.logError(p.smt().responseFactory.error("Unexpected end of data while parsing a what command",
-						p.savedlp == null ? null : p.pos(p.savedlp.pos().charStart(),p.currentPos())));
-						// Note: actually p.savedlp should not ever be null - a bit defensive here
-				return null;
+				throw new ParserException("Unexpected end of data while parsing a what command",
+						p.savedlp == null ? null : p.pos(p.savedlp.pos().charStart(),p.currentPos()));
 			}
-			IIdentifier id = p.parseIdentifier();
-			if (id == null) return null;
-			ids.add(id);
+			ids.add(p.parseIdentifier());
 		}
 		return new C_what(ids);
 	}

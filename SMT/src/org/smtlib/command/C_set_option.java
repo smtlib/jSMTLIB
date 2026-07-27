@@ -47,16 +47,15 @@ public class C_set_option extends Command implements Iset_option {
 	}
 	
 	/** Creates a command instance by parsing the concrete S-expression syntax */
-	static public /*@Nullable*/ C_set_option parse(Parser p) throws ParserException  {
+	static public C_set_option parse(Parser p) throws ParserException  {
 		IKeyword key = p.parseKeyword();
-		if (key == null) return null;
 		IAttributeValue value = p.parseAttributeValue();
-		if (value == null) return null;
 		C_set_option c = new C_set_option(key,value);
 		IResponse.IError r = c.checkOptionType(p.smt(), key, value);
-		if (r == null) return c;
-		p.smt().log.logError(r);
-		return null;
+		if (r != null) {
+			throw new ParserException(r.errorMsg(), r.pos());
+		}
+		return c;
 	}
 
 

@@ -12,6 +12,7 @@ tests: local-setup
 	@result=0; \
 	$(MAKE) script-tests || result=1; \
 	$(MAKE) smt-tests || result=1; \
+	$(MAKE) junit-tests || result=1; \
 	exit $$result
 
 ## Generate jsmtlib.properties from $$SOLVERS when running outside CI.

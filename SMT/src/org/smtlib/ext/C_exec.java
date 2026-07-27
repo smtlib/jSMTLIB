@@ -35,11 +35,10 @@ public class C_exec extends Command implements Iexec {
 	}
 	
 	/** Parses the arguments of the command, producing a new command instance */
-	static public /*@Nullable*/ C_exec parse(Parser p) throws ParserException {
+	static public C_exec parse(Parser p) throws ParserException {
 		if (!p.smt().relax) {
-			error(p.smt(),"Invalid SMT-LIB command: " + commandName,p.commandName.pos());
-			return null;
-		} 
+			throw error(p.smt(),"Invalid SMT-LIB command: " + commandName,p.commandName.pos());
+		}
 		IScript script = p.parseScript();
 		if (script == null) return null;
 		return new C_exec(script);

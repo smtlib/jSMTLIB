@@ -48,9 +48,8 @@ public class C_assert extends Command implements Iassert {
 	}
 
 	/** Parses the arguments of the command, producing a new command instance */
-	static public /*@Nullable*/ C_assert parse(Parser p) throws IOException, ParserException {
+	static public C_assert parse(Parser p) throws IOException, ParserException {
 		IExpr expr = p.parseExpr();
-		if (expr == null) return null;
 		return new C_assert(expr);
 	}
 

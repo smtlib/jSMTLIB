@@ -40,6 +40,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 	public /*@Nullable*/T visit(INumeral e) throws VisitorException;
     public /*@Nullable*/T visit(IExpr.IDatatype e) throws VisitorException;// FIXME - or ISort.IDatatype
     public /*@Nullable*/T visit(IDeclaration e) throws VisitorException;
+    public /*@Nullable*/T visit(IFunctionDeclaration e) throws VisitorException;
 	public /*@Nullable*/T visit(IParameterizedIdentifier e) throws VisitorException;
 	public /*@Nullable*/T visit(IAsIdentifier e) throws VisitorException;
 	public /*@Nullable*/T visit(IStringLiteral e) throws VisitorException;
@@ -150,6 +151,12 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 
 		@Override
 		public /*@Nullable*/T visit(IDeclaration e) throws VisitorException {
+			return null;
+		}
+
+		@Override
+		public /*@Nullable*/T visit(IExpr.IFunctionDeclaration e) throws VisitorException {
+			// FIXME
 			return null;
 		}
 
@@ -362,6 +369,12 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 		public /*@Nullable*/T visit(IDeclaration e) throws VisitorException {
 			e.parameter().accept(this);
 			e.sort().accept(this);
+			return null;
+		}
+
+		@Override
+		public /*@Nullable*/T visit(IExpr.IFunctionDeclaration e) throws VisitorException {
+			// FIXME
 			return null;
 		}
 

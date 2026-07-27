@@ -53,13 +53,11 @@ public class C_declare_datatypes extends Command implements Ideclare_datatypes {
 	}
 
 	/** Parses the arguments of the command, producing a new command instance */
-	static public /*@Nullable*/C_declare_datatypes parse(Parser p) throws IOException, ParserException {
+	static public C_declare_datatypes parse(Parser p) throws IOException, ParserException {
 	    List<ISymbol> ids = new LinkedList<ISymbol>();
-		/*@Nullable*/ISymbol id = p.parseSymbol();
-		if (id == null) return null;
+		ISymbol id = p.parseSymbol();
 		List<IDatatype> datatypes = new LinkedList<IDatatype>();
-		if (datatypes == null) return null;
-        if (!p.checkUserId(id)) return null;
+		p.checkUserId(id);
 		return new C_declare_datatypes(ids,datatypes);
 	}
 

@@ -178,30 +178,26 @@ public interface IParser {
 		public SyntaxException(String msg, /*@Nullable*//*@ReadOnly*/IPos pos) { super(msg, pos); }
 	}
 	
-	/** An exception to be thrown if parsing is to be intentionally aborted (and restarted, ignoring 
+	/** An exception to be thrown if parsing is to be intentionally aborted (and restarted, ignoring
 	 * any tokens since the last successful call to the parser. */
-	public static class AbortParseException extends ParserException {
+	public static class AbortInputException extends RuntimeException {
 		private static final long serialVersionUID = 1L;
 
-		/** Creates an exception that intentionally aborts the current parse */
-		public AbortParseException() { super("",null); }
+		/** Signals that interactive input was intentionally aborted by the user. */
+		public AbortInputException() { super(); }
 	}
 	
     public default List<IExpr> parseListTerms(Parser p) throws ParserException {
         List<IExpr> list = new LinkedList<IExpr>();
-        boolean anyErrors = false;
         if (!p.isLP()) {
             throw new ParserException("Expected a parenthesized list of terms beginning here",
                                     p.pos(p.currentPos()-1,p.currentPos()));
         }
         ILexToken lp = p.parseLP();
         while (!p.isRP() && !p.isEOD()) {
-            IExpr e = p.parseExpr();
-            if (e == null) anyErrors = true;
-            else list.add(e);
+            list.add(p.parseExpr());
         }
         ILexToken rp = p.parseRP();
-        if (anyErrors) { throw new ParserException(null, null); }
         if (list.isEmpty()) {
             throw new ParserException("Expected a parenthesized list of at least one term",
                                     p.pos(lp.pos().charStart(),rp.pos().charEnd()));
@@ -209,44 +205,32 @@ public interface IParser {
         return list;
     }
     
-    public default List<IDatatype> parseListDatatypes(Parser p) throws ParserException {
+    public default List<IDatatype> parseListDatatypes(Parser p) throws IOException, ParserException {
         List<IDatatype> list = new LinkedList<IDatatype>();
-        boolean anyErrors = false;
         if (!p.isLP()) {
-            org.smtlib.impl.Command.error(p.smt(),"Expected a parenthesized list of terms beginning here",
+            throw new ParserException("Expected a parenthesized list of terms beginning here",
                                     p.pos(p.currentPos()-1,p.currentPos()));
-            return null;
         }
         ILexToken lp = p.parseLP();
-        try {
-            while (!p.isRP() && !p.isEOD()) {
-                IDatatype e = p.parseDatatype();
-                if (e == null) anyErrors = true;
-                else list.add(e);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(); // FIXME new ParseException(e);
+        while (!p.isRP() && !p.isEOD()) {
+            IDatatype e = p.parseDatatype();
+            list.add(e);
         }
         ILexToken rp = p.parseRP();
-        if (anyErrors) { return null; }
         if (list.isEmpty()) {
-            org.smtlib.impl.Command.error(p.smt(),"Expected a parenthesized list of at least one datatype declaration",
+            throw new ParserException("Expected a parenthesized list of at least one datatype declaration",
                                     p.pos(lp.pos().charStart(),rp.pos().charEnd()));
-            return null;
         }
         return list;
     }
     
-	public default boolean checkUserId(ISymbol id) {
+	public default void checkUserId(ISymbol id) throws ParserException {
 	    String v = id.value();
 	    if (v.length() == 0) {
-            org.smtlib.impl.Command.error(this.smt(),"User-defined symbols may not be empty strings",id.pos());
-            return false;
+	        throw new ParserException("User-defined symbols may not be empty strings", id.pos());
 	    } else if (v.charAt(0) == '@' || v.charAt(0) == '.') {
-	        org.smtlib.impl.Command.error(this.smt(),"User-defined symbols may not begin with . or @",id.pos());
-	        return false;
+	        throw new ParserException("User-defined symbols may not begin with . or @", id.pos());
 	    }
-	    return true;
 	}
 
 }

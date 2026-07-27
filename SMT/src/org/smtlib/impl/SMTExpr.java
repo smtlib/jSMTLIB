@@ -10,6 +10,7 @@ import java.math.BigInteger;
 import java.util.*;
 
 import org.smtlib.*;
+import org.smtlib.IVisitor.VisitorException;
 
 // FIXME - Decide whether we use reference or structural equality - either complete or remove equals and hashCode
 
@@ -559,6 +560,21 @@ public abstract class SMTExpr implements IExpr {
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+	}
+	
+	static public class FunctionDeclaration extends Pos.Posable implements IExpr.IFunctionDeclaration {
+	    protected ISymbol symbol;
+	    protected ISort sort;
+	    protected List<IDeclaration> parameters;
+	    
+	    public ISymbol symbol() { return symbol; }
+	    
+	    public ISort sort() { return sort; }
+	    
+	    public List<IDeclaration> parameters() { return parameters; }
+
+        @Override
+        public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 
 	static public class Binding extends Pos.Posable implements IBinding {

@@ -124,10 +124,30 @@ public interface IExpr extends IAccept, IPosable, IAttributeValue {
 		String toString();
 	}
 	
-	static public interface IDatatype extends IAccept, IPosable {
-	    // FIXME
-	}
-	
+    static public interface ISelector extends IAccept, IPosable {
+        ISymbol symbol();
+        ISort sort();
+        //@ pure
+        @Override
+        String toString();
+    }
+    
+    static public interface IConstructor extends IAccept, IPosable {
+        ISymbol symbol();
+        List<? extends ISelector> selectors();
+        //@ pure
+        @Override
+        String toString();
+    }
+    
+    static public interface IDatatype extends IAccept, IPosable {
+        List<IConstructor> constructors();
+        /*@ nullable */ List<ISymbol> symbols();
+        //@ pure
+        @Override
+        String toString();
+    }
+    
 	/** This interface represents SMT-LIB attribute and infoflag names. */
 	static public interface IKeyword extends IAccept, IPosable {
 		/** A canonical representation of keyword key */
@@ -262,12 +282,17 @@ public interface IExpr extends IAccept, IPosable, IAttributeValue {
 		/*@Nullable*/ TT attrValue();
 	}
 	
-	/** This interface represents a declaration of a parameter and its sort */
-	static public interface IDeclaration extends IAccept, IPosable {
-		ISymbol parameter();
-		ISort sort();
-	}
-	
+    /** This interface represents a declaration of a parameter and its sort */
+    static public interface IDeclaration extends IAccept, IPosable {
+        ISymbol parameter();
+        ISort sort();
+    }
+    
+    /** This interface represents a declaration of a parameter and its sort */
+    static public interface IFunctionDeclaration extends IAccept, IPosable {
+        // FIXME
+    }
+    
 	/** This interface represents a binding of a parameter and an expression */
 	static public interface IBinding extends IAccept, IPosable {
 		ISymbol parameter();

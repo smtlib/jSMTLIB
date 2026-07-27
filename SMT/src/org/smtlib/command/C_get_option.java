@@ -40,9 +40,8 @@ public class C_get_option extends Command implements Iget_option {
 	}
 	
 	/** Creates a command instance by parsing the concrete S-expression syntax */
-	static public /*@Nullable*/C_get_option parse(Parser p) throws ParserException {
+	static public C_get_option parse(Parser p) throws ParserException {
 		IKeyword key = p.parseKeyword();
-		if (key == null) return null;
 		return new C_get_option(key);
 	}
 	
