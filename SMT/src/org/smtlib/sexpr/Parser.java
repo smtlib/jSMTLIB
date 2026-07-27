@@ -155,6 +155,7 @@ public class Parser extends Lexer implements IParser {
 			while (true) { // The while loop is just so that AbortParseException can cause a retry
 				try {
 					ILexToken rp = null;
+					if (isEOD()) return null;
 					savedlp = parseLP();
 					if (savedlp == null) {
 						// We have not consumed a token - if we don't we may get into
