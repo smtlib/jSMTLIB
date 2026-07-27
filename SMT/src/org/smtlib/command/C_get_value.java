@@ -47,14 +47,14 @@ public class C_get_value extends Command implements Iget_value {
 	}
 
 	
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append("(" + commandName + " (");
+	@Override
+	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
+		p.writer().append(" (");
 		for (IExpr e: exprs()) {
 			p.writer().append(" ");
 			e.accept(p);
 		}
-		p.writer().append("))");
+		p.writer().append(")");
 	}
 	
 	@Override

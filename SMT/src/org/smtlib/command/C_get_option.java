@@ -46,11 +46,10 @@ public class C_get_option extends Command implements Iget_option {
 		return new C_get_option(key);
 	}
 	
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append("(" + commandName + " ");
+	@Override
+	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
+		p.writer().append(" ");
 		option.accept(p);
-		p.writer().append(")");
 	}
 
 	@Override

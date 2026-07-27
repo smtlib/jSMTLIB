@@ -6,8 +6,11 @@
 package org.smtlib.impl;
 
 
+import java.io.IOException;
+
 import org.smtlib.*;
 import org.smtlib.IPos.IPosable;
+import org.smtlib.sexpr.Printer;
 
 /** This abstract class is the base class for all commands within this implementation. */
 public abstract class Command implements ICommand, IPosable {
@@ -32,6 +35,17 @@ public abstract class Command implements ICommand, IPosable {
 	
 	/** The command name */
 	abstract public String commandName();
+
+	/** Writes the command arguments (everything between the opening parenthesis +
+	 *  command name and the closing parenthesis); called by {@link #write}. */
+	public abstract void writeArgs(Printer p) throws IOException, IVisitor.VisitorException;
+
+	/** Writes the full command: {@code (commandName() <writeArgs output>)}. */
+	public void write(Printer p) throws IOException, IVisitor.VisitorException {
+		p.writer().append("(" + commandName());
+		writeArgs(p);
+		p.writer().append(")");
+	}
 	
 	// FIXME - move this
 	/** Utility method for logging errors */

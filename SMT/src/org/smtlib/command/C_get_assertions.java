@@ -33,9 +33,8 @@ public class C_get_assertions extends Command implements Iget_assertions {
 	@Override
 	public String commandName() { return commandName; }
 	
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException {
-		p.writer().append("(" + commandName + ")");
+	@Override
+	public void writeArgs(Printer p) throws IOException {
 	}
 	
 	@Override

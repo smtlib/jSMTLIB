@@ -60,13 +60,12 @@ public class C_set_option extends Command implements Iset_option {
 	}
 
 
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append("(" + commandName + " ");
+	@Override
+	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
+		p.writer().append(" ");
 		option.accept(p);
 		p.writer().append(" ");
 		value.accept(p);
-		p.writer().append(")");
 	}
 	
 	@Override

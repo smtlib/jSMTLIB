@@ -62,10 +62,9 @@ public class C_define_funs_rec extends Command implements Idefine_funs_rec {
 		this.expression = expr;
 	}
 	
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException, IVisitor.VisitorException {
+	@Override
+	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
 	    // FIXME
-//		p.writer().append("(" + commandName + " ");
 //		symbol().accept(p);
 //		p.writer().append(" (");
 //		for (IDeclaration d: parameters()) {
@@ -75,7 +74,6 @@ public class C_define_funs_rec extends Command implements Idefine_funs_rec {
 //		resultSort().accept(p);
 //		p.writer().append(" ");
 //		expression().accept(p);
-//		p.writer().append(")");
 	}
 	
 	/** Parses the command arguments and creates a command instance */

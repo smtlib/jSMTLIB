@@ -67,15 +67,13 @@ public class C_what extends Command implements Iwhat {
 		return new C_what(ids);
 	}
 
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException {
+	@Override
+	public void writeArgs(Printer p) throws IOException {
 		try {
-			p.writer().append("(" + commandName);
 			for (IIdentifier id: ids()) {
 				p.writer().append(" ");
 				id.accept(p);
 			}
-			p.writer().append(")");
 		} catch (IVisitor.VisitorException e) {
 			p.error(e.getMessage());
 		}

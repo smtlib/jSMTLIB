@@ -36,14 +36,12 @@ public class C_declare_const extends C_declare_fun implements Ideclare_const {
 		super(symbol, emptyList, resultSort);
 	}
 
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append("(" + commandName + " ");
+	@Override
+	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
+		p.writer().append(" ");
 		symbol().accept(p);
 		p.writer().append(" ");
 		resultSort().accept(p);
-		p.writer().append(")");
-		
 	}
 
 	/** Parses the arguments of the command, producing a new command instance */

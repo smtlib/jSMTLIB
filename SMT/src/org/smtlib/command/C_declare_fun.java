@@ -55,9 +55,9 @@ public class C_declare_fun extends Command implements Ideclare_fun {
 		this.resultSort = resultSort;
 	}
 
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append("(" + commandName + " ");
+	@Override
+	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
+		p.writer().append(" ");
 		symbol().accept(p);
 		p.writer().append(" (");
 		for (ISort s: argSorts()) {
@@ -66,8 +66,6 @@ public class C_declare_fun extends Command implements Ideclare_fun {
 		}
 		p.writer().append(") ");
 		resultSort().accept(p);
-		p.writer().append(")");
-		
 	}
 
 	/** Parses the arguments of the command, producing a new command instance */

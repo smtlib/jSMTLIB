@@ -42,13 +42,12 @@ public class C_declare_datatype extends Command implements Ideclare_datatype {
 		// FIXME
 	}
 	
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append("(" + commandName + " ");
+	@Override
+	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
+		p.writer().append(" ");
 		sortSymbol.accept(p);
 		p.writer().append(" ");
 		datatype.accept(p);
-		p.writer().append(")");
 	}
 
 	/** Parses the arguments of the command, producing a new command instance */

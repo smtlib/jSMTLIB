@@ -45,12 +45,11 @@ public class C_exec extends Command implements Iexec {
 		return new C_exec(script);
 	}
 
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException {
+	@Override
+	public void writeArgs(Printer p) throws IOException {
 		try {
-			p.writer().append("(" + commandName + " ");
+			p.writer().append(" ");
 			script.accept(p);
-			p.writer().append(")");
 		} catch (IVisitor.VisitorException e) {
 			p.error(e.getMessage());
 		}

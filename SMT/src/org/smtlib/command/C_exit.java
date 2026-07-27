@@ -42,9 +42,8 @@ public class C_exit extends Command implements Iexit {
 		return v.visit(this);
 	}
 	
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException {
-		p.writer().append("(" + commandName + ")");
+	@Override
+	public void writeArgs(Printer p) throws IOException {
 	}
 	
 }

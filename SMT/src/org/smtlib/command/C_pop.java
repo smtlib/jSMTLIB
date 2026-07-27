@@ -52,11 +52,10 @@ public class C_pop extends Command implements Ipop {
 		return new C_pop(num);
 	}
 
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append("(" + commandName + " ");
+	@Override
+	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
+		p.writer().append(" ");
 		numeral.accept(p);
-		p.writer().append(")");
 	}
 	
 	@Override

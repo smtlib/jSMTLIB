@@ -41,11 +41,10 @@ public class C_assert extends Command implements Iassert {
 	/** The formula to assert */
 	protected IExpr formula;
 
-	/** Writes out the command in S-expression syntax using the given printer */
-	public void write(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append("(" + commandName + " ");
+	@Override
+	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
+		p.writer().append(" ");
 		formula.accept(p);
-		p.writer().append(")");
 	}
 
 	/** Parses the arguments of the command, producing a new command instance */

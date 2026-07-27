@@ -44,11 +44,10 @@ public class C_get_info extends Command implements Iget_info {
 		return new C_get_info(key);
 	}
 	
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append("(" + commandName + " ");
+	@Override
+	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
+		p.writer().append(" ");
 		option.accept(p);
-		p.writer().append(")");
 	}
 	
 	@Override

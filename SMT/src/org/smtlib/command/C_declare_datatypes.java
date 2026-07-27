@@ -44,13 +44,11 @@ public class C_declare_datatypes extends Command implements Ideclare_datatypes {
 		this.datatypes = datatypes;
 	}
 	
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append("(" + commandName + " ");
+	@Override
+	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
 //FIXME		sortSymbols.accept(p);
 		p.writer().append(" ");
 //FIXME		datatypes.accept(p);
-		p.writer().append(")");
 		// FIXME
 	}
 

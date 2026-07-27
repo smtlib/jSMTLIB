@@ -52,11 +52,10 @@ public class C_push extends Command implements Ipush {
 		return new C_push(num);
 	}
 
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append("(" + commandName + " ");
+	@Override
+	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
+		p.writer().append(" ");
 		numeral.accept(p);
-		p.writer().append(")");
 	}
 	
 	@Override

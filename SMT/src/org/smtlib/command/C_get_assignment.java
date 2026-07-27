@@ -33,9 +33,8 @@ public class C_get_assignment extends Command implements Iget_assignment {
 	@Override
 	public String commandName() { return commandName; }
 	
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException {
-		p.writer().append("(" + commandName + ")");
+	@Override
+	public void writeArgs(Printer p) throws IOException {
 	}
 	
 	@Override

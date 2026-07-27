@@ -53,9 +53,9 @@ public class C_define_sort extends Command implements Idefine_sort {
 		this.expression = expr;
 	}
 	
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append("(" + commandName + " ");
+	@Override
+	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
+		p.writer().append(" ");
 		sortSymbol().accept(p);
 		p.writer().append(" (");
 		for (IParameter d: parameters()) {
@@ -64,7 +64,6 @@ public class C_define_sort extends Command implements Idefine_sort {
 		}
 		p.writer().append(") ");
 		expression().accept(p);
-		p.writer().append(")");
 	}
 	
 	/** Parses the command arguments and creates a command instance */

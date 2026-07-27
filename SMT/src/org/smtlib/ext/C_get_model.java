@@ -34,9 +34,8 @@ public class C_get_model extends Command implements Iget_model {
 		return p.checkNoArg() ? new C_get_model() : null;
 	}
 
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException {
-		p.writer().append("(" + commandName + ")");
+	@Override
+	public void writeArgs(Printer p) throws IOException {
 	}
 	
 	@Override

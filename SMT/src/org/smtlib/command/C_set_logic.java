@@ -45,11 +45,10 @@ public class C_set_logic extends Command implements Iset_logic {
 		return new C_set_logic(logic);
 	}
 	
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append("(" + commandName + " ");
+	@Override
+	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
+		p.writer().append(" ");
 		logicName.accept(p);
-		p.writer().append(")");
 	}
 
 	@Override

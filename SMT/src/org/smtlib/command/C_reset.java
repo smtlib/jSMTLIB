@@ -47,9 +47,8 @@ public class C_reset extends Command {
 		return v.visit(this);
 	}
 	
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException {
-		p.writer().append("(" + commandName + ")");
+	@Override
+	public void writeArgs(Printer p) throws IOException {
 	}
 	
 }

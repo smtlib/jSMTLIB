@@ -59,9 +59,10 @@ public class C_echo extends Command implements Iecho {
 		return v.visit(this);
 	}
 	
-	/** Writes the command in the syntax of the given printer */
-	public void write(Printer p) throws IOException {
-		p.writer().append("(" + commandName + " " + arg + ")");  // FIXME Pretty printer for arg?
+	@Override
+	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
+		p.writer().append(" ");
+		arg.accept(p);
 	}
 	
 }
