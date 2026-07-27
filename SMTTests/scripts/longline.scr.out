@@ -1,0 +1,2 @@
+(error "Too many arguments or extraneous material after the command or missing right parenthesis")
+(error "The logic must be set before an assert command is issued")

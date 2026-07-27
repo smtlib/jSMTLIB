@@ -1,0 +1,11 @@
+##EXITCODE 1
+# Tests long-line truncation in Log.locationIndication.
+# PREFIX case: error token starts at column 152 (> 150), so the diagnostic line
+#   is shown with a "... " prefix and a scrolled window into the source.
+ASTR=$(printf '%143s' | tr ' ' 'a')
+$SMT_CMD --solver test --text "(echo \"${ASTR}\" extra)"
+
+# SUFFIX case: source line is 169 chars (> 150), so it is truncated to 150 chars
+#   and a "..." suffix is appended.
+XSTR=$(printf '%160s' | tr ' ' 'x')
+$SMT_CMD --solver test --text "(assert ${XSTR})"

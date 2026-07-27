@@ -1,0 +1,2 @@
+(error "Expected a string literal here, instead of a )")
+(error "Expected a string literal here, instead of a symbol")

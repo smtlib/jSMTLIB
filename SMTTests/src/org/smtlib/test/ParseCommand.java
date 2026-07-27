@@ -131,7 +131,7 @@ public class ParseCommand {
 
 	@Test
 	public void define_sort() throws Exception {
-		testCommand("(define-sort || (B ) Bool)");
+		testCommand("(define-sort MySort (B ) Bool)");
 	}
 
 	@Test

@@ -305,6 +305,10 @@ public class Utils {
 		StringBuilder sb = new StringBuilder();
 		int k = 1;
 		int endPos = msg.length() - 1;
+		if (msg.isEmpty() || msg.charAt(0) != '"') {
+			smtConfig.log.logError("Malformed string literal (missing opening quote): " + msg);
+			return msg;
+		}
 		while (k < endPos) {
 			if (smtConfig.isVersion(SMTLIB.V20)) { // Version 2.0
 				int kk = msg.indexOf('\\', k);
@@ -313,9 +317,21 @@ public class Utils {
 					break;
 				} else {
 					if (k < kk) sb.append(msg.substring(k, kk));
+					if (kk >= endPos) {
+						// backslash is the last character — no closing quote follows
+						smtConfig.log.logError("Malformed string literal (backslash at end, missing closing quote): " + msg);
+						break;
+					}
 					char c = msg.charAt(kk + 1);
-					// In SMT-LIB v2, \\ is \ , \" is "
-					// and \x for some other x is \x (the \ is not special)
+					if (kk + 1 == endPos && c == '"') {
+						// the escape sequence \\" consumes the closing quote — string is unterminated
+						smtConfig.log.logError("Malformed string literal (closing quote consumed by escape sequence): " + msg);
+						sb.append(c);
+						k = kk + 2;
+						break;
+					}
+					// In SMT-LIB v2.0, \\ is \ , \" is "
+					// and \x for any other x keeps both chars (\ is not an error per spec)
 					if (c == '\\' || c == '"') {
 						sb.append(c);
 					} else {
@@ -326,7 +342,8 @@ public class Utils {
 				}
 			} else { // Version 2.5ff
 				int kk = msg.indexOf('"', k);
-				if (kk == -1) { // FIXME - there should always be a " at the end of the string
+				if (kk == -1) {
+					smtConfig.log.logError("Malformed string literal (missing closing quote): " + msg);
 					sb.append(msg.substring(k, endPos));
 					break;
 				} else if (kk == endPos) {
@@ -336,12 +353,11 @@ public class Utils {
 				} else {
 					if (k < kk) sb.append(msg.substring(k, kk));
 					char c = msg.charAt(kk + 1);
-					// In SMT-LIB v2, \\ is \ , \" is "
-					// and \x for some other x is \x (the \ is not special)
+					// In SMT-LIB v2.5ff, the only escape sequence is "" (for ")
 					if (c == '"') {
 						sb.append(c);
 					} else {
-						// FIXME - invalid escape sequence
+						smtConfig.log.logError("Malformed string literal (lone quote not followed by quote): " + msg);
 					}
 					k = kk + 2;
 				}

@@ -1,0 +1,3 @@
+success
+(error "The get-unsat-assumptions command is only valid if :produce-unsat-cores has been enabled")
+(error "A get-unsat-assumptions command takes no arguments")

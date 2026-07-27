@@ -151,16 +151,17 @@ public class Driver {
 			for (String command: commands) {
 				if (verbose) System.out.println("send: " + command);
 				out.println(command);
-				do {
-					String answer = in.readLine();
-					if ("success".equals(answer)) exitcode = EX_SUCCESS;
-					else if ("sat".equals(answer)) exitcode = EX_SMT_SAT;
-					else if ("unsat".equals(answer)) exitcode = EX_SMT_UNSAT;
-					else if ("unknown".equals(answer)) exitcode = EX_SMT_UNKNOWN;
-					else if (answer.indexOf("error") != -1) exitcode = EX_SMT_ERROR;
-					else exitcode = EX_SMT_OTHER;
-					if (!quiet || verbose || exitcode != EX_SUCCESS) System.out.println("SMT: " + answer);
-				} while (in.ready());
+				// TODO: loop here accumulating lines until parentheses balance,
+				// to support multi-line responses such as (get-model).
+				String answer = in.readLine();
+				if (answer == null) break; // server closed the connection
+				if ("success".equals(answer)) exitcode = EX_SUCCESS;
+				else if ("sat".equals(answer)) exitcode = EX_SMT_SAT;
+				else if ("unsat".equals(answer)) exitcode = EX_SMT_UNSAT;
+				else if ("unknown".equals(answer)) exitcode = EX_SMT_UNKNOWN;
+				else if (answer.indexOf("error") != -1) exitcode = EX_SMT_ERROR;
+				else exitcode = EX_SMT_OTHER;
+				if (!quiet || verbose || exitcode != EX_SUCCESS) System.out.println("SMT: " + answer);
 			}
 
 			if (verbose) System.out.println("exitcode = " + exitcode);

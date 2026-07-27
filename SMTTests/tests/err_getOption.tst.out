@@ -1,0 +1,2 @@
+(error "Expected a keyword (beginning with a colon) here, instead of a numeral")
+(error "Expected a keyword (beginning with a colon) here, instead of a string-literal")

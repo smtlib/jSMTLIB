@@ -1,0 +1,4 @@
+(get-option 42)
+            ^^
+(get-option "hello")
+            ^^^^^^^

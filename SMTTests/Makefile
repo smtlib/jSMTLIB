@@ -6,7 +6,7 @@ SHELL = /bin/bash
 ##   make cov-test cov-report COV_CLASSES=../SMT/bin
 COV_CLASSES ?= ../SMT/jSMTLIB.jar
 
-.PHONY: test clean script-tests smt-tests build local-setup cov-test cov-clean cov-report cov-show
+.PHONY: test clean script-tests smt-tests junit-tests build local-setup cov-test cov-clean cov-report cov-show
 
 tests: local-setup
 	@result=0; \
@@ -42,9 +42,13 @@ script-tests:
 smt-tests:
 	bash ./runtests
 
+junit-tests:
+	bash ./runjunits
+
 clean:
 	rm -f tempout scripts/tempout
 	rm -f tests/*.actual tests/*.actual.tmp scripts/*.actual scripts/*.actual.tmp
+	rm -f bin/org/smtlib/test/UnitTests.class bin/org/smtlib/test/UnitTests\$$*.class
 
 build:
 	$(MAKE) -C ../SMT build
@@ -54,6 +58,7 @@ cov-test: local-setup
 	@result=0; \
 	COV_CLASSES=$(COV_CLASSES) COV= bash ./runscripts; ret=$$?; [ $$ret -gt 128 ] && exit $$ret; [ $$ret -ne 0 ] && result=1; \
 	COV_CLASSES=$(COV_CLASSES) COV= bash ./runtests;   ret=$$?; [ $$ret -gt 128 ] && exit $$ret; [ $$ret -ne 0 ] && result=1; \
+	COV_CLASSES=$(COV_CLASSES) COV= bash ./runjunits;  ret=$$?; [ $$ret -gt 128 ] && exit $$ret; [ $$ret -ne 0 ] && result=1; \
 	exit $$result
 
 ## Remove collected coverage data
