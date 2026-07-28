@@ -12,7 +12,7 @@ import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.ISymbol;
 
 /** This interface represents a definition of an SMT_LIB logic */
-public interface ILogic extends IAccept, ILanguage {
+public interface ILogic extends INode, ILanguage {
 	/** The name of the logic */
 	ISymbol logicName();
 	

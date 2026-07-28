@@ -17,7 +17,7 @@ import org.smtlib.IPos.IPosable;
 // FIXME - any new s-expressions
 
 /** This interface represents the functionality for any class implementing an SMT-LIB term or formula */
-public interface IExpr extends IAccept, IPosable, IAttributeValue {
+public interface IExpr extends INode, IPosable, IAttributeValue {
 	
 	/** Helpful method that indicates the class of expression, used in human-readable messages. */
 	//@ pure
@@ -148,12 +148,12 @@ public interface IExpr extends IAccept, IPosable, IAttributeValue {
 	}
 	
     /** Pairs a sort name with its arity; used in declare-datatype and declare-datatypes. */
-    static public interface ISortDeclaration extends IAccept, IPosable {
+    static public interface ISortDeclaration extends INode, IPosable {
         ISymbol symbol();
         INumeral arity();
     }
 
-    static public interface ISelector extends IAccept, IPosable {
+    static public interface ISelector extends INode, IPosable {
         ISymbol symbol();
         ISort sort();
         //@ pure
@@ -161,7 +161,7 @@ public interface IExpr extends IAccept, IPosable, IAttributeValue {
         String toString();
     }
     
-    static public interface IConstructor extends IAccept, IPosable {
+    static public interface IConstructor extends INode, IPosable {
         ISymbol symbol();
         List<? extends ISelector> selectors();
         //@ pure
@@ -169,7 +169,7 @@ public interface IExpr extends IAccept, IPosable, IAttributeValue {
         String toString();
     }
     
-    static public interface IDatatype extends IAccept, IPosable {
+    static public interface IDatatype extends INode, IPosable {
         List<IConstructor> constructors();
         /*@ nullable */ List<ISymbol> symbols();
         //@ pure
@@ -178,7 +178,7 @@ public interface IExpr extends IAccept, IPosable, IAttributeValue {
     }
     
 	/** This interface represents SMT-LIB attribute and infoflag names. */
-	static public interface IKeyword extends IAccept, IPosable {
+	static public interface IKeyword extends INode, IPosable {
 		/** A canonical representation of keyword key */
 		//@ pure
 		String value();
@@ -307,7 +307,7 @@ public interface IExpr extends IAccept, IPosable, IAttributeValue {
 	}
 	
 	/** This interface represents an SMT-LIB attribute-value pair */
-	static public interface IAttribute<TT extends IAttributeValue> extends IAccept, IPosable, IResponse {
+	static public interface IAttribute<TT extends IAttributeValue> extends INode, IPosable, IResponse {
 		//@ pure
 		IKeyword keyword();
 		
@@ -316,20 +316,20 @@ public interface IExpr extends IAccept, IPosable, IAttributeValue {
 	}
 	
     /** This interface represents a declaration of a parameter and its sort */
-    static public interface IDeclaration extends IAccept, IPosable {
+    static public interface IDeclaration extends INode, IPosable {
         ISymbol parameter();
         ISort sort();
     }
     
     /** This interface represents a declaration of a parameter and its sort */
-    static public interface IFunctionDeclaration extends IAccept, IPosable {
+    static public interface IFunctionDeclaration extends INode, IPosable {
         ISymbol symbol();
         List<IDeclaration> parameters();
         ISort sort();
     }
     
 	/** This interface represents a binding of a parameter and an expression */
-	static public interface IBinding extends IAccept, IPosable {
+	static public interface IBinding extends INode, IPosable {
 		ISymbol parameter();
 		IExpr expr();
 	}
@@ -366,13 +366,13 @@ public interface IExpr extends IAccept, IPosable, IAttributeValue {
 
 	/** This interface represents a match pattern: either a bare symbol (variable/nullary-constructor)
 	 *  or a constructor applied to zero or more variable symbols. */
-	static public interface IPattern extends IAccept, IPosable {
+	static public interface IPattern extends INode, IPosable {
 		ISymbol constructor();
 		List<ISymbol> params();
 	}
 
 	/** This interface represents one case in a match expression: a pattern and its body. */
-	static public interface IMatchCase extends IAccept, IPosable {
+	static public interface IMatchCase extends INode, IPosable {
 		IPattern pattern();
 		IExpr body();
 	}

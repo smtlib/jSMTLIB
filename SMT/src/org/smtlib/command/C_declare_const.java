@@ -58,6 +58,6 @@ public class C_declare_const extends C_declare_fun implements Ideclare_const {
 
 	@Override
 	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
+		return v.visit((Ideclare_const)this);
 	}
 }

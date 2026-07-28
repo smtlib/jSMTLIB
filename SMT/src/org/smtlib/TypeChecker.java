@@ -624,8 +624,12 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	public /*@Nullable*/ ISort visit(ISymbol e) {
 		IFcnSort sort = null;
 		String value = e.value();
-		if (Utils.TRUE.equals(value) || Utils.FALSE.equals(value)) { 
-			return save(e,symTable.smtConfig.sortFactory.Bool()); 
+		if ("_".equals(value)) {
+			error("The _ wildcard may only appear in match patterns", e.pos());
+			return null;
+		}
+		if (Utils.TRUE.equals(value) || Utils.FALSE.equals(value)) {
+			return save(e,symTable.smtConfig.sortFactory.Bool());
 		} else {
 			Variable v = currentScope.get(e);
 			if (v != null) {

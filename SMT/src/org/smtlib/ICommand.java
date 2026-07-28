@@ -21,7 +21,7 @@ import org.smtlib.ISort.IParameter;
  * to type-check the command and to execute it.
  * @author David R. Cok
  */
-public interface ICommand extends IAccept {
+public interface ICommand extends INode {
 	
 	/** This interface defines classes that implement techniques for mapping a command name to a class
 	 * that implements that command.
@@ -130,7 +130,7 @@ public interface ICommand extends IAccept {
 	
 	/** Interface to be implemented by all objects representing SMT-LIB scripts. A script may consist of a file or an explicit list of commands. */
 	// FIXME - move to org.smtlib?
-	static public interface IScript extends IAccept {
+	static public interface IScript extends INode {
 		/*@Nullable*/ IStringLiteral filename();
 		/*@Nullable*/ List<ICommand> commands();
 		IResponse execute(ISolver solver);

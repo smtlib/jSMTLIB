@@ -13,7 +13,7 @@ import org.smtlib.IPos.IPosable;
 import org.smtlib.sexpr.ISexpr.ISeq;
 
 /** This interface represents responses that can be received from SMT-LIB commands. */
-public interface IResponse extends IAccept {
+public interface IResponse extends INode {
 	
 	/** Returns true if the response is a SUCCESS response */
 	boolean isOK();

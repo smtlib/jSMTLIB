@@ -245,12 +245,12 @@ public class Solver_z3_4_5b extends Solver_smt implements ISolver {
 
 //	
 //	/** Translates an S-expression into SMT syntax */
-//	protected String translate(IAccept sexpr) throws IVisitor.VisitorException {
+//	protected String translate(INode sexpr) throws IVisitor.VisitorException {
 //		return translateSMT(sexpr);
 //	}
 //	
 //	/** Translates an S-expression into standard SMT syntax */
-//	protected String translateSMT(IAccept sexpr) throws IVisitor.VisitorException {
+//	protected String translateSMT(INode sexpr) throws IVisitor.VisitorException {
 //		StringWriter sw = new StringWriter();
 //		org.smtlib.solvers.Printer.write(sw,sexpr);
 //		return sw.toString();

@@ -7,7 +7,7 @@ package org.smtlib.sexpr;
 
 import java.util.List;
 
-import org.smtlib.IAccept;
+import org.smtlib.INode;
 import org.smtlib.IAttributeValue;
 import org.smtlib.IPos.IPosable;
 
@@ -15,7 +15,7 @@ import org.smtlib.IPos.IPosable;
  * they are used as values for attributes in the standard concrete
  * syntax.  
  */
-public interface ISexpr extends IPosable, IAttributeValue, IAccept {
+public interface ISexpr extends IPosable, IAttributeValue, INode {
 	
 	/** A word characterizing the subclass */
 	String kind();

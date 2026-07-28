@@ -743,7 +743,7 @@ public class Solver_yices extends Solver_test implements ISolver {
 		
 		//@ requires iter.hasNext();
 		//@ requires length > 0;
-		private <T extends IAccept> String remove_chainable(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
+		private <T extends INode> String remove_chainable(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
 			StringBuilder sb = new StringBuilder();
 			sb.append("(and ");
 			T left = iter.next();

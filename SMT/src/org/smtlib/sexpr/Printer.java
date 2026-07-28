@@ -6,8 +6,6 @@
 package org.smtlib.sexpr;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.List;
 
 import org.smtlib.*;
@@ -72,7 +70,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	
 	/** Prints the argument to the receiver */
 	@Override
-	public <T extends IAccept> void print(T expr) throws IVisitor.VisitorException {
+	public <T extends INode> void print(T expr) throws IVisitor.VisitorException {
 		expr.accept(this);
 	}
 	
@@ -80,7 +78,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	 * but does not modify the receiver.
 	 */
 	@Override
-	public <T extends IAccept> String toString(T expr) {
+	public <T extends INode> String toString(T expr) {
 		try {
 			StringWriter sw = new StringWriter();
 			expr.accept(new Printer(sw)); // FIXME = should be same type as receiver
@@ -91,7 +89,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	}
 
 	/** Writes the given expression and outputs as a String */
-	static public <T extends IAccept> String write(T e) {
+	static public <T extends INode> String write(T e) {
 		try {
 			StringWriter w = new StringWriter();
 			e.accept(new Printer(w));
@@ -102,13 +100,13 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	}
 
 	/** Writes the given expression to the given writer */
-	static public <T extends IAccept> void write(Writer w, T e) throws IVisitor.VisitorException {
+	static public <T extends INode> void write(Writer w, T e) throws IVisitor.VisitorException {
 		e.accept(new Printer(w));
 		try { w.flush(); } catch (IOException ex) { throw new IVisitor.VisitorException(ex); }
 	}
 
 	/** Writes the given expression to the given stream */
-	static public <T extends IAccept> void write(PrintStream w, T e)  throws IVisitor.VisitorException {
+	static public <T extends INode> void write(PrintStream w, T e)  throws IVisitor.VisitorException {
 		Writer wr = new OutputStreamWriter(w);
 		e.accept(new Printer(wr));
 		try { 
@@ -493,7 +491,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 		}
 		
 		/** Writes the given expression to the given stream */
-		static public <T extends IAccept> void write(PrintStream w, T e)  throws IVisitor.VisitorException {
+		static public <T extends INode> void write(PrintStream w, T e)  throws IVisitor.VisitorException {
 			Writer wr = new OutputStreamWriter(w);
 			e.accept(new Printer.WithLines(wr));
 			try { 
@@ -533,22 +531,277 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	}
 
-	@Override
-	public Void visit(ICommand e) throws IVisitor.VisitorException {
-		Class<?> clazz = e.getClass();
+	/** Functional interface for the argument-printing lambda passed to {@link #printCommand}. */
+	@FunctionalInterface
+	protected interface PrintArgs {
+		void run() throws IVisitor.VisitorException, IOException;
+	}
+
+	/** Prints {@code (name args)} — the space between name and args is emitted here,
+	 *  so the {@code args} lambda should not prepend one. Subclasses may override to
+	 *  change the overall command format. */
+	protected Void printCommand(String name, ICommand e, PrintArgs args) throws IVisitor.VisitorException {
 		try {
-			Method m = clazz.getMethod("write",Printer.class);
-			m.invoke(e,this);
-		} catch (IllegalAccessException ex) {
+			w.append("(" + name + " ");
+			args.run();
+			w.append(")");
+		} catch (IOException ex) {
 			throw new IVisitor.VisitorException(ex,
 					e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null);
-		} catch (InvocationTargetException ex) {
-			throw new VisitorException(ex.getTargetException(),
-					e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null);
-		} catch (NoSuchMethodException ex) {
-			throw new VisitorException("No write method for " + clazz + " and " + this.getClass(),null);
 		}
 		return null;
+	}
+
+	/** Prints a no-argument command: {@code (name)}. Subclasses may override to change format. */
+	protected Void printCommand(String name, ICommand e) throws IVisitor.VisitorException {
+		try {
+			w.append("(" + name + ")");
+		} catch (IOException ex) {
+			throw new IVisitor.VisitorException(ex,
+					e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null);
+		}
+		return null;
+	}
+
+	/** Fallback for any command type not covered by a specific visit method. */
+	@Override
+	public Void visit(ICommand e) throws IVisitor.VisitorException {
+		throw new IVisitor.VisitorException(
+				"No specific visit method for command type " + e.getClass(), null);
+	}
+
+	@Override
+	public Void visit(ICommand.Iassert e) throws IVisitor.VisitorException {
+		return printCommand("assert", e, () -> e.expr().accept(this));
+	}
+
+	@Override
+	public Void visit(ICommand.Icheck_sat e) throws IVisitor.VisitorException {
+		return printCommand("check-sat", e);
+	}
+
+	@Override
+	public Void visit(ICommand.Icheck_sat_assuming e) throws IVisitor.VisitorException {
+		return printCommand("check-sat-assuming", e, () -> {
+			w.append("(");
+			for (IExpr x : e.exprs()) { w.append(" "); x.accept(this); }
+			w.append(")");
+		});
+	}
+
+	@Override
+	public Void visit(ICommand.Ideclare_const e) throws IVisitor.VisitorException {
+		return printCommand("declare-const", e, () -> {
+			e.symbol().accept(this);
+			w.append(" ");
+			e.resultSort().accept(this);
+		});
+	}
+
+	@Override
+	public Void visit(ICommand.Ideclare_datatype e) throws IVisitor.VisitorException {
+		return printCommand("declare-datatype", e, () -> {
+			e.sortDeclaration().symbol().accept(this);
+			w.append(" ");
+			e.datatype().accept(this);
+		});
+	}
+
+	@Override
+	public Void visit(ICommand.Ideclare_datatypes e) throws IVisitor.VisitorException {
+		return printCommand("declare-datatypes", e, () -> {
+			w.append("(");
+			for (IExpr.ISortDeclaration sd : e.sortDeclarations()) { w.append(" "); sd.accept(this); }
+			w.append(") (");
+			for (IExpr.IDatatype dt : e.datatypes()) { w.append(" "); dt.accept(this); }
+			w.append(")");
+		});
+	}
+
+	@Override
+	public Void visit(ICommand.Ideclare_fun e) throws IVisitor.VisitorException {
+		return printCommand("declare-fun", e, () -> {
+			e.symbol().accept(this);
+			w.append(" (");
+			for (ISort s : e.argSorts()) { s.accept(this); w.append(" "); }
+			w.append(") ");
+			e.resultSort().accept(this);
+		});
+	}
+
+	@Override
+	public Void visit(ICommand.Ideclare_sort e) throws IVisitor.VisitorException {
+		return printCommand("declare-sort", e, () -> {
+			e.sortSymbol().accept(this);
+			w.append(" ");
+			e.arity().accept(this);
+		});
+	}
+
+	@Override
+	public Void visit(ICommand.Ideclare_sort_parameter e) throws IVisitor.VisitorException {
+		return printCommand("declare-sort-parameter", e, () -> e.sortSymbol().accept(this));
+	}
+
+	@Override
+	public Void visit(ICommand.Idefine_const e) throws IVisitor.VisitorException {
+		return printCommand("define-const", e, () -> {
+			e.symbol().accept(this);
+			w.append(" ");
+			e.resultSort().accept(this);
+			w.append(" ");
+			e.expression().accept(this);
+		});
+	}
+
+	@Override
+	public Void visit(ICommand.Idefine_fun e) throws IVisitor.VisitorException {
+		return printCommand("define-fun", e, () -> {
+			e.symbol().accept(this);
+			w.append(" (");
+			for (IExpr.IDeclaration d : e.parameters()) d.accept(this);
+			w.append(") ");
+			e.resultSort().accept(this);
+			w.append(" ");
+			e.expression().accept(this);
+		});
+	}
+
+	@Override
+	public Void visit(ICommand.Idefine_fun_rec e) throws IVisitor.VisitorException {
+		return printCommand("define-fun-rec", e, () -> {
+			e.symbol().accept(this);
+			w.append(" (");
+			for (IExpr.IDeclaration d : e.parameters()) d.accept(this);
+			w.append(") ");
+			e.resultSort().accept(this);
+			w.append(" ");
+			e.expression().accept(this);
+		});
+	}
+
+	@Override
+	public Void visit(ICommand.Idefine_funs_rec e) throws IVisitor.VisitorException {
+		return printCommand("define-funs-rec", e, () -> {
+			w.append("(");
+			for (IExpr.IFunctionDeclaration d : e.declarations()) { d.accept(this); w.append(" "); }
+			w.append(") (");
+			for (IExpr body : e.bodies()) { body.accept(this); w.append(" "); }
+			w.append(")");
+		});
+	}
+
+	@Override
+	public Void visit(ICommand.Idefine_sort e) throws IVisitor.VisitorException {
+		return printCommand("define-sort", e, () -> {
+			e.sortSymbol().accept(this);
+			w.append(" (");
+			for (ISort.IParameter d : e.parameters()) { d.accept(this); w.append(" "); }
+			w.append(") ");
+			e.expression().accept(this);
+		});
+	}
+
+	@Override
+	public Void visit(ICommand.Iecho e) throws IVisitor.VisitorException {
+		return printCommand("echo", e, () -> e.arg().accept(this));
+	}
+
+	@Override
+	public Void visit(ICommand.Iexit e) throws IVisitor.VisitorException {
+		return printCommand("exit", e);
+	}
+
+	@Override
+	public Void visit(ICommand.Iget_assertions e) throws IVisitor.VisitorException {
+		return printCommand("get-assertions", e);
+	}
+
+	@Override
+	public Void visit(ICommand.Iget_assignment e) throws IVisitor.VisitorException {
+		return printCommand("get-assignment", e);
+	}
+
+	@Override
+	public Void visit(ICommand.Iget_info e) throws IVisitor.VisitorException {
+		return printCommand("get-info", e, () -> e.infoflag().accept(this));
+	}
+
+	@Override
+	public Void visit(ICommand.Iget_model e) throws IVisitor.VisitorException {
+		return printCommand("get-model", e);
+	}
+
+	@Override
+	public Void visit(ICommand.Iget_option e) throws IVisitor.VisitorException {
+		return printCommand("get-option", e, () -> e.option().accept(this));
+	}
+
+	@Override
+	public Void visit(ICommand.Iget_proof e) throws IVisitor.VisitorException {
+		return printCommand("get-proof", e);
+	}
+
+	@Override
+	public Void visit(ICommand.Iget_unsat_assumptions e) throws IVisitor.VisitorException {
+		return printCommand("get-unsat-assumptions", e);
+	}
+
+	@Override
+	public Void visit(ICommand.Iget_unsat_core e) throws IVisitor.VisitorException {
+		return printCommand("get-unsat-core", e);
+	}
+
+	@Override
+	public Void visit(ICommand.Iget_value e) throws IVisitor.VisitorException {
+		return printCommand("get-value", e, () -> {
+			w.append("(");
+			for (IExpr x : e.exprs()) { w.append(" "); x.accept(this); }
+			w.append(")");
+		});
+	}
+
+	@Override
+	public Void visit(ICommand.Ipop e) throws IVisitor.VisitorException {
+		return printCommand("pop", e, () -> e.number().accept(this));
+	}
+
+	@Override
+	public Void visit(ICommand.Ipush e) throws IVisitor.VisitorException {
+		return printCommand("push", e, () -> e.number().accept(this));
+	}
+
+	@Override
+	public Void visit(ICommand.Ireset e) throws IVisitor.VisitorException {
+		return printCommand("reset", e);
+	}
+
+	@Override
+	public Void visit(ICommand.Ireset_assertions e) throws IVisitor.VisitorException {
+		return printCommand("reset-assertions", e);
+	}
+
+	@Override
+	public Void visit(ICommand.Iset_info e) throws IVisitor.VisitorException {
+		return printCommand("set-info", e, () -> {
+			e.infoflag().accept(this);
+			w.append(" ");
+			e.value().accept(this);
+		});
+	}
+
+	@Override
+	public Void visit(ICommand.Iset_logic e) throws IVisitor.VisitorException {
+		return printCommand("set-logic", e, () -> e.logic().accept(this));
+	}
+
+	@Override
+	public Void visit(ICommand.Iset_option e) throws IVisitor.VisitorException {
+		return printCommand("set-option", e, () -> {
+			e.option().accept(this);
+			w.append(" ");
+			e.value().accept(this);
+		});
 	}
 
 	@Override

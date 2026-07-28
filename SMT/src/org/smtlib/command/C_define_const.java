@@ -59,6 +59,6 @@ public class C_define_const extends C_define_fun implements Idefine_const {
 
 	@Override
 	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
+		return v.visit((Idefine_const)this);
 	}
 }

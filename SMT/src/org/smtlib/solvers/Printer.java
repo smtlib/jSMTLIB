@@ -6,7 +6,7 @@ import java.io.PrintStream;
 import java.io.StringWriter;
 import java.io.Writer;
 
-import org.smtlib.IAccept;
+import org.smtlib.INode;
 import org.smtlib.IVisitor;
 import org.smtlib.IExpr.IDeclaration;
 import org.smtlib.IExpr.IExists;
@@ -27,7 +27,7 @@ public class Printer extends org.smtlib.sexpr.Printer {
 	}
 	
 	@Override
-	public <T extends IAccept> String toString(T expr) {
+	public <T extends INode> String toString(T expr) {
 		try {
 			StringWriter sw = new StringWriter();
 			expr.accept(new Printer(sw));
@@ -38,7 +38,7 @@ public class Printer extends org.smtlib.sexpr.Printer {
 	}
 
 	/** Writes the given expression and outputs as a String */
-	static public <T extends IAccept> String write(T e) {
+	static public <T extends INode> String write(T e) {
 		try {
 			StringWriter w = new StringWriter();
 			e.accept(new Printer(w));
@@ -49,13 +49,13 @@ public class Printer extends org.smtlib.sexpr.Printer {
 	}
 
 	/** Writes the given expression to the given writer */
-	static public <T extends IAccept> void write(Writer w, T e) throws IVisitor.VisitorException {
+	static public <T extends INode> void write(Writer w, T e) throws IVisitor.VisitorException {
 		e.accept(new Printer(w));
 		try { w.flush(); } catch (IOException ex) { throw new IVisitor.VisitorException(ex); }
 	}
 
 	/** Writes the given expression to the given stream */
-	static public <T extends IAccept> void write(PrintStream w, T e)  throws IVisitor.VisitorException {
+	static public <T extends INode> void write(PrintStream w, T e)  throws IVisitor.VisitorException {
 		Writer wr = new OutputStreamWriter(w);
 		e.accept(new Printer(wr));
 		try { 

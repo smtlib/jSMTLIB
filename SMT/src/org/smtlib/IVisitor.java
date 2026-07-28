@@ -50,6 +50,40 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 	public /*@Nullable*/T visit(ISymbol e) throws VisitorException;
 	public /*@Nullable*/T visit(IScript e) throws VisitorException;
 	public /*@Nullable*/T visit(ICommand e) throws VisitorException;
+	// Specific visit methods for ICommand subtypes; by default delegate to visit(ICommand e)
+	// so that existing IVisitor implementations need not be updated.
+	default public /*@Nullable*/T visit(ICommand.Iassert e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Icheck_sat e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Icheck_sat_assuming e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Ideclare_const e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Ideclare_datatype e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Ideclare_datatypes e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Ideclare_fun e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Ideclare_sort e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Ideclare_sort_parameter e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Idefine_const e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Idefine_fun e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Idefine_fun_rec e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Idefine_funs_rec e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Idefine_sort e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Iecho e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Iexit e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Iget_assertions e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Iget_assignment e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Iget_info e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Iget_model e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Iget_option e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Iget_proof e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Iget_unsat_assumptions e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Iget_unsat_core e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Iget_value e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Ipop e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Ipush e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Ireset e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Ireset_assertions e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Iset_info e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Iset_logic e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Iset_option e) throws VisitorException { return visit((ICommand)e); }
 	public /*@Nullable*/T visit(IExpr.IMatch e) throws VisitorException;
 	public /*@Nullable*/T visit(IExpr.IMatchCase e) throws VisitorException;
 	public /*@Nullable*/T visit(IExpr.IPattern e) throws VisitorException;
@@ -205,6 +239,39 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 			return null;
 		}
 
+		@Override public /*@Nullable*/T visit(ICommand.Iassert e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Icheck_sat e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Icheck_sat_assuming e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Ideclare_const e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Ideclare_datatype e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Ideclare_datatypes e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Ideclare_fun e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Ideclare_sort e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Ideclare_sort_parameter e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Idefine_const e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Idefine_fun e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Idefine_fun_rec e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Idefine_funs_rec e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Idefine_sort e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Iecho e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Iexit e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Iget_assertions e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Iget_assignment e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Iget_info e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Iget_model e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Iget_option e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Iget_proof e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Iget_unsat_assumptions e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Iget_unsat_core e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Iget_value e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Ipop e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Ipush e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Ireset e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Ireset_assertions e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Iset_info e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Iset_logic e) throws VisitorException { return null; }
+		@Override public /*@Nullable*/T visit(ICommand.Iset_option e) throws VisitorException { return null; }
+
 		@Override
 		public /*@Nullable*/T visit(IResponse e) throws VisitorException {
 			return null;
@@ -306,8 +373,8 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 		@Override
 		public /*@Nullable*/T visit(IAttribute<?> e) throws VisitorException {
 			e.keyword().accept(this);
-			if (e.attrValue() instanceof IAccept) {
-				((IAccept)e.attrValue()).accept(this);
+			if (e.attrValue() instanceof INode) {
+				((INode)e.attrValue()).accept(this);
 			}
 			return null;
 		}
@@ -454,10 +521,135 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 		}
 
 		// This should be implemented by each command, so this could be abstract
-		// For now at least, we implement it here to avoid the nuisance of 
+		// For now at least, we implement it here to avoid the nuisance of
 		// requiring implementations when it is not needed
 		@Override
 		public /*@Nullable*/T visit(ICommand e) throws VisitorException {
+			return null;
+		}
+
+		@Override
+		public /*@Nullable*/T visit(ICommand.Iassert e) throws VisitorException {
+			e.expr().accept(this); return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Icheck_sat e) throws VisitorException { return null; }
+		@Override
+		public /*@Nullable*/T visit(ICommand.Icheck_sat_assuming e) throws VisitorException {
+			for (IExpr x : e.exprs()) x.accept(this); return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Ideclare_const e) throws VisitorException {
+			e.symbol().accept(this); e.resultSort().accept(this); return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Ideclare_datatype e) throws VisitorException {
+			e.sortDeclaration().accept(this); e.datatype().accept(this); return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Ideclare_datatypes e) throws VisitorException {
+			for (IExpr.ISortDeclaration sd : e.sortDeclarations()) sd.accept(this);
+			for (IExpr.IDatatype dt : e.datatypes()) dt.accept(this);
+			return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Ideclare_fun e) throws VisitorException {
+			e.symbol().accept(this);
+			for (ISort s : e.argSorts()) s.accept(this);
+			e.resultSort().accept(this); return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Ideclare_sort e) throws VisitorException {
+			e.sortSymbol().accept(this); e.arity().accept(this); return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Ideclare_sort_parameter e) throws VisitorException {
+			e.sortSymbol().accept(this); return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Idefine_const e) throws VisitorException {
+			e.symbol().accept(this); e.resultSort().accept(this); e.expression().accept(this); return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Idefine_fun e) throws VisitorException {
+			e.symbol().accept(this);
+			for (IDeclaration d : e.parameters()) d.accept(this);
+			e.resultSort().accept(this); e.expression().accept(this); return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Idefine_fun_rec e) throws VisitorException {
+			e.symbol().accept(this);
+			for (IDeclaration d : e.parameters()) d.accept(this);
+			e.resultSort().accept(this); e.expression().accept(this); return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Idefine_funs_rec e) throws VisitorException {
+			for (IExpr.IFunctionDeclaration d : e.declarations()) d.accept(this);
+			for (IExpr body : e.bodies()) body.accept(this);
+			return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Idefine_sort e) throws VisitorException {
+			e.sortSymbol().accept(this);
+			for (IParameter p : e.parameters()) p.accept(this);
+			e.expression().accept(this); return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Iecho e) throws VisitorException {
+			e.arg().accept(this); return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Iexit e) throws VisitorException { return null; }
+		@Override
+		public /*@Nullable*/T visit(ICommand.Iget_assertions e) throws VisitorException { return null; }
+		@Override
+		public /*@Nullable*/T visit(ICommand.Iget_assignment e) throws VisitorException { return null; }
+		@Override
+		public /*@Nullable*/T visit(ICommand.Iget_info e) throws VisitorException {
+			e.infoflag().accept(this); return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Iget_model e) throws VisitorException { return null; }
+		@Override
+		public /*@Nullable*/T visit(ICommand.Iget_option e) throws VisitorException {
+			e.option().accept(this); return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Iget_proof e) throws VisitorException { return null; }
+		@Override
+		public /*@Nullable*/T visit(ICommand.Iget_unsat_assumptions e) throws VisitorException { return null; }
+		@Override
+		public /*@Nullable*/T visit(ICommand.Iget_unsat_core e) throws VisitorException { return null; }
+		@Override
+		public /*@Nullable*/T visit(ICommand.Iget_value e) throws VisitorException {
+			for (IExpr x : e.exprs()) x.accept(this); return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Ipop e) throws VisitorException {
+			e.number().accept(this); return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Ipush e) throws VisitorException {
+			e.number().accept(this); return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Ireset e) throws VisitorException { return null; }
+		@Override
+		public /*@Nullable*/T visit(ICommand.Ireset_assertions e) throws VisitorException { return null; }
+		@Override
+		public /*@Nullable*/T visit(ICommand.Iset_info e) throws VisitorException {
+			e.infoflag().accept(this);
+			if (e.value() instanceof INode) ((INode)e.value()).accept(this);
+			return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Iset_logic e) throws VisitorException {
+			e.logic().accept(this); return null;
+		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Iset_option e) throws VisitorException {
+			e.option().accept(this);
+			if (e.value() instanceof INode) ((INode)e.value()).accept(this);
 			return null;
 		}
 

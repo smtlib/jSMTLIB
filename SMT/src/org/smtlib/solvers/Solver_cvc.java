@@ -762,7 +762,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 		
 		//@ requires iter.hasNext();
 		//@ requires length > 0;
-		private <T extends IAccept> String remove_chainable(String newName, int length, Iterator<IExpr> iter ) throws IVisitor.VisitorException {
+		private <T extends INode> String remove_chainable(String newName, int length, Iterator<IExpr> iter ) throws IVisitor.VisitorException {
 			StringBuilder sb = new StringBuilder();
 			if (length == 2) {
 				sb.append("(");

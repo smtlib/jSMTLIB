@@ -193,7 +193,7 @@ public class Solver_z3_4_5 extends AbstractSolver implements ISolver {
 	}
 
 	/** Translates an S-expression into Z3 syntax */
-	protected String translate(IAccept sexpr) throws IVisitor.VisitorException {
+	protected String translate(INode sexpr) throws IVisitor.VisitorException {
 		// The z3 solver uses the standard S-expression concrete syntax, but not quite
 		// so we have to use our own translator
 		StringWriter sw = new StringWriter();
@@ -202,7 +202,7 @@ public class Solver_z3_4_5 extends AbstractSolver implements ISolver {
 	}
 	
 	/** Translates an S-expression into standard SMT syntax */
-	protected String translateSMT(IAccept sexpr) throws IVisitor.VisitorException {
+	protected String translateSMT(INode sexpr) throws IVisitor.VisitorException {
 		// The z3 solver uses the standard S-expression concrete syntax, but not quite
 		StringWriter sw = new StringWriter();
 		org.smtlib.sexpr.Printer.write(sw,sexpr);
@@ -773,7 +773,7 @@ public class Solver_z3_4_5 extends AbstractSolver implements ISolver {
 		
 		//@ requires iter.hasNext();
 		//@ requires length > 0;
-		protected <T extends IAccept> void chainable(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
+		protected <T extends INode> void chainable(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
 			try {
 				w.append("(and ");
 				T left = iter.next();

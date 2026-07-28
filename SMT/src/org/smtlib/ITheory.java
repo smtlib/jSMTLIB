@@ -11,7 +11,7 @@ import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IExpr.IKeyword;
 
 /** This interface represents a definition of an SMT-LIB theory */
-public interface ITheory extends IAccept {
+public interface ITheory extends INode {
 	/** The name of the theory */
 	ISymbol theoryName();
 	

@@ -10,7 +10,7 @@ package org.smtlib;
  * subtypes implement the accept method
  * @author David Cok
  */
-public interface IAccept {
+public interface INode {
 	/** The accept method corresponding to IVisitor, to be implemented in each subclass
 	 * as { return v.visit(this); }
 	 * @param <T> the return type desired from the visit methods

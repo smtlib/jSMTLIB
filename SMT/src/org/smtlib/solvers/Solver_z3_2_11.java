@@ -83,7 +83,7 @@ public class Solver_z3_2_11 extends Solver_z3_4_3 {
 
 	/** Translates an S-expression into Z3 syntax */
 	@Override
-	protected String translate(IAccept sexpr) throws IVisitor.VisitorException {
+	protected String translate(INode sexpr) throws IVisitor.VisitorException {
 		// The z3 solver uses the standard S-expression concrete syntax, but not quite
 		// so we have to use our own translator
 		StringWriter sw = new StringWriter();

@@ -33,7 +33,7 @@ import org.smtlib.IVisitor.VisitorException;
  * useful internally within jSMTLIB.
  * </UL>
  */
-public interface ISort extends IAccept, IPosable {
+public interface ISort extends INode, IPosable {
 
 	/** Structural equality after expansion of abbreviations, but without any substitution of free parameters. */
 	//@ pure
@@ -62,13 +62,13 @@ public interface ISort extends IAccept, IPosable {
 	//@ pure
 	boolean equalsNoExpand(ISort sort);
 	
-	static public interface IDatatype extends IAccept {
+	static public interface IDatatype extends INode {
 	    // FIXME
 	}
 	
 	/** A super-interface for definitions of new sort ids.
 	 */
-	static public interface IDefinition extends IAccept {
+	static public interface IDefinition extends INode {
 		/** The identifier for the sort symbol */
 		//@ pure
 		IIdentifier identifier();
