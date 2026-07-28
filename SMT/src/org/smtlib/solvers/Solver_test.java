@@ -199,7 +199,7 @@ public class Solver_test implements ISolver {
 			if (e instanceof IFcnExpr && ((IFcnExpr)e).args().size() != 0) {
 				IFcnExpr f = (IFcnExpr)e;
 				if (f.args().size() != 1 || !f.head().toString().equals("not")) {
-					return smtConfig.responseFactory.error("Each element of a check-sat-assuming command must be either p or (not p), where p is a Bool constant");
+					return smtConfig.responseFactory.error("Each element of a check-sat-assuming command must be either p or (not p), where p is a Bool constant (required in V2.6 and earlier)");
 				}
 				e = f.args().get(0);
 			}

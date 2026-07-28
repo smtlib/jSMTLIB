@@ -1,0 +1,3 @@
+success
+success
+(error "Symbol indices in indexed identifiers require SMT-LIB V2.5 or later")

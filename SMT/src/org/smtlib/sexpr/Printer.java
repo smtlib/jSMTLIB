@@ -192,9 +192,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 		try {
 			w.append("(" + Utils.UNDERSCORE + " ");
 			e.headSymbol().accept(this);
-			for (INumeral n: e.numerals()) {
+			for (IExpr idx: e.indices()) {
 				w.append(" ");
-				w.append(n.value().toString());
+				idx.accept(this);
 			}
 			w.append(")");
 		} catch (IOException ex) {

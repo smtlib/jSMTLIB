@@ -223,42 +223,51 @@ public abstract class SMTExpr implements IExpr {
 	/** This class represents an SMT parameterized-identifier AST */
 	static public class ParameterizedIdentifier extends Pos.Posable implements IParameterizedIdentifier {
 		protected IIdentifier head;
-		protected List<INumeral>  nums;
-		
+		protected List<IExpr> idxs;
+
 		public ParameterizedIdentifier(IIdentifier symbol, List<INumeral> nums) {
 			this.head = symbol;
-			this.nums = nums;
+			this.idxs = new java.util.ArrayList<IExpr>(nums);
 		}
-		
+
+		public ParameterizedIdentifier(IIdentifier symbol, List<IExpr> idxs, boolean hasSymbolIndex) {
+			this.head = symbol;
+			this.idxs = idxs;
+		}
+
 		@Override
 		public IIdentifier head() { return this; }
-		
+
 		@Override
 		public ISymbol headSymbol() { return head.headSymbol(); }
-		
+
 		@Override
-		public List<INumeral> numerals() {return nums; }
-		
+		public List<IExpr> indices() { return idxs; }
+
+		@Override
+		public List<INumeral> numerals() {
+			List<INumeral> result = new java.util.ArrayList<>();
+			for (IExpr e : idxs) { if (e instanceof INumeral) result.add((INumeral) e); }
+			return result;
+		}
+
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
 			if (!(o instanceof ParameterizedIdentifier)) return false;
 			ParameterizedIdentifier p = (ParameterizedIdentifier)o;
-			if (! this.headSymbol().equals(p.headSymbol())) return false;
-			if (this.nums.size() != p.nums.size()) return false;
-			for (int i=0; i< this.nums.size(); i++) {
-				if (!this.nums.get(i).equals(p.nums.get(i))) return false;
+			if (!this.headSymbol().equals(p.headSymbol())) return false;
+			if (this.idxs.size() != p.idxs.size()) return false;
+			for (int i = 0; i < this.idxs.size(); i++) {
+				if (!this.idxs.get(i).equals(p.idxs.get(i))) return false;
 			}
 			return true;
 		}
-		
+
 		@Override
 		public int hashCode() {
 			int hash = headSymbol().hashCode();
-			Iterator<INumeral> iter = this.numerals().iterator();
-			while (iter.hasNext()) {
-				hash = (hash<<1) + iter.next().hashCode();
-			}
+			for (IExpr idx : idxs) hash = (hash << 1) + idx.hashCode();
 			return hash;
 		}
 		

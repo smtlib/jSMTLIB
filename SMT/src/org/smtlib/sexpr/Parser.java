@@ -393,16 +393,29 @@ public class Parser extends Lexer implements IParser {
 	 */
 	private IIdentifier parseIdentifierRest(ILexToken lp) throws ParserException {
 		ISymbol name = parseSymbol();
-		List<INumeral> numerals = new LinkedList<INumeral>();
+		List<IExpr> indices = new LinkedList<IExpr>();
+		boolean hasSymbolIndex = false;
 		do {
 			if (isEOD()) {
 				throw new ParserException("Unexpected end of data while parsing a parameterized identifier", pos(lp.pos().charStart(),currentPos()));
 			}
-			numerals.add(parseNumeral());
+			ILexToken peek = peekToken();
+			if (peek instanceof Symbol) {
+				hasSymbolIndex = true;
+				indices.add(parseSymbol());
+			} else {
+				indices.add(parseNumeral());
+			}
 		} while (!isRP());
 		ILexToken rp = parseRP();
-		IPos pos = pos(lp.pos(),rp.pos());
-		return setPos(smtConfig.exprFactory.id(name,numerals),pos);
+		IPos pos = pos(lp.pos(), rp.pos());
+		if (hasSymbolIndex) {
+			return setPos(smtConfig.exprFactory.idIndexed(name, indices), pos);
+		} else {
+			List<INumeral> numerals = new LinkedList<INumeral>();
+			for (IExpr e : indices) numerals.add((INumeral) e);
+			return setPos(smtConfig.exprFactory.id(name, numerals), pos);
+		}
 	}
 	
 	/** Parses an expression, returning null with error messages if there is not a valid
@@ -1001,20 +1014,29 @@ public class Parser extends Lexer implements IParser {
 		return setPos(smtConfig.exprFactory.matchCase(pattern, body), pos(lp.pos(), rp.pos()));
 	}
 
-	/** Parses a match pattern: either a bare symbol or "(symbol symbol*)" */
+	/** Parses a match pattern: either a bare symbol (or wildcard _) or "(symbol symbol*)" where params may include _ */
 	public IExpr.IPattern parsePattern() throws ParserException {
 		if (!isLP()) {
-			ISymbol sym = parseSymbol();
+			ISymbol sym = parsePatternSymbol();
 			return setPos(smtConfig.exprFactory.pattern(sym, new LinkedList<>()), sym.pos());
 		} else {
 			ILexToken lp = parseLP();
 			ISymbol constructor = parseSymbol();
 			List<ISymbol> params = new LinkedList<>();
 			while (!isRP() && !isEOD()) {
-				params.add(parseSymbol());
+				params.add(parsePatternSymbol());
 			}
 			ILexToken rp = parseRP();
 			return setPos(smtConfig.exprFactory.pattern(constructor, params), pos(lp.pos(), rp.pos()));
 		}
+	}
+
+	/** Parses a symbol in pattern position: accepts _ as a wildcard (reserved elsewhere) */
+	private Symbol parsePatternSymbol() throws ParserException {
+		ILexToken token = peekToken();
+		if (token instanceof Symbol && "_".equals(token.toString())) {
+			return (Symbol) getToken();
+		}
+		return parseSymbol();
 	}
 }

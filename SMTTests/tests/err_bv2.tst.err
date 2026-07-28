@@ -49,7 +49,7 @@
 (assert (= ((_ extract 1 2) z) x))
                          ^
 (assert (= ((_ extract a 1) z) x))
-                       ^
+            ^^^^^^^^^^^^^^^
 (assert (= ((_ extract ) z) x))
                        ^
 (assert (= ((_ extract 1 2 3 ) z) x))

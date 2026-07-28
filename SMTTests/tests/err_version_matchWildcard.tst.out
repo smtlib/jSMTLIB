@@ -1,0 +1,5 @@
+success
+success
+success
+success
+(error "The _ wildcard in match patterns requires SMT-LIB V2.7 or later")

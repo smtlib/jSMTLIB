@@ -61,6 +61,9 @@ public interface IExpr extends IAccept, IPosable, IAttributeValue {
         /** Creates a parameterized identifier from a symbol and a non-empty list of numerals */
         //@ requires num.size() > 0;
 		IParameterizedIdentifier id(ISymbol symbol, List<INumeral> num);
+        /** Creates a parameterized identifier from a symbol and a non-empty list of indices (each INumeral or ISymbol) */
+        //@ requires indices.size() > 0;
+		IParameterizedIdentifier idIndexed(ISymbol symbol, List<IExpr> indices);
 		/** Creates a 'as' identifier from an identifier and a sort qualifier */
 		IAsIdentifier id(IIdentifier identifier, ISort qualifier);
 		/** Creates a Let expression */
@@ -276,16 +279,20 @@ public interface IExpr extends IAccept, IPosable, IAttributeValue {
 	
 	/** This interface represents SMT-LIB parameterized identifiers */
 	static public interface IParameterizedIdentifier extends IIdentifier {
-		
+
 		// TODO - document
 		IIdentifier head();
-		
+
 		/** The head symbol of the identifier */
 		@Override
 		ISymbol headSymbol();
-		
-		/** The non-negative integer parameters of the identifier */
+
+		/** All indices of the identifier; each element is either an INumeral or an ISymbol.
+		 *  Symbol indices are allowed only in SMT-LIB V2.5 and later. */
 		//@ ensures \result.size() > 0;
+		List<IExpr> indices();
+
+		/** The numeric indices; equivalent to indices() filtered to INumeral elements. */
 		List<INumeral> numerals();
 	}
 	

@@ -687,8 +687,20 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		return null;
 	}
 
+	private void requireVersionForSymbolIndex(IExpr.IParameterizedIdentifier pid) {
+		if (!smtConfig.atLeastVersion(SMT.Configuration.SMTLIB.V25)) {
+			for (IExpr idx : pid.indices()) {
+				if (idx instanceof ISymbol) {
+					error("Symbol indices in indexed identifiers require SMT-LIB V2.5 or later", idx.pos());
+					return;
+				}
+			}
+		}
+	}
+
 	@Override
 	public /*@Nullable*/ ISort visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
+		requireVersionForSymbolIndex(e);
 		IFcnSort sort = null;
 		boolean useext = true;
 		String pname = e.headSymbol().toString();
@@ -874,8 +886,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	
 	@Override
 	public /*@Nullable*/ ISort visit(IExpr.IMatch e) throws IVisitor.VisitorException {
-		if (!smtConfig.atLeastVersion(SMT.Configuration.SMTLIB.V27)) {
-			error("The match expression requires SMT-LIB " + SMTLIB.V27 + " or later", e.pos());
+		if (!smtConfig.atLeastVersion(SMT.Configuration.SMTLIB.V26)) {
+			error("The match expression requires SMT-LIB " + SMTLIB.V26 + " or later", e.pos());
 			return null;
 		}
 		ISort scrutineeSort = e.expr().accept(this);
@@ -897,9 +909,17 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				IExpr.IPattern pat = mc.pattern();
 
 				if (pat.params().isEmpty()) {
-					IFcnSort ctorSort = symTable.lookup(0, pat.constructor());
-					if (ctorSort == null || !scrutineeSort.equals(ctorSort.resultSort())) {
-						currentScope.put(pat.constructor(), new Variable(pat.constructor(), scrutineeSort, null));
+					if ("_".equals(pat.constructor().value())) {
+						if (!smtConfig.atLeastVersion(SMTLIB.V27)) {
+							error("The _ wildcard in match patterns requires SMT-LIB V2.7 or later", pat.constructor().pos());
+							anyErrors = true;
+						}
+						// wildcard: matches anything, no binding
+					} else {
+						IFcnSort ctorSort = symTable.lookup(0, pat.constructor());
+						if (ctorSort == null || !scrutineeSort.equals(ctorSort.resultSort())) {
+							currentScope.put(pat.constructor(), new Variable(pat.constructor(), scrutineeSort, null));
+						}
 					}
 				} else {
 					int arity = pat.params().size();
@@ -916,7 +936,15 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 						ISort[] argSorts = ctorSort.argSorts();
 						List<IExpr.ISymbol> params = pat.params();
 						for (int i = 0; i < params.size(); i++) {
-							currentScope.put(params.get(i), new Variable(params.get(i), argSorts[i], null));
+							if ("_".equals(params.get(i).value())) {
+								if (!smtConfig.atLeastVersion(SMTLIB.V27)) {
+									error("The _ wildcard in match patterns requires SMT-LIB V2.7 or later", params.get(i).pos());
+									anyErrors = true;
+								}
+								// wildcard param: no binding
+							} else {
+								currentScope.put(params.get(i), new Variable(params.get(i), argSorts[i], null));
+							}
 						}
 					}
 				}
@@ -945,6 +973,9 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	@Override
 	public /*@Nullable*/ ISort visit(ISort.IApplication s) throws IVisitor.VisitorException {
 		IIdentifier f = s.family();
+		if (f instanceof IExpr.IParameterizedIdentifier) {
+			requireVersionForSymbolIndex((IExpr.IParameterizedIdentifier) f);
+		}
 		List<ISort> args = s.parameters();
 		IDefinition def = symTable.lookupSort(f);
 		if (def instanceof ISort.ErrorDefinition) {
@@ -1043,7 +1074,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V26, "declare-datatype", errors);
 			validateUserId(smtConfig, ((ICommand.Ideclare_datatype)cmd).sortDeclaration().symbol(), errors);
 		} else if (cmd instanceof ICommand.Ideclare_datatypes) {
-			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "declare-datatypes", errors);
+			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V26, "declare-datatypes", errors);
 			ICommand.Ideclare_datatypes c = (ICommand.Ideclare_datatypes)cmd;
 			if (c.sortDeclarations().isEmpty()) {
 				errors.add(smtConfig.responseFactory.error(
@@ -1070,6 +1101,16 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "reset-assertions", errors);
 		} else if (cmd instanceof ICommand.Icheck_sat_assuming) {
 			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "check-sat-assuming", errors);
+			if (errors.isEmpty() && !smtConfig.atLeastVersion(SMT.Configuration.SMTLIB.V27)) {
+				for (IExpr e : ((ICommand.Icheck_sat_assuming) cmd).exprs()) {
+					if (!isLiteralAssumption(e)) {
+						errors.add(smtConfig.responseFactory.error(
+							"Arguments to check-sat-assuming must be a symbol or (not symbol) in SMT-LIB V2.6 and earlier",
+							e.pos()));
+						break;
+					}
+				}
+			}
 		} else if (cmd instanceof ICommand.Iget_model) {
 			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "get-model", errors);
 		} else if (cmd instanceof ICommand.Iget_unsat_assumptions) {
@@ -1082,6 +1123,15 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			}
 		}
 		return errors;
+	}
+
+	private static boolean isLiteralAssumption(IExpr e) {
+		if (e instanceof ISymbol) return true;
+		if (e instanceof IFcnExpr) {
+			IFcnExpr f = (IFcnExpr) e;
+			return f.head().toString().equals("not") && f.args().size() == 1 && f.args().get(0) instanceof ISymbol;
+		}
+		return false;
 	}
 
 	private static void validateUserId(SMT.Configuration smtConfig, ISymbol id, List<IResponse> errors) {

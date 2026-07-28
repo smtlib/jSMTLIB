@@ -1,4 +1,4 @@
 success
 success
 success
-(error "The match expression requires SMT-LIB V2.7 or later")
+(error "The match expression requires SMT-LIB V2.6 or later")

@@ -209,6 +209,11 @@ public class Factory implements IExpr.IFactory, ISort.IFactory {
 	}
 
 	@Override
+	public IParameterizedIdentifier idIndexed(ISymbol symbol, List<IExpr> indices) {
+		return new ParameterizedIdentifier(symbol, indices, true);
+	}
+
+	@Override
 	public IAsIdentifier id(IIdentifier identifier, ISort qualifier) {
 		return new AsIdentifier(identifier,qualifier);
 	}

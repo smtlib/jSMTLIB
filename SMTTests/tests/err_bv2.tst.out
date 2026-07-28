@@ -27,7 +27,7 @@ success
 (error "The argument must have a BitVec sort, not Bool")
 (error "The end index must be less than the length of the argument sort: 40 vs. 8")
 (error "The end index is less than the starting index")
-(error "Expected a numeral here, instead of a symbol")
+(error "Expected exactly two numerals in an extract identifier")
 (error "Expected a numeral here, instead of a )")
 (error "Expected exactly two numerals in an extract identifier")
 (error "Mismatched sorts of arguments: (_ BitVec 3) vs. (_ BitVec 4)")
