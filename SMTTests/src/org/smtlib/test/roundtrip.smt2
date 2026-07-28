@@ -40,6 +40,9 @@
 (declare-sort MySort 0)
 (declare-sort MySort2 2)
 
+; declare-sort-parameter: single symbol argument
+(declare-sort-parameter A)
+
 ; define-const: syntactic sugar for define-fun with no parameters
 (define-const x Bool true)
 

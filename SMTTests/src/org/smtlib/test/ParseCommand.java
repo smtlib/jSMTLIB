@@ -298,4 +298,32 @@ public class ParseCommand {
 				"The number of function declarations (1) must equal the number of bodies (2)");
 	}
 
+	@Test
+	public void declare_sort_parameter() throws Exception {
+		testCommand("(declare-sort-parameter A)");
+	}
+
+	@Test
+	public void declare_sort_parameter_badsymbol() throws Exception {
+		testCommand("(declare-sort-parameter |.XX|)","User-defined symbols may not begin with . or @");
+	}
+
+	@Test
+	public void define_fun_rec_duplicate() throws Exception {
+		testCommand("(define-fun-rec f ((p Bool)(|p| Bool)) Bool (and p q))",
+				"A name is duplicated in the parameter list: |p|");
+	}
+
+	@Test
+	public void define_fun_rec_badsymbol() throws Exception {
+		testCommand("(define-fun-rec .f () Bool true)",
+				"User-defined symbols may not begin with . or @");
+	}
+
+	@Test
+	public void declare_datatypes_badsymbol() throws Exception {
+		testCommand("(declare-datatypes ( (|.X| 0)) ( ((red) )))",
+				"User-defined symbols may not begin with . or @");
+	}
+
 }
