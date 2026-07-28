@@ -59,7 +59,6 @@ public class C_declare_sort extends Command implements Ideclare_sort {
 	static public C_declare_sort parse(Parser p) throws IOException, ParserException {
 		ISymbol id = p.parseSymbol();
 		INumeral numeral = p.parseNumeral();
-		p.checkUserId(id);
 		return new C_declare_sort(id,numeral);
 	}
 

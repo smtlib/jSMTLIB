@@ -6,9 +6,7 @@
 package org.smtlib.command;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.smtlib.ICommand.Idefine_fun;
 import org.smtlib.*;
@@ -77,15 +75,8 @@ public class C_define_fun extends Command implements Idefine_fun {
 	static public C_define_fun parse(Parser p) throws ParserException {
 		ISymbol name = p.parseSymbol();
 		List<IDeclaration> list = p.parseList(p::parseDeclaration, "declaration", true);
-		Set<ISymbol> names = new HashSet<ISymbol>();
-		for (IDeclaration d : list) {
-			if (!names.add(d.parameter()))
-				throw error(p.smt(), "A name is duplicated in the parameter list: " +
-						p.smt().defaultPrinter.toString(d.parameter()), d.parameter().pos());
-		}
 		ISort resultSort = p.parseSort(null);
 		IExpr expr = p.parseExpr();
-		p.checkUserId(name);
 		return new C_define_fun(name,list,resultSort,expr);
 	}
 

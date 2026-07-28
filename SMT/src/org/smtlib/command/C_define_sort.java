@@ -6,9 +6,7 @@
 package org.smtlib.command;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.smtlib.ICommand.Idefine_sort;
 import org.smtlib.IExpr.ISymbol;
@@ -69,14 +67,7 @@ public class C_define_sort extends Command implements Idefine_sort {
 		ISymbol name = p.parseSymbol();
 		List<IParameter> list = p.parseList(
 				() -> p.smt().sortFactory.createSortParameter(p.parseSymbol()), "parameter", true);
-		Set<String> names = new HashSet<String>();
-		for (IParameter param : list) {
-			if (!names.add(param.identifier().toString()))
-				throw error(p.smt(), "A name is duplicated in the parameter list: " +
-						p.smt().defaultPrinter.toString(param.identifier()), param.pos());
-		}
 		ISort expr = p.parseSort(list);
-		p.checkUserId(name);
 		return new C_define_sort(name,list,expr);
 	}
 

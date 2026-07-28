@@ -476,26 +476,14 @@ public class Parser extends Lexer implements IParser {
 		return setPos(smtConfig.exprFactory.fcn(head,list), pos(lp.pos(), rp.pos()));
 	}
 	
-	/** Parses a parenthesized sequence of IDeclaration items, returning null with error messages if an error occurs */
+	/** Parses a parenthesized sequence of IDeclaration items */
 	public List<IDeclaration> parseDeclarations() throws ParserException {
-		List<IDeclaration> decls = parseList(this::parseDeclaration, "declaration", true);
-		Set<ISymbol> names = new HashSet<ISymbol>();
-		for (IDeclaration d : decls) {
-			if (!names.add(d.parameter()))
-				throw new ParserException("Parameter list has a duplicate name: " + smtConfig.defaultPrinter.toString(d.parameter()), d.parameter().pos());
-		}
-		return decls;
+		return parseList(this::parseDeclaration, "declaration", true);
 	}
 
-	/** Parses a parenthesized sequence of let-bindings, returning null with error messages if an error occurs */
+	/** Parses a parenthesized sequence of let-bindings */
 	public List<IBinding> parseBindings() throws ParserException {
-		List<IBinding> decls = parseList(this::parseBinding, "binding", true);
-		Set<ISymbol> names = new HashSet<ISymbol>();
-		for (IBinding d : decls) {
-			if (!names.add(d.parameter()))
-				throw new ParserException("Parameter list has a duplicate name: " + smtConfig.defaultPrinter.toString(d.parameter()), d.parameter().pos());
-		}
-		return decls;
+		return parseList(this::parseBinding, "binding", true);
 	}
 	
 	/** Parses a selector declaration "(symbol sort)" */

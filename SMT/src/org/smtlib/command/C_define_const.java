@@ -49,7 +49,6 @@ public class C_define_const extends C_define_fun implements Idefine_const {
 		ISymbol symbol = p.parseSymbol();
 		ISort resultSort = p.parseSort(null);
 		IExpr expr = p.parseExpr();
-		p.checkUserId(symbol);
 		return new C_define_const(symbol, resultSort, expr);
 	}
 

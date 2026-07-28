@@ -1,6 +1,7 @@
 package org.smtlib.test;
 
 import java.io.StringWriter;
+import java.util.List;
 
 import org.junit.*;
 import org.smtlib.ICommand;
@@ -8,6 +9,7 @@ import org.smtlib.IParser;
 import org.smtlib.IResponse;
 import org.smtlib.ISource;
 import org.smtlib.SMT;
+import org.smtlib.TypeChecker;
 
 /** Tests parsing commands, without invoking solvers */
 public class ParseCommand {
@@ -28,6 +30,11 @@ public class ParseCommand {
 		ISource source = config.smtFactory.createSource(input,null);
 		IParser p = new org.smtlib.sexpr.Parser(config,source);
 		ICommand e = p.parseCommand();
+		if (e != null) {
+			List<IResponse> errs = TypeChecker.validate(config, e);
+			for (IResponse err : errs) config.log.logError((IResponse.IError)err);
+			if (!errs.isEmpty()) e = null;
+		}
 		StringWriter sw = new StringWriter();
 		if (e != null) org.smtlib.sexpr.Printer.write(sw,e);
 		// Expecting success
@@ -40,9 +47,14 @@ public class ParseCommand {
 		ISource source = config.smtFactory.createSource(input,null);
 		IParser p = new org.smtlib.sexpr.Parser(config,source);
 		ICommand e = p.parseCommand();
+		if (e != null) {
+			List<IResponse> errs = TypeChecker.validate(config, e);
+			for (IResponse err : errs) config.log.logError((IResponse.IError)err);
+			if (!errs.isEmpty()) e = null;
+		}
 		StringWriter sw = new StringWriter();
 		if (e != null) org.smtlib.sexpr.Printer.write(sw,e);
-		// Expecting an error 
+		// Expecting an error
 		Assert.assertTrue("Expected an error message",!listener.msgs.isEmpty());
 		Assert.assertEquals(errormsg,((IResponse.IError)listener.msgs.get(0)).errorMsg()); // FIXME - check other messages?
 		Assert.assertTrue(e == null);

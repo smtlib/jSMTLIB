@@ -72,7 +72,6 @@ public class C_declare_fun extends Command implements Ideclare_fun {
 		ISymbol symbol = p.parseSymbol();
 		List<ISort> argSorts = p.parseList(() -> p.parseSort(null), "sort", true);
 		ISort result = p.parseSort(null);
-		p.checkUserId(symbol);
 		return new C_declare_fun(symbol,argSorts,result);
 	}
 

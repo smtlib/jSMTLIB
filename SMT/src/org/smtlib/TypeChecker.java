@@ -8,10 +8,12 @@ package org.smtlib;
 
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.smtlib.IExpr.*;
 import org.smtlib.ISort.*;
@@ -795,7 +797,12 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		saved.putAll(currentScope);
 		parameters.add(0,saved);
 		boolean errors = false;
+		Set<ISymbol> seen = new HashSet<>();
 		for (IExpr.IDeclaration decl : e.parameters()) {
+			if (!seen.add(decl.parameter())) {
+				error("Parameter list has a duplicate name: " + pr(decl.parameter()), decl.parameter().pos());
+				errors = true;
+			}
 			ISort res = decl.sort().accept(this);
 			if (res == null) errors = true;
 			else currentScope.put(decl.parameter(),new Variable(decl.parameter(),decl.sort(),null));
@@ -815,7 +822,12 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		saved.putAll(currentScope);
 		parameters.add(0,saved);
 		boolean errors = false;
+		Set<ISymbol> seen = new HashSet<>();
 		for (IExpr.IDeclaration decl : e.parameters()) {
+			if (!seen.add(decl.parameter())) {
+				error("Parameter list has a duplicate name: " + pr(decl.parameter()), decl.parameter().pos());
+				errors = true;
+			}
 			ISort res = decl.sort().accept(this);
 			if (res == null) errors = true;
 			else currentScope.put(decl.parameter(),new Variable(decl.parameter(),decl.sort(),null));
@@ -837,7 +849,12 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		parameters.add(0,saved);
 		try {
 			boolean anyErrors = false;
+			Set<ISymbol> seen = new HashSet<>();
 			for (IExpr.IBinding decl : e.bindings()) {
+				if (!seen.add(decl.parameter())) {
+					error("Parameter list has a duplicate name: " + pr(decl.parameter()), decl.parameter().pos());
+					anyErrors = true;
+				}
 				IExpr expr = decl.expr();
 				ISort s = expr.accept(this);
 				if (s == null) anyErrors = true;
@@ -909,6 +926,91 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		return null;
 	}
 	
+	/** Validates non-syntactic well-formedness of a command (user IDs, duplicate names, list sizes).
+	 *  Returns a list of errors; an empty list means the command is well-formed. */
+	public static List<IResponse> validate(SMT.Configuration smtConfig, ICommand cmd) {
+		List<IResponse> errors = new LinkedList<>();
+		if (cmd instanceof ICommand.Ideclare_fun) {
+			// Covers declare-fun and declare-const (C_declare_const extends C_declare_fun)
+			validateUserId(smtConfig, ((ICommand.Ideclare_fun)cmd).symbol(), errors);
+		} else if (cmd instanceof ICommand.Idefine_fun) {
+			// Covers define-fun and define-const (C_define_const extends C_define_fun)
+			ICommand.Idefine_fun c = (ICommand.Idefine_fun)cmd;
+			validateUserId(smtConfig, c.symbol(), errors);
+			if (errors.isEmpty()) validateUniqueDeclarations(smtConfig, c.parameters(), errors);
+		} else if (cmd instanceof ICommand.Idefine_fun_rec) {
+			ICommand.Idefine_fun_rec c = (ICommand.Idefine_fun_rec)cmd;
+			validateUserId(smtConfig, c.symbol(), errors);
+			if (errors.isEmpty()) validateUniqueDeclarations(smtConfig, c.parameters(), errors);
+		} else if (cmd instanceof ICommand.Idefine_funs_rec) {
+			ICommand.Idefine_funs_rec c = (ICommand.Idefine_funs_rec)cmd;
+			if (c.declarations().size() != c.bodies().size())
+				errors.add(smtConfig.responseFactory.error(
+					"The number of function declarations (" + c.declarations().size() +
+					") must equal the number of bodies (" + c.bodies().size() + ")", null));
+		} else if (cmd instanceof ICommand.Ideclare_sort) {
+			validateUserId(smtConfig, ((ICommand.Ideclare_sort)cmd).sortSymbol(), errors);
+		} else if (cmd instanceof ICommand.Ideclare_sort_parameter) {
+			validateUserId(smtConfig, ((ICommand.Ideclare_sort_parameter)cmd).sortSymbol(), errors);
+		} else if (cmd instanceof ICommand.Ideclare_datatype) {
+			validateUserId(smtConfig, ((ICommand.Ideclare_datatype)cmd).sortDeclaration().symbol(), errors);
+		} else if (cmd instanceof ICommand.Ideclare_datatypes) {
+			ICommand.Ideclare_datatypes c = (ICommand.Ideclare_datatypes)cmd;
+			if (c.sortDeclarations().isEmpty()) {
+				errors.add(smtConfig.responseFactory.error(
+					"Expected at least one sort declaration in declare-datatypes", null));
+			} else if (c.sortDeclarations().size() != c.datatypes().size()) {
+				errors.add(smtConfig.responseFactory.error(
+					"Number of sort declarations (" + c.sortDeclarations().size() +
+					") does not match number of datatype declarations (" + c.datatypes().size() + ")", null));
+			} else {
+				for (IExpr.ISortDeclaration sd : c.sortDeclarations()) {
+					validateUserId(smtConfig, sd.symbol(), errors);
+					if (!errors.isEmpty()) break;
+				}
+			}
+		} else if (cmd instanceof ICommand.Idefine_sort) {
+			ICommand.Idefine_sort c = (ICommand.Idefine_sort)cmd;
+			validateUserId(smtConfig, c.sortSymbol(), errors);
+			if (errors.isEmpty()) validateUniqueSortParams(smtConfig, c.parameters(), errors);
+		}
+		return errors;
+	}
+
+	private static void validateUserId(SMT.Configuration smtConfig, ISymbol id, List<IResponse> errors) {
+		String v = id.value();
+		if (v.isEmpty())
+			errors.add(smtConfig.responseFactory.error("User-defined symbols may not be empty strings", id.pos()));
+		else if (v.charAt(0) == '@' || v.charAt(0) == '.')
+			errors.add(smtConfig.responseFactory.error("User-defined symbols may not begin with . or @", id.pos()));
+	}
+
+	private static void validateUniqueDeclarations(SMT.Configuration smtConfig,
+			List<IExpr.IDeclaration> params, List<IResponse> errors) {
+		Set<ISymbol> seen = new HashSet<>();
+		for (IExpr.IDeclaration d : params) {
+			if (!seen.add(d.parameter())) {
+				errors.add(smtConfig.responseFactory.error(
+					"A name is duplicated in the parameter list: " +
+					smtConfig.defaultPrinter.toString(d.parameter()), d.parameter().pos()));
+				return;
+			}
+		}
+	}
+
+	private static void validateUniqueSortParams(SMT.Configuration smtConfig,
+			List<ISort.IParameter> params, List<IResponse> errors) {
+		Set<String> seen = new HashSet<>();
+		for (ISort.IParameter p : params) {
+			if (!seen.add(p.symbol().value())) {
+				errors.add(smtConfig.responseFactory.error(
+					"A name is duplicated in the parameter list: " +
+					smtConfig.defaultPrinter.toString(p.symbol()), p.pos()));
+				return;
+			}
+		}
+	}
+
 	public static class Variable {
 		public ISymbol symbol;
 		public ISort sort;

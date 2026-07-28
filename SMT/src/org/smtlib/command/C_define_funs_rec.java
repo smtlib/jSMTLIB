@@ -53,9 +53,6 @@ public class C_define_funs_rec extends Command implements Idefine_funs_rec {
 	static public C_define_funs_rec parse(Parser p) throws ParserException {
 		List<IFunctionDeclaration> decls = p.parseList(p::parseFunctionDeclaration, "function declaration", false);
 		List<IExpr> bodies = p.parseList(p::parseExpr, "term", false);
-		if (decls.size() != bodies.size())
-			throw new ParserException("The number of function declarations (" + decls.size() +
-					") must equal the number of bodies (" + bodies.size() + ")", null);
 		return new C_define_funs_rec(decls, bodies);
 	}
 

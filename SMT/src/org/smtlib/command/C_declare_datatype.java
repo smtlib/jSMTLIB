@@ -54,7 +54,6 @@ public class C_declare_datatype extends Command implements Ideclare_datatype {
 	static public C_declare_datatype parse(Parser p) throws IOException, ParserException {
 		ISymbol id = p.parseSymbol();
 		IDatatype datatype = p.parseDatatype();
-		p.checkUserId(id);
 		int arityVal = datatype.symbols() == null ? 0 : datatype.symbols().size();
 		ISortDeclaration sortDecl = p.smt().exprFactory.sortDeclaration(id, p.smt().exprFactory.numeral(arityVal));
 		return new C_declare_datatype(sortDecl, datatype);

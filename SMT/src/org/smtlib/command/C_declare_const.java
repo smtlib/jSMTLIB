@@ -48,7 +48,6 @@ public class C_declare_const extends C_declare_fun implements Ideclare_const {
 	static public C_declare_const parse(Parser p) throws ParserException {
 		ISymbol symbol = p.parseSymbol();
 		ISort result = p.parseSort(null);
-		p.checkUserId(symbol);
 		return new C_declare_const(symbol,result);
 	}
 

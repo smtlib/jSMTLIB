@@ -505,6 +505,24 @@ public class SMT {
 						continue;
 					}
 
+					{
+						java.util.List<IResponse> validationErrors = TypeChecker.validate(smtConfig, command);
+						if (!validationErrors.isEmpty()) {
+							retcode = 1;
+							IResponse.IError eresult = (IResponse.IError)validationErrors.get(0);
+							smtConfig.log.logError(eresult);
+							command = null;
+							if (abortMode) {
+								if (!smtConfig.interactive) {
+									smtConfig.log.logDiag("Aborting because of a validation error");
+									break;
+								}
+								p.abortLine();
+							}
+							continue;
+						}
+					}
+
 					if (smtConfig.echo) {
 						smtConfig.log.logDiag(smtConfig.defaultPrinter.toString(command));
 					}

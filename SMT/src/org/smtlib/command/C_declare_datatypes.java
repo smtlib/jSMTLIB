@@ -71,16 +71,7 @@ public class C_declare_datatypes extends Command implements Ideclare_datatypes {
 			sortDecls.add(p.smt().exprFactory.sortDeclaration(sym, arity));
 		}
 		p.parseRP();
-		if (sortDecls.isEmpty())
-			throw new ParserException("Expected at least one sort declaration in declare-datatypes", null);
-
 		List<IDatatype> datatypes = p.parseList(p::parseDatatype, "datatype declaration", false);
-
-		if (sortDecls.size() != datatypes.size())
-			throw new ParserException("Number of sort declarations (" + sortDecls.size() +
-					") does not match number of datatype declarations (" + datatypes.size() + ")", null);
-
-		for (ISortDeclaration sd : sortDecls) p.checkUserId(sd.symbol());
 		return new C_declare_datatypes(sortDecls, datatypes);
 	}
 
