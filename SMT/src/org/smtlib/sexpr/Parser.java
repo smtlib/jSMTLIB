@@ -454,6 +454,11 @@ public class Parser extends Lexer implements IParser {
 				IExpr expr = parseExpr();
 				ILexToken rp = parseRP();
 				return setPos(smtConfig.exprFactory.let(decls, expr), pos(lp.pos(), rp.pos()));
+			} else if (Utils.MATCH.equals(s)) {
+				IExpr scrutinee = parseExpr();
+				List<IExpr.IMatchCase> cases = parseList(this::parseMatchCase, "match case", true);
+				ILexToken rp = parseRP();
+				return setPos(smtConfig.exprFactory.match(scrutinee, cases), pos(lp.pos(), rp.pos()));
 			} else if (Utils.AS.equals(s)) {
 				return parseAsIdentifierRest(lp);
 			} else if (Utils.UNDERSCORE.equals(s)) {
@@ -985,5 +990,31 @@ public class Parser extends Lexer implements IParser {
 	public ParserException error(String msg, ILexToken token) {
 		if (token.kind().equals("error")) return new ParserException(null, token.pos());
 		return new ParserException(msg.replace("#", token.kind()), token.pos());
+	}
+
+	/** Parses a single match case: "(pattern term)" */
+	public IExpr.IMatchCase parseMatchCase() throws ParserException {
+		ILexToken lp = parseLP();
+		IExpr.IPattern pattern = parsePattern();
+		IExpr body = parseExpr();
+		ILexToken rp = parseRP();
+		return setPos(smtConfig.exprFactory.matchCase(pattern, body), pos(lp.pos(), rp.pos()));
+	}
+
+	/** Parses a match pattern: either a bare symbol or "(symbol symbol*)" */
+	public IExpr.IPattern parsePattern() throws ParserException {
+		if (!isLP()) {
+			ISymbol sym = parseSymbol();
+			return setPos(smtConfig.exprFactory.pattern(sym, new LinkedList<>()), sym.pos());
+		} else {
+			ILexToken lp = parseLP();
+			ISymbol constructor = parseSymbol();
+			List<ISymbol> params = new LinkedList<>();
+			while (!isRP() && !isEOD()) {
+				params.add(parseSymbol());
+			}
+			ILexToken rp = parseRP();
+			return setPos(smtConfig.exprFactory.pattern(constructor, params), pos(lp.pos(), rp.pos()));
+		}
 	}
 }

@@ -409,7 +409,7 @@ public class Lexer {
 				int begin = matcher.start(k); // position of the initial quote
 				int p = begin;
 				try {
-					if (smtConfig.isVersion(SMT.Configuration.SMTLIB.V25)) { // Version 2.5ff
+					if (smtConfig.atLeastVersion(SMT.Configuration.SMTLIB.V25)) { // Version 2.5ff
 						while (true) {
 							p++;
 							char c = csr.charAt(p);

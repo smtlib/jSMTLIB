@@ -26,7 +26,10 @@ import org.smtlib.IExpr.IForall;
 import org.smtlib.IExpr.IHexLiteral;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.ILet;
+import org.smtlib.IExpr.IMatch;
+import org.smtlib.IExpr.IMatchCase;
 import org.smtlib.IExpr.INumeral;
+import org.smtlib.IExpr.IPattern;
 import org.smtlib.IExpr.IParameterizedIdentifier;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
@@ -278,6 +281,57 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 			w.append(")");
 		} catch (IOException ex) {
 			throw new IVisitor.VisitorException(ex,e.pos());
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(IExpr.IMatch e) throws IVisitor.VisitorException {
+		try {
+			w.append("(match ");
+			e.expr().accept(this);
+			w.append(" (");
+			for (IExpr.IMatchCase mc : e.cases()) {
+				w.append(" ");
+				mc.accept(this);
+			}
+			w.append("))");
+		} catch (IOException ex) {
+			throw new VisitorException(ex, e.pos());
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(IExpr.IMatchCase e) throws IVisitor.VisitorException {
+		try {
+			w.append("(");
+			e.pattern().accept(this);
+			w.append(" ");
+			e.body().accept(this);
+			w.append(")");
+		} catch (IOException ex) {
+			throw new VisitorException(ex, e.pos());
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(IExpr.IPattern e) throws IVisitor.VisitorException {
+		try {
+			if (e.params().isEmpty()) {
+				e.constructor().accept(this);
+			} else {
+				w.append("(");
+				e.constructor().accept(this);
+				for (IExpr.ISymbol v : e.params()) {
+					w.append(" ");
+					v.accept(this);
+				}
+				w.append(")");
+			}
+		} catch (IOException ex) {
+			throw new VisitorException(ex, e.pos());
 		}
 		return null;
 	}

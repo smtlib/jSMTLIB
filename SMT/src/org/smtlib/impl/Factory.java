@@ -293,4 +293,19 @@ public class Factory implements IExpr.IFactory, ISort.IFactory {
 		return new SMTExpr.FunctionDeclaration(symbol, parameters, sort);
 	}
 
+	@Override
+	public IExpr.IPattern pattern(IExpr.ISymbol constructor, List<IExpr.ISymbol> params) {
+		return new SMTExpr.Pattern(constructor, params);
+	}
+
+	@Override
+	public IExpr.IMatchCase matchCase(IExpr.IPattern pattern, IExpr body) {
+		return new SMTExpr.MatchCase(pattern, body);
+	}
+
+	@Override
+	public IExpr.IMatch match(IExpr expr, List<IExpr.IMatchCase> cases) {
+		return new SMTExpr.Match(expr, cases);
+	}
+
 }

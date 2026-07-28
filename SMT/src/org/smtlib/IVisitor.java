@@ -50,6 +50,9 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 	public /*@Nullable*/T visit(ISymbol e) throws VisitorException;
 	public /*@Nullable*/T visit(IScript e) throws VisitorException;
 	public /*@Nullable*/T visit(ICommand e) throws VisitorException;
+	public /*@Nullable*/T visit(IExpr.IMatch e) throws VisitorException;
+	public /*@Nullable*/T visit(IExpr.IMatchCase e) throws VisitorException;
+	public /*@Nullable*/T visit(IExpr.IPattern e) throws VisitorException;
 	
 	public /*@Nullable*/T visit(ISort.IFamily s) throws VisitorException;
 	public /*@Nullable*/T visit(ISort.IAbbreviation s) throws VisitorException;
@@ -281,6 +284,15 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
         public T visit(IExpr.ISortDeclaration e) throws VisitorException {
             return null;
         }
+
+		@Override
+		public /*@Nullable*/T visit(IExpr.IMatch e) throws VisitorException { return null; }
+
+		@Override
+		public /*@Nullable*/T visit(IExpr.IMatchCase e) throws VisitorException { return null; }
+
+		@Override
+		public /*@Nullable*/T visit(IExpr.IPattern e) throws VisitorException { return null; }
 
 	}
 
@@ -565,6 +577,27 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
             e.arity().accept(this);
             return null;
         }
+
+		@Override
+		public /*@Nullable*/T visit(IExpr.IMatch e) throws VisitorException {
+			e.expr().accept(this);
+			for (IExpr.IMatchCase mc : e.cases()) mc.accept(this);
+			return null;
+		}
+
+		@Override
+		public /*@Nullable*/T visit(IExpr.IMatchCase e) throws VisitorException {
+			e.pattern().accept(this);
+			e.body().accept(this);
+			return null;
+		}
+
+		@Override
+		public /*@Nullable*/T visit(IExpr.IPattern e) throws VisitorException {
+			e.constructor().accept(this);
+			for (IExpr.ISymbol v : e.params()) v.accept(this);
+			return null;
+		}
 
 	}
 

@@ -1,0 +1,2 @@
+success
+(error "The define-funs-rec command requires SMT-LIB V2.5 or later")

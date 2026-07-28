@@ -109,26 +109,35 @@ public class SMT {
 		/** A list of all reserved words */
 		public Set<String> reservedWords = new HashSet<String>();
 
-		/** The version of SMT-LIB to be supported; default (null) is the most recent version */
+		/** The version of SMT-LIB to be supported; null means the default (V2.5) */
 		public static String smtlib = null;
 		public static enum SMTLIB {
 			V20("V2.0"),
 			V25("V2.5"),
+			V26("V2.6"),
 			V27("V2.7");
 			public String id;
 			private SMTLIB(String id) { this.id = id; }
 			public String toString() { return id; }
-			public static SMTLIB find(String id) { for (SMTLIB e: SMTLIB.values()) { if (e.id.equals(id)) return e; } return null; } 
+			public static SMTLIB find(String id) { for (SMTLIB e: SMTLIB.values()) { if (e.id.equals(id)) return e; } return null; }
 		}
-		
+
+		/** Returns the configured version, defaulting to V27 when smtlib is null or unrecognized. */
+		private SMTLIB currentVersion() {
+			if (smtlib == null) return SMTLIB.V27;
+			SMTLIB v = SMTLIB.find(smtlib);
+			return (v != null) ? v : SMTLIB.V27;
+		}
+
+		/** Returns true if the configured version equals the given version. */
 		public boolean isVersion(SMTLIB version) {
-			if (smtlib == null && version == SMTLIB.V25) return true;
-			return version.toString().equals(smtlib);
+			return currentVersion() == version;
 		}
-		
+
+		/** Returns true if the configured version is at least the given version.
+		 *  Uses enum declaration order: V20 < V25 < V26 < V27. */
 		public boolean atLeastVersion(SMTLIB version) {
-			if (smtlib == null && version == SMTLIB.V25) return true;
-			return version.toString().compareTo(smtlib) <= 0;
+			return version.ordinal() <= currentVersion().ordinal();
 		}
 		
 		/** True to emit diagnostic output through the SMT-LIB diagnostic channel */
@@ -528,6 +537,12 @@ public class SMT {
 					}
 					else if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Command to execute: " +  command);
 					result = command.execute(solver);
+					if (!result.isError() && command instanceof ICommand.Iset_info) {
+						ICommand.Iset_info si = (ICommand.Iset_info) command;
+						if (Utils.SMTLIB_VERSION.equals(si.infoflag()) && si.value() instanceof IExpr.IStringLiteral) {
+							Configuration.smtlib = ((IExpr.IStringLiteral) si.value()).value();
+						}
+					}
 					if (result.isError()) {
 						IResponse.IError eresult = (IResponse.IError)result;
 						if (eresult.pos() == null && command instanceof IPosable) {

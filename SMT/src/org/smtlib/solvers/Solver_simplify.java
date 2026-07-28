@@ -978,6 +978,21 @@ public class Solver_simplify extends Solver_test implements ISolver {
             return null;
         }
 
+        @Override
+        public String visit(IExpr.IMatch e) throws VisitorException {
+            return null;
+        }
+
+        @Override
+        public String visit(IExpr.IMatchCase e) throws VisitorException {
+            return null;
+        }
+
+        @Override
+        public String visit(IExpr.IPattern e) throws VisitorException {
+            return null;
+        }
+
 
 //		@Override
 //		public String visit(IScript e) throws IVisitor.VisitorException {

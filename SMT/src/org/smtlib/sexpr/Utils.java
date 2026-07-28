@@ -32,6 +32,8 @@ public class Utils extends org.smtlib.Utils {
 	public static final String EXISTS = "exists";
 	/** Concrete syntax for the let token */
 	public static final String LET = "let";
+	/** Concrete syntax for the match token */
+	public static final String MATCH = "match";
 	/** Concrete syntax for the token that starts a parameterized identifier*/
 	public static final String UNDERSCORE = "_";
 	/** Concrete syntax for the token that starts a named expression */
@@ -60,6 +62,7 @@ public class Utils extends org.smtlib.Utils {
 		reservedWordsNotCommands.add(EXISTS);
 		reservedWordsNotCommands.add(FORALL);
 		reservedWordsNotCommands.add(LET);
+		reservedWordsNotCommands.add(MATCH);
 		reservedWordsNotCommands.add(NUMERAL);
 		reservedWordsNotCommands.add(PAR);
 		reservedWordsNotCommands.add(STRING);

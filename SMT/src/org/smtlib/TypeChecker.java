@@ -17,6 +17,7 @@ import java.util.Set;
 
 import org.smtlib.IExpr.*;
 import org.smtlib.ISort.*;
+import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.impl.SMTExpr;
 import org.smtlib.sexpr.ISexpr;
 import org.smtlib.sexpr.ISexpr.ISeq;
@@ -872,6 +873,76 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	}
 	
 	@Override
+	public /*@Nullable*/ ISort visit(IExpr.IMatch e) throws IVisitor.VisitorException {
+		if (!smtConfig.atLeastVersion(SMT.Configuration.SMTLIB.V27)) {
+			error("The match expression requires SMT-LIB " + SMTLIB.V27 + " or later", e.pos());
+			return null;
+		}
+		ISort scrutineeSort = e.expr().accept(this);
+		if (scrutineeSort == null) return null;
+
+		if (e.cases().isEmpty()) {
+			error("A match expression must have at least one case", e.pos());
+			return null;
+		}
+
+		ISort resultSort = null;
+		boolean anyErrors = false;
+
+		for (IExpr.IMatchCase mc : e.cases()) {
+			Map<ISymbol,Variable> saved = new HashMap<ISymbol,Variable>();
+			saved.putAll(currentScope);
+			parameters.add(0, saved);
+			try {
+				IExpr.IPattern pat = mc.pattern();
+
+				if (pat.params().isEmpty()) {
+					IFcnSort ctorSort = symTable.lookup(0, pat.constructor());
+					if (ctorSort == null || !scrutineeSort.equals(ctorSort.resultSort())) {
+						currentScope.put(pat.constructor(), new Variable(pat.constructor(), scrutineeSort, null));
+					}
+				} else {
+					int arity = pat.params().size();
+					IFcnSort ctorSort = symTable.lookup(arity, pat.constructor());
+					if (ctorSort == null) {
+						error("Unknown constructor: " + pat.constructor().value(), pat.constructor().pos());
+						anyErrors = true;
+					} else if (!scrutineeSort.equals(ctorSort.resultSort())) {
+						error("Constructor " + pat.constructor().value() + " has result sort "
+								+ pr(ctorSort.resultSort()) + " but scrutinee has sort " + pr(scrutineeSort),
+								pat.constructor().pos());
+						anyErrors = true;
+					} else {
+						ISort[] argSorts = ctorSort.argSorts();
+						List<IExpr.ISymbol> params = pat.params();
+						for (int i = 0; i < params.size(); i++) {
+							currentScope.put(params.get(i), new Variable(params.get(i), argSorts[i], null));
+						}
+					}
+				}
+
+				if (!anyErrors) {
+					ISort bodySort = mc.body().accept(this);
+					if (bodySort == null) {
+						anyErrors = true;
+					} else if (resultSort == null) {
+						resultSort = bodySort;
+					} else if (!resultSort.equals(bodySort)) {
+						error("Match cases have incompatible sorts: " + pr(resultSort) + " vs. " + pr(bodySort),
+								mc.body().pos());
+						anyErrors = true;
+					}
+				}
+			} finally {
+				currentScope = parameters.remove(0);
+			}
+		}
+
+		if (anyErrors) return null;
+		return save(e, resultSort);
+	}
+
+	@Override
 	public /*@Nullable*/ ISort visit(ISort.IApplication s) throws IVisitor.VisitorException {
 		IIdentifier f = s.family();
 		List<ISort> args = s.parameters();
@@ -926,23 +997,38 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		return null;
 	}
 	
+	private static void requireVersion(SMT.Configuration smtConfig, SMT.Configuration.SMTLIB minVersion,
+			String cmdName, List<IResponse> errors) {
+		if (!smtConfig.atLeastVersion(minVersion)) {
+			errors.add(smtConfig.responseFactory.error(
+				"The " + cmdName + " command requires SMT-LIB " + minVersion + " or later", null));
+		}
+	}
+
 	/** Validates non-syntactic well-formedness of a command (user IDs, duplicate names, list sizes).
 	 *  Returns a list of errors; an empty list means the command is well-formed. */
 	public static List<IResponse> validate(SMT.Configuration smtConfig, ICommand cmd) {
 		List<IResponse> errors = new LinkedList<>();
-		if (cmd instanceof ICommand.Ideclare_fun) {
-			// Covers declare-fun and declare-const (C_declare_const extends C_declare_fun)
+		if (cmd instanceof ICommand.Ideclare_const) {
+			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "declare-const", errors);
+			validateUserId(smtConfig, ((ICommand.Ideclare_const)cmd).symbol(), errors);
+		} else if (cmd instanceof ICommand.Ideclare_fun) {
 			validateUserId(smtConfig, ((ICommand.Ideclare_fun)cmd).symbol(), errors);
+		} else if (cmd instanceof ICommand.Idefine_const) {
+			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V27, "define-const", errors);
+			ICommand.Idefine_const c = (ICommand.Idefine_const)cmd;
+			validateUserId(smtConfig, c.symbol(), errors);
 		} else if (cmd instanceof ICommand.Idefine_fun) {
-			// Covers define-fun and define-const (C_define_const extends C_define_fun)
 			ICommand.Idefine_fun c = (ICommand.Idefine_fun)cmd;
 			validateUserId(smtConfig, c.symbol(), errors);
 			if (errors.isEmpty()) validateUniqueDeclarations(smtConfig, c.parameters(), errors);
 		} else if (cmd instanceof ICommand.Idefine_fun_rec) {
+			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "define-fun-rec", errors);
 			ICommand.Idefine_fun_rec c = (ICommand.Idefine_fun_rec)cmd;
 			validateUserId(smtConfig, c.symbol(), errors);
 			if (errors.isEmpty()) validateUniqueDeclarations(smtConfig, c.parameters(), errors);
 		} else if (cmd instanceof ICommand.Idefine_funs_rec) {
+			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "define-funs-rec", errors);
 			ICommand.Idefine_funs_rec c = (ICommand.Idefine_funs_rec)cmd;
 			if (c.declarations().size() != c.bodies().size())
 				errors.add(smtConfig.responseFactory.error(
@@ -951,10 +1037,13 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		} else if (cmd instanceof ICommand.Ideclare_sort) {
 			validateUserId(smtConfig, ((ICommand.Ideclare_sort)cmd).sortSymbol(), errors);
 		} else if (cmd instanceof ICommand.Ideclare_sort_parameter) {
+			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V27, "declare-sort-parameter", errors);
 			validateUserId(smtConfig, ((ICommand.Ideclare_sort_parameter)cmd).sortSymbol(), errors);
 		} else if (cmd instanceof ICommand.Ideclare_datatype) {
+			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V26, "declare-datatype", errors);
 			validateUserId(smtConfig, ((ICommand.Ideclare_datatype)cmd).sortDeclaration().symbol(), errors);
 		} else if (cmd instanceof ICommand.Ideclare_datatypes) {
+			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "declare-datatypes", errors);
 			ICommand.Ideclare_datatypes c = (ICommand.Ideclare_datatypes)cmd;
 			if (c.sortDeclarations().isEmpty()) {
 				errors.add(smtConfig.responseFactory.error(
@@ -973,6 +1062,18 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			ICommand.Idefine_sort c = (ICommand.Idefine_sort)cmd;
 			validateUserId(smtConfig, c.sortSymbol(), errors);
 			if (errors.isEmpty()) validateUniqueSortParams(smtConfig, c.parameters(), errors);
+		} else if (cmd instanceof ICommand.Iecho) {
+			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "echo", errors);
+		} else if (cmd instanceof ICommand.Ireset) {
+			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "reset", errors);
+		} else if (cmd instanceof ICommand.Ireset_assertions) {
+			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "reset-assertions", errors);
+		} else if (cmd instanceof ICommand.Icheck_sat_assuming) {
+			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "check-sat-assuming", errors);
+		} else if (cmd instanceof ICommand.Iget_model) {
+			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "get-model", errors);
+		} else if (cmd instanceof ICommand.Iget_unsat_assumptions) {
+			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "get-unsat-assumptions", errors);
 		}
 		return errors;
 	}

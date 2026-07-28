@@ -1,0 +1,2 @@
+success
+(error "The define-const command requires SMT-LIB V2.7 or later")

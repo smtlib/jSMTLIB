@@ -9,11 +9,9 @@ import java.io.IOException;
 
 import org.smtlib.ICommand.Iget_model;
 import org.smtlib.IParser.ParserException;
-import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.IResponse;
 import org.smtlib.ISolver;
 import org.smtlib.IVisitor;
-import org.smtlib.SMT;
 import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
@@ -26,10 +24,6 @@ public class C_get_model extends Command implements Iget_model {
 	
 	/** Parses the command, producing a new command instance */
 	static public /*@Nullable*/ C_get_model parse(Parser p) throws ParserException {
-//		if (SMT.Configuration.isVersion(SMTLIB.V20)) {
-//			p.error("The get-model command is not valid in V2.0", p.peekToken().pos());
-//			return null;
-//		}
 		return p.checkNoArg() ? new C_get_model() : null;
 	}
 

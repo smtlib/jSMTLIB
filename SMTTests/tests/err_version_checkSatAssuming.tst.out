@@ -1,0 +1,2 @@
+success
+(error "The check-sat-assuming command requires SMT-LIB V2.5 or later")

@@ -96,6 +96,13 @@ public interface IExpr extends IAccept, IPosable, IAttributeValue {
 		/** Creates a function declaration (used in define-funs-rec) */
 		IFunctionDeclaration functionDeclaration(ISymbol symbol, List<IDeclaration> parameters, ISort sort);
 
+		/** Creates a match pattern */
+		IPattern pattern(ISymbol constructor, List<ISymbol> params);
+		/** Creates a single match case */
+		IMatchCase matchCase(IPattern pattern, IExpr body);
+		/** Creates a match expression */
+		IMatch match(IExpr expr, List<IMatchCase> cases);
+
 	}
 	
 	/** This interface represents all literal (explicit constant) expressions. */
@@ -348,6 +355,25 @@ public interface IExpr extends IAccept, IPosable, IAttributeValue {
 	static public interface IError extends IExpr {
 		/** Returns an informational message about the error */
 		String value();
+	}
+
+	/** This interface represents a match pattern: either a bare symbol (variable/nullary-constructor)
+	 *  or a constructor applied to zero or more variable symbols. */
+	static public interface IPattern extends IAccept, IPosable {
+		ISymbol constructor();
+		List<ISymbol> params();
+	}
+
+	/** This interface represents one case in a match expression: a pattern and its body. */
+	static public interface IMatchCase extends IAccept, IPosable {
+		IPattern pattern();
+		IExpr body();
+	}
+
+	/** This interface represents an SMT-LIB 2.7 match expression. */
+	static public interface IMatch extends IExpr {
+		IExpr expr();
+		List<IMatchCase> cases();
 	}
 
 }

@@ -853,23 +853,23 @@ public abstract class SMTExpr implements IExpr {
 	
 	static public class Error extends Pos.Posable implements IError {
 		protected String message;
-		
+
 		public Error(String msg) {
 			message = msg;
 		}
-		
+
 		/** Returns the error message */
 		@Override
 		public String value() {
 			return this.message;
 		}
-		
+
 		/** Shows a string for debugging; use an IPrinter to get concrete syntax */
 		@Override
 		public String toString() {
 			return "Error: " + this.message;
 		}
-		
+
 		@Override
 		public String kind() { return "error"; }
 
@@ -882,6 +882,58 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
-	
+
+	static public class Pattern extends Pos.Posable implements IExpr.IPattern {
+		protected ISymbol constructor;
+		protected List<ISymbol> params;
+
+		public Pattern(ISymbol constructor, List<ISymbol> params) {
+			this.constructor = constructor;
+			this.params = params;
+		}
+
+		@Override public ISymbol constructor() { return constructor; }
+		@Override public List<ISymbol> params() { return params; }
+
+		@Override
+		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+	}
+
+	static public class MatchCase extends Pos.Posable implements IExpr.IMatchCase {
+		protected IExpr.IPattern pattern;
+		protected IExpr body;
+
+		public MatchCase(IExpr.IPattern pattern, IExpr body) {
+			this.pattern = pattern;
+			this.body = body;
+		}
+
+		@Override public IExpr.IPattern pattern() { return pattern; }
+		@Override public IExpr body() { return body; }
+
+		@Override
+		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+	}
+
+	static public class Match extends Pos.Posable implements IExpr.IMatch {
+		protected IExpr expression;
+		protected List<IExpr.IMatchCase> cases;
+
+		public Match(IExpr expr, List<IExpr.IMatchCase> cases) {
+			this.expression = expr;
+			this.cases = cases;
+		}
+
+		@Override public IExpr expr() { return expression; }
+		@Override public List<IExpr.IMatchCase> cases() { return cases; }
+		@Override public String kind() { return "match"; }
+
+		@Override
+		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+
+		@Override public boolean isOK() { throw new RuntimeException(); }
+		@Override public boolean isError() { throw new RuntimeException(); }
+	}
+
 
 }

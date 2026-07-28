@@ -1,0 +1,2 @@
+success
+(error "The declare-datatype command requires SMT-LIB V2.6 or later")
