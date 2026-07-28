@@ -22,8 +22,10 @@ cp src/org/smtlib/test/*.smt2 "${TEST_BIN}/org/smtlib/test/" 2>/dev/null || true
 ## Compile any unit-test sources that are newer than their .class files.
 echo "Compiling unit tests..."
 javac -cp "$CP" -d "$TEST_BIN" \
+    src/org/smtlib/test/JUnitListener.java \
     src/org/smtlib/test/UnitTests.java \
-    src/org/smtlib/test/RoundTripTest.java
+    src/org/smtlib/test/RoundTripTest.java \
+    src/org/smtlib/test/ParseCommand.java
 ret=$?
 if [ $ret -ne 0 ]; then
     echo "Compilation FAILED"
@@ -34,7 +36,8 @@ fi
 echo "Running unit tests..."
 java ${COV_AGENT:-} -cp "$CP" org.junit.runner.JUnitCore \
     org.smtlib.test.UnitTests \
-    org.smtlib.test.RoundTripTest
+    org.smtlib.test.RoundTripTest \
+    org.smtlib.test.ParseCommand
 ret=$?
 [ $ret -eq 0 ] && echo "Unit tests SUCCEEDED" || echo "Unit tests FAILED"
 exit $ret

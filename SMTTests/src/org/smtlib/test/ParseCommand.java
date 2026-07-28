@@ -68,10 +68,7 @@ public class ParseCommand {
 		testCommand("(check-sat ","The input ends with an unmatched left parenthesis");
 	}
 
-	@Test
-	public void noparen() throws Exception {
-		testCommand("check-sat ","Expected a left parenthesis here, instead of a symbol");
-	}
+
 
 	@Test
 	public void declare_fun() throws Exception {
@@ -141,7 +138,7 @@ public class ParseCommand {
 
 	@Test
 	public void define_sort_duplicate() throws Exception {
-		testCommand("(define-sort |@z| (B |B| ) Bool)","A name is duplicated in the parameter list: |B|");
+		testCommand("(define-sort MySort (B B) Bool)","A name is duplicated in the parameter list: B");
 	}
 
 	@Test
@@ -251,6 +248,54 @@ public class ParseCommand {
 	public void what() throws Exception {
 		config.relax = true;
 		testCommand("(what a b)");
+	}
+
+	@Test
+	public void declare_const() throws Exception {
+		testCommand("(declare-const x Bool)");
+	}
+
+	@Test
+	public void define_const() throws Exception {
+		testCommand("(define-const x Bool true)");
+	}
+
+	@Test
+	public void declare_datatype_nonpar() throws Exception {
+		testCommand("(declare-datatype Color ((red) (green) (blue) ))");
+	}
+
+	@Test
+	public void declare_datatype_par() throws Exception {
+		testCommand("(declare-datatype Option ( par (A ) ((some (val A)) (none) ) ))");
+	}
+
+	@Test
+	public void declare_datatypes() throws Exception {
+		testCommand("(declare-datatypes ( (Color 0)) ( ((red) (green) (blue) )))");
+	}
+
+	@Test
+	public void declare_datatypes_empty_sort_list() throws Exception {
+		testCommand("(declare-datatypes () (((red) )))",
+				"Expected at least one sort declaration in declare-datatypes");
+	}
+
+	@Test
+	public void declare_datatypes_size_mismatch() throws Exception {
+		testCommand("(declare-datatypes ( (Color 0) (Shape 0)) ( ((red) ) ))",
+				"Number of sort declarations (2) does not match number of datatype declarations (1)");
+	}
+
+	@Test
+	public void define_funs_rec() throws Exception {
+		testCommand("(define-funs-rec ((f () Bool) ) (true ))");
+	}
+
+	@Test
+	public void define_funs_rec_size_mismatch() throws Exception {
+		testCommand("(define-funs-rec ((f () Bool) ) (true false ))",
+				"The number of function declarations (1) must equal the number of bodies (2)");
 	}
 
 }

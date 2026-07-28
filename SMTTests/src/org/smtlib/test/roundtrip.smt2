@@ -2,11 +2,6 @@
 ; write() output must exactly reproduce the input text.
 ; Covers all command write() methods and their branches (0-element vs
 ; 1+-element loops, attribute with/without value, etc.).
-;
-; Excluded (incomplete write() implementations with FIXME comments):
-;   declare-datatypes  -- write() body is commented out
-;   define-funs-rec    -- write() body is commented out
-;   declare-datatype   -- write() calls IDatatype.accept() which is a TODO stub
 
 ; assert: exercises IFcnExpr (0,1,2+ args), IForall/IExists (1 and 2 decls),
 ;         ILet (1 binding), IAttributedExpr (:named attribute), IDeclaration,
@@ -33,12 +28,20 @@
 (declare-fun g (Bool ) Bool)
 (declare-fun h (Int Bool ) Int)
 
+; declare-datatype: non-parametric (symbols null) and parametric (symbols non-null)
+; Note: datatype body uses trailing space before ')' per printer convention
+(declare-datatype Color ((red) (green) (blue) ))
+(declare-datatype Option ( par (A ) ((some (val A)) (none) ) ))
+
+; declare-datatypes: parallel sort-decl and datatype lists (space after '(' per printer)
+(declare-datatypes ( (Color 0)) ( ((red) (green) (blue) )))
+
 ; declare-sort: arity 0 and arity > 0
 (declare-sort MySort 0)
 (declare-sort MySort2 2)
 
-; define-const is excluded: C_define_const.commandName is "declare-const",
-; so parsing "(define-const ...)" writes back as "(declare-const ...)" -- no round-trip.
+; define-const: syntactic sugar for define-fun with no parameters
+(define-const x Bool true)
 
 ; define-fun: 0 and 2 parameters
 (define-fun f0 () Bool true)
@@ -46,6 +49,9 @@
 
 ; define-fun-rec: 1 parameter (same write format as define-fun)
 (define-fun-rec f2 ((x Bool)) Bool (not x))
+
+; define-funs-rec: two parallel lists (decl list and body list, each with trailing space)
+(define-funs-rec ((f () Bool) ) (true ))
 
 ; define-sort: 0 and 1 sort parameters (note trailing space inside paren)
 (define-sort MyAlias () Bool)
