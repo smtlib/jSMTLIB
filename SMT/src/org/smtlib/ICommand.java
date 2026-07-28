@@ -31,6 +31,9 @@ public interface ICommand extends INode {
 		Class<? extends ICommand> findCommand(String name);
 	}
 	
+	/** Returns the SMT-LIB name of this command (e.g. {@code "assert"}, {@code "check-sat"}). */
+	String commandName();
+
 	/** Executes the command on the given solver; presumes that the command type-checked
 	 * successfully.
 	 * @param solver the instance of the solver to use (note that solvers have state)

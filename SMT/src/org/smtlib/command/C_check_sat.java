@@ -35,10 +35,6 @@ public class C_check_sat extends Command implements Icheck_sat {
 	public String commandName() { return commandName; }
 	
 	@Override
-	public void writeArgs(Printer p) throws IOException {
-	}
-	
-	@Override
 	public IResponse execute(ISolver solver) {
 		return solver.check_sat();
 	}

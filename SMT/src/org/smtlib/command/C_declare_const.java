@@ -36,14 +36,6 @@ public class C_declare_const extends C_declare_fun implements Ideclare_const {
 		super(symbol, emptyList, resultSort);
 	}
 
-	@Override
-	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append(" ");
-		symbol().accept(p);
-		p.writer().append(" ");
-		resultSort().accept(p);
-	}
-
 	/** Parses the arguments of the command, producing a new command instance */
 	static public C_declare_const parse(Parser p) throws ParserException {
 		ISymbol symbol = p.parseSymbol();

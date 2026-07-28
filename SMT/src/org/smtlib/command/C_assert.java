@@ -41,12 +41,6 @@ public class C_assert extends Command implements Iassert {
 	/** The formula to assert */
 	protected IExpr formula;
 
-	@Override
-	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append(" ");
-		expr().accept(p);
-	}
-
 	/** Parses the arguments of the command, producing a new command instance */
 	static public C_assert parse(Parser p) throws IOException, ParserException {
 		IExpr expr = p.parseExpr();

@@ -40,15 +40,6 @@ public class C_define_funs_rec extends Command implements Idefine_funs_rec {
 		this.bodies = bodies;
 	}
 
-	@Override
-	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append(" (");
-		for (IFunctionDeclaration d : declarations()) { d.accept(p); p.writer().append(" "); }
-		p.writer().append(") (");
-		for (IExpr body : bodies()) { body.accept(p); p.writer().append(" "); }
-		p.writer().append(")");
-	}
-
 	/** Parses the command arguments and creates a command instance */
 	static public C_define_funs_rec parse(Parser p) throws ParserException {
 		List<IFunctionDeclaration> decls = p.parseList(p::parseFunctionDeclaration, "function declaration", false);

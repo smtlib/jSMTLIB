@@ -44,12 +44,6 @@ public class C_get_info extends Command implements Iget_info {
 	}
 	
 	@Override
-	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append(" ");
-		infoflag().accept(p);
-	}
-	
-	@Override
 	public IResponse execute(ISolver solver) {
 		if (prefixText != null) solver.comment(prefixText);
 		return solver.get_info(infoflag);

@@ -54,19 +54,6 @@ public class C_declare_fun extends Command implements Ideclare_fun {
 		this.resultSort = resultSort;
 	}
 
-	@Override
-	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append(" ");
-		symbol().accept(p);
-		p.writer().append(" (");
-		for (ISort s: argSorts()) {
-			s.accept(p);
-			p.writer().append(" ");
-		}
-		p.writer().append(") ");
-		resultSort().accept(p);
-	}
-
 	/** Parses the arguments of the command, producing a new command instance */
 	static public C_declare_fun parse(Parser p) throws ParserException {
 		ISymbol symbol = p.parseSymbol();

@@ -57,20 +57,6 @@ public class C_define_fun extends Command implements Idefine_fun {
 		this.expression = expr;
 	}
 	
-	@Override
-	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append(" ");
-		symbol().accept(p);
-		p.writer().append(" (");
-		for (IDeclaration d: parameters()) {
-			d.accept(p);
-		}
-		p.writer().append(") ");
-		resultSort().accept(p);
-		p.writer().append(" ");
-		expression().accept(p);
-	}
-	
 	/** Parses the command arguments and creates a command instance */
 	static public C_define_fun parse(Parser p) throws ParserException {
 		ISymbol name = p.parseSymbol();

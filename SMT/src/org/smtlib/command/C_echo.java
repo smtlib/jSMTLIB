@@ -52,10 +52,4 @@ public class C_echo extends Command implements Iecho {
 		return v.visit(this);
 	}
 	
-	@Override
-	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append(" ");
-		arg().accept(p);
-	}
-	
 }

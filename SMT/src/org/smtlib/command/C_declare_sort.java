@@ -47,14 +47,6 @@ public class C_declare_sort extends Command implements Ideclare_sort {
 		this.arity = n;
 	}
 	
-	@Override
-	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append(" ");
-		sortSymbol().accept(p);
-		p.writer().append(" ");
-		arity().accept(p);
-	}
-
 	/** Parses the arguments of the command, producing a new command instance */
 	static public C_declare_sort parse(Parser p) throws IOException, ParserException {
 		ISymbol id = p.parseSymbol();

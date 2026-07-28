@@ -52,12 +52,6 @@ public class C_push extends Command implements Ipush {
 	}
 
 	@Override
-	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append(" ");
-		number().accept(p);
-	}
-	
-	@Override
 	public IResponse execute(ISolver solver) {
 		return solver.push(number);
 	}

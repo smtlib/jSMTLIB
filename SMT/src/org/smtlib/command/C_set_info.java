@@ -50,14 +50,6 @@ public class C_set_info extends Command implements Iset_info {
 	}
 
 	@Override
-	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append(" ");
-		infoflag().accept(p);
-		p.writer().append(" ");
-		value().accept(p);
-	}
-	
-	@Override
 	public IResponse execute(ISolver solver) {
 		if (prefixText != null) solver.comment(prefixText);
 		return solver.set_info(infoflag,value);

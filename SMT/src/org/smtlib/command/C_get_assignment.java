@@ -34,10 +34,6 @@ public class C_get_assignment extends Command implements Iget_assignment {
 	public String commandName() { return commandName; }
 	
 	@Override
-	public void writeArgs(Printer p) throws IOException {
-	}
-	
-	@Override
 	public IResponse execute(ISolver solver) {
 		return solver.get_assignment();
 	}

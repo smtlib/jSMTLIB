@@ -44,21 +44,6 @@ public class C_declare_datatypes extends Command implements Ideclare_datatypes {
 		this.datatypes = datatypes;
 	}
 
-	@Override
-	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append(" (");
-		for (ISortDeclaration sd : sortDeclarations()) {
-			p.writer().append(" ");
-			sd.accept(p);
-		}
-		p.writer().append(") (");
-		for (IDatatype dt : datatypes()) {
-			p.writer().append(" ");
-			dt.accept(p);
-		}
-		p.writer().append(")");
-	}
-
 	/** Parses the arguments: ( (symbol numeral)+ ) ( datatype_dec+ ) */
 	static public C_declare_datatypes parse(Parser p) throws ParserException {
 		List<ISortDeclaration> sortDecls = new LinkedList<>();

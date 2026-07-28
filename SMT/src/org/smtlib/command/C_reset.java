@@ -42,8 +42,4 @@ public class C_reset extends Command implements Ireset {
 		return v.visit(this);
 	}
 	
-	@Override
-	public void writeArgs(Printer p) throws IOException {
-	}
-	
 }

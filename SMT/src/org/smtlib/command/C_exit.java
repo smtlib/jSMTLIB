@@ -42,8 +42,4 @@ public class C_exit extends Command implements Iexit {
 		return v.visit(this);
 	}
 	
-	@Override
-	public void writeArgs(Printer p) throws IOException {
-	}
-	
 }

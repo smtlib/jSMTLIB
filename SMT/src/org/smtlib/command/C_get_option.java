@@ -46,12 +46,6 @@ public class C_get_option extends Command implements Iget_option {
 	}
 	
 	@Override
-	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append(" ");
-		option().accept(p);
-	}
-
-	@Override
 	public IResponse execute(ISolver solver) {
 		if (prefixText != null) solver.comment(prefixText);
 		return solver.get_option(option);

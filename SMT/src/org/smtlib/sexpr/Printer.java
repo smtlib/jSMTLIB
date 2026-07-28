@@ -6,6 +6,8 @@
 package org.smtlib.sexpr;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 
 import org.smtlib.*;
@@ -537,12 +539,12 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 		void run() throws IVisitor.VisitorException, IOException;
 	}
 
-	/** Prints {@code (name args)} — the space between name and args is emitted here,
+	/** Prints {@code (commandName() args)} — the space between name and args is emitted here,
 	 *  so the {@code args} lambda should not prepend one. Subclasses may override to
 	 *  change the overall command format. */
-	protected Void printCommand(String name, ICommand e, PrintArgs args) throws IVisitor.VisitorException {
+	protected Void printCommand(ICommand e, PrintArgs args) throws IVisitor.VisitorException {
 		try {
-			w.append("(" + name + " ");
+			w.append("(" + e.commandName() + " ");
 			args.run();
 			w.append(")");
 		} catch (IOException ex) {
@@ -552,10 +554,10 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 		return null;
 	}
 
-	/** Prints a no-argument command: {@code (name)}. Subclasses may override to change format. */
-	protected Void printCommand(String name, ICommand e) throws IVisitor.VisitorException {
+	/** Prints a no-argument command: {@code (commandName())}. Subclasses may override to change format. */
+	protected Void printCommand(ICommand e) throws IVisitor.VisitorException {
 		try {
-			w.append("(" + name + ")");
+			w.append("(" + e.commandName() + ")");
 		} catch (IOException ex) {
 			throw new IVisitor.VisitorException(ex,
 					e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null);
@@ -563,26 +565,40 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 		return null;
 	}
 
-	/** Fallback for any command type not covered by a specific visit method. */
+	/** Fallback for extension command types not covered by a specific visit method;
+	 *  uses reflection to invoke {@code write(Printer)} on the command object. */
 	@Override
 	public Void visit(ICommand e) throws IVisitor.VisitorException {
-		throw new IVisitor.VisitorException(
-				"No specific visit method for command type " + e.getClass(), null);
+		Class<?> clazz = e.getClass();
+		try {
+			Method m = clazz.getMethod("write", Printer.class);
+			m.invoke(e, this);
+		} catch (IllegalAccessException ex) {
+			throw new IVisitor.VisitorException(ex,
+					e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null);
+		} catch (InvocationTargetException ex) {
+			throw new IVisitor.VisitorException(ex.getTargetException(),
+					e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null);
+		} catch (NoSuchMethodException ex) {
+			throw new IVisitor.VisitorException(
+					"No write method for " + clazz + " and " + this.getClass(), null);
+		}
+		return null;
 	}
 
 	@Override
 	public Void visit(ICommand.Iassert e) throws IVisitor.VisitorException {
-		return printCommand("assert", e, () -> e.expr().accept(this));
+		return printCommand(e, () -> e.expr().accept(this));
 	}
 
 	@Override
 	public Void visit(ICommand.Icheck_sat e) throws IVisitor.VisitorException {
-		return printCommand("check-sat", e);
+		return printCommand(e);
 	}
 
 	@Override
 	public Void visit(ICommand.Icheck_sat_assuming e) throws IVisitor.VisitorException {
-		return printCommand("check-sat-assuming", e, () -> {
+		return printCommand(e, () -> {
 			w.append("(");
 			for (IExpr x : e.exprs()) { w.append(" "); x.accept(this); }
 			w.append(")");
@@ -591,7 +607,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(ICommand.Ideclare_const e) throws IVisitor.VisitorException {
-		return printCommand("declare-const", e, () -> {
+		return printCommand(e, () -> {
 			e.symbol().accept(this);
 			w.append(" ");
 			e.resultSort().accept(this);
@@ -600,7 +616,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(ICommand.Ideclare_datatype e) throws IVisitor.VisitorException {
-		return printCommand("declare-datatype", e, () -> {
+		return printCommand(e, () -> {
 			e.sortDeclaration().symbol().accept(this);
 			w.append(" ");
 			e.datatype().accept(this);
@@ -609,7 +625,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(ICommand.Ideclare_datatypes e) throws IVisitor.VisitorException {
-		return printCommand("declare-datatypes", e, () -> {
+		return printCommand(e, () -> {
 			w.append("(");
 			for (IExpr.ISortDeclaration sd : e.sortDeclarations()) { w.append(" "); sd.accept(this); }
 			w.append(") (");
@@ -620,7 +636,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(ICommand.Ideclare_fun e) throws IVisitor.VisitorException {
-		return printCommand("declare-fun", e, () -> {
+		return printCommand(e, () -> {
 			e.symbol().accept(this);
 			w.append(" (");
 			for (ISort s : e.argSorts()) { s.accept(this); w.append(" "); }
@@ -631,7 +647,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(ICommand.Ideclare_sort e) throws IVisitor.VisitorException {
-		return printCommand("declare-sort", e, () -> {
+		return printCommand(e, () -> {
 			e.sortSymbol().accept(this);
 			w.append(" ");
 			e.arity().accept(this);
@@ -640,12 +656,12 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(ICommand.Ideclare_sort_parameter e) throws IVisitor.VisitorException {
-		return printCommand("declare-sort-parameter", e, () -> e.sortSymbol().accept(this));
+		return printCommand(e, () -> e.sortSymbol().accept(this));
 	}
 
 	@Override
 	public Void visit(ICommand.Idefine_const e) throws IVisitor.VisitorException {
-		return printCommand("define-const", e, () -> {
+		return printCommand(e, () -> {
 			e.symbol().accept(this);
 			w.append(" ");
 			e.resultSort().accept(this);
@@ -656,7 +672,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(ICommand.Idefine_fun e) throws IVisitor.VisitorException {
-		return printCommand("define-fun", e, () -> {
+		return printCommand(e, () -> {
 			e.symbol().accept(this);
 			w.append(" (");
 			for (IExpr.IDeclaration d : e.parameters()) d.accept(this);
@@ -669,7 +685,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(ICommand.Idefine_fun_rec e) throws IVisitor.VisitorException {
-		return printCommand("define-fun-rec", e, () -> {
+		return printCommand(e, () -> {
 			e.symbol().accept(this);
 			w.append(" (");
 			for (IExpr.IDeclaration d : e.parameters()) d.accept(this);
@@ -682,7 +698,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(ICommand.Idefine_funs_rec e) throws IVisitor.VisitorException {
-		return printCommand("define-funs-rec", e, () -> {
+		return printCommand(e, () -> {
 			w.append("(");
 			for (IExpr.IFunctionDeclaration d : e.declarations()) { d.accept(this); w.append(" "); }
 			w.append(") (");
@@ -693,7 +709,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(ICommand.Idefine_sort e) throws IVisitor.VisitorException {
-		return printCommand("define-sort", e, () -> {
+		return printCommand(e, () -> {
 			e.sortSymbol().accept(this);
 			w.append(" (");
 			for (ISort.IParameter d : e.parameters()) { d.accept(this); w.append(" "); }
@@ -704,57 +720,57 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(ICommand.Iecho e) throws IVisitor.VisitorException {
-		return printCommand("echo", e, () -> e.arg().accept(this));
+		return printCommand(e, () -> e.arg().accept(this));
 	}
 
 	@Override
 	public Void visit(ICommand.Iexit e) throws IVisitor.VisitorException {
-		return printCommand("exit", e);
+		return printCommand(e);
 	}
 
 	@Override
 	public Void visit(ICommand.Iget_assertions e) throws IVisitor.VisitorException {
-		return printCommand("get-assertions", e);
+		return printCommand(e);
 	}
 
 	@Override
 	public Void visit(ICommand.Iget_assignment e) throws IVisitor.VisitorException {
-		return printCommand("get-assignment", e);
+		return printCommand(e);
 	}
 
 	@Override
 	public Void visit(ICommand.Iget_info e) throws IVisitor.VisitorException {
-		return printCommand("get-info", e, () -> e.infoflag().accept(this));
+		return printCommand(e, () -> e.infoflag().accept(this));
 	}
 
 	@Override
 	public Void visit(ICommand.Iget_model e) throws IVisitor.VisitorException {
-		return printCommand("get-model", e);
+		return printCommand(e);
 	}
 
 	@Override
 	public Void visit(ICommand.Iget_option e) throws IVisitor.VisitorException {
-		return printCommand("get-option", e, () -> e.option().accept(this));
+		return printCommand(e, () -> e.option().accept(this));
 	}
 
 	@Override
 	public Void visit(ICommand.Iget_proof e) throws IVisitor.VisitorException {
-		return printCommand("get-proof", e);
+		return printCommand(e);
 	}
 
 	@Override
 	public Void visit(ICommand.Iget_unsat_assumptions e) throws IVisitor.VisitorException {
-		return printCommand("get-unsat-assumptions", e);
+		return printCommand(e);
 	}
 
 	@Override
 	public Void visit(ICommand.Iget_unsat_core e) throws IVisitor.VisitorException {
-		return printCommand("get-unsat-core", e);
+		return printCommand(e);
 	}
 
 	@Override
 	public Void visit(ICommand.Iget_value e) throws IVisitor.VisitorException {
-		return printCommand("get-value", e, () -> {
+		return printCommand(e, () -> {
 			w.append("(");
 			for (IExpr x : e.exprs()) { w.append(" "); x.accept(this); }
 			w.append(")");
@@ -763,27 +779,27 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(ICommand.Ipop e) throws IVisitor.VisitorException {
-		return printCommand("pop", e, () -> e.number().accept(this));
+		return printCommand(e, () -> e.number().accept(this));
 	}
 
 	@Override
 	public Void visit(ICommand.Ipush e) throws IVisitor.VisitorException {
-		return printCommand("push", e, () -> e.number().accept(this));
+		return printCommand(e, () -> e.number().accept(this));
 	}
 
 	@Override
 	public Void visit(ICommand.Ireset e) throws IVisitor.VisitorException {
-		return printCommand("reset", e);
+		return printCommand(e);
 	}
 
 	@Override
 	public Void visit(ICommand.Ireset_assertions e) throws IVisitor.VisitorException {
-		return printCommand("reset-assertions", e);
+		return printCommand(e);
 	}
 
 	@Override
 	public Void visit(ICommand.Iset_info e) throws IVisitor.VisitorException {
-		return printCommand("set-info", e, () -> {
+		return printCommand(e, () -> {
 			e.infoflag().accept(this);
 			w.append(" ");
 			e.value().accept(this);
@@ -792,12 +808,12 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(ICommand.Iset_logic e) throws IVisitor.VisitorException {
-		return printCommand("set-logic", e, () -> e.logic().accept(this));
+		return printCommand(e, () -> e.logic().accept(this));
 	}
 
 	@Override
 	public Void visit(ICommand.Iset_option e) throws IVisitor.VisitorException {
-		return printCommand("set-option", e, () -> {
+		return printCommand(e, () -> {
 			e.option().accept(this);
 			w.append(" ");
 			e.value().accept(this);

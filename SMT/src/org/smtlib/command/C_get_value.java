@@ -46,17 +46,7 @@ public class C_get_value extends Command implements Iget_value {
 		return new C_get_value(list);
 	}
 
-	
-	@Override
-	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append(" (");
-		for (IExpr e: exprs()) {
-			p.writer().append(" ");
-			e.accept(p);
-		}
-		p.writer().append(")");
-	}
-	
+
 	@Override
 	public IResponse execute(ISolver solver) {
 		return solver.get_value(exprs().toArray(new IExpr[exprs().size()]));

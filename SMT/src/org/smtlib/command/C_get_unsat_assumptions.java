@@ -34,10 +34,6 @@ public class C_get_unsat_assumptions extends Command implements Iget_unsat_assum
 	public String commandName() { return commandName; }
 	
 	@Override
-	public void writeArgs(Printer p) throws IOException {
-	}
-	
-	@Override
 	public IResponse execute(ISolver solver) {
 		return solver.get_unsat_assumptions();
 	}

@@ -60,14 +60,6 @@ public class C_set_option extends Command implements Iset_option {
 
 
 	@Override
-	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append(" ");
-		option().accept(p);
-		p.writer().append(" ");
-		value().accept(p);
-	}
-	
-	@Override
 	public IResponse execute(ISolver solver) {
 		if (prefixText != null) solver.comment(prefixText);
 		return solver.set_option(option,value);

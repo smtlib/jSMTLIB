@@ -38,8 +38,9 @@ public abstract class Command implements ICommand, IPosable {
 	abstract public String commandName();
 
 	/** Writes the command arguments (everything between the opening parenthesis +
-	 *  command name and the closing parenthesis); called by {@link #write}. */
-	public abstract void writeArgs(Printer p) throws IOException, IVisitor.VisitorException;
+	 *  command name and the closing parenthesis); called by {@link #write}.
+	 *  Extension commands override this; standard commands are printed via the visitor. */
+	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {}
 
 	/** Writes the full command: {@code (commandName() <writeArgs output>)}. */
 	public void write(Printer p) throws IOException, IVisitor.VisitorException {

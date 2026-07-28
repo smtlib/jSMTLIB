@@ -34,16 +34,6 @@ public class C_define_const extends C_define_fun implements Idefine_const {
 		super(symbol, Collections.emptyList(), resultSort, expression);
 	}
 
-	@Override
-	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append(" ");
-		symbol().accept(p);
-		p.writer().append(" ");
-		resultSort().accept(p);
-		p.writer().append(" ");
-		expression().accept(p);
-	}
-
 	/** Parses the arguments of the command, producing a new command instance */
 	static public C_define_const parse(Parser p) throws ParserException {
 		ISymbol symbol = p.parseSymbol();

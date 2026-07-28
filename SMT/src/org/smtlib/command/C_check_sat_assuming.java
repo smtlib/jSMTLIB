@@ -46,16 +46,6 @@ public class C_check_sat_assuming extends Command implements Icheck_sat_assuming
     public List<IExpr> exprs() { return terms; }
 
 	@Override
-	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-        p.writer().append(" (");
-        for (IExpr e: exprs()) {
-            p.writer().append(" ");
-            e.accept(p);
-        }
-        p.writer().append(")");
-	}
-	
-	@Override
 	public IResponse execute(ISolver solver) {
 		return solver.check_sat_assuming(exprs().toArray(new IExpr[0]));
 	}

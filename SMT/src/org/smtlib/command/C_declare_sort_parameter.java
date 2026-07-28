@@ -38,12 +38,6 @@ public class C_declare_sort_parameter extends Command implements Ideclare_sort_p
 		this.sortSymbol = id;
 	}
 	
-	@Override
-	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append(" ");
-		sortSymbol().accept(p);
-	}
-
 	/** Parses the arguments of the command, producing a new command instance */
 	static public C_declare_sort_parameter parse(Parser p) throws IOException, ParserException {
 		ISymbol id = p.parseSymbol();

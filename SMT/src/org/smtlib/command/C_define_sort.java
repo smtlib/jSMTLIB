@@ -49,19 +49,6 @@ public class C_define_sort extends Command implements Idefine_sort {
 		this.expression = expr;
 	}
 	
-	@Override
-	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-		p.writer().append(" ");
-		sortSymbol().accept(p);
-		p.writer().append(" (");
-		for (IParameter d: parameters()) {
-			d.accept(p);
-			p.writer().append(" ");
-		}
-		p.writer().append(") ");
-		expression().accept(p);
-	}
-	
 	/** Parses the command arguments and creates a command instance */
 	static public C_define_sort parse(Parser p) throws ParserException {
 		ISymbol name = p.parseSymbol();

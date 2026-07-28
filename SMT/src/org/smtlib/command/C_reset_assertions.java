@@ -42,8 +42,4 @@ public class C_reset_assertions extends Command implements Ireset_assertions {
 		return v.visit(this);
 	}
 	
-	@Override
-	public void writeArgs(Printer p) throws IOException {
-	}
-	
 }
