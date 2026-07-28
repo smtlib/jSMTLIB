@@ -62,9 +62,9 @@ public class C_set_option extends Command implements Iset_option {
 	@Override
 	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
 		p.writer().append(" ");
-		option.accept(p);
+		option().accept(p);
 		p.writer().append(" ");
-		value.accept(p);
+		value().accept(p);
 	}
 	
 	@Override

@@ -54,7 +54,7 @@ public class C_push extends Command implements Ipush {
 	@Override
 	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
 		p.writer().append(" ");
-		numeral.accept(p);
+		number().accept(p);
 	}
 	
 	@Override

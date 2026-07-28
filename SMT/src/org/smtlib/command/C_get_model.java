@@ -7,7 +7,7 @@ package org.smtlib.command;
 
 import java.io.IOException;
 
-import org.smtlib.ICommand.Iget_proof;
+import org.smtlib.ICommand.Iget_model;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.IResponse;
@@ -18,8 +18,8 @@ import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
 
-/** Implements the get-proof command */
-public class C_get_model extends Command implements Iget_proof {
+/** Implements the get-model command */
+public class C_get_model extends Command implements Iget_model {
 	/** Constructs a command instance */
 	public C_get_model() {
 	}

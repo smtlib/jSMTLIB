@@ -48,7 +48,7 @@ public class C_get_option extends Command implements Iget_option {
 	@Override
 	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
 		p.writer().append(" ");
-		option.accept(p);
+		option().accept(p);
 	}
 
 	@Override

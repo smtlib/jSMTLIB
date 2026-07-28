@@ -26,15 +26,15 @@ public class C_get_info extends Command implements Iget_info {
 	public String commandName() { return commandName; }
 
 	/** The keyword for the info item to fetch */
-	protected IKeyword option;
+	protected IKeyword infoflag;
 
 	/** The keyword for the info item to fetch */
 	@Override
-	public IKeyword infoflag() { return option; }
+	public IKeyword infoflag() { return infoflag; }
 
 	/** Constructs a command instance given the keyword */
 	public C_get_info(IKeyword infoflag) { 
-		this.option = infoflag;
+		this.infoflag = infoflag;
 	}
 	
 	/** Creates a command instance by parsing the concrete S-expression syntax */
@@ -46,13 +46,13 @@ public class C_get_info extends Command implements Iget_info {
 	@Override
 	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
 		p.writer().append(" ");
-		option.accept(p);
+		infoflag().accept(p);
 	}
 	
 	@Override
 	public IResponse execute(ISolver solver) {
 		if (prefixText != null) solver.comment(prefixText);
-		return solver.get_info(option);
+		return solver.get_info(infoflag);
 	}
 
 	@Override

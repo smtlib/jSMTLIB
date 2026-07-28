@@ -44,7 +44,7 @@ public class C_assert extends Command implements Iassert {
 	@Override
 	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
 		p.writer().append(" ");
-		formula.accept(p);
+		expr().accept(p);
 	}
 
 	/** Parses the arguments of the command, producing a new command instance */

@@ -47,7 +47,7 @@ public class C_set_logic extends Command implements Iset_logic {
 	@Override
 	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
 		p.writer().append(" ");
-		logicName.accept(p);
+		logic().accept(p);
 	}
 
 	@Override

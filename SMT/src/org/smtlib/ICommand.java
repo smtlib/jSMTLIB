@@ -62,16 +62,16 @@ public interface ICommand extends IAccept {
         Ideclare_sort declare_sort_parameter(ISymbol sym);
         
         /** Creates a define-const command object */
-        Idefine_fun define_const(IIdentifier id, ISort resultSort, IExpr expression);
-        
+        Idefine_const define_const(ISymbol symbol, ISort resultSort, IExpr expression);
+
         /** Creates a define-fun command object */
         Idefine_fun define_fun(IIdentifier id, List<IDeclaration> declarations, ISort resultSort, IExpr expression);
-        
+
         /** Creates a define-fun-rec command object */
-        Idefine_fun define_fun_rec(IIdentifier id, List<IDeclaration> declarations, ISort resultSort, IExpr expression);
-        
-        /** Creates a define-funs-rec command object */   // FIXME
-        Idefine_fun define_funs_rec(IIdentifier id, List<IDeclaration> declarations, ISort resultSort, IExpr expression);
+        Idefine_fun_rec define_fun_rec(IIdentifier id, List<IDeclaration> declarations, ISort resultSort, IExpr expression);
+
+        /** Creates a define-funs-rec command object */
+        Idefine_funs_rec define_funs_rec(List<IExpr.IFunctionDeclaration> declarations, List<IExpr> bodies);
         
 		/** Creates a define-sort command object. */
 		Idefine_sort define_sort(IIdentifier id, List<IParameter> parameters, ISort.IApplication expression);
@@ -250,6 +250,10 @@ public interface ICommand extends IAccept {
 		IKeyword option();
 	}
 	
+	/** Interface to be implemented by all objects representing SMT-LIB get-model commands (non-standard). */
+	static public interface Iget_model extends ICommand {
+	}
+
 	/** Interface to be implemented by all objects representing SMT-LIB get-proof commands. */
 	static public interface Iget_proof extends ICommand {
 	}

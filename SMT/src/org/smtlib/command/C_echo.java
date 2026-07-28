@@ -61,7 +61,7 @@ public class C_echo extends Command implements Iecho {
 	@Override
 	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
 		p.writer().append(" ");
-		arg.accept(p);
+		arg().accept(p);
 	}
 	
 }

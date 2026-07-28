@@ -54,7 +54,7 @@ public class C_pop extends Command implements Ipop {
 	@Override
 	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
 		p.writer().append(" ");
-		numeral.accept(p);
+		number().accept(p);
 	}
 	
 	@Override

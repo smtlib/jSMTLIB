@@ -7,6 +7,7 @@ package org.smtlib.command;
 
 import java.io.IOException;
 
+import org.smtlib.ICommand.Ireset;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.IResponse;
@@ -18,7 +19,7 @@ import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
 
 /** Implements the reset command */
-public class C_reset extends Command {
+public class C_reset extends Command implements Ireset {
 	/** Constructs an instance of the command */
 	public C_reset() {
 	}

@@ -63,7 +63,7 @@ public class C_check_sat_assuming extends Command implements Icheck_sat_assuming
 	
 	@Override
 	public IResponse execute(ISolver solver) {
-		return solver.check_sat_assuming();
+		return solver.check_sat_assuming(exprs().toArray(new IExpr[0]));
 	}
 
 	@Override
