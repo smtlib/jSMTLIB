@@ -157,15 +157,15 @@ public interface ICommand extends IAccept {
         // FIXME;
     }
     
-    /** Interface to be implemented by all objects representing SMT-LIB declare-datatype commands. */
+    /** Interface for the declare-datatypes command: a list of sort declarations and parallel datatype declarations. */
     static public interface Ideclare_datatypes extends ICommand {
-        List<ISymbol> symbols();
+        List<IExpr.ISortDeclaration> sortDeclarations();
         List<IDatatype> datatypes();
     }
-    
-    /** Interface to be implemented by all objects representing SMT-LIB declare-datatypes commands. */
+
+    /** Interface for the declare-datatype command: a sort declaration and its datatype body. */
     static public interface Ideclare_datatype extends ICommand {
-        ISymbol symbol();
+        IExpr.ISortDeclaration sortDeclaration();
         IDatatype datatype();
     }
     
@@ -210,13 +210,10 @@ public interface ICommand extends IAccept {
         IExpr expression();
     }
     
-    /** Interface to be implemented by all objects representing SMT-LIB define-fun-rec commands. */
+    /** Interface to be implemented by all objects representing SMT-LIB define-funs-rec commands. */
     static public interface Idefine_funs_rec extends ICommand {
-//        ISymbol symbol();
-//        List<IDeclaration> parameters();
-//        ISort resultSort();
-//        IExpr expression();
-        // FIXME
+        List<IExpr.IFunctionDeclaration> declarations();
+        List<IExpr> bodies();
     }
     
 	/** Interface to be implemented by all objects representing SMT-LIB define-sort commands. */

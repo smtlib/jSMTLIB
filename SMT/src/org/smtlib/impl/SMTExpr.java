@@ -10,6 +10,8 @@ import java.math.BigInteger;
 import java.util.*;
 
 import org.smtlib.*;
+import org.smtlib.IExpr.IConstructor;
+import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IVisitor.VisitorException;
 
 // FIXME - Decide whether we use reference or structural equality - either complete or remove equals and hashCode
@@ -537,6 +539,81 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
+	
+    static public class SortDeclaration extends Pos.Posable implements IExpr.ISortDeclaration {
+        protected ISymbol symbol;
+        protected INumeral arity;
+
+        @Override public ISymbol symbol() { return symbol; }
+        @Override public INumeral arity() { return arity; }
+
+        public SortDeclaration(ISymbol symbol, INumeral arity) {
+            this.symbol = symbol;
+            this.arity = arity;
+        }
+
+        @Override
+        public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+    }
+
+    static public class Selector extends Pos.Posable implements ISelector {
+        protected ISymbol symbol;
+        protected ISort sort;
+
+        @Override
+        public ISymbol symbol() { return symbol; }
+
+        @Override
+        public ISort sort() { return sort; }
+        
+        public Selector(ISymbol symbol, ISort sort) {
+            this.symbol = symbol;
+            this.sort = sort;
+        }
+
+        @Override
+        public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+    }
+
+    static public class Constructor extends Pos.Posable implements IConstructor {
+        //@ nullable
+        protected ISymbol symbol;
+        protected List<ISelector> selectors;
+
+        @Override
+        public ISymbol symbol() { return symbol; }
+
+        @Override
+        public List<ISelector> selectors() { return selectors; }
+        
+        public Constructor(ISymbol symbol, List<ISelector> selectors) {
+            this.symbol = symbol;
+            this.selectors = selectors;
+        }
+
+        @Override
+        public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+    }
+    
+    static public class Datatype extends Pos.Posable implements IDatatype {
+        List<IConstructor> constructors;
+        /*@ nullable */ List<ISymbol> symbols;
+
+        @Override
+        public List<IConstructor> constructors() { return constructors; }
+        @Override
+        public /*@ nullable */ List<ISymbol> symbols() { return symbols; }
+
+        public Datatype(List<IConstructor> constructors, /*@ nullable */ List<ISymbol> symbols) {
+            this.constructors = constructors;
+            this.symbols = symbols;
+        }
+
+        @Override
+        public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+
+    }
+
 
 	static public class Declaration extends Pos.Posable implements IDeclaration {
 		ISymbol parameter;
@@ -567,11 +644,20 @@ public abstract class SMTExpr implements IExpr {
 	    protected ISort sort;
 	    protected List<IDeclaration> parameters;
 	    
+	    @Override
 	    public ISymbol symbol() { return symbol; }
 	    
+	    @Override
 	    public ISort sort() { return sort; }
 	    
+	    @Override
 	    public List<IDeclaration> parameters() { return parameters; }
+	    
+	    public FunctionDeclaration(ISymbol symbol, List<IDeclaration> parameters, ISort sort) {
+	        this.symbol = symbol;
+	        this.parameters = parameters;
+	        this.sort = sort;
+	    }
 
         @Override
         public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }

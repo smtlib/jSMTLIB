@@ -10,6 +10,8 @@ import java.math.BigInteger;
 import java.util.List;
 
 import org.smtlib.ICommand.IScript;
+import org.smtlib.IExpr.IDeclaration;
+import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IPos.IPosable;
 
 // FIXME - any new s-expressions
@@ -83,6 +85,17 @@ public interface IExpr extends IAccept, IPosable, IAttributeValue {
 		/** Creates an error expression */
 		IError error(String text);
 
+		/** Creates a sort declaration (symbol + arity) for use in declare-datatype(s) */
+		ISortDeclaration sortDeclaration(ISymbol symbol, INumeral arity);
+		/** Creates a selector declaration */
+		ISelector selector(ISymbol symbol, ISort sort);
+		/** Creates a constructor declaration */
+		IConstructor constructor(ISymbol symbol, List<ISelector> selectors);
+		/** Creates a datatype declaration; symbols is non-null only for parametric (par) forms */
+		IDatatype datatype(List<IConstructor> constructors, /*@nullable*/ List<ISymbol> symbols);
+		/** Creates a function declaration (used in define-funs-rec) */
+		IFunctionDeclaration functionDeclaration(ISymbol symbol, List<IDeclaration> parameters, ISort sort);
+
 	}
 	
 	/** This interface represents all literal (explicit constant) expressions. */
@@ -124,6 +137,12 @@ public interface IExpr extends IAccept, IPosable, IAttributeValue {
 		String toString();
 	}
 	
+    /** Pairs a sort name with its arity; used in declare-datatype and declare-datatypes. */
+    static public interface ISortDeclaration extends IAccept, IPosable {
+        ISymbol symbol();
+        INumeral arity();
+    }
+
     static public interface ISelector extends IAccept, IPosable {
         ISymbol symbol();
         ISort sort();
@@ -290,7 +309,9 @@ public interface IExpr extends IAccept, IPosable, IAttributeValue {
     
     /** This interface represents a declaration of a parameter and its sort */
     static public interface IFunctionDeclaration extends IAccept, IPosable {
-        // FIXME
+        ISymbol symbol();
+        List<IDeclaration> parameters();
+        ISort sort();
     }
     
 	/** This interface represents a binding of a parameter and an expression */

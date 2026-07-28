@@ -473,56 +473,87 @@ public class Parser extends Lexer implements IParser {
 			list.add(parseExpr());
 		}
 		ILexToken rp = parseRP();
-		if (list.size() == 0) {
-			throw new ParserException("A function expression must have at least one argument", pos(lp.pos(),rp.pos()));
-		}
 		return setPos(smtConfig.exprFactory.fcn(head,list), pos(lp.pos(), rp.pos()));
 	}
 	
 	/** Parses a parenthesized sequence of IDeclaration items, returning null with error messages if an error occurs */
 	public List<IDeclaration> parseDeclarations() throws ParserException {
-		ILexToken lp = parseLP();
+		List<IDeclaration> decls = parseList(this::parseDeclaration, "declaration", true);
 		Set<ISymbol> names = new HashSet<ISymbol>();
-		List<IDeclaration> decls = new LinkedList<IDeclaration>();
-		while (!isRP()) {
-			if (isEOD()) {
-				throw new ParserException("Unexpected end of data while parsing a sequence of declarations", pos(lp.pos().charStart(),currentPos()));
-			}
-			IDeclaration decl = parseDeclaration();
-			decls.add(decl);
-			if (!names.add(decl.parameter())) {
-				throw new ParserException("Parameter list has a duplicate name: " + smtConfig.defaultPrinter.toString(decl.parameter()), decl.parameter().pos());
-			}
+		for (IDeclaration d : decls) {
+			if (!names.add(d.parameter()))
+				throw new ParserException("Parameter list has a duplicate name: " + smtConfig.defaultPrinter.toString(d.parameter()), d.parameter().pos());
 		}
-		parseRP();
 		return decls;
 	}
 
 	/** Parses a parenthesized sequence of let-bindings, returning null with error messages if an error occurs */
 	public List<IBinding> parseBindings() throws ParserException {
-		ILexToken lp = parseLP();
-		List<IBinding> decls = new LinkedList<IBinding>();
+		List<IBinding> decls = parseList(this::parseBinding, "binding", true);
 		Set<ISymbol> names = new HashSet<ISymbol>();
-		while (!isRP()) {
-			if (isEOD()) {
-				throw new ParserException("Unexpected end of data while parsing a sequence of parameter bindings", pos(lp.pos().charStart(),currentPos()));
-			}
-			IBinding decl = parseBinding();
-			decls.add(decl);
-			if (!names.add(decl.parameter())) {
-				throw new ParserException("Parameter list has a duplicate name: " + smtConfig.defaultPrinter.toString(decl.parameter()), decl.parameter().pos());
-			}
+		for (IBinding d : decls) {
+			if (!names.add(d.parameter()))
+				throw new ParserException("Parameter list has a duplicate name: " + smtConfig.defaultPrinter.toString(d.parameter()), d.parameter().pos());
 		}
-		parseRP();
 		return decls;
 	}
 	
-	   /** Parses a datatype declaration, returning null with error messages if an error occurs */
-    public /*@Nullable*/ IDatatype parseDatatype() throws IOException, ParserException {
-        // FIXME
-        return null;
-    }
-    
+	/** Parses a selector declaration "(symbol sort)" */
+	@Override
+	public IExpr.ISelector parseSelector() throws ParserException {
+		ILexToken lp = parseLP();
+		ISymbol symbol = parseSymbol();
+		ISort sort = parseSort(null);
+		ILexToken rp = parseRP();
+		return setPos(smtConfig.exprFactory.selector(symbol, sort), pos(lp.pos(), rp.pos()));
+	}
+
+	/** Parses a constructor declaration "(symbol selector*)" */
+	@Override
+	public IExpr.IConstructor parseConstructor() throws ParserException {
+		ILexToken lp = parseLP();
+		ISymbol symbol = parseSymbol();
+		List<IExpr.ISelector> selectors = new LinkedList<>();
+		while (!isRP() && !isEOD()) {
+			selectors.add(parseSelector());
+		}
+		ILexToken rp = parseRP();
+		return setPos(smtConfig.exprFactory.constructor(symbol, selectors), pos(lp.pos(), rp.pos()));
+	}
+
+	/** Parses a datatype declaration: "( constructor+ )" or "( par ( symbol+ ) ( constructor+ ) )" */
+	@Override
+	public IExpr.IDatatype parseDatatype() throws ParserException {
+		ILexToken lp = parseLP();
+		List<IExpr.IConstructor> constructors = new LinkedList<>();
+		List<IExpr.ISymbol> typeParams = null;
+		if (!isLP()) {
+			ISymbol par = parseSymbolOrReservedWord("Expected 'par' or a constructor beginning with '(' here, not a #");
+			if (!"par".equals(par.value()))
+				throw new ParserException("Expected 'par' keyword here", par.pos());
+			typeParams = parseList(this::parseSymbol, "type parameter", false);
+			ILexToken lp2 = parseLP();
+			while (!isRP() && !isEOD()) constructors.add(parseConstructor());
+			parseRP();
+		} else {
+			while (!isRP() && !isEOD()) constructors.add(parseConstructor());
+		}
+		ILexToken rp = parseRP();
+		return setPos(smtConfig.exprFactory.datatype(constructors, typeParams), pos(lp.pos(), rp.pos()));
+	}
+
+	/** Parses a function declaration "( symbol ( sorted_var* ) sort )" used in define-funs-rec */
+	@Override
+	public IExpr.IFunctionDeclaration parseFunctionDeclaration() throws ParserException {
+		ILexToken lp = parseLP();
+		ISymbol symbol = parseSymbol();
+		List<IDeclaration> params = parseList(this::parseDeclaration, "declaration", true);
+		ISort sort = parseSort(null);
+		ILexToken rp = parseRP();
+		return setPos(smtConfig.exprFactory.functionDeclaration(symbol, params, sort), pos(lp.pos(), rp.pos()));
+	}
+
+
 
 	
 	/** Parses a declaration "(id sort)", returning null with error messages if an error occurs */
@@ -545,6 +576,24 @@ public class Parser extends Lexer implements IParser {
 		ILexToken rp = parseRP();
 		//ISymbol.ILetParameter p = new Symbol.LetParameter(sym); // FIXME - use a factory
 		return setPos(smtConfig.exprFactory.binding(sym,expr), pos(lp.pos(), rp.pos()));
+	}
+
+	/** Parses a parenthesized list of elements using the given element parser.
+	 * @param elementParser  lambda that parses one element
+	 * @param kind  singular noun describing the element type (e.g. "term"), used in error messages
+	 * @param allowEmpty  if false, throws when the list is empty
+	 */
+	public <T> List<T> parseList(IParser.ElementParser<T> elementParser, String kind, boolean allowEmpty) throws ParserException {
+		ILexToken next = peekToken();
+		if (next.kind() != LexToken.LP) throw new ParserException("Expected a parenthesized list of " + kind + "s beginning here", next.pos());
+		ILexToken lp = parseLP();
+		List<T> list = new LinkedList<T>();
+		while (!isRP() && !isEOD()) {
+			list.add(elementParser.parse());
+		}
+		ILexToken rp = parseRP();
+		if (!allowEmpty && list.isEmpty()) throw new ParserException("Expected a parenthesized list of at least one " + kind, pos(lp.pos().charStart(), rp.pos().charEnd()));
+		return list;
 	}
 
 	/** Parses a symbol, returning null with messages and not advancing the parser if an error occurs */

@@ -6,96 +6,57 @@
 package org.smtlib.command;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import org.smtlib.ICommand.Idefine_funs_rec;
 import org.smtlib.*;
-import org.smtlib.IExpr.IDeclaration;
-import org.smtlib.IExpr.ISymbol;
+import org.smtlib.IExpr.IFunctionDeclaration;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
 
-// FIXME
-
-/** Implements the define-fun command */
+/** Implements the define-funs-rec command */
 public class C_define_funs_rec extends Command implements Idefine_funs_rec {
 	/** The command name */
 	public static final String commandName = "define-funs-rec";
 	/** The command name */
 	@Override
 	public String commandName() { return commandName; }
-	
-	/** The name of the function being defined */
-	protected ISymbol fcnName;
-	/** The sorts of the arguments of the function being defined */
-	protected List<IDeclaration> args;
-	/** The sort of the result */
-	protected ISort resultSort;
-	/** The defining expression for the function */
-	protected IExpr expression;
-	
-	/** The name of the function being defined */
-//	@Override
-//	public ISymbol symbol() { return fcnName; }
-//	/** The sorts of the arguments of the function being defined */
-//	@Override
-//	public List<IDeclaration> parameters() { return args; };
-//	/** The result sort */
-//	@Override
-//	public ISort resultSort() { return resultSort; }
-//	/** The defining expression for the function */
-//	@Override
-//	public IExpr expression() { return expression; }
-	
-	// FIXME - typechecking needs to check that the resultSort matches the expression's sort
-	
+
+	/** The list of function declarations (name, parameters, result sort) */
+	protected List<IFunctionDeclaration> declarations;
+	/** The list of defining bodies, one per declaration */
+	protected List<IExpr> bodies;
+
+	@Override
+	public List<IFunctionDeclaration> declarations() { return declarations; }
+	@Override
+	public List<IExpr> bodies() { return bodies; }
+
 	/** Constructs a command instance */
-	public C_define_funs_rec(ISymbol id, List<IDeclaration> declarations, ISort resultSort, IExpr expr) {
-		this.fcnName = id;
-		this.args = declarations;
-		this.resultSort = resultSort;
-		this.expression = expr;
+	public C_define_funs_rec(List<IFunctionDeclaration> declarations, List<IExpr> bodies) {
+		this.declarations = declarations;
+		this.bodies = bodies;
 	}
-	
+
 	@Override
 	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
-	    // FIXME
-//		symbol().accept(p);
-//		p.writer().append(" (");
-//		for (IDeclaration d: parameters()) {
-//			d.accept(p);
-//		}
-//		p.writer().append(") ");
-//		resultSort().accept(p);
-//		p.writer().append(" ");
-//		expression().accept(p);
+		p.writer().append(" (");
+		for (IFunctionDeclaration d : declarations()) { d.accept(p); p.writer().append(" "); }
+		p.writer().append(") (");
+		for (IExpr body : bodies()) { body.accept(p); p.writer().append(" "); }
+		p.writer().append(")");
 	}
-	
+
 	/** Parses the command arguments and creates a command instance */
 	static public C_define_funs_rec parse(Parser p) throws ParserException {
-		ISymbol name = p.parseSymbol();
-		p.parseLP();
-		List<IDeclaration> list = new LinkedList<IDeclaration>();
-		Set<ISymbol> names = new HashSet<ISymbol>();
-		while (!p.isRP()) {
-			if (p.isEOD()) throw new ParserException("Unexpected end of input in define-funs-rec parameter list", p.pos(p.currentPos()-1, p.currentPos()));
-			IDeclaration d = p.parseDeclaration();
-			list.add(d);
-			if (!names.add(d.parameter())) {
-				throw error(p.smt(), "A name is duplicated in the parameter list: " +
-						p.smt().defaultPrinter.toString(d.parameter()), d.parameter().pos());
-			}
-		}
-		p.parseRP();
-		ISort resultSort = p.parseSort(null);
-		IExpr expr = p.parseExpr();
-		p.checkUserId(name);
-		return new C_define_funs_rec(name,list,resultSort,expr);
+		List<IFunctionDeclaration> decls = p.parseList(p::parseFunctionDeclaration, "function declaration", false);
+		List<IExpr> bodies = p.parseList(p::parseExpr, "term", false);
+		if (decls.size() != bodies.size())
+			throw new ParserException("The number of function declarations (" + decls.size() +
+					") must equal the number of bodies (" + bodies.size() + ")", null);
+		return new C_define_funs_rec(decls, bodies);
 	}
 
 	@Override

@@ -54,7 +54,7 @@ public class C_declare_const extends C_declare_fun implements Ideclare_const {
 
 	@Override
 	public IResponse execute(ISolver solver) {
-		return solver.declare_fun(this);
+		return solver.declare_const(this);
 	}
 
 	@Override

@@ -804,6 +804,24 @@ public class Solver_simplify extends Solver_test implements ISolver {
 		}
 
 		@Override
+		public String visit(IExpr.ISortDeclaration e) throws IVisitor.VisitorException {
+			// FIXME
+			return null;
+		}
+
+		@Override
+		public String visit(IExpr.ISelector e) throws IVisitor.VisitorException {
+			// FIXME
+			return null;
+		}
+
+		@Override
+		public String visit(IExpr.IConstructor e) throws IVisitor.VisitorException {
+			// FIXME
+			return null;
+		}
+
+		@Override
 		public String visit(ILet e) throws IVisitor.VisitorException {
 			// Simplify does not have let
 			// We can create a new temp variable (or function of any quantified parameters)

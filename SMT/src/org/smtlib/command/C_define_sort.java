@@ -7,7 +7,6 @@ package org.smtlib.command;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -17,7 +16,6 @@ import org.smtlib.IParser.ParserException;
 import org.smtlib.*;
 import org.smtlib.ISort.IParameter;
 import org.smtlib.impl.Command;
-import org.smtlib.impl.SMTExpr.Symbol;
 import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
 
@@ -69,19 +67,14 @@ public class C_define_sort extends Command implements Idefine_sort {
 	/** Parses the command arguments and creates a command instance */
 	static public C_define_sort parse(Parser p) throws ParserException {
 		ISymbol name = p.parseSymbol();
-		p.parseLP();
-		List<IParameter> list = new LinkedList<IParameter>();
-		Set<Symbol> names = new HashSet<Symbol>();
-		while (!p.isRP()) {
-			if (p.isEOD()) throw new ParserException("Unexpected end of input in define-sort parameter list", p.pos(p.currentPos()-1, p.currentPos()));
-			Symbol d = p.parseSymbol();
-			list.add(p.smt().sortFactory.createSortParameter(d));
-			if (!names.add(d)) {
+		List<IParameter> list = p.parseList(
+				() -> p.smt().sortFactory.createSortParameter(p.parseSymbol()), "parameter", true);
+		Set<String> names = new HashSet<String>();
+		for (IParameter param : list) {
+			if (!names.add(param.identifier().toString()))
 				throw error(p.smt(), "A name is duplicated in the parameter list: " +
-						p.smt().defaultPrinter.toString(d), d.pos());
-			}
+						p.smt().defaultPrinter.toString(param.identifier()), param.pos());
 		}
-		p.parseRP();
 		ISort expr = p.parseSort(list);
 		p.checkUserId(name);
 		return new C_define_sort(name,list,expr);

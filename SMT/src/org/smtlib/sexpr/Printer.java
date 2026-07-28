@@ -331,7 +331,58 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(IExpr.IFunctionDeclaration e) throws IVisitor.VisitorException {
-		// FIXME
+		try {
+			w.append("(");
+			e.symbol().accept(this);
+			w.append(" (");
+			for (IExpr.IDeclaration d : e.parameters()) { d.accept(this); w.append(" "); }
+			w.append(") ");
+			e.sort().accept(this);
+			w.append(")");
+		} catch (IOException ex) {
+			throw new VisitorException(ex, e.pos());
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(IExpr.ISortDeclaration e) throws IVisitor.VisitorException {
+		try {
+			w.append("(");
+			e.symbol().accept(this);
+			w.append(" ");
+			e.arity().accept(this);
+			w.append(")");
+		} catch (IOException ex) {
+			throw new VisitorException(ex, e.pos());
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(IExpr.ISelector e) throws IVisitor.VisitorException {
+		try {
+			w.append("(");
+			e.symbol().accept(this);
+			w.append(" ");
+			e.sort().accept(this);
+			w.append(")");
+		} catch (IOException ex) {
+			throw new VisitorException(ex, e.pos());
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(IExpr.IConstructor e) throws IVisitor.VisitorException {
+		try {
+			w.append("(");
+			e.symbol().accept(this);
+			for (IExpr.ISelector s : e.selectors()) { w.append(" "); s.accept(this); }
+			w.append(")");
+		} catch (IOException ex) {
+			throw new VisitorException(ex, e.pos());
+		}
 		return null;
 	}
 
@@ -702,7 +753,21 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
     @Override
     public Void visit(IDatatype e) throws VisitorException {
-        // TODO Auto-generated method stub
+        try {
+            if (e.symbols() != null) {
+                w.append("( par (");
+                for (IExpr.ISymbol s : e.symbols()) { s.accept(this); w.append(" "); }
+                w.append(") (");
+                for (IExpr.IConstructor c : e.constructors()) { c.accept(this); w.append(" "); }
+                w.append(") )");
+            } else {
+                w.append("(");
+                for (IExpr.IConstructor c : e.constructors()) { c.accept(this); w.append(" "); }
+                w.append(")");
+            }
+        } catch (IOException ex) {
+            throw new VisitorException(ex, e.pos());
+        }
         return null;
     }
 }

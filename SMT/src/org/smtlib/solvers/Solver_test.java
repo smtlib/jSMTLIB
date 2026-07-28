@@ -600,13 +600,64 @@ public class Solver_test implements ISolver {
 
     @Override
     public IResponse declare_datatype(Ideclare_datatype cmd) {
-        // TODO Auto-generated method stub
-        return null;
+        if (logicSet == null) {
+            return smtConfig.responseFactory.error("The logic must be set before a declare-datatype command is issued");
+        }
+        ISymbol sortName = cmd.sortDeclaration().symbol();
+        INumeral arity = cmd.sortDeclaration().arity();
+        IDatatype dt = cmd.datatype();
+        if (!symTable.addSortDefinition(sortName, arity)) {
+            return smtConfig.responseFactory.error("The sort is already declared: " + smtConfig.defaultPrinter.toString(sortName), sortName.pos());
+        }
+        IResponse err = registerDatatypeConstructors(sortName, dt);
+        if (err != null) return err;
+        checkSatStatus = null;
+        return smtConfig.responseFactory.success();
     }
 
     @Override
     public IResponse declare_datatypes(Ideclare_datatypes cmd) {
-        // TODO Auto-generated method stub
+        if (logicSet == null) {
+            return smtConfig.responseFactory.error("The logic must be set before a declare-datatypes command is issued");
+        }
+        // Register all sort names first so constructors can cross-reference them
+        List<ISortDeclaration> sortDecls = cmd.sortDeclarations();
+        for (ISortDeclaration sd : sortDecls) {
+            if (!symTable.addSortDefinition(sd.symbol(), sd.arity())) {
+                return smtConfig.responseFactory.error("The sort is already declared: " + smtConfig.defaultPrinter.toString(sd.symbol()), sd.symbol().pos());
+            }
+        }
+        List<IDatatype> datatypes = cmd.datatypes();
+        for (int i = 0; i < sortDecls.size(); i++) {
+            IResponse err = registerDatatypeConstructors(sortDecls.get(i).symbol(), datatypes.get(i));
+            if (err != null) return err;
+        }
+        checkSatStatus = null;
+        return smtConfig.responseFactory.success();
+    }
+
+    /** Registers constructors and selectors for one datatype into the symbol table. */
+    private IResponse registerDatatypeConstructors(ISymbol sortName, IDatatype dt) {
+        ISort declaredSort = smtConfig.sortFactory.createSortExpression(sortName, new ISort[0]);
+        for (IConstructor ctor : dt.constructors()) {
+            List<ISort> argSorts = new java.util.LinkedList<>();
+            for (ISelector sel : ctor.selectors()) argSorts.add(sel.sort());
+            List<IResponse> errs = TypeChecker.checkFcn(symTable, ctor.symbol(), argSorts, declaredSort, ctor.symbol().pos());
+            if (!errs.isEmpty()) return errs.get(0);
+            ISort.IFcnSort ctorSort = smtConfig.sortFactory.createFcnSort(argSorts.toArray(new ISort[0]), declaredSort);
+            if (!symTable.add(new SymbolTable.Entry(ctor.symbol(), ctorSort, null), false)) {
+                return smtConfig.responseFactory.error("Constructor " + smtConfig.defaultPrinter.toString(ctor.symbol()) + " is already defined", ctor.symbol().pos());
+            }
+            for (ISelector sel : ctor.selectors()) {
+                ISort[] selArgs = new ISort[]{ declaredSort };
+                List<IResponse> selErrs = TypeChecker.checkFcn(symTable, sel.symbol(), Arrays.asList(selArgs), sel.sort(), sel.symbol().pos());
+                if (!selErrs.isEmpty()) return selErrs.get(0);
+                ISort.IFcnSort selSort = smtConfig.sortFactory.createFcnSort(selArgs, sel.sort());
+                if (!symTable.add(new SymbolTable.Entry(sel.symbol(), selSort, null), false)) {
+                    return smtConfig.responseFactory.error("Selector " + smtConfig.defaultPrinter.toString(sel.symbol()) + " is already defined", sel.symbol().pos());
+                }
+            }
+        }
         return null;
     }
 	

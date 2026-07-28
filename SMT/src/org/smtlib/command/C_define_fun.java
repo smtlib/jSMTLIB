@@ -7,7 +7,6 @@ package org.smtlib.command;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -77,19 +76,13 @@ public class C_define_fun extends Command implements Idefine_fun {
 	/** Parses the command arguments and creates a command instance */
 	static public C_define_fun parse(Parser p) throws ParserException {
 		ISymbol name = p.parseSymbol();
-		p.parseLP();
-		List<IDeclaration> list = new LinkedList<IDeclaration>();
+		List<IDeclaration> list = p.parseList(p::parseDeclaration, "declaration", true);
 		Set<ISymbol> names = new HashSet<ISymbol>();
-		while (!p.isRP()) {
-			if (p.isEOD()) throw new ParserException("Unexpected end of input in define-fun parameter list", p.pos(p.currentPos()-1, p.currentPos()));
-			IDeclaration d = p.parseDeclaration();
-			list.add(d);
-			if (!names.add(d.parameter())) {
+		for (IDeclaration d : list) {
+			if (!names.add(d.parameter()))
 				throw error(p.smt(), "A name is duplicated in the parameter list: " +
 						p.smt().defaultPrinter.toString(d.parameter()), d.parameter().pos());
-			}
 		}
-		p.parseRP();
 		ISort resultSort = p.parseSort(null);
 		IExpr expr = p.parseExpr();
 		p.checkUserId(name);

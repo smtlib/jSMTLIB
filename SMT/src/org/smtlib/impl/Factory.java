@@ -268,4 +268,29 @@ public class Factory implements IExpr.IFactory, ISort.IFactory {
 		return new SMTExpr.Error(text);
 	}
 
+	@Override
+	public ISortDeclaration sortDeclaration(ISymbol symbol, INumeral arity) {
+		return new SMTExpr.SortDeclaration(symbol, arity);
+	}
+
+	@Override
+	public ISelector selector(ISymbol symbol, ISort sort) {
+		return new SMTExpr.Selector(symbol, sort);
+	}
+
+	@Override
+	public IConstructor constructor(ISymbol symbol, List<ISelector> selectors) {
+		return new SMTExpr.Constructor(symbol, selectors);
+	}
+
+	@Override
+	public IDatatype datatype(List<IConstructor> constructors, List<ISymbol> symbols) {
+		return new SMTExpr.Datatype(constructors, symbols);
+	}
+
+	@Override
+	public IFunctionDeclaration functionDeclaration(ISymbol symbol, List<IDeclaration> parameters, ISort sort) {
+		return new SMTExpr.FunctionDeclaration(symbol, parameters, sort);
+	}
+
 }

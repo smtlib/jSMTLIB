@@ -6,7 +6,6 @@
 package org.smtlib.command;
 
 import java.io.IOException;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.smtlib.ICommand.Ideclare_fun;
@@ -71,13 +70,7 @@ public class C_declare_fun extends Command implements Ideclare_fun {
 	/** Parses the arguments of the command, producing a new command instance */
 	static public C_declare_fun parse(Parser p) throws ParserException {
 		ISymbol symbol = p.parseSymbol();
-		List<ISort> argSorts = new LinkedList<ISort>();
-		p.parseLP();
-		while (!p.isRP()) {
-			if (p.isEOD()) throw new ParserException("Unexpected end of input in declare-fun argument list", p.pos(p.currentPos()-1, p.currentPos()));
-			argSorts.add(p.parseSort(null));
-		}
-		p.parseRP();
+		List<ISort> argSorts = p.parseList(() -> p.parseSort(null), "sort", true);
 		ISort result = p.parseSort(null);
 		p.checkUserId(symbol);
 		return new C_declare_fun(symbol,argSorts,result);

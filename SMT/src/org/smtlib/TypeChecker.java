@@ -245,13 +245,6 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 
 	@Override
 	public /*@Nullable*/ ISort visit(IFcnExpr e) throws IVisitor.VisitorException {
-		if (e.args().size() == 0) {
-			// Error message already given on parsing
-			// but we'll defensively program
-			error("Unexpected function with no arguments: " + pr(e.head()),e.pos());
-			return null; 
-		}
-
 		// Type check all the arguments
 		boolean anyErrors = false;
 		List<ISort> argSorts = new LinkedList<ISort>();

@@ -6,10 +6,10 @@
 package org.smtlib.command;
 
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Collections;
 
-import org.smtlib.ICommand.Ideclare_const;
+import org.smtlib.ICommand.Idefine_const;
+import org.smtlib.IExpr;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.IResponse;
@@ -19,21 +19,19 @@ import org.smtlib.IVisitor;
 import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
 
-/** Implements the declare-fun command */
-public class C_define_const extends C_declare_fun implements Ideclare_const {
-	
+/** Implements the define-const command: syntactic sugar for define-fun with no parameters */
+public class C_define_const extends C_define_fun implements Idefine_const {
+
 	/** The command name */
-	public static final String commandName = "declare-const";
+	public static final String commandName = "define-const";
 
 	/** The command name */
 	@Override
 	public String commandName() { return commandName; }
-	
-	static final private List<ISort> emptyList = new LinkedList<ISort>();
-	
-	/** Constructs a command instance from its components */
-	public C_define_const(ISymbol symbol, ISort resultSort) {
-		super(symbol, emptyList, resultSort);
+
+	/** Constructs a command instance */
+	public C_define_const(ISymbol symbol, ISort resultSort, IExpr expression) {
+		super(symbol, Collections.emptyList(), resultSort, expression);
 	}
 
 	@Override
@@ -42,19 +40,22 @@ public class C_define_const extends C_declare_fun implements Ideclare_const {
 		symbol().accept(p);
 		p.writer().append(" ");
 		resultSort().accept(p);
+		p.writer().append(" ");
+		expression().accept(p);
 	}
 
 	/** Parses the arguments of the command, producing a new command instance */
 	static public C_define_const parse(Parser p) throws ParserException {
 		ISymbol symbol = p.parseSymbol();
-		ISort result = p.parseSort(null);
+		ISort resultSort = p.parseSort(null);
+		IExpr expr = p.parseExpr();
 		p.checkUserId(symbol);
-		return new C_define_const(symbol,result);
+		return new C_define_const(symbol, resultSort, expr);
 	}
 
 	@Override
 	public IResponse execute(ISolver solver) {
-		return solver.declare_fun(this);
+		return solver.define_fun(this);
 	}
 
 	@Override

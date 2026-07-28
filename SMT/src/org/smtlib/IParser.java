@@ -120,9 +120,18 @@ public interface IParser {
 	/** Parses a binding "(id expression)", returning null with error messages if an error occurs */
 	/*@Nullable*/ IBinding parseBinding() throws IOException, ParserException;
 
-	/** Parses a datatype declaration, returning null with error messages if an error occurs */
+	/** Parses a datatype declaration */
 	/*@Nullable*/ IDatatype parseDatatype() throws IOException, ParserException;
-	
+
+	/** Parses a selector declaration "(symbol sort)" */
+	/*@Nullable*/ IExpr.ISelector parseSelector() throws ParserException;
+
+	/** Parses a constructor declaration "(symbol selector*)" */
+	/*@Nullable*/ IExpr.IConstructor parseConstructor() throws ParserException;
+
+	/** Parses a function declaration "(symbol (sorted_var*) sort)" used in define-funs-rec */
+	/*@Nullable*/ IExpr.IFunctionDeclaration parseFunctionDeclaration() throws ParserException;
+
 	/** Parses a declaration "(id sort)", returning null with error messages if an error occurs */
 	/*@Nullable*/ IDeclaration parseDeclaration() throws IOException, ParserException;
 	
@@ -187,41 +196,18 @@ public interface IParser {
 		public AbortInputException() { super(); }
 	}
 	
-    public default List<IExpr> parseListTerms(Parser p) throws ParserException {
-        List<IExpr> list = new LinkedList<IExpr>();
-        if (!p.isLP()) {
-            throw new ParserException("Expected a parenthesized list of terms beginning here",
-                                    p.pos(p.currentPos()-1,p.currentPos()));
-        }
-        ILexToken lp = p.parseLP();
-        while (!p.isRP() && !p.isEOD()) {
-            list.add(p.parseExpr());
-        }
-        ILexToken rp = p.parseRP();
-        if (list.isEmpty()) {
-            throw new ParserException("Expected a parenthesized list of at least one term",
-                                    p.pos(lp.pos().charStart(),rp.pos().charEnd()));
-        }
-        return list;
+    /** Functional interface for a lambda that parses one element from a Parser. */
+    @FunctionalInterface
+    public interface ElementParser<T> {
+        T parse() throws ParserException;
     }
-    
-    public default List<IDatatype> parseListDatatypes(Parser p) throws IOException, ParserException {
-        List<IDatatype> list = new LinkedList<IDatatype>();
-        if (!p.isLP()) {
-            throw new ParserException("Expected a parenthesized list of terms beginning here",
-                                    p.pos(p.currentPos()-1,p.currentPos()));
-        }
-        ILexToken lp = p.parseLP();
-        while (!p.isRP() && !p.isEOD()) {
-            IDatatype e = p.parseDatatype();
-            list.add(e);
-        }
-        ILexToken rp = p.parseRP();
-        if (list.isEmpty()) {
-            throw new ParserException("Expected a parenthesized list of at least one datatype declaration",
-                                    p.pos(lp.pos().charStart(),rp.pos().charEnd()));
-        }
-        return list;
+
+    public default List<IExpr> parseListTerms(Parser p) throws ParserException {
+        return p.parseList(p::parseExpr, "term", false);
+    }
+
+    public default List<IDatatype> parseListDatatypes(Parser p) throws ParserException {
+        return p.parseList(p::parseDatatype, "datatype declaration", false);
     }
     
 	public default void checkUserId(ISymbol id) throws ParserException {

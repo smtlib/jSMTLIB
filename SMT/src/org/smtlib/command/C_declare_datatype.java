@@ -9,6 +9,7 @@ import java.io.IOException;
 
 import org.smtlib.ICommand.Ideclare_datatype;
 import org.smtlib.IExpr.IDatatype;
+import org.smtlib.IExpr.ISortDeclaration;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.IResponse;
@@ -18,34 +19,33 @@ import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
 
-/** Implements the declare-sort command */
+/** Implements the declare-datatype command */
 public class C_declare_datatype extends Command implements Ideclare_datatype {
 	/** The command name */
 	public static final String commandName = "declare-datatype";
 
-	/** The new sort symbol */
-	protected ISymbol sortSymbol;
-	
+	/** The sort declaration (symbol + arity derived from datatype body) */
+	protected ISortDeclaration sortDeclaration;
+
 	protected IDatatype datatype;
-	
+
 	/** The command name */
 	@Override
 	public String commandName() { return commandName; }
 
-	/** The sort symbol declared by this command */
 	@Override
-	public ISymbol symbol() { return sortSymbol; }
-	
+	public ISortDeclaration sortDeclaration() { return sortDeclaration; }
+
 	/** Constructs a new command object */
-	public C_declare_datatype(ISymbol id, IDatatype d) {
-		this.sortSymbol = id;
-		// FIXME
+	public C_declare_datatype(ISortDeclaration sortDeclaration, IDatatype d) {
+		this.sortDeclaration = sortDeclaration;
+		this.datatype = d;
 	}
-	
+
 	@Override
 	public void writeArgs(Printer p) throws IOException, IVisitor.VisitorException {
 		p.writer().append(" ");
-		sortSymbol.accept(p);
+		sortDeclaration.symbol().accept(p);
 		p.writer().append(" ");
 		datatype.accept(p);
 	}
@@ -55,7 +55,9 @@ public class C_declare_datatype extends Command implements Ideclare_datatype {
 		ISymbol id = p.parseSymbol();
 		IDatatype datatype = p.parseDatatype();
 		p.checkUserId(id);
-		return new C_declare_datatype(id,datatype);
+		int arityVal = datatype.symbols() == null ? 0 : datatype.symbols().size();
+		ISortDeclaration sortDecl = p.smt().exprFactory.sortDeclaration(id, p.smt().exprFactory.numeral(arityVal));
+		return new C_declare_datatype(sortDecl, datatype);
 	}
 
 	@Override
@@ -69,8 +71,5 @@ public class C_declare_datatype extends Command implements Ideclare_datatype {
 	}
 
     @Override
-    public IDatatype datatype() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+    public IDatatype datatype() { return datatype; }
 }

@@ -1,2 +1,0 @@
-(define-sort A (X X) Bool)
-                  ^
