@@ -1,0 +1,3 @@
+##EXITCODE 0
+$SMT_CMD --solver test --text "(set-info :smt-lib-version \"V2.0\")(set-logic ALL)"
+$SMT_CMD --relax --solver test --text "(set-info :smt-lib-version \"V2.0\")(set-logic ALL)"

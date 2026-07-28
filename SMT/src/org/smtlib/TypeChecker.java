@@ -1074,6 +1074,12 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "get-model", errors);
 		} else if (cmd instanceof ICommand.Iget_unsat_assumptions) {
 			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "get-unsat-assumptions", errors);
+		} else if (cmd instanceof ICommand.Iset_logic) {
+			String logicName = ((ICommand.Iset_logic) cmd).logic().value();
+			if ("ALL".equals(logicName) && !smtConfig.relax && !smtConfig.atLeastVersion(SMT.Configuration.SMTLIB.V25)) {
+				errors.add(smtConfig.responseFactory.error(
+					"The ALL logic requires SMT-LIB V2.5 or later", null));
+			}
 		}
 		return errors;
 	}

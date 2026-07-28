@@ -122,11 +122,13 @@ public class SMT {
 			public static SMTLIB find(String id) { for (SMTLIB e: SMTLIB.values()) { if (e.id.equals(id)) return e; } return null; }
 		}
 
-		/** Returns the configured version, defaulting to V27 when smtlib is null or unrecognized. */
+		/** Returns the configured version, defaulting to the highest declared version when smtlib is null or unrecognized. */
 		private SMTLIB currentVersion() {
-			if (smtlib == null) return SMTLIB.V27;
+			SMTLIB[] values = SMTLIB.values();
+			SMTLIB latest = values[values.length - 1];
+			if (smtlib == null) return latest;
 			SMTLIB v = SMTLIB.find(smtlib);
-			return (v != null) ? v : SMTLIB.V27;
+			return (v != null) ? v : latest;
 		}
 
 		/** Returns true if the configured version equals the given version. */

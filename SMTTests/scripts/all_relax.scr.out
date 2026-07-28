@@ -1,0 +1,5 @@
+success
+(error "The ALL logic requires SMT-LIB V2.5 or later")
+success
+(error "Invalid character: ASCII(decimal) = 65533")
+success
