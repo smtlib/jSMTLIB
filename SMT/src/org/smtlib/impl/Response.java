@@ -337,17 +337,17 @@ public class Response implements IResponse {
 			return false;
 		}
 		
-		@Override 
+		@Override
 		public String toString() {
-			return super.toString();
+			StringBuilder sb = new StringBuilder("(");
+			for (IAttribute<?> a : list) sb.append(" ").append(a.toString());
+			return sb.append(" )").toString();
 		}
 
 		@Override
 		public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
 			return v.visit(this);
 		}
-		
-		// FIXME - equals, hashCode
 	}
 
     @Override

@@ -51,13 +51,13 @@ public class Pos implements IPos {
 		public void setPos(IPos pos) { this.pos = pos; }
 
 		// Defined here (rather than on INode) because Java forbids interface default methods from overriding
-		// Object methods. Throwing instead of inheriting Object's identity-based defaults ensures that any
-		// accidental use of equals/hashCode on an AST node that hasn't provided a real implementation is
-		// caught immediately at runtime rather than silently producing wrong results (e.g. in Maps or Sets).
+		// Object methods. Identity semantics is the correct default for AST nodes: the typemap and other
+		// internal maps always key on the same parsed object instance. Classes requiring structural equality
+		// (Numeral, Symbol, Keyword, etc.) override these explicitly.
 		@Override
-		public boolean equals(Object o) { throw new UnsupportedOperationException("equals not implemented for " + getClass()); }
+		public boolean equals(Object o) { return this == o; }
 		@Override
-		public int hashCode() { throw new UnsupportedOperationException("hashCode not implemented for " + getClass()); }
+		public int hashCode() { return System.identityHashCode(this); }
 	}
 
 	/** A Posable that also implements INode, with toString() delegating to Printer */

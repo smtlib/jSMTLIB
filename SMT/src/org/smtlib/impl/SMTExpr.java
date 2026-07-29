@@ -92,9 +92,6 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 
-		/** For a StringLiteral, toString produces a properly escaped and quoted string */
-		@Override
-		public String toString() { return smtConfig.utils.quote(value); }
 	}
 
 	/** This class represents an SMT Decimal literal expression or syntax token */
@@ -148,9 +145,6 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 
-		/** Just for debugging - use a Printer for proper output */
-		@Override
-		public String toString() { return value.toString(); }
 	}
 
 	/** This class represents an SMT as-identifier AST */
@@ -571,11 +565,6 @@ public abstract class SMTExpr implements IExpr {
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
-
-		@Override
-		public String toString() {
-			return parameter + ":" + expression;
-		}
 	}
 
 	static public class Attribute<TT extends IAttributeValue> extends Pos.Printable implements IAttribute<TT> {
@@ -713,10 +702,6 @@ public abstract class SMTExpr implements IExpr {
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
-
-		/** Shows a string for debugging; use an IPrinter to get concrete syntax */
-		@Override
-		public String toString() { return "Error: " + this.message; }
 
 	}
 

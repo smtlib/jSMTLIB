@@ -164,16 +164,15 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	/*@Nullable*/
 	@Override
 	public Void visit(IStringLiteral e) throws IVisitor.VisitorException {
-		// The toString method returns a string that is fully escaped and has enclosing quotes
-		try { w.append(e.toString()); } catch (IOException ex) { throw new IVisitor.VisitorException(ex);  }
+		try { w.append(smtConfig.utils.quote(e.value())); } catch (IOException ex) { throw new IVisitor.VisitorException(ex); }
 		return null;
 	}
 
 	/*@Nullable*/
 	@Override
 	public Void visit(IKeyword e) throws IVisitor.VisitorException {
-		try { w.append(e.toString()); } catch (IOException ex) { throw new IVisitor.VisitorException(ex);  }
-		return null; // FIXME - need an encoding, not the original string
+		try { w.append(e.value()); } catch (IOException ex) { throw new IVisitor.VisitorException(ex); }
+		return null;
 	}
 
 	/*@Nullable*/
