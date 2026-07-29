@@ -14,15 +14,13 @@ import org.smtlib.IExpr.IConstructor;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IVisitor.VisitorException;
 
-// FIXME - Decide whether we use reference or structural equality - either complete or remove equals and hashCode
-
 /** This class defines a number of subclasses that implement the SMT-LIB abstract AST;
  * they are used by commands and expressions. */
 public abstract class SMTExpr implements IExpr {
 	public static SMT.Configuration smtConfig;
 
 	/** Just a convenient base class to provide some method implementations */
-	static abstract public class Literal<T> extends Pos.Posable {
+	static abstract public class Literal<T> extends Pos.Printable {
 		protected T value;
 
 		public Literal(T value) { this.value = value; }
@@ -30,10 +28,6 @@ public abstract class SMTExpr implements IExpr {
 		public T value() { return value; }
 
 		public boolean isError() { return false; }
-
-		/** Just for debugging - use a Printer for proper output */
-		@Override
-		public String toString() { return value.toString(); }
 	}
 
 	/** This class represents an SMT Numeral expression or syntax token */
@@ -126,7 +120,7 @@ public abstract class SMTExpr implements IExpr {
 	}
 
 	/** This class represents an SMT Keyword syntax token */
-	static public class Keyword extends Pos.Posable implements IKeyword {
+	static public class Keyword extends Pos.Printable implements IKeyword {
 		protected String value; // Keyword string with leading colon (TODO - check this)
 
 		public Keyword(String v) {
@@ -160,7 +154,7 @@ public abstract class SMTExpr implements IExpr {
 	}
 
 	/** This class represents an SMT as-identifier AST */
-	static public class AsIdentifier extends Pos.Posable implements IAsIdentifier {
+	static public class AsIdentifier extends Pos.Printable implements IAsIdentifier {
 		protected IIdentifier head;
 		protected ISort qualifier;
 
@@ -181,10 +175,10 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
-			if (!(o instanceof AsIdentifier)) return false;
-			AsIdentifier p = (AsIdentifier)o;
+			if (!(o instanceof IAsIdentifier)) return false;
+			IAsIdentifier p = (IAsIdentifier)o;
 			return this.head().equals(p.head()) &&
-					this.qualifier().equals(p.qualifier);
+					this.qualifier().equals(p.qualifier());
 		}
 
 		@Override
@@ -196,14 +190,10 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 
-		/** Just for debugging - use a Printer for proper output */
-		@Override
-		public String toString() { return org.smtlib.sexpr.Printer.write(this); }
-
 	}
 
 	/** This class represents an SMT parameterized-identifier AST */
-	static public class ParameterizedIdentifier extends Pos.Posable implements IParameterizedIdentifier {
+	static public class ParameterizedIdentifier extends Pos.Printable implements IParameterizedIdentifier {
 		protected IIdentifier head;
 		protected List<IExpr> idxs;
 
@@ -236,12 +226,12 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
-			if (!(o instanceof ParameterizedIdentifier)) return false;
-			ParameterizedIdentifier p = (ParameterizedIdentifier)o;
+			if (!(o instanceof IParameterizedIdentifier)) return false;
+			IParameterizedIdentifier p = (IParameterizedIdentifier)o;
 			if (!this.headSymbol().equals(p.headSymbol())) return false;
-			if (this.idxs.size() != p.idxs.size()) return false;
-			for (int i = 0; i < this.idxs.size(); i++) {
-				if (!this.idxs.get(i).equals(p.idxs.get(i))) return false;
+			if (this.indices().size() != p.indices().size()) return false;
+			for (int i = 0; i < this.indices().size(); i++) {
+				if (!this.indices().get(i).equals(p.indices().get(i))) return false;
 			}
 			return true;
 		}
@@ -256,14 +246,10 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 
-		/** Just for debugging - use a Printer for proper output */
-		@Override
-		public String toString() { return org.smtlib.sexpr.Printer.write(this); }
-
 	}
 
 	/** This class represents an SMT Symbol */
-	static public class Symbol extends Pos.Posable implements ISymbol {
+	static public class Symbol extends Pos.Printable implements ISymbol {
 
 		// FIXME - this incorporates some concrete syntax
 
@@ -286,8 +272,8 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
-			if (!(o instanceof Symbol)) return false;
-			return ((Symbol)o).value().equals(value());
+			if (!(o instanceof ISymbol)) return false;
+			return ((ISymbol)o).value().equals(value());
 		}
 
 		@Override
@@ -320,7 +306,7 @@ public abstract class SMTExpr implements IExpr {
 
 	}
 
-	static public class FcnExpr extends Pos.Posable implements IFcnExpr {
+	static public class FcnExpr extends Pos.Printable implements IFcnExpr {
 		protected IQualifiedIdentifier id;
 		protected List<IExpr> args;
 
@@ -337,10 +323,6 @@ public abstract class SMTExpr implements IExpr {
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
-
-		/** Just for debugging - use a Printer for proper output */
-		@Override
-		public String toString() { return org.smtlib.sexpr.Printer.write(this); }
 
 	}
 
@@ -404,7 +386,7 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 
-	static public class Let extends Pos.Posable implements ILet {
+	static public class Let extends Pos.Printable implements ILet {
 		protected List<IBinding> bindings;
 		protected IExpr expression;
 
@@ -424,7 +406,7 @@ public abstract class SMTExpr implements IExpr {
 
 	}
 
-	static public class Exists extends Pos.Posable implements IExists {
+	static public class Exists extends Pos.Printable implements IExists {
 		protected List<IDeclaration> parameters;
 		protected IExpr expression;
 
@@ -444,7 +426,7 @@ public abstract class SMTExpr implements IExpr {
 
 	}
 
-	static public class Forall extends Pos.Posable implements IForall {
+	static public class Forall extends Pos.Printable implements IForall {
 		protected List<IDeclaration> parameters;
 		protected IExpr expression;
 
@@ -464,7 +446,7 @@ public abstract class SMTExpr implements IExpr {
 
 	}
 
-	static public class SortDeclaration extends Pos.Posable implements IExpr.ISortDeclaration {
+	static public class SortDeclaration extends Pos.Printable implements IExpr.ISortDeclaration {
 		protected ISymbol symbol;
 		protected INumeral arity;
 
@@ -480,7 +462,7 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 
-	static public class Selector extends Pos.Posable implements ISelector {
+	static public class Selector extends Pos.Printable implements ISelector {
 		protected ISymbol symbol;
 		protected ISort sort;
 
@@ -497,7 +479,7 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 
-	static public class Constructor extends Pos.Posable implements IConstructor {
+	static public class Constructor extends Pos.Printable implements IConstructor {
 		//@ nullable
 		protected ISymbol symbol;
 		protected List<ISelector> selectors;
@@ -515,7 +497,7 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 
-	static public class Datatype extends Pos.Posable implements IDatatype {
+	static public class Datatype extends Pos.Printable implements IDatatype {
 		protected List<IConstructor> constructors;
 		/*@ nullable */ protected List<ISymbol> symbols;
 
@@ -532,7 +514,7 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 
-	static public class Declaration extends Pos.Posable implements IDeclaration {
+	static public class Declaration extends Pos.Printable implements IDeclaration {
 		protected ISymbol parameter;
 		protected ISort sort;
 
@@ -551,7 +533,7 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 
-	static public class FunctionDeclaration extends Pos.Posable implements IExpr.IFunctionDeclaration {
+	static public class FunctionDeclaration extends Pos.Printable implements IExpr.IFunctionDeclaration {
 		protected ISymbol symbol;
 		protected List<IDeclaration> parameters;
 		protected ISort sort;
@@ -572,7 +554,7 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 
-	static public class Binding extends Pos.Posable implements IBinding {
+	static public class Binding extends Pos.Printable implements IBinding {
 		protected ISymbol parameter;
 		protected IExpr expression;
 
@@ -596,10 +578,9 @@ public abstract class SMTExpr implements IExpr {
 		}
 	}
 
-	static public class Attribute<TT extends IAttributeValue> extends Pos.Posable implements IAttribute<TT> {
+	static public class Attribute<TT extends IAttributeValue> extends Pos.Printable implements IAttribute<TT> {
 		protected IKeyword keyword;
 		protected TT value;
-		protected /*@Nullable*//*@ReadOnly*/IPos pos;
 
 		public Attribute(IKeyword keyword, TT value) {
 			this.keyword = keyword;
@@ -617,15 +598,9 @@ public abstract class SMTExpr implements IExpr {
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
-
-		// for debugging only
-		@Override
-		public String toString() {
-			return keyword.toString() + " " + value.toString();
-		}
 	}
 
-	static public class AttributedExpr extends Pos.Posable implements IAttributedExpr {
+	static public class AttributedExpr extends Pos.Printable implements IAttributedExpr {
 		protected IExpr expression;
 		protected List<IAttribute<?>> attributes;
 
@@ -642,14 +617,6 @@ public abstract class SMTExpr implements IExpr {
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
-
-		// For debugging only
-		@Override
-		public String toString() {
-			String s = "(! " + expr().toString();
-			for (IAttribute<?> a: attributes) s = s + " " + a.toString();
-			return s + ")";
-		}
 
 	}
 
@@ -733,7 +700,7 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 
-	static public class Error extends Pos.Posable implements IError {
+	static public class Error extends Pos.Printable implements IError {
 		protected String message;
 
 		public Error(String msg) {
@@ -753,7 +720,7 @@ public abstract class SMTExpr implements IExpr {
 
 	}
 
-	static public class Pattern extends Pos.Posable implements IExpr.IPattern {
+	static public class Pattern extends Pos.Printable implements IExpr.IPattern {
 		protected ISymbol constructor;
 		protected List<ISymbol> params;
 
@@ -769,7 +736,7 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 
-	static public class MatchCase extends Pos.Posable implements IExpr.IMatchCase {
+	static public class MatchCase extends Pos.Printable implements IExpr.IMatchCase {
 		protected IExpr.IPattern pattern;
 		protected IExpr body;
 
@@ -785,7 +752,7 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 
-	static public class Match extends Pos.Posable implements IExpr.IMatch {
+	static public class Match extends Pos.Printable implements IExpr.IMatch {
 		protected IExpr expression;
 		protected List<IExpr.IMatchCase> cases;
 

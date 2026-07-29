@@ -15,12 +15,6 @@ import org.smtlib.impl.SMTExpr.Symbol;
 /** This class implements the abstract ISort interface */
 public abstract class Sort extends Pos.Posable implements ISort {
 	
-//	/** Declared abstract so the derived classes are reminded to implement it */
-//	abstract public boolean equals(Object o);
-//	
-//	/** Declared abstract so the derived classes are reminded to implement it */
-//	abstract public int hashCode();
-	
 	/** Returns true iff the receiver is a Sort expression designating the pre-defined Bool sort */
 	@Override
 	public boolean isBool() {
@@ -520,7 +514,7 @@ public abstract class Sort extends Pos.Posable implements ISort {
 		
 		@Override
 		public int hashCode() {
-			return super.hashCode(); // Should use Object hashCode
+			return System.identityHashCode(this);
 		}
 		
 		/** Use this just for debugging - proper conversion to a String is performed by an IPrinter */

@@ -49,8 +49,26 @@ public class Pos implements IPos {
 		public IPos pos() { return pos; }
 		@Override
 		public void setPos(IPos pos) { this.pos = pos; }
+
+		// Defined here (rather than on INode) because Java forbids interface default methods from overriding
+		// Object methods. Throwing instead of inheriting Object's identity-based defaults ensures that any
+		// accidental use of equals/hashCode on an AST node that hasn't provided a real implementation is
+		// caught immediately at runtime rather than silently producing wrong results (e.g. in Maps or Sets).
+		@Override
+		public boolean equals(Object o) { throw new UnsupportedOperationException("equals not implemented for " + getClass()); }
+		@Override
+		public int hashCode() { throw new UnsupportedOperationException("hashCode not implemented for " + getClass()); }
 	}
-	
+
+	/** A Posable that also implements INode, with toString() delegating to Printer */
+	public static abstract class Printable extends Posable implements INode {
+		@Override
+		public String toString() {
+			return org.smtlib.sexpr.Printer.write(this);
+		}
+	}
+
+
 	/** An implementation of the ISource interface */
 	public static class Source implements ISource {
 		private Reader rdr = null;
