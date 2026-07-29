@@ -15,4 +15,7 @@ public interface ILexToken {
 	String kind();
 	
 	boolean isError();
+	default boolean isLP()  { return false; }
+	default boolean isRP()  { return false; }
+	default boolean isEOD() { return false; }
 }

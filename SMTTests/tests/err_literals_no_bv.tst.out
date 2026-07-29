@@ -1,0 +1,3 @@
+success
+(error "No sort specified for a binary literal")
+(error "No sort specified for a hex literal")

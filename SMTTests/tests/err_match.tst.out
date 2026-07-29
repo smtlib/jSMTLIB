@@ -1,0 +1,9 @@
+success
+success
+success
+success
+success
+success
+(error "Unknown constructor: unknown")
+(error "Constructor node has result sort Tree but scrutinee has sort Color")
+(error "Match cases have incompatible sorts: Bool vs. Int")

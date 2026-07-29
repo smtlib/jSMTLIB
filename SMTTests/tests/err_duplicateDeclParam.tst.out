@@ -1,2 +1,3 @@
 success
 (error "Parameter list has a duplicate name: x")
+(error "Parameter list has a duplicate name: x")

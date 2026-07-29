@@ -591,7 +591,7 @@ public class Parser extends Lexer implements IParser {
 	 */
 	public <T> List<T> parseList(IParser.ElementParser<T> elementParser, String kind, boolean allowEmpty) throws ParserException {
 		ILexToken next = peekToken();
-		if (next.kind() != LexToken.LP) throw new ParserException("Expected a parenthesized list of " + kind + "s beginning here", next.pos());
+		if (!next.isLP()) throw new ParserException("Expected a parenthesized list of " + kind + "s beginning here", next.pos());
 		ILexToken lp = parseLP();
 		List<T> list = new LinkedList<T>();
 		while (!isRP() && !isEOD()) {
@@ -969,7 +969,7 @@ public class Parser extends Lexer implements IParser {
 	 */
 	public /*@Nullable*/ILexToken parseLP() throws ParserException {
 		ILexToken token = peekToken();
-		if (token.kind() == LexToken.LP) return getToken();
+		if (token.isLP()) return getToken();
 		throw error("Expected a left parenthesis here, instead of a #", token);
 	}
 	
@@ -978,7 +978,7 @@ public class Parser extends Lexer implements IParser {
 	 */
 	public /*@Nullable*/ILexToken parseRP() throws ParserException {
 		ILexToken token = peekToken();
-		if (token.kind() == LexToken.RP) return getToken();
+		if (token.isRP()) return getToken();
 		throw error("Expected a right parenthesis here, instead of a #", token);
 	}
 
@@ -989,7 +989,7 @@ public class Parser extends Lexer implements IParser {
 	 */
 	public /*@Nullable*/ILexToken parseRP(String msg) throws ParserException {
 		ILexToken token = peekToken();
-		if (token.kind() == LexToken.RP) return getToken();
+		if (token.isRP()) return getToken();
 		throw error(msg, token);
 	}
 	
@@ -1001,7 +1001,7 @@ public class Parser extends Lexer implements IParser {
 	/** Creates a ParserException from the given message and token; callers should throw the result.
 	 *  If the token is already an error token, returns an exception with null message (already reported by lexer). */
 	public ParserException error(String msg, ILexToken token) {
-		if (token.kind().equals("error")) return new ParserException(null, token.pos());
+		if (token.isError()) return new ParserException(null, token.pos());
 		return new ParserException(msg.replace("#", token.kind()), token.pos());
 	}
 

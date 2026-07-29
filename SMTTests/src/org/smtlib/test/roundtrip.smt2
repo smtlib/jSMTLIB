@@ -94,4 +94,16 @@
 (set-logic QF_UF)
 (set-option :print-success true)
 
+; IDecimal, IBinaryLiteral, IHexLiteral: literal expressions in assert
+(assert 1.5)
+(assert #b00001010)
+(assert #x0a)
+
+; IMatch, IMatchCase, IPattern: bare constructor patterns and constructor-with-params patterns
+(assert (match c ( (red true) (blue false))))
+(assert (match c ( ((cons h t) h) (nil 0))))
+
+; ISexpr.ISeq: s-expression sequence as a set-info attribute value
+(set-info :x ( a b c ))
+
 ; trailing comment to verify EOF handling

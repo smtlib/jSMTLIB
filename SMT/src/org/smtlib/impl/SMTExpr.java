@@ -19,16 +19,18 @@ import org.smtlib.IVisitor.VisitorException;
 /** This class defines a number of subclasses that implement the SMT-LIB abstract AST;
  * they are used by commands and expressions. */
 public abstract class SMTExpr implements IExpr {
-	static public SMT.Configuration smtConfig;
-	
+	public static SMT.Configuration smtConfig;
+
 	/** Just a convenient base class to provide some method implementations */
 	static abstract public class Literal<T> extends Pos.Posable {
 		protected T value;
-		public T value() { return value; }
+
 		public Literal(T value) { this.value = value; }
-		public boolean isOK() { return false; }
+
+		public T value() { return value; }
+
 		public boolean isError() { return false; }
-		
+
 		/** Just for debugging - use a Printer for proper output */
 		@Override
 		public String toString() { return value.toString(); }
@@ -38,25 +40,22 @@ public abstract class SMTExpr implements IExpr {
 	static public class Numeral extends Literal<BigInteger> implements INumeral {
 		/** A value equivalent to the BigInteger, when it is in range. */
 		protected int number;
-		
+
 		/** Constructs a Numeral with the given value. */  // FIXME - test with too big a number
 		public Numeral(BigInteger i) {
 			super(i);
 			number = value.intValue();
 		}
-		
-		/** Constructs a Numeral with the given value. */ 
+
+		/** Constructs a Numeral with the given value. */
 		public Numeral(int i) {
 			super(BigInteger.valueOf(i));
 			number = i;
 		}
-		
+
 		@Override
 		public int intValue() { return number; }
-		
-		@Override
-		public String kind() { return "numeral"; }
-		
+
 		/** Equal to any INumeral with the same numeric value */
 		@Override
 		public boolean equals(Object o) {
@@ -64,20 +63,19 @@ public abstract class SMTExpr implements IExpr {
 			if (!(o instanceof INumeral)) return false;
 			return ((INumeral)o).value().equals(value);
 		}
-		
+
 		@Override
 		public int hashCode() { return value.hashCode(); }
-		
+
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
-
 	}
-	
+
 	/** This class represents an SMT String literal expression or syntax token */
 	static public class StringLiteral extends Literal<String> implements IStringLiteral {
-		
+
 		// The 'value' field holds an unquoted string
-		
+
 		/** If quoted is true, then the value should be the string with all escape sequences intact and
 		 * enclosing quotes in place; if quoted is false, the value should not have enclosing quotes and
 		 * any escape sequences should be replaced by the actual characters.
@@ -85,13 +83,6 @@ public abstract class SMTExpr implements IExpr {
 		public StringLiteral(String value, boolean quoted) {
 			super(quoted ? smtConfig.utils.unescape(value) : value);
 		}
-		
-		/** For a StringLiteral, toString produces a properly escaped and quoted string */
-		@Override
-		public String toString() { return smtConfig.utils.quote(value); }
-
-		@Override
-		public String kind() { return "string-literal"; }
 
 		/** Equal to any IStringLiteral with the same string value */
 		@Override
@@ -100,23 +91,24 @@ public abstract class SMTExpr implements IExpr {
 			if (!(o instanceof IStringLiteral)) return false;
 			return ((IStringLiteral)o).value().equals(value);
 		}
-		
+
 		@Override
 		public int hashCode() { return value.hashCode(); }
-		
+
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+
+		/** For a StringLiteral, toString produces a properly escaped and quoted string */
+		@Override
+		public String toString() { return smtConfig.utils.quote(value); }
 	}
-	
+
 	/** This class represents an SMT Decimal literal expression or syntax token */
 	static public class Decimal extends Literal<BigDecimal> implements IDecimal {
-		
+
 		public Decimal(BigDecimal v) {
 			super(v);
 		}
-		
-		@Override
-		public String kind() { return "decimal"; }
 
 		/** Equal to any IDecimal with the same BigDecimal value */
 		@Override
@@ -125,26 +117,26 @@ public abstract class SMTExpr implements IExpr {
 			if (!(o instanceof IDecimal)) return false;
 			return ((IDecimal)o).value().equals(value);
 		}
-		
+
 		@Override
 		public int hashCode() { return value.hashCode(); }
-		
+
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
-	
+
 	/** This class represents an SMT Keyword syntax token */
 	static public class Keyword extends Pos.Posable implements IKeyword {
 		protected String value; // Keyword string with leading colon (TODO - check this)
-		
+
 		public Keyword(String v) {
 			super();
 			value = v.intern();
 		}
-		
+
 		@Override
 		public String value() { return value; }
-		
+
 		@Override
 		public String kind() { return "keyword"; }
 
@@ -155,12 +147,10 @@ public abstract class SMTExpr implements IExpr {
 			if (!(o instanceof IKeyword)) return false;
 			return ((IKeyword)o).value().equals(value);
 		}
-		
+
 		@Override
-		public int hashCode() { 
-			return value.hashCode(); 
-		}
-		
+		public int hashCode() { return value.hashCode(); }
+
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 
@@ -168,26 +158,26 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public String toString() { return value.toString(); }
 	}
-	
+
 	/** This class represents an SMT as-identifier AST */
 	static public class AsIdentifier extends Pos.Posable implements IAsIdentifier {
 		protected IIdentifier head;
 		protected ISort qualifier;
-		
+
 		public AsIdentifier(IIdentifier symbol, ISort qualifier) {
 			this.head = symbol;
 			this.qualifier = qualifier;
 		}
-		
+
 		@Override
 		public IIdentifier head() { return head; }
-		
+
 		@Override
 		public ISymbol headSymbol() { return head.headSymbol(); }
-		
+
 		@Override
 		public ISort qualifier() { return qualifier; }
-		
+
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
@@ -196,30 +186,22 @@ public abstract class SMTExpr implements IExpr {
 			return this.head().equals(p.head()) &&
 					this.qualifier().equals(p.qualifier);
 		}
-		
+
 		@Override
 		public int hashCode() {
 			int hash = (head().hashCode() << 4) ^ qualifier().hashCode();
 			return hash;
 		}
-		
-		@Override
-		public String kind() { return "qualifiedSymbol"; }
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
-		
+
 		/** Just for debugging - use a Printer for proper output */
 		@Override
 		public String toString() { return org.smtlib.sexpr.Printer.write(this); }
 
-		@Override
-		public boolean isOK() { throw new RuntimeException(); } // FIXME - should never be called
-
-		@Override
-		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
-	
+
 	/** This class represents an SMT parameterized-identifier AST */
 	static public class ParameterizedIdentifier extends Pos.Posable implements IParameterizedIdentifier {
 		protected IIdentifier head;
@@ -270,75 +252,61 @@ public abstract class SMTExpr implements IExpr {
 			for (IExpr idx : idxs) hash = (hash << 1) + idx.hashCode();
 			return hash;
 		}
-		
-		@Override
-		public String kind() { return "parameterizedSymbol"; }
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
-		
+
 		/** Just for debugging - use a Printer for proper output */
 		@Override
 		public String toString() { return org.smtlib.sexpr.Printer.write(this); }
 
-		@Override
-		public boolean isOK() { throw new RuntimeException(); } // FIXME - should never be called
-
-		@Override
-		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
-	
+
 	/** This class represents an SMT Symbol */
 	static public class Symbol extends Pos.Posable implements ISymbol {
-		
-		 // FIXME - this incorporates some concrete syntax
-		
+
+		// FIXME - this incorporates some concrete syntax
+
 		protected String value; // canonical string (without bars)
 		protected String originalString;
-		
+
 		/** The argument is a Symbol string, with or without enclosing bars */
-		public Symbol(String v) { 
+		public Symbol(String v) {
 			value = v.length() > 0 && v.charAt(0) == '|' ? v.substring(1,v.length()-1) : v;
 			originalString = v;
 		}
-		
+
 		/** Returns the unique string for this symbol (e.g. modulo enclosing bars) */
 		@Override
 		public String value() { return value; }
-		
-		/** Returns the original String - use for debugging and use a printer to print to concrete syntax. */
-		@Override
-		public String toString() { return originalString; }
-		
+
 		@Override
 		public ISymbol headSymbol() { return this; }
-		
+
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
 			if (!(o instanceof Symbol)) return false;
 			return ((Symbol)o).value().equals(value());
 		}
-		
-		@Override
-		public int hashCode() {
-			return value().hashCode();
-		}
-		
-		@Override
-		public String kind() { return "symbol"; }
 
 		@Override
-		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { 
-			return v.visit(this); 
+		public int hashCode() { return value().hashCode(); }
+
+		@Override
+		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException {
+			return v.visit(this);
 		}
-		
+
+		/** Returns the original String - use for debugging and use a printer to print to concrete syntax. */
+		@Override
+		public String toString() { return originalString; }
+
 		@Override
 		public boolean isOK() { return value.equals(Response.OK) || value.equals(Response.EMPTY); }
 
-		@Override
-		public boolean isError() { return false; }
-		
+		@Override public boolean isError() { return false; }
+
 //		// FIXME - do we want these?
 //		public static class Parameter extends Symbol implements IParameter {
 //			public Parameter(ISymbol s) { super(s.toString()); pos = s.pos(); }
@@ -351,28 +319,21 @@ public abstract class SMTExpr implements IExpr {
 //		}
 
 	}
-	
+
 	static public class FcnExpr extends Pos.Posable implements IFcnExpr {
 		protected IQualifiedIdentifier id;
 		protected List<IExpr> args;
-		
+
 		public FcnExpr(IQualifiedIdentifier id, List<IExpr> args) {
 			this.id = id;
 			this.args = args;
 		}
 
 		@Override
-		public IQualifiedIdentifier head() {
-			return id;
-		}
+		public IQualifiedIdentifier head() { return id; }
 
 		@Override
-		public List<IExpr> args() {
-			return args;
-		}
-		
-		@Override
-		public String kind() { return "fcn"; }
+		public List<IExpr> args() { return args; }
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
@@ -381,348 +342,279 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public String toString() { return org.smtlib.sexpr.Printer.write(this); }
 
-		@Override
-		public boolean isOK() { throw new RuntimeException(); } // FIXME - should never be called
-
-		@Override
-		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
 
 	static public class BinaryLiteral extends Literal<String> implements IBinaryLiteral {
-		
+		protected int length;
+		protected BigInteger intValue;
+
 		public BinaryLiteral(String unquotedValue) {
 			super(unquotedValue);
 			length = unquotedValue.length();
-			intvalue = new BigInteger(unquotedValue,2);
+			intValue = new BigInteger(unquotedValue,2);
 		}
-		
-		int length;
-		BigInteger intvalue;
-		
+
 		@Override
-		public BigInteger intValue() { return intvalue; }
-		
+		public BigInteger intValue() { return intValue; }
+
 		@Override
 		public int length() { return length; }
-		
-		@Override
-		public String kind() { return "binary"; }
 
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
 			if (!(o instanceof IBinaryLiteral)) return false;
-			return ((IBinaryLiteral)o).intValue().equals(intvalue);
+			return ((IBinaryLiteral)o).intValue().equals(intValue);
 		}
-		
+
 		@Override
-		public int hashCode() { return intvalue.hashCode(); }
-		
+		public int hashCode() { return intValue.hashCode(); }
+
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
-	
+
 	static public class HexLiteral extends Literal<String> implements IHexLiteral {
-		
+		protected int length; // in hex digits
+		protected BigInteger intValue;
+
 		public HexLiteral(String unquotedValue) {
 			super(unquotedValue);
 			length = unquotedValue.length();
-			intvalue = new BigInteger(unquotedValue,16);
+			intValue = new BigInteger(unquotedValue,16);
 		}
-		
-		int length; // in hex digits
-		BigInteger intvalue;
-		
+
 		@Override
-		public BigInteger intValue() { return intvalue; }
-		
+		public BigInteger intValue() { return intValue; }
+
 		@Override
 		public int length() { return length; }
-		
-		@Override
-		public String kind() { return "hex-literal"; }
 
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
 			if (!(o instanceof IHexLiteral)) return false;
-			return ((IHexLiteral)o).intValue().equals(intvalue);
+			return ((IHexLiteral)o).intValue().equals(intValue);
 		}
-		
+
 		@Override
 		public int hashCode() { return value.hashCode(); }
-		
+
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
-	
+
 	static public class Let extends Pos.Posable implements ILet {
-		
 		protected List<IBinding> bindings;
 		protected IExpr expression;
-		
+
 		public Let(List<IBinding> bindings, IExpr expr) {
 			this.bindings = bindings;
 			this.expression = expr;
 		}
-		
+
 		@Override
 		public List<IBinding> bindings() { return bindings; }
-		
+
 		@Override
 		public IExpr expr() { return expression; }
 
 		@Override
-		public String kind() {
-			return "let";
-		}
-
-		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 
-		@Override
-		public boolean isOK() { throw new RuntimeException(); } // FIXME - should never be called
-
-		@Override
-		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
 
 	static public class Exists extends Pos.Posable implements IExists {
-
 		protected List<IDeclaration> parameters;
 		protected IExpr expression;
-		
+
 		public Exists(List<IDeclaration> parameters, IExpr expr) {
 			this.parameters = parameters;
 			this.expression = expr;
 		}
-		
+
 		@Override
 		public List<IDeclaration> parameters() { return parameters; }
-		
+
 		@Override
 		public IExpr expr() { return expression; }
 
 		@Override
-		public String kind() {
-			return "exists";
-		}
-
-		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 
-		@Override
-		public boolean isOK() { throw new RuntimeException(); } // FIXME - should never be called
-
-		@Override
-		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
 
 	static public class Forall extends Pos.Posable implements IForall {
-
 		protected List<IDeclaration> parameters;
 		protected IExpr expression;
-		
+
 		public Forall(List<IDeclaration> parameters, IExpr expr) {
 			this.parameters = parameters;
 			this.expression = expr;
 		}
-		
+
 		@Override
 		public List<IDeclaration> parameters() { return parameters; }
-		
+
 		@Override
 		public IExpr expr() { return expression; }
-		
+
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 
-		@Override
-		public String kind() {
-			return "forall";
+	}
+
+	static public class SortDeclaration extends Pos.Posable implements IExpr.ISortDeclaration {
+		protected ISymbol symbol;
+		protected INumeral arity;
+
+		public SortDeclaration(ISymbol symbol, INumeral arity) {
+			this.symbol = symbol;
+			this.arity = arity;
 		}
 
-		@Override
-		public boolean isOK() { throw new RuntimeException(); } // FIXME - should never be called
+		@Override public ISymbol symbol() { return symbol; }
+		@Override public INumeral arity() { return arity; }
 
 		@Override
-		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
+		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
-	
-    static public class SortDeclaration extends Pos.Posable implements IExpr.ISortDeclaration {
-        protected ISymbol symbol;
-        protected INumeral arity;
 
-        @Override public ISymbol symbol() { return symbol; }
-        @Override public INumeral arity() { return arity; }
+	static public class Selector extends Pos.Posable implements ISelector {
+		protected ISymbol symbol;
+		protected ISort sort;
 
-        public SortDeclaration(ISymbol symbol, INumeral arity) {
-            this.symbol = symbol;
-            this.arity = arity;
-        }
+		public Selector(ISymbol symbol, ISort sort) {
+			this.symbol = symbol;
+			this.sort = sort;
+		}
 
-        @Override
-        public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
-    }
+		@Override public ISymbol symbol() { return symbol; }
 
-    static public class Selector extends Pos.Posable implements ISelector {
-        protected ISymbol symbol;
-        protected ISort sort;
+		@Override public ISort sort() { return sort; }
 
-        @Override
-        public ISymbol symbol() { return symbol; }
+		@Override
+		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+	}
 
-        @Override
-        public ISort sort() { return sort; }
-        
-        public Selector(ISymbol symbol, ISort sort) {
-            this.symbol = symbol;
-            this.sort = sort;
-        }
+	static public class Constructor extends Pos.Posable implements IConstructor {
+		//@ nullable
+		protected ISymbol symbol;
+		protected List<ISelector> selectors;
 
-        @Override
-        public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
-    }
+		public Constructor(ISymbol symbol, List<ISelector> selectors) {
+			this.symbol = symbol;
+			this.selectors = selectors;
+		}
 
-    static public class Constructor extends Pos.Posable implements IConstructor {
-        //@ nullable
-        protected ISymbol symbol;
-        protected List<ISelector> selectors;
+		@Override public ISymbol symbol() { return symbol; }
 
-        @Override
-        public ISymbol symbol() { return symbol; }
+		@Override public List<ISelector> selectors() { return selectors; }
 
-        @Override
-        public List<ISelector> selectors() { return selectors; }
-        
-        public Constructor(ISymbol symbol, List<ISelector> selectors) {
-            this.symbol = symbol;
-            this.selectors = selectors;
-        }
+		@Override
+		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+	}
 
-        @Override
-        public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
-    }
-    
-    static public class Datatype extends Pos.Posable implements IDatatype {
-        List<IConstructor> constructors;
-        /*@ nullable */ List<ISymbol> symbols;
+	static public class Datatype extends Pos.Posable implements IDatatype {
+		protected List<IConstructor> constructors;
+		/*@ nullable */ protected List<ISymbol> symbols;
 
-        @Override
-        public List<IConstructor> constructors() { return constructors; }
-        @Override
-        public /*@ nullable */ List<ISymbol> symbols() { return symbols; }
+		public Datatype(List<IConstructor> constructors, /*@ nullable */ List<ISymbol> symbols) {
+			this.constructors = constructors;
+			this.symbols = symbols;
+		}
 
-        public Datatype(List<IConstructor> constructors, /*@ nullable */ List<ISymbol> symbols) {
-            this.constructors = constructors;
-            this.symbols = symbols;
-        }
+		@Override public List<IConstructor> constructors() { return constructors; }
 
-        @Override
-        public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+		@Override public /*@ nullable */ List<ISymbol> symbols() { return symbols; }
 
-    }
-
+		@Override
+		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+	}
 
 	static public class Declaration extends Pos.Posable implements IDeclaration {
-		ISymbol parameter;
-		ISort sort;
-		
+		protected ISymbol parameter;
+		protected ISort sort;
+
 		public Declaration(ISymbol parameter, ISort sort) {
 			this.parameter = parameter;
 			this.sort = sort;
 		}
-		
+
 		@Override
 		public ISymbol parameter() { return parameter; }
-		
+
 		@Override
 		public ISort sort() { return sort; }
-		
-		// FIXME @Override
-		public String kind() {
-			return "declaration";
-		}
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
-	
-	static public class FunctionDeclaration extends Pos.Posable implements IExpr.IFunctionDeclaration {
-	    protected ISymbol symbol;
-	    protected ISort sort;
-	    protected List<IDeclaration> parameters;
-	    
-	    @Override
-	    public ISymbol symbol() { return symbol; }
-	    
-	    @Override
-	    public ISort sort() { return sort; }
-	    
-	    @Override
-	    public List<IDeclaration> parameters() { return parameters; }
-	    
-	    public FunctionDeclaration(ISymbol symbol, List<IDeclaration> parameters, ISort sort) {
-	        this.symbol = symbol;
-	        this.parameters = parameters;
-	        this.sort = sort;
-	    }
 
-        @Override
-        public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+	static public class FunctionDeclaration extends Pos.Posable implements IExpr.IFunctionDeclaration {
+		protected ISymbol symbol;
+		protected List<IDeclaration> parameters;
+		protected ISort sort;
+
+		public FunctionDeclaration(ISymbol symbol, List<IDeclaration> parameters, ISort sort) {
+			this.symbol = symbol;
+			this.parameters = parameters;
+			this.sort = sort;
+		}
+
+		@Override public ISymbol symbol() { return symbol; }
+
+		@Override public List<IDeclaration> parameters() { return parameters; }
+
+		@Override public ISort sort() { return sort; }
+
+		@Override
+		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 
 	static public class Binding extends Pos.Posable implements IBinding {
-		ISymbol parameter;
-		IExpr expr;
-		
+		protected ISymbol parameter;
+		protected IExpr expression;
+
 		public Binding(ISymbol parameter, IExpr expr) {
 			this.parameter = parameter;
-			this.expr = expr;
-		}
-		
-		@Override
-		public ISymbol parameter() { return parameter; }
-		
-		@Override
-		public IExpr expr() { return expr; }
-		
-		// FIXME @Override
-		public String kind() {
-			return "binding";
+			this.expression = expr;
 		}
 
 		@Override
+		public ISymbol parameter() { return parameter; }
+
+		@Override
+		public IExpr expr() { return expression; }
+
+		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
-		
+
 		@Override
 		public String toString() {
-			return parameter + ":" + expr;
+			return parameter + ":" + expression;
 		}
 	}
-	
+
 	static public class Attribute<TT extends IAttributeValue> extends Pos.Posable implements IAttribute<TT> {
 		protected IKeyword keyword;
 		protected TT value;
 		protected /*@Nullable*//*@ReadOnly*/IPos pos;
-		
+
 		public Attribute(IKeyword keyword, TT value) {
 			this.keyword = keyword;
 			this.value = value;
 		}
-		
-		@Override
-		public boolean isOK() { return false; }
-		
-		@Override
-		public boolean isError() { return false; }
-		
+
 		@Override
 		public IKeyword keyword() { return keyword; }
-		
+
 		@Override
 		public TT attrValue() { return value; }
-		
+
+		@Override public boolean isOK() { return false; }
+		@Override public boolean isError() { return false; }
+
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 
@@ -732,31 +624,21 @@ public abstract class SMTExpr implements IExpr {
 			return keyword.toString() + " " + value.toString();
 		}
 	}
-	
+
 	static public class AttributedExpr extends Pos.Posable implements IAttributedExpr {
-		
 		protected IExpr expression;
 		protected List<IAttribute<?>> attributes;
-		
+
 		public AttributedExpr(IExpr expression, List<IAttribute<?>> attributes) {
 			this.expression = expression;
 			this.attributes = attributes;
 		}
 
 		@Override
-		public String kind() {
-			return "attributedExpr";
-		}
+		public IExpr expr() { return expression; }
 
 		@Override
-		public IExpr expr() {
-			return expression;
-		}
-
-		@Override
-		public List<IAttribute<?>> attributes() {
-			return attributes;
-		}
+		public List<IAttribute<?>> attributes() { return attributes; }
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
@@ -769,14 +651,15 @@ public abstract class SMTExpr implements IExpr {
 			return s + ")";
 		}
 
-		@Override
-		public boolean isOK() { throw new RuntimeException(); } // FIXME - should never be called
-
-		@Override
-		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
-	
+
 	static public class Logic implements ILogic {
+		/** The name of the logic */
+		protected ISymbol logicName;
+
+		/** The logic's attributes */
+		protected Map<IKeyword,IAttribute<?>> attributes = new HashMap<IKeyword,IAttribute<?>>();
+
 		/** Creates a logic */
 		public Logic(ISymbol name, Collection<IAttribute<?>> attributes) {
 			this.logicName = name;
@@ -784,20 +667,15 @@ public abstract class SMTExpr implements IExpr {
 				this.attributes.put(attr.keyword(),attr);
 			}
 		}
-		/** The name of the logic */
-		protected ISymbol logicName;
-		
-		/** The logic's attributes */
-		protected Map<IKeyword,IAttribute<?>> attributes = new HashMap<IKeyword,IAttribute<?>>();
-		
+
 		/** The name of the logic */
 		@Override
 		public ISymbol logicName() { return logicName; }
-		
+
 		/** The attributes, as a Map, keyed by the keyword in the attribute */
 		@Override
 		public Map<IKeyword,IAttribute<?>> attributes() { return attributes; }
-		
+
 		/** The value of a given attribute */
 		@Override
 		public /*@Nullable*/IAttributeValue value(IKeyword keyword) {
@@ -805,7 +683,7 @@ public abstract class SMTExpr implements IExpr {
 			if (attr == null) return null;
 			return attr.attrValue();
 		}
-		
+
 		// FIXME - do we really want this here
 		@Override
 		public void validExpression(IExpr expr)  throws IVisitor.VisitorException {}
@@ -816,14 +694,17 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {}
 
-		// FIXME @Override
-		public String kind() { return "logic"; }
-
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
-	
+
 	static public class Theory implements ITheory {
+		/** The name of the theory */
+		protected ISymbol theoryName;
+
+		/** The theory attributes */
+		protected Map<IKeyword,IAttribute<?>> attributes = new HashMap<IKeyword,IAttribute<?>>();
+
 		/** Creates a theory */
 		public Theory(ISymbol name, Collection<IAttribute<?>> attributes) {
 			this.theoryName = name;
@@ -831,20 +712,15 @@ public abstract class SMTExpr implements IExpr {
 				this.attributes.put(attr.keyword(),attr);
 			}
 		}
-		/** The name of the theory */
-		protected ISymbol theoryName;
-		
-		/** The theory attributes */
-		protected Map<IKeyword,IAttribute<?>> attributes = new HashMap<IKeyword,IAttribute<?>>();
-		
+
 		/** The name of the theory */
 		@Override
 		public ISymbol theoryName() { return theoryName; }
-		
+
 		/** The attributes, as a Map, keyed by the keyword in the attribute */
 		@Override
 		public Map<IKeyword,IAttribute<?>> attributes() { return attributes; }
-		
+
 		/** The value of a given attribute */
 		@Override
 		public /*@Nullable*/ IAttributeValue value(IKeyword keyword) {
@@ -852,14 +728,11 @@ public abstract class SMTExpr implements IExpr {
 			if (attr == null) return null;
 			return attr.attrValue();
 		}
-		
-		//FIXME @Override
-		public String kind() { return "theory"; }
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
-	
+
 	static public class Error extends Pos.Posable implements IError {
 		protected String message;
 
@@ -869,27 +742,15 @@ public abstract class SMTExpr implements IExpr {
 
 		/** Returns the error message */
 		@Override
-		public String value() {
-			return this.message;
-		}
-
-		/** Shows a string for debugging; use an IPrinter to get concrete syntax */
-		@Override
-		public String toString() {
-			return "Error: " + this.message;
-		}
-
-		@Override
-		public String kind() { return "error"; }
+		public String value() { return this.message; }
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 
+		/** Shows a string for debugging; use an IPrinter to get concrete syntax */
 		@Override
-		public boolean isOK() { throw new RuntimeException(); } // FIXME - should never be called
+		public String toString() { return "Error: " + this.message; }
 
-		@Override
-		public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
 
 	static public class Pattern extends Pos.Posable implements IExpr.IPattern {
@@ -935,14 +796,9 @@ public abstract class SMTExpr implements IExpr {
 
 		@Override public IExpr expr() { return expression; }
 		@Override public List<IExpr.IMatchCase> cases() { return cases; }
-		@Override public String kind() { return "match"; }
 
 		@Override
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 
-		@Override public boolean isOK() { throw new RuntimeException(); }
-		@Override public boolean isError() { throw new RuntimeException(); }
 	}
-
-
 }

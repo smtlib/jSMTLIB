@@ -1,0 +1,4 @@
+(assert (! true :named 5))
+                       ^
+(assert (forall ((x Bool)) (! x :pattern x)))
+                                         ^

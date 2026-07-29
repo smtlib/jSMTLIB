@@ -1,0 +1,3 @@
+success
+(error "Expected a symbol after :named")
+(error "Expected a sequence after :pattern")

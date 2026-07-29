@@ -18,11 +18,10 @@ import org.smtlib.IPos.IPosable;
 
 /** This interface represents the functionality for any class implementing an SMT-LIB term or formula */
 public interface IExpr extends INode, IPosable, IAttributeValue {
-	
-	/** Helpful method that indicates the class of expression, used in human-readable messages. */
-	//@ pure
-	String kind();
+    
+    default boolean isError() { return false; }
 
+	
 	/** The interface defining the factory type for producing objects of various subtypes of IExpr;
 	 * the IPos argument is an optional argument giving information about the textual position of an expression. */
 	static public interface IFactory {

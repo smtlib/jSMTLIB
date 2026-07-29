@@ -1,3 +1,4 @@
-; duplicate declaration in forall
+; duplicate declaration in forall and exists
 (set-logic QF_LIA)
 (assert (forall ((x Int)(x Int)) (= x 0)))
+(assert (exists ((x Int)(x Int)) (= x 0)))

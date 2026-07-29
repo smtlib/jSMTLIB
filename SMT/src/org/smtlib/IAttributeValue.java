@@ -6,4 +6,6 @@ package org.smtlib;
  * true, false, string literals, numerals, and various pre-defined constants.
  */
 public interface IAttributeValue extends IResponse, IPos.IPosable {
+    @Override default boolean isOK()    { return false; }
+    @Override default boolean isError() { return false; }
 }

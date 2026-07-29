@@ -173,11 +173,6 @@ public class Factory implements IExpr.IFactory, ISort.IFactory {
             return s + " )";
         }
 
-        @Override
-        public boolean isOK() { throw new RuntimeException(); } // FIXME - should never be called
-
-        @Override
-        public boolean isError() { throw new RuntimeException(); } // FIXME - should never be called
 	}
 
 	@Override

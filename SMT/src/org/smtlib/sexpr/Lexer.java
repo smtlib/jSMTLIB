@@ -67,11 +67,12 @@ public class Lexer {
 		@Override
 		public IPos pos() { return pos; }
 		public LexToken(String s, int cp) { // FIXME - factory? or Lexer.pos?
-			chars = s.intern(); 
-			pos = new Pos(cp,cp+1,source); 
-		} 
-		@Override
-		public boolean isError() { return false; }
+			chars = s.intern();
+			pos = new Pos(cp,cp+1,source);
+		}
+		@Override public boolean isError() { return false; }
+		@Override public boolean isLP()  { return chars == IPLexToken.LP; }
+		@Override public boolean isRP()  { return chars == IPLexToken.RP; }
 		@Override
 		public String toString() { return chars; }
 		@Override
@@ -89,13 +90,15 @@ public class Lexer {
 
 	/** A class that represents a lexical token corresponding to the end of input */
 	private class EOD extends LexToken implements IPLexToken {
-		
-		
+
 		/** Creates an instance of an end-of-data token at the given character position */
 		public EOD(int cpos) {
 			super(EMPTY,cpos);
 		}
-		
+
+		@Override public boolean isLP()  { return false; }
+		@Override public boolean isRP()  { return false; }
+		@Override public boolean isEOD() { return true; }
 		@Override
 		public String kind() {
 			return EOD_KIND;
@@ -226,26 +229,32 @@ public class Lexer {
 	
 	private static class LexSymbol extends Symbol implements ILexToken, ISexpr.IToken<String> {
 		public LexSymbol(String n) { super(n); }
+		@Override public String kind() { return "symbol"; }
 	}
 
 	private static class LexNumeral extends Numeral implements ILexToken, ISexpr.IToken<BigInteger> {
 		public LexNumeral(BigInteger n) { super(n); }
+		@Override public String kind() { return "numeral"; }
 	}
 
 	private static class LexDecimal extends Decimal implements ILexToken, ISexpr.IToken<BigDecimal> {
 		public LexDecimal(BigDecimal n) { super(n); }
+		@Override public String kind() { return "decimal"; }
 	}
 
 	private static class LexStringLiteral extends StringLiteral implements ILexToken, ISexpr.IToken<String> {
 		public LexStringLiteral(String n, boolean quoted) { super(n,quoted); }
+		@Override public String kind() { return "string-literal"; }
 	}
 
 	private static class LexBinaryLiteral extends BinaryLiteral implements ILexToken, ISexpr.IToken<String> {
 		public LexBinaryLiteral(String n) { super(n); }
+		@Override public String kind() { return "binary"; }
 	}
 
 	private static class LexHexLiteral extends HexLiteral implements ILexToken, ISexpr.IToken<String> {
 		public LexHexLiteral(String n) { super(n); }
+		@Override public String kind() { return "hex-literal"; }
 	}
 
 	private static class LexKeyword extends Keyword implements ILexToken, ISexpr.IToken<String> {
@@ -261,12 +270,14 @@ public class Lexer {
 	private class LexError extends org.smtlib.impl.SMTExpr.Error implements ILexToken, ISexpr.IToken<String> {
 		public LexError(String n) { super(n); }
 
+		@Override public String kind() { return "error"; }
+
 		@Override
 		public boolean isOK() { return false; }
 
 		@Override
 		public boolean isError() { return true; }
-		
+
 		/** For debugging only - not general printing */
 		@Override
 		public String toString() { return "Error: " + smtConfig.utils.quote(value()); }
@@ -308,7 +319,7 @@ public class Lexer {
 	
 	/** Returns true if the next token is the end-of-data */
 	public boolean isEOD() throws ParserException {
-		return peekToken().kind() == EOD_KIND;
+		return peekToken().isEOD();
 	}
 	
 	
@@ -320,24 +331,20 @@ public class Lexer {
 		ILexToken t;
 		while (!isEOD()) {
 			t = getToken();
-			if (!(t instanceof LexToken)) continue;
-			String s = ((LexToken)t).chars;
-			if (s == IPLexToken.LP) ++n;
-			if (s == IPLexToken.RP) { --n; if (n == 0) return t.pos(); }
+			if (t.isLP()) ++n;
+			else if (t.isRP()) { --n; if (n == 0) return t.pos(); }
 		}
 		return getToken().pos(); 
 	}
 	
 	/** Returns true if the next token is a left parenthesis (without consuming it) */
 	public boolean isLP() throws ParserException {
-		ILexToken token = peekToken();
-		return (token.kind() == LexToken.LP);
+		return peekToken().isLP();
 	}
 
 	/** Returns true if the next token is a right parenthesis (without consuming it) */
 	public boolean isRP() throws ParserException {
-		ILexToken token = peekToken();
-		return (token.kind() == LexToken.RP);
+		return peekToken().isRP();
 	}
 	
 	/** Creates an IPos object with the given start and end and the source for this Lexer */

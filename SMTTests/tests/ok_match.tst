@@ -1,0 +1,9 @@
+; match expressions: bare constructor patterns and constructor-with-params patterns
+(set-info :smt-lib-version "V2.6")
+(set-logic QF_UF)
+(declare-datatype Color ((red) (green) (blue)))
+(declare-datatype Tree ((leaf) (node (left Tree) (right Tree))))
+(declare-fun c () Color)
+(declare-fun t () Tree)
+(assert (match c ( (red true) (green false) (blue false))))
+(assert (match t ( (leaf true) ((node l r) false))))

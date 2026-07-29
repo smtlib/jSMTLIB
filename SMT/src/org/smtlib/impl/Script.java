@@ -62,8 +62,6 @@ public class Script implements IScript {
 		commands.add(command);
 	}
 	
-	public String kind() { return "script"; }  // FIXME - should override?
-
 	/** Executes the current list */
 	// FIXME _ should we have an incremental read and execute option?
 	@Override

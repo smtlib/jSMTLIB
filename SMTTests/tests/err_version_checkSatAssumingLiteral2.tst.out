@@ -1,0 +1,4 @@
+success
+success
+success
+(error "Arguments to check-sat-assuming must be a symbol or (not symbol) in SMT-LIB V2.6 and earlier")
