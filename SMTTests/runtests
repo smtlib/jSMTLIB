@@ -8,8 +8,7 @@ fi
 source setup
 rm -f tempout
 
-solvers="z3_4_3"
-solvers="test"
+solvers="test z3_4_3"
 
 while [[ $# -gt 0 && "$1" == --* ]]; do
     case "$1" in
@@ -36,8 +35,8 @@ echo SOLVERS $solvers
 count=0
 ok=0
 skip=0
-for f in "${tests[@]}" ; do
     for solver in $solvers; do
+for f in "${tests[@]}" ; do
         (( count++ ))
         ./runtest $solver "$f"
         ret=$?

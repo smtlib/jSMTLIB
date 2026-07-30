@@ -485,6 +485,15 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		IResponse r = checkPrintSuccess(smtConfig,key,value);
 		if (r != null) return r;
 
+		// Don't forward output-channel redirects to z3. jSMTLIB owns the output channels and has
+		// already applied the redirect above (smtConfig.log.out / smtConfig.log.diag). If we also
+		// told z3 to redirect, z3 would start writing its pipe output to a file, breaking
+		// jSMTLIB's ability to read z3's responses and causing a deadlock. The proper behavior
+		// is for jSMTLIB to intercept z3's responses on the pipe and route them itself.
+		if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option) || Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
+			return successOrEmpty(smtConfig);
+		}
+
 		try {
 			solverProcess.sendAndListen("(set-option ",option," ",value.toString(),")\n");// FIXME - detect errors
 		} catch (IOException e) {
@@ -510,12 +519,31 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	@Override
 	public IResponse set_info(IKeyword key, IAttributeValue value) {
 		if (Utils.infoKeywords.contains(key)) {
-			return smtConfig.responseFactory.error("Setting the value of a pre-defined keyword is not permitted: "+ 
+			return smtConfig.responseFactory.error("Setting the value of a pre-defined keyword is not permitted: "+
 					smtConfig.defaultPrinter.toString(key),key.pos());
 		}
 		return sendCommand(new org.smtlib.command.C_set_info(key,value));
 	}
 
+	@Override
+	public IResponse echo(IStringLiteral arg) {
+		return arg;
+	}
+
+	@Override
+	public IResponse get_model() {
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
+			return smtConfig.responseFactory.error("The get-model command is only valid if :produce-models has been enabled");
+		}
+		if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
+			return smtConfig.responseFactory.error("The get-model command is only valid immediately after check-sat returned sat or unknown");
+		}
+		try {
+			return parseResponse(solverProcess.sendAndListen("(get-model)\n"));
+		} catch (IOException e) {
+			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+		}
+	}
 
 	@Override
 	public IResponse declare_fun(Ideclare_fun cmd) {

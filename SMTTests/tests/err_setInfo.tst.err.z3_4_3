@@ -1,0 +1,10 @@
+(set-info :name "x")
+          ^^^^^
+(set-info :authors "x")
+          ^^^^^^^^
+(set-info :version "0")
+          ^^^^^^^^
+(set-info :error-behavior x)
+          ^^^^^^^^^^^^^^^
+(get-info :error-behavior)
+^^^^^^^^^^^^^^^^^^^^^^^^^^

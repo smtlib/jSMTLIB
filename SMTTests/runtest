@@ -64,7 +64,7 @@ elif [ -e "${test}.skip" ]; then
 fi
 
 rm -f "${test}.out.actual" "${test}.err.actual"
-echo Running $solver $test
+echo Running $solver "	" $test
 
 _timeout "$TEST_TIMEOUT" $SMT_EXE "$test" > "${test}.out.actual" 2> "${test}.err.actual"
 _exit=$?

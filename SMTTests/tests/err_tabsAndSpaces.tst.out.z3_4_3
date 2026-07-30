@@ -1,0 +1,6 @@
+success
+success
+(error "line 4 column 23: invalid function/constant definition, sort mismatch")
+(error "line 5 column 23: invalid function/constant definition, sort mismatch")
+(error "line 6 column 23: invalid function/constant definition, sort mismatch")
+(error "line 7 column 23: invalid function/constant definition, sort mismatch")

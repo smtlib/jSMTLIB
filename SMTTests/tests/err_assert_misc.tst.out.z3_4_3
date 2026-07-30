@@ -1,0 +1,3 @@
+success
+(error "line 4 column 8: unknown constant _")
+(error "line 5 column 8: invalid expression, unexpected input")

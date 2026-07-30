@@ -21,6 +21,8 @@ if [ "$solver" == "z3r" ]; then
     export SMT_EXE="$SMT_EXE_z3r"
 elif [ "$solver" == "z3" ]; then
     export SMT_EXE="$JV z3"
+elif [ "$solver" == "z3_4_3" ]; then
+    export SMT_EXE="$JV z3_4_3"
 
 elif [ "$solver" == "yices" ] ; then
     export SMT_EXE="$JV yices"
