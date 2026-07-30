@@ -7,7 +7,6 @@ package org.smtlib;
 
 import java.util.List;
 
-import org.smtlib.IExpr.IDatatype;
 import org.smtlib.IExpr.IDeclaration;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.IKeyword;
@@ -53,35 +52,44 @@ public interface ICommand extends INode {
         Icheck_sat check_sat();
         
         /** Creates a check-sat-assuming command object */
-        Icheck_sat_assuming check_sat_assuming();
-        
+        Icheck_sat_assuming check_sat_assuming(List<IExpr> terms);
+
+        /** Creates a declare-const command object */
+        Ideclare_const declare_const(ISymbol symbol, ISort resultSort);
+
 		/** Creates a declare-fun command object */
-		Ideclare_fun declare_fun(IIdentifier id, List<ISort> argSorts, ISort resultSort);
-		
+		Ideclare_fun declare_fun(ISymbol id, List<ISort> argSorts, ISort resultSort);
+
         /** Creates a declare-sort command object. */
         Ideclare_sort declare_sort(ISymbol sym, INumeral arity);
-        
+
         /** Creates a declare-sort-parameter command object. */
-        Ideclare_sort declare_sort_parameter(ISymbol sym);
-        
+        Ideclare_sort_parameter declare_sort_parameter(ISymbol sym);
+
+        /** Creates a declare-datatype command object */
+        Ideclare_datatype declare_datatype(IExpr.ISortDeclaration sd, ISort.IDatatype d);
+
+        /** Creates a declare-datatypes command object */
+        Ideclare_datatypes declare_datatypes(List<IExpr.ISortDeclaration> sds, List<ISort.IDatatype> dts);
+
         /** Creates a define-const command object */
         Idefine_const define_const(ISymbol symbol, ISort resultSort, IExpr expression);
 
         /** Creates a define-fun command object */
-        Idefine_fun define_fun(IIdentifier id, List<IDeclaration> declarations, ISort resultSort, IExpr expression);
+        Idefine_fun define_fun(ISymbol id, List<IDeclaration> declarations, ISort resultSort, IExpr expression);
 
         /** Creates a define-fun-rec command object */
-        Idefine_fun_rec define_fun_rec(IIdentifier id, List<IDeclaration> declarations, ISort resultSort, IExpr expression);
+        Idefine_fun_rec define_fun_rec(ISymbol id, List<IDeclaration> declarations, ISort resultSort, IExpr expression);
 
         /** Creates a define-funs-rec command object */
         Idefine_funs_rec define_funs_rec(List<IExpr.IFunctionDeclaration> declarations, List<IExpr> bodies);
-        
+
 		/** Creates a define-sort command object. */
-		Idefine_sort define_sort(IIdentifier id, List<IParameter> parameters, ISort.IApplication expression);
-		
+		Idefine_sort define_sort(ISymbol id, List<IParameter> parameters, ISort expression);
+
         /** Creates an echo command object. */
-        Iecho echo(); // FIXME - needs striong literal
-        
+        Iecho echo(IStringLiteral arg);
+
         /** Creates an exit command object. */
         Iexit exit();
         
@@ -97,9 +105,12 @@ public interface ICommand extends INode {
 		/** Creates a get-option command object */
 		Iget_option get_option(IKeyword option);
 		
+		/** Creates a get-model command object. */
+		Iget_model get_model();
+
 		/** Creates a get-proof command object. */
 		Iget_proof get_proof();
-		
+
         /** Creates a get-unsat-assumptions command object. */
         Iget_unsat_assumptions get_unsat_assumptions();
         
@@ -119,7 +130,7 @@ public interface ICommand extends INode {
         Ireset reset();
         
         /** Creates a reset-assertions command object. */
-        Ireset reset_assertions();
+        Ireset_assertions reset_assertions();
         
 		/** Creates a set-logic command object */
 		Iset_logic set_logic(ISymbol logic);
@@ -163,13 +174,13 @@ public interface ICommand extends INode {
     /** Interface for the declare-datatypes command: a list of sort declarations and parallel datatype declarations. */
     static public interface Ideclare_datatypes extends ICommand {
         List<IExpr.ISortDeclaration> sortDeclarations();
-        List<IDatatype> datatypes();
+        List<ISort.IDatatype> datatypes();
     }
 
     /** Interface for the declare-datatype command: a sort declaration and its datatype body. */
     static public interface Ideclare_datatype extends ICommand {
         IExpr.ISortDeclaration sortDeclaration();
-        IDatatype datatype();
+        ISort.IDatatype datatype();
     }
     
 	/** Interface to be implemented by all objects representing SMT-LIB declare-fun commands. */

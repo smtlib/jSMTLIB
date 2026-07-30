@@ -18,10 +18,12 @@ import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
 
-/** Implements the exit command */
+/** Implements the echo command */
 public class C_echo extends Command implements Iecho {
 	protected IStringLiteral arg;
-	
+
+	/** The string literal argument to be echoed. */
+	@Override
 	public IStringLiteral arg() {
 	    return arg;
 	}

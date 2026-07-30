@@ -5,6 +5,7 @@
  */
 package org.smtlib;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -35,8 +36,11 @@ public class SymbolTable {
 	
 	/** true if the RealsInts theory is set (which allows implicit promotion of ints to reals) */
 	public boolean realsIntsTheorySet = false;
-	
-	/** The logic that is being used - this value is used to check that 
+
+	/** Maps each datatype sort name to its constructors (in declaration order); populated by declare-datatype/declare-datatypes */
+	public Map<String, List<ISymbol>> datatypeConstructors = new HashMap<>();
+
+	/** The logic that is being used - this value is used to check that
 	 * expressions, etc., conform to the language restrictions of the current
 	 * logic.
 	 */
@@ -143,6 +147,7 @@ public class SymbolTable {
 		symStack.addAll(s.symStack);
 		names = symStack.get(0);
 		sorts = sortStack.get(0);
+		datatypeConstructors = new HashMap<>(s.datatypeConstructors);
 	}
 	
 	/** Returns a fresh iterator over the symbol table's contents */
@@ -158,6 +163,7 @@ public class SymbolTable {
 		} else {
 			sortStack = new LinkedList<Map<IIdentifier,ISort.IDefinition>>();
 			symStack = new LinkedList<Map<IIdentifier,Map<Integer,List<Entry>>>>();
+			datatypeConstructors = new HashMap<>();
 			push(); // an empty background frame
 			push(); // an empty primary frame
 		}
@@ -276,13 +282,13 @@ public class SymbolTable {
 		if (name instanceof IParameterizedIdentifier) {
 			IParameterizedIdentifier pf = (IParameterizedIdentifier)name;
 			if (bitVectorTheorySet && pf.headSymbol().toString().equals("BitVec")) { // FIXME -  toString() or value()?
-				if (pf.numerals().size() != 1) {
-					return new ISort.ErrorDefinition(name,"A bit-vector sort must have exactly one numeral",
-							pf.numerals().size() > 1 ? pf.numerals().get(1).pos()
+				if (pf.indices().size() != 1 || !(pf.indices().get(0) instanceof INumeral)) {
+					return smtConfig.sortFactory.createErrorDefinition(name,"A bit-vector sort must have exactly one numeral",
+							pf.indices().size() > 1 ? pf.indices().get(1).pos()
 									: pf.headSymbol().pos());
 				}
-				if (pf.numerals().get(0).intValue() == 0) {
-					return new ISort.ErrorDefinition(name,"A bit-vector sort must have a length of at least 1",pf.numerals().get(0).pos());
+				if (((INumeral) pf.indices().get(0)).intValue() == 0) {
+					return smtConfig.sortFactory.createErrorDefinition(name,"A bit-vector sort must have a length of at least 1",pf.indices().get(0).pos());
 				}
 				ISort.IDefinition def = smtConfig.sortFactory.createSortFamily(name,smtConfig.exprFactory.numeral(0));
 				sorts.put(name, def);

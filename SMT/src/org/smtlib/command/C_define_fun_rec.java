@@ -17,7 +17,7 @@ import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
 
-/** Implements the define-fun command */
+/** Implements the define-fun-rec command (recursive function definition) */
 public class C_define_fun_rec extends Command implements Idefine_fun_rec {
 	/** The command name */
 	public static final String commandName = "define-fun-rec";

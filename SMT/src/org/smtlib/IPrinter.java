@@ -19,7 +19,7 @@ public interface IPrinter {
 	 */
 	public <T extends INode> String toString(T expr);
 	
-	// FIXME
+	/** Creates a new printer of the same type as the receiver, writing to the given Writer. */
 	public IPrinter newPrinter(java.io.Writer pw);
 
 }

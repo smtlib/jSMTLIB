@@ -1,0 +1,6 @@
+success
+success
+success
+(error "Constructor f is already defined")
+success
+(error "Selector g is already defined")

@@ -744,7 +744,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 				throw new VisitorException("INTERNAL ERROR: Do not expect to ever have a pre-defined name within a parameterized identifier",e.headSymbol().pos());
 			}
 			v = v.substring(0,v.length()-1);
-			for (INumeral n: e.numerals()) {
+			for (IExpr.IIndex n: e.indices()) {
 				v = v + "?" + n.toString();
 			}
 			return v + "|";
@@ -967,13 +967,19 @@ public class Solver_simplify extends Solver_test implements ISolver {
 		}
 
 		@Override
+		public String visit(IResponse.IUnsatAssumptionsResponse e) throws VisitorException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
 		public String visit(IAttributeList e) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
         @Override
-        public String visit(IDatatype e) throws VisitorException {
+        public String visit(ISort.IDatatype e) throws VisitorException {
             // TODO Auto-generated method stub
             return null;
         }

@@ -11,6 +11,7 @@ import org.smtlib.*;
 import org.smtlib.IExpr.IBinaryLiteral;
 import org.smtlib.IExpr.IFcnExpr;
 import org.smtlib.IExpr.IHexLiteral;
+import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.IParameterizedIdentifier;
 import org.smtlib.IExpr.IQualifiedIdentifier;
 import org.smtlib.sexpr.ISexpr;
@@ -125,7 +126,7 @@ public class Solver_z3_2_11 extends Solver_z3_4_3 {
 			try {
 				String s = e.headSymbol().toString();
 				if (s.matches("bv[0-9]+")) {
-					int length = e.numerals().get(0).intValue();
+					int length = ((INumeral) e.indices().get(0)).intValue();
 					w.append( s + "[" + length + "]" );
 				} else {
 					super.visit(e);

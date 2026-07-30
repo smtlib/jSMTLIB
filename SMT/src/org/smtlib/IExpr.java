@@ -57,12 +57,9 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
         IFcnExpr fcn(IQualifiedIdentifier id, List<IExpr> args);
 		/** Creates a function expression (perhaps with an empty argument list) */
         IFcnExpr fcn(IQualifiedIdentifier id, IExpr... args);
-        /** Creates a parameterized identifier from a symbol and a non-empty list of numerals */
-        //@ requires num.size() > 0;
-		IParameterizedIdentifier id(ISymbol symbol, List<INumeral> num);
         /** Creates a parameterized identifier from a symbol and a non-empty list of indices (each INumeral or ISymbol) */
         //@ requires indices.size() > 0;
-		IParameterizedIdentifier idIndexed(ISymbol symbol, List<IExpr> indices);
+		IParameterizedIdentifier id(ISymbol symbol, List<IIndex> indices);
 		/** Creates a 'as' identifier from an identifier and a sort qualifier */
 		IAsIdentifier id(IIdentifier identifier, ISort qualifier);
 		/** Creates a Let expression */
@@ -81,9 +78,6 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
         IExists exists(List<IDeclaration> params, IExpr e);
         IExists exists(List<IDeclaration> params, IExpr e, List<IExpr> patterns);
 
-		/** Creates a command script from a file of commands or a list of commands */
-		IScript script(/*@Nullable*/IStringLiteral filename, /*@Nullable*/List<ICommand> commands);
-
 		/** Creates an error expression */
 		IError error(String text);
 
@@ -94,7 +88,7 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
 		/** Creates a constructor declaration */
 		IConstructor constructor(ISymbol symbol, List<ISelector> selectors);
 		/** Creates a datatype declaration; symbols is non-null only for parametric (par) forms */
-		IDatatype datatype(List<IConstructor> constructors, /*@nullable*/ List<ISymbol> symbols);
+		ISort.IDatatype datatype(List<IConstructor> constructors, /*@nullable*/ List<ISymbol> symbols);
 		/** Creates a function declaration (used in define-funs-rec) */
 		IFunctionDeclaration functionDeclaration(ISymbol symbol, List<IDeclaration> parameters, ISort sort);
 
@@ -110,9 +104,13 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
 	/** This interface represents all literal (explicit constant) expressions. */
 	static public interface ILiteral extends IExpr, IAttributeValue {
 	}
-	
+
+	/** Marker interface for the two legal index types in a parameterized identifier: INumeral and ISymbol. */
+	static public interface IIndex extends IExpr {
+	}
+
 	/** This interface represents non-negative integers of arbitrary size. */
-	static public interface INumeral extends ILiteral {
+	static public interface INumeral extends ILiteral, IIndex {
 		//@ ensures compareTo(BigInteger.ZERO) >= 0;
 		/*@ pure */
 		BigInteger value();
@@ -135,7 +133,7 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
 	/** This interface represents SMT-LIB ids; equal ids have equal (using .equals) values
 	 * of value().
 	 */
-	static public interface ISymbol extends IAttributeValue, IIdentifier {
+	static public interface ISymbol extends IAttributeValue, IIdentifier, IIndex {
 		/** A String giving the canonical value of symbol. */
 		//@ pure
 		String value();
@@ -152,6 +150,7 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
         INumeral arity();
     }
 
+    /** A selector declaration within a constructor; pairs a selector name with its result sort. */
     static public interface ISelector extends INode, IPosable {
         ISymbol symbol();
         ISort sort();
@@ -159,18 +158,11 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
         @Override
         String toString();
     }
-    
+
+    /** A constructor declaration within a datatype; pairs a constructor name with its selectors. */
     static public interface IConstructor extends INode, IPosable {
         ISymbol symbol();
         List<? extends ISelector> selectors();
-        //@ pure
-        @Override
-        String toString();
-    }
-    
-    static public interface IDatatype extends INode, IPosable {
-        List<IConstructor> constructors();
-        /*@ nullable */ List<ISymbol> symbols();
         //@ pure
         @Override
         String toString();
@@ -289,10 +281,7 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
 		/** All indices of the identifier; each element is either an INumeral or an ISymbol.
 		 *  Symbol indices are allowed only in SMT-LIB V2.5 and later. */
 		//@ ensures \result.size() > 0;
-		List<IExpr> indices();
-
-		/** The numeric indices; equivalent to indices() filtered to INumeral elements. */
-		List<INumeral> numerals();
+		List<IIndex> indices();
 	}
 	
 	/** This interface represents an SMT-LIB expression with attributes. */
@@ -305,11 +294,11 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
 		List<IAttribute<?>> attributes();
 	}
 	
-	/** This interface represents an SMT-LIB attribute-value pair */
+	/** This interface represents an SMT-LIB attribute-value pair; the value may be null (keyword-only attribute). */
 	static public interface IAttribute<TT extends IAttributeValue> extends INode, IPosable, IResponse {
 		//@ pure
 		IKeyword keyword();
-		
+
 		//@ pure
 		/*@Nullable*/ TT attrValue();
 	}
@@ -320,7 +309,8 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
         ISort sort();
     }
     
-    /** This interface represents a declaration of a parameter and its sort */
+    /** A function declaration: a name, a parameter list (sorted variables), and a result sort;
+     *  used in the header list of define-funs-rec. */
     static public interface IFunctionDeclaration extends INode, IPosable {
         ISymbol symbol();
         List<IDeclaration> parameters();

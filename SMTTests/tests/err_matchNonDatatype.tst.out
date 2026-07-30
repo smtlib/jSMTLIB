@@ -1,0 +1,4 @@
+success
+success
+success
+(error "The scrutinee of a match expression must be of a datatype sort, but has sort Int")

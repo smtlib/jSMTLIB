@@ -16,7 +16,7 @@ import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
 
-/** Implements the get-unsat-core command */
+/** Implements the get-unsat-assumptions command */
 public class C_get_unsat_assumptions extends Command implements Iget_unsat_assumptions {
 	/** Constructs a command instance */
 	public C_get_unsat_assumptions() {

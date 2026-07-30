@@ -97,7 +97,7 @@ public class APIExample {
 			// typechecking?
 
 			// Bit-vector and model example
-			List<IExpr.INumeral> nums = new LinkedList<IExpr.INumeral>();
+			List<IExpr.IIndex> nums = new LinkedList<IExpr.IIndex>();
 			nums.add(efactory.numeral(32)); // TODO - room for improvement in ease of use here...
 			ISort bv32 = sortfactory.createSortExpression(efactory.id(efactory.symbol("BitVec"),nums));
 			solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,z3exec);

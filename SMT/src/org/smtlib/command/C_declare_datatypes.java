@@ -10,8 +10,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.smtlib.ICommand.Ideclare_datatypes;
-import org.smtlib.IExpr.IDatatype;
 import org.smtlib.IExpr.ISortDeclaration;
+import org.smtlib.ISort;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.IResponse;
 import org.smtlib.ISolver;
@@ -31,15 +31,15 @@ public class C_declare_datatypes extends Command implements Ideclare_datatypes {
 	/** The sort declarations: (symbol arity) pairs */
 	protected List<ISortDeclaration> sortDeclarations;
 	/** The datatype declarations, parallel to sortDeclarations */
-	protected List<IDatatype> datatypes;
+	protected List<ISort.IDatatype> datatypes;
 
 	@Override
 	public List<ISortDeclaration> sortDeclarations() { return sortDeclarations; }
 	@Override
-	public List<IDatatype> datatypes() { return datatypes; }
+	public List<ISort.IDatatype> datatypes() { return datatypes; }
 
 	/** Constructs a new command object */
-	public C_declare_datatypes(List<ISortDeclaration> sortDeclarations, List<IDatatype> datatypes) {
+	public C_declare_datatypes(List<ISortDeclaration> sortDeclarations, List<ISort.IDatatype> datatypes) {
 		this.sortDeclarations = sortDeclarations;
 		this.datatypes = datatypes;
 	}
@@ -56,7 +56,7 @@ public class C_declare_datatypes extends Command implements Ideclare_datatypes {
 			sortDecls.add(p.smt().exprFactory.sortDeclaration(sym, arity));
 		}
 		p.parseRP();
-		List<IDatatype> datatypes = p.parseList(p::parseDatatype, "datatype declaration", false);
+		List<ISort.IDatatype> datatypes = p.parseList(p::parseDatatype, "datatype declaration", false);
 		return new C_declare_datatypes(sortDecls, datatypes);
 	}
 

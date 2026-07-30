@@ -19,7 +19,7 @@ import org.smtlib.IVisitor;
 import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
 
-/** Implements the declare-fun command */
+/** Implements the declare-const command (syntactic sugar for declare-fun with no argument sorts) */
 public class C_declare_const extends C_declare_fun implements Ideclare_const {
 	
 	/** The command name */

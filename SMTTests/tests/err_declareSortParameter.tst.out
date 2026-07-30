@@ -1,0 +1,4 @@
+success
+success
+(error "User-defined symbols may not begin with . or @")
+(error "User-defined symbols may not begin with . or @")

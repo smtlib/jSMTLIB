@@ -18,13 +18,13 @@ import org.smtlib.IExpr.IAsIdentifier;
 import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IBinaryLiteral;
 import org.smtlib.IExpr.IBinding;
-import org.smtlib.IExpr.IDatatype;
 import org.smtlib.IExpr.IDecimal;
 import org.smtlib.IExpr.IDeclaration;
 import org.smtlib.IExpr.IHexLiteral;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.ILiteral;
+import org.smtlib.IExpr.IIndex;
 import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.IQualifiedIdentifier;
 import org.smtlib.IExpr.IStringLiteral;
@@ -98,9 +98,7 @@ public class Parser extends Lexer implements IParser {
 			StringLiteral filename;
 			if (!isLP()) {
 				filename = parseStringLiteral();
-				//scr = smtConfig.commandFactory.script(filename,null);
-				scr = new Script(filename,null); // FIXME - use a factory, set position
-				//scr = setPos(smtConfig.commandFactory.script(filename,null),filename.pos());// FIXME - set pos
+					scr = (Script) smtConfig.commandFactory.script(filename, null);
 			} else {
 				// This loop skips over invalid commands, producing error messages (parseCommand
 				// returns null); the resulting script is valid, but misses the invalid entries
@@ -116,8 +114,7 @@ public class Parser extends Lexer implements IParser {
 				}
 				parseRP();
 				if (anyError) return null;
-				scr = new Script(null,res); // FIXME - use a factory, set position
-				// FIXME set pos pos(lp.pos(),rp.pos(),source);
+				scr = (Script) smtConfig.commandFactory.script(null, res);
 			}
 			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Completed input");
 		} catch (ParserException e) {
@@ -393,15 +390,13 @@ public class Parser extends Lexer implements IParser {
 	 */
 	private IIdentifier parseIdentifierRest(ILexToken lp) throws ParserException {
 		ISymbol name = parseSymbol();
-		List<IExpr> indices = new LinkedList<IExpr>();
-		boolean hasSymbolIndex = false;
+		List<IIndex> indices = new LinkedList<IIndex>();
 		do {
 			if (isEOD()) {
 				throw new ParserException("Unexpected end of data while parsing a parameterized identifier", pos(lp.pos().charStart(),currentPos()));
 			}
 			ILexToken peek = peekToken();
 			if (peek instanceof Symbol) {
-				hasSymbolIndex = true;
 				indices.add(parseSymbol());
 			} else {
 				indices.add(parseNumeral());
@@ -409,13 +404,7 @@ public class Parser extends Lexer implements IParser {
 		} while (!isRP());
 		ILexToken rp = parseRP();
 		IPos pos = pos(lp.pos(), rp.pos());
-		if (hasSymbolIndex) {
-			return setPos(smtConfig.exprFactory.idIndexed(name, indices), pos);
-		} else {
-			List<INumeral> numerals = new LinkedList<INumeral>();
-			for (IExpr e : indices) numerals.add((INumeral) e);
-			return setPos(smtConfig.exprFactory.id(name, numerals), pos);
-		}
+		return setPos(smtConfig.exprFactory.id(name, indices), pos);
 	}
 	
 	/** Parses an expression, returning null with error messages if there is not a valid
@@ -529,7 +518,7 @@ public class Parser extends Lexer implements IParser {
 
 	/** Parses a datatype declaration: "( constructor+ )" or "( par ( symbol+ ) ( constructor+ ) )" */
 	@Override
-	public IExpr.IDatatype parseDatatype() throws ParserException {
+	public ISort.IDatatype parseDatatype() throws ParserException {
 		ILexToken lp = parseLP();
 		List<IExpr.IConstructor> constructors = new LinkedList<>();
 		List<IExpr.ISymbol> typeParams = null;

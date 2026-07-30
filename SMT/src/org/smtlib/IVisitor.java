@@ -11,7 +11,6 @@ package org.smtlib;
 
 import org.smtlib.ICommand.IScript;
 import org.smtlib.IExpr.*;
-import org.smtlib.IExpr.IDatatype;
 import org.smtlib.IExpr.IError;
 import org.smtlib.IResponse.*;
 import org.smtlib.ISort.*;
@@ -38,7 +37,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 	public /*@Nullable*/T visit(ILet e) throws VisitorException;
 	//public /*@Nullable*/T visit(ILiteral e) throws VisitorException;
 	public /*@Nullable*/T visit(INumeral e) throws VisitorException;
-    public /*@Nullable*/T visit(IExpr.IDatatype e) throws VisitorException;// FIXME - or ISort.IDatatype
+    public /*@Nullable*/T visit(ISort.IDatatype e) throws VisitorException;
     public /*@Nullable*/T visit(IExpr.ISortDeclaration e) throws VisitorException;
     public /*@Nullable*/T visit(ISelector e) throws VisitorException;
     public /*@Nullable*/T visit(IConstructor e) throws VisitorException;
@@ -104,6 +103,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 	public /*@Nullable*/T visit(IResponse.IProofResponse e) throws VisitorException;
 	public /*@Nullable*/T visit(IResponse.IValueResponse e) throws VisitorException;
 	public /*@Nullable*/T visit(IResponse.IUnsatCoreResponse e) throws VisitorException;
+	public /*@Nullable*/T visit(IResponse.IUnsatAssumptionsResponse e) throws VisitorException;
 	public /*@Nullable*/T visit(IResponse.IAttributeList e) throws VisitorException;
 
 	/** This class is an implementation of IVisitor, meant to be used as a base class
@@ -338,12 +338,17 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 		}
 
 		@Override
+		public T visit(IResponse.IUnsatAssumptionsResponse e) throws VisitorException {
+			return null;
+		}
+
+		@Override
 		public T visit(IAttributeList e) throws VisitorException {
 			return null;
 		}
 
         @Override
-        public T visit(IDatatype e) throws VisitorException {
+        public T visit(ISort.IDatatype e) throws VisitorException {
             return null;
         }
 
@@ -363,7 +368,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 
 	}
 
-	/** This class is an implementation of IVisitor meant fur further derivation:
+	/** This class is an implementation of IVisitor meant for further derivation:
 	 * each visitor is implemented to visit its children without doing anything else;
 	 * the default return value is null.
 	 * @param <T> the type of the return value
@@ -493,7 +498,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 		@Override
 		public /*@Nullable*/T visit(IParameterizedIdentifier e) throws VisitorException {
 			e.headSymbol().accept(this);
-			for (INumeral n: e.numerals()) n.accept(this);
+			for (IExpr.IIndex idx: e.indices()) idx.accept(this);
 			return null;
 		}
 
@@ -549,7 +554,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 		@Override
 		public /*@Nullable*/T visit(ICommand.Ideclare_datatypes e) throws VisitorException {
 			for (IExpr.ISortDeclaration sd : e.sortDeclarations()) sd.accept(this);
-			for (IExpr.IDatatype dt : e.datatypes()) dt.accept(this);
+			for (ISort.IDatatype dt : e.datatypes()) dt.accept(this);
 			return null;
 		}
 		@Override
@@ -749,6 +754,14 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 		}
 
 		@Override
+		public T visit(IResponse.IUnsatAssumptionsResponse e) throws VisitorException {
+			for (ISymbol s: e.names()) {
+				s.accept(this);
+			}
+			return null;
+		}
+
+		@Override
 		public T visit(IAttributeList e) throws VisitorException {
 			for (IAttribute<?> a : e.attributes()) {
 				a.accept(this);
@@ -757,7 +770,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 		}
 
         @Override
-        public T visit(IDatatype e) throws VisitorException {
+        public T visit(ISort.IDatatype e) throws VisitorException {
             if (e.symbols() != null) for (IExpr.ISymbol s : e.symbols()) s.accept(this);
             for (IExpr.IConstructor c : e.constructors()) c.accept(this);
             return null;

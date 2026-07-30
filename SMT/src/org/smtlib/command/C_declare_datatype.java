@@ -8,8 +8,8 @@ package org.smtlib.command;
 import java.io.IOException;
 
 import org.smtlib.ICommand.Ideclare_datatype;
-import org.smtlib.IExpr.IDatatype;
 import org.smtlib.IExpr.ISortDeclaration;
+import org.smtlib.ISort;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.IResponse;
@@ -27,7 +27,7 @@ public class C_declare_datatype extends Command implements Ideclare_datatype {
 	/** The sort declaration (symbol + arity derived from datatype body) */
 	protected ISortDeclaration sortDeclaration;
 
-	protected IDatatype datatype;
+	protected ISort.IDatatype datatype;
 
 	/** The command name */
 	@Override
@@ -37,7 +37,7 @@ public class C_declare_datatype extends Command implements Ideclare_datatype {
 	public ISortDeclaration sortDeclaration() { return sortDeclaration; }
 
 	/** Constructs a new command object */
-	public C_declare_datatype(ISortDeclaration sortDeclaration, IDatatype d) {
+	public C_declare_datatype(ISortDeclaration sortDeclaration, ISort.IDatatype d) {
 		this.sortDeclaration = sortDeclaration;
 		this.datatype = d;
 	}
@@ -45,7 +45,7 @@ public class C_declare_datatype extends Command implements Ideclare_datatype {
 	/** Parses the arguments of the command, producing a new command instance */
 	static public C_declare_datatype parse(Parser p) throws IOException, ParserException {
 		ISymbol id = p.parseSymbol();
-		IDatatype datatype = p.parseDatatype();
+		ISort.IDatatype datatype = p.parseDatatype();
 		int arityVal = datatype.symbols() == null ? 0 : datatype.symbols().size();
 		ISortDeclaration sortDecl = p.smt().exprFactory.sortDeclaration(id, p.smt().exprFactory.numeral(arityVal));
 		return new C_declare_datatype(sortDecl, datatype);
@@ -62,5 +62,5 @@ public class C_declare_datatype extends Command implements Ideclare_datatype {
 	}
 
     @Override
-    public IDatatype datatype() { return datatype; }
+    public ISort.IDatatype datatype() { return datatype; }
 }

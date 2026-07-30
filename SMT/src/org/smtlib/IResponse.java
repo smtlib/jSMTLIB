@@ -31,14 +31,14 @@ public interface IResponse extends INode {
 		/*@Nullable*/ IPos pos();
 	}
 	
-	/** An interface for simple pairs of objects */
+	/** An interface for simple pairs of objects; used to represent value/assignment response items */
 	public static interface IPair<T1,T2> {
 		T1 first();
 		T2 second();
 	}
 
 	
-	/** The interface representing the factory for IResponse instances */ // TODO _ more restrictive return types?
+	/** The factory interface for creating the standard IResponse singleton and structured instances. */
 	public static interface IFactory {
 		IError error(String msg);
 		IError error(String msg, /*@Nullable*//*@ReadOnly*/ IPos pos);
@@ -69,30 +69,37 @@ public interface IResponse extends INode {
 		IResponse.IAssertionsResponse get_assertions_response(List<IExpr> exprs);
 	}
 	
+	/** Response type for get-info, carrying a list of attribute key-value pairs. */
 	static public interface IAttributeList extends IResponse {
 		public List<IAttribute<? extends IAttributeValue>> attributes();
 	}
 
+	/** Response type for get-assignment, carrying a list of name-Boolean pairs. */
 	static public interface IAssignmentResponse extends IResponse {
 		public List<IPair<IExpr.ISymbol,Boolean>> assignments();
 	}
 
+	/** Response type for get-value, carrying a list of expression-value pairs. */
 	static public interface IValueResponse extends IResponse {
 		public List<IPair<IExpr,IExpr>> values();
 	}
 
+	/** Response type for get-unsat-core, carrying the names of the formulae in the unsat core. */
     static public interface IUnsatCoreResponse extends IResponse {
         public List<IExpr.ISymbol> names();
     }
 
+	/** Response type for get-unsat-assumptions, carrying the named assumptions in the unsat core. */
     static public interface IUnsatAssumptionsResponse extends IResponse {
-        public List<IExpr.ISymbol> names(); // FIXME
+        public List<IExpr.ISymbol> names();
     }
 
+	/** Response type for get-assertions, carrying the list of currently asserted formulae. */
 	static public interface IAssertionsResponse extends IResponse {
 		public List<IExpr> assertions();
 	}
 
+	/** Response type for get-proof, carrying an opaque proof object. */
 	static public interface IProofResponse extends IResponse {
 		public Object proof();
 	}

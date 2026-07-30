@@ -8,6 +8,7 @@ package org.smtlib;
 import java.util.List;
 import java.util.Map;
 
+import org.smtlib.IExpr.IConstructor;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.ISymbol;
@@ -62,10 +63,6 @@ public interface ISort extends INode, IPosable {
 	//@ pure
 	boolean equalsNoExpand(ISort sort);
 	
-	static public interface IDatatype extends INode {
-	    // FIXME
-	}
-	
 	/** A super-interface for definitions of new sort ids.
 	 */
 	static public interface IDefinition extends INode {
@@ -84,40 +81,14 @@ public interface ISort extends INode, IPosable {
 		int intArity();
 	}
 	
-	/** This class is an instance of a sort definition that represents an erroneous definition
-	 * of a Sort; by defining an actual IDefinition, excessive propagation of errors is avoided.
-	 */ // TODO - check if the above statement is actually valid and that having this class makes a difference
-	static public class ErrorDefinition implements IDefinition {
-		public IIdentifier id;
-		public String error;
-		public IPos pos;
-		
-		public ErrorDefinition(IIdentifier id, String error, IPos pos) {
-			this.id = id;
-			this.error = error;
-			this.pos = pos;
-		}
-		
-		@Override
-		public <T> T accept(IVisitor<T> v) throws VisitorException {
-			return null;
-		}
-
-		@Override
-		public IIdentifier identifier() {
-			return id;
-		}
-
-		@Override
-		public ISort eval(List<ISort> sorts) {
-			return null;
-		}
-
-		@Override
-		public int intArity() {
-			return 0;
-		}
-		
+	/** Represents an erroneous sort definition; by having an actual IDefinition,
+	 * redundant cascading errors are suppressed.
+	 */
+	static public interface IErrorDefinition extends IDefinition {
+		/** The error message describing why the definition is ill-formed */
+		String errorMessage();
+		/** The source position of the error */
+		IPos errorPos();
 	}
 	
 	/** This interface represents a new Sort symbol designating either
@@ -215,6 +186,15 @@ public interface ISort extends INode, IPosable {
 		ISort[] argSorts();
 	}
 	
+	/** The interface for a datatype declaration (used in declare-datatype and declare-datatypes). */
+	static public interface IDatatype extends INode, IPosable {
+		List<IConstructor> constructors();
+		/*@ nullable */ List<ISymbol> symbols();
+		//@ pure
+		@Override
+		String toString();
+	}
+
 	/** The interface for a Sort-creating factory */
 	static public interface IFactory {
 		/** Creates a sort family with the given identifier and arity */
@@ -239,6 +219,9 @@ public interface ISort extends INode, IPosable {
 		/** Creates a function sort */
 		IFcnSort createFcnSort(ISort[] args, ISort result);
 		
+		/** Creates an error-placeholder definition (suppresses cascading errors) */
+		IErrorDefinition createErrorDefinition(IIdentifier id, String errorMessage, IPos pos);
+
 		/** Returns the Bool Sort */
 		IApplication Bool();
 	}

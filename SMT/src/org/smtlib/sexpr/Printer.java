@@ -17,7 +17,6 @@ import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IAttributedExpr;
 import org.smtlib.IExpr.IBinaryLiteral;
 import org.smtlib.IExpr.IBinding;
-import org.smtlib.IExpr.IDatatype;
 import org.smtlib.IExpr.IDecimal;
 import org.smtlib.IExpr.IDeclaration;
 import org.smtlib.IExpr.IExists;
@@ -191,7 +190,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 		try {
 			w.append("(" + Utils.UNDERSCORE + " ");
 			e.headSymbol().accept(this);
-			for (IExpr idx: e.indices()) {
+			for (IExpr.IIndex idx: e.indices()) {
 				w.append(" ");
 				idx.accept(this);
 			}
@@ -628,7 +627,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 			w.append("(");
 			for (IExpr.ISortDeclaration sd : e.sortDeclarations()) { w.append(" "); sd.accept(this); }
 			w.append(") (");
-			for (IExpr.IDatatype dt : e.datatypes()) { w.append(" "); dt.accept(this); }
+			for (ISort.IDatatype dt : e.datatypes()) { w.append(" "); dt.accept(this); }
 			w.append(")");
 		});
 	}
@@ -1039,6 +1038,21 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	}
 
 	@Override
+	public Void visit(IResponse.IUnsatAssumptionsResponse e) throws IVisitor.VisitorException {
+		try {
+			w.append("(");
+			for (ISymbol n : e.names()) {
+				n.accept(this);
+				w.append(" ");
+			}
+			w.append(")");
+		} catch (IOException ex) {
+			throw new IVisitor.VisitorException(ex);
+		}
+		return null;
+	}
+
+	@Override
 	public Void visit(IAttributeList e) throws IVisitor.VisitorException {
 		try {
 			w.append("(");
@@ -1074,7 +1088,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	}
 
     @Override
-    public Void visit(IDatatype e) throws VisitorException {
+    public Void visit(ISort.IDatatype e) throws VisitorException {
         try {
             if (e.symbols() != null) {
                 w.append("( par (");

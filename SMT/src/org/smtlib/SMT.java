@@ -52,9 +52,11 @@ public class SMT {
 //		Configuration.smtlib = version;
 //	}
 	
+	/** Properties loaded from the jsmtlib.properties file(s). */
 	public Properties props;
-	
-	static public interface IConfiguration {} // FIXME - do we need this?
+
+	/** Marker interface for configuration objects; reserved for future extension. */
+	static public interface IConfiguration {}
 	
 	/** The configuration object holds the values of all of the current options (e.g. command-line
 	 * settings); it also holds factory objects that are used to create objects for the particular
@@ -111,14 +113,17 @@ public class SMT {
 
 		/** The version of SMT-LIB to be supported; null means the default (V2.5) */
 		public static String smtlib = null;
+		/** Enumeration of the supported SMT-LIB versions, in declaration order from oldest to newest. */
 		public static enum SMTLIB {
 			V20("V2.0"),
 			V25("V2.5"),
 			V26("V2.6"),
 			V27("V2.7");
+			/** The canonical string identifier for this version (e.g. {@code "V2.6"}). */
 			public String id;
 			private SMTLIB(String id) { this.id = id; }
-			public String toString() { return id; }
+			@Override public String toString() { return id; }
+			/** Returns the SMTLIB constant whose id equals the given string, or null if none matches. */
 			public static SMTLIB find(String id) { for (SMTLIB e: SMTLIB.values()) { if (e.id.equals(id)) return e; } return null; }
 		}
 
@@ -193,8 +198,9 @@ public class SMT {
         /** If non-zero, a seed to pass to the solver to initialize its random number generator */
         public int seed = 0;
         
-		/** FIXME */
+		/** If non-null, the file name (or 'stdout'/'stderr') to use for regular output. */
 		/*@Nullable*/ public String out = null;
+		/** If non-null, the file name (or 'stdout'/'stderr') to use for diagnostic output. */
 		/*@Nullable*/ public String diag = null;
 		
 		/** The port to use for socket communications; a port > 0 supersedes any file value, but is
@@ -238,9 +244,10 @@ public class SMT {
 		/** The factory to use to create IParser, IPos, ISource objects */
 		public IParser.IFactory smtFactory;
 		
+		/** The default printer used to convert AST objects to strings for output. */
 		public /*@LazyNonNull*/IPrinter defaultPrinter = null;
 		
-		// FIXME - document
+		/** Initial capacity in characters for the input reader's internal buffer. */
 		public int initialInputBufferSize = 1000000;
 		
 		/** Holds a mapping from command name to the class implementing the command */
@@ -389,8 +396,9 @@ public class SMT {
 		return ret;
 	}
 	
+	/** The last check-sat status seen during execution; null if no check-sat has been executed yet. */
 	public /*@Nullable*/ IResponse checkSatStatus = null;
-	
+
 	/** Executes, presuming all options (e.g. from the command-line) are set in the configuration object */
 	public int exec() {
 		int retcode = 0;
@@ -464,6 +472,10 @@ public class SMT {
 		}
 	}
 	
+	/** Parses and executes a single SMT-LIB command string, reusing the existing solver if one is active.
+	 * @param cmd the command text (without outer parentheses) to execute
+	 * @return the exit code: 0 for success, non-zero for errors
+	 */
 	public int execCommand(String cmd) {
 		ISource src = smtConfig.smtFactory.createSource(cmd,null);
 		IParser p = smtConfig.smtFactory.createParser(smtConfig,src);
@@ -478,7 +490,8 @@ public class SMT {
 	
 	protected /*@Nullable*/ ISolver solver = null;
 	
-	public IResponse lastResponse = null; // FIXME - quick hack to export the result of an interactive command
+	/** The response from the most recently executed command; used to export results in interactive mode. */
+	public IResponse lastResponse = null;
 	
 	protected int doParser(IParser p, boolean restart) { 
 		boolean checkMode = Utils.TEST_SOLVER.equals(smtConfig.solvername);
@@ -973,6 +986,7 @@ public class SMT {
 		}
 	}
 	
+	/** Strategy interface for locating a logic or theory definition by name. */
 	public static interface ILogicFinder {
 		/** Looks for a logic with the given name, returning an InputStream by which to read it
 		 * @param smtConfig the current smt configuration, indicating where to look for logics

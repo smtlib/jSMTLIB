@@ -13,12 +13,12 @@ import org.smtlib.*;
 public class Pos implements IPos {
 
 	/** The starting character, beginning from 0 */
-	int charStart;
+	protected int charStart;
 	/** One past the last character of the range, beginning from 0 */
-	int charEnd;
-	
+	protected int charEnd;
+
 	/** The source of text */
-	/*@Nullable*/ISource source;
+	protected /*@Nullable*/ISource source;
 	
 	/** Constructor for a Pos object
 	 * @param cs the start position of the character range, 0-based

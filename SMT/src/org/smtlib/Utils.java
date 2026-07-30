@@ -637,17 +637,20 @@ public class Utils {
 				"org.smtlib.Utils.loadTheory must be overridden");
 	}
 
-	/** An Exception class used by the library */
+	/** A checked exception used internally to propagate SMT-LIB errors that carry an IResponse.IError. */
 	static public class SMTLIBException extends Exception {
 		private static final long serialVersionUID = 1L;
+		/** The error response describing the problem that caused this exception. */
 		@SuppressWarnings("serial")
 		public IResponse.IError errorResponse;
 
+		/** Creates an SMTLIBException wrapping the given error response. */
 		public SMTLIBException(IResponse.IError err) {
 			this.errorResponse = err;
 		}
 	}
 	
+    /** Concatenates two or more arrays of the same component type into a single new array. */
     @SafeVarargs // requires an argument that is not empty
     public static <T> T[] cat(T[] ... arrays) {
         int n = 0;
@@ -662,6 +665,7 @@ public class Utils {
         return r;
     }
 
+    /** Concatenates an array and additional individual elements into a single new array. */
     @SafeVarargs
     @SuppressWarnings("varargs")
     public static <T> T[] cat(T[] aa, T ... rest) {
@@ -673,6 +677,8 @@ public class Utils {
         return r;
     }
     
+    /** Called at branches that should never be executed in a correct program;
+     *  prints a stack trace so that JaCoCo coverage failures are immediately visible. */
     public static void jacocoNeverExecuted() {
         RuntimeException e = new RuntimeException("Utils.jacocoNeverExecuted is unexpectedly called");
         System.out.println(e.getMessage());

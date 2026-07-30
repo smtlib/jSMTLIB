@@ -1,0 +1,4 @@
+(declare-sort-parameter .bad)
+                        ^^^^
+(declare-sort-parameter @bad)
+                        ^^^^

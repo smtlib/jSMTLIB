@@ -40,8 +40,8 @@ public class Response implements IResponse {
 	/** Implements the IResponse.IPair interface */
 	static public class Pair<T1,T2> implements IResponse.IPair<T1,T2>{
 		public Pair(T1 first, T2 second) { this.first = first; this.second = second; }
-		public T1 first;
-		public T2 second;
+		protected T1 first;
+		protected T2 second;
 		@Override
 		public T1 first() { return first; }
 		@Override
@@ -254,7 +254,7 @@ public class Response implements IResponse {
 		}
 	}
 
-    /** Implements the IResponse.IUnsatCoreResponse interface */
+    /** Implements the IResponse.IUnsatAssumptionsResponse interface */
     static public class UnsatAssumptionsResponse implements IResponse.IUnsatAssumptionsResponse {
         private List<ISymbol> names = new LinkedList<ISymbol>();
         @Override 
@@ -311,7 +311,7 @@ public class Response implements IResponse {
 		}
 	}
 
-	// FIXME - what is this for
+	/** Implementation of IAttributeList: a list of attributes returned by get-info. */
 	static public class Seq extends Pos.Posable implements IAttributeList {
 		List<IAttribute<? extends IAttributeValue>> list = new LinkedList<IAttribute<? extends IAttributeValue>>();
 

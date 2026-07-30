@@ -52,8 +52,8 @@ public class Log {
 		
 		/** Called when a message is sent to the SMT-LIB diagnostic output (it is expected that a line termination will be added) */
 		public void logDiag(String msg);
-		
-		/** The character sequence with which to start any log line */
+
+		/** Sets the indent prefix used when displaying error-location carets; typically the current prompt string. */
 		public void indent(String chars);
 	}
 	
@@ -135,7 +135,7 @@ public class Log {
 		}
 	}
 	
-	/** Prints the argument on the regular output stream with no newline, and to any listeners. */
+	/** Prints the argument on the regular output stream with no newline appended, and notifies any listeners. */
 	public void logOutNoln(/*@NonNull*/ String message) {
 		for (IListener listener: listeners) {
 			listener.logOut(message);

@@ -1,0 +1,2 @@
+(define-funs-rec ((f ((x Int)) Bool) (g ((x Int)) Int)) ((x) (x)))
+                               ^^^^

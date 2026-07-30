@@ -680,9 +680,9 @@ public class Solver_yices extends Solver_test implements ISolver {
 					} else if (fcnname.equals("extract")) {
 						sb.append("(bv-extract ");
 						IParameterizedIdentifier pid = (IParameterizedIdentifier)fcn;
-						sb.append(pid.numerals().get(1).intValue());
+						sb.append(((INumeral)pid.indices().get(1)).intValue());
 						sb.append(" ");
-						sb.append(pid.numerals().get(0).intValue());
+						sb.append(((INumeral)pid.indices().get(0)).intValue());
 						sb.append(" ");
 						sb.append(iter.next().accept(this));
 						sb.append(")");
@@ -880,7 +880,7 @@ public class Solver_yices extends Solver_test implements ISolver {
 				if ("Real".equals(sort)) return "real";
 				if (symTable.bitVectorTheorySet && "BitVec".equals(sort)) {
 					String sbv = "(bitvector ";
-					int k = ((IParameterizedIdentifier)s.family()).numerals().get(0).intValue();
+					int k = ((INumeral)((IParameterizedIdentifier)s.family()).indices().get(0)).intValue();
 					sbv = sbv + k + ")";
 					return sbv;
 				}

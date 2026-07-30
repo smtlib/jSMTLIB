@@ -34,8 +34,9 @@ public abstract class Sort extends Pos.Posable implements ISort {
 
 	/** Represents a new sort symbol, with a given identifier and arity */
 	static public class Family implements IFamily {
-		private IIdentifier identifier;
-		private INumeral arity;
+		protected IIdentifier identifier;
+		protected INumeral arity;
+		/** Creates a sort family with the given identifier and arity. */
 		public Family(IIdentifier identifier, INumeral arity) {
 			this.identifier = identifier;
 			this.arity = arity;
@@ -85,11 +86,12 @@ public abstract class Sort extends Pos.Posable implements ISort {
 	
 	/** Implements a Sort abbreviation (parameterized definition, possibly with no parameters) */
 	static public class Abbreviation implements IAbbreviation {
-		
-		private IIdentifier identifier;
-		private List<IParameter> parameters;
-		private ISort sortExpression;
-		
+
+		protected IIdentifier identifier;
+		protected List<IParameter> parameters;
+		protected ISort sortExpression;
+
+		/** Creates a sort abbreviation with the given identifier, parameter list, and defining expression. */
 		public Abbreviation(IIdentifier identifier, List<IParameter> parameters, ISort sortExpression) {
 			this.identifier = identifier;
 			this.parameters = parameters;
@@ -170,16 +172,18 @@ public abstract class Sort extends Pos.Posable implements ISort {
 		protected List<ISort> sortParameters;
 		
 		/** Reference to definition; filled in during type-checking */
-		private ISort.IDefinition definition;  
-		
+		protected ISort.IDefinition definition;
+
 		/** Cached value for expanded() */
-		private ISort expanded = null;
+		protected ISort expanded = null;
 		
+		/** Creates a sort application from a sort identifier and a list of sort arguments. */
 		public Application(IIdentifier sortID, List<ISort> sortParameters) {
 			this.sortID = sortID;
 			this.sortParameters = sortParameters;
 		}
-		
+
+		/** Creates a sort application from a sort identifier and a varargs array of sort arguments. */
 		public Application(IIdentifier sortID, ISort... sortParameters) {
 			this.sortID = sortID;
 			this.sortParameters = Arrays.asList(sortParameters);
@@ -368,15 +372,17 @@ public abstract class Sort extends Pos.Posable implements ISort {
 	 * commands and in theory definitions.
 	 */
 	static public class FcnSort extends Sort implements IFcnSort {
-		static private ISort[] noargs = new ISort[0];
-		private ISort resultSort;
-		private ISort[] argSorts;
+		static protected ISort[] noargs = new ISort[0];
+		protected ISort resultSort;
+		protected ISort[] argSorts;
 		
+		/** Creates a function sort with the given argument sorts and result sort. */
 		public FcnSort(ISort[] argSorts, ISort resultSort) {
 			this.argSorts = argSorts;
 			this.resultSort = resultSort;
 		}
-		
+
+		/** Creates a zero-argument (nullary) function sort with the given result sort. */
 		public FcnSort(ISort resultSort) {
 			this.argSorts = noargs;
 			this.resultSort = resultSort;
@@ -466,8 +472,9 @@ public abstract class Sort extends Pos.Posable implements ISort {
 	
 	/** Represents a Sort parameter, such as in either the parameter list or the expression of a Sort abbreviation */
 	static public class Parameter extends Sort implements IParameter {
-		private IExpr.ISymbol symbol;
-		
+		protected IExpr.ISymbol symbol;
+
+		/** Creates a sort parameter for the given symbol name. */
 		public Parameter(IExpr.ISymbol symbol) {
 			this.symbol = symbol;
 		}
@@ -543,6 +550,31 @@ public abstract class Sort extends Pos.Posable implements ISort {
 		@Override
 		public int intArity() {
 			return 0;
+		}
+	}
+
+	/** A placeholder sort definition used when a sort declaration is ill-formed, to suppress cascading errors. */
+	static public class ErrorDefinition implements ISort.IErrorDefinition {
+		protected IIdentifier id;
+		protected String error;
+		protected IPos pos;
+
+		/** Creates an error placeholder for the given identifier, error message, and source position. */
+		public ErrorDefinition(IIdentifier id, String error, IPos pos) {
+			this.id = id;
+			this.error = error;
+			this.pos = pos;
+		}
+
+		@Override public String errorMessage() { return error; }
+		@Override public IPos errorPos() { return pos; }
+		@Override public IIdentifier identifier() { return id; }
+		@Override public ISort eval(List<ISort> sorts) { return null; }
+		@Override public int intArity() { return 0; }
+
+		@Override
+		public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+			return null;
 		}
 	}
 

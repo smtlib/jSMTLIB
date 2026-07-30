@@ -18,9 +18,9 @@ import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
 
-/** Implements the check-sat command */
+/** Implements the check-sat-assuming command */
 public class C_check_sat_assuming extends Command implements Icheck_sat_assuming {
-	/** Creates a check_sat_assuming command (which has no arguments) */
+	/** Creates a check-sat-assuming command with the given assumption terms. */
 	public C_check_sat_assuming(List<IExpr> terms) {
 	    this.terms = terms;
 	}

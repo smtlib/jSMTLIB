@@ -327,11 +327,11 @@ public class Solver_cvc extends Solver_test implements ISolver {
 			ISymbol head = pid.headSymbol();
 			String nm = org.smtlib.sexpr.Printer.write(head);
 			if ("BitVec".equals(nm)) {
-				return "BITVECTOR(" + pid.numerals().get(0) + ")";
+				return "BITVECTOR(" + pid.indices().get(0) + ")";
 			}
 			nm = "T$" + nm;
-			for (INumeral n: pid.numerals()) {
-				nm = nm + "$_" + org.smtlib.sexpr.Printer.write(n);
+			for (IExpr.IIndex n: pid.indices()) {
+				nm = nm + "$_" + org.smtlib.sexpr.Printer.write((IExpr)n);
 			}
 			return nm;
 		} else {
@@ -652,8 +652,8 @@ public class Solver_cvc extends Solver_test implements ISolver {
 				IParameterizedIdentifier pid = (IParameterizedIdentifier)id;
 				ISymbol head = pid.headSymbol();
 				String nm = org.smtlib.sexpr.Printer.write(head);
-				for (INumeral n: pid.numerals()) {
-					nm = nm + "$_" + org.smtlib.sexpr.Printer.write(n);
+				for (IExpr.IIndex n: pid.indices()) {
+					nm = nm + "$_" + org.smtlib.sexpr.Printer.write((IExpr)n);
 				}
 				return nm;
 			} else {
@@ -960,9 +960,9 @@ public class Solver_cvc extends Solver_test implements ISolver {
 					IParameterizedIdentifier pid = (IParameterizedIdentifier)e.head();
 					sb.append(iter.next().accept(this));
 					sb.append("[");
-					sb.append(org.smtlib.sexpr.Printer.write(pid.numerals().get(0)));
+					sb.append(org.smtlib.sexpr.Printer.write((IExpr)pid.indices().get(0)));
 					sb.append(":");
-					sb.append(org.smtlib.sexpr.Printer.write(pid.numerals().get(1)));
+					sb.append(org.smtlib.sexpr.Printer.write((IExpr)pid.indices().get(1)));
 					sb.append("]");
 				} else if (symTable.bitVectorTheorySet && (oldName.equals("bvudiv") || oldName.equals("bvurem") || oldName.equals("bvshl") || oldName.equals("bvlshr")
 						|| oldName.equals("bvsge") || oldName.equals("bvsgt") || oldName.equals("bvsle") || oldName.equals("bvslt") 
@@ -986,7 +986,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 					if (sort instanceof IApplication) {
 						IIdentifier id = ((IApplication)sort).family();
 						if (id instanceof IParameterizedIdentifier) {
-							k = ((IParameterizedIdentifier)id).numerals().get(0).intValue();
+							k = ((INumeral)((IParameterizedIdentifier)id).indices().get(0)).intValue();
 						}
 					}
 					sb.append(newName);
@@ -1003,11 +1003,9 @@ public class Solver_cvc extends Solver_test implements ISolver {
 					if (sort instanceof IApplication) {
 						IIdentifier id = ((IApplication)sort).family();
 						if (id instanceof IParameterizedIdentifier) {
-							k = ((IParameterizedIdentifier)id).numerals().get(0).intValue();
+							k = ((INumeral)((IParameterizedIdentifier)id).indices().get(0)).intValue();
 						}
 					}
-//					List<INumeral> numerals = ((IParameterizedIdentifier)e.head()).numerals();
-//					int arg = numerals.get(0).intValue();
 					sb.append("SX");
 					sb.append("(");
 					sb.append(iter.next().accept(this));
@@ -1020,11 +1018,10 @@ public class Solver_cvc extends Solver_test implements ISolver {
 					if (sort instanceof IApplication) {
 						IIdentifier id = ((IApplication)sort).family();
 						if (id instanceof IParameterizedIdentifier) {
-							k = ((IParameterizedIdentifier)id).numerals().get(0).intValue();
+							k = ((INumeral)((IParameterizedIdentifier)id).indices().get(0)).intValue();
 						}
 					}
-					List<INumeral> numerals = ((IParameterizedIdentifier)e.head()).numerals();
-					int arg = numerals.get(0).intValue();
+					int arg = ((INumeral)((IParameterizedIdentifier)e.head()).indices().get(0)).intValue();
 					String expr = (iter.next().accept(this));
 
 					sb.append("(");
@@ -1044,11 +1041,10 @@ public class Solver_cvc extends Solver_test implements ISolver {
 					if (sort instanceof IApplication) {
 						IIdentifier id = ((IApplication)sort).family();
 						if (id instanceof IParameterizedIdentifier) {
-							k = ((IParameterizedIdentifier)id).numerals().get(0).intValue();
+							k = ((INumeral)((IParameterizedIdentifier)id).indices().get(0)).intValue();
 						}
 					}
-					List<INumeral> numerals = ((IParameterizedIdentifier)e.head()).numerals();
-					int arg = numerals.get(0).intValue();
+					int arg = ((INumeral)((IParameterizedIdentifier)e.head()).indices().get(0)).intValue();
 					String expr = (iter.next().accept(this));
 
 					sb.append("(");
@@ -1068,11 +1064,10 @@ public class Solver_cvc extends Solver_test implements ISolver {
 					if (sort instanceof IApplication) {
 						IIdentifier id = ((IApplication)sort).family();
 						if (id instanceof IParameterizedIdentifier) {
-							k = ((IParameterizedIdentifier)id).numerals().get(0).intValue();
+							k = ((INumeral)((IParameterizedIdentifier)id).indices().get(0)).intValue();
 						}
 					}
-					List<INumeral> numerals = ((IParameterizedIdentifier)e.head()).numerals();
-					int arg = numerals.get(0).intValue();
+					int arg = ((INumeral)((IParameterizedIdentifier)e.head()).indices().get(0)).intValue();
 					String expr = (iter.next().accept(this));
 					
 					String addedzeros = "";
@@ -1085,8 +1080,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 					sb.append(expr);
 					sb.append(")");
 				} else if (symTable.bitVectorTheorySet && newName.equals("repeat")) {
-					List<INumeral> numerals = ((IParameterizedIdentifier)e.head()).numerals();
-					int arg = numerals.get(0).intValue();
+					int arg = ((INumeral)((IParameterizedIdentifier)e.head()).indices().get(0)).intValue();
 					String expr = (iter.next().accept(this));
 					sb.append("((");
 					sb.append(expr);
@@ -1153,7 +1147,7 @@ public class Solver_cvc extends Solver_test implements ISolver {
 		public String visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
 			String s = e.headSymbol().toString();
 			if (s.matches("bv[0-9]+")) {
-				int length = e.numerals().get(0).intValue();
+				int length = ((INumeral) e.indices().get(0)).intValue();
 				BigInteger value = new BigInteger(s.substring(2));
 				String bits = value.toString(2);
 				while (bits.length() < length) {

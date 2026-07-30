@@ -150,7 +150,10 @@ public interface ISolver {
 	/** Returns a model of current satisfiable state */
 	IResponse get_model();
 	
-	// FIXME
+	/** Returns the named assumptions that caused the most recent check-sat-assuming to return unsat.
+	 * May only be issued if :produce-unsat-assumptions is enabled.
+	 * @return unsupported or error or a list of assumption names
+	 */
 	IResponse get_unsat_assumptions();
 
 	
@@ -173,17 +176,15 @@ public interface ISolver {
 	 */
 	IResponse get_assignment();
 
-	/** Gets the value of an SMT-LIB option
-	 * 
+	/** Gets the value of an SMT-LIB option.
 	 * @param option the option whose value is desired
-	 * @return TODO
+	 * @return the current value of the option, or an error or unsupported response
 	 */
 	IResponse get_option(IKeyword option);
 
-	/** Gets the value of an SMT-LIB information topic
-	 * 
-	 * @param option the info option whose value is desired
-	 * @return TODO
+	/** Gets the value of an SMT-LIB information item.
+	 * @param option the info keyword whose value is desired
+	 * @return the info attribute list, or an error or unsupported response
 	 */
 	IResponse get_info(IKeyword option);
 }

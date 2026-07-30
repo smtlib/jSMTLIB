@@ -11,7 +11,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.smtlib.IExpr.IBinding;
-import org.smtlib.IExpr.IDatatype;
 import org.smtlib.IExpr.IDeclaration;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.IQualifiedIdentifier;
@@ -121,7 +120,7 @@ public interface IParser {
 	/*@Nullable*/ IBinding parseBinding() throws IOException, ParserException;
 
 	/** Parses a datatype declaration */
-	/*@Nullable*/ IDatatype parseDatatype() throws IOException, ParserException;
+	/*@Nullable*/ ISort.IDatatype parseDatatype() throws IOException, ParserException;
 
 	/** Parses a selector declaration "(symbol sort)" */
 	/*@Nullable*/ IExpr.ISelector parseSelector() throws ParserException;
@@ -202,14 +201,19 @@ public interface IParser {
         T parse() throws ParserException;
     }
 
+    /** Parses a parenthesized list of terms from the given parser. */
     public default List<IExpr> parseListTerms(Parser p) throws ParserException {
         return p.parseList(p::parseExpr, "term", false);
     }
 
-    public default List<IDatatype> parseListDatatypes(Parser p) throws ParserException {
+    /** Parses a parenthesized list of datatype declarations from the given parser. */
+    public default List<ISort.IDatatype> parseListDatatypes(Parser p) throws ParserException {
         return p.parseList(p::parseDatatype, "datatype declaration", false);
     }
-    
+
+    /** Checks that a user-defined symbol does not begin with the reserved characters {@code @} or {@code .};
+     *  throws a ParserException if the check fails.
+     */
 	public default void checkUserId(ISymbol id) throws ParserException {
 	    String v = id.value();
 	    if (v.length() == 0) {
