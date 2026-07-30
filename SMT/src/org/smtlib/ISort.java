@@ -195,34 +195,34 @@ public interface ISort extends INode, IPosable {
 		String toString();
 	}
 
-	/** The interface for a Sort-creating factory */
+	/** The interface for a Sort-creating factory. */
 	static public interface IFactory {
-		/** Creates a sort family with the given identifier and arity */
+		/** Creates a sort family with the given identifier and arity. */
 		IFamily createSortFamily(IIdentifier identifier, INumeral arity);
-		
-		/** Creates a parameter for a parameterized sort abbreviation */
+
+		/** Creates a parameter for a parameterized sort abbreviation. */
 		IParameter createSortParameter(ISymbol symbol);
-		
+
 		/** Creates a sort expression, applying a family to a list of sort arguments;
-		 * the arity of the identifier in the applicable symbol table must match the number of sort arguments
+		 * the arity of the identifier in the applicable symbol table must match the number of sort arguments.
 		 */
 		IApplication createSortExpression(IIdentifier sortFamily, ISort... exprs);
 
 		/** Creates a sort expression, applying a family to a list of sort arguments;
-		 * the arity of the identifier in the applicable symbol table must match the number of sort arguments
+		 * the arity of the identifier in the applicable symbol table must match the number of sort arguments.
 		 */
 		IApplication createSortExpression(IIdentifier sortFamily, List<ISort> exprs);
-		
-		/** Creates a new sort abbreviation */
+
+		/** Creates a new sort abbreviation. */
 		IAbbreviation createSortAbbreviation(IIdentifier identifier, List<IParameter> params, ISort sortExpr);
-		
-		/** Creates a function sort */
+
+		/** Creates a function sort. */
 		IFcnSort createFcnSort(ISort[] args, ISort result);
-		
-		/** Creates an error-placeholder definition (suppresses cascading errors) */
+
+		/** Creates an error-placeholder definition (suppresses cascading errors). */
 		IErrorDefinition createErrorDefinition(IIdentifier id, String errorMessage, IPos pos);
 
-		/** Returns the Bool Sort */
+		/** Returns the Bool sort. */
 		IApplication Bool();
 	}
 }

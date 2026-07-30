@@ -42,22 +42,22 @@ public interface ICommand extends INode {
 	
 	/** This is the interface to be used by a concrete ICommand factory. */
 	static public interface IFactory {
-		/** Creates a script object containing the given filename or the given set of commands */
+		/** Creates a script object containing the given filename or the given set of commands. */
 		IScript script(/*@Nullable*/IStringLiteral filename, /*@Nullable*/List<ICommand> commands);
-		
-		/** Creates an assert command object, asserting the given expression */
+
+		/** Creates an assert command object, asserting the given expression. */
 		Iassert assertCommand(IExpr expr);
-		
-        /** Creates a check-sat command object */
+
+        /** Creates a check-sat command object. */
         Icheck_sat check_sat();
-        
-        /** Creates a check-sat-assuming command object */
+
+        /** Creates a check-sat-assuming command object. */
         Icheck_sat_assuming check_sat_assuming(List<IExpr> terms);
 
-        /** Creates a declare-const command object */
+        /** Creates a declare-const command object. */
         Ideclare_const declare_const(ISymbol symbol, ISort resultSort);
 
-		/** Creates a declare-fun command object */
+		/** Creates a declare-fun command object. */
 		Ideclare_fun declare_fun(ISymbol id, List<ISort> argSorts, ISort resultSort);
 
         /** Creates a declare-sort command object. */
@@ -66,22 +66,22 @@ public interface ICommand extends INode {
         /** Creates a declare-sort-parameter command object. */
         Ideclare_sort_parameter declare_sort_parameter(ISymbol sym);
 
-        /** Creates a declare-datatype command object */
+        /** Creates a declare-datatype command object. */
         Ideclare_datatype declare_datatype(IExpr.ISortDeclaration sd, ISort.IDatatype d);
 
-        /** Creates a declare-datatypes command object */
+        /** Creates a declare-datatypes command object. */
         Ideclare_datatypes declare_datatypes(List<IExpr.ISortDeclaration> sds, List<ISort.IDatatype> dts);
 
-        /** Creates a define-const command object */
+        /** Creates a define-const command object. */
         Idefine_const define_const(ISymbol symbol, ISort resultSort, IExpr expression);
 
-        /** Creates a define-fun command object */
+        /** Creates a define-fun command object. */
         Idefine_fun define_fun(ISymbol id, List<IDeclaration> declarations, ISort resultSort, IExpr expression);
 
-        /** Creates a define-fun-rec command object */
+        /** Creates a define-fun-rec command object. */
         Idefine_fun_rec define_fun_rec(ISymbol id, List<IDeclaration> declarations, ISort resultSort, IExpr expression);
 
-        /** Creates a define-funs-rec command object */
+        /** Creates a define-funs-rec command object. */
         Idefine_funs_rec define_funs_rec(List<IExpr.IFunctionDeclaration> declarations, List<IExpr> bodies);
 
 		/** Creates a define-sort command object. */
@@ -102,7 +102,7 @@ public interface ICommand extends INode {
 		/** Creates a get-info command object. */
 		Iget_info get_info(IKeyword infoflag);
 		
-		/** Creates a get-option command object */
+		/** Creates a get-option command object. */
 		Iget_option get_option(IKeyword option);
 		
 		/** Creates a get-model command object. */
@@ -132,7 +132,7 @@ public interface ICommand extends INode {
         /** Creates a reset-assertions command object. */
         Ireset_assertions reset_assertions();
         
-		/** Creates a set-logic command object */
+		/** Creates a set-logic command object. */
 		Iset_logic set_logic(ISymbol logic);
 		
 		/** Creates a set-info command object. */
@@ -150,176 +150,216 @@ public interface ICommand extends INode {
 		IResponse execute(ISolver solver);
 	}
 	
-	/** Interface to be implemented by all objects representing SMT-LIB assert commands. */
+	/** Interface for the SMT-LIB {@code assert} command. */
 	static public interface Iassert extends ICommand {
+		/** Returns the expression to be asserted. */
 		IExpr expr();
 	}
-	
-	/** Interface to be implemented by all objects representing SMT-LIB check-sat commands. */
+
+	/** Interface for the SMT-LIB {@code check-sat} command. */
 	static public interface Icheck_sat extends ICommand {
 	}
-	
-	/** Interface to be implemented by all objects representing SMT-LIB check-sat-assuming commands. */
+
+	/** Interface for the SMT-LIB {@code check-sat-assuming} command. */
 	static public interface Icheck_sat_assuming extends ICommand {
-        List<IExpr> exprs();
+		/** Returns the boolean-sorted terms to assume. */
+        List<IExpr> terms();
 	}
-	
-    /** Interface to be implemented by all objects representing SMT-LIB declare-const commands. */
+
+	/** Interface for the SMT-LIB {@code declare-const} command. */
     static public interface Ideclare_const extends ICommand {
+    	/** Returns the name of the constant being declared. */
         ISymbol symbol();
+        /** Returns the sort of the constant being declared. */
         ISort resultSort();
-        // FIXME;
     }
-    
-    /** Interface for the declare-datatypes command: a list of sort declarations and parallel datatype declarations. */
+
+	/** Interface for the SMT-LIB {@code declare-datatypes} command. */
     static public interface Ideclare_datatypes extends ICommand {
+    	/** Returns the list of sort declarations (names and arities). */
         List<IExpr.ISortDeclaration> sortDeclarations();
+        /** Returns the list of datatype bodies, parallel to {@link #sortDeclarations()}. */
         List<ISort.IDatatype> datatypes();
     }
 
-    /** Interface for the declare-datatype command: a sort declaration and its datatype body. */
+	/** Interface for the SMT-LIB {@code declare-datatype} command. */
     static public interface Ideclare_datatype extends ICommand {
+    	/** Returns the sort declaration (name and arity). */
         IExpr.ISortDeclaration sortDeclaration();
+        /** Returns the datatype body. */
         ISort.IDatatype datatype();
     }
-    
-	/** Interface to be implemented by all objects representing SMT-LIB declare-fun commands. */
+
+	/** Interface for the SMT-LIB {@code declare-fun} command. */
 	static public interface Ideclare_fun extends ICommand {
+		/** Returns the name of the function being declared. */
 		ISymbol symbol();
+		/** Returns the list of argument sorts. */
 		List<ISort> argSorts();
+		/** Returns the result sort. */
 		ISort resultSort();
 	}
-	
-    /** Interface to be implemented by all objects representing SMT-LIB declare-sort commands. */
+
+	/** Interface for the SMT-LIB {@code declare-sort} command. */
     static public interface Ideclare_sort extends ICommand {
+    	/** Returns the name of the sort being declared. */
         ISymbol sortSymbol();
+        /** Returns the arity of the sort. */
         INumeral arity();
     }
-    
-    /** Interface to be implemented by all objects representing SMT-LIB declare-sort commands. */
+
+	/** Interface for the SMT-LIB {@code declare-sort-parameter} command. */
     static public interface Ideclare_sort_parameter extends ICommand {
+    	/** Returns the name of the sort parameter being declared. */
         ISymbol sortSymbol();
     }
-    
-    /** Interface to be implemented by all objects representing SMT-LIB define-const commands. */
+
+	/** Interface for the SMT-LIB {@code define-const} command. */
     static public interface Idefine_const extends ICommand {
+    	/** Returns the name of the constant being defined. */
         ISymbol symbol();
+        /** Returns the sort of the constant. */
         ISort resultSort();
+        /** Returns the defining expression. */
         IExpr expression();
     }
-    
-    /** Interface to be implemented by all objects representing SMT-LIB define-fun commands. */
+
+	/** Interface for the SMT-LIB {@code define-fun} command. */
     static public interface Idefine_fun extends ICommand {
+    	/** Returns the name of the function being defined. */
         ISymbol symbol();
+        /** Returns the list of formal parameters. */
         List<IDeclaration> parameters();
+        /** Returns the result sort. */
         ISort resultSort();
+        /** Returns the defining expression (body). */
         IExpr expression();
     }
-    
-    /** Interface to be implemented by all objects representing SMT-LIB define-fun-rec commands. */
+
+	/** Interface for the SMT-LIB {@code define-fun-rec} command. */
     static public interface Idefine_fun_rec extends ICommand {
+    	/** Returns the name of the function being defined. */
         ISymbol symbol();
+        /** Returns the list of formal parameters. */
         List<IDeclaration> parameters();
+        /** Returns the result sort. */
         ISort resultSort();
+        /** Returns the defining expression (body). */
         IExpr expression();
     }
-    
-    /** Interface to be implemented by all objects representing SMT-LIB define-funs-rec commands. */
+
+	/** Interface for the SMT-LIB {@code define-funs-rec} command. */
     static public interface Idefine_funs_rec extends ICommand {
+    	/** Returns the list of function declarations. */
         List<IExpr.IFunctionDeclaration> declarations();
+        /** Returns the list of defining expressions (bodies), parallel to {@link #declarations()}. */
         List<IExpr> bodies();
     }
-    
-	/** Interface to be implemented by all objects representing SMT-LIB define-sort commands. */
+
+	/** Interface for the SMT-LIB {@code define-sort} command. */
 	static public interface Idefine_sort extends ICommand {
+		/** Returns the name of the sort being defined. */
 		ISymbol sortSymbol();
+		/** Returns the list of sort parameters. */
 		List<IParameter> parameters();
+		/** Returns the sort expression that is the definition. */
 		ISort expression();
 	}
-	
-    /** Interface to be implemented by all objects representing SMT-LIB exit commands. */
+
+	/** Interface for the SMT-LIB {@code echo} command. */
     static public interface Iecho extends ICommand {
+    	/** Returns the string literal to be echoed. */
         IStringLiteral arg();
     }
-    
-    /** Interface to be implemented by all objects representing SMT-LIB exit commands. */
+
+	/** Interface for the SMT-LIB {@code exit} command. */
     static public interface Iexit extends ICommand {
     }
-    
-	/** Interface to be implemented by all objects representing SMT-LIB get-assertions commands. */
+
+	/** Interface for the SMT-LIB {@code get-assertions} command. */
 	static public interface Iget_assertions extends ICommand {
 	}
-	
-	/** Interface to be implemented by all objects representing SMT-LIB get-assignment commands. */
+
+	/** Interface for the SMT-LIB {@code get-assignment} command. */
 	static public interface Iget_assignment extends ICommand {
 	}
-	
-	/** Interface to be implemented by all objects representing SMT-LIB get-info commands. */
+
+	/** Interface for the SMT-LIB {@code get-info} command. */
 	static public interface Iget_info extends ICommand {
+		/** Returns the info flag keyword being queried. */
 		IKeyword infoflag();
 	}
-	
-	/** Interface to be implemented by all objects representing SMT-LIB get-option commands. */
+
+	/** Interface for the SMT-LIB {@code get-option} command. */
 	static public interface Iget_option extends ICommand {
+		/** Returns the option keyword being queried. */
 		IKeyword option();
 	}
-	
-	/** Interface to be implemented by all objects representing SMT-LIB get-model commands (non-standard). */
+
+	/** Interface for the SMT-LIB {@code get-model} command (non-standard extension). */
 	static public interface Iget_model extends ICommand {
 	}
 
-	/** Interface to be implemented by all objects representing SMT-LIB get-proof commands. */
+	/** Interface for the SMT-LIB {@code get-proof} command. */
 	static public interface Iget_proof extends ICommand {
 	}
-	
-	/** Interface to be implemented by all objects representing SMT-LIB get-unsat-assumptions commands. */
+
+	/** Interface for the SMT-LIB {@code get-unsat-assumptions} command. */
 	static public interface Iget_unsat_assumptions extends ICommand {
 	}
 
-	/** Interface to be implemented by all objects representing SMT-LIB get-unsat-core commands. */
+	/** Interface for the SMT-LIB {@code get-unsat-core} command. */
 	static public interface Iget_unsat_core extends ICommand {
 	}
 
-	/** Interface to be implemented by all objects representing SMT-LIB get-value commands. */
+	/** Interface for the SMT-LIB {@code get-value} command. */
 	static public interface Iget_value extends ICommand {
 		//@ ensures exprs().size > 0;
+		/** Returns the list of expressions whose values are requested. */
 		List<IExpr> exprs();
 	}
-	
-	/** Interface to be implemented by all objects representing SMT-LIB pop commands. */
+
+	/** Interface for the SMT-LIB {@code pop} command. */
 	static public interface Ipop extends ICommand {
 		//@ ensures \result.intValue() >= 0;
+		/** Returns the number of scopes to pop. */
 		INumeral number();
 	}
-	
-	/** Interface to be implemented by all objects representing SMT-LIB push commands. */
+
+	/** Interface for the SMT-LIB {@code push} command. */
 	static public interface Ipush extends ICommand {
 		//@ ensures \result.intValue() >= 0;
+		/** Returns the number of scopes to push. */
 		INumeral number();
 	}
-	
-	/** Interface to be implemented by all objects representing SMT-LIB reset commands. */
+
+	/** Interface for the SMT-LIB {@code reset} command. */
 	static public interface Ireset extends ICommand {
 	}
-	
-	/** Interface to be implemented by all objects representing SMT-LIB reset-assertions commands. */
+
+	/** Interface for the SMT-LIB {@code reset-assertions} command. */
 	static public interface Ireset_assertions extends ICommand {
 	}
-	
-	/** Interface to be implemented by all objects representing SMT-LIB set-logic commands. */
+
+	/** Interface for the SMT-LIB {@code set-logic} command. */
 	static public interface Iset_logic extends ICommand {
+		/** Returns the logic name. */
 		ISymbol logic();
 	}
-	
-	/** Interface to be implemented by all objects representing SMT-LIB set-info commands. */
+
+	/** Interface for the SMT-LIB {@code set-info} command. */
 	static public interface Iset_info extends ICommand {
+		/** Returns the info flag keyword. */
 		IKeyword infoflag();
+		/** Returns the attribute value. */
 		IAttributeValue value();
 	}
-	
-	/** Interface to be implemented by all objects representing SMT-LIB set-option commands. */
+
+	/** Interface for the SMT-LIB {@code set-option} command. */
 	static public interface Iset_option extends ICommand {
+		/** Returns the option keyword. */
 		IKeyword option();
+		/** Returns the option value, or {@code null} if none was provided. */
 		/*@Nullable*/IAttributeValue value();
 	}
 }

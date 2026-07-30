@@ -5,8 +5,8 @@ import java.util.List;
 import org.smtlib.ICommand;
 import org.smtlib.IExpr.IIdentifier;
 
-/** Interface to be implemented by all objects representing SMT-LIB what commands. */
+/** Interface for the SMT-LIB {@code what} command (non-standard extension). */
 public interface Iwhat extends ICommand {
-	/** The ids to look for and describe */
+	/** Returns the identifiers to look up and describe. */
 	List<IIdentifier> ids();
 }

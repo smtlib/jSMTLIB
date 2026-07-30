@@ -22,7 +22,7 @@ import org.smtlib.impl.SMTExpr.*;
 import org.smtlib.impl.Sort.*;
 import org.smtlib.sexpr.Utils;
 
-// FIXME - spearate out the concrete syntax?
+// FIXME - separate out the concrete syntax?
 
 /** Implements a factory for SMT-LIB expressions using the standard concrete syntax.
  * Instances of these IExpr objects have an IPos element. 

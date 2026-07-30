@@ -1224,7 +1224,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		} else if (cmd instanceof ICommand.Icheck_sat_assuming) {
 			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "check-sat-assuming", errors);
 			if (errors.isEmpty() && !smtConfig.atLeastVersion(SMT.Configuration.SMTLIB.V27)) {
-				for (IExpr e : ((ICommand.Icheck_sat_assuming) cmd).exprs()) {
+				for (IExpr e : ((ICommand.Icheck_sat_assuming) cmd).terms()) {
 					if (!isLiteralAssumption(e)) {
 						errors.add(smtConfig.responseFactory.error(
 							"Arguments to check-sat-assuming must be a symbol or (not symbol) in SMT-LIB V2.6 and earlier",

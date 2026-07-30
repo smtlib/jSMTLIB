@@ -33,7 +33,7 @@ public class C_push extends Command implements Ipush {
 	//@ protected invariant numeral.value().compareTo(BigInteger.MAX_INT) <= 0 ==> numeral.intValue() == number;
 	protected int number;
 	
-	/** The number of assertion set stack items to pop */
+	/** Returns the number of assertion set scopes to push. */
 	@Override
 	public INumeral number() { 
 		return numeral;

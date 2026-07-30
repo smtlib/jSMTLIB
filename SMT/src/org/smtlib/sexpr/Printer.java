@@ -598,7 +598,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	public Void visit(ICommand.Icheck_sat_assuming e) throws IVisitor.VisitorException {
 		return printCommand(e, () -> {
 			w.append("(");
-			for (IExpr x : e.exprs()) { w.append(" "); x.accept(this); }
+			for (IExpr x : e.terms()) { w.append(" "); x.accept(this); }
 			w.append(")");
 		});
 	}

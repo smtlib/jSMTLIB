@@ -17,7 +17,7 @@ import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
 
-/** This class implements the get-info command */
+/** Implements the get-info command. */
 public class C_get_info extends Command implements Iget_info {
 	/** The command name */
 	public static final String commandName = "get-info";

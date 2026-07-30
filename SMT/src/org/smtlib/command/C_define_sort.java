@@ -27,15 +27,15 @@ public class C_define_sort extends Command implements Idefine_sort {
 	
 	/** The name of the sort being defined */
 	protected ISymbol sortName;
-	/** The sorts of the arguments of the function being defined */
+	/** The sort parameters of the sort being defined. */
 	protected List<IParameter> args;
 	/** The defining expression for the function */
 	protected ISort expression;
 	
-	/** The name of the function being defined */
+	/** Returns the name of the sort being defined. */
 	@Override
 	public ISymbol sortSymbol() { return sortName; }
-	/** The sorts of the arguments of the function being defined */
+	/** Returns the sort parameters of the sort being defined. */
 	@Override
 	public List<IParameter> parameters() { return args; };
 	/** The defining expression for the function */

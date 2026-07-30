@@ -142,7 +142,7 @@ public class SMT {
 		}
 
 		/** Returns true if the configured version is at least the given version.
-		 *  Uses enum declaration order: V20 < V25 < V26 < V27. */
+		 *  Uses enum declaration order: V20 &lt; V25 &lt; V26 &lt; V27. */
 		public boolean atLeastVersion(SMTLIB version) {
 			return version.ordinal() <= currentVersion().ordinal();
 		}

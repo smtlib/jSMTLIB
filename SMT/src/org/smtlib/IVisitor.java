@@ -541,7 +541,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 		public /*@Nullable*/T visit(ICommand.Icheck_sat e) throws VisitorException { return null; }
 		@Override
 		public /*@Nullable*/T visit(ICommand.Icheck_sat_assuming e) throws VisitorException {
-			for (IExpr x : e.exprs()) x.accept(this); return null;
+			for (IExpr x : e.terms()) x.accept(this); return null;
 		}
 		@Override
 		public /*@Nullable*/T visit(ICommand.Ideclare_const e) throws VisitorException {

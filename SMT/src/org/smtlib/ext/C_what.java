@@ -42,6 +42,7 @@ public class C_what extends Command implements Iwhat {
 	@Override
 	public List<IIdentifier> ids() { return ids; }
 
+	/** Constructs a command instance for the given identifiers. */
 	public C_what(List<IIdentifier> ids) {
 		this.ids = ids;
 	}

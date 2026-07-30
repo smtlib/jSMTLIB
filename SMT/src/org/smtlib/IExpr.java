@@ -25,78 +25,82 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
 	/** The interface defining the factory type for producing objects of various subtypes of IExpr;
 	 * the IPos argument is an optional argument giving information about the textual position of an expression. */
 	static public interface IFactory {
-		/** Creates a INumeral object; the argument must be a string of digits. */
+		/** Creates an INumeral object; the argument must be a string of digits. */
 		INumeral numeral(String v);
-		/** Creates a INumeral object; the argument must be non-negative */
+		/** Creates an INumeral object; the argument must be non-negative. */
 		//@ requires v >= 0;
 		INumeral numeral(long v);
-		/** Creates a IDecimal object; the argument must be a string of digits with just one decimal point */
+		/** Creates an IDecimal object; the argument must be a string of digits with just one decimal point. */
 		IDecimal decimal(String v);
-		/** The argument is a pure character string, with no Java or SMTLIB escapes or enclosing quotes */
+		/** Creates an IStringLiteral from a pure character string with no SMT-LIB escapes or enclosing quotes. */
 		IStringLiteral unquotedString(String v);
-		/** The argument is SMTLIB escaped, with enclosing quotes */
+		/** Creates an IStringLiteral from a string that is SMT-LIB escaped with enclosing quotes. */
 		IStringLiteral quotedString(String v);
-		/** Creates a IKeyword object from a canonical string representation */
+		/** Creates an IKeyword object from a canonical string representation. */
 		IKeyword keyword(String v);
-		/** Creates a IBinaryLiteral from a string of 0 and 1 digits */
+		/** Creates an IBinaryLiteral from a string of 0 and 1 digits. */
 		IBinaryLiteral binary(String v);
-		/** Creates a IHexLiteral object from a string of hex digits (either case) */
+		/** Creates an IHexLiteral object from a string of hex digits (either case). */
 		IHexLiteral hex(String v);
-		/** Creates a ISymbol object from a canonical String representation of the symbol */
+		/** Creates an ISymbol object from a canonical String representation of the symbol. */
 		ISymbol symbol(String v);
-		/** Creates an attribute with just a keyword and no attribute value */
+		/** Creates an attribute with just a keyword and no attribute value. */
 		IAttribute<?> attribute(IKeyword k);
-		/** Creates an attribute with a keyword and a value */
+		/** Creates an attribute with a keyword and a value. */
 		<T extends IAttributeValue> IAttribute<T> attribute(IKeyword k, T value);
-		/** Creates an attributed expression (an expression with a positive number of attributes) */
+		/** Creates an attributed expression (an expression with a positive number of attributes). */
 		//@ requires attributes.size() > 0;
 		IAttributedExpr attributedExpr(IExpr e, List<IAttribute<?>> attributes);
 		/** Creates an attributed expression with just one attribute. */
 		<T extends IAttributeValue> IAttributedExpr attributedExpr(IExpr e, IKeyword key, /*@Nullable*/T value);
-		/** Creates a function expression (perhaps with an empty argument list) */
+		/** Creates a function expression (perhaps with an empty argument list). */
         IFcnExpr fcn(IQualifiedIdentifier id, List<IExpr> args);
-		/** Creates a function expression (perhaps with an empty argument list) */
+		/** Creates a function expression (perhaps with an empty argument list). */
         IFcnExpr fcn(IQualifiedIdentifier id, IExpr... args);
-        /** Creates a parameterized identifier from a symbol and a non-empty list of indices (each INumeral or ISymbol) */
+        /** Creates a parameterized identifier from a symbol and a non-empty list of indices (each INumeral or ISymbol). */
         //@ requires indices.size() > 0;
 		IParameterizedIdentifier id(ISymbol symbol, List<IIndex> indices);
-		/** Creates a 'as' identifier from an identifier and a sort qualifier */
+		/** Creates an 'as' identifier from an identifier and a sort qualifier. */
 		IAsIdentifier id(IIdentifier identifier, ISort qualifier);
-		/** Creates a Let expression */
+		/** Creates a Let expression. */
 		//@ requires bindings.size() > 0;
 		ILet let(List<IBinding> bindings, IExpr e);
-		/** Creates a binding for a Let expression */
+		/** Creates a binding for a Let expression. */
 		IBinding binding(ISymbol symbol, IExpr expr);
-		/** Creates a parameter declaration */
+		/** Creates a parameter declaration. */
 		IDeclaration declaration(ISymbol symbol, ISort sort);
-		/** Creates a Forall expression */
+		/** Creates a Forall expression. */
 		//@ requires params.size() > 0;
         IForall forall(List<IDeclaration> params, IExpr e);
+		/** Creates a Forall expression with trigger patterns. */
+		//@ requires params.size() > 0;
         IForall forall(List<IDeclaration> params, IExpr e, List<IExpr> patterns);
-		/** Creates a Exists expression */
+		/** Creates an Exists expression. */
 		//@ requires params.size() > 0;
         IExists exists(List<IDeclaration> params, IExpr e);
+		/** Creates an Exists expression with trigger patterns. */
+		//@ requires params.size() > 0;
         IExists exists(List<IDeclaration> params, IExpr e, List<IExpr> patterns);
 
-		/** Creates an error expression */
+		/** Creates an error expression. */
 		IError error(String text);
 
-		/** Creates a sort declaration (symbol + arity) for use in declare-datatype(s) */
+		/** Creates a sort declaration (symbol + arity) for use in declare-datatype(s). */
 		ISortDeclaration sortDeclaration(ISymbol symbol, INumeral arity);
-		/** Creates a selector declaration */
+		/** Creates a selector declaration. */
 		ISelector selector(ISymbol symbol, ISort sort);
-		/** Creates a constructor declaration */
+		/** Creates a constructor declaration. */
 		IConstructor constructor(ISymbol symbol, List<ISelector> selectors);
-		/** Creates a datatype declaration; symbols is non-null only for parametric (par) forms */
+		/** Creates a datatype declaration; symbols is non-null only for parametric (par) forms. */
 		ISort.IDatatype datatype(List<IConstructor> constructors, /*@nullable*/ List<ISymbol> symbols);
-		/** Creates a function declaration (used in define-funs-rec) */
+		/** Creates a function declaration (used in define-funs-rec). */
 		IFunctionDeclaration functionDeclaration(ISymbol symbol, List<IDeclaration> parameters, ISort sort);
 
-		/** Creates a match pattern */
+		/** Creates a match pattern. */
 		IPattern pattern(ISymbol constructor, List<ISymbol> params);
-		/** Creates a single match case */
+		/** Creates a single match case. */
 		IMatchCase matchCase(IPattern pattern, IExpr body);
-		/** Creates a match expression */
+		/** Creates a match expression. */
 		IMatch match(IExpr expr, List<IMatchCase> cases);
 
 	}

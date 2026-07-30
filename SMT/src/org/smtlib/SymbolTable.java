@@ -318,7 +318,7 @@ public class SymbolTable {
 
 	/** Lookup the Symbol with the given identifier, returning a Map of arity to List&lt;Entry&gt;.
 	 * @param name the name of the Symbol
-	 * @return null if not found, the corresponding List&lt;Entry&gt from the 
+	 * @return null if not found, the corresponding List&lt;Entry&gt; from the
 	 * top-most scope in which the identifier is found
 	 */
 	public /*@Nullable*/ Map<Integer,List<Entry>> lookup(IIdentifier name) {

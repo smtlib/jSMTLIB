@@ -17,7 +17,7 @@ import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
 
-/** This class implements the set-logic command */
+/** Implements the set-logic command. */
 public class C_set_logic extends Command implements Iset_logic {
 
 	/** The command name */
@@ -33,6 +33,7 @@ public class C_set_logic extends Command implements Iset_logic {
 	@Override
 	public ISymbol logic() { return logicName; }
 
+	/** Constructs a command instance for the given logic name. */
 	public C_set_logic(ISymbol logic) {
 		super();
 		this.logicName = logic;

@@ -139,7 +139,7 @@ public class AbstractSolver implements ISolver {
 		throw new UnsupportedOperationException("AbstractSolver.check_sat");
 	}
 
-	/** @see org.smtlib.ISolver#check_sat_assuming()*/
+	/** @see org.smtlib.ISolver#check_sat_assuming(IExpr...)*/
 	@Override
 	public IResponse check_sat_assuming(IExpr ... exprs) {
 		throw new UnsupportedOperationException("AbstractSolver.check_sat_assuming");
@@ -263,7 +263,7 @@ public class AbstractSolver implements ISolver {
 		throw new UnsupportedOperationException("AbstractSolver.get_model");
 	}
 
-    /** @see org.smtlib.ISolver#get_unsat_assertions()*/
+    /** @see org.smtlib.ISolver#get_unsat_assumptions()*/
     @Override
     public IResponse get_unsat_assumptions(){
         throw new UnsupportedOperationException("AbstractSolver.get_unsat_assumptions");

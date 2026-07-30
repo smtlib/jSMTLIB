@@ -31,23 +31,23 @@ public class C_check_sat_assuming extends Command implements Icheck_sat_assuming
 		return new C_check_sat_assuming(list);
 	}
 
-    /** The terms whose values are to be gotten */
+    /** The boolean-sorted terms to assume. */
     protected List<IExpr> terms;
 
 	/** The command name */
 	public static final String commandName = "check-sat-assuming";
-	
+
 	/** The command name */
 	@Override
 	public String commandName() { return commandName; }
-	
-    /** The terms whose values are to be gotten */
+
+    /** Returns the boolean-sorted terms to assume. */
     @Override
-    public List<IExpr> exprs() { return terms; }
+    public List<IExpr> terms() { return terms; }
 
 	@Override
 	public IResponse execute(ISolver solver) {
-		return solver.check_sat_assuming(exprs().toArray(new IExpr[0]));
+		return solver.check_sat_assuming(terms().toArray(new IExpr[0]));
 	}
 
 	@Override

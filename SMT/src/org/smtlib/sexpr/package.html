@@ -21,7 +21,7 @@ The allowed tokens are
 <LI> string literal - a '"'-enclosed sequence of printable characters, with a backslash included as '\\'
         and an embedded quote as '\"'
 <LI> symbol - a sequence, starting with a non-digit, of digits, upper and lower case letters and these punctuation characters:
-<code>+-*/_=%?!.$~&^<>@</code>  Some character sequences that would be symbols are instead reserved words.
+<code>+-*/_=%?!.$~&amp;^&lt;&gt;@</code>  Some character sequences that would be symbols are instead reserved words.
 <LI> quoted symbol - a sequence of any printable or whitespace characters beginning and ending with vertical bars (<code>|</code>).
 <LI> keywords - a colon followed by a sequence of printable characters allowed in unquoted symbols
 <LI> reserved words - some character sequences are reserved and not allowed to be used as symbols.  These are<br>
@@ -30,7 +30,7 @@ and the pre-defined commands:<br>
 <code>assert</code> <code>check-sat</code> <code>declare-fun</code> <code>declare-sort</code> <code>define-fun</code> <code>define-sort</code> <code>exit</code> <code>get-assertions</code> <code>get-assignment</code> <code>get-info</code> <code>get_option</code> <code>get-proof</code> <code>get-unsat-core</code> <code>get-value</code> <code>pop</code> <code>push</code> <code>set-info</code> <code>set-logic</code> <code>set-option</code>
 </UL>
 <P>
-A command has the form <code>(</code> <i>command-name</i> <i><reserved-word</i> <i>arguments...</i> <code>)</code><br>
+A command has the form <code>(</code> <i>command-name</i> <i>&lt;reserved-word</i> <i>arguments...</i> <code>)</code><br>
 in which the command-name is a symbol or reserved word naming the command and the arguments are also S-expressions of particular forms, depending on the command.
 <P>
 The logical formulas that are asserted and reasoned about by an SMT solver also are S-expressions.  An expression

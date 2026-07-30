@@ -2,8 +2,8 @@ package org.smtlib.ext;
 
 import org.smtlib.ICommand;
 
-/** Interface to be implemented by all objects representing SMT-LIB exec commands. */
+/** Interface for the SMT-LIB {@code exec} command (non-standard extension). */
 public interface Iexec extends ICommand {
-	/** The script to execute */
+	/** Returns the script to execute. */
 	IScript script();
 }

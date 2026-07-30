@@ -16,5 +16,13 @@ clean:
 test:
 	$(MAKE) -C ../SMTTests test
 
+JAVADOC = $(if $(JAVA_HOME),$(JAVA_HOME)/bin/javadoc,javadoc)
+
 javadoc:
-	ant -f javadoc.xml
+	mkdir -p doc
+	$(JAVADOC) -d doc \
+	    -protected -author -version -use -splitindex \
+	    -source 21 -sourcepath src \
+	    -doctitle "jSMTLIB API documentation" \
+	    -subpackages org.smtlib \
+	    src/APIExample.java
