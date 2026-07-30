@@ -35,8 +35,8 @@ echo SOLVERS $solvers
 count=0
 ok=0
 skip=0
-    for solver in $solvers; do
 for f in "${tests[@]}" ; do
+    for solver in $solvers; do
         (( count++ ))
         ./runtest $solver "$f"
         ret=$?

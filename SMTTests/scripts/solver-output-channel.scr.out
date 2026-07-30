@@ -1,0 +1,30 @@
+PASS: z3-4.10.2
+  reg-fileops: file-create=yes dir-create=no write=appends
+  diag-fileops: file-create=yes dir-create=no write=appends
+PASS: z3-4.12.6
+  reg-fileops: file-create=yes dir-create=no write=appends
+  diag-fileops: file-create=yes dir-create=no write=appends
+PASS: z3-4.14.1
+  reg-fileops: file-create=yes dir-create=no write=appends
+  diag-fileops: file-create=yes dir-create=no write=appends
+PASS: z3-4.16.0
+  reg-fileops: file-create=yes dir-create=no write=appends
+  diag-fileops: file-create=yes dir-create=no write=appends
+PASS: z3-4.3.1
+  reg-fileops: file-create=yes dir-create=no write=appends
+  diag-fileops: file-create=yes dir-create=no write=appends
+PASS: z3-4.5.0
+  reg-fileops: file-create=yes dir-create=no write=appends
+  diag-fileops: file-create=yes dir-create=no write=appends
+PASS: z3-4.6.0
+  reg-fileops: file-create=yes dir-create=no write=appends
+  diag-fileops: file-create=yes dir-create=no write=appends
+PASS: z3-4.7.1
+  reg-fileops: file-create=yes dir-create=no write=appends
+  diag-fileops: file-create=yes dir-create=no write=appends
+PASS: z3-4.8.12
+  reg-fileops: file-create=yes dir-create=no write=appends
+  diag-fileops: file-create=yes dir-create=no write=appends
+PASS: cvc5-1.3.2
+  reg-fileops: file-create=yes dir-create=no write=truncates
+  diag-fileops: file-create=yes dir-create=no write=truncates

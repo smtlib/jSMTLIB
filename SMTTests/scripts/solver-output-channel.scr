@@ -1,0 +1,349 @@
+##EXITCODE 0
+# Validate SMT-LIB output-channel redirection for z3 and cvc5 solvers
+# (commands sent directly to each solver — no jSMTLIB involved).
+#
+# This test suite has two purposes:
+#   (1) Verify that :regular-output-channel and :diagnostic-output-channel
+#       redirection and restore work correctly (PASS/FAIL).
+#   (2) Document per-solver file-operation behavior (informational report).
+#       The SMT-LIB standard does not fully specify these behaviors, so this
+#       test records what each solver actually does rather than asserting a
+#       single correct answer.
+#
+# Redirect tests (PASS/FAIL):
+#
+#   regular-output-channel:
+#     The response to the set-option redirect command itself goes to the new
+#     destination (solvers apply the redirect immediately, including for their
+#     own response).  After restore, responses return to stdout.
+#
+#   diagnostic-output-channel:
+#     verbosity 10 causes solvers to emit per-check-sat statistics on the
+#     diagnostic channel, providing a reliable trigger across all versions.
+#     z3 uses a before/during/after three-check-sat design; the ratio of
+#     bytes sent to stderr vs. the redirect file is exactly 2:1.
+#     cvc5 uses a redirect-first design because its one-time setup messages
+#     only fire on the first check-sat; the file therefore gets more content
+#     than stderr (file_bytes > stderr_bytes).
+#
+# File-operation report (informational, recorded in the golden file):
+#
+#   file-create  Redirect to a path where the FILE does not yet exist but the
+#                DIRECTORY does.  ACCEPTED behavior: both z3 and cvc5 create
+#                the file automatically.
+#
+#   dir-create   Redirect to a path where neither the file nor the parent
+#                directory exists.  ACCEPTED behavior: neither z3 nor cvc5
+#                creates the missing directory — both return an error response
+#                and leave the filesystem unchanged.
+#
+#   write-mode   Redirect to a path where the file already exists.  This
+#                behavior VARIES by solver and is intentionally documented
+#                here as part of the inter-solver differences this suite
+#                tracks:
+#                  z3   — APPENDS  (pre-existing content is preserved)
+#                  cvc5 — TRUNCATES (pre-existing content is overwritten)
+#                Both behaviors apply equally to the regular and diagnostic
+#                output channels.
+
+_tmpdir=$(mktemp -d /tmp/solver_redir_test.XXXXXX)
+trap 'rm -rf "$_tmpdir"' EXIT
+
+# Shared expected values
+_expected_reg_redir=$'success\nsat'
+
+# z3 expected values (4 preamble commands, no :incremental needed)
+_z3_expected_reg_stdout=$'success\nsuccess\nsuccess\nsuccess\nsuccess\nsat\nsuccess'
+_z3_expected_diag_stdout=$'success\nsuccess\nsuccess\nsuccess\nsuccess\nsat\nsuccess\nsat\nsuccess\nsat\nsuccess'
+
+# cvc5 expected values (5 preamble commands; :incremental true required)
+_cvc5_expected_reg_stdout=$'success\nsuccess\nsuccess\nsuccess\nsuccess\nsuccess\nsat\nsuccess'
+
+# Build solver lists
+declare -a _Z3_SOLVERS=()
+for _exe in "$SMT_SOLVER_DIR"/z3-*;  do [ -x "$_exe" ] && _Z3_SOLVERS+=("$_exe");  done
+
+declare -a _CVC5_SOLVERS=()
+for _exe in "$SMT_SOLVER_DIR"/cvc5-*; do [ -x "$_exe" ] && _CVC5_SOLVERS+=("$_exe"); done
+
+if [ ${#_Z3_SOLVERS[@]} -eq 0 ] && [ ${#_CVC5_SOLVERS[@]} -eq 0 ]; then
+    echo "SKIP: no solver executables found in $SMT_SOLVER_DIR"
+    exit 0
+fi
+
+_fail=0
+
+# ===========================================================================
+# Helper: report file-operation behavior for one channel of one solver.
+# Args: $1=label ("reg"|"diag")  $2=file-create-result("yes"|"no")
+#       $3=dir-created("yes"|"no")  $4=write-mode("appends"|"truncates")
+# ===========================================================================
+_report_fileops() {
+    printf '  %s-fileops: file-create=%s dir-create=%s write=%s\n' "$1" "$2" "$3" "$4"
+}
+
+# ===========================================================================
+# z3 solvers
+# ===========================================================================
+for _exe in "${_Z3_SOLVERS[@]}"; do
+    _name=$(basename "$_exe")
+    _redir="$_tmpdir/${_name}_redir.txt"
+    _diagfile="$_tmpdir/${_name}_diag.txt"
+    _stderrfile="$_tmpdir/${_name}_stderr.txt"
+
+    # --- regular-output-channel redirect ---
+    _reg_stdout=$(printf \
+'(set-option :print-success true)
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(assert p)
+(set-option :regular-output-channel "%s")
+(check-sat)
+(set-option :regular-output-channel "stdout")
+(check-sat)
+(exit)
+' "$_redir" | timeout 10 "$_exe" -smt2 -in 2>/dev/null)
+    _reg_rc=$?
+    if [ "$_reg_rc" -eq 124 ]; then echo "TIMEOUT reg: $_name"; (( _fail++ )); continue; fi
+    _reg_stdout_ok=true; _reg_redir_ok=true
+    [ "$_reg_stdout" = "$_z3_expected_reg_stdout" ]              || _reg_stdout_ok=false
+    [ "$(cat "$_redir" 2>/dev/null)" = "$_expected_reg_redir" ] || _reg_redir_ok=false
+    _reg_file_create=$([ -s "$_redir" ] && echo yes || echo no)
+
+    # --- diagnostic-output-channel redirect (before/during/after three check-sats) ---
+    _diag_stdout=$(printf \
+'(set-option :print-success true)
+(set-option :verbosity 10)
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(assert p)
+(check-sat)
+(set-option :diagnostic-output-channel "%s")
+(check-sat)
+(set-option :diagnostic-output-channel "stderr")
+(check-sat)
+(exit)
+' "$_diagfile" | timeout 10 "$_exe" -smt2 -in 2>"$_stderrfile")
+    _diag_rc=$?
+    if [ "$_diag_rc" -eq 124 ]; then echo "TIMEOUT diag: $_name"; (( _fail++ )); continue; fi
+    _diag_stdout_ok=true; _diag_file_ok=true; _diag_stderr_ok=true; _diag_ratio_ok=true
+    [ "$_diag_stdout" = "$_z3_expected_diag_stdout" ] || _diag_stdout_ok=false
+    [ -s "$_diagfile" ]                               || _diag_file_ok=false
+    [ -s "$_stderrfile" ]                             || _diag_stderr_ok=false
+    if $_diag_file_ok && $_diag_stderr_ok; then
+        _file_bytes=$(wc -c < "$_diagfile")
+        _stderr_bytes=$(wc -c < "$_stderrfile")
+        [ "$_stderr_bytes" -eq "$(( _file_bytes * 2 ))" ] || _diag_ratio_ok=false
+    fi
+    _diag_file_create=$([ -s "$_diagfile" ] && echo yes || echo no)
+
+    # --- regular-channel: dir-create test (parent dir does not exist) ---
+    _reg_dirtest_file="$_tmpdir/${_name}_regdir/out.txt"
+    printf \
+'(set-option :print-success true)
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(assert p)
+(set-option :regular-output-channel "%s")
+(check-sat)
+(set-option :regular-output-channel "stdout")
+(exit)
+' "$_reg_dirtest_file" | timeout 10 "$_exe" -smt2 -in >/dev/null 2>/dev/null
+    _reg_dir_create=$([ -d "$(dirname "$_reg_dirtest_file")" ] && echo yes || echo no)
+
+    # --- regular-channel: write-mode test (pre-existing file) ---
+    _reg_writefile="$_tmpdir/${_name}_regwrite.txt"
+    echo "PRE-EXISTING" > "$_reg_writefile"
+    printf \
+'(set-option :print-success true)
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(assert p)
+(set-option :regular-output-channel "%s")
+(check-sat)
+(set-option :regular-output-channel "stdout")
+(exit)
+' "$_reg_writefile" | timeout 10 "$_exe" -smt2 -in >/dev/null 2>/dev/null
+    _reg_write=$([[ "$(cat "$_reg_writefile" 2>/dev/null)" == *"PRE-EXISTING"* ]] && echo appends || echo truncates)
+
+    # --- diagnostic-channel: dir-create test ---
+    _diag_dirtest_file="$_tmpdir/${_name}_diagdir/out.txt"
+    printf \
+'(set-option :print-success true)
+(set-option :verbosity 10)
+(set-option :diagnostic-output-channel "%s")
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(assert p)
+(check-sat)
+(set-option :diagnostic-output-channel "stderr")
+(exit)
+' "$_diag_dirtest_file" | timeout 10 "$_exe" -smt2 -in >/dev/null 2>/dev/null
+    _diag_dir_create=$([ -d "$(dirname "$_diag_dirtest_file")" ] && echo yes || echo no)
+
+    # --- diagnostic-channel: write-mode test ---
+    _diag_writefile="$_tmpdir/${_name}_diagwrite.txt"
+    echo "PRE-EXISTING" > "$_diag_writefile"
+    printf \
+'(set-option :print-success true)
+(set-option :verbosity 10)
+(set-option :diagnostic-output-channel "%s")
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(assert p)
+(check-sat)
+(set-option :diagnostic-output-channel "stderr")
+(exit)
+' "$_diag_writefile" | timeout 10 "$_exe" -smt2 -in >/dev/null 2>/dev/null
+    _diag_write=$([[ "$(cat "$_diag_writefile" 2>/dev/null)" == *"PRE-EXISTING"* ]] && echo appends || echo truncates)
+
+    # --- report ---
+    if $_reg_stdout_ok && $_reg_redir_ok && \
+       $_diag_stdout_ok && $_diag_file_ok && $_diag_stderr_ok && $_diag_ratio_ok; then
+        echo "PASS: $_name"
+    else
+        (( _fail++ ))
+        ! $_reg_stdout_ok  && echo "FAIL: $_name reg-stdout:  expected '$(echo "$_z3_expected_reg_stdout" | tr '\n' '|')' got '$(echo "$_reg_stdout" | tr '\n' '|')'"
+        ! $_reg_redir_ok   && echo "FAIL: $_name reg-redir:   expected '$(echo "$_expected_reg_redir" | tr '\n' '|')' got '$(cat "$_redir" 2>/dev/null | tr '\n' '|')'"
+        ! $_diag_stdout_ok && echo "FAIL: $_name diag-stdout: expected '$(echo "$_z3_expected_diag_stdout" | tr '\n' '|')' got '$(echo "$_diag_stdout" | tr '\n' '|')'"
+        ! $_diag_file_ok   && echo "FAIL: $_name diag-file:   diagnostic file is empty (redirect did not work)"
+        ! $_diag_stderr_ok && echo "FAIL: $_name diag-stderr: stderr is empty after restore (restore did not work)"
+        ! $_diag_ratio_ok  && echo "FAIL: $_name diag-ratio:  expected stderr=2×file(${_file_bytes}) got stderr=${_stderr_bytes}"
+    fi
+    _report_fileops reg  "$_reg_file_create"  "$_reg_dir_create"  "$_reg_write"
+    _report_fileops diag "$_diag_file_create" "$_diag_dir_create" "$_diag_write"
+done
+
+# ===========================================================================
+# cvc5 solvers — reads SMT-LIB from stdin; (set-option :incremental true) needed
+# for sessions with multiple check-sat calls.
+# Diagnostic uses redirect-first design: file gets setup+first-check-sat messages;
+# stderr gets only post-restore per-check-sat messages, so file_bytes > stderr_bytes.
+# ===========================================================================
+for _exe in "${_CVC5_SOLVERS[@]}"; do
+    _name=$(basename "$_exe")
+    _redir="$_tmpdir/${_name}_redir.txt"
+    _diagfile="$_tmpdir/${_name}_diag.txt"
+    _stderrfile="$_tmpdir/${_name}_stderr.txt"
+
+    # --- regular-output-channel redirect ---
+    _reg_stdout=$(printf \
+'(set-option :print-success true)
+(set-option :incremental true)
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(assert p)
+(set-option :regular-output-channel "%s")
+(check-sat)
+(set-option :regular-output-channel "stdout")
+(check-sat)
+(exit)
+' "$_redir" | timeout 10 "$_exe" 2>/dev/null)
+    _reg_rc=$?
+    if [ "$_reg_rc" -eq 124 ]; then echo "TIMEOUT reg: $_name"; (( _fail++ )); continue; fi
+    _reg_stdout_ok=true; _reg_redir_ok=true
+    [ "$_reg_stdout" = "$_cvc5_expected_reg_stdout" ]            || _reg_stdout_ok=false
+    [ "$(cat "$_redir" 2>/dev/null)" = "$_expected_reg_redir" ] || _reg_redir_ok=false
+    _reg_file_create=$([ -s "$_redir" ] && echo yes || echo no)
+
+    # --- diagnostic-output-channel redirect (redirect-first design) ---
+    _diag_stdout=$(printf \
+'(set-option :print-success true)
+(set-option :incremental true)
+(set-option :verbosity 10)
+(set-option :diagnostic-output-channel "%s")
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(assert p)
+(check-sat)
+(set-option :diagnostic-output-channel "stderr")
+(check-sat)
+(exit)
+' "$_diagfile" | timeout 10 "$_exe" 2>"$_stderrfile")
+    _diag_rc=$?
+    if [ "$_diag_rc" -eq 124 ]; then echo "TIMEOUT diag: $_name"; (( _fail++ )); continue; fi
+    _diag_file_ok=true; _diag_stderr_ok=true; _diag_order_ok=true
+    [ -s "$_diagfile" ]  || _diag_file_ok=false
+    [ -s "$_stderrfile" ] || _diag_stderr_ok=false
+    if $_diag_file_ok && $_diag_stderr_ok; then
+        _file_bytes=$(wc -c < "$_diagfile")
+        _stderr_bytes=$(wc -c < "$_stderrfile")
+        [ "$_file_bytes" -gt "$_stderr_bytes" ] || _diag_order_ok=false
+    fi
+    _diag_file_create=$([ -s "$_diagfile" ] && echo yes || echo no)
+
+    # --- regular-channel: dir-create test ---
+    _reg_dirtest_file="$_tmpdir/${_name}_regdir/out.txt"
+    printf \
+'(set-option :print-success true)
+(set-option :incremental true)
+(set-option :regular-output-channel "%s")
+(check-sat)
+(set-option :regular-output-channel "stdout")
+(exit)
+' "$_reg_dirtest_file" | timeout 10 "$_exe" >/dev/null 2>/dev/null
+    _reg_dir_create=$([ -d "$(dirname "$_reg_dirtest_file")" ] && echo yes || echo no)
+
+    # --- regular-channel: write-mode test ---
+    _reg_writefile="$_tmpdir/${_name}_regwrite.txt"
+    echo "PRE-EXISTING" > "$_reg_writefile"
+    printf \
+'(set-option :print-success true)
+(set-option :incremental true)
+(set-option :regular-output-channel "%s")
+(check-sat)
+(set-option :regular-output-channel "stdout")
+(exit)
+' "$_reg_writefile" | timeout 10 "$_exe" >/dev/null 2>/dev/null
+    _reg_write=$([[ "$(cat "$_reg_writefile" 2>/dev/null)" == *"PRE-EXISTING"* ]] && echo appends || echo truncates)
+
+    # --- diagnostic-channel: dir-create test ---
+    _diag_dirtest_file="$_tmpdir/${_name}_diagdir/out.txt"
+    printf \
+'(set-option :print-success true)
+(set-option :incremental true)
+(set-option :verbosity 10)
+(set-option :diagnostic-output-channel "%s")
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(assert p)
+(check-sat)
+(set-option :diagnostic-output-channel "stderr")
+(exit)
+' "$_diag_dirtest_file" | timeout 10 "$_exe" >/dev/null 2>/dev/null
+    _diag_dir_create=$([ -d "$(dirname "$_diag_dirtest_file")" ] && echo yes || echo no)
+
+    # --- diagnostic-channel: write-mode test ---
+    _diag_writefile="$_tmpdir/${_name}_diagwrite.txt"
+    echo "PRE-EXISTING" > "$_diag_writefile"
+    printf \
+'(set-option :print-success true)
+(set-option :incremental true)
+(set-option :verbosity 10)
+(set-option :diagnostic-output-channel "%s")
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(assert p)
+(check-sat)
+(set-option :diagnostic-output-channel "stderr")
+(exit)
+' "$_diag_writefile" | timeout 10 "$_exe" >/dev/null 2>/dev/null
+    _diag_write=$([[ "$(cat "$_diag_writefile" 2>/dev/null)" == *"PRE-EXISTING"* ]] && echo appends || echo truncates)
+
+    # --- report ---
+    if $_reg_stdout_ok && $_reg_redir_ok && \
+       $_diag_file_ok && $_diag_stderr_ok && $_diag_order_ok; then
+        echo "PASS: $_name"
+    else
+        (( _fail++ ))
+        ! $_reg_stdout_ok  && echo "FAIL: $_name reg-stdout:  expected '$(echo "$_cvc5_expected_reg_stdout" | tr '\n' '|')' got '$(echo "$_reg_stdout" | tr '\n' '|')'"
+        ! $_reg_redir_ok   && echo "FAIL: $_name reg-redir:   expected '$(echo "$_expected_reg_redir" | tr '\n' '|')' got '$(cat "$_redir" 2>/dev/null | tr '\n' '|')'"
+        ! $_diag_file_ok   && echo "FAIL: $_name diag-file:   diagnostic file is empty (redirect did not work)"
+        ! $_diag_stderr_ok && echo "FAIL: $_name diag-stderr: stderr is empty after restore (restore did not work)"
+        ! $_diag_order_ok  && echo "FAIL: $_name diag-order:  expected file_bytes(${_file_bytes}) > stderr_bytes(${_stderr_bytes})"
+    fi
+    _report_fileops reg  "$_reg_file_create"  "$_reg_dir_create"  "$_reg_write"
+    _report_fileops diag "$_diag_file_create" "$_diag_dir_create" "$_diag_write"
+done
+
+[ "$_fail" -eq 0 ]
