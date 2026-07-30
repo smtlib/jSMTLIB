@@ -10,15 +10,11 @@ package org.smtlib.solvers;
 //   get-values get-assignment get-proof get-unsat-core
 //   some error detection and handling
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.StringWriter;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import org.smtlib.*;
 import org.smtlib.ICommand.Ideclare_const;
@@ -38,13 +34,6 @@ import org.smtlib.sexpr.Utils;
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into SMT commands */
 public class Solver_cvc4 extends AbstractSolver implements ISolver {
 		
-	/** A reference to the SMT configuration */
-	protected SMT.Configuration smtConfig;
-
-	/** A reference to the SMT configuration */
-	@Override
-	public SMT.Configuration smt() { return smtConfig; }
-	
 	/** The command-line arguments for launching the solver */
 	protected String cmds[];
 	protected String cmds_win[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet", "--produce-models","--no-full-saturate-quant"}; 
@@ -60,10 +49,6 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 	@Override
 	public /*@Nullable*/IResponse checkSatStatus() { return checkSatStatus; }
 
-	// FIXME - get rid of this?
-	/** Map that keeps current values of options */
-	protected Map<String,IAttributeValue> options = new HashMap<String,IAttributeValue>();
-	
 	/** Creates an instance of the solver */
     public Solver_cvc4(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
         this(smtConfig, executable, "CVC4> ");
@@ -304,65 +289,18 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 	}
 
 	@Override
-	public IResponse set_option(IKeyword key, IAttributeValue value) {
-		
-		// FIXME - clarify all this - perhaps leave it to cvc4
+	protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
 		String option = key.value();
-//		if (Utils.PRINT_SUCCESS.equals(option)) {
-//			if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
-//				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
-//			}
-//		}
 		if (Utils.VERBOSITY.equals(option)) {
 			IAttributeValue v = options.get(option);
 			smtConfig.verbose = (v instanceof INumeral) ? ((INumeral)v).intValue() : 0;
-		} else 
-			if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
-			// Actually, v should never be anything but IStringLiteral - that should
-			// be checked during parsing
-			String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : "stderr";
-			if (name.equals("stdout")) {
-				smtConfig.log.diag = System.out;
-			} else if (name.equals("stderr")) {
-				smtConfig.log.diag = System.err;
-			} else {
-				try {
-					FileOutputStream f = new FileOutputStream(name,true); // true -> append
-					smtConfig.log.diag = new PrintStream(f);
-				} catch (java.io.IOException e) {
-					return smtConfig.responseFactory.error("Failed to open or write to the diagnostic output " + e.getMessage(),value.pos());
-				}
-			}
-		} else if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
-			// Actually, v should never be anything but IStringLiteral - that should
-			// be checked during parsing
-			String name = (value instanceof IStringLiteral)?((IStringLiteral)value).value() : "stdout";
-			if (name.equals("stdout")) {
-				smtConfig.log.out = System.out;
-			} else if (name.equals("stderr")) {
-				smtConfig.log.out = System.err;
-			} else {
-				try {
-					FileOutputStream f = new FileOutputStream(name,true); // append
-					smtConfig.log.out = new PrintStream(f);
-				} catch (java.io.IOException e) {
-					return smtConfig.responseFactory.error("Failed to open or write to the regular output " + e.getMessage(),value.pos());
-				}
-			}
 		}
 		// Save the options on our side as well
+		options.put(option, value);
 
-		options.put(option,value);
-
-		IResponse r = checkPrintSuccess(smtConfig,key,value);
+		IResponse r = checkPrintSuccess(smtConfig, key, value);
 		if (r != null) return r;
-		return sendCommand(new org.smtlib.command.C_set_option(key,value));
-
-//		if (!Utils.PRINT_SUCCESS.equals(option)) {
-//			return sendCommand(new org.smtlib.command.C_set_option(key,value));
-//		} else {
-//			return smtConfig.responseFactory.success();
-//		}
+		return sendCommand(new org.smtlib.command.C_set_option(key, value));
 	}
 
 	@Override

@@ -5,7 +5,11 @@
  */
 package org.smtlib;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.smtlib.ICommand.*;
 import org.smtlib.IExpr.IKeyword;
@@ -31,11 +35,17 @@ public class AbstractSolver implements ISolver {
 	protected static boolean isMac = System.getProperty("os.name").contains("Mac");
 
 	final protected IKeyword printSuccess;
-	
+
 	protected boolean printSuccessResponse = true;
 
 	/** The object that interacts with external processes */
 	protected SolverProcess solverProcess;
+
+	/** SMT configuration — set by each concrete subclass constructor. */
+	protected SMT.Configuration smtConfig;
+
+	/** Map that keeps current values of options. */
+	protected Map<String, IAttributeValue> options = new HashMap<String, IAttributeValue>();
 	
 	@Override
 	public void forceExit() {
@@ -187,8 +197,46 @@ public class AbstractSolver implements ISolver {
 
 	/** @see org.smtlib.ISolver#set_option(IExpr.IKeyword,IExpr.IAttributeValue)  */
 	@Override
-	public IResponse set_option(IKeyword option, IAttributeValue value){
-		throw new UnsupportedOperationException("AbstractSolver.set_option");
+	public IResponse set_option(IKeyword key, IAttributeValue value) {
+		String option = key.value();
+		if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
+			String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : "stdout";
+			if (name.equals("stdout")) {
+				smtConfig.log.out = System.out;
+			} else if (name.equals("stderr")) {
+				smtConfig.log.out = System.err;
+			} else {
+				try {
+					smtConfig.log.out = new PrintStream(new FileOutputStream(name, true));
+				} catch (IOException e) {
+					return smtConfig.responseFactory.error("Failed to open regular output: " + e.getMessage(), value.pos());
+				}
+			}
+			options.put(option, value);
+			return successOrEmpty(smtConfig);
+		}
+		if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
+			String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : "stderr";
+			if (name.equals("stdout")) {
+				smtConfig.log.diag = System.out;
+			} else if (name.equals("stderr")) {
+				smtConfig.log.diag = System.err;
+			} else {
+				try {
+					smtConfig.log.diag = new PrintStream(new FileOutputStream(name, true));
+				} catch (IOException e) {
+					return smtConfig.responseFactory.error("Failed to open diagnostic output: " + e.getMessage(), value.pos());
+				}
+			}
+			options.put(option, value);
+			return successOrEmpty(smtConfig);
+		}
+		return set_option_impl(key, value);
+	}
+
+	/** Override in subclasses to handle solver-specific options. Channel options are handled by set_option and never reach here. */
+	protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
+		return smtConfig.responseFactory.unsupported();
 	}
 
 	/** @see org.smtlib.ISolver#set_info(IExpr.IKeyword, IExpr.IAttributeValue)  */
@@ -254,7 +302,7 @@ public class AbstractSolver implements ISolver {
 	/** @see org.smtlib.ISolver#smt()*/
 	@Override
 	public Configuration smt() {
-		throw new UnsupportedOperationException("AbstractSolver.smt");
+		return smtConfig;
 	}
 
 	/** @see org.smtlib.ISolver#checkSatStatus()*/

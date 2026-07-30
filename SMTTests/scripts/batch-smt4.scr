@@ -1,2 +1,2 @@
 ##EXITCODE 1
-$SMT_CMD --solver simplify $TESTS/ok_sat.tst
+$SMT_CMD --solver simplify $SCRIPTS/ok_sat.smt2

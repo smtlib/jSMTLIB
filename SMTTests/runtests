@@ -18,12 +18,13 @@ while [[ $# -gt 0 && "$1" == --* ]]; do
 done
 
 if [ $# -eq 0 ]; then
-    tests=( "$TESTS"/*.tst )
+    tests=( $(find "$TESTS" -name "*.tst" | sort) )
 else
     tests=()
     for arg in "$@"; do
         if [[ "$arg" != */* ]]; then
-            tests+=( "$TESTS/$arg" )
+            found=$(find "$TESTS" \( -name "$arg" -o -name "$arg.tst" \) | head -1)
+            tests+=( "${found:-$TESTS/$arg}" )
         else
             tests+=( "$arg" )
         fi

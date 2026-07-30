@@ -10,17 +10,13 @@ package org.smtlib.solvers;
 //   get-values get-assignment get-proof get-unsat-core
 //   some error detection and handling
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,12 +48,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
 	protected int linesOffset = 0;
 	
-	/** A reference to the SMT configuration */
-	protected SMT.Configuration smtConfig;
-
-	/** A reference to the SMT configuration */
-	public SMT.Configuration smt() { return smtConfig; }
-	
 	/** The command-line arguments for launching the Z3 solver */
 	protected String cmds[];
 	protected String cmds_win[] = new String[]{ "", "/smt2","/in","SMTLIB2_COMPLIANT=true"};//,"/rs:42"}; 
@@ -78,9 +68,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
 	/** The number of pushes less the number of pops so far */
 	protected int pushesDepth = 0;
-	
-	/** Map that keeps current values of options */
-	protected Map<String,IAttributeValue> options = new HashMap<String,IAttributeValue>();
 	
 	/** Creates an instance of the Z3 solver */
 	public Solver_z3_4_3(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
@@ -425,7 +412,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	}
 
 	@Override
-	public IResponse set_option(IKeyword key, IAttributeValue value) {
+	protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
 		String option = key.value();
 		if (Utils.PRINT_SUCCESS.equals(option)) {
 			if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
@@ -435,7 +422,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		if (logicSet && (Utils.INTERACTIVE_MODE.equals(option)||Utils.PRODUCE_ASSERTIONS.equals(option))) {
 			return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
 		}
-		if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 
+		if (Utils.PRODUCE_ASSIGNMENTS.equals(option) ||
 				Utils.PRODUCE_PROOFS.equals(option) ||
 				Utils.PRODUCE_UNSAT_CORES.equals(option)) {
 			if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
@@ -447,59 +434,18 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		if (Utils.VERBOSITY.equals(option)) {
 			IAttributeValue v = options.get(option);
 			smtConfig.verbose = (v instanceof INumeral) ? ((INumeral)v).intValue() : 0;
-		} else if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
-			// Actually, v should never be anything but IStringLiteral - that should
-			// be checked during parsing
-			String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : "stderr";
-			if (name.equals("stdout")) {
-				smtConfig.log.diag = System.out;
-			} else if (name.equals("stderr")) {
-				smtConfig.log.diag = System.err;
-			} else {
-				try {
-					FileOutputStream f = new FileOutputStream(name,true); // true -> append
-					smtConfig.log.diag = new PrintStream(f);
-				} catch (java.io.IOException e) {
-					return smtConfig.responseFactory.error("Failed to open or write to the diagnostic output " + e.getMessage(),value.pos());
-				}
-			}
-		} else if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
-			// Actually, v should never be anything but IStringLiteral - that should
-			// be checked during parsing
-			String name = (value instanceof IStringLiteral)?((IStringLiteral)value).value() : "stdout";
-			if (name.equals("stdout")) {
-				smtConfig.log.out = System.out;
-			} else if (name.equals("stderr")) {
-				smtConfig.log.out = System.err;
-			} else {
-				try {
-					FileOutputStream f = new FileOutputStream(name,true); // append
-					smtConfig.log.out = new PrintStream(f);
-				} catch (java.io.IOException e) {
-					return smtConfig.responseFactory.error("Failed to open or write to the regular output " + e.getMessage(),value.pos());
-				}
-			}
 		}
 		// Save the options on our side as well
 		options.put(Utils.INTERACTIVE_MODE.equals(option) && !smtConfig.isVersion(SMTLIB.V20) ? Utils.PRODUCE_ASSERTIONS : option,value);
 		IResponse r = checkPrintSuccess(smtConfig,key,value);
 		if (r != null) return r;
 
-		// Don't forward output-channel redirects to z3. jSMTLIB owns the output channels and has
-		// already applied the redirect above (smtConfig.log.out / smtConfig.log.diag). If we also
-		// told z3 to redirect, z3 would start writing its pipe output to a file, breaking
-		// jSMTLIB's ability to read z3's responses and causing a deadlock. The proper behavior
-		// is for jSMTLIB to intercept z3's responses on the pipe and route them itself.
-		if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option) || Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
-			return successOrEmpty(smtConfig);
-		}
-
 		try {
 			solverProcess.sendAndListen("(set-option ",option," ",value.toString(),")\n");// FIXME - detect errors
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
 		}
-		
+
 		return successOrEmpty(smtConfig);
 	}
 
