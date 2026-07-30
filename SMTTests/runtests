@@ -8,16 +8,7 @@ fi
 source setup
 rm -f tempout
 
-### Auto-detect which solvers are configured; --solvers overrides
-if [ ! -f jsmtlib.properties ]; then
-    echo "WARNING: jsmtlib.properties not found; running test solver only" >&2
-fi
-_z3_exec=$(grep "^org.smtlib.solver_z3\.exec=" jsmtlib.properties 2>/dev/null | cut -d= -f2-)
-if [[ -n "$_z3_exec" ]]; then
-    solvers="test z3"
-else
-    solvers="test"
-fi
+solvers="z3_4_3"
 solvers="test"
 
 while [[ $# -gt 0 && "$1" == --* ]]; do

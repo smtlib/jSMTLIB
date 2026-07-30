@@ -779,8 +779,21 @@ public class SMT {
 		return 0;
 	}
 	
+	/**
+	 * Resolves an executable path read from properties.
+	 * If exec is null or already absolute it is returned unchanged.
+	 * If exec is relative and solverDir is non-null, returns solverDir + separator + exec.
+	 * If exec is relative and solverDir is null, returns exec unchanged so ProcessBuilder can search PATH.
+	 * Pass {@code System.getenv("SMT_SOLVER_DIR")} as solverDir in production; pass a literal in tests.
+	 */
+	static /*@Nullable*/ String resolveExecutablePath(/*@Nullable*/ String exec, /*@Nullable*/ String solverDir) {
+		if (exec == null || new File(exec).isAbsolute()) return exec;
+		if (solverDir != null && !solverDir.isEmpty()) return solverDir + File.separator + exec;
+		return exec; // rely on PATH
+	}
+
 	/** Starts the solver with the given name and executable, preset according to the given configuration.
-	 * If executable is null, then an executable path is looked for in the org.smtlib.SMT_EXE_solvername 
+	 * If executable is null, then an executable path is looked for in the org.smtlib.SMT_EXE_solvername
 	 * property or the SMT_EXE_solvername environment variable.
 	 * @param smtConfig the configuration object to use for solver settings
 	 * @param solvername the name of the solver to use
@@ -840,7 +853,11 @@ public class SMT {
 				executable = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX);
 				if (executable != null && executable.trim().isEmpty()) executable = null;
 			}
-			
+
+			if (executable != null) {
+				executable = resolveExecutablePath(executable, System.getenv("SMT_SOLVER_DIR"));
+			}
+
 			if (command != null && executable != null) command[0] = executable;
 			
 			if (executable == null && command == null) {

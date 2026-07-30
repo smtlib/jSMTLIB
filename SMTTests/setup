@@ -6,6 +6,10 @@ export SCRIPTS=$(cd scripts && pwd)
 # Must be set externally; the Makefile local-setup target reads jsmtlib.properties to discover it.
 export SOLVERS=${SOLVERS:-}
 
+# Directory prepended to relative solver executable names from jsmtlib.properties.
+# A relative path here is resolved relative to the test runner's working directory (SMTTests/).
+export SMT_SOLVER_DIR=${SMT_SOLVER_DIR:-../../OpenJML21/Solvers/Solvers-macos}
+
 # Normalized platform name used to select platform-specific golden files
 _p=$(uname -s | tr '[:upper:]' '[:lower:]')
 case "$_p" in

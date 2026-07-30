@@ -21,20 +21,6 @@ tests: local-setup
 local-setup:
 	@if [ -z "$$CI" ]; then \
 		source ./setup; \
-		Z3_4_3=$$([ -f "$$SOLVERS/z3-4.3.1" ] && echo "$$SOLVERS/z3-4.3.1" || ([ -f "$$SOLVERS/z3-4.3.2" ] && echo "$$SOLVERS/z3-4.3.2" || echo "")); \
-		Z3_4_8=$$([ -f "$$SOLVERS/z3-4.8.12" ] && echo "$$SOLVERS/z3-4.8.12" || echo ""); \
-		CVC5=$$([ -f "$$SOLVERS/cvc5-1.6" ] && echo "$$SOLVERS/cvc5-1.6" || echo ""); \
-		{ \
-			echo "org.smtlib.logic_path="; \
-			echo "org.smtlib.solver_z3.exec=$$Z3_4_3"; \
-			echo "org.smtlib.solver_z3_4_3.exec=$$Z3_4_3"; \
-			echo "org.smtlib.solver_z3_4_8.adapter=org.smtlib.solvers.Solver_z3_4_8"; \
-			echo "org.smtlib.solver_z3_4_8.exec=$$Z3_4_8"; \
-			echo "org.smtlib.solver_z3_4_8.command=$${Z3_4_8:+$$Z3_4_8,-smt2,-in,SMTLIB2_COMPLIANT=true}"; \
-			echo "org.smtlib.solver_cvc5.exec=$$CVC5"; \
-			echo "org.smtlib.solver_simplify.exec="; \
-		} > jsmtlib.properties; \
-		echo "Generated jsmtlib.properties from SOLVERS=$$SOLVERS"; \
 	fi
 
 script-tests:

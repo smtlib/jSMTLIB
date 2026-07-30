@@ -549,10 +549,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				return null;
 			}
 			IParameterizedIdentifier pid = (IParameterizedIdentifier)head;
-			if (pid.indices().size() != 2) {
-				error("Expected exactly two numerals in an extract identifier",pid.pos());
-				return null;
-			}
+			if (!checkNumeralIndices(pid, 2, "Expected exactly two numerals in an extract identifier")) return null;
 			int end = ((INumeral) pid.indices().get(0)).intValue();
 			int start = ((INumeral) pid.indices().get(1)).intValue();
 			if (end < start) {
@@ -582,10 +579,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				return null;
 			}
 			IParameterizedIdentifier pid = (IParameterizedIdentifier)head;
-			if (pid.indices().size() != 1) {
-				error("Expected exactly one numeral in a repeat identifier",pid.pos());
-				return null;
-			}
+			if (!checkNumeralIndices(pid, 1, "Expected exactly one numeral in a repeat identifier")) return null;
 			int val = ((INumeral) pid.indices().get(0)).intValue();
 			if (val == 0) {
 				error("The numeral may not be 0 in a repeat",pid.indices().get(0).pos());
@@ -610,10 +604,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				return null;
 			}
 			IParameterizedIdentifier pid = (IParameterizedIdentifier)head;
-			if (pid.indices().size() != 1) {
-				error("Expected exactly one numeral in a repeat identifier",pid.pos());
-				return null;
-			}
+			if (!checkNumeralIndices(pid, 1, "Expected exactly one numeral in a repeat identifier")) return null;
 			int val = ((INumeral) pid.indices().get(0)).intValue();
 			s = makeBitVec(val+bitvecSize(s));
 			return save(e,s);
@@ -633,10 +624,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				return null;
 			}
 			IParameterizedIdentifier pid = (IParameterizedIdentifier)head;
-			if (pid.indices().size() != 1) {
-				error("Expected exactly one numeral in a repeat identifier",pid.pos());
-				return null;
-			}
+			if (!checkNumeralIndices(pid, 1, "Expected exactly one numeral in a repeat identifier")) return null;
 			return save(e,s);
 
 		}
@@ -684,7 +672,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		ISort.IApplication se = (ISort.IApplication)s;
 		if (!(se.family() instanceof IParameterizedIdentifier)) return -1;
 		IParameterizedIdentifier pid = (IParameterizedIdentifier)se.family();
-		if (pid.indices().size() != 1) return -1;
+		if (pid.indices().size() != 1 || !(pid.indices().get(0) instanceof INumeral)) return -1;
 		return ((INumeral) pid.indices().get(0)).intValue();
 	}
 	
@@ -770,6 +758,16 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		return null;
 	}
 
+	/** Checks that pid has exactly {@code count} indices and all are INumeral.
+	 *  Records {@code errorMsg} at pid.pos() and returns false if not. */
+	private boolean checkNumeralIndices(IExpr.IParameterizedIdentifier pid, int count, String errorMsg) {
+		if (pid.indices().size() != count) { error(errorMsg, pid.pos()); return false; }
+		for (IIndex idx : pid.indices()) {
+			if (!(idx instanceof INumeral)) { error(errorMsg, pid.pos()); return false; }
+		}
+		return true;
+	}
+
 	private void requireVersionForSymbolIndex(IExpr.IParameterizedIdentifier pid) {
 		if (!smtConfig.atLeastVersion(SMT.Configuration.SMTLIB.V25)) {
 			for (IIndex idx : pid.indices()) {
@@ -790,10 +788,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		if (useext && symTable.bitVectorTheorySet && 
 				(pname.matches("bv(0|[1-9][0-9]*)") // TODO - allow leading zeros?
 				)) {
-			if (e.indices().size() != 1) {
-				error("Expected exactly one numeral in a bv identifier",e.pos());
-				return null;
-			}
+			if (!checkNumeralIndices(e, 1, "Expected exactly one numeral in a bv identifier")) return null;
 			int size = ((INumeral) e.indices().get(0)).intValue();
 			BigInteger value = new BigInteger(pname.substring(2));
 			if (value.bitLength() > size) {
