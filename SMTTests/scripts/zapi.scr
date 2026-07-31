@@ -1,6 +1,4 @@
 #!/bin/bash
 ##EXITCODE 0
 
-SOLVERS=/Users/davidcok/projects/OpenJML21/Solvers/Solvers-macos
-source setup
 java -cp $SMT_JAR APIExample

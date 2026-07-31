@@ -1,1 +1,1 @@
-#reading properties (class path) from $INSTALL/jsmtlib.properties
+#reading properties (class path) from jar:file:$INSTALL/jSMTLIB.jar!/jsmtlib.properties

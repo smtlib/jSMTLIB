@@ -1,7 +1,6 @@
 ##EXITCODE 0
-echo "zzzzz" > ~/jsmtlib.properties
-chmod ugo-r ~/jsmtlib.properties
+_HOMEFILE="$HOME/jsmtlib.properties"
+trap 'chmod u+r "$_HOMEFILE" 2>/dev/null; rm -f "$_HOMEFILE"' EXIT
+echo "zzzzz" > "$_HOMEFILE"
+chmod ugo-r "$_HOMEFILE"
 $SMT_CMD --solver test --text "(exit)"
-EX=$?
-rm ~/jsmtlib.properties
-exit $EX

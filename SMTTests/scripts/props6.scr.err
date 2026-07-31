@@ -1,4 +1,4 @@
-#reading properties (class path) from $INSTALL/jsmtlib.properties
+#reading properties (class path) from jar:file:$INSTALL/jSMTLIB.jar!/jsmtlib.properties
 #reading properties (user home) from $HOME/jsmtlib.properties
 #Start parsing text input
 #start

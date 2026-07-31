@@ -1,6 +1,5 @@
 ##EXITCODE 0
-echo "# verbose test" > ~/jsmtlib.properties
+_HOMEFILE="$HOME/jsmtlib.properties"
+trap 'rm -f "$_HOMEFILE"' EXIT
+echo "# verbose test" > "$_HOMEFILE"
 $SMT_CMD --verbose 1 --solver test --text "(exit)"
-EX=$?
-rm ~/jsmtlib.properties
-exit $EX
