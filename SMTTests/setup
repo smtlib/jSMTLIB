@@ -2,21 +2,14 @@ SMT_DIR=$(cd ../SMT && pwd)
 export SMT_JAR=$SMT_DIR/jSMTLIB.jar
 export TESTS=$(cd tests && pwd)
 export SCRIPTS=$(cd scripts && pwd)
-# Platform-specific directory containing solver executables (z3-4.3.1, cvc5-1.6, etc.).
-# Must be set externally; the Makefile local-setup target reads jsmtlib.properties to discover it.
-export SOLVERS=${SOLVERS:-}
-
-# Directory prepended to relative solver executable names from jsmtlib.properties.
-# A relative path here is resolved relative to the test runner's working directory (SMTTests/).
-export SMT_SOLVER_DIR=${SMT_SOLVER_DIR:-../../OpenJML21/Solvers/Solvers-macos}
 
 # Normalized platform name used to select platform-specific golden files
 _p=$(uname -s | tr '[:upper:]' '[:lower:]')
 case "$_p" in
-  darwin*)              PLATFORM=macos ;;
-  linux*)               PLATFORM=linux ;;
-  mingw*|msys*|cygwin*) PLATFORM=windows ;;
-  *)                    PLATFORM="$_p" ;;
+  darwin*)               PLATFORM=macos ;;
+  linux*)                PLATFORM=linux ;;
+  mingw*|msys*|cygwin*)  PLATFORM=windows ;;
+  *)                     PLATFORM="$_p" ;;
 esac
 export PLATFORM
 
@@ -30,21 +23,37 @@ esac
 export ARCH
 export PLATFORM_ARCH="$PLATFORM-$ARCH"
 
+# Directory containing the solver executables for this platform.
+# Relative names in jsmtlib.properties (e.g. z3-4.3.1) are resolved against this directory.
+# Set SMT_SOLVER_DIR externally to override; the Makefile exports it before running tests.
+if [[ -z "${SMT_SOLVER_DIR:-}" ]]; then
+  case "$PLATFORM_ARCH" in
+    macos-x64)    _SUBDIR=Solvers-macos ;;
+    macos-arm64)  _SUBDIR=Solvers-macos-arm64 ;;
+    linux-x64)    _SUBDIR=Solvers-linux ;;
+    linux-arm64)  _SUBDIR=Solvers-linux-arm64 ;;
+    windows-*)    _SUBDIR=Solvers-windows ;;
+    *)            _SUBDIR=Solvers-$PLATFORM ;;
+  esac
+  SMT_SOLVER_DIR=../../OpenJML21/Solvers/$_SUBDIR
+fi
+export SMT_SOLVER_DIR
+
 # Resolve COV_CLASSES to an absolute path — scripts that cd to a temp dir would break otherwise.
 if [[ -n "${COV_CLASSES:-}" && "${COV_CLASSES}" != /* ]]; then
     COV_CLASSES="$(pwd)/${COV_CLASSES}"
 fi
 
-# Use -cp (not -jar) so that SMT_DIR is on the classpath and jsmtlib.properties is found there.
+# Use -cp (not -jar) to allow coverage instrumentation (COV_CLASSES) to be prepended.
+# jsmtlib.properties is embedded in the jar and loaded via ClassLoader.getSystemResource.
 # On Windows, Java requires ; as the classpath separator and Windows-style paths;
 # cygpath (bundled with Git for Windows) converts POSIX paths to Windows form.
 if [[ "$PLATFORM" == "windows" ]]; then
     _w_jar=$(cygpath -w "$SMT_JAR")
-    _w_dir=$(cygpath -w "$SMT_DIR")
     _w_classes=${COV_CLASSES:+$(cygpath -w "$COV_CLASSES")}
-    export SMT_CMD="java ${COV_AGENT:-} -cp ${_w_classes:-$_w_jar};${_w_dir} org.smtlib.SMT"
+    export SMT_CMD="java ${COV_AGENT:-} -cp ${_w_classes:-$_w_jar} org.smtlib.SMT"
     export SMT_DRIVER="java ${COV_AGENT:-} -cp ${_w_classes:-$_w_jar} org.smtlib.Driver"
 else
-    export SMT_CMD="java ${COV_AGENT:-} -cp ${COV_CLASSES:-$SMT_JAR}:$SMT_DIR org.smtlib.SMT"
+    export SMT_CMD="java ${COV_AGENT:-} -cp ${COV_CLASSES:-$SMT_JAR} org.smtlib.SMT"
     export SMT_DRIVER="java ${COV_AGENT:-} -cp ${COV_CLASSES:-$SMT_JAR} org.smtlib.Driver"
 fi

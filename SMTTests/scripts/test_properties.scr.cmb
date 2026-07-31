@@ -1,0 +1,11 @@
+Test 1: jar-embedded properties (java -jar, no local properties file)
+PASS: jar-embedded properties loaded via 'java -jar'
+Test 2: jar-embedded properties (java -cp jar, no local properties file)
+PASS: jar-embedded properties loaded via 'java -cp jar'
+Test 3: CWD jsmtlib.properties overrides jar-embedded copy
+PASS: jar-embedded properties still loaded when CWD copy also present
+PASS: CWD jsmtlib.properties loaded
+Test 4: correct SMT-LIB output with jar-only classpath
+PASS: correct output with jar-only classpath
+
+All 5 properties tests PASSED

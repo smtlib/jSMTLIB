@@ -329,15 +329,16 @@ public class SMT {
 	public Properties readProperties() {
 		Properties p = new Properties();
 		File f;
-		// Find and read file on class path
+		// Find and read file on class path (including resources embedded in the jar).
+		// Must use url.openStream(), not new File(url.getFile()), because jar: URLs
+		// are not valid filesystem paths and FileReader would throw FileNotFoundException.
 		URL url =  ClassLoader.getSystemResource(Utils.PROPS_FILE);
 		if (url != null) {
-			f = new File(url.getFile());
-            try (FileReader rdr = new FileReader(f);) {
-				if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (class path) from " + f);
+            try (Reader rdr = new InputStreamReader(url.openStream())) {
+				if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (class path) from " + url);
 				p.load(rdr);
 			} catch (IOException|IllegalArgumentException e) {
-				smtConfig.log.logDiag("IOException " + e); // FIXME - is this how to report this error
+				smtConfig.log.logDiag("IOException reading properties from classpath: " + e);
 			}
 		}
 		// Find and read file in the directory that contains

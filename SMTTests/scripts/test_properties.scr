@@ -1,0 +1,93 @@
+##EXITCODE 0
+# Tests that jsmtlib.properties is loaded correctly from each search location.
+#
+# Three locations are exercised:
+#   1. Embedded in the jar (classpath resource) -- the primary case for deployed users
+#   2. Current working directory -- user override
+#   3. java -jar invocation style -- verifies the jar is self-contained
+
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT
+
+PASS=0
+FAIL=0
+
+pass() { echo "PASS: $1"; PASS=$((PASS + 1)); }
+fail() { echo "FAIL: $1"; FAIL=$((FAIL + 1)); if [ -n "$2" ]; then echo "  $2"; fi; }
+
+# Minimal SMT-LIB input that exercises set-logic and exit cleanly.
+cat > "$TMPDIR/minimal.tst" <<'EOF'
+(set-logic QF_UF)
+(exit)
+EOF
+
+# ---------------------------------------------------------------------------
+# Test 1: jar-embedded properties found when running with "java -jar"
+# Run from a temp directory that has NO local jsmtlib.properties.
+# The verbose message "reading properties (class path)" confirms the embedded
+# copy was loaded.
+# ---------------------------------------------------------------------------
+echo "Test 1: jar-embedded properties (java -jar, no local properties file)"
+err=$(cd "$TMPDIR" && java -jar "$SMT_JAR" --verbose 1 --solver test "$TMPDIR/minimal.tst" 2>&1 >/dev/null)
+if echo "$err" | grep -q "reading properties (class path)"; then
+    pass "jar-embedded properties loaded via 'java -jar'"
+else
+    fail "jar-embedded properties NOT loaded via 'java -jar'" "stderr: $err"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 2: jar-embedded properties found when running with "java -cp jar"
+# This is the invocation style used by the test suite (without SMT_DIR).
+# ---------------------------------------------------------------------------
+echo "Test 2: jar-embedded properties (java -cp jar, no local properties file)"
+err=$(cd "$TMPDIR" && java -cp "$SMT_JAR" org.smtlib.SMT --verbose 1 --solver test "$TMPDIR/minimal.tst" 2>&1 >/dev/null)
+if echo "$err" | grep -q "reading properties (class path)"; then
+    pass "jar-embedded properties loaded via 'java -cp jar'"
+else
+    fail "jar-embedded properties NOT loaded via 'java -cp jar'" "stderr: $err"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 3: jsmtlib.properties in the current working directory is loaded
+# and applied on top of the jar-embedded copy.
+# Both "class path" and "current dir" messages must appear.
+# ---------------------------------------------------------------------------
+echo "Test 3: CWD jsmtlib.properties overrides jar-embedded copy"
+cp "$SMT_DIR/jsmtlib.properties" "$TMPDIR/"
+err=$(cd "$TMPDIR" && java -jar "$SMT_JAR" --verbose 1 --solver test "$TMPDIR/minimal.tst" 2>&1 >/dev/null)
+if echo "$err" | grep -q "reading properties (class path)"; then
+    pass "jar-embedded properties still loaded when CWD copy also present"
+else
+    fail "jar-embedded properties NOT loaded when CWD copy also present" "stderr: $err"
+fi
+if echo "$err" | grep -q "reading properties (current dir)"; then
+    pass "CWD jsmtlib.properties loaded"
+else
+    fail "CWD jsmtlib.properties NOT loaded" "stderr: $err"
+fi
+rm "$TMPDIR/jsmtlib.properties"
+
+# ---------------------------------------------------------------------------
+# Test 4: Tool exits cleanly with correct output in all invocation styles.
+# (Regression: verifies that removing SMT_DIR from the classpath doesn't
+# break normal operation.)
+# ---------------------------------------------------------------------------
+echo "Test 4: correct SMT-LIB output with jar-only classpath"
+out=$(cd "$TMPDIR" && java -cp "$SMT_JAR" org.smtlib.SMT --solver test "$TMPDIR/minimal.tst" 2>/dev/null)
+# set-logic and exit with default print-success=true produce two "success" lines
+expected="$(printf 'success\nsuccess')"
+if [ "$out" = "$expected" ]; then
+    pass "correct output with jar-only classpath"
+else
+    fail "unexpected output with jar-only classpath" "expected: '$expected'  got: '$out'"
+fi
+
+# ---------------------------------------------------------------------------
+echo ""
+if [ $FAIL -eq 0 ]; then
+    echo "All $PASS properties tests PASSED"
+    exit 0
+else
+    echo "$FAIL FAILURES, $PASS passed"
+    exit 1
+fi

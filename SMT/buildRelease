@@ -25,8 +25,8 @@ echo "Manifest-Version: 1.0" > temp/manifest
 echo "Main-Class: org.smtlib.SMT" >> temp/manifest
 cd bin || { echo "Cannot cd to bin"; exit 1; }
 rm -f jsmtlib.properties
-"$JAVA_HOME/bin/jar" -cfm ../jSMTLIB.jar ../temp/manifest .
 cp ../jsmtlib.properties .
+"$JAVA_HOME/bin/jar" -cfm ../jSMTLIB.jar ../temp/manifest .
 cd ..
 ##ant -f javadoc.xml
 ##cp ../../../../texstuff/papers/SMTLIBUserGuide/SMTLIBUserGuide.pdf jSMTLIBUserGuide.pdf

@@ -6,22 +6,22 @@ SHELL = /bin/bash
 ##   make cov-test cov-report COV_CLASSES=../SMT/bin
 COV_CLASSES ?= ../SMT/jSMTLIB.jar
 
-.PHONY: test clean script-tests smt-tests junit-tests build local-setup cov-test cov-clean cov-report cov-show
+.PHONY: test clean script-tests smt-tests junit-tests build cov-test cov-clean cov-report cov-show
 
-tests: local-setup
+## Resolve the platform-appropriate solver directory, honouring any value already in the
+## environment (CI sets it via GITHUB_ENV before invoking make; developers can export it
+## manually to override the default).  setup computes the default from the platform/arch.
+ifndef SMT_SOLVER_DIR
+  SMT_SOLVER_DIR := $(shell . ./setup && echo "$$SMT_SOLVER_DIR")
+endif
+export SMT_SOLVER_DIR
+
+tests:
 	@result=0; \
 	$(MAKE) script-tests || result=1; \
 	$(MAKE) smt-tests || result=1; \
 	$(MAKE) junit-tests || result=1; \
 	exit $$result
-
-## Generate jsmtlib.properties from $$SOLVERS when running outside CI.
-## In CI the jsmtlib-test action writes this file directly before running make.
-## Sources ./setup to pick up the SOLVERS default when the env var is not set.
-local-setup:
-	@if [ -z "$$CI" ]; then \
-		source ./setup; \
-	fi
 
 script-tests:
 	bash ./runscripts
@@ -41,7 +41,7 @@ build:
 	$(MAKE) -C ../SMT build
 
 ## Run SMT tests and script tests with JaCoCo coverage instrumentation
-cov-test: local-setup
+cov-test:
 	@result=0; \
 	COV_CLASSES=$(COV_CLASSES) COV= bash ./runscripts; ret=$$?; [ $$ret -gt 128 ] && exit $$ret; [ $$ret -ne 0 ] && result=1; \
 	COV_CLASSES=$(COV_CLASSES) COV= bash ./runtests;   ret=$$?; [ $$ret -gt 128 ] && exit $$ret; [ $$ret -ne 0 ] && result=1; \
