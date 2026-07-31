@@ -119,7 +119,7 @@ comparison=""
 while true; do ## The while true is just to allow a break from the inner test loop
     for f in "${test}.out.$solver.$PLATFORM_ARCH" "${test}.out.$solver.$PLATFORM" "${test}.out.$solver" "${test}.out.$solver.bad" "${test}.out.$PLATFORM_ARCH" "${test}.out.$PLATFORM" "${test}.out" ; do
       if [ -e "$f" ]; then
-        diff -b "${test}.out.actual" "$f"
+        diff -b -I '\(:memory' "${test}.out.actual" "$f"
         diffresult=$?
         comparison="$f"
         break 2

@@ -1,0 +1,1 @@
+Linux z3-4.3.1 closes the stream after certain BV type errors, producing "Stream closed" instead of the expected per-error messages.

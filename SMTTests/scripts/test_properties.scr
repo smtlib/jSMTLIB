@@ -73,7 +73,7 @@ rm "$TMPDIR/jsmtlib.properties"
 # break normal operation.)
 # ---------------------------------------------------------------------------
 echo "Test 4: correct SMT-LIB output with jar-only classpath"
-out=$(cd "$TMPDIR" && java -cp "$SMT_JAR" org.smtlib.SMT --solver test "$TMPDIR/minimal.tst" 2>/dev/null)
+out=$(cd "$TMPDIR" && java -cp "$SMT_JAR" org.smtlib.SMT --solver test "$TMPDIR/minimal.tst" 2>/dev/null | tr -d '\r')
 # set-logic and exit with default print-success=true produce two "success" lines
 expected="$(printf 'success\nsuccess')"
 if [ "$out" = "$expected" ]; then

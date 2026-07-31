@@ -8,7 +8,13 @@ fi
 source setup
 rm -f tempout
 
-solvers="test z3_4_3"
+# Windows ships z3-4.3.2.exe (not 4.3.1), which differs in error messages, version
+# strings, and other behaviors; skip z3_4_3 there and test only the built-in solver.
+if [[ "$PLATFORM" == "windows" ]]; then
+    solvers="test"
+else
+    solvers="test z3_4_3"
+fi
 
 while [[ $# -gt 0 && "$1" == --* ]]; do
     case "$1" in

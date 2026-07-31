@@ -1,0 +1,2 @@
+(error "Setting the value of a pre-defined keyword is not permitted: :all-statistics")
+(error "Setting the value of a pre-defined keyword is not permitted: :reason-unknown")
