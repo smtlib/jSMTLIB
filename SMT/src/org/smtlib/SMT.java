@@ -789,7 +789,7 @@ public class SMT {
 	 */
 	static /*@Nullable*/ String resolveExecutablePath(/*@Nullable*/ String exec, /*@Nullable*/ String solverDir) {
 		if (exec == null || new File(exec).isAbsolute()) return exec;
-		if (solverDir != null && !solverDir.isEmpty()) return solverDir + File.separator + exec;
+		if (solverDir != null && !solverDir.isEmpty()) return solverDir + "/" + exec;
 		return exec; // rely on PATH
 	}
 

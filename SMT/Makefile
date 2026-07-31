@@ -10,7 +10,7 @@ release:
 
 clean:
 	rm -rf bin/ doc/ temp/
-	rm -f jSMTLIB.jar jSMTLIB.tar.gz jSMTLIB-*.jar
+	rm -f jSMTLIB.jar jSMTLIB-sources.jar jSMTLIB.tar.gz jSMTLIB-*.jar
 	rm -f src/org/smtlib/resources/version.properties
 
 test:

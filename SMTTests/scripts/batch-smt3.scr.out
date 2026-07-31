@@ -1,1 +1,1 @@
-(error "Problem in starting or running simplify: Cannot run program ""../../OpenJML21/Solvers/Solvers-macos/C:/cygwin/home/dcok/mybin/simplify.exe"": error=2, No such file or directory")
+(error "Problem in starting or running simplify: Cannot run program ""$SOLVERS/C:/cygwin/home/dcok/mybin/simplify.exe"": error=2, No such file or directory")
