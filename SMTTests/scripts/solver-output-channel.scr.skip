@@ -1,0 +1,1 @@
+Skipped: tests solver binaries directly; output depends on solver versions/OS and is not portable across CI platforms

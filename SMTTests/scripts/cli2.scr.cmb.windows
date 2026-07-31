@@ -1,0 +1,3 @@
+Could not find file: zzz Exception: java.io.FileNotFoundException: zzz (The system cannot find the file specified)
+#reading properties (class path) from jar:file:$JAR_INSTALL/jSMTLIB.jar!/jsmtlib.properties
+Could not find file: zzz Exception: java.io.FileNotFoundException: zzz (The system cannot find the file specified)

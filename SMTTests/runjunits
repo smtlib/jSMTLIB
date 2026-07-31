@@ -13,7 +13,15 @@ JUNIT_JAR="lsp/libs/junit-4.13.2.jar"
 HAMCREST_JAR="lsp/libs/hamcrest-core-1.3.jar"
 SMT_JAR="${COV_CLASSES:-../SMT/jSMTLIB.jar}"
 TEST_BIN="bin"
-CP="${SMT_JAR}:${JUNIT_JAR}:${HAMCREST_JAR}:${TEST_BIN}"
+
+# Windows Java requires ; as classpath separator and Windows-style paths.
+_p=$(uname -s | tr '[:upper:]' '[:lower:]')
+if [[ "$_p" == mingw* || "$_p" == msys* || "$_p" == cygwin* ]]; then
+    _w() { cygpath -w "$1"; }
+    CP="$(_w "$SMT_JAR");$(_w "$JUNIT_JAR");$(_w "$HAMCREST_JAR");$(_w "$TEST_BIN")"
+else
+    CP="${SMT_JAR}:${JUNIT_JAR}:${HAMCREST_JAR}:${TEST_BIN}"
+fi
 
 ## Copy .smt2 resource files so they are on the classpath at runtime.
 mkdir -p "${TEST_BIN}/org/smtlib/test"

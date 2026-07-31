@@ -51,8 +51,8 @@ fi
 if [[ "$PLATFORM" == "windows" ]]; then
     _w_jar=$(cygpath -w "$SMT_JAR")
     _w_classes=${COV_CLASSES:+$(cygpath -w "$COV_CLASSES")}
-    export SMT_CMD="java ${COV_AGENT:-} -cp ${_w_classes:-$_w_jar} org.smtlib.SMT"
-    export SMT_DRIVER="java ${COV_AGENT:-} -cp ${_w_classes:-$_w_jar} org.smtlib.Driver"
+    export SMT_CMD="java ${COV_AGENT:-} -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -cp ${_w_classes:-$_w_jar} org.smtlib.SMT"
+    export SMT_DRIVER="java ${COV_AGENT:-} -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -cp ${_w_classes:-$_w_jar} org.smtlib.Driver"
 else
     export SMT_CMD="java ${COV_AGENT:-} -cp ${COV_CLASSES:-$SMT_JAR} org.smtlib.SMT"
     export SMT_DRIVER="java ${COV_AGENT:-} -cp ${COV_CLASSES:-$SMT_JAR} org.smtlib.Driver"

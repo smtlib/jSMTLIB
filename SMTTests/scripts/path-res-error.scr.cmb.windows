@@ -1,0 +1,2 @@
+(error "Failed to start process nonexistent-solver-xyz : Cannot run program ""nonexistent-solver-xyz"": CreateProcess error=2, The system cannot find the file specified")
+(error "z3_4_3 failed to start: Failed to start process nonexistent-solver-xyz : Cannot run program ""nonexistent-solver-xyz"": CreateProcess error=2, The system cannot find the file specified")
