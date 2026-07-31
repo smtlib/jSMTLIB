@@ -5,8 +5,6 @@
  */
 package org.smtlib.command;
 
-import java.io.IOException;
-
 import org.smtlib.ICommand.Iset_logic;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IParser.ParserException;
@@ -15,7 +13,6 @@ import org.smtlib.ISolver;
 import org.smtlib.IVisitor;
 import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
-import org.smtlib.sexpr.Printer;
 
 /** Implements the set-logic command. */
 public class C_set_logic extends Command implements Iset_logic {

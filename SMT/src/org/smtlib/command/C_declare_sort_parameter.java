@@ -8,7 +8,6 @@ package org.smtlib.command;
 import java.io.IOException;
 
 import org.smtlib.ICommand.Ideclare_sort_parameter;
-import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.IResponse;
@@ -16,9 +15,8 @@ import org.smtlib.ISolver;
 import org.smtlib.IVisitor;
 import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
-import org.smtlib.sexpr.Printer;
 
-/** Implements the declare-sort-parameter command (a jSMTLIB extension to declare a sort parameter) */
+/** Implements the declare-sort-parameter command */
 public class C_declare_sort_parameter extends Command implements Ideclare_sort_parameter{
 	/** The command name */
 	public static final String commandName = "declare-sort-parameter";
