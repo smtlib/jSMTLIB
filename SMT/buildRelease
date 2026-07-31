@@ -17,7 +17,7 @@ mkdir temp
 echo Compiling sources
 mkdir -p bin
 find src -name "*.java" > temp/sources.txt
-"$JAVA_HOME/bin/javac" -d bin @temp/sources.txt
+"$JAVA_HOME/bin/javac" -Xdoclint:all,-missing -d bin @temp/sources.txt
 mkdir -p bin/org/smtlib/resources
 cp src/org/smtlib/resources/version.properties bin/org/smtlib/resources/version.properties
 cp logics/*.smt2 bin/
@@ -28,13 +28,6 @@ rm -f jsmtlib.properties
 cp ../jsmtlib.properties .
 "$JAVA_HOME/bin/jar" -cfm ../jSMTLIB.jar ../temp/manifest .
 cd ..
-##ant -f javadoc.xml
-##cp ../../../../texstuff/papers/SMTLIBUserGuide/SMTLIBUserGuide.pdf jSMTLIBUserGuide.pdf
-##tar cf jSMTLIB.tar jSMTLIB.jar LICENSE jSMTLIBUserGuide.pdf jsmtlib.properties-template doc
-##rm -f jSMTLIBUserGuide.pdf
-##tar tvf jSMTLIB.tar
-##rm -f jSMTLIB.tar.gz
-##gzip jSMTLIB.tar
-
-##rm -rf temp
+"$JAVA_HOME/bin/jar" -cf jSMTLIB-sources.jar -C src .
+make javadoc
 echo Build complete

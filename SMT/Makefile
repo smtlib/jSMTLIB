@@ -23,6 +23,7 @@ javadoc:
 	$(JAVADOC) -d doc \
 	    -protected -author -version -use -splitindex \
 	    -source 21 -sourcepath src \
+	    -Xdoclint:all,-missing \
 	    -doctitle "jSMTLIB API documentation" \
 	    -subpackages org.smtlib \
 	    src/APIExample.java

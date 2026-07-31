@@ -6,7 +6,7 @@ SHELL = /bin/bash
 ##   make cov-test cov-report COV_CLASSES=../SMT/bin
 COV_CLASSES ?= ../SMT/jSMTLIB.jar
 
-.PHONY: test clean script-tests smt-tests junit-tests build cov-test cov-clean cov-report cov-show
+.PHONY: test tests clean script-tests smt-tests junit-tests build cov-test cov-clean cov-report cov-show
 
 ## Resolve the platform-appropriate solver directory, honouring any value already in the
 ## environment (CI sets it via GITHUB_ENV before invoking make; developers can export it
@@ -16,7 +16,7 @@ ifndef SMT_SOLVER_DIR
 endif
 export SMT_SOLVER_DIR
 
-tests:
+test tests:
 	@result=0; \
 	$(MAKE) script-tests || result=1; \
 	$(MAKE) smt-tests || result=1; \

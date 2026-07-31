@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project default="javadoc">
-    <target name="javadoc">
-        <javadoc access="protected" author="true" destdir="doc" doctitle="jSMTLIB API documentation" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="org.smtlib.impl,org.smtlib.command,org.smtlib.ext,org.smtlib.solvers,org.smtlib.logic,org.smtlib,org.smtlib.sexpr" source="21" sourcefiles="src/APIExample.java" sourcepath="src" splitindex="true" use="true" version="true"/>
-    </target>
-</project>

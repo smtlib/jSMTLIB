@@ -13,4 +13,6 @@ runs:
         cd jSMTLIB/SMT
         ./buildRelease
         cp jSMTLIB.jar $GITHUB_WORKSPACE/jSMTLIB.jar
+        cp jSMTLIB-sources.jar $GITHUB_WORKSPACE/jSMTLIB-sources.jar
         echo "Built jSMTLIB.jar ($(wc -c < jSMTLIB.jar) bytes)"
+        echo "Built jSMTLIB-sources.jar ($(wc -c < jSMTLIB-sources.jar) bytes)"
