@@ -62,13 +62,14 @@ public class SolverProcess {
 	/** A place (e.g., log file), if non-null, to write all outbound communications for diagnostic purposes */
 	public /*@Nullable*/Writer log;
 	
+	static java.io.PrintWriter pw = null;
+
 	/** Constructs a SolverProcess object, without actually starting the process as yet.
 	 * @param cmd the command-line that will launch the desired process
-	 * @param endMarker text that marks the end of text returned from the process, e.g. the end of the 
+	 * @param endMarker text that marks the end of text returned from the process, e.g. the end of the
 	 * prompt for new input
 	 * @param logfile if not null, the name of a file to log communications to, for diagnostic purposes
 	 */
-	static java.io.PrintWriter pw = null;
 	public SolverProcess(String[] cmd, String endMarker, /*@Nullable*/String logfile) {
 		this.endMarker = endMarker;
 		try {
