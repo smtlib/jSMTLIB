@@ -1,7 +1,4 @@
 success
 (error "The ALL logic requires SMT-LIB V2.5 or later")
 success
-  Fran�ois Bobot, David Cok, Alberto Griggio, Florian Lapschies, Leonardo de 
-      ^
-(error "Invalid character: ASCII(decimal) = 65533")
 success

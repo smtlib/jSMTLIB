@@ -1,0 +1,115 @@
+##EXITCODE 0
+# Tests that logic and theory validation errors are reported correctly.
+#
+# Four cases are exercised:
+#   1. Logic file declares the wrong logic name
+#   2. Logic file requires a newer SMT-LIB version than configured
+#   3. Theory file declares the wrong theory name
+#   4. Theory file requires a newer SMT-LIB version than configured
+#
+# A custom file is placed in a temp directory and -L is used to make
+# jSMTLIB find that file before falling back to the jar-embedded copies.
+
+_tmpdir=$(mktemp -d)
+trap 'rm -rf "$_tmpdir"' EXIT
+
+PASS=0
+FAIL=0
+
+pass() { echo "PASS: $1"; PASS=$((PASS + 1)); }
+fail() { echo "FAIL: $1"; FAIL=$((FAIL + 1)); if [ -n "$2" ]; then echo "  $2"; fi; }
+
+# ---------------------------------------------------------------------------
+# Test 1: Logic name mismatch
+# QF_LIA.smt2 declares logic QF_UF instead of QF_LIA.
+# ---------------------------------------------------------------------------
+cat > "$_tmpdir/QF_LIA.smt2" <<'EOF'
+(logic QF_UF
+ :smt-lib-version 2.0
+ :theories (Core)
+ :language "Test"
+)
+EOF
+out=$($SMT_CMD -L "$_tmpdir" --solver test --text "(set-logic QF_LIA)" 2>/dev/null)
+if echo "$out" | grep -qF "(error \"Logic file for QF_LIA declares logic name 'QF_UF'\")"; then
+    pass "logic name mismatch is detected"
+else
+    fail "logic name mismatch not detected" "got: $out"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 2: Logic version too new
+# QF_UF.smt2 declares :smt-lib-version 2.6 but the configured version is V2.5.
+# ---------------------------------------------------------------------------
+cat > "$_tmpdir/QF_UF.smt2" <<'EOF'
+(logic QF_UF
+ :smt-lib-version 2.6
+ :theories (Core)
+ :language "Test"
+)
+EOF
+cat > "$_tmpdir/t2.smt2" <<'EOF'
+(set-info :smt-lib-version "V2.5")
+(set-logic QF_UF)
+EOF
+out=$($SMT_CMD -L "$_tmpdir" --solver test "$_tmpdir/t2.smt2" 2>/dev/null)
+if echo "$out" | grep -qF "(error \"Logic QF_UF requires SMT-LIB 2.6 but the configured version is older\")"; then
+    pass "logic version check detected"
+else
+    fail "logic version check not detected" "got: $out"
+fi
+
+# Remove the QF_UF override so tests 3 and 4 load the jar's QF_UF.smt2,
+# which in turn loads Core.smt2 from the theory directory.
+rm "$_tmpdir/QF_UF.smt2"
+
+# ---------------------------------------------------------------------------
+# Test 3: Theory name mismatch
+# Core.smt2 declares theory Ints instead of Core.
+# The jar's QF_UF logic references the Core theory, so -L redirects that load.
+# ---------------------------------------------------------------------------
+cat > "$_tmpdir/Core.smt2" <<'EOF'
+(theory Ints
+ :smt-lib-version 2.0
+ :sorts ((Bool 0))
+ :funs ((true Bool) (false Bool))
+)
+EOF
+out=$($SMT_CMD -L "$_tmpdir" --solver test --text "(set-logic QF_UF)" 2>/dev/null)
+if echo "$out" | grep -qF "(error \"Theory file for Core declares theory name 'Ints'\")"; then
+    pass "theory name mismatch is detected"
+else
+    fail "theory name mismatch not detected" "got: $out"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 4: Theory version too new
+# Core.smt2 declares :smt-lib-version 2.6 but the configured version is V2.5.
+# ---------------------------------------------------------------------------
+cat > "$_tmpdir/Core.smt2" <<'EOF'
+(theory Core
+ :smt-lib-version 2.6
+ :sorts ((Bool 0))
+ :funs ((true Bool) (false Bool))
+)
+EOF
+cat > "$_tmpdir/t4.smt2" <<'EOF'
+(set-info :smt-lib-version "V2.5")
+(set-logic QF_UF)
+EOF
+out=$($SMT_CMD -L "$_tmpdir" --solver test "$_tmpdir/t4.smt2" 2>/dev/null)
+if echo "$out" | grep -qF "(error \"Theory Core requires SMT-LIB 2.6 but the configured version is older\")"; then
+    pass "theory version check detected"
+else
+    fail "theory version check not detected" "got: $out"
+fi
+
+# ---------------------------------------------------------------------------
+echo ""
+if [ $FAIL -eq 0 ]; then
+    echo "All $PASS logic/theory validation tests PASSED"
+    exit 0
+else
+    echo "$FAIL FAILURES, $PASS passed"
+    exit 1
+fi

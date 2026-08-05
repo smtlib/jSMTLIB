@@ -1,0 +1,10 @@
+success
+success
+success
+success
+success
+success
+(error "The @ function requires exactly two arguments")
+(error "The @ function requires exactly two arguments")
+(error "The first argument of @ must have a -> sort, not A")
+(error "The second argument of @ must match the domain sort: B vs. A")

@@ -680,12 +680,16 @@ public abstract class SMTExpr implements IExpr {
 		/** The name of the theory */
 		protected ISymbol theoryName;
 
-		/** The theory attributes */
+		/** The theory attributes — last occurrence wins for duplicate keywords */
 		protected Map<IKeyword,IAttribute<?>> attributes = new HashMap<IKeyword,IAttribute<?>>();
+
+		/** All theory attributes in source order, preserving duplicates */
+		protected List<IAttribute<?>> attributesList = new ArrayList<>();
 
 		/** Creates a theory */
 		public Theory(ISymbol name, Collection<IAttribute<?>> attributes) {
 			this.theoryName = name;
+			this.attributesList.addAll(attributes);
 			for (IAttribute<?> attr: attributes) {
 				this.attributes.put(attr.keyword(),attr);
 			}
@@ -699,12 +703,24 @@ public abstract class SMTExpr implements IExpr {
 		@Override
 		public Map<IKeyword,IAttribute<?>> attributes() { return attributes; }
 
-		/** The value of a given attribute */
+		/** The value of a given attribute (last occurrence wins for duplicate keywords) */
 		@Override
 		public /*@Nullable*/ IAttributeValue value(IKeyword keyword) {
 			IAttribute<?> attr = attributes.get(keyword);
 			if (attr == null) return null;
 			return attr.attrValue();
+		}
+
+		/** All values for a given attribute keyword, in source order */
+		@Override
+		public List<IAttributeValue> values(IKeyword keyword) {
+			List<IAttributeValue> result = new ArrayList<>();
+			for (IAttribute<?> attr : attributesList) {
+				if (attr.keyword().equals(keyword)) {
+					result.add(attr.attrValue());
+				}
+			}
+			return result;
 		}
 
 		@Override

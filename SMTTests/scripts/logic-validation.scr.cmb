@@ -1,0 +1,6 @@
+PASS: logic name mismatch is detected
+PASS: logic version check detected
+PASS: theory name mismatch is detected
+PASS: theory version check detected
+
+All 4 logic/theory validation tests PASSED

@@ -441,7 +441,26 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			// FIXME - this is just here until we get par types implemented; it also should depend on which theories are installed
 			sort1 = ((ISort.IApplication)sort1).parameters().get(1);
 			return save(e,sort1);
-		} 
+		}
+		if (symTable.hoTheorySet && name.equals("@")) {
+			// FIXME - this is just here until we get par types implemented
+			if (argSorts.size() != 2) {
+				error("The @ function requires exactly two arguments",head.pos());
+				return null;
+			}
+			ISort sort1 = argSorts.get(0);
+			if (!(sort1 instanceof ISort.IApplication) ||
+					!((ISort.IApplication)sort1).family().headSymbol().toString().equals("->")) {
+				error("The first argument of @ must have a -> sort, not " + smtConfig.defaultPrinter.toString(sort1),e.pos());
+				return null;
+			}
+			ISort.IApplication asort = (ISort.IApplication)sort1;
+			if (!asort.parameters().get(0).equals(argSorts.get(1))) {
+				error("The second argument of @ must match the domain sort: " + smtConfig.defaultPrinter.toString(argSorts.get(1)) + " vs. " + smtConfig.defaultPrinter.toString(asort.parameters().get(0)),e.pos());
+				return null;
+			}
+			return save(e,asort.parameters().get(1));
+		}
 		boolean useext = true;
 		if (bvperhaps) {
 			if (name.equals("bvnot") || name.equals("bvneg")) {

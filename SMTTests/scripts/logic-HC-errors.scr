@@ -1,0 +1,11 @@
+##EXITCODE 1
+$SMT_CMD -L scripts:../SMT/logics --text '(set-logic HC)
+(declare-sort A 0)
+(declare-sort B 0)
+(declare-const f (-> A B))
+(declare-const x A)
+(declare-const y B)
+(assert (= (@ f) y))
+(assert (= (@ f x y) y))
+(assert (= (@ x f) y))
+(assert (= (@ f y) y))'

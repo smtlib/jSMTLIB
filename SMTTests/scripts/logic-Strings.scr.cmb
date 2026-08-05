@@ -1,0 +1,49 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(assert (= ((_ re.^ 3) r1) r))
+           ^^^^^^^^^^^^^^^
+(error "Unknown predicate symbol (_ re.^ 3) with argument types RegLan")
+(assert (= ((_ re.loop 2 5) r1) r))
+           ^^^^^^^^^^^^^^^^^^^^
+(error "Unknown predicate symbol (_ re.loop 2 5) with argument types RegLan")
+success
+success
+success
+success
+success

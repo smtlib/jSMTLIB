@@ -29,5 +29,5 @@ cp ../jsmtlib.properties .
 "$JAVA_HOME/bin/jar" -cfm ../jSMTLIB.jar ../temp/manifest .
 cd ..
 "$JAVA_HOME/bin/jar" -cf jSMTLIB-sources.jar -C src .
-make javadoc
+make javadoc 2>&1 | grep -v Generating
 echo Build complete

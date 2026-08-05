@@ -37,6 +37,10 @@ public class SymbolTable {
 	/** true if the RealsInts theory is set (which allows implicit promotion of ints to reals) */
 	public boolean realsIntsTheorySet = false;
 
+	/** true if the HO-Core theory has been set */
+	// Used only while we have @ built in
+	public boolean hoTheorySet = false;
+
 	/** Maps each datatype sort name to its constructors (in declaration order); populated by declare-datatype/declare-datatypes */
 	public Map<String, List<ISymbol>> datatypeConstructors = new HashMap<>();
 

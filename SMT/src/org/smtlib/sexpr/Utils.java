@@ -22,33 +22,19 @@ import org.smtlib.*;
  */
 public class Utils extends org.smtlib.Utils {
 	
-	/** Concrete syntax for the logic token */
-	public static final String LOGIC = "logic";
-	/** Concrete syntax for the theory token */
-	public static final String THEORY = "theory";
-	/** Concrete syntax for the forall token */
-	public static final String FORALL = "forall";
-	/** Concrete syntax for the exists token */
-	public static final String EXISTS = "exists";
-	/** Concrete syntax for the let token */
-	public static final String LET = "let";
 	/** Concrete syntax for the match token */
 	public static final String MATCH = "match";
-	/** Concrete syntax for the token that starts a parameterized identifier*/
-	public static final String UNDERSCORE = "_";
-	/** Concrete syntax for the token that starts a named expression */
-	public static final String NAMED_EXPR = "!";
-	/** Concrete syntax for the as token */
-	public static final String AS = "as";
-	/** Concrete syntax for the par token */
-	public static final String PAR = "par";
 	/** Concrete syntax for the special NUMERAL token */
 	public static final String NUMERAL = "NUMERAL";
 	/** Concrete syntax for the special DECIMAL token */
 	public static final String DECIMAL = "DECIMAL";
 	/** Concrete syntax for the special STRING token */
 	public static final String STRING = "STRING";
-	
+	/** Concrete syntax for the token that starts a parameterized identifier*/
+	public static final String UNDERSCORE = "_";
+	/** Concrete syntax for the token that starts a named expression */
+	public static final String NAMED_EXPR = "!";
+
 
 	/** A list of reserved words that are not commands */
 	static public Set<String> reservedWordsNotCommands = new HashSet<String>();
@@ -132,7 +118,39 @@ public class Utils extends org.smtlib.Utils {
 				// TODO - do we want to use the canonical value of the theory name or some representation?
 				ISymbol theoryName = (IExpr.ISymbol)theory;
 				if (CORE.equals(theoryName.value())) continue;
-				res = loadTheory(theoryName.value(),symTable);
+				if ("ALL".equals(logicName)) {
+					// For ALL: parse the theory to check its version; skip theories that
+					// require a newer SMT-LIB version than the one configured.
+					boolean savedRelax = smtConfig.relax;
+					String savedSmtlib = SMT.Configuration.smtlib;
+					smtConfig.relax = true; // suppress version-mismatch exception in findTheory
+					SMT.Configuration.smtlib = null; // use latest lexer rules to read the theory file
+					ITheory th;
+					try {
+						th = findTheory(theoryName.value(), smtConfig.logicPath);
+					} catch (SMTLIBException e) {
+						res = e.errorResponse;
+						return res;
+					} finally {
+						smtConfig.relax = savedRelax;
+						SMT.Configuration.smtlib = savedSmtlib;
+					}
+					IAttributeValue tv = th.value(SMTLIB_VERSION);
+					if (tv instanceof IDecimal) {
+						SMT.Configuration.SMTLIB ver = SMT.Configuration.SMTLIB.find("V" + tv.toString());
+						if (ver != null && !smtConfig.atLeastVersion(ver)) continue;
+					}
+					res = loadTheory(th, symTable);
+					if (res == null) {
+						String tname = th.theoryName().value();
+						if (tname.equals("ArraysEx")) symTable.arrayTheorySet = true;
+						if (tname.equals("Fixed_Size_BitVectors") || tname.equals("FixedSizeBitVectors")) symTable.bitVectorTheorySet = true;
+						if (tname.equals("Reals_Ints")) symTable.realsIntsTheorySet = true;
+						if (tname.equals("HO-Core")) symTable.hoTheorySet = true;
+					}
+				} else {
+					res = loadTheory(theoryName.value(), symTable);
+				}
 				if (res != null) return res;
 			}
 		} finally {
@@ -159,13 +177,12 @@ public class Utils extends org.smtlib.Utils {
 		if (!(version instanceof IDecimal)) return smtConfig.responseFactory.error("The value of " + SMTLIB_VERSION + " must be expressed as a decimal");
 		if (version.toString().compareTo(SMTLIB_VERSION_CURRENT) > 0) return smtConfig.responseFactory.error("Only implemented version " + SMTLIB_VERSION_CURRENT + " of smtConfig-lib, not " + version);
 
-		// Find and install any Sorts the theory defines
-		Object o = theory.value(SORTS);
-		if (o != null) {
-			if (!(o instanceof ISexpr.ISeq)) {
-				return smtConfig.responseFactory.error("The list of sorts in theory " + theoryName + " is ill-formed: " + o);
+		// Find and install any Sorts the theory defines (handles multiple :sorts attributes)
+		for (IAttributeValue sortsVal : theory.values(SORTS)) {
+			if (!(sortsVal instanceof ISexpr.ISeq)) {
+				return smtConfig.responseFactory.error("The list of sorts in theory " + theoryName + " is ill-formed: " + sortsVal);
 			}
-			Iterator<ISexpr> iter = ((ISexpr.ISeq)o).sexprs().iterator();
+			Iterator<ISexpr> iter = ((ISexpr.ISeq)sortsVal).sexprs().iterator();
 			while (iter.hasNext()) {
 				ISexpr.ISeq sx = (ISexpr.ISeq)iter.next(); // FIXME - check casts and number here and on subsequent lines
 				IExpr.ISymbol name = ((IExpr.ISymbol)sx.sexprs().get(0));
@@ -174,56 +191,12 @@ public class Utils extends org.smtlib.Utils {
 				if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Added sort " + name);
 			}
 		}
-		
-		// Find and install any functions and constants the theory defines
-		o = theory.value(FUNS);
-		if (o != null) {
-			if (!(o instanceof ISexpr.ISeq)) return smtConfig.responseFactory.error("Expected a sequence of function declarations instead of " + o);
-			Iterator<ISexpr> iter = ((ISexpr.ISeq)o).sexprs().iterator();
-			while (iter.hasNext()) {
-				ISexpr.ISeq sx = (ISexpr.ISeq)iter.next(); // FIXME - should check
-				IExpr.ISymbol sym = (IExpr.ISymbol)sx.sexprs().get(0); // FIXME - should check here too
-				String name = sym.value(); // FIXME - should check here too
-				if (name.equals(PAR)) continue; // FIXME - not handling parameterized as yet
-				Iterator<ISexpr> iter2 = sx.sexprs().iterator();
-				iter2.next();
-				List<ISort> sorts = new LinkedList<ISort>();
-				ISexpr key = null;
-				while (iter2.hasNext()) {
-					key = iter2.next();
-					if (key instanceof IExpr.IKeyword) break; // end of sorts, start of attributes
-					ISort ss = asSort(key, symTable);
-					if (ss == null) {
-						return smtConfig.responseFactory.error("Unknown sort given: " + key);
-					}
-					sorts.add(ss);
-					key = null;
-				}
-				ISort result = sorts.remove(sorts.size()-1); // The result sort is the last one
-				List<IExpr.IAttribute<?>> attrs = new LinkedList<IExpr.IAttribute<?>>();
-				if (key != null) while (true) {
-					if (iter2.hasNext()) {
-						ISexpr key2 = iter2.next();
-						if (key2 instanceof IExpr.IKeyword) {
-							attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword)key,null),key.pos()));
-							key = key2;
-						} else {
-							attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword)key,key2),
-										new Pos(key.pos().charStart(),key2.pos().charEnd(),key.pos().source()))); // FIXME - factory?
-							if (!iter2.hasNext()) break;
-							key = iter2.next();
-						}
-					} else {
-						attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword)key,null),key.pos()));
-						break;
-					}
-				}
-				ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(sorts.toArray(new ISort[sorts.size()]),result);
 
-				boolean b = symTable.add(new SymbolTable.Entry(sym,fcnSort,attrs),true);
-				if (!b) return smtConfig.responseFactory.error("Failed to add to symbol table: " + smtConfig.defaultPrinter.toString(sym) + " " + smtConfig.defaultPrinter.toString(fcnSort));
-				if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Added symbol " + name);
-			}
+		// Find and install any functions and constants the theory defines
+		// Multiple :funs attributes are all processed
+		for (IAttributeValue funsVal : theory.values(FUNS)) {
+			IResponse r = loadFuns(funsVal, theoryName, symTable);
+			if (r != null) return r;
 		}
 		if (theoryName.equals("ArraysEx")) {
 			ISort.IFcnSort fs = smtConfig.sortFactory.createFcnSort(new ISort[0],null);
@@ -248,6 +221,61 @@ public class Utils extends org.smtlib.Utils {
 	 * @param symtab the symbol table to use for symbol lookup
 	 * @return null or the corresponding Sort
 	 */
+	/** Loads a single :funs or :fun attribute value into the symbol table. Returns an error response or null on success. */
+	private /*@Nullable*/IResponse loadFuns(IAttributeValue funsVal, String theoryName, SymbolTable symTable) {
+		if (!(funsVal instanceof ISexpr.ISeq)) return smtConfig.responseFactory.error("Expected a sequence of function declarations instead of " + funsVal);
+		Iterator<ISexpr> iter = ((ISexpr.ISeq)funsVal).sexprs().iterator();
+		while (iter.hasNext()) {
+			ISexpr next = iter.next();
+			if (!(next instanceof ISexpr.ISeq)) continue; // skip embedded keywords/strings (e.g. :notes)
+			ISexpr.ISeq sx = (ISexpr.ISeq)next;
+			ISexpr first = sx.sexprs().get(0);
+			if (!(first instanceof IExpr.ISymbol)) continue; // skip indexed identifiers like (_ re.^ n) — not yet supported
+			IExpr.ISymbol sym = (IExpr.ISymbol)first;
+			String name = sym.value();
+			if (name.equals(PAR)) continue; // FIXME - not handling parameterized as yet
+			Iterator<ISexpr> iter2 = sx.sexprs().iterator();
+			iter2.next();
+			List<ISort> sorts = new LinkedList<ISort>();
+			ISexpr key = null;
+			while (iter2.hasNext()) {
+				key = iter2.next();
+				if (key instanceof IExpr.IKeyword) break; // end of sorts, start of attributes
+				ISort ss = asSort(key, symTable);
+				if (ss == null) {
+					return smtConfig.responseFactory.error("Unknown sort given: " + key);
+				}
+				sorts.add(ss);
+				key = null;
+			}
+			ISort result = sorts.remove(sorts.size()-1); // The result sort is the last one
+			List<IExpr.IAttribute<?>> attrs = new LinkedList<IExpr.IAttribute<?>>();
+			if (key != null) while (true) {
+				if (iter2.hasNext()) {
+					ISexpr key2 = iter2.next();
+					if (key2 instanceof IExpr.IKeyword) {
+						attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword)key,null),key.pos()));
+						key = key2;
+					} else {
+						attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword)key,key2),
+									new Pos(key.pos().charStart(),key2.pos().charEnd(),key.pos().source()))); // FIXME - factory?
+						if (!iter2.hasNext()) break;
+						key = iter2.next();
+					}
+				} else {
+					attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword)key,null),key.pos()));
+					break;
+				}
+			}
+			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(sorts.toArray(new ISort[sorts.size()]),result);
+
+			boolean b = symTable.add(new SymbolTable.Entry(sym,fcnSort,attrs),true);
+			if (!b) return smtConfig.responseFactory.error("Failed to add to symbol table: " + smtConfig.defaultPrinter.toString(sym) + " " + smtConfig.defaultPrinter.toString(fcnSort));
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Added symbol " + name);
+		}
+		return null;
+	}
+
 	public /*@Nullable*/ISort asSort(ISexpr sexpr, SymbolTable symtab) {
 		if (sexpr instanceof IExpr.ISymbol) {
 			IExpr.ISymbol sym = (IExpr.ISymbol)sexpr; 

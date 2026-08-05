@@ -1,8 +1,10 @@
 (theory FixedSizeBitVectors
 
- :smt-lib-version 2.6
+ :smt-lib-version 2.7
+ :smt-lib-release "2024-07-21"
  :written_by "Silvio Ranise, Cesare Tinelli, and Clark Barrett"
  :date "2010-05-02"
+:last-updated "2025-09-09"
 
  :notes
   "This theory declaration defines a core theory for fixed-size bitvectors 

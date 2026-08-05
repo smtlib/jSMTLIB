@@ -143,6 +143,7 @@ public class Utils {
 	/** The version of SMT-LIB that is expected of theory and logic definitions */
 	public static final String SMTLIB_VERSION_20 = "2.0";
     public static final String SMTLIB_VERSION_25 = "2.5";
+    public static final String SMTLIB_VERSION_26 = "2.6";
     public static final String SMTLIB_VERSION_27 = "2.7";
 	public static       String SMTLIB_VERSION_CURRENT = SMTLIB_VERSION_27;
 
@@ -434,7 +435,22 @@ public class Utils {
 			}
 			source = config.smtFactory.createSource(config, input, null);
 			IParser p = config.smtFactory.createParser(config, source);
-			return p.parseLogic();
+			ILogic logic = p.parseLogic();
+			if (!name.equals(logic.logicName().value())) {
+				throw new Utils.SMTLIBException(smtConfig.responseFactory.error(
+						"Logic file for " + name + " declares logic name '"
+						+ logic.logicName().value() + "'"));
+			}
+			IAttributeValue logicVer = logic.value(SMTLIB_VERSION);
+			if (logicVer instanceof IExpr.IDecimal) {
+				SMTLIB tv = SMTLIB.find("V" + logicVer.toString());
+				if (tv != null && !smtConfig.atLeastVersion(tv) && !smtConfig.relax) {
+					throw new Utils.SMTLIBException(smtConfig.responseFactory.error(
+							"Logic " + name + " requires SMT-LIB " + logicVer
+							+ " but the configured version is older"));
+				}
+			}
+			return logic;
 		} catch (IParser.ParserException e) {
 			throw new Utils.SMTLIBException(smtConfig.responseFactory.error(
 					"Failed to parse the logic file for " + name + " in "
@@ -484,11 +500,28 @@ public class Utils {
 			}
 			source = config.smtFactory.createSource(config, input, null);
 			IParser p = config.smtFactory.createParser(config, source);
-			return p.parseTheory();
+			ITheory th = p.parseTheory();
+			if (!name.equals(th.theoryName().value())) {
+				throw new SMTLIBException(smtConfig.responseFactory.error(
+						"Theory file for " + name + " declares theory name '"
+						+ th.theoryName().value() + "'"));
+			}
+			IAttributeValue theoryVer = th.value(SMTLIB_VERSION);
+			if (theoryVer instanceof IExpr.IDecimal) {
+				SMTLIB tv = SMTLIB.find("V" + theoryVer.toString());
+				if (tv != null && !smtConfig.atLeastVersion(tv) && !smtConfig.relax) {
+					throw new SMTLIBException(smtConfig.responseFactory.error(
+							"Theory " + name + " requires SMT-LIB " + theoryVer
+							+ " but the configured version is older"));
+				}
+			}
+			return th;
 		} catch (IParser.ParserException e) {
 			throw new SMTLIBException(smtConfig.log.logError(smtConfig.responseFactory.error(
 					"Failed to parse the theory file " + name + " in " + path
 							+ ": " + e, e.pos())));
+		} catch (SMTLIBException e) {
+			throw e;
 		} catch (Exception e) {
 			throw new SMTLIBException(smtConfig.log.logError(smtConfig.responseFactory.error(
 					"Failed to read the theory file " + name + " in " + path
@@ -558,13 +591,19 @@ public class Utils {
 			return smtConfig.responseFactory.error("Failed to load logic", pos);
 		}
 
-		// The second element should be the name of the logic, if specified
 		if (!logicName.equals(sx.logicName().value())) {
-			return smtConfig.responseFactory
-					.error("Definition of logic "
-							+ logicName
-							+ " is mal-formed (internal name does not match file name): "
-							+ sx.logicName().value(), sx.logicName().pos());
+			return smtConfig.responseFactory.error(
+					"Logic file for " + logicName + " declares logic name '"
+					+ sx.logicName().value() + "'");
+		}
+		IAttributeValue logicVer = sx.value(SMTLIB_VERSION);
+		if (logicVer instanceof IExpr.IDecimal) {
+			SMTLIB tv = SMTLIB.find("V" + logicVer.toString());
+			if (tv != null && !smtConfig.atLeastVersion(tv) && !smtConfig.relax) {
+				return smtConfig.responseFactory.error(
+						"Logic " + logicName + " requires SMT-LIB " + logicVer
+						+ " but the configured version is older");
+			}
 		}
 
 		boolean g = smtConfig.globalDeclarations;
@@ -609,10 +648,12 @@ public class Utils {
 		if (response == null) {
 			if (theoryName.equals("ArraysEx"))
 				symTable.arrayTheorySet = true;
-			if (theoryName.equals("Fixed_Size_BitVectors"))
+			if (theoryName.equals("Fixed_Size_BitVectors") || theoryName.equals("FixedSizeBitVectors"))
 				symTable.bitVectorTheorySet = true;
 			if (theoryName.equals("Reals_Ints"))
 				symTable.realsIntsTheorySet = true;
+			if (theoryName.equals("HO-Core"))
+				symTable.hoTheorySet = true;
 		}
 		return response;
 	}
