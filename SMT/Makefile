@@ -5,12 +5,10 @@ build:
 
 release:
 	./buildRelease
-	cp jSMTLIB.jar jSMTLIB-$(shell cat version.txt).jar
-	@echo "Release JAR: jSMTLIB-$(shell cat version.txt).jar"
 
 clean:
 	rm -rf bin/ doc/ temp/
-	rm -f jSMTLIB.jar jSMTLIB-sources.jar jSMTLIB.tar.gz jSMTLIB-*.jar
+	rm -f jSMTLIB.jar jSMTLIB-sources.jar jSMTLIB.tar.gz
 	rm -f src/org/smtlib/resources/version.properties
 
 test:
