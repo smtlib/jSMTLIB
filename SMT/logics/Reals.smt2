@@ -1,9 +1,19 @@
 (theory Reals
 
- :smt-lib-version 2.0
- :written_by "Cesare Tinelli"
+ :smt-lib-version 2.7
+ :smt-lib-release "2024-07-21"
+ :written-by "Cesare Tinelli"
  :date "2010-04-17"
- 
+ :last-updated "2024-07-21"
+ :update-history
+ "Note: history only accounts for content changes, not release changes.
+  2024-07-21 Updated to Version 2.7.
+  2017-05-08 Fixed error in note on intepretation of (/t 0). 
+  2016-04-20 Minor formatting of notes fields.
+  2015-04-25 Updated to Version 2.5.
+  2012-06-20 Modified the definition of :value attribute to include abstract values
+             for irrational algebraic numbers.
+ "
  :sorts ((Real 0))
 
  :funs ((NUMERAL Real) 
@@ -21,6 +31,7 @@
 
  :values
  "The set of values for the sort Real consists of 
+  - an abstract value for each irrational algebraic number
   - all numerals
   - all terms of the form (- n) where n is a numeral other than 0
   - all terms of the form (/ m n) or (/ (- m) n) where 
@@ -50,8 +61,9 @@
   instance of Reals. However, the declaration imposes no constraints
   on their value. This means in particular that 
   - for every instance theory T and
-  - for every closed terms t1 and t2 of sort Real, 
-  there is a model of T that satisfies (= t1 (/ t2 0)). 
+  - for every value v (as defined in the :values attribute) and 
+    closed term t of sort Real,
+  there is a model of T that satisfies (= v (/ t 0)).
  "
 
  :notes
@@ -102,56 +114,54 @@
    (forall ((x Real) (y Real) (z Real))
     (= (* (+ x y) z) (+ (* x z) (* y z))))
 
-         - non-triviality
+   - non-triviality
    (distinct 0 1)
 
-         - all positive elements have a square root
+   - all positive elements have a square root
    (forall (x Real)
     (exists (y Real) (or (= x (* y y)) (= (- x) (* y y)))))
 
-         - axiom schemas for all n > 0
+    - axiom schemas for all n > 0
     (forall (x_1 Real) ... (x_n Real)
       (distinct (+ (* x_1 x_1) (+ ... (* x_n x_n)))
          (- 1))) 
 
-         - axiom schemas for all odd n > 0 where
-    (^ y n) abbreviates the n-fold product of y with itself
-     (forall (x_1 Real) ... (x_n Real)
-      (exists (y Real)
+    - axiom schemas for all odd n > 0 where (^ y n) abbreviates
+      the n-fold product of y with itself
+    (forall (x_1 Real) ... (x_n Real)
+     (exists (y Real)
       (= 0
          (+ (^ y n) (+ (* x_1 (^ y n-1)) (+  ... (+ (* x_{n-1} y) x_n)))))))
 
-         - reflexivity of <=
-         (forall (x Real) (<= x x))
+    - reflexivity of <=
+    (forall (x Real) (<= x x))
 
-         - antisymmetry of <=
-         (forall (x Real) (y Real)
-   (implies (and (<= x y) (<= y x))
-            (= x y)))
+    - antisymmetry of <=
+    (forall (x Real) (y Real)
+      (=> (and (<= x y) (<= y x)) 
+       (= x y)))
 
-         - transitivity of <=
-         (forall (x Real) (y Real) (z Real)
-   (implies (and (<= x y) (<= y z))
-            (<= x z)))
+    - transitivity of <=
+    (forall (x Real) (y Real) (z Real)
+     (=> (and (<= x y) (<= y z))
+      (<= x z)))
 
-         - totality of <=
-         (forall (x Real) (y Real)
-   (or (<= x y) (<= y x)))
+    - totality of <=
+    (forall (x Real) (y Real)
+      (or (<= x y) (<= y x)))
     
-         - monotonicity of <= wrt +
-         (forall (x Real) (y Real) (z Real)
-   (implies (<= x y) (<= (+ x z) (+ y z))))
+    - monotonicity of <= wrt +
+    (forall (x Real) (y Real) (z Real)
+      (=> (<= x y) (<= (+ x z) (+ y z))))
 
-         - monotonicity of <= wrt *
-         (forall (x Real) (y Real) (z Real)
-   (implies (and (<= x y) (<= 0 z))
-            (<= (* z x) (* z y))))
+    - monotonicity of <= wrt *
+    (forall (x Real) (y Real) (z Real)
+      (=> (and (<= x y) (<= 0 z))
+       (<= (* z x) (* z y))))
 
-         - definition of <
-         (forall (x Real) (y Real) 
-   (iff (< x y)
-        (and (<= x y) (distinct x y)))
-         )
+   - definition of <
+   (forall (x Real) (y Real) 
+     (= (< x y) (and (<= x y) (distinct x y))))
 
   References:
   1) W. Hodges. Model theory. Cambridge University Press, 1993.

@@ -1,9 +1,16 @@
 (theory Core
 
- :smt-lib-version 2.0
- :written_by "Cesare Tinelli"
+ :smt-lib-version 2.7
+ :smt-lib-release "2024-07-21"
+ :written-by "Cesare Tinelli"
  :date "2010-04-17"
- :last_modified "2010-08-15"
+ :last-updated "2024-07-21"
+ :update-history
+ "Note: history only accounts for content changes, not release changes.
+  2024-07-21 Updated to Version 2.7.
+  2015-04-25 Updated to Version 2.5.
+  2010-08-15 Minor fix.
+ "
 
  :sorts ((Bool 0))
 

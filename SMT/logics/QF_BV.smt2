@@ -1,14 +1,34 @@
 (logic QF_BV
 
-:smt-lib-version 2.0
-:written_by "Silvio Ranise, Cesare Tinelli, and Clark Barrett"
-:date "2010-05-02"
+ :smt-lib-version 2.7
+ :smt-lib-release "2024-07-21"
+ :written-by "Clark Barrett, Pascal Fontaine, Silvio Ranise, and Cesare Tinelli"
+ :date "2010-05-02"
+ :last-updated "2025-02-25"
+ :update-history
+ "Note: history only accounts for content changes, not release changes.
+  2025-02-25 Renamed and updated conversion operators to/from integers.
+  2024-07-21 Updated to Version 2.7.
+  2024-07-15 Added conversion operators between bitvectors and integers.
+  2024-07-14 Minor disambiguation.
+  2023-11-29 Added bvnego bvuaddo bvsaddo bvumulo bvsmulo bvusubo bvssubo bvsdivo
+  2020-05-20 bvxnor is no longer marked as left associative, as that is
+             inconsistent with its meaning as the negation of bvxor.
+  2017-06-13 Added that bvxor and bvxnor are left associative
+  2017-05-03 Updated to Version 2.6.  Division and remainder operations are no
+             longer undefiend when the second operand is 0.  See
+             the FixedSizeBitVectors theory definition for details.
+  2015-04-25 Updated to Version 2.5.
+  2013-06-24 Changed references to Fixed_Size_Bitvectors to FixedSizeBitVectors.
+  2011-06-15 Fixed bug in definition of bvsmod.  Previously, it gave an incorrect
+             answer when the divisor is negative and goes into the dividend evenly.
+ "
 
-:theories (Fixed_Size_BitVectors)
+:theories (FixedSizeBitVectors)
 
 :language
  "Closed quantifier-free formulas built over an arbitrary expansion of the
-  Fixed_Size_BitVectors signature with free constant symbols over the sorts
+  FixedSizeBitVectors signature with free constant symbols over the sorts
   (_ BitVec m) for 0 < m.  Formulas in ite terms must satisfy the same
   restriction as well, with the exception that they need not be closed 
   (because they may be in the scope of a let binder).
@@ -17,10 +37,9 @@
 :notes
  "For quick reference, the following is a brief and informal summary of the
   legal symbols in this logic and their meaning (formal definitions are found
-  either in the Fixed_Size_Bitvectors theory, or in the extensions below).
+  either in the FixedSizeBitvectors theory, or in the extensions below).
 
-  Defined in theory Fixed_Size_Bitvectors:
-
+  Defined in theory FixedSizeBitvectors:
 
     Bitvector constants:
 
@@ -50,9 +69,9 @@
     (bvmul (_ BitVec m) (_ BitVec m) (_ BitVec m))
       - multiplication modulo 2^m
     (bvudiv (_ BitVec m) (_ BitVec m) (_ BitVec m))
-      - unsigned division, truncating towards 0 (undefined if divisor is 0)
+      - unsigned division, truncating towards 0
     (bvurem (_ BitVec m) (_ BitVec m) (_ BitVec m))
-      - unsigned remainder from truncating division (undefined if divisor is 0)
+      - unsigned remainder from truncating division
     (bvshl (_ BitVec m) (_ BitVec m) (_ BitVec m))
       - shift left (equivalent to multiplication by 2^x where x is the value of
         the second argument)
@@ -61,6 +80,22 @@
         the value of the second argument)
     (bvult (_ BitVec m) (_ BitVec m) Bool)
       - binary predicate for unsigned less-than
+    (bvnego (_ BitVec m) Bool)
+      - overflow predicate for 2's complement unary minus
+    (bvuaddo (_ BitVec m) (_ BitVec m) Bool)
+      - overflow predicate for unsigned addition modulo 2^m
+    (bvsaddo (_ BitVec m) (_ BitVec m) Bool)
+      - overflow predicate for signed addition on m-bit 2's complement
+    (bvumulo (_ BitVec m) (_ BitVec m) Bool)
+      - overflow predicate for unsigned multiplication modulo 2^m
+    (bvsmulo (_ BitVec m) (_ BitVec m) Bool)
+      - overflow predicate for signed multiplication on m-bit 2's complement
+    (ubv_to_int (_ BitVec m) Int)
+      - convert bitvector, interpreted as unsigned, to its integer value
+    (sbv_to_int (_ BitVec m) Int)
+      - convert a bitvector, interpreted as signed, to its integer value
+    ((_ int_to_bv m) (Int) (_ BitVec m))
+      - convert an Integer to a bitvector
 
   Defined below:
 
@@ -88,6 +123,12 @@
       - Arithmetic shift right, like logical shift right except that the most
         significant bits of the result always copy the most significant
         bit of the first argument.
+    (bvusubo (_ BitVec m) (_ BitVec m) Bool)
+      - overflow predicate for unsigned subtraction modulo 2^m
+    (bvssubo (_ BitVec m) (_ BitVec m) Bool)
+      - overflow predicate for signed 2's complement m-bit subtraction
+    (bvsdivo (_ BitVec m) (_ BitVec m) Bool)
+      - overflow predicate for 2's complement signed division
 
     The following symbols are parameterized by the numeral i, where i >= 1.
 
@@ -121,7 +162,6 @@
       - binary predicate for signed greater than
     (bvsge (_ BitVec m) (_ BitVec m) Bool)
       - binary predicate for signed greater than or equal
-
  "
 
 :extensions
@@ -136,7 +176,8 @@
 
     See the specification of the theory's semantics for a definition
     of the functions [[_]] and nat2bv.  Note that this convention implicitly
-    considers the numeral X as a number written in base 10.
+    considers the numeral X as a number written in decimal.  It is
+    an error to write (_ bvX n) with X >= 2^n.
 
   - Bitwise operators
 
@@ -148,7 +189,11 @@
     (bvxnor s t) abbreviates (bvor (bvand s t) (bvand (bvnot s) (bvnot t)))
     (bvcomp s t) abbreviates (bvxnor s t) if m = 1, and
        (bvand (bvxnor ((_ extract |m-1| |m-1|) s) ((_ extract |m-1| |m-1|) t))
-              (bvcomp ((_ extract |m-2| 0) s) ((_ extract |m-2| 0) t))) otherwise
+              (bvcomp ((_ extract |m-2| 0) s) ((_ extract |m-2| 0) t))) otherwise.
+
+    Additionally, bvxor is left associative, so:
+
+    (bvxor s_1 s_2 ... s_n) abbreviates (bvxor (bvxor s_1 s_2 ...) s_n), and
 
   - Arithmetic operators
 
@@ -178,13 +223,18 @@
     (bvsmod s t) abbreviates
       (let ((?msb_s ((_ extract |m-1| |m-1|) s))
             (?msb_t ((_ extract |m-1| |m-1|) t)))
-        (ite (and (= ?msb_s #b0) (= ?msb_t #b0))
-             (bvurem s t)
-        (ite (and (= ?msb_s #b1) (= ?msb_t #b0))
-             (bvadd (bvneg (bvurem (bvneg s) t)) t)
-        (ite (and (= ?msb_s #b0) (= ?msb_t #b1))
-             (bvadd (bvurem s (bvneg t)) t)
-             (bvneg (bvurem (bvneg s) (bvneg t)))))))
+        (let ((abs_s (ite (= ?msb_s #b0) s (bvneg s)))
+              (abs_t (ite (= ?msb_t #b0) t (bvneg t))))
+          (let ((u (bvurem abs_s abs_t)))
+            (ite (= u (_ bv0 m))
+                 u
+            (ite (and (= ?msb_s #b0) (= ?msb_t #b0))
+                 u
+            (ite (and (= ?msb_s #b1) (= ?msb_t #b0))
+                 (bvadd (bvneg u) t)
+            (ite (and (= ?msb_s #b0) (= ?msb_t #b1))
+                 (bvadd u t)
+                 (bvneg u))))))))
     (bvule s t) abbreviates (or (bvult s t) (= s t))
     (bvugt s t) abbreviates (bvult t s)
     (bvuge s t) abbreviates (or (bvult t s) (= s t))
@@ -200,6 +250,9 @@
                (bvule s t)))
     (bvsgt s t) abbreviates (bvslt t s)
     (bvsge s t) abbreviates (bvsle t s)
+    (bvusubo s t) stands for (bvult s t)
+    (bvssubo s t) abbreviates (ite (bvnego t) (bvsge s (_ bv0 m)) (bvsaddo s (bvneg t)))
+    (bvsdivo s t) abbreviates (and (bvnego s) (= t (bvnot (_ bv0 m))))
 
   - Other operations
 
