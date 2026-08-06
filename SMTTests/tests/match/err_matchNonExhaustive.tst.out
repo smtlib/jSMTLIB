@@ -1,5 +1,4 @@
 success
 success
 success
-success
 (error "Non-exhaustive match: missing constructors: blue")

@@ -1,14 +1,26 @@
 (logic QF_BV
 
-:smt-lib-version 2.0
-:written_by "Silvio Ranise, Cesare Tinelli, and Clark Barrett"
-:date "2010-05-02"
+ :smt-lib-version 2.5
+ :smt-lib-release "2017-05-09"
+ :written-by "Silvio Ranise, Cesare Tinelli, and Clark Barrett"
+ :date "2010-05-02"
+ :last-updated "2017-05-03"
+ :update-history
+ "Note: history only accounts for content changes, not release changes.
+  2017-05-03 Updated to Version 2.6.  Division and remainder operations are no
+             longer undefiend when the second operand is 0.  See
+             the FixedSizeBitVectors theory definition for details.
+  2015-04-25 Updated to Version 2.5.
+  2013-06-24 Changed references to Fixed_Size_Bitvectors to FixedSizeBitVectors.
+  2011-06-15 Fixed bug in definition of bvsmod.  Previously, it gave an incorrect
+             answer when the divisor is negative and goes into the dividend evenly.
+ "
 
-:theories (Fixed_Size_BitVectors)
+:theories (FixedSizeBitVectors)
 
 :language
  "Closed quantifier-free formulas built over an arbitrary expansion of the
-  Fixed_Size_BitVectors signature with free constant symbols over the sorts
+  FixedSizeBitVectors signature with free constant symbols over the sorts
   (_ BitVec m) for 0 < m.  Formulas in ite terms must satisfy the same
   restriction as well, with the exception that they need not be closed 
   (because they may be in the scope of a let binder).
@@ -17,10 +29,9 @@
 :notes
  "For quick reference, the following is a brief and informal summary of the
   legal symbols in this logic and their meaning (formal definitions are found
-  either in the Fixed_Size_Bitvectors theory, or in the extensions below).
+  either in the FixedSizeBitvectors theory, or in the extensions below).
 
-  Defined in theory Fixed_Size_Bitvectors:
-
+  Defined in theory FixedSizeBitvectors:
 
     Bitvector constants:
 
@@ -50,9 +61,9 @@
     (bvmul (_ BitVec m) (_ BitVec m) (_ BitVec m))
       - multiplication modulo 2^m
     (bvudiv (_ BitVec m) (_ BitVec m) (_ BitVec m))
-      - unsigned division, truncating towards 0 (undefined if divisor is 0)
+      - unsigned division, truncating towards 0
     (bvurem (_ BitVec m) (_ BitVec m) (_ BitVec m))
-      - unsigned remainder from truncating division (undefined if divisor is 0)
+      - unsigned remainder from truncating division
     (bvshl (_ BitVec m) (_ BitVec m) (_ BitVec m))
       - shift left (equivalent to multiplication by 2^x where x is the value of
         the second argument)
@@ -121,7 +132,6 @@
       - binary predicate for signed greater than
     (bvsge (_ BitVec m) (_ BitVec m) Bool)
       - binary predicate for signed greater than or equal
-
  "
 
 :extensions
@@ -178,13 +188,18 @@
     (bvsmod s t) abbreviates
       (let ((?msb_s ((_ extract |m-1| |m-1|) s))
             (?msb_t ((_ extract |m-1| |m-1|) t)))
-        (ite (and (= ?msb_s #b0) (= ?msb_t #b0))
-             (bvurem s t)
-        (ite (and (= ?msb_s #b1) (= ?msb_t #b0))
-             (bvadd (bvneg (bvurem (bvneg s) t)) t)
-        (ite (and (= ?msb_s #b0) (= ?msb_t #b1))
-             (bvadd (bvurem s (bvneg t)) t)
-             (bvneg (bvurem (bvneg s) (bvneg t)))))))
+        (let ((abs_s (ite (= ?msb_s #b0) s (bvneg s)))
+              (abs_t (ite (= ?msb_t #b0) t (bvneg t))))
+          (let ((u (bvurem abs_s abs_t)))
+            (ite (= u (_ bv0 m))
+                 u
+            (ite (and (= ?msb_s #b0) (= ?msb_t #b0))
+                 u
+            (ite (and (= ?msb_s #b1) (= ?msb_t #b0))
+                 (bvadd (bvneg u) t)
+            (ite (and (= ?msb_s #b0) (= ?msb_t #b1))
+                 (bvadd u t)
+                 (bvneg u))))))))
     (bvule s t) abbreviates (or (bvult s t) (= s t))
     (bvugt s t) abbreviates (bvult t s)
     (bvuge s t) abbreviates (or (bvult t s) (= s t))

@@ -1,8 +1,14 @@
 (logic AUFLIA
 
- :smt-lib-version 2.0
- :written_by "Cesare Tinelli"
+ :smt-lib-version 2.5
+ :smt-lib-release "2017-05-09"
+ :written-by "Cesare Tinelli"
  :date "2010-04-30"
+ :last-updated "2015-04-25"
+ :update-history
+ "Note: history only accounts for content changes, not release changes.
+  2015-04-25 Updated to Version 2.5.
+ "
 
  :theories (Ints ArraysEx)
 
@@ -21,7 +27,6 @@
 
 :notes
  "This logic properly extends the logic QF_AUFLIA by allowing quantifiers."
-
 )
 
 

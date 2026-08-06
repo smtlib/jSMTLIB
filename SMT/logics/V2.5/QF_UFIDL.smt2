@@ -1,11 +1,16 @@
 (logic QF_UFIDL
 
- :smt-lib-version 2.0
- :written_by "Cesare Tinelli"
+ :smt-lib-version 2.5
+ :smt-lib-release "2017-05-09"
+ :written-by "Clark Barrett, Cesare Tinelli"
  :date "2010-05-12"
+ :last-updated "2015-04-25"
+ :update-history
+ "Note: history only accounts for content changes, not release changes.
+  2015-04-25 Updated to Version 2.5.
+  2011-06-03 Added :note field."
 
  :theories (Ints)
-
 
  :language
  "Closed quantifier-free formulas built over an arbitrary expansion with 
@@ -25,6 +30,13 @@
 
   Additionally, for every term of the form (op t1 t2) with op in {+, -}, 
   at least one of t1 and t2 is a numeral. 
+ "
+
+ :note 
+ "For historical reasons, the syntax of this logic is *not* an extension 
+  of QF_IDL's syntax. However, any formula in this logic with no free sorts 
+  and no free function symbol of arity > 0 can be converted into an 
+  equisatisfiable formula in QF_IDL.
  "
 )
 

@@ -1,8 +1,14 @@
 (theory Ints
 
- :smt-lib-version 2.0
- :written_by "Cesare Tinelli"
+ :smt-lib-version 2.5
+ :smt-lib-release "2017-05-09"
+ :written-by "Cesare Tinelli"
  :date "2010-04-17"
+ :last-updated "2015-04-25"
+ :update-history
+ "Note: history only accounts for content changes, not release changes.
+  2015-04-25 Updated to Version 2.5.
+ "
  
  :sorts ((Int 0))
 
@@ -68,7 +74,7 @@
   when n is positive, (div m n) is the floor of the rational number m/n;
   when n is negative, (div m n) is the ceiling of m/n.
 
-  This contrasts with alternative but less robust definitions of / and mod
+  This contrasts with alternative but less robust definitions of div and mod
   where (div m n) is 
   - always the integer part of m/n (rounding towards 0), or 
   - always the floor of x/y (rounding towards -infinity).

@@ -1,9 +1,13 @@
 (logic LIA
 
- :smt-lib-version 2.0
- :written_by "David COK, from QF_LIA"
- :date "2015-06-27"
-
+ :smt-lib-version 2.5
+ :smt-lib-release "2017-05-09"
+ :written-by "Cesare Tinelli"
+ :date "2016-02-07"
+ :update-history
+ "Note: history only accounts for content changes, not release changes.
+ "
+ 
  :theories (Ints)
 
  :language 
@@ -19,4 +23,5 @@
   c is a term of the form n or (- n) for some numeral n.
  "
 )
+
 

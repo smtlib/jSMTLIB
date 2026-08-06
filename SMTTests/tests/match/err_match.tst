@@ -1,7 +1,6 @@
 ; match type-checking errors: unknown constructor, constructor sort mismatch,
 ; and incompatible body sorts across cases
-(set-info :smt-lib-version "V2.6")
-(set-logic UFLIA)
+(set-logic AUFLIA)
 (declare-datatype Color ((red) (green) (blue)))
 (declare-datatype Tree ((leaf) (node (left Tree) (right Tree))))
 (declare-fun c () Color)

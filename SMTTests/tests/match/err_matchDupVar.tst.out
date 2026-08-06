@@ -1,5 +1,4 @@
 success
 success
 success
-success
 (error "Duplicate variable in match pattern: x")

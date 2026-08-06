@@ -1,3 +1,2 @@
 success
-success
 (error "Declared sort of the result does not match the sort of the expression: Bool vs. Int")

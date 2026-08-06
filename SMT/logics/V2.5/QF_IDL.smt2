@@ -1,21 +1,27 @@
 (logic QF_IDL
 
- :smt-lib-version 2.0
- :written_by "Cesare Tinelli"
+ :smt-lib-version 2.5
+ :smt-lib-release "2017-05-09"
+ :written-by "Cesare Tinelli"
  :date "2010-04-30"
+ :last-updated "2015-04-25"
+ :update-history
+ "Note: history only accounts for content changes, not release changes.
+  2015-04-25 Updated to Version 2.5.
+ "
 
- :theories (Ints)
+ :theories ( Ints )
 
  :language
  "Closed quantifier-free formulas with atoms of the form:
-  - p
+  - q
   - (op (- x y) n),
-  - (op (- x y) (- n)),
-  - (op x y), or
+  - (op (- x y) (- n)), or
+  - (op x y)
   where
-    - p is a variable or free constant symbol of sort Bool,
+    - q is a variable or free constant symbol of sort Bool,
     - op is <, <=, >, >=, =, or distinct,
-    - x, y are free constant symbols of sort Ints, 
+    - x, y are free constant symbols of sort Int, 
     - n is a numeral. 
  "
 )

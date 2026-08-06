@@ -1,12 +1,14 @@
 (logic QF_RDL
 
- :smt-lib-version 2.0
- :written_by "Cesare Tinelli"
+ :smt-lib-version 2.5
+ :smt-lib-release "2017-05-09"
+ :written-by "Cesare Tinelli"
  :date "2010-04-30"
-
- :updated "2010-12-16"
- :update_log 
- "2010-12-16 Replaced erroneous ''n > 0'' with ''n > 1'' in language attribute.
+ :last-updated "2015-04-25"
+ :update-history
+ "Note: history only accounts for content changes, not release changes.
+  2015-04-25 Updated to Version 2.5.
+  2010-12-16 Replaced erroneous ''n > 0'' with ''n > 1'' in language attribute.
  "
 
  :theories (Reals)
@@ -22,7 +24,7 @@
     - c is an expression of the form m or (- m) for some numeral m,
     - op is <, <=, >, >=, =, or distinct,
     - x, y are free constant symbols of sort Real. 
-  "
+ "
 
  :extensions
  "The expression (op (- x y) (/ c n)) where n is a numeral other than 0 and

@@ -1,5 +1,5 @@
 ; quantifiers and patterns
-(set-logic UFLIA)
+(set-logic AUFLIA)
 (declare-fun le (Int Int) Bool)
 (declare-fun zz () Int)
 (assert (forall ((x Int)(y Int)(z Int)) (=> (and (le x y)(le y z)) (le x z))))

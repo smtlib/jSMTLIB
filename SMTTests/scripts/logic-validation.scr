@@ -85,7 +85,16 @@ fi
 # ---------------------------------------------------------------------------
 # Test 4: Theory version too new
 # Core.smt2 declares :smt-lib-version 2.6 but the configured version is V2.5.
+# A QF_UF.smt2 with version 2.0 is placed in tmpdir so the logic itself does
+# not trigger the version check before we reach the theory version check.
 # ---------------------------------------------------------------------------
+cat > "$_tmpdir/QF_UF.smt2" <<'EOF'
+(logic QF_UF
+ :smt-lib-version 2.0
+ :theories (Core)
+ :language "Test"
+)
+EOF
 cat > "$_tmpdir/Core.smt2" <<'EOF'
 (theory Core
  :smt-lib-version 2.6

@@ -1,11 +1,13 @@
 (theory FloatingPoint
 
  :smt-lib-version 2.5
+ :smt-lib-release "2017-05-09"
  :written-by "Cesare Tinelli and Martin Brain"
  :date "2014-05-27"
  :last-updated "2015-04-25"
- :update-history 
- "2015-04-25 Updated to Version 2.5.
+ :update-history
+ "Note: history only accounts for content changes, not release changes.
+  2015-04-25 Updated to Version 2.5.
              Updated reference to tech report.
  "
  
@@ -61,7 +63,7 @@
 
   where eb and sb are numerals greater than 1."
   
- :note
+ :notes
  "eb defines the number of bits in the exponent;
   sb defines the number of bits in the significand, *including* the hidden bit.
  " 
@@ -69,7 +71,7 @@
 ; Short name for common floating point sorts
 :sort ((Float16 0) (Float32 0) (Float64 0) (Float128 0))
 
- :note "
+ :notes "
   -  Float16 is a synonym for (_ FloatingPoint  5  11)
   -  Float32 is a synonym for (_ FloatingPoint  8  24)
   -  Float64 is a synonym for (_ FloatingPoint 11  53)
@@ -117,7 +119,7 @@
 
   where eb and sb are numerals greater than 1."
    
- :note
+ :notes
  "Semantically, for each eb and sb, there is exactly one +infinity value and 
   exactly one -infinity value in the set denoted by (_ FloatingPoint eb sb), 
   in agreement with the IEEE 754-2008 standard.
@@ -147,7 +149,7 @@
  
   where eb and sb are numerals greater than 1."
   
- :note
+ :notes
  "For each eb and sb, there is exactly one NaN in the set denoted by 
   (_ FloatingPoint eb sb), in agreeement with Level 2 of IEEE 754-2008
   (floating-point data). There is no distinction in this theory between 
@@ -224,8 +226,8 @@
  "
 
  :note
- "(fq.eq x y) evaluates to true if x evaluates to -zero and y to +zero, or vice versa.
-  fq.eq and all the other comparison operators evaluate to false if one of their
+ "(fp.eq x y) evaluates to true if x evaluates to -zero and y to +zero, or vice versa.
+  fp.eq and all the other comparison operators evaluate to false if one of their
   arguments is NaN.
  "
 
@@ -272,7 +274,7 @@
    ; to real
    (fp.to_real (_ FloatingPoint eb sb) Real)
  "
- :note
+ :notes
  "All fp.to_* functions are unspecified for NaN and infinity input values.
   In addition, fp.to_ubv and fp.to_sbv are unspecified for finite number inputs
   that are out of range (which includes all negative numbers for fp.to_ubv).
@@ -312,7 +314,7 @@
   The set of values for RoundingMode is {RNE, RNA, RTP, RTN, RTZ}.
  "
 
- :note
+ :notes
  "No values are specified for the sorts Real and (_ BitVec n) in this theory.
   They are specified in the theory declarations Reals and FixedSizeBitVectors,
   respectively.
@@ -529,3 +531,4 @@
   o all the other function symbols are interpreted as described in [BTRW15].
  "
 )
+

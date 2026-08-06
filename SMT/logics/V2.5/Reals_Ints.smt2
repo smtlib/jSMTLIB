@@ -1,8 +1,14 @@
 (theory Reals_Ints
 
- :smt-lib-version 2.0
+ :smt-lib-version 2.5
+ :smt-lib-release "2017-05-09"
  :written_by "Cesare Tinelli"
  :date "2010-04-17"
+ :last-updated "2015-04-25"
+ :update-history
+ "Note: history only accounts for content changes, not release changes.
+  2015-04-25 Updated to Version 2.5.
+ "
  
  :sorts ((Int 0) (Real 0))
 
@@ -80,9 +86,9 @@
  "
 
  :notes
-  "By definition of to_int, (to_int (- 1.3)) is equivalent to (- 2), not
+ "By definition of to_int, (to_int (- 1.3)) is equivalent to (- 2), not
    (- 1).
-  "
+ "
 
  :notes
  "For each instance T of Reals_Ints, all models of T satisfy the sentence:

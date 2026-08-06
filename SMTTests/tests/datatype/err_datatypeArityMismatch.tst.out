@@ -1,3 +1,2 @@
 success
-success
 (error "Arity 2 of sort Pair does not match the number of sort parameters (1)")
