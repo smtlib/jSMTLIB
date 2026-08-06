@@ -9,7 +9,7 @@
  "Note: history only accounts for content changes, not release changes.
   2024-07-21 Updated to Version 2.7.
   2015-04-25 Updated to Version 2.5.
-  2011-06-03 Replaced "(* c x), or (* x c)" with "c, (* c x), or (* x c)" 
+  2011-06-03 Replaced ""(* c x), or (* x c)"" with ""c, (* c x), or (* x c)"" 
              in :extensions.
              (The missing case was had been left out unintentionally.)
  "

@@ -35,10 +35,10 @@ public class QF_IDL extends Logic {
 							throw new IVisitor.VisitorException("rhs must be a symbol if the lhs is a symbol", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
 						}
 					}
-					IExpr.IFcnExpr f = (IExpr.IFcnExpr)lhs;
 					if (!(lhs instanceof IExpr.IFcnExpr)) {
 						throw new IVisitor.VisitorException("lhs must be a symbol or a difference", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
 					}
+                    IExpr.IFcnExpr f = (IExpr.IFcnExpr)lhs;
 					fcn = f.head().toString();
 					if (!fcn.equals("-")) {
 						throw new IVisitor.VisitorException("lhs must be a symbol or a difference", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());

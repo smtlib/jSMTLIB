@@ -1,66 +1,52 @@
 # V2.0 Logic Archive
 
-This directory contains SMT-LIB logic definition files that are not part of the
-current SMT-LIB standard but are recognized by major SMT solvers.
+This directory is an archive of the jSMTLIB logic and theory definition files as
+they existed just before SMT-LIB 2.5 support was added. The content matches
+commit `efd0b16` ("CLeaning up tests and responses to tests", 2015-06-27), which
+is the last commit before V2.5 work began.
 
-## Origin
+All files carry `:smt-lib-version 2.0` and are used by jSMTLIB when the
+configured SMT-LIB version is set to V2.0 (e.g. via `set-info :smt-lib-version
+"V2.0"`), so that logic and theory version checks pass correctly.
 
-These 18 files were added to jSMTLIB in June 2015 (commit c7837e8, "Adding
-support for yices2 and z3-4.4") to allow jSMTLIB to accept `set-logic` commands
-using logic names that those solvers recognize but that are not defined on
-smt-lib.org.
+## File Contents
 
-They are labeled V2.0 because the version strings inside them carry
-`:smt-lib-version 2.0`, but most were not part of the jSMTLIB distribution
-before 2015 — they were added specifically for solver compatibility.
+The directory contains 49 files in two groups:
 
-## Status in the SMT-LIB Standard
+### Standard SMT-LIB 2.0 logic and theory files (30 files)
 
-None of these logic names appear on smt-lib.org/logics.shtml (checked August
-2026) or in the GitHub repository SMT-LIB/SMT-LIB-2, which dates back to 2015
-and has never contained them. They are absent from the standard at least since
-SMT-LIB 2.5 (April 2015).
+These were present in jSMTLIB from the initial commit (`5a05f55`, 2015-06-24)
+and are unchanged through `efd0b16`:
 
-Note: Several of these names (QF_UFNIA, NRA, ALIA, QF_ALIA and possibly others)
-do appear in the logic inclusion diagram on smt-lib.org even though they have no
+`AUFLIA`, `AUFLIRA`, `AUFNIRA`, `ArraysEx`, `Core`, `Fixed_Size_BitVectors`,
+`FloatingPoint`, `Ints`, `LIA`, `LRA`, `QF_ABV`, `QF_AUFBV`, `QF_AUFLIA`,
+`QF_AX`, `QF_BV`, `QF_IDL`, `QF_LIA`, `QF_LRA`, `QF_NIA`, `QF_NRA`,
+`QF_RDL`, `QF_UF`, `QF_UFBV`, `QF_UFIDL`, `QF_UFLIA`, `QF_UFLRA`,
+`QF_UFNRA`, `Reals`, `Reals_Ints`, `UFLRA`, `UFNIA`
+
+### Non-standard solver-compatibility logic files (19 files)
+
+These were added in commit `c7837e8` ("Adding support for yices2 and z3-4.4",
+2015-06-26) to allow jSMTLIB to accept `set-logic` commands using logic names
+recognized by Yices2 and Z3 but not defined on smt-lib.org:
+
+`ALIA`, `BV`, `NIA`, `NRA`, `QF_ALIA`, `QF_ANIA`, `QF_AUFNIA`, `QF_BVFP`,
+`QF_FP`, `QF_LIRA`, `QF_NIRA`, `QF_UFNIA`, `UF`, `UFBV`, `UFIDL`, `UFLIA`,
+`UFNRA`, `FloatingPoint`, `LIA`
+
+None of these logic names appear on smt-lib.org/logics.shtml or in the GitHub
+repository SMT-LIB/SMT-LIB-2 (absent from the standard since at least SMT-LIB
+2.5, April 2015). Several names (QF_UFNIA, NRA, ALIA, QF_ALIA and possibly
+others) appear in the smt-lib.org logic inclusion diagram but have no
 downloadable `.smt2` file there.
 
-Sources:
-- https://smt-lib.org/logics.shtml
-- https://github.com/SMT-LIB/SMT-LIB-2
-
-## Solver Support
-
-### Yices2
-
-14 of the 18 logic names are explicitly listed in Yices2's internal logic code
-table (`src/api/smt_logic_codes.h`) and documentation. The exceptions are
-`QF_BVFP`, `QF_FP` (Yices2 has no floating-point support), and
-`Fixed_Size_BitVectors` (not a recognized name).
-
-Sources:
-- https://yices.csl.sri.com/doc/smt-logics.html
-- https://github.com/SRI-CSL/yices2/blob/master/src/api/smt_logic_codes.h
-
-### Z3
-
-16 of the 18 logic names appear in Z3 source or release notes. `QF_FP` and
-`QF_BVFP` are explicitly supported in `smt_setup.cpp`. Z3 also uses substring
-matching on logic names, so it will functionally accept most combinations.
-`Fixed_Size_BitVectors` does not appear in Z3 source or documentation.
-
-Sources:
-- https://github.com/Z3Prover/z3/blob/master/src/solver/smt_logics.cpp
-- https://github.com/Z3Prover/z3/blob/master/src/smt/smt_setup.cpp
-- https://github.com/Z3Prover/z3/blob/master/RELEASE_NOTES.md
-
-## File Notes
+#### Solver support for non-standard logics
 
 | File | Yices2 | Z3 | Notes |
 |------|--------|----|-------|
 | ALIA.smt2 | yes | yes | |
 | BV.smt2 | yes | yes | |
-| Fixed_Size_BitVectors.smt2 | no | no | Old underscore form of FixedSizeBitVectors; predates 2015 in jSMTLIB |
+| Fixed_Size_BitVectors.smt2 | no | no | Old underscore form of FixedSizeBitVectors |
 | NIA.smt2 | yes | yes | |
 | NRA.smt2 | yes | yes | |
 | QF_ALIA.smt2 | yes | yes | |
@@ -76,3 +62,11 @@ Sources:
 | UFIDL.smt2 | yes | yes | |
 | UFLIA.smt2 | yes | yes | |
 | UFNRA.smt2 | yes | yes | |
+
+Sources:
+- https://smt-lib.org/logics.shtml
+- https://github.com/SMT-LIB/SMT-LIB-2
+- https://yices.csl.sri.com/doc/smt-logics.html
+- https://github.com/SRI-CSL/yices2/blob/master/src/api/smt_logic_codes.h
+- https://github.com/Z3Prover/z3/blob/master/src/solver/smt_logics.cpp
+- https://github.com/Z3Prover/z3/blob/master/src/smt/smt_setup.cpp

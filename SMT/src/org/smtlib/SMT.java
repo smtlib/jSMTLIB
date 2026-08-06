@@ -1017,25 +1017,38 @@ public class SMT {
 		/*@Mutable*/ InputStream find(Configuration smtConfig, String logicName, /*@Nullable*/IPos pos) throws IOException, Utils.SMTLIBException;
 	}
 	
-	/** An instance of a logic finder that looks in the configuration's logicPath, or (if there is no such path) as a file on the system CLASSPATH */
+	/** An instance of a logic finder that looks in the configuration's logicPath, or (if there is no such path) as a file on the system CLASSPATH.
+	 * When a path is explicitly stipulated, only that path (then classpath top-level) is searched.
+	 * Without a path, versioned subfolders (e.g. V2.5/) are searched before the top-level when an older version is configured. */
 	public static ILogicFinder logicFinder = new ILogicFinder() {
 		@Override
 		public /*@Mutable*/ InputStream find(Configuration smtConfig, String name, /*@Nullable*/IPos pos) throws IOException, Utils.SMTLIBException {
 			String path = smtConfig.logicPath;
+			String filename = name + org.smtlib.Utils.SUFFIX;
 			if (path == null) {
-				URL url = ClassLoader.getSystemResource(name + org.smtlib.Utils.SUFFIX);
-				if (url == null) {
-					throw new Utils.SMTLIBException(smtConfig.responseFactory.error("No logic file found for " + name, pos));
+				// No explicit path: try versioned subfolder in classpath first, then top-level.
+				List<String> candidates = new ArrayList<>();
+				if (Configuration.smtlib != null) {
+					Configuration.SMTLIB cv = Configuration.SMTLIB.find(Configuration.smtlib);
+					Configuration.SMTLIB latest = Configuration.SMTLIB.values()[Configuration.SMTLIB.values().length - 1];
+					if (cv != null && cv != latest) {
+						candidates.add(cv.id + "/" + filename);
+					}
 				}
-				return url.openStream();
+				candidates.add(filename);
+				for (String candidate : candidates) {
+					URL url = ClassLoader.getSystemResource(candidate);
+					if (url != null) return url.openStream();
+				}
+				throw new Utils.SMTLIBException(smtConfig.responseFactory.error("No logic file found for " + name, pos));
 			} else {
-				for (String d: path.split(File.pathSeparator)) {
-					File f = new File(d + File.separator + name + org.smtlib.Utils.SUFFIX);
+				// Explicit path stipulated: search path dirs only, then classpath top-level.
+				for (String d : path.split(File.pathSeparator)) {
+					File f = new File(d + File.separator + filename);
 					if (f.exists()) return new FileInputStream(f);
 				}
-				if (this.getClass().getClassLoader().getResource(name + org.smtlib.Utils.SUFFIX) != null) {
-					return this.getClass().getClassLoader().getResourceAsStream(name + org.smtlib.Utils.SUFFIX);
-				}
+				URL url = ClassLoader.getSystemResource(filename);
+				if (url != null) return url.openStream();
 				throw new Utils.SMTLIBException(smtConfig.responseFactory.error("No logic file found for " + name + " on path \"" + path + "\"", pos));
 			}
 		}

@@ -20,7 +20,7 @@ find src -name "*.java" > temp/sources.txt
 "$JAVA_HOME/bin/javac" -Xdoclint:all,-missing -d bin @temp/sources.txt
 mkdir -p bin/org/smtlib/resources
 cp src/org/smtlib/resources/version.properties bin/org/smtlib/resources/version.properties
-cp logics/*.smt2 bin/
+cp -r logics/. bin/
 echo "Manifest-Version: 1.0" > temp/manifest
 echo "Main-Class: org.smtlib.SMT" >> temp/manifest
 cd bin || { echo "Cannot cd to bin"; exit 1; }
