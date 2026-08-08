@@ -1,4 +1,5 @@
 SMT_DIR=$(cd ../SMT && pwd)
+export SMT_DIR
 export SMT_JAR=$SMT_DIR/jSMTLIB.jar
 export TESTS=$(cd tests && pwd)
 export SCRIPTS=$(cd scripts && pwd)

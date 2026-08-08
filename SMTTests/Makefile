@@ -17,17 +17,13 @@ endif
 export SMT_SOLVER_DIR
 
 test tests:
-	@result=0; \
-	$(MAKE) script-tests || result=1; \
-	$(MAKE) smt-tests || result=1; \
-	$(MAKE) junit-tests || result=1; \
-	exit $$result
+	$(MAKE) junit-tests
 
 script-tests:
 	bash ./runscripts
 
 smt-tests:
-	bash ./runtests
+	bash ./runtests --solvers "test z3_4_3"
 
 junit-tests:
 	bash ./runjunits
@@ -40,22 +36,21 @@ clean:
 build:
 	$(MAKE) -C ../SMT build
 
-## Run SMT tests and script tests with JaCoCo coverage instrumentation
+## Run all tests with JaCoCo coverage instrumentation.
+## FileTests and the pure JUnit classes are instrumented via the agent on the
+## main JVM; ScriptTests' spawned SMT processes are instrumented because
+## runjunits sources setup-coverage before setup, so SMT_CMD carries the agent.
+## All coverage is written to cov/junits.exec.
 cov-test:
-	@result=0; \
-	COV_CLASSES=$(COV_CLASSES) COV= bash ./runscripts; ret=$$?; [ $$ret -gt 128 ] && exit $$ret; [ $$ret -ne 0 ] && result=1; \
-	COV_CLASSES=$(COV_CLASSES) COV= bash ./runtests;   ret=$$?; [ $$ret -gt 128 ] && exit $$ret; [ $$ret -ne 0 ] && result=1; \
-	COV_CLASSES=$(COV_CLASSES) COV= bash ./runjunits;  ret=$$?; [ $$ret -gt 128 ] && exit $$ret; [ $$ret -ne 0 ] && result=1; \
-	exit $$result
+	COV_CLASSES=$(COV_CLASSES) COV= bash ./runjunits
 
 ## Remove collected coverage data
 cov-clean:
 	rm -rf cov
 
-## Merge .exec files and generate HTML + XML report
+## Generate HTML + XML coverage report from the single exec file produced by cov-test
 cov-report:
-	java -jar jacoco/lib/jacococli.jar merge cov/*.exec --destfile cov/merged.exec
-	java -jar jacoco/lib/jacococli.jar report cov/merged.exec \
+	java -jar jacoco/lib/jacococli.jar report cov/junits.exec \
 		--classfiles $(COV_CLASSES) \
 		--sourcefiles ../SMT/src \
 		--html cov/html \

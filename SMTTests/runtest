@@ -80,6 +80,9 @@ if [[ "$PLATFORM" == "windows" ]]; then
 fi
 
 ### Check the error output
+### IMPORTANT: the priority order in these two 'for f in' loops must stay in sync
+### with the candidates array in FileTests.java (SMTTests/src/org/smtlib/test/FileTests.java).
+### If you change the order here, change it there too, and vice versa.
 errok=0
 while true; do ## The while true is just to allow a break from the inner test loop
     for f in "${test}.err.$solver.$PLATFORM_ARCH" "${test}.err.$solver.$PLATFORM" "${test}.err.$solver" "${test}.err.$PLATFORM_ARCH" "${test}.err.$PLATFORM" "${test}.err" ; do

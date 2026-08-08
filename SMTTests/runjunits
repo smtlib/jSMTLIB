@@ -5,13 +5,20 @@
 
 cd "$(dirname "$0")" || exit 1
 trap 'exit 130' INT
+# setup-coverage must be sourced BEFORE setup so that COV_AGENT is already set
+# when setup constructs SMT_CMD / SMT_DRIVER.  That way any JVM processes spawned
+# by ScriptTests (via $SMT_CMD) are also instrumented.
 if [ -n "${COV++}" ]; then
     source ./setup-coverage junits
 fi
+source setup
 
 JUNIT_JAR="lsp/libs/junit-4.13.2.jar"
 HAMCREST_JAR="lsp/libs/hamcrest-core-1.3.jar"
-SMT_JAR="${COV_CLASSES:-../SMT/jSMTLIB.jar}"
+# setup already set SMT_JAR to an absolute path; use COV_CLASSES only when coverage is on.
+# Do NOT fall back to a relative path here — scripts that cd to a temp dir depend on SMT_JAR
+# being absolute when they inherit it from the environment.
+SMT_JAR="${COV_CLASSES:-$SMT_JAR}"
 TEST_BIN="bin"
 
 # Windows Java requires ; as classpath separator and Windows-style paths.
@@ -30,10 +37,14 @@ cp src/org/smtlib/test/*.smt2 "${TEST_BIN}/org/smtlib/test/" 2>/dev/null || true
 ## Compile any unit-test sources that are newer than their .class files.
 echo "Compiling unit tests..."
 javac -cp "$CP" -d "$TEST_BIN" \
+    src/org/junit/runners/ParameterizedWithNames.java \
     src/org/smtlib/test/JUnitListener.java \
+    src/org/smtlib/test/LogicTests.java \
     src/org/smtlib/test/UnitTests.java \
     src/org/smtlib/test/RoundTripTest.java \
-    src/org/smtlib/test/ParseCommand.java
+    src/org/smtlib/test/ParseCommand.java \
+    src/org/smtlib/test/FileTests.java \
+    src/org/smtlib/test/ScriptTests.java
 ret=$?
 if [ $ret -ne 0 ]; then
     echo "Compilation FAILED"
@@ -45,7 +56,9 @@ echo "Running unit tests..."
 java ${COV_AGENT:-} -cp "$CP" org.junit.runner.JUnitCore \
     org.smtlib.test.UnitTests \
     org.smtlib.test.RoundTripTest \
-    org.smtlib.test.ParseCommand
+    org.smtlib.test.ParseCommand \
+    org.smtlib.test.FileTests \
+    org.smtlib.test.ScriptTests
 ret=$?
 [ $ret -eq 0 ] && echo "Unit tests SUCCEEDED" || echo "Unit tests FAILED"
 exit $ret

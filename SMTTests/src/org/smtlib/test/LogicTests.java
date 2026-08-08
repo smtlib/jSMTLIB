@@ -100,7 +100,7 @@ public class LogicTests {
 		props.setProperty("org.smtlib.solver_z3_4_8_5.exec", solver_binary_location);
 	}
 
-	private Properties readPropertiesAndAddDefaults(SMT smt) {
+	protected Properties readPropertiesAndAddDefaults(SMT smt) {
 		Properties props = smt.readProperties();
 		if (props.isEmpty()) {
 			loadSimplifyBinary(props);

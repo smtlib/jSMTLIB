@@ -1,0 +1,79 @@
+#!/bin/bash
+## Run a single .scr script test.
+## Exit codes: 0 = pass, 77 = skip, 1 = fail
+## Usage: ./runscript <path-to-script.scr>
+
+cd "$(dirname "$0")" || exit 1
+# Source setup only if the caller has not already exported the key variables.
+# ScriptTests.java pre-sources setup (via runjunits sourcing it) so the JVM
+# inherits them, saving one bash startup + uname per test invocation.
+if [[ -z "${SMT_CMD:-}" ]]; then
+    source setup
+fi
+
+f="$1"
+if [ ! -e "$f" ]; then
+    echo "File not found: $f" >&2
+    exit 1
+fi
+
+# Skip checks
+if   [ -e "$f.skip.$PLATFORM_ARCH" ]; then echo "SKIP: $(cat "$f.skip.$PLATFORM_ARCH")"; exit 77
+elif [ -e "$f.skip.$PLATFORM" ];      then echo "SKIP: $(cat "$f.skip.$PLATFORM")";       exit 77
+elif [ -e "$f.skip" ];                then echo "SKIP: $(cat "$f.skip")";                  exit 77
+fi
+
+INSTALL=$(cd ../SMT && pwd)
+if [[ "$PLATFORM" == "windows" ]]; then
+    JAR_INSTALL="/$INSTALL"
+else
+    JAR_INSTALL="$INSTALL"
+fi
+
+( source "$f" ) 2> "$f.err.actual" > "$f.out.actual"
+actualret=$?
+
+if [[ "$PLATFORM" == "windows" ]]; then
+    tr -d '\r' < "$f.out.actual" > "$f.out.actual.tmp" && mv "$f.out.actual.tmp" "$f.out.actual"
+    tr -d '\r' < "$f.err.actual" > "$f.err.actual.tmp" && mv "$f.err.actual.tmp" "$f.err.actual"
+fi
+
+fail=0
+_cmp_golden() {
+    local actual="$1" base="$2" label="$3"
+    local golden=""
+    if   [ -e "${base}.$PLATFORM_ARCH" ]; then golden="${base}.$PLATFORM_ARCH"
+    elif [ -e "${base}.$PLATFORM" ];      then golden="${base}.$PLATFORM"
+    elif [ -e "${base}" ];                then golden="${base}"
+    fi
+    if [ -n "$golden" ]; then
+        sed -e "s@\$JAR_INSTALL@$JAR_INSTALL@g" \
+            -e "s@\$INSTALL@$INSTALL@g" \
+            -e "s@\$HOME@$HOME@g" \
+            -e "s@\$SOLVERS@$SMT_SOLVER_DIR@g" \
+            < "$golden" | diff "$actual" -
+        if [ $? -eq 0 ]; then rm -f "$actual"; else (( fail++ )); fi
+    else
+        echo "Creating $label golden file for $f"
+        cat "$actual"
+        mv "$actual" "${base}"
+    fi
+}
+
+_cmp_golden "$f.out.actual" "$f.out" "output"
+_cmp_golden "$f.err.actual" "$f.err" "err"
+
+( source "$f" ) > "$f.cmb.actual" 2>&1
+if [[ "$PLATFORM" == "windows" ]]; then
+    tr -d '\r' < "$f.cmb.actual" > "$f.cmb.actual.tmp" && mv "$f.cmb.actual.tmp" "$f.cmb.actual"
+fi
+_cmp_golden "$f.cmb.actual" "$f.cmb" "combined output"
+
+expectedret=$(grep EXITCODE "$f" | sed -e "s/##EXITCODE //")
+if [ "$actualret" != "$expectedret" ]; then
+    echo "EXIT CODE: got $actualret, expected $expectedret"
+    (( fail++ ))
+fi
+
+[ $fail -gt 0 ] && exit 1
+exit 0

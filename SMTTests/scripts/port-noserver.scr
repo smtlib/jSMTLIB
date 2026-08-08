@@ -1,6 +1,6 @@
 ##EXITCODE 12
 
-PORT=8777
+PORT=8799
 
 EXE="$SMT_DRIVER --port ${PORT}"
 

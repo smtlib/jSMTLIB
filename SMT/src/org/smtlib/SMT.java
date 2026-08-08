@@ -513,7 +513,15 @@ public class SMT {
 	}
 	
 	protected /*@Nullable*/ ISolver solver = null;
-	
+
+	/** Forcibly stops the active solver, if any. Safe to call when no solver is running. */
+	public void cleanup() {
+		if (solver != null) {
+			try { solver.forceExit(); } catch (Throwable ignored) {}
+			solver = null;
+		}
+	}
+
 	/** The response from the most recently executed command; used to export results in interactive mode. */
 	public IResponse lastResponse = null;
 	

@@ -1,13 +1,18 @@
 package org.smtlib.test;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Reader;
+import java.io.PrintStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
@@ -18,188 +23,245 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.ParameterizedWithNames;
 import org.junit.runners.Parameterized.Parameters;
+import org.smtlib.SMT;
 
 @RunWith(ParameterizedWithNames.class)
-public class FileTests  extends LogicTests {
+public class FileTests extends LogicTests {
 
-	static Collection<String[]> data = datax();
+    @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
 
-    @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES); // limit on entire test, not on each proof attempt
+    // Platform strings matching the bash setup script conventions
+    private static final String PLATFORM;
+    private static final String PLATFORM_ARCH;
 
-	private static File findTestsFolder() {
-		//This is slightly hacked, as it relies on the existence of 'err_array.tst' to reach the right directory.
-	    try {
-	        String resource = FileTests.class.getClassLoader().getResource("err_array.tst").getPath();
-	        if (resource == null) {
-	            resource = "tests/";
-	        } else {
-	            resource = new File(resource).getParent();
-	        }
-	        return new File(resource);
-	    } catch (Exception e) {
-	        return new File ("/Users/davidcok/cok/projects/jSMTLIB/SMTTests/tests");
-	    }
-	}
+    static {
+        String os = System.getProperty("os.name").toLowerCase();
+        String platform;
+        if (os.contains("win"))      platform = "windows";
+        else if (os.contains("mac")) platform = "macos";
+        else                         platform = "linux";
+        PLATFORM = platform;
 
-	@Parameters
-    static public  Collection<String[]> datax() {
-    	Collection<String[]> data = new ArrayList<String[]>(1000);
-		File f = new File("/Users/davidcok/projects/jSMTLIB/SMTTests/tests"); // findTestsFolder();
-    	String[] files = f.list();
-    	for (String ff: files) { 
-    		if (ff.endsWith(".tst") && !ff.startsWith("ok")) {
-    			for (String s : solvers) {
-    				data.add(new String[]{s,ff});
-    			}
-    		}
-//    		if (ff.getName().endsWith(".tst")) {
-//    			data.add(new String[]{"test",ff.getName()}); 
-//    			if (
-//    					!ff.getName().equals("err_getValueTypes.tst") // Crashes CVC5
-//    					&& !ff.getName().equals("err_setLogic.tst")
-//				) {
-//    			data.add(new String[]{"cvc5",ff.getName()}); 
-//    			}
-//    			data.add(new String[]{"simplify",ff.getName()}); 
-//    			if (
-//    					!ff.getName().equals("ok_regularOutput.tst") &&
-//    					!ff.getName().equals("err_bv2.tst") &&
-//    					!ff.getName().equals("err_bv.tst") &&
-//    					!ff.getName().equals("ok_bv2.tst") 
-//    					) {
-//    				data.add(new String[]{"z3_4_3",ff.getName()}); // FIXME - z3 crashes or hangs or is non-deterministic 
-//    			}
-////    			if (
-////    					!ff.getName().equals("err_namedExpr2.tst")
-////    					) {
-////    				data.add(new String[]{"z3_2_11",ff.getName()}); // FIXME - z3 crashes 
-////    			}
-////    			data.add(new String[]{"cvc",ff.getName()}); 
-////    			data.add(new String[]{"yices",ff.getName()});
-////    			data.add(new String[]{"yices2",ff.getName()});
-//    		}
-    	}
-//    	data.clear();
-//		data.add(new String[]{"yices","ok_ite.tst"}); 
-    	return data;
-    }
-    
-    protected String testfile;
-    
-    public FileTests(String solvername, String testfile) {
-    	this.solvername = solvername;
-    	this.testfile = testfile;
+        String arch = System.getProperty("os.arch").toLowerCase();
+        String archTag = (arch.contains("aarch64") || arch.contains("arm64")) ? "arm64" : "x64";
+        PLATFORM_ARCH = platform + "-" + archTag;
     }
 
-	/**
-	 * Packaging the jar along with the resources allows to read files form the resource folder. This method determines
-	 * whether it can read the file from the resource folder and tries the old location otherwise.
-	 *
-	 * @param filename file that should be read from resource folder
-	 * @return path to file
-	 */
-	private String resolveFileName(final String filename) {
-		final String resolvedFile;
-		if (new File(filename).exists()) {
-			resolvedFile = filename;
-		} else if (this.getClass().getClassLoader().getResource(filename) == null) {
-			resolvedFile = "tests/" + filename;
-		} else {
-			resolvedFile = this.getClass().getClassLoader().getResource(filename).getPath();
-		}
-		return resolvedFile;
-	}
+    // -----------------------------------------------------------------------
+    // Parameter discovery
+    // -----------------------------------------------------------------------
 
-	/**
-	 * Reads a file into a String
-	 */
-	public String readFile(String filename) {
-		char[] b = new char[100000];
-		Reader r = null;
-		try {
-			r = new FileReader(resolveFileName(filename));
-			int i = 0;
-			int ii = 0;
-			while ((ii = r.read(b,i,b.length-i)) > 0) {
-				i += ii;
-				if (i >= b.length) throw new RuntimeException("File too large");
-			}
-			return new String(b,0,i);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		} finally {
-			if (r != null) try { r.close(); } catch (IOException ee) {}
-		}
-	}
-	
-	static String shortname(String name) {
-		if (name.startsWith("z3")) return "z3";
-		return name;
-	}
-    
-	@Test
-	public void checkFile() {
-        Assert.assertFalse("ok_getInfo2.tst".equals(testfile) && "z3_4_5".equals(solvername));
-        Assert.assertFalse("ok_getInfo2.tst".equals(testfile) && "z3_4_6".equals(solvername));
-		Assert.assertFalse("ok_getInfo2.tst".equals(testfile) && "z3_4_8_5".equals(solvername));
-        Assert.assertFalse("err_getInfo2.tst".equals(testfile) && "z3_4_5".equals(solvername));
-        Assert.assertFalse("err_getInfo2.tst".equals(testfile) && "z3_4_6".equals(solvername));
-		Assert.assertFalse("err_getInfo2.tst".equals(testfile) && "z3_4_8_5".equals(solvername));
-        Assert.assertFalse("err_setInfo3.tst".equals(testfile) && "z3_4_5".equals(solvername));
-        Assert.assertFalse("err_setInfo3.tst".equals(testfile) && "z3_4_6".equals(solvername));
-		Assert.assertFalse("err_setInfo3.tst".equals(testfile) && "z3_4_8_5".equals(solvername));
-		Assert.assertFalse("err_tokens.tst".equals(testfile) && "z3_4_3".equals(solvername));
+    private static final String[] SOLVERS = { "test", "z3_4_3" };
 
-		Assume.assumeTrue(!("err_declareFun.tst".equals(testfile) &&
-							"z3_4_5".equals(solvername))); // FIXME - appears to hang
-		Assert.assertFalse("err_declareFun.tst".equals(testfile) && "z3_4_6".equals(solvername));  // FIXME - hangs
-		Assert.assertFalse("err_declareFun.tst".equals(testfile) && "z3_4_8_5".equals(solvername));  // FIXME - hangs
+    @Parameters
+    public static Collection<String[]> datax() {
+        Collection<String[]> data = new ArrayList<String[]>();
+        File testsDir = findTestsFolder();
+        List<File> tstFiles = new ArrayList<File>();
+        collectTstFiles(testsDir, tstFiles);
+        for (File f : tstFiles) {
+            for (String solver : SOLVERS) {
+                data.add(new String[]{solver, f.getAbsolutePath()});
+            }
+        }
+        return data;
+    }
 
-		Assume.assumeTrue(!("err_namedExpr2.tst".equals(testfile) && "yices2".equals(solvername))); // FIXME - yices2 does not support Boolean quantifiers
-		Assume.assumeTrue(!("ok_regularOutput.tst".equals(testfile))); // FIXME - appears to hang
-		Assume.assumeTrue(!("ok_getInfo2.tst".equals(testfile)));
+    private static File findTestsFolder() {
+        try {
+            String resource = FileTests.class.getClassLoader().getResource("err_array.tst").getPath();
+            return new File(resource).getParentFile();
+        } catch (Exception e) {
+            return new File("tests");
+        }
+    }
 
-		Assume.assumeFalse("err_getProof3.tst".equals(testfile) &&
-						   "z3_4_8_5".equals(solvername)); //FIXME Segfault in z3 4.8.5 not handled!
-		
-//		System.out.println("File: " + testfile + "  Solver: " + solvername);
-		String script = readFile(testfile);
-		String outname = resolveFileName(testfile + ".out");
-		String altname = outname + "." + solvername;
-		String altname2 = outname + "." + shortname(solvername);
-		Assume.assumeTrue(! (new File(altname + ".skip").exists()) );
-		String[] names = new String[]{ altname + "." + version + ".bad", altname + ".bad", altname + "." + version, altname2 + "." + version, altname2 + ".bad", altname, altname2, outname + "." + version + ".bad", outname + ".bad", outname  + "." + version, outname};
-		for (String name: names) {
-			if (new File(name).exists()) { outname = name; break; }
-		}
+    private static void collectTstFiles(File dir, List<File> result) {
+        File[] entries = dir.listFiles();
+        if (entries == null) return;
+        Arrays.sort(entries);
+        for (File entry : entries) {
+            if (entry.isDirectory()) {
+                collectTstFiles(entry, result);
+            } else if (entry.getName().endsWith(".tst")) {
+                result.add(entry);
+            }
+        }
+    }
 
-		File actualFile = new File(resolveFileName(testfile + ".out." + solvername + "." + version + ".actual"));
-		String actual = doScript(script).replace("\r\n","\n");
-		if (!new File(outname).exists()) {
-			try {
-				BufferedWriter w = new BufferedWriter(new FileWriter(actualFile));
-				w.write(actual);
-				w.close();
-			} catch (IOException e) {
-				// ignore
-			}
-			Assert.fail("No output file found");
-		} else {
-			String output = readFile(outname).replace("\r\n","\n");
-			if (!output.equals(actual)) {
-				try {
-					BufferedWriter w = new BufferedWriter(new FileWriter(actualFile));
-					w.write(actual);
-					w.close();
-				} catch (IOException e) {
-					// ignore
-				}
-			} else {
-				if (actualFile.exists()) actualFile.delete();
-			}
-			output = testfile + " " + solvername + "\n" + output;
-			actual = testfile + " " + solvername + "\n" + actual;
-			Assert.assertEquals(output,actual);
-		}
-	}
+    // -----------------------------------------------------------------------
+    // Constructor and setup
+    // -----------------------------------------------------------------------
+
+    private final File tstFile;
+
+    public FileTests(String solvername, String tstFilePath) {
+        this.solvername = solvername;
+        this.tstFile = new File(tstFilePath);
+    }
+
+    @Override
+    public void init() {
+        smt = new SMT();
+        smt.props = readPropertiesAndAddDefaults(smt);
+        smt.smtConfig.solvername = solvername;
+        // solver is started lazily by exec()
+    }
+
+    @Override
+    public void teardown() {
+        if (smt != null) smt.cleanup();
+    }
+
+    // -----------------------------------------------------------------------
+    // Test body
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void checkFile() {
+        checkSkip();
+
+        ByteArrayOutputStream outBuf = new ByteArrayOutputStream();
+        ByteArrayOutputStream errBuf = new ByteArrayOutputStream();
+        PrintStream outPs = new PrintStream(outBuf);
+        PrintStream errPs = new PrintStream(errBuf);
+        smt.smtConfig.log.out = outPs;
+        smt.smtConfig.log.diag = errPs;
+        smt.smtConfig.stdout = outPs;
+        smt.smtConfig.stderr = errPs;
+
+        // Use text mode so error position messages carry no file path,
+        // matching the format of existing golden files.
+        try {
+            smt.smtConfig.text = new String(Files.readAllBytes(tstFile.toPath()));
+        } catch (IOException e) {
+            Assert.fail("Cannot read test file: " + tstFile + ": " + e);
+            return;
+        }
+
+        smt.exec();
+        outPs.flush();
+        errPs.flush();
+
+        String actualOut = outBuf.toString().replace("\r\n", "\n");
+        String actualErr = errBuf.toString().replace("\r\n", "\n");
+
+        // stdout: filter (:memory lines (memory usage varies between runs)
+        compareOutput(".out", findGoldenFile(".out"), actualOut, true);
+        // stderr: exact match
+        compareOutput(".err", findGoldenFile(".err"), actualErr, false);
+    }
+
+    // -----------------------------------------------------------------------
+    // Skip logic
+    // -----------------------------------------------------------------------
+
+    private void checkSkip() {
+        String base = tstFile.getAbsolutePath();
+        String[] suffixes = {
+            ".skip." + solvername + "." + PLATFORM_ARCH,
+            ".skip." + solvername + "." + PLATFORM,
+            ".skip." + solvername,
+            ".skip." + PLATFORM_ARCH,
+            ".skip." + PLATFORM,
+            ".skip"
+        };
+        for (String suffix : suffixes) {
+            File skipFile = new File(base + suffix);
+            if (skipFile.exists()) {
+                Assume.assumeTrue("Skip (" + suffix + "): " + readFirstLine(skipFile), false);
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Golden file lookup
+    // IMPORTANT: this priority order must stay in sync with the two 'for f in ...'
+    // loops in SMTTests/runtest (one for .err, one for .out).  If you change the
+    // order here, change it there too, and vice versa.
+    // -----------------------------------------------------------------------
+
+    private File findGoldenFile(String ext) {
+        String base = tstFile.getAbsolutePath();
+        String[] candidates = {
+            base + ext + "." + solvername + "." + PLATFORM_ARCH,
+            base + ext + "." + solvername + "." + PLATFORM,
+            base + ext + "." + solvername,
+            base + ext + "." + solvername + ".bad",
+            base + ext + "." + PLATFORM_ARCH,
+            base + ext + "." + PLATFORM,
+            base + ext,
+        };
+        for (String c : candidates) {
+            File f = new File(c);
+            if (f.exists()) return f;
+        }
+        return null;
+    }
+
+    // -----------------------------------------------------------------------
+    // Comparison
+    // -----------------------------------------------------------------------
+
+    private void compareOutput(String ext, File golden, String actual, boolean normalize) {
+        // No golden file: OK only if actual output is empty (matches runtest .err behaviour;
+        // for .out an absent golden file is always a failure).
+        if (golden == null || !golden.exists()) {
+            if (!actual.trim().isEmpty()) {
+                writeActual(ext, actual);
+                Assert.fail("No golden " + ext + " file for " + tstFile.getName()
+                        + " but actual output is:\n" + actual);
+            }
+            return;
+        }
+
+        String expected;
+        try {
+            expected = new String(Files.readAllBytes(golden.toPath())).replace("\r\n", "\n");
+        } catch (IOException e) {
+            Assert.fail("Cannot read golden file " + golden + ": " + e);
+            return;
+        }
+
+        String cmpExpected = normalize ? filterMemoryLines(expected) : expected;
+        String cmpActual   = normalize ? filterMemoryLines(actual)   : actual;
+
+        if (!cmpExpected.equals(cmpActual)) {
+            writeActual(ext, actual);
+            Assert.assertEquals(
+                tstFile.getName() + " / " + solvername + " " + ext,
+                cmpExpected, cmpActual);
+        }
+        // On success: do not write .actual (and delete any stale one)
+        new File(tstFile.getAbsolutePath() + ext + ".actual").delete();
+    }
+
+    /** Drops lines containing {@code (:memory} — memory usage varies between runs. */
+    private static String filterMemoryLines(String s) {
+        StringBuilder sb = new StringBuilder();
+        for (String line : s.split("\n", -1)) {
+            if (!line.contains("(:memory")) sb.append(line).append('\n');
+        }
+        return sb.toString();
+    }
+
+    // -----------------------------------------------------------------------
+    // Helpers
+    // -----------------------------------------------------------------------
+
+    private void writeActual(String ext, String content) {
+        File out = new File(tstFile.getAbsolutePath() + ext + ".actual");
+        try (BufferedWriter w = new BufferedWriter(new FileWriter(out))) {
+            w.write(content);
+        } catch (IOException ignored) {}
+    }
+
+    private static String readFirstLine(File f) {
+        try (BufferedReader r = new BufferedReader(new FileReader(f))) {
+            String line = r.readLine();
+            return line != null ? line : "";
+        } catch (IOException e) {
+            return f.getName();
+        }
+    }
 }
