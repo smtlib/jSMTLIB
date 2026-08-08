@@ -111,8 +111,8 @@ public class SMT {
 		/** A list of all reserved words */
 		public Set<String> reservedWords = new HashSet<String>();
 
-		/** The version of SMT-LIB to be supported; null means the default (V2.5) */
-		public static String smtlib = null;
+		/** The version of SMT-LIB to be supported; null means the default (most recent version) */
+		public String smtlib = null;
 		/** Enumeration of the supported SMT-LIB versions, in declaration order from oldest to newest. */
 		public static enum SMTLIB {
 			V20("V2.0"),
@@ -207,8 +207,20 @@ public class SMT {
 		 * ignored if the text option is set. */
 		public int port = -1;
 		
-		/** The log to use for regular, error, and diagnostic output */ 
+		/** The log to use for regular, error, and diagnostic output */
 		public /*@NonNull*/ Log log = new Log(this);
+
+		/** The PrintStream that "stdout" resolves to for this instance.
+		 *  Defaults to System.out; in-process callers (e.g. JUnit tests) set this
+		 *  to a per-test stream so that set_option(:regular-output-channel "stdout")
+		 *  does not escape the capture. */
+		public /*@NonNull*/ java.io.PrintStream stdout = System.out;
+
+		/** The PrintStream that "stderr" resolves to for this instance.
+		 *  Defaults to System.err; in-process callers (e.g. JUnit tests) set this
+		 *  to a per-test stream so that set_option(:diagnostic-output-channel "stderr")
+		 *  does not escape the capture. */
+		public /*@NonNull*/ java.io.PrintStream stderr = System.err;
 		
 		/** The utils object to use for utility methods */
 		public /*@NonNull*/ Utils utils = new Utils(this);
@@ -441,7 +453,7 @@ public class SMT {
 			try {
 				serverSocket = new ServerSocket(smtConfig.port);
 			} catch (IOException e) {
-				System.out.println("Could not listen on port: " + smtConfig.port + " " + e.getMessage());
+				smtConfig.log.out.println("Could not listen on port: " + smtConfig.port + " " + e.getMessage());
 				return 1;
 			}
 
@@ -573,7 +585,7 @@ public class SMT {
 					if (!result.isError() && command instanceof ICommand.Iset_info) {
 						ICommand.Iset_info si = (ICommand.Iset_info) command;
 						if (Utils.SMTLIB_VERSION.equals(si.infoflag()) && si.value() instanceof IExpr.IStringLiteral) {
-							Configuration.smtlib = ((IExpr.IStringLiteral) si.value()).value();
+							smtConfig.smtlib = ((IExpr.IStringLiteral) si.value()).value();
 						}
 					}
 					if (result.isError()) {
@@ -719,7 +731,7 @@ public class SMT {
 				help();
 				return -1;
 			} else if ("--version".equals(s)) {
-				System.out.println(Version.version());
+				smtConfig.log.out.println(Version.version());
 				return -1;
 			} else if ("--echo".equals(s)) {
 				options.echo = true;
@@ -937,61 +949,63 @@ public class SMT {
 	// FIXME - combine, update, document usage() and help()
 	/** Prints a summary of the command-line arguments */
 	public void usage() {
-		System.out.println("Usage: java org.smtlib.SMT [args] [file]");
-		System.out.println("       --help [-h]");
-		System.out.println("       --version");
-		System.out.println("       --verbose [-v] <int>");
-		System.out.println("       --solver [-s] <solvername>");
-		System.out.println("       --exec   [-e] <path>");
-		System.out.println("       --logics [-L] <path>");
-		System.out.println("       --out         <filename or 'stdout' or 'stderr'>");
-		System.out.println("       --diag        <filename or 'stdout' or 'stderr'>");
-		System.out.println("       --port        <int>");
-		System.out.println("       --text        <string>");
-		System.out.println("       --echo   [-e]");
-		System.out.println("       --abort");
-		System.out.println("       --noshow");
-		System.out.println("       --nosuccess   [-q]");
-		System.out.println("       --relax  [-r]");
+		java.io.PrintStream out = smtConfig.log.out;
+		out.println("Usage: java org.smtlib.SMT [args] [file]");
+		out.println("       --help [-h]");
+		out.println("       --version");
+		out.println("       --verbose [-v] <int>");
+		out.println("       --solver [-s] <solvername>");
+		out.println("       --exec   [-e] <path>");
+		out.println("       --logics [-L] <path>");
+		out.println("       --out         <filename or 'stdout' or 'stderr'>");
+		out.println("       --diag        <filename or 'stdout' or 'stderr'>");
+		out.println("       --port        <int>");
+		out.println("       --text        <string>");
+		out.println("       --echo   [-e]");
+		out.println("       --abort");
+		out.println("       --noshow");
+		out.println("       --nosuccess   [-q]");
+		out.println("       --relax  [-r]");
 
 	}
 	
 	/** Prints a verbose message about command line arguments */
 	public void help() {
-		System.out.println("The main routine of this Java executable is org.smtlib.SMT,");
-		System.out.println("    but the jar file is an executable jar file, and can be run");
-		System.out.println("    using the command: java -jar jSMTLIB.jar ");
-		System.out.println("THIS IS AN ALPHA VERSION AND STILL BEING CORRECTED AND POLISHED");
-		System.out.println("The command-line arguments are typical options and files.");
-		System.out.println("If no files are present, commands are read from standard input");
-		System.out.println("    until a control-D is read, indicating end of input.");
-		System.out.println("If files are listed on the command-line they are processed");
-		System.out.println("    after all options are read and in the order the files are listed.");
-		System.out.println("Option names have a long version, beginning with --");
-		System.out.println("    and an abbreviated version, beginning with a single -.");
-		System.out.println("The recognized options are these:");
-		System.out.println("    -h, --help : prints this help message and exits");
-		System.out.println("        --version : prints the version of this application and exits");
-		System.out.println("    -v, --verbose <int>: enables verbose mode, so more stuff is printed");
+		java.io.PrintStream out = smtConfig.log.out;
+		out.println("The main routine of this Java executable is org.smtlib.SMT,");
+		out.println("    but the jar file is an executable jar file, and can be run");
+		out.println("    using the command: java -jar jSMTLIB.jar ");
+		out.println("THIS IS AN ALPHA VERSION AND STILL BEING CORRECTED AND POLISHED");
+		out.println("The command-line arguments are typical options and files.");
+		out.println("If no files are present, commands are read from standard input");
+		out.println("    until a control-D is read, indicating end of input.");
+		out.println("If files are listed on the command-line they are processed");
+		out.println("    after all options are read and in the order the files are listed.");
+		out.println("Option names have a long version, beginning with --");
+		out.println("    and an abbreviated version, beginning with a single -.");
+		out.println("The recognized options are these:");
+		out.println("    -h, --help : prints this help message and exits");
+		out.println("        --version : prints the version of this application and exits");
+		out.println("    -v, --verbose <int>: enables verbose mode, so more stuff is printed");
 // FIXME-NOW - distinguish verbose for app and verbose for solver?
-		System.out.println("    -s, --solver <name> : indicates the SMT solver to use (or 'test')");
-		System.out.println("        The name of the adaptor class is \"org.smtlib.solvers.Solver_\" + <name>");
-		System.out.println("    -e, --exec <path> : indicates the SMT solver executable to use");
-		System.out.println("        The argument is the pathname of the executable for the named solver");
-// FIXME - if not specified, uses the value of...		
-		System.out.println("    -L, --logics <path>: the directory containing SMT-LIB logic and theory ");
-		System.out.println("              definitions (default is to use the internal, built-in definitions)");
-		System.out.println("        --out <filename or 'stdout' or 'stderr'>: where to send normal and error output");
-		System.out.println("        --diag <filename or 'stdout' or 'stderr'>: where to send verbose (diagnostic) output");
-		System.out.println("        --port <number>: which port to use for client-server communication");
-		System.out.println("        --text: text to process (ignoring file and port input)");
-		System.out.println("        --echo: if enabled, commands are echoed to diagnostic output when successfully parsed");
-		System.out.println("        --abort: if enabled, an error causes immediate exit");
-		System.out.println("        --noshow: if enabled, error location information is not shown");
-		System.out.println("    -q, --nosuccess: if enabled, 'success' responses are suppressed");
-		System.out.println("        --relax: if enabled, extensions to strict SMT-LIB are permitted");
-		System.out.println("This software is Copyright 2010-2027 by David R. Cok. The accompanying LICENSE ");
-		System.out.println("    file describes the conditions under which it may be used.");
+		out.println("    -s, --solver <name> : indicates the SMT solver to use (or 'test')");
+		out.println("        The name of the adaptor class is \"org.smtlib.solvers.Solver_\" + <name>");
+		out.println("    -e, --exec <path> : indicates the SMT solver executable to use");
+		out.println("        The argument is the pathname of the executable for the named solver");
+// FIXME - if not specified, uses the value of...
+		out.println("    -L, --logics <path>: the directory containing SMT-LIB logic and theory ");
+		out.println("              definitions (default is to use the internal, built-in definitions)");
+		out.println("        --out <filename or 'stdout' or 'stderr'>: where to send normal and error output");
+		out.println("        --diag <filename or 'stdout' or 'stderr'>: where to send verbose (diagnostic) output");
+		out.println("        --port <number>: which port to use for client-server communication");
+		out.println("        --text: text to process (ignoring file and port input)");
+		out.println("        --echo: if enabled, commands are echoed to diagnostic output when successfully parsed");
+		out.println("        --abort: if enabled, an error causes immediate exit");
+		out.println("        --noshow: if enabled, error location information is not shown");
+		out.println("    -q, --nosuccess: if enabled, 'success' responses are suppressed");
+		out.println("        --relax: if enabled, extensions to strict SMT-LIB are permitted");
+		out.println("This software is Copyright 2010-2027 by David R. Cok. The accompanying LICENSE ");
+		out.println("    file describes the conditions under which it may be used.");
 	}
 	
 	/** This class is used to turn internal bugs that we do not want to try
@@ -1046,8 +1060,8 @@ public class SMT {
 			if (path == null) {
 				// No explicit path: try versioned subfolder in classpath first, then top-level.
 				List<String> candidates = new ArrayList<>();
-				if (Configuration.smtlib != null) {
-					Configuration.SMTLIB cv = Configuration.SMTLIB.find(Configuration.smtlib);
+				if (smtConfig.smtlib != null) {
+					Configuration.SMTLIB cv = Configuration.SMTLIB.find(smtConfig.smtlib);
 					Configuration.SMTLIB latest = Configuration.SMTLIB.values()[Configuration.SMTLIB.values().length - 1];
 					if (cv != null && cv != latest) {
 						candidates.add(cv.id + "/" + filename);

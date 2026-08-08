@@ -201,9 +201,9 @@ public class Solver_z3_4_5b extends Solver_smt implements ISolver {
 			// be checked during parsing
 			String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : "stderr";
 			if (name.equals("stdout")) {
-				smtConfig.log.diag = System.out;
+				smtConfig.log.diag = smtConfig.stdout;
 			} else if (name.equals("stderr")) {
-				smtConfig.log.diag = System.err;
+				smtConfig.log.diag = smtConfig.stderr;
 			} else {
 				try {
 					FileOutputStream f = new FileOutputStream(name,true); // true -> append
@@ -217,9 +217,9 @@ public class Solver_z3_4_5b extends Solver_smt implements ISolver {
 			// be checked during parsing
 			String name = (value instanceof IStringLiteral)?((IStringLiteral)value).value() : "stdout";
 			if (name.equals("stdout")) {
-				smtConfig.log.out = System.out;
+				smtConfig.log.out = smtConfig.stdout;
 			} else if (name.equals("stderr")) {
-				smtConfig.log.out = System.err;
+				smtConfig.log.out = smtConfig.stderr;
 			} else {
 				try {
 					FileOutputStream f = new FileOutputStream(name,true); // append

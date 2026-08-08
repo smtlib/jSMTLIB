@@ -204,9 +204,9 @@ public class AbstractSolver implements ISolver {
 		if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
 			String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : "stdout";
 			if (name.equals("stdout")) {
-				smtConfig.log.out = System.out;
+				smtConfig.log.out = smtConfig.stdout;
 			} else if (name.equals("stderr")) {
-				smtConfig.log.out = System.err;
+				smtConfig.log.out = smtConfig.stderr;
 			} else {
 				try {
 					smtConfig.log.out = new PrintStream(new FileOutputStream(name, true));
@@ -220,9 +220,9 @@ public class AbstractSolver implements ISolver {
 		if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
 			String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : "stderr";
 			if (name.equals("stdout")) {
-				smtConfig.log.diag = System.out;
+				smtConfig.log.diag = smtConfig.stdout;
 			} else if (name.equals("stderr")) {
-				smtConfig.log.diag = System.err;
+				smtConfig.log.diag = smtConfig.stderr;
 			} else {
 				try {
 					smtConfig.log.diag = new PrintStream(new FileOutputStream(name, true));

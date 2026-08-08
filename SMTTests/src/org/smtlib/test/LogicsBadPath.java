@@ -13,7 +13,6 @@ public class LogicsBadPath extends LogicTests {
 	public void init() {
 		super.init();
 		smt.smtConfig.logicPath = "xxx";
-		SMT.Configuration.smtlib = version;
 	}
 
     public LogicsBadPath(String solver, String version) {

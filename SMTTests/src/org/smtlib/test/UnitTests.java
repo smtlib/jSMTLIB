@@ -17,11 +17,9 @@ public class UnitTests {
 
     private SMT.Configuration config;
     private Log log;
-    private String savedSmtlib;
 
     @Before
     public void setUp() {
-        savedSmtlib = SMT.Configuration.smtlib;
         config = new SMT.Configuration();
         log = config.log;
         log.clearListeners();
@@ -29,7 +27,6 @@ public class UnitTests {
 
     @After
     public void tearDown() {
-        SMT.Configuration.smtlib = savedSmtlib;
     }
 
     // -----------------------------------------------------------------------
@@ -92,15 +89,16 @@ public class UnitTests {
      *  V2.0: only \" and \\ are escape sequences.
      *  V2.5: only "" is an escape sequence; backslash is not special. */
     private Utils makeUtils(boolean v20) {
-        SMT.Configuration.smtlib = v20 ? "V2.0" : null; // null → default V2.5
-        return new Utils(new SMT.Configuration());
+        SMT.Configuration cfg = new SMT.Configuration();
+        cfg.smtlib = v20 ? "V2.0" : null; // null → default V2.5
+        return new Utils(cfg);
     }
 
     /** Creates a Utils with a RecordingListener attached to its log (StandardListener removed).
      *  Use this when the test needs to verify that errors are or are not reported. */
     private Utils makeUtilsWithListener(boolean v20, RecordingListener listener) {
-        SMT.Configuration.smtlib = v20 ? "V2.0" : null;
         SMT.Configuration cfg = new SMT.Configuration();
+        cfg.smtlib = v20 ? "V2.0" : null;
         cfg.log.clearListeners();
         cfg.log.addListener(listener);
         return new Utils(cfg);

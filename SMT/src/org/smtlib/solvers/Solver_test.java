@@ -87,8 +87,8 @@ public class Solver_test implements ISolver {
 		options.putAll(smt().utils.defaults);
 		((Response.Factory)smtConfig.responseFactory).printSuccess = true;
 		smtConfig.verbose = 0;
-		smtConfig.log.out = System.out;
-		smtConfig.log.diag = System.err;
+		smtConfig.log.out = smtConfig.stdout;
+		smtConfig.log.diag = smtConfig.stderr;
 		smtConfig.globalDeclarations = false;
 		checkSatStatus = null;
 
@@ -378,9 +378,9 @@ public class Solver_test implements ISolver {
 			// be checked during parsing
 			String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : "stderr";
 			if (name.equals("stdout")) {
-				smtConfig.log.diag = System.out;
+				smtConfig.log.diag = smtConfig.stdout;
 			} else if (name.equals("stderr")) {
-				smtConfig.log.diag = System.err;
+				smtConfig.log.diag = smtConfig.stderr;
 			} else {
 				try {
 					FileOutputStream f = new FileOutputStream(name,true); // append
@@ -394,9 +394,9 @@ public class Solver_test implements ISolver {
 			// be checked during parsing
 			String name = (value instanceof IStringLiteral)?((IStringLiteral)value).value() : "stdout";
 			if (name.equals("stdout")) {
-				smtConfig.log.out = System.out;
+				smtConfig.log.out = smtConfig.stdout;
 			} else if (name.equals("stderr")) {
-				smtConfig.log.out = System.err;
+				smtConfig.log.out = smtConfig.stderr;
 			} else {
 				try {
 					FileOutputStream f = new FileOutputStream(name,true); // append

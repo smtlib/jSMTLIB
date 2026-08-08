@@ -79,7 +79,7 @@ public class SolverProcess {
 //			    log = pw == null ? (pw = new java.io.PrintWriter(System.out)) : pw;
 			}
 		} catch (IOException e) {
-			System.out.println("Failed to create solver log file " + logfile + ": " + e); // FIXME - wwrite to somewhere better
+			System.err.println("Failed to create solver log file " + logfile + ": " + e);
 		}
 		setCmd(cmd);
 	}
@@ -95,7 +95,7 @@ public class SolverProcess {
 				log.write(eol);
 			}
 		} catch (IOException e) {
-			System.out.println("Failed to write to solver log file : " + e); // FIXME - wwrite to somewhere better
+			System.err.println("Failed to write to solver log file : " + e);
 		}
 	}
 	

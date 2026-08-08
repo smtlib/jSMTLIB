@@ -110,7 +110,6 @@ public class LogicTests {
 	}
 
     public void init() {
-		SMT.Configuration.smtlib = version;
 		smt = new SMT();
 		// We're not reading the command-line so we have to set items ourselves
 		// Executable paths are taken from the properties
@@ -120,7 +119,7 @@ public class LogicTests {
 		smt.smtConfig.log.addListener(listener);
 		smt.smtConfig.solvername = solvername;
 		smt.smtConfig.logfile = "solver.out";
-		smt.smtConfig.smtlib = version; // FIXME - is this needed?
+		smt.smtConfig.smtlib = version;
 		ISolver s = smt.startSolver(smt.smtConfig,solvername,null);
 		if (s == null) throw new RuntimeException("Failed to create or start solver");
 		solver = s;

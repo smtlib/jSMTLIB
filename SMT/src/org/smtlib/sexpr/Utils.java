@@ -122,9 +122,9 @@ public class Utils extends org.smtlib.Utils {
 					// For ALL: parse the theory to check its version; skip theories that
 					// require a newer SMT-LIB version than the one configured.
 					boolean savedRelax = smtConfig.relax;
-					String savedSmtlib = SMT.Configuration.smtlib;
+					String savedSmtlib = smtConfig.smtlib;
 					smtConfig.relax = true; // suppress version-mismatch exception in findTheory
-					SMT.Configuration.smtlib = null; // use latest lexer rules to read the theory file
+					smtConfig.smtlib = null; // use latest lexer rules to read the theory file
 					ITheory th;
 					try {
 						th = findTheory(theoryName.value(), smtConfig.logicPath);
@@ -133,7 +133,7 @@ public class Utils extends org.smtlib.Utils {
 						return res;
 					} finally {
 						smtConfig.relax = savedRelax;
-						SMT.Configuration.smtlib = savedSmtlib;
+						smtConfig.smtlib = savedSmtlib;
 					}
 					IAttributeValue tv = th.value(SMTLIB_VERSION);
 					if (tv instanceof IDecimal) {
