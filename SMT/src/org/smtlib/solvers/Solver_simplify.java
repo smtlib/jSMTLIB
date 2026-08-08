@@ -7,6 +7,7 @@ package org.smtlib.solvers;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -434,52 +435,55 @@ public class Solver_simplify extends Solver_test implements ISolver {
 	/** Name of an if-then-else construct on term arguments */ 
 	static private String ite_term = "_ITE";
 	
-	static Map<String,String> fcnNames = new HashMap<String,String>();
-	static Set<String> logicNames = new HashSet<String>();
-	static Set<String> reservedWords  = new HashSet<String>();
-	static Set<String> nonchainables  = new HashSet<String>();
+	static final Map<String,String> fcnNames;
+	static final Set<String> logicNames;
+	static final Set<String> reservedWords;
+	static final Set<String> nonchainables;
 	static {
 		// FIXME - this builds in the theories - we should abstract both the naming and the mappings for arbitrary arguments
 		// Translations of SMT-LIB standard concrete names to Simplify names
 		// Anything not here is considered to be uninterpreted and the
 		// SMT-LIB name will be encoded into a unique Simplify name
-		fcnNames.put("or","OR");  // >2 arguments OK for simplify (left-assoc)
-		fcnNames.put("not","NOT");
-		fcnNames.put("and","AND");  // >2 arguments OK for simplify (left-assoc)
-		fcnNames.put("=","EQ");		  // >2 arguments NOT OK for simplify (chainable)
-		fcnNames.put("=>","IMPLIES"); // >2 arguments NOT OK for simplify (right-assoc)
-		fcnNames.put("distinct","DISTINCT"); // >2 arguments OK for simplify (pairwise)
-		fcnNames.put("xor","NEQ");			// >2 arguments NOT OK for simplify (left-assoc)
-		fcnNames.put("+","+");				// >2 arguments  OK for simplify (left-assoc)
-		fcnNames.put("-","-");				// >2 arguments NOT OK for simplify (left-assoc)
-		fcnNames.put("*","*");				// >2 arguments  OK for simplify (left-assoc)
-		fcnNames.put(">",">");				// >2 arguments NOT OK for simplify	(left-assoc)		
-		fcnNames.put(">=",">=");			// >2 arguments NOT OK for simplify (chainable)
-		fcnNames.put("<","<");				// >2 arguments NOT OK for simplify (chainable)
-		fcnNames.put("<=","<=");			// >2 arguments NOT OK for simplify (chainable)
-		fcnNames.put("true","TRUE");
-		fcnNames.put("false","FALSE");
-		fcnNames.put("ite",ite_term);
-		
-		fcnNames.put("select","select");
-		fcnNames.put("store","store");
+		Map<String,String> fcn = new HashMap<String,String>();
+		fcn.put("or","OR");  // >2 arguments OK for simplify (left-assoc)
+		fcn.put("not","NOT");
+		fcn.put("and","AND");  // >2 arguments OK for simplify (left-assoc)
+		fcn.put("=","EQ");		  // >2 arguments NOT OK for simplify (chainable)
+		fcn.put("=>","IMPLIES"); // >2 arguments NOT OK for simplify (right-assoc)
+		fcn.put("distinct","DISTINCT"); // >2 arguments OK for simplify (pairwise)
+		fcn.put("xor","NEQ");			// >2 arguments NOT OK for simplify (left-assoc)
+		fcn.put("+","+");				// >2 arguments  OK for simplify (left-assoc)
+		fcn.put("-","-");				// >2 arguments NOT OK for simplify (left-assoc)
+		fcn.put("*","*");				// >2 arguments  OK for simplify (left-assoc)
+		fcn.put(">",">");				// >2 arguments NOT OK for simplify (left-assoc)
+		fcn.put(">=",">=");			// >2 arguments NOT OK for simplify (chainable)
+		fcn.put("<","<");				// >2 arguments NOT OK for simplify (chainable)
+		fcn.put("<=","<=");			// >2 arguments NOT OK for simplify (chainable)
+		fcn.put("true","TRUE");
+		fcn.put("false","FALSE");
+		fcn.put("ite",ite_term);
+		fcn.put("select","select");
+		fcn.put("store","store");
+		fcnNames = Collections.unmodifiableMap(fcn);
 
-		nonchainables.addAll(Arrays.asList(new String[]{ "EQ", ">", "<", ">=", "<=", "IFF" }));
-		
-		reservedWords.addAll(Arrays.asList(new String[]
-		  { "FORALL","EXISTS","LET",
+		Set<String> nc = new HashSet<String>(Arrays.asList("EQ", ">", "<", ">=", "<=", "IFF"));
+		nonchainables = Collections.unmodifiableSet(nc);
+
+		Set<String> rw = new HashSet<String>(Arrays.asList(
+			"FORALL","EXISTS","LET",
 			"OR","AND","IMPLIES","EXPLIES","XOR","DISTINCT","IFF","NOT","TRUE","FALSE",
 			"EQ","NEQ","DISTINCT","PATS",
 			"+","-","*",">",">=","<","<=","store","select","@true",
 			"LBLPOS","LBLNEG","LBL","ORDER",
 			"BG_PUSH","BG_POP","DEFPRED","DEFPREDMAP",
-			ite_term,
-			}
+			ite_term
 		));
-		
+		reservedWords = Collections.unmodifiableSet(rw);
+
 		// These are formulas and take formulas as arguments
-		logicNames.addAll(Arrays.asList(new String[]
-		   { "OR","AND","IMPLIES","EXPLIES","XOR","IFF","NOT","FORALL","EXISTS"}));
+		Set<String> logic = new HashSet<String>(Arrays.asList(
+			"OR","AND","IMPLIES","EXPLIES","XOR","IFF","NOT","FORALL","EXISTS"));
+		logicNames = Collections.unmodifiableSet(logic);
 	}
 	
 	static public class Translator implements IVisitor<String> {

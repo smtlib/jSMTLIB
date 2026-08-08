@@ -1,6 +1,7 @@
 package org.smtlib.sexpr;
 
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -36,42 +37,60 @@ public class Utils extends org.smtlib.Utils {
 	public static final String NAMED_EXPR = "!";
 
 
-	/** A list of reserved words that are not commands */
-	static public Set<String> reservedWordsNotCommands = new HashSet<String>();
-	/** A list of all reserved words */
-	static public Set<String> reservedWords = new HashSet<String>();
+	/** Reserved words that are not commands (e.g. keywords, built-in tokens) */
+	static public final Set<String> reservedWordsNotCommands;
+	/** All reserved words (reserved-non-commands plus command names) */
+	static public final Set<String> reservedWords;
 	static {
-		reservedWordsNotCommands.add(NAMED_EXPR);
-		reservedWordsNotCommands.add(UNDERSCORE);
-		reservedWordsNotCommands.add(AS);
-		reservedWordsNotCommands.add(DECIMAL);
-		reservedWordsNotCommands.add(EXISTS);
-		reservedWordsNotCommands.add(FORALL);
-		reservedWordsNotCommands.add(LET);
-		reservedWordsNotCommands.add(MATCH);
-		reservedWordsNotCommands.add(NUMERAL);
-		reservedWordsNotCommands.add(PAR);
-		reservedWordsNotCommands.add(STRING);
-		reservedWords.addAll(reservedWordsNotCommands);
-		reservedWords.add(C_assert.commandName);
-		reservedWords.add(C_check_sat.commandName);
-		reservedWords.add(C_declare_fun.commandName);
-		reservedWords.add(C_declare_sort.commandName);
-		reservedWords.add(C_define_fun.commandName);
-		reservedWords.add(C_define_sort.commandName);
-		reservedWords.add(C_exit.commandName);
-		reservedWords.add(C_get_assertions.commandName);
-		reservedWords.add(C_get_assignment.commandName);
-		reservedWords.add(C_get_info.commandName);
-		reservedWords.add(C_get_option.commandName);
-		reservedWords.add(C_get_proof.commandName);
-		reservedWords.add(C_get_unsat_core.commandName);
-		reservedWords.add(C_get_value.commandName);
-		reservedWords.add(C_pop.commandName);
-		reservedWords.add(C_push.commandName);
-		reservedWords.add(C_set_info.commandName);
-		reservedWords.add(C_set_logic.commandName);
-		reservedWords.add(C_set_option.commandName);
+		Set<String> notCmds = new HashSet<String>();
+		notCmds.add(NAMED_EXPR);
+		notCmds.add(UNDERSCORE);
+		notCmds.add(AS);
+		notCmds.add(DECIMAL);
+		notCmds.add(EXISTS);
+		notCmds.add(FORALL);
+		notCmds.add(LET);
+		notCmds.add(MATCH);
+		notCmds.add(NUMERAL);
+		notCmds.add(PAR);
+		notCmds.add(STRING);
+		reservedWordsNotCommands = Collections.unmodifiableSet(notCmds);
+
+		// When adding a new C_*.java command class, add its commandName here.
+		Set<String> all = new HashSet<String>(notCmds);
+		all.add(C_assert.commandName);
+		all.add(C_check_sat.commandName);
+		all.add(C_check_sat_assuming.commandName);
+		all.add(C_declare_const.commandName);
+		all.add(C_declare_datatype.commandName);
+		all.add(C_declare_datatypes.commandName);
+		all.add(C_declare_fun.commandName);
+		all.add(C_declare_sort.commandName);
+		all.add(C_declare_sort_parameter.commandName);
+		all.add(C_define_const.commandName);
+		all.add(C_define_fun.commandName);
+		all.add(C_define_fun_rec.commandName);
+		all.add(C_define_funs_rec.commandName);
+		all.add(C_define_sort.commandName);
+		all.add(C_echo.commandName);
+		all.add(C_exit.commandName);
+		all.add(C_get_assertions.commandName);
+		all.add(C_get_assignment.commandName);
+		all.add(C_get_info.commandName);
+		all.add(C_get_model.commandName);
+		all.add(C_get_option.commandName);
+		all.add(C_get_proof.commandName);
+		all.add(C_get_unsat_assumptions.commandName);
+		all.add(C_get_unsat_core.commandName);
+		all.add(C_get_value.commandName);
+		all.add(C_pop.commandName);
+		all.add(C_push.commandName);
+		all.add(C_reset.commandName);
+		all.add(C_reset_assertions.commandName);
+		all.add(C_set_info.commandName);
+		all.add(C_set_logic.commandName);
+		all.add(C_set_option.commandName);
+		reservedWords = Collections.unmodifiableSet(all);
 	}
 	
 	private <T extends IPos.IPosable>T setPos(T p, IPos pos) { p.setPos(pos); return p; } 

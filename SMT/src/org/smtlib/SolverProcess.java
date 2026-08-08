@@ -24,10 +24,10 @@ import java.util.List;
  */
 public class SolverProcess {
     
-    static public int sleepTime = 1;
-    static public boolean useNotifyWait = false; // TOOD: Not sure that true works
-    static public boolean useShutdownHooks = true;
-    static public boolean useMultiThreading = true;
+    public int sleepTime = 1;
+    public boolean useNotifyWait = false; // TOOD: Not sure that true works
+    public boolean useShutdownHooks = true;
+    public boolean useMultiThreading = true;
 	
 	final static protected String eol = System.getProperty("line.separator");
 	
@@ -62,7 +62,6 @@ public class SolverProcess {
 	/** A place (e.g., log file), if non-null, to write all outbound communications for diagnostic purposes */
 	public /*@Nullable*/Writer log;
 	
-	static java.io.PrintWriter pw = null;
 
 	/** Constructs a SolverProcess object, without actually starting the process as yet.
 	 * @param cmd the command-line that will launch the desired process
@@ -117,8 +116,8 @@ public class SolverProcess {
     		}
     		toProcess = new OutputStreamWriter(process.getOutputStream());
     		if (useMultiThreading) {
-                errorOut = new StreamGobbler(process.getErrorStream(), null);
-                standardOut = new StreamGobbler(process.getInputStream(), s->endsWith(s,endMarker));
+                errorOut = new StreamGobbler(process.getErrorStream(), null, useNotifyWait);
+                standardOut = new StreamGobbler(process.getInputStream(), s->endsWith(s,endMarker), useNotifyWait);
                 errorOut.start();
                 standardOut.start();
     		} else {
@@ -310,7 +309,7 @@ public class SolverProcess {
 	 * @return the String read
 	 * @throws IOException if an IO failure occurs
 	 */
-	static public /*@NonNull*/String listenThru(/*@NonNull*/Reader r, /*@Nullable*/ String end) throws IOException {
+	public /*@NonNull*/String listenThru(/*@NonNull*/Reader r, /*@Nullable*/ String end) throws IOException {
 	    if (!useMultiThreading) {
 	        char[] buf = getBuffer();
 	        try {
@@ -355,21 +354,24 @@ public class SolverProcess {
 	    }
 	}
 	
-	public static boolean badFormat = false;
+	public boolean badFormat = false;
 	
 	public static class StreamGobbler extends Thread {
-	    
+
 	    /*@ non_null */java.io.InputStream is;
         /*@ non_null */StringBuilder accumulator;
         /*@ nullable */String output;
 	    /*@ nullable */ java.util.function.Function<StringBuilder,Boolean> endRecognizer;
-	    
+	    boolean useNotifyWait;
+
 	    char[] buf = new char[10000];
-	    
-	    public StreamGobbler(/*@ non_null */java.io.InputStream is, 
-	                            /*@ nullable */ java.util.function.Function<StringBuilder,Boolean> endRecognizer) {
+
+	    public StreamGobbler(/*@ non_null */java.io.InputStream is,
+	                            /*@ nullable */ java.util.function.Function<StringBuilder,Boolean> endRecognizer,
+	                            boolean useNotifyWait) {
 	        this.is = is;
 	        this.endRecognizer = endRecognizer;
+	        this.useNotifyWait = useNotifyWait;
 	        accumulator = new StringBuilder();
 	    }
 	    
@@ -432,8 +434,7 @@ public class SolverProcess {
 	}
 	
 	public static void main(String ... args) {
-        java.util.Scanner in = new java.util.Scanner(System.in); 
-        SolverProcess.useMultiThreading = true;
+        java.util.Scanner in = new java.util.Scanner(System.in);
 	    SolverProcess sp = new SolverProcess(args, "\n", null);
 	    sp.start(false);
 	    while (true) {

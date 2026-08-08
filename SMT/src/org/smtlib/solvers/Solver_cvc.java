@@ -561,73 +561,74 @@ public class Solver_cvc extends Solver_test implements ISolver {
 	 * BOOLEAN terms
 	 */
 	
-	static Map<String,String> fcnNames = new HashMap<String,String>();
-	static Set<String> logicNames = new HashSet<String>();
+	static final Map<String,String> fcnNames;
+	static final Set<String> logicNames;
 	static {
 		/* SMTLIB			CVC
 		 * (or p q r ...)	(p OR q OR r ...)
 		 * (and p q r ...)	(p AND q AND r ...)
 		 * (not p)			(NOT p)
-		 * (=> p q r ...)	(p => (q => r)) 
+		 * (=> p q r ...)	(p => (q => r))
 		 * (xor p q r ...)	((p XOR q) XOR r)
 		 * (= p q r ...)	((p <=> q) AND ( q <=> r) ... )   - formulas
 		 * (= p q r ...)	((p = q) AND (q == r) ... )   - terms
-		 * (distinct p q r)	(NOT (p == q))   - formulas (error if more than 2 arguments) 
-		 * (distinct p q r)	(DISTINCT p q r ... )   - terms  
+		 * (distinct p q r)	(NOT (p == q))   - formulas (error if more than 2 arguments)
+		 * (distinct p q r)	(DISTINCT p q r ... )   - terms
 		 * true				TRUE
 		 * false			FALSE
 		 * (ite b p q)		(IF b THEN p ELSE q ENDIF)
-		 * 
+		 *
 		 */
-		
-		fcnNames.put("or","|");				// infix for cvc (left-assoc)
-		fcnNames.put("and","&");				// infix for cvc (left-assoc)
-		fcnNames.put("not","~");				// prefix
-		fcnNames.put("=>","=>");				// infix for cvc (right-assoc)
-		fcnNames.put("xor","XOR");				// infix for cvc (left-assoc)
-		fcnNames.put("=","="); // <=> for formula 	// infix for cvc (chainable)
-		fcnNames.put("distinct","DISTINCT"); // XOR for formula// >2 arguments OK for cvc (pairwise)
-		fcnNames.put("true","TRUE");
-		fcnNames.put("false","FALSE");
-		fcnNames.put("ite","IF");			// special in cvc  IF ... THEN ... ELSE ... FI
-		fcnNames.put("+","+");				// infix for cvc (left-assoc)
-		fcnNames.put("-","-");				// infix for cvc (left-assoc)
-		fcnNames.put("*","*");				// infix for cvc (left-assoc)
-		fcnNames.put(">",">");				// infix for cvc (left-assoc)		
-		fcnNames.put(">=",">=");			// infix for cvc (chainable)
-		fcnNames.put("<","<");				// infix for cvc (chainable)
-		fcnNames.put("<=","<=");			// infix for cvc (chainable)
-		
-		fcnNames.put("forall","FORALL");
-		fcnNames.put("exists","EXISTS");
-		fcnNames.put("let","LET");
-		
-		fcnNames.put("bvadd","BVPLUS"); // needs a first argument of the number of bits
-		fcnNames.put("bvsub","BVSUB"); // needs a first argument of the number of bits
-		fcnNames.put("bvmul","BVMULT"); // needs a first argument of the number of bits
-		fcnNames.put("bvneg","BVUMINUS");
-		fcnNames.put("bvnand","BVNAND");
-		fcnNames.put("bvnor","BVNOR");
-		fcnNames.put("bvxor","BVXOR");
-		fcnNames.put("bvxnor","BVXNOR");
-		fcnNames.put("bvnot","~");
-		fcnNames.put("bvand","&"); // infix
-		fcnNames.put("bvor","|"); // infix
-		fcnNames.put("bvudiv","&"); // FIXME
-		fcnNames.put("bvurem","&"); // FIXME
-		fcnNames.put("bvshl","<<"); // infix// FIXME
-		fcnNames.put("bvlshr",">>"); // infix// FIXME
-		fcnNames.put("concat","@"); // infix
-		fcnNames.put("bvult","BVLT");
-		fcnNames.put("bvule","BVLE");
-		fcnNames.put("bvugt","BVGT");
-		fcnNames.put("bvuge","BVGE");
-		fcnNames.put("extract","extract");
-		
-		logicNames.add("or");
-		logicNames.add("and");
-		logicNames.add("not");
-		logicNames.add("=>");
+		Map<String,String> fcn = new HashMap<String,String>();
+		fcn.put("or","|");				// infix for cvc (left-assoc)
+		fcn.put("and","&");				// infix for cvc (left-assoc)
+		fcn.put("not","~");				// prefix
+		fcn.put("=>","=>");				// infix for cvc (right-assoc)
+		fcn.put("xor","XOR");				// infix for cvc (left-assoc)
+		fcn.put("=","="); // <=> for formula 	// infix for cvc (chainable)
+		fcn.put("distinct","DISTINCT"); // XOR for formula// >2 arguments OK for cvc (pairwise)
+		fcn.put("true","TRUE");
+		fcn.put("false","FALSE");
+		fcn.put("ite","IF");			// special in cvc  IF ... THEN ... ELSE ... FI
+		fcn.put("+","+");				// infix for cvc (left-assoc)
+		fcn.put("-","-");				// infix for cvc (left-assoc)
+		fcn.put("*","*");				// infix for cvc (left-assoc)
+		fcn.put(">",">");				// infix for cvc (left-assoc)
+		fcn.put(">=",">=");			// infix for cvc (chainable)
+		fcn.put("<","<");				// infix for cvc (chainable)
+		fcn.put("<=","<=");			// infix for cvc (chainable)
+		fcn.put("forall","FORALL");
+		fcn.put("exists","EXISTS");
+		fcn.put("let","LET");
+		fcn.put("bvadd","BVPLUS"); // needs a first argument of the number of bits
+		fcn.put("bvsub","BVSUB"); // needs a first argument of the number of bits
+		fcn.put("bvmul","BVMULT"); // needs a first argument of the number of bits
+		fcn.put("bvneg","BVUMINUS");
+		fcn.put("bvnand","BVNAND");
+		fcn.put("bvnor","BVNOR");
+		fcn.put("bvxor","BVXOR");
+		fcn.put("bvxnor","BVXNOR");
+		fcn.put("bvnot","~");
+		fcn.put("bvand","&"); // infix
+		fcn.put("bvor","|"); // infix
+		fcn.put("bvudiv","&"); // FIXME
+		fcn.put("bvurem","&"); // FIXME
+		fcn.put("bvshl","<<"); // infix// FIXME
+		fcn.put("bvlshr",">>"); // infix// FIXME
+		fcn.put("concat","@"); // infix
+		fcn.put("bvult","BVLT");
+		fcn.put("bvule","BVLE");
+		fcn.put("bvugt","BVGT");
+		fcn.put("bvuge","BVGE");
+		fcn.put("extract","extract");
+		fcnNames = Collections.unmodifiableMap(fcn);
+
+		Set<String> logic = new HashSet<String>();
+		logic.add("or");
+		logic.add("and");
+		logic.add("not");
+		logic.add("=>");
+		logicNames = Collections.unmodifiableSet(logic);
 	}
 	
 	

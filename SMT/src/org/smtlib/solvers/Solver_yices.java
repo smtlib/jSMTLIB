@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -474,8 +475,8 @@ public class Solver_yices extends Solver_test implements ISolver {
 	 * from SMT-LIB is simpler.
 	 */
 	
-	static Map<String,String> fcnNames = new HashMap<String,String>();
-	static Set<String> logicNames = new HashSet<String>();
+	static final Map<String,String> fcnNames;
+	static final Set<String> logicNames;
 	static {
 		/* SMTLIB			YICES
 		 * (or p q r ...)	(or p q r ...)
@@ -483,64 +484,67 @@ public class Solver_yices extends Solver_test implements ISolver {
 		 * (not p)			(not p)
 		 * (=> p q r ...)	(=> p (=> q r...))
 		 * (xor p q r ...)	(/= (/= p q)) r )) ...
-		 * (= p q r ...)	(and (= p q) (= q r) ... ) 
-		 * (distinct p q r)	 conjunction of /= 
+		 * (= p q r ...)	(and (= p q) (= q r) ... )
+		 * (distinct p q r)	 conjunction of /=
 		 * true				true
 		 * false			false
 		 * (ite b p q)		(if b p q)
 		 * (forall ...		(forall (a::Bool b::Int) expr)
 		 * (exists ...		(exists (a::Bool b::Int) expr)
 		 * (let ...			(let ((aux::int (f (f x)))) (g aux aux))
-		 * 
+		 *
 		 * < <= > >=		< <= > >=  : no chaining allowed
 		 *
 		 * TERMS
 		 * + - *			+ - * : left associative
 		 * 	    			select store  - for arrays
-		 * 
-		 * 
+		 *
+		 *
 		 * Yices has / mod div
 		 */
-		
+		fcnNames = Collections.unmodifiableMap(new HashMap<String,String>());
+		logicNames = Collections.unmodifiableSet(new HashSet<String>());
 	}
-	
+
 
 	/* Yices ids:
 	 * 		FIXME - not  defined what Yices ids can be made of
 	 */
-	
-	static Map<String,String> bvfcns = new HashMap<String,String>();
+
+	static final Map<String,String> bvfcns;
 	static {
-		bvfcns.put("bvadd","bv-add");
-		bvfcns.put("bvand","bv-and");
-		bvfcns.put("bvor","bv-or");
-		bvfcns.put("bvmul","bv-mul");
-		bvfcns.put("bvshl","bv-shift-left0"); // second argument is an integer
-		bvfcns.put("bvlshr","bv-shift-right0"); // second argument is an integer
-		bvfcns.put("bvneg","bv-neg");
-		bvfcns.put("bvnot","bv-not");
-		bvfcns.put("bvudiv","");
-		bvfcns.put("bvurem","");
-		bvfcns.put("concat","bv-concat");
-		bvfcns.put("extract","bv-extract");
-		bvfcns.put("bvult","bv-lt");
-		bvfcns.put("bvnand","");
-		bvfcns.put("bvnor","");
-		bvfcns.put("bvxor","");
-		bvfcns.put("bvxnor","");
-		bvfcns.put("bvcomp","");
-		bvfcns.put("bvsub","");
-		bvfcns.put("bvsdiv","");
-		bvfcns.put("bvsrem","");
-		bvfcns.put("bvsmod","");
-		bvfcns.put("bvashr","");
-		bvfcns.put("bvule","");
-		bvfcns.put("bvugt","");
-		bvfcns.put("bvuge","");
-		bvfcns.put("bvslt","");
-		bvfcns.put("bvsle","");
-		bvfcns.put("bvsgt","");
-		bvfcns.put("bvsge","");
+		Map<String,String> bv = new HashMap<String,String>();
+		bv.put("bvadd","bv-add");
+		bv.put("bvand","bv-and");
+		bv.put("bvor","bv-or");
+		bv.put("bvmul","bv-mul");
+		bv.put("bvshl","bv-shift-left0"); // second argument is an integer
+		bv.put("bvlshr","bv-shift-right0"); // second argument is an integer
+		bv.put("bvneg","bv-neg");
+		bv.put("bvnot","bv-not");
+		bv.put("bvudiv","");
+		bv.put("bvurem","");
+		bv.put("concat","bv-concat");
+		bv.put("extract","bv-extract");
+		bv.put("bvult","bv-lt");
+		bv.put("bvnand","");
+		bv.put("bvnor","");
+		bv.put("bvxor","");
+		bv.put("bvxnor","");
+		bv.put("bvcomp","");
+		bv.put("bvsub","");
+		bv.put("bvsdiv","");
+		bv.put("bvsrem","");
+		bv.put("bvsmod","");
+		bv.put("bvashr","");
+		bv.put("bvule","");
+		bv.put("bvugt","");
+		bv.put("bvuge","");
+		bv.put("bvslt","");
+		bv.put("bvsle","");
+		bv.put("bvsgt","");
+		bv.put("bvsge","");
+		bvfcns = Collections.unmodifiableMap(bv);
 	}
 
 	
