@@ -1,0 +1,10 @@
+success
+success
+success
+(error "A quantified expression is not allowed in the QF_LRA logic")
+(error "The expression must be linear: ")
+(error "Declarations of uninterpreted functions are not allowed in this logic")
+(error "Error while checking sort abbreviation: New sorts are not allowed in this logic")
+(error "The expression must be linear: ")
+(error "The expression must be linear: ")
+(error "The expression must be linear: ")

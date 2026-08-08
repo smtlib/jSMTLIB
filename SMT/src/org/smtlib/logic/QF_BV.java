@@ -17,6 +17,7 @@ public class QF_BV extends Logic {
 	}
 
 	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
+		noQuantifiers(expression);
 	}
 	
 

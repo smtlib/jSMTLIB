@@ -1,0 +1,6 @@
+success
+success
+success
+(error "Integer expressions must be linear in this logic")
+(error "Declarations of uninterpreted functions are not allowed in this logic")
+(error "Error while checking sort abbreviation: New sorts are not allowed in this logic")

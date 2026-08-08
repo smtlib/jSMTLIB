@@ -1,6 +1,6 @@
 (logic ALL
 
- :smt-lib-version 2.5
+ :smt-lib-version 2.7
  :written-by "David Cok"
  
  :theories (Core ArraysEx Reals_Ints FloatingPoint FixedSizeBitVectors Strings HO-Core)

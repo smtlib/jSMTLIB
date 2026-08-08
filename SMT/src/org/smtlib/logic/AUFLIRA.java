@@ -22,14 +22,15 @@ public class AUFLIRA extends Logic {
 
 	@Override
 	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
-		//if (!isLinearInteger(expression)) throw new IVisitor.VisitorException("Integer expressions must be linear in this logic",expression.pos());
+		if (!isLinearReal(expression))
+			throw new IVisitor.VisitorException("Arithmetic expressions must be linear in the " + logicName + " logic", expression.pos());
 	}
 	
 	@Override
 	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
+		if (expr != null) checkArraySort(expr, id,
+				"(Array Int Real) or (Array Int (Array Int Real))",
+				"(Array Int Real)", "(Array Int (Array Int Real))");
 	}
-
-	// FIXME - needs only linear integer or real terms
-	// FIXME - needs restriction on array sort parameters - only Int
 
 }

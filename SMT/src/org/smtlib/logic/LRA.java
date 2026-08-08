@@ -10,7 +10,7 @@ import org.smtlib.IVisitor;
 import org.smtlib.IExpr.*;
 import org.smtlib.impl.SMTExpr;
 
-/** This logic does not allow quantifiers or uninterpreted functions */
+/** This logic does not allow uninterpreted functions or nonlinear arithmetic terms */
 public class LRA extends Logic {
 
 	public LRA(ISymbol name, Collection<IAttribute<?>> attributes) {

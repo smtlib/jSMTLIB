@@ -168,7 +168,9 @@ public class AbstractSolver implements ISolver {
 	/** @see org.smtlib.ISolver#declare_const(ICommand.Ideclare_const)  */
 	@Override
 	public IResponse declare_const(Ideclare_const cmd) {
-		throw new UnsupportedOperationException("AbstractSolver.declare_const");
+		// declare-const is syntactic sugar for declare-fun with an empty argument list
+		return declare_fun(smtConfig.commandFactory.declare_fun(
+				cmd.symbol(), new java.util.ArrayList<>(), cmd.resultSort()));
 	}
 
 	/** @see org.smtlib.ISolver#declare_fun(ICommand.Ideclare_fun)  */

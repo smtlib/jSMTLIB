@@ -24,8 +24,8 @@ public class QF_AUFLIA extends Logic {
 		if (!isLinearInteger(expression)) throw new IVisitor.VisitorException("Integer expressions must be linear in this logic",expression.pos());
 	}
 	
+	@Override
 	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
+		if (expr != null) checkArraySort(expr, id, "(Array Int Int)", "(Array Int Int)");
 	}
-
-	// FIXME - needs restriction on array sort parameters - only Int
 }

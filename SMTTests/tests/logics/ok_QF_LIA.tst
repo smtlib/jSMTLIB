@@ -1,0 +1,11 @@
+; QF_LIA: quantifier-free linear integer arithmetic; no UF, no new sorts
+(set-logic QF_LIA)
+(declare-const x Int)
+(declare-const y Int)
+(assert (= y (+ x 1)))
+(assert (= y (* 3 x)))
+(assert (>= x 0))
+; define-fun with args is allowed (covers noFunctions pass branch)
+(define-fun double ((n Int)) Int (* 2 n))
+; define-sort alias is allowed (covers noSorts pass branch)
+(define-sort MyInt () Int)

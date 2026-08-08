@@ -1,0 +1,6 @@
+(assert (forall ((z Real)) (>= z 0.0)))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun f (Real) Real)
+             ^
+(declare-sort S 0)
+              ^

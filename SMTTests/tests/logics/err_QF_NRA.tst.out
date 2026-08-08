@@ -1,0 +1,6 @@
+success
+success
+success
+(error "A quantified expression is not allowed in the QF_NRA logic")
+(error "Declarations of uninterpreted functions are not allowed in this logic")
+(error "Error while checking sort abbreviation: New sorts are not allowed in this logic")

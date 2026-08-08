@@ -111,10 +111,10 @@ public class SolverProcess {
     	    } else {
                 process = Runtime.getRuntime().exec(app);
     	    }
-//    		if (useShutdownHooks) {
-//    		    shutdownThread = new Thread() { public void run() { process.destroyForcibly(); }};
-//    		    Runtime.getRuntime().addShutdownHook( shutdownThread );
-//    		}
+    		if (useShutdownHooks) {
+    		    shutdownThread = new Thread() { public void run() { process.destroyForcibly(); }};
+    		    Runtime.getRuntime().addShutdownHook( shutdownThread );
+    		}
     		toProcess = new OutputStreamWriter(process.getOutputStream());
     		if (useMultiThreading) {
                 errorOut = new StreamGobbler(process.getErrorStream(), null);

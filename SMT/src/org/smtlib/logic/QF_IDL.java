@@ -43,7 +43,7 @@ public class QF_IDL extends Logic {
 					if (!fcn.equals("-")) {
 						throw new IVisitor.VisitorException("lhs must be a symbol or a difference", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
 					}
-					if (f.args().get(0) instanceof ISymbol && f.args().get(1) instanceof ISymbol) {
+					if (f.args().size()  == 2 && f.args().get(0) instanceof ISymbol && f.args().get(1) instanceof ISymbol) {
 						// OK
 					} else {
 						throw new IVisitor.VisitorException("differences must be difference of symbols", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
@@ -54,16 +54,14 @@ public class QF_IDL extends Logic {
 						throw new IVisitor.VisitorException("The rhs must be an integer", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
 					} else {
 						f = (IExpr.IFcnExpr)rhs;
-						if (f.args().size() != 1 || f.head().toString().equals("-")) {
-							throw new IVisitor.VisitorException("The rhs must be an integer", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
-						} else if (f.args().get(0) instanceof INumeral) {
-							// OK
+						if (f.args().size() == 1 && f.head().toString().equals("-") && f.args().get(0) instanceof INumeral) {
+						    // OK
 						} else {
-							throw new IVisitor.VisitorException("The rhs must be an integer", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
+							throw new IVisitor.VisitorException("The rhs must be a numeral or negation of numeral", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
 						}
 					}
-//				} else {
-//					throw new IVisitor.VisitorException("Invalid operation in IDL logic", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
+				} else {
+					throw new IVisitor.VisitorException("Invalid operation in IDL logic", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
 				}
 				return (Void)null;
 			}

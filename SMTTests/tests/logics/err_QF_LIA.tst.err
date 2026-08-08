@@ -1,0 +1,16 @@
+(assert (forall ((a Int)) (>= a 0)))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (= y (* x x)))
+        ^^^^^^^^^^^^^
+(declare-fun f (Int) Int)
+             ^
+(declare-sort S 0)
+              ^
+(assert (= z (div x y)))
+        ^^^^^^^^^^^^^^^
+(assert (= z (mod x y)))
+        ^^^^^^^^^^^^^^^
+(assert (= z (abs x)))
+        ^^^^^^^^^^^^^
+(assert (= z (* (- x) y)))
+        ^^^^^^^^^^^^^^^^^

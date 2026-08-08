@@ -16,6 +16,11 @@ public class UFNIA extends Logic {
 		super(name,attributes);
 	}
 
+	@Override
+	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
+		noExponentiation(expression);
+	}
+
 	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
 		// new sorts permitted
 	}

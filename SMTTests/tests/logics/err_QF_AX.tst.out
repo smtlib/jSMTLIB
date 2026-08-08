@@ -1,0 +1,5 @@
+success
+success
+success
+(error "A quantified expression is not allowed in the QF_AX logic")
+(error "Declarations of uninterpreted functions are not allowed in this logic")

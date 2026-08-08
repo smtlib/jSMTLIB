@@ -316,7 +316,18 @@ public class SMT {
 	/** The main method of the SMT application */
 	public static void main(String[] args) {
 		//System.err.println("#Start main");
-		int exitValue = (new SMT()).exec(args);
+		SMT smt = new SMT();
+		int exitValue = 1;
+		try {
+			exitValue = smt.exec(args);
+		} catch (Throwable t) {
+			System.err.println("jSMTLIB: unexpected error: " + t);
+		} finally {
+			if (smt.solver != null) {
+				try { smt.solver.forceExit(); } catch (Throwable ignored) {}
+				smt.solver = null;
+			}
+		}
 		System.exit(exitValue);
 	}
 	
@@ -552,7 +563,13 @@ public class SMT {
 						smtConfig.log.logDiag(smtConfig.defaultPrinter.toString(command));
 					}
 					else if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Command to execute: " +  command);
-					result = command.execute(solver);
+					try {
+						result = command.execute(solver);
+					} catch (UnsupportedOperationException e) {
+						result = smtConfig.responseFactory.error(
+							"The " + smtConfig.solvername + " solver does not support this operation: " + e.getMessage(),
+							command instanceof IPosable ? ((IPosable)command).pos() : null);
+					}
 					if (!result.isError() && command instanceof ICommand.Iset_info) {
 						ICommand.Iset_info si = (ICommand.Iset_info) command;
 						if (Utils.SMTLIB_VERSION.equals(si.infoflag()) && si.value() instanceof IExpr.IStringLiteral) {
@@ -608,6 +625,7 @@ public class SMT {
 			retcode = 2;
 		}
 		solver.forceExit();  // Just in case the solver was not explicitly exited
+		solver = null;
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Exiting program");
 		return retcode;
 	}

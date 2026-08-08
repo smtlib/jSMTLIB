@@ -23,7 +23,7 @@ public class QF_NIA extends Logic {
 
 	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
 		noQuantifiers(expression);
-		super.validExpression(expression);
+		noExponentiation(expression);
 	}
 	
 	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {

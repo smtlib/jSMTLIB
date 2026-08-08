@@ -1,0 +1,6 @@
+success
+success
+success
+(error "Arithmetic expressions must be linear in the AUFLIRA logic")
+(error "Arithmetic expressions must be linear in the AUFLIRA logic")
+(error "Error while checking sort abbreviation: Array sorts must be (Array Int Real) or (Array Int (Array Int Real)) in this logic")

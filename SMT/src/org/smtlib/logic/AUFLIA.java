@@ -29,8 +29,7 @@ public class AUFLIA extends Logic {
 	
 	@Override
 	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
+		if (expr != null) checkArraySort(expr, id, "(Array Int Int)", "(Array Int Int)");
 	}
-
-	// FIXME - needs restriction on array sort parameters - only Int
 
 }

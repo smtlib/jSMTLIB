@@ -1,0 +1,8 @@
+; AUFNIRA: quantifiers + UF + nonlinear arithmetic + arrays; no restrictions enforced
+(set-logic AUFNIRA)
+(declare-sort Tag 0)
+(declare-const x Int)
+(declare-const y Int)
+(declare-fun f (Int Int) Int)
+(assert (= y (* x x)))
+(assert (forall ((z Int)) (>= z 0)))

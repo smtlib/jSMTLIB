@@ -1,0 +1,5 @@
+success
+success
+success
+(error "A quantified expression is not allowed in the QF_UFLIA logic")
+(error "Integer expressions must be linear in this logic")

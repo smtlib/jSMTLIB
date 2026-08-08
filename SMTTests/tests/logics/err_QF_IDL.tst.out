@@ -1,0 +1,11 @@
+success
+success
+success
+success
+(error "A quantified expression is not allowed in the QF_IDL logic")
+(error "Declarations of uninterpreted functions are not allowed in this logic")
+(error "Error while checking sort abbreviation: New sorts are not allowed in this logic")
+(error "lhs must be a symbol or a difference")
+(error "rhs must be a symbol if the lhs is a symbol")
+(error "differences must be difference of symbols")
+(error "The rhs must be an integer")

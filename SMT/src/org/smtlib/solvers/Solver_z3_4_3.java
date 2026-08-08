@@ -21,6 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.smtlib.*;
+import org.smtlib.ICommand.Ideclare_const;
 import org.smtlib.ICommand.Ideclare_fun;
 import org.smtlib.ICommand.Ideclare_sort;
 import org.smtlib.ICommand.Idefine_fun;
@@ -492,6 +493,21 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	}
 
 	@Override
+	public IResponse declare_const(Ideclare_const cmd) {
+		if (!logicSet) {
+			return smtConfig.responseFactory.error("The logic must be set before a declare-const command is issued");
+		}
+		try {
+			checkSatStatus = null;
+			return parseResponse(solverProcess.sendAndListen(translate(cmd),"\n"));
+		} catch (IOException e) {
+			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+		} catch (IVisitor.VisitorException e) {
+			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+		}
+	}
+
+	@Override
 	public IResponse declare_fun(Ideclare_fun cmd) {
 		if (!logicSet) {
 			return smtConfig.responseFactory.error("The logic must be set before a declare-fun command is issued");
@@ -499,7 +515,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		try {
 			checkSatStatus = null;
 			return parseResponse(solverProcess.sendAndListen(translate(cmd),"\n"));
-			
+
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
 		} catch (IVisitor.VisitorException e) {

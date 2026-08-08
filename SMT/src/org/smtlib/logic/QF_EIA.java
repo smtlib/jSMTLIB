@@ -23,12 +23,11 @@ public class QF_EIA extends Logic {
 
     public void validExpression(IExpr expression) throws IVisitor.VisitorException {
         noQuantifiers(expression);
-        super.validExpression(expression);
+        // Exponentiation (**) is permitted — that is the sole difference from QF_NIA.
     }
-    
+
     public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
         noSorts(id,params,expr);
     }
 
-    // FIXME -- allows exponentiation -- otherwise like QF_NIA
 }

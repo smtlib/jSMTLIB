@@ -1,0 +1,8 @@
+; QF_UFLIA: quantifier-free linear integer arithmetic with UF
+(set-logic QF_UFLIA)
+(declare-const x Int)
+(declare-const y Int)
+(declare-fun f (Int) Int)
+(assert (= y (+ x 1)))
+(assert (= y (* 3 x)))
+(assert (= y (f x)))

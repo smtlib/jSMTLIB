@@ -1,0 +1,15 @@
+; AUFLIRA accepts linear arithmetic including scalar multiplication
+(set-logic AUFLIRA)
+(declare-const a Real)
+(declare-const b Real)
+; linear multiplication by constant is allowed
+(assert (= b (* 2.0 a)))
+(assert (= b (* a 2.0)))
+(assert (= b (+ a 1.0)))
+(assert (>= a 0.0))
+; constant division (covers isLinearReal / pass; isRealConst IDecimal args)
+(assert (= b (/ 2.0 3.0)))
+; negative decimal const (covers isRealConst - with IDecimal, line 134)
+(assert (= b (* (- 2.0) a)))
+(define-sort MyArr () (Array Int Real))
+(define-sort MyArr2 () (Array Int (Array Int Real)))

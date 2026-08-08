@@ -1,0 +1,4 @@
+(assert (forall ((z A)) (= z x)))
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun f (A) A)
+             ^

@@ -141,8 +141,31 @@ public class Driver {
 	}
 
 	/** Sends the options and commands to the port; returns the exit code corresponding to the response
-	 * from the last command. */
+	 * from the last command. Retries on ConnectException to tolerate slow server startup. */
 	public int send() throws IOException {
+		int delayMs = 200;
+		ConnectException lastConnectException = null;
+		for (int attempt = 0; attempt < 10; attempt++) {
+			try {
+				return sendOnce();
+			} catch (ConnectException e) {
+				lastConnectException = e;
+				try { Thread.sleep(delayMs); } catch (InterruptedException ie) {
+					Thread.currentThread().interrupt();
+					break;
+				}
+				delayMs = Math.min(delayMs * 2, 2000);
+			} catch (IOException e) {
+				System.err.println("Couldn't get I/O from the socket connection: " + e);
+				return EX_EXCEPTION;
+			}
+		}
+		System.err.println("Couldn't get I/O from the socket connection: " + lastConnectException);
+		return EX_EXCEPTION;
+	}
+
+	/** Attempts one connection to the port and sends all commands; throws IOException on failure. */
+	private int sendOnce() throws IOException {
 		try (Socket serverSocket = new Socket(InetAddress.getLoopbackAddress(), port);
 			 PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
 			 BufferedReader in = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()))) {
@@ -166,9 +189,6 @@ public class Driver {
 
 			if (verbose) System.out.println("exitcode = " + exitcode);
 			return exitcode;
-		} catch (IOException e) {
-			System.err.println("Couldn't get I/O from the socket connection: " + e);
-			return EX_EXCEPTION;
 		}
 	}
 }

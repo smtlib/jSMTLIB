@@ -1,0 +1,11 @@
+success
+success
+success
+success
+(error "line 6 column 36: logic does not support quantifiers")
+(error "line 7 column 25: logic does not support uninterpreted functions")
+success
+(error "line 9 column 22: logic does not support nonlinear arithmetic")
+success
+success
+(error "line 12 column 22: logic only supports difference arithmetic")

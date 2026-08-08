@@ -1,0 +1,6 @@
+(assert (= b (* a a)))
+        ^^^^^^^^^^^^^
+(assert (= b (/ a 2.0)))
+        ^^^^^^^^^^^^^^^
+(define-sort BadArr () (Array Int Int))
+             ^^^^^^

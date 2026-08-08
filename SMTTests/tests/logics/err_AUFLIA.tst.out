@@ -1,0 +1,5 @@
+success
+success
+success
+(error "Integer expressions must be linear in this logic")
+(error "Error while checking sort abbreviation: Array sorts must be (Array Int Int) in this logic")
