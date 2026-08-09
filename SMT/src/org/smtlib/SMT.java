@@ -287,8 +287,7 @@ public class SMT {
 						}
 						if (!ICommand.class.isAssignableFrom(clazzz)) { // Check that the returned class is an ICommand -- implementation bug if it is not
 						    Utils.jacocoNeverExecuted(); // This branch only occurs if there is a bug in writing a derived command class.
-						    // FIXME - can we use logDiag?  Need a handle on smtCOnfig
-						    System.err.println("Command " + className + " is supposed to inherit from " + ICommand.class);
+						    log.logDiag("Command " + className + " is supposed to inherit from " + ICommand.class);
 						    continue;
 						}
 						@SuppressWarnings("unchecked") // FIXME - do better on checking typing
@@ -327,18 +326,15 @@ public class SMT {
 	
 	/** The main method of the SMT application */
 	public static void main(String[] args) {
-		//System.err.println("#Start main");
 		SMT smt = new SMT();
+		//if (smt.smtConfig.verbose != 0) smt.smtConfig.log.logDiag("#Start main");
 		int exitValue = 1;
 		try {
 			exitValue = smt.exec(args);
 		} catch (Throwable t) {
 			System.err.println("jSMTLIB: unexpected error: " + t);
 		} finally {
-			if (smt.solver != null) {
-				try { smt.solver.forceExit(); } catch (Throwable ignored) {}
-				smt.solver = null;
-			}
+			smt.cleanup();
 		}
 		System.exit(exitValue);
 	}
@@ -412,7 +408,7 @@ public class SMT {
 	 * @return the exit code to return to the command-line: FIXME - document exit codes
 	 */
 	public int exec(String[] args) {
-		//System.err.println("#Start exec");
+		//if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Start exec");
 		int ret = processCommandLine(args,smtConfig);
 		if (ret == -1) return 0; // help or version
 		if (ret != 0) return ret;
@@ -425,74 +421,78 @@ public class SMT {
 
 	/** Executes, presuming all options (e.g. from the command-line) are set in the configuration object */
 	public int exec() {
-		int retcode = 0;
-		IParser p;
-		ISource src;
-		if (smtConfig.text != null) {
-			// If 'text' is set, use it as the input
-			smtConfig.interactive = false;
-			Reader rdr = new StringReader(smtConfig.text);
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Start parsing text input");
-			// In the case of text input, the file name, if specified, is used just as an
-			// indicator of where the text came from. The name is not used to open or read
-			// from the file. This is used particularly when called from the plug-in; in that
-			// case the text is the edited but unsaved text of a file and the file name is
-			// the name of the edited file, so that any error messages can be directed back
-			// to the correct editor.
-			src = smtConfig.smtFactory.createSource(new CharSequenceReader(rdr,100000,0,2), 
-					(smtConfig.files == null || smtConfig.files.isEmpty())? null : smtConfig.files.get(0)); // FIXME - use factory
-			p = smtConfig.smtFactory.createParser(smtConfig,src);
-			return doParser(p);
+		try {
+			int retcode = 0;
+			IParser p;
+			ISource src;
+			if (smtConfig.text != null) {
+				// If 'text' is set, use it as the input
+				smtConfig.interactive = false;
+				Reader rdr = new StringReader(smtConfig.text);
+				if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Start parsing text input");
+				// In the case of text input, the file name, if specified, is used just as an
+				// indicator of where the text came from. The name is not used to open or read
+				// from the file. This is used particularly when called from the plug-in; in that
+				// case the text is the edited but unsaved text of a file and the file name is
+				// the name of the edited file, so that any error messages can be directed back
+				// to the correct editor.
+				src = smtConfig.smtFactory.createSource(new CharSequenceReader(rdr,100000,0,2),
+						(smtConfig.files == null || smtConfig.files.isEmpty())? null : smtConfig.files.get(0)); // FIXME - use factory
+				p = smtConfig.smtFactory.createParser(smtConfig,src);
+				return doParser(p);
 
-		} else if (smtConfig.port >= 0) {
-			// If port is set, use the input from the socket.  We still set interactive to true,
-			// so that the prompt is sent back on the socket and the client knows that the communication
-			// has been received and responded to.
-			smtConfig.interactive = false;
-			ServerSocket serverSocket;
-			try {
-				serverSocket = new ServerSocket(smtConfig.port);
-			} catch (IOException e) {
-				smtConfig.log.out.println("Could not listen on port: " + smtConfig.port + " " + e.getMessage());
-				return 1;
-			}
-
-			CharSequenceSocket csq = new CharSequenceSocket(smtConfig,serverSocket,100000,0,2);
-			csq.prompter = new Prompter(smtConfig);
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Start parsing");
-			src = smtConfig.smtFactory.createSource(csq, null);
-			p = smtConfig.smtFactory.createParser(smtConfig,src);
-			return doParser(p);
-
-		} else if (smtConfig.files == null || smtConfig.files.isEmpty()) {
-			// No files listed - use standard input
-			smtConfig.interactive = true;
-			Reader rdr = new BufferedReader(new InputStreamReader(System.in));
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Start parsing standard input");
-			CharSequenceReader csr = new CharSequenceReader(rdr,100000,0,2);
-			csr.prompter = new Prompter(smtConfig);
-			src = smtConfig.smtFactory.createSource(csr, null);
-			p = smtConfig.smtFactory.createParser(smtConfig,src);
-			return doParser(p);
-			
-		} else {
-			// Otherwise, iterate over all the files
-			smtConfig.interactive = false;
-			for (String file: smtConfig.files) {
+			} else if (smtConfig.port >= 0) {
+				// If port is set, use the input from the socket.  We still set interactive to true,
+				// so that the prompt is sent back on the socket and the client knows that the communication
+				// has been received and responded to.
+				smtConfig.interactive = false;
+				ServerSocket serverSocket;
 				try {
-					Reader rdr = new BufferedReader(new FileReader(file));
-					CharSequenceReader csr = new CharSequenceReader(rdr,100000,0,2);
-					src = smtConfig.smtFactory.createSource(csr, file);
-					p = smtConfig.smtFactory.createParser(smtConfig,src);
-					if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Starting file " + file);
-					int e = doParser(p);
-					if (e != 0) retcode = e;
-				} catch (FileNotFoundException e) {
-					smtConfig.log.logError("Could not find file: " + file + " Exception: " + e);
-					retcode = 1;
+					serverSocket = new ServerSocket(smtConfig.port);
+				} catch (IOException e) {
+					smtConfig.log.out.println("Could not listen on port: " + smtConfig.port + " " + e.getMessage());
+					return 1;
 				}
+
+				CharSequenceSocket csq = new CharSequenceSocket(smtConfig,serverSocket,100000,0,2);
+				csq.prompter = new Prompter(smtConfig);
+				if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Start parsing");
+				src = smtConfig.smtFactory.createSource(csq, null);
+				p = smtConfig.smtFactory.createParser(smtConfig,src);
+				return doParser(p);
+
+			} else if (smtConfig.files == null || smtConfig.files.isEmpty()) {
+				// No files listed - use standard input
+				smtConfig.interactive = true;
+				Reader rdr = new BufferedReader(new InputStreamReader(System.in));
+				if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Start parsing standard input");
+				CharSequenceReader csr = new CharSequenceReader(rdr,100000,0,2);
+				csr.prompter = new Prompter(smtConfig);
+				src = smtConfig.smtFactory.createSource(csr, null);
+				p = smtConfig.smtFactory.createParser(smtConfig,src);
+				return doParser(p);
+
+			} else {
+				// Otherwise, iterate over all the files
+				smtConfig.interactive = false;
+				for (String file: smtConfig.files) {
+					try {
+						Reader rdr = new BufferedReader(new FileReader(file));
+						CharSequenceReader csr = new CharSequenceReader(rdr,100000,0,2);
+						src = smtConfig.smtFactory.createSource(csr, file);
+						p = smtConfig.smtFactory.createParser(smtConfig,src);
+						if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Starting file " + file);
+						int e = doParser(p);
+						if (e != 0) retcode = e;
+					} catch (FileNotFoundException e) {
+						smtConfig.log.logError("Could not find file: " + file + " Exception: " + e);
+						retcode = 1;
+					}
+				}
+				return retcode;
 			}
-			return retcode;
+		} finally {
+			cleanup();
 		}
 	}
 	
@@ -517,7 +517,10 @@ public class SMT {
 	/** Forcibly stops the active solver, if any. Safe to call when no solver is running. */
 	public void cleanup() {
 		if (solver != null) {
-			try { solver.forceExit(); } catch (Throwable ignored) {}
+			try { 
+			    solver.forceExit();
+			} catch (Throwable ignored) {
+			}
 			solver = null;
 		}
 	}
@@ -917,9 +920,9 @@ public class SMT {
 	            constructor = adapterClass.getConstructor(SMT.Configuration.class,command.getClass());
 				solver = (ISolver)(constructor.newInstance(smtConfig,command));
 			}
-			//System.out.println("SMT START " + solver + " " + command);
+			//if (smtConfig.verbose != 0) smtConfig.log.logDiag("#SMT START " + solver + " " + command);
 			IResponse res = solver.start();
-            //System.out.println("SMT RES " + res);
+			//if (smtConfig.verbose != 0) smtConfig.log.logDiag("#SMT RES " + res);
 			if (res.isError()) {
 				smtConfig.log.logError((IResponse.IError)res);
 				error(solvername + " failed to start: " + ((IResponse.IError)res).errorMsg());
@@ -1044,53 +1047,4 @@ public class SMT {
 		}
 	}
 	
-	/** Strategy interface for locating a logic or theory definition by name. */
-	public static interface ILogicFinder {
-		/** Looks for a logic with the given name, returning an InputStream by which to read it
-		 * @param smtConfig the current smt configuration, indicating where to look for logics
-		 * @param logicName the name of the logic to find
-		 * @param pos if not null, the textual position of the logicName, used for error messages
-		 * @return an InputStream from which to read the logic
-		 * @throws IOException if the file cannot be opened or other I/O exception happens
-		 * @throws Utils.SMTLIBException if the logic file cannot be found
-		 */
-		/*@Mutable*/ InputStream find(Configuration smtConfig, String logicName, /*@Nullable*/IPos pos) throws IOException, Utils.SMTLIBException;
-	}
-	
-	/** An instance of a logic finder that looks in the configuration's logicPath, or (if there is no such path) as a file on the system CLASSPATH.
-	 * When a path is explicitly stipulated, only that path (then classpath top-level) is searched.
-	 * Without a path, versioned subfolders (e.g. V2.5/) are searched before the top-level when an older version is configured. */
-	public static ILogicFinder logicFinder = new ILogicFinder() {
-		@Override
-		public /*@Mutable*/ InputStream find(Configuration smtConfig, String name, /*@Nullable*/IPos pos) throws IOException, Utils.SMTLIBException {
-			String path = smtConfig.logicPath;
-			String filename = name + org.smtlib.Utils.SUFFIX;
-			if (path == null) {
-				// No explicit path: try versioned subfolder in classpath first, then top-level.
-				List<String> candidates = new ArrayList<>();
-				if (smtConfig.smtlib != null) {
-					Configuration.SMTLIB cv = Configuration.SMTLIB.find(smtConfig.smtlib);
-					Configuration.SMTLIB latest = Configuration.SMTLIB.values()[Configuration.SMTLIB.values().length - 1];
-					if (cv != null && cv != latest) {
-						candidates.add(cv.id + "/" + filename);
-					}
-				}
-				candidates.add(filename);
-				for (String candidate : candidates) {
-					URL url = ClassLoader.getSystemResource(candidate);
-					if (url != null) return url.openStream();
-				}
-				throw new Utils.SMTLIBException(smtConfig.responseFactory.error("No logic file found for " + name, pos));
-			} else {
-				// Explicit path stipulated: search path dirs only, then classpath top-level.
-				for (String d : path.split(File.pathSeparator)) {
-					File f = new File(d + File.separator + filename);
-					if (f.exists()) return new FileInputStream(f);
-				}
-				URL url = ClassLoader.getSystemResource(filename);
-				if (url != null) return url.openStream();
-				throw new Utils.SMTLIBException(smtConfig.responseFactory.error("No logic file found for " + name + " on path \"" + path + "\"", pos));
-			}
-		}
-	};
 }

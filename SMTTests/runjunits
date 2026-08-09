@@ -44,7 +44,8 @@ javac -cp "$CP" -d "$TEST_BIN" \
     src/org/smtlib/test/RoundTripTest.java \
     src/org/smtlib/test/ParseCommand.java \
     src/org/smtlib/test/FileTests.java \
-    src/org/smtlib/test/ScriptTests.java
+    src/org/smtlib/test/ScriptTests.java \
+    src/org/smtlib/test/SMTCommandLineTests.java
 ret=$?
 if [ $ret -ne 0 ]; then
     echo "Compilation FAILED"
@@ -58,7 +59,8 @@ java ${COV_AGENT:-} -cp "$CP" org.junit.runner.JUnitCore \
     org.smtlib.test.RoundTripTest \
     org.smtlib.test.ParseCommand \
     org.smtlib.test.FileTests \
-    org.smtlib.test.ScriptTests
+    org.smtlib.test.ScriptTests \
+    org.smtlib.test.SMTCommandLineTests
 ret=$?
 [ $ret -eq 0 ] && echo "Unit tests SUCCEEDED" || echo "Unit tests FAILED"
 exit $ret

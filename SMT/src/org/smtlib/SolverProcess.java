@@ -118,6 +118,8 @@ public class SolverProcess {
     		if (useMultiThreading) {
                 errorOut = new StreamGobbler(process.getErrorStream(), null, useNotifyWait);
                 standardOut = new StreamGobbler(process.getInputStream(), s->endsWith(s,endMarker), useNotifyWait);
+                errorOut.log = log;
+                standardOut.log = log;
                 errorOut.start();
                 standardOut.start();
     		} else {
@@ -172,8 +174,7 @@ public class SolverProcess {
 	            if (!out.isEmpty()) { log.write(";OUT: "); log.write(out); log.write(eol); log.flush(); } // input usually ends with a prompt and no line terminator
 	            if (!err.isEmpty()) { log.write(";ERR: "); log.write(err); } // input usually ends with a line terminator, we think
 	        }
-//	      System.out.println("OUT: " + out.replace('\r', '@').replace('\n', '@'));
-//	      System.out.println("ERR: " + err.replace('\r', '@').replace('\n', '@'));
+//if (log != null) { log.write("OUT: " + out.replace('\r', '@').replace('\n', '@') + eol); log.write("ERR: " + err.replace('\r', '@').replace('\n', '@') + eol); }
 	        // In some cases (yices2) the prompt is on the error stream. Our heuristic is that then there is no line-termination
 	        if (err.endsWith("\n") || out.isEmpty()) {
 	            return err.isEmpty() || err.charAt(0) == ';' ? out : err; // Note: the guard against comments (starting with ;) is for Z3
@@ -317,15 +318,15 @@ public class SolverProcess {
 	            int p = 0; // Number of characters read
 	            int parens = 0;
 	            while (end != null || r.ready()) {
-	                //System.out.println("ABOUT TO READ " + p);
+	                //if (log != null) log.write("ABOUT TO READ " + p + eol);
 	                int i = r.read(buf,p,buf.length-p);
 	                if (i == -1) break; // End of Input
 	                for (int ii=0; ii<i; ++ii) {
-	                    if (buf[p+ii] == '(') ++parens; 
+	                    if (buf[p+ii] == '(') ++parens;
 	                    else if (buf[p+ii] == ')') --parens;
 	                }
 	                p += i;
-	                //System.out.println("HEARD: " + new String(buf,0,p));
+	                //if (log != null) log.write("HEARD: " + new String(buf,0,p) + eol);
 	                if (p>100 && len == 1) {
 	                    len = len;
 	                }
@@ -363,6 +364,7 @@ public class SolverProcess {
         /*@ nullable */String output;
 	    /*@ nullable */ java.util.function.Function<StringBuilder,Boolean> endRecognizer;
 	    boolean useNotifyWait;
+	    /*@ nullable */ Writer log;
 
 	    char[] buf = new char[10000];
 
@@ -383,7 +385,7 @@ public class SolverProcess {
 	            int n;
 	            while ((n = br.read(buf)) > 0) {
 	                accumulator.append(buf,0,n);
-	                //System.out.println("OUT/ERR: " + accumulator.toString());
+	                //if (log != null) { try { log.write("OUT/ERR: " + accumulator.toString() + "\n"); log.flush(); } catch (java.io.IOException ignored) {} }
 	                if (endRecognizer != null && endRecognizer.apply(accumulator)) {
 	                    putString();
 	                }

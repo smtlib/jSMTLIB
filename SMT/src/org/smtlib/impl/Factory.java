@@ -40,7 +40,7 @@ public class Factory implements IExpr.IFactory, ISort.IFactory, ICommand.IFactor
 		config.sortFactory = f;
 		config.exprFactory = f;
 		config.commandFactory = f;
-		config.utils = new Utils(config);
+		config.utils = new org.smtlib.Utils(config);
 		config.reservedWords.addAll(Utils.reservedWords);
 		config.reservedWordsNotCommands.addAll(Utils.reservedWordsNotCommands);
 	}

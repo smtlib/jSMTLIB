@@ -29,7 +29,7 @@ import org.smtlib.IParser.ParserException;
 import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.impl.Pos;
 import org.smtlib.impl.Response;
-import org.smtlib.sexpr.Utils;
+import org.smtlib.Utils;
 
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into SMT commands */
 public class Solver_cvc4 extends AbstractSolver implements ISolver {

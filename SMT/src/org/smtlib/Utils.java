@@ -5,24 +5,31 @@
  */
 package org.smtlib;
 
-// TODO can we arrange Utils to be extensible?
-// FIXME - needs more separation of concrete syntax
-
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.smtlib.IExpr.IDecimal;
 import org.smtlib.IExpr.IKeyword;
+import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.impl.Factory;
+import org.smtlib.impl.Pos;
 import org.smtlib.impl.SMTExpr;
+import org.smtlib.sexpr.ISexpr;
 import org.smtlib.sexpr.ILexToken;
 import org.smtlib.sexpr.Parser;
 
@@ -409,69 +416,120 @@ public class Utils {
 	}
 
 	/**
-	 * Reads a logic file.
-	 * 
-	 * @param name
-	 *            the name of the logic
-	 * @param path
-	 *            the directory in which logic files are stored
-	 * @return an ISexpr that holds a logic definition
-	 * @throws SMTLIBException if an error occurred
+	 * Opens an InputStream for a named logic or theory file.
+	 * Searches the configured logicPath directories first, then falls back to the
+	 * system classpath (with a versioned subfolder prefix when no path is set and
+	 * an older SMT-LIB version is configured).
+	 *
+	 * @param name the logic or theory name (filename without .smt2 suffix)
+	 * @param pos  source position for error messages, or null
+	 * @throws SMTLIBException if the file cannot be found or opened
 	 */
-	public ILogic findLogic(String name, 
-										/* @Nullable */String path, 
-										/* @Nullable */ IPos pos) throws Utils.SMTLIBException {
-		ISource source;
+	private InputStream openLogicStream(String name, IPos pos) throws SMTLIBException {
+		String filename = name + SUFFIX;
+		String path = smtConfig.logicPath;
+		try {
+			if (path == null) {
+				// No explicit path: try versioned subfolder in classpath first, then top-level.
+				List<String> candidates = new ArrayList<>();
+				if (smtConfig.smtlib != null) {
+					SMTLIB cv = SMTLIB.find(smtConfig.smtlib);
+					SMTLIB latest = SMTLIB.values()[SMTLIB.values().length - 1];
+					if (cv != null && cv != latest) candidates.add(cv.id + "/" + filename);
+				}
+				candidates.add(filename);
+				for (String candidate : candidates) {
+					URL url = ClassLoader.getSystemResource(candidate);
+					if (url != null) return url.openStream();
+				}
+				throw new SMTLIBException(smtConfig.responseFactory.error(
+						"No logic file found for " + name, pos));
+			} else {
+				// Explicit path: search path directories, then classpath top-level.
+				for (String d : path.split(File.pathSeparator)) {
+					File f = new File(d + File.separator + filename);
+					if (f.exists()) return new FileInputStream(f);
+				}
+				URL url = ClassLoader.getSystemResource(filename);
+				if (url != null) return url.openStream();
+				throw new SMTLIBException(smtConfig.responseFactory.error(
+						"No logic file found for " + name + " on path \"" + path + "\"", pos));
+			}
+		} catch (IOException e) {
+			throw new SMTLIBException(smtConfig.responseFactory.error(
+					"Failed to open logic file for " + name + ": " + e, pos));
+		}
+	}
+
+	/**
+	 * Reads a logic file, parses it, validates the name, and checks the version.
+	 *
+	 * @param name the logic name (and base filename)
+	 * @param pos  source position for error messages, or null
+	 * @return the parsed ILogic
+	 * @throws SMTLIBException if the file cannot be found, parsed, or validated
+	 */
+	public ILogic findLogic(String name, IPos pos) throws SMTLIBException {
 		InputStream input = null;
 		try {
+			input = openLogicStream(name, pos);
 			SMT.Configuration config = smtConfig.clone();
 			config.interactive = false;
-			input = SMT.logicFinder.find(smtConfig, name, pos);
-			// All errors should result in thrown exceptions, not all null response
-			if (input == null) {
-				throw new Utils.SMTLIBException(smtConfig.responseFactory.error(
-						"Unexpected null returned from SMT.logicFinder when parsing the logic file for " + name + " in "
-								+ path));
-			}
-			source = config.smtFactory.createSource(config, input, null);
+			ISource source = config.smtFactory.createSource(config, input, null);
 			IParser p = config.smtFactory.createParser(config, source);
 			ILogic logic = p.parseLogic();
 			if (!name.equals(logic.logicName().value())) {
-				throw new Utils.SMTLIBException(smtConfig.responseFactory.error(
+				throw new SMTLIBException(smtConfig.responseFactory.error(
 						"Logic file for " + name + " declares logic name '"
 						+ logic.logicName().value() + "'"));
 			}
-			IAttributeValue logicVer = logic.value(SMTLIB_VERSION);
-			if (logicVer instanceof IExpr.IDecimal) {
-				SMTLIB tv = SMTLIB.find("V" + logicVer.toString());
-				if (tv != null && !smtConfig.atLeastVersion(tv) && !smtConfig.relax) {
-					throw new Utils.SMTLIBException(smtConfig.responseFactory.error(
-							"Logic " + name + " requires SMT-LIB " + logicVer
-							+ " but the configured version is older"));
-				}
-			}
+			IResponse.IError verErr = checkVersion("Logic", name, logic.value(SMTLIB_VERSION));
+			if (verErr != null) throw new SMTLIBException(verErr);
 			return logic;
 		} catch (IParser.ParserException e) {
-			throw new Utils.SMTLIBException(smtConfig.responseFactory.error(
-					"Failed to parse the logic file for " + name + " in "
-							+ path + " : " + e, e.pos()));
-		} catch (Utils.SMTLIBException e) {
+			throw new SMTLIBException(smtConfig.responseFactory.error(
+					"Failed to parse the logic file for " + name + ": " + e, e.pos()));
+		} catch (SMTLIBException e) {
 			throw e;
 		} catch (Exception e) {
-			throw new Utils.SMTLIBException(smtConfig.responseFactory.error(
-					"Failed to read the logic file for " + name + " in " + path
-							+ " : " + e, null));
+			throw new SMTLIBException(smtConfig.responseFactory.error(
+					"Failed to read the logic file for " + name + ": " + e, null));
 		} finally {
-			try {
-				if (input != null) input.close();
-			} catch (java.io.IOException e) {
-				throw new Utils.SMTLIBException(
-						smtConfig.responseFactory.error(
-								"Failed to close a stream while parsing "
-										+ name + " in " + path + " : " + e,
-								null));
+			try { if (input != null) input.close(); }
+			catch (IOException e) {
+				throw new SMTLIBException(smtConfig.responseFactory.error(
+						"Failed to close a stream while parsing " + name + ": " + e, null));
 			}
 		}
+	}
+
+	/**
+	 * Checks that a :smt-lib-version attribute value is a recognised decimal version
+	 * and that the configured version is at least as new. Returns an error response if
+	 * any check fails; returns null if the attribute is absent or all checks pass.
+	 *
+	 * @param kind  "Logic" or "Theory" (used in error messages)
+	 * @param name  the logic/theory name (used in error messages)
+	 * @param ver   the raw attribute value from the parsed file (may be null if absent)
+	 */
+	private IResponse.IError checkVersion(String kind, String name, IAttributeValue ver) {
+		if (ver == null) return null;
+		if (!(ver instanceof IExpr.IDecimal)) {
+			return smtConfig.responseFactory.error(
+					kind + " " + name + ": the value of " + SMTLIB_VERSION
+					+ " is not a decimal number: " + ver);
+		}
+		SMTLIB tv = SMTLIB.find("V" + ver.toString());
+		if (tv == null) {
+			return smtConfig.responseFactory.error(
+					kind + " " + name + ": unrecognized SMT-LIB version: " + ver);
+		}
+		if (!smtConfig.atLeastVersion(tv) && !smtConfig.relax) {
+			return smtConfig.responseFactory.error(
+					kind + " " + name + " requires SMT-LIB " + ver
+					+ " but the configured version is older");
+		}
+		return null;
 	}
 
 	/**
@@ -491,13 +549,7 @@ public class Utils {
 		try {
 			SMT.Configuration config = smtConfig.clone();
 			config.interactive = false;
-			input = SMT.logicFinder.find(smtConfig, name, null);
-			// All errors should result in thrown exceptions, not all null response
-			if (input == null) {
-				throw new Utils.SMTLIBException(smtConfig.responseFactory.error(
-						"Unexpected null returned from SMT.logicFinder when parsing the theory file for " + name + " in "
-								+ path));
-			}
+			input = openLogicStream(name, null);
 			source = config.smtFactory.createSource(config, input, null);
 			IParser p = config.smtFactory.createParser(config, source);
 			ITheory th = p.parseTheory();
@@ -506,15 +558,8 @@ public class Utils {
 						"Theory file for " + name + " declares theory name '"
 						+ th.theoryName().value() + "'"));
 			}
-			IAttributeValue theoryVer = th.value(SMTLIB_VERSION);
-			if (theoryVer instanceof IExpr.IDecimal) {
-				SMTLIB tv = SMTLIB.find("V" + theoryVer.toString());
-				if (tv != null && !smtConfig.atLeastVersion(tv) && !smtConfig.relax) {
-					throw new SMTLIBException(smtConfig.responseFactory.error(
-							"Theory " + name + " requires SMT-LIB " + theoryVer
-							+ " but the configured version is older"));
-				}
-			}
+			IResponse.IError verErr = checkVersion("Theory", name, th.value(SMTLIB_VERSION));
+			if (verErr != null) throw new SMTLIBException(verErr);
 			return th;
 		} catch (IParser.ParserException e) {
 			throw new SMTLIBException(smtConfig.log.logError(smtConfig.responseFactory.error(
@@ -548,64 +593,13 @@ public class Utils {
 	 */
 	public/* @Nullable */IResponse loadLogic(String logicName,
 			SymbolTable symTable, /* @Nullable */IPos pos) {
-		ILogic sx = null; // = findLogic(logicName, smtConfig.logicPath, pos);
-		{
-			String name = logicName;
-			ISource source;
-			InputStream input = null;
-			try {
-				SMT.Configuration config = smtConfig.clone();
-				config.interactive = false;
-				input = SMT.logicFinder.find(smtConfig, name, pos);
-				if (input == null)
-					return smtConfig.responseFactory.error("Unexpected null result: No logic loaded "
-							+ name, pos);
-				// The above error should not happen, because an exception
-				// ought to be thrown for any problems in find().
-				source = config.smtFactory.createSource(config, input, null);
-				IParser p = config.smtFactory.createParser(config, source);
-				sx = p.parseLogic();
-				symTable.logicInUse = sx;
-			} catch (IParser.ParserException e) {
-				return smtConfig.responseFactory.error(
-						"Failed to parse the logic file " + name + ": " + e,
-						e.pos());
-			} catch (Utils.SMTLIBException e) {
-				return e.errorResponse;
-			} catch (Exception e) {
-				return smtConfig.responseFactory.error(
-						"Failed to read the logic file for " + name + ": " + e,
-						null);
-			} finally {
-				try {
-					if (input != null)
-						input.close();
-				} catch (java.io.IOException e) {
-					return smtConfig.responseFactory.error(
-							"Failed to close a stream while parsing " + name
-									+ " : " + e, null);
-				}
-			}
+		ILogic sx;
+		try {
+			sx = findLogic(logicName, pos);
+		} catch (SMTLIBException e) {
+			return e.errorResponse;
 		}
-		if (sx == null) {
-			return smtConfig.responseFactory.error("Failed to load logic", pos);
-		}
-
-		if (!logicName.equals(sx.logicName().value())) {
-			return smtConfig.responseFactory.error(
-					"Logic file for " + logicName + " declares logic name '"
-					+ sx.logicName().value() + "'");
-		}
-		IAttributeValue logicVer = sx.value(SMTLIB_VERSION);
-		if (logicVer instanceof IExpr.IDecimal) {
-			SMTLIB tv = SMTLIB.find("V" + logicVer.toString());
-			if (tv != null && !smtConfig.atLeastVersion(tv) && !smtConfig.relax) {
-				return smtConfig.responseFactory.error(
-						"Logic " + logicName + " requires SMT-LIB " + logicVer
-						+ " but the configured version is older");
-			}
-		}
-
+		symTable.logicInUse = sx;
 		boolean g = smtConfig.globalDeclarations;
 		smtConfig.globalDeclarations = false;
 		IResponse b = loadLogic(sx, symTable);
@@ -631,15 +625,6 @@ public class Utils {
 			return e.errorResponse;
 		}
 
-		// The second element should be the name of the logic, if specified
-		if (theoryName != null && !theoryName.equals(th.theoryName().value())) {
-			return smtConfig.responseFactory
-					.error("Definition of logic "
-							+ theoryName
-							+ " is mal-formed (internal name does not match file name): "
-							+ th.theoryName().value(), th.theoryName().pos());
-		}
-
 		if (smtConfig.verbose != 0) {
 			smtConfig.log.logDiag("#Installing theory " + theoryName);
 		}
@@ -658,24 +643,168 @@ public class Utils {
 		return response;
 	}
 
-	// FIXME - where are these overridden???
-	
-	/**
-	 * This method must be overridden by a subclass to interpret the ILogic
-	 * object according to the concrete syntax
-	 */
-	public/* @Nullable */IResponse loadLogic(ILogic logic, SymbolTable symTable) {
-		throw new UnsupportedOperationException(
-				"org.smtlib.Utils.loadLogic must be overridden");
+	private <T extends IPos.IPosable> T setPos(T p, IPos pos) { p.setPos(pos); return p; }
+
+	public /* @Nullable */ IResponse loadLogic(ILogic logicExpr, SymbolTable symTable) {
+		String logicName = logicExpr.logicName().value();
+
+		IAttributeValue version = logicExpr.value(SMTLIB_VERSION);
+		if (version == null) return smtConfig.responseFactory.error("Logic definition for " + logicName + " is missing the " + SMTLIB_VERSION + " attribute");
+		if (!(version instanceof IDecimal)) return smtConfig.responseFactory.error("The value of " + SMTLIB_VERSION + " must be expressed as a decimal");
+		if (version.toString().compareTo(SMTLIB_VERSION_CURRENT) > 0) return smtConfig.responseFactory.error("Only implemented version " + SMTLIB_VERSION_CURRENT + " of smtConfig-lib, not " + version);
+
+		IAttributeValue o = logicExpr.value(THEORIES);
+		if (!(o instanceof ISexpr.ISeq)) {
+			return smtConfig.responseFactory.error("Expected a list of theories for the value of the " + THEORIES + " attribute");
+		}
+		/* @Mutable */ IResponse res = null;
+		try {
+			symTable.push();
+			res = loadTheory(CORE, symTable);
+			if (res != null) return res;
+			ISexpr.ISeq theories = (ISexpr.ISeq) o;
+			for (ISexpr theory : theories.sexprs()) {
+				if (!(theory instanceof IExpr.ISymbol)) return smtConfig.responseFactory.error("Expected a simple symbol to designate a theory");
+				ISymbol theoryName = (IExpr.ISymbol) theory;
+				if (CORE.equals(theoryName.value())) continue;
+				if ("ALL".equals(logicName)) {
+					boolean savedRelax = smtConfig.relax;
+					String savedSmtlib = smtConfig.smtlib;
+					smtConfig.relax = true;
+					smtConfig.smtlib = null;
+					ITheory th;
+					try {
+						th = findTheory(theoryName.value(), smtConfig.logicPath);
+					} catch (SMTLIBException e) {
+						res = e.errorResponse;
+						return res;
+					} finally {
+						smtConfig.relax = savedRelax;
+						smtConfig.smtlib = savedSmtlib;
+					}
+					IAttributeValue tv = th.value(SMTLIB_VERSION);
+					if (tv instanceof IDecimal) {
+						SMT.Configuration.SMTLIB ver = SMT.Configuration.SMTLIB.find("V" + tv.toString());
+						if (ver != null && !smtConfig.atLeastVersion(ver)) continue;
+					}
+					res = loadTheory(th, symTable);
+					if (res == null) {
+						String tname = th.theoryName().value();
+						if (tname.equals("ArraysEx")) symTable.arrayTheorySet = true;
+						if (tname.equals("Fixed_Size_BitVectors") || tname.equals("FixedSizeBitVectors")) symTable.bitVectorTheorySet = true;
+						if (tname.equals("Reals_Ints")) symTable.realsIntsTheorySet = true;
+						if (tname.equals("HO-Core")) symTable.hoTheorySet = true;
+					}
+				} else {
+					res = loadTheory(theoryName.value(), symTable);
+				}
+				if (res != null) return res;
+			}
+		} finally {
+			if (res != null) symTable.pop();
+			else symTable.moveToBackground();
+		}
+		return res;
 	}
 
-	/**
-	 * This method must be overridden by a subclass to interpret the ITheory
-	 * object according to the concrete syntax
-	 */
-	public/* @Nullable */IResponse loadTheory(ITheory theory, SymbolTable symTable) {
-		throw new UnsupportedOperationException(
-				"org.smtlib.Utils.loadTheory must be overridden");
+	public /* @Nullable */ IResponse loadTheory(ITheory theory, SymbolTable symTable) {
+		String theoryName = theory.theoryName().value();
+
+		IAttributeValue version = theory.value(SMTLIB_VERSION);
+		if (version == null) return smtConfig.responseFactory.error("Theory definition for " + theoryName + " is missing the " + SMTLIB_VERSION + " attribute");
+		if (!(version instanceof IDecimal)) return smtConfig.responseFactory.error("The value of " + SMTLIB_VERSION + " must be expressed as a decimal");
+		if (version.toString().compareTo(SMTLIB_VERSION_CURRENT) > 0) return smtConfig.responseFactory.error("Only implemented version " + SMTLIB_VERSION_CURRENT + " of smtConfig-lib, not " + version);
+
+		for (IAttributeValue sortsVal : theory.values(SORTS)) {
+			if (!(sortsVal instanceof ISexpr.ISeq)) {
+				return smtConfig.responseFactory.error("The list of sorts in theory " + theoryName + " is ill-formed: " + sortsVal);
+			}
+			Iterator<ISexpr> iter = ((ISexpr.ISeq) sortsVal).sexprs().iterator();
+			while (iter.hasNext()) {
+				ISexpr.ISeq sx = (ISexpr.ISeq) iter.next();
+				IExpr.ISymbol name = (IExpr.ISymbol) sx.sexprs().get(0);
+				INumeral arity = (IExpr.INumeral) sx.sexprs().get(1);
+				symTable.addSortDefinition(name, arity);
+				if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Added sort " + name);
+			}
+		}
+
+		for (IAttributeValue funsVal : theory.values(FUNS)) {
+			IResponse r = loadFuns(funsVal, theoryName, symTable);
+			if (r != null) return r;
+		}
+		if (theoryName.equals("ArraysEx")) {
+			ISort.IFcnSort fs = smtConfig.sortFactory.createFcnSort(new ISort[0], null);
+			SymbolTable.Entry e = new SymbolTable.Entry(smtConfig.exprFactory.symbol("store"), fs, null);
+			symTable.add(e);
+			e = new SymbolTable.Entry(smtConfig.exprFactory.symbol("select"), fs, null);
+			symTable.add(e);
+		}
+
+		return null;
+	}
+
+	private /* @Nullable */ IResponse loadFuns(IAttributeValue funsVal, String theoryName, SymbolTable symTable) {
+		if (!(funsVal instanceof ISexpr.ISeq)) return smtConfig.responseFactory.error("Expected a sequence of function declarations instead of " + funsVal);
+		Iterator<ISexpr> iter = ((ISexpr.ISeq) funsVal).sexprs().iterator();
+		while (iter.hasNext()) {
+			ISexpr next = iter.next();
+			if (!(next instanceof ISexpr.ISeq)) continue;
+			ISexpr.ISeq sx = (ISexpr.ISeq) next;
+			ISexpr first = sx.sexprs().get(0);
+			if (!(first instanceof IExpr.ISymbol)) continue;
+			IExpr.ISymbol sym = (IExpr.ISymbol) first;
+			String name = sym.value();
+			if (name.equals(PAR)) continue;
+			Iterator<ISexpr> iter2 = sx.sexprs().iterator();
+			iter2.next();
+			List<ISort> sorts = new LinkedList<ISort>();
+			ISexpr key = null;
+			while (iter2.hasNext()) {
+				key = iter2.next();
+				if (key instanceof IExpr.IKeyword) break;
+				ISort ss = asSort(key, symTable);
+				if (ss == null) return smtConfig.responseFactory.error("Unknown sort given: " + key);
+				sorts.add(ss);
+				key = null;
+			}
+			ISort result = sorts.remove(sorts.size() - 1);
+			List<IExpr.IAttribute<?>> attrs = new LinkedList<IExpr.IAttribute<?>>();
+			if (key != null) while (true) {
+				if (iter2.hasNext()) {
+					ISexpr key2 = iter2.next();
+					if (key2 instanceof IExpr.IKeyword) {
+						attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword) key, null), key.pos()));
+						key = key2;
+					} else {
+						attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword) key, key2),
+								new Pos(key.pos().charStart(), key2.pos().charEnd(), key.pos().source())));
+						if (!iter2.hasNext()) break;
+						key = iter2.next();
+					}
+				} else {
+					attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword) key, null), key.pos()));
+					break;
+				}
+			}
+			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(sorts.toArray(new ISort[sorts.size()]), result);
+			boolean b = symTable.add(new SymbolTable.Entry(sym, fcnSort, attrs), true);
+			if (!b) return smtConfig.responseFactory.error("Failed to add to symbol table: " + smtConfig.defaultPrinter.toString(sym) + " " + smtConfig.defaultPrinter.toString(fcnSort));
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Added symbol " + name);
+		}
+		return null;
+	}
+
+	public /* @Nullable */ ISort asSort(ISexpr sexpr, SymbolTable symtab) {
+		if (sexpr instanceof IExpr.ISymbol) {
+			IExpr.ISymbol sym = (IExpr.ISymbol) sexpr;
+			ISort.IDefinition def = symtab.lookupSort(sym);
+			if (def == null || def.intArity() != 0) return null;
+			ISort.IApplication sort = smtConfig.sortFactory.createSortExpression(def.identifier());
+			sort.definition(def);
+			return sort;
+		}
+		return null;
 	}
 
 	/** A checked exception used internally to propagate SMT-LIB errors that carry an IResponse.IError. */

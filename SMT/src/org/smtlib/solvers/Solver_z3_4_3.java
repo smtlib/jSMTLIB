@@ -37,7 +37,7 @@ import org.smtlib.IParser.ParserException;
 import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.impl.Pos;
 import org.smtlib.sexpr.Printer;
-import org.smtlib.sexpr.Utils;
+import org.smtlib.Utils;
 
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into Z3 commands */
 public class Solver_z3_4_3 extends AbstractSolver implements ISolver {

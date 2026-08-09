@@ -11,7 +11,7 @@ import org.smtlib.IVisitor;
 import org.smtlib.IExpr.IDeclaration;
 import org.smtlib.IExpr.IExists;
 import org.smtlib.IExpr.IForall;
-import org.smtlib.sexpr.Utils;
+import org.smtlib.Utils;
 
 
 public class Printer extends org.smtlib.sexpr.Printer {
