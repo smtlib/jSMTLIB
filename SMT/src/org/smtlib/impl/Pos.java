@@ -68,6 +68,16 @@ public class Pos implements IPos {
 		}
 	}
 
+	/** A Printable that also implements IExpr, additionally holding the sort computed for
+	 *  the expression by the type checker (null if not yet, or never, computed). */
+	public static abstract class AbstractExpr extends Printable implements IExpr {
+		protected /*@Nullable*/ ISort sort;
+		@Override
+		public /*@Nullable*/ ISort sort() { return sort; }
+		@Override
+		public void setSort(/*@Nullable*/ ISort sort) { this.sort = sort; }
+	}
+
 
 	/** An implementation of the ISource interface */
 	public static class Source implements ISource {

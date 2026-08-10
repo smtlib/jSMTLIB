@@ -36,23 +36,13 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	/** A reference to the current configuration */
 	private SMT.Configuration smtConfig;
 	
-	/** A reference to the map in which to keep type information */
-	private /*@Nullable*/ Map<IExpr,ISort> typemap;
-	
 	private ISymbol isClosed = null;
 
-	/** Constructs a formula typechecker from the current
-	 * symbol table and type map
-	 */
-	private TypeChecker(SymbolTable symTable, Map<IExpr,ISort> typemap) {
+	/** Constructs a formula typechecker from the current symbol table; sorts computed while
+	 * checking are recorded directly on each IExpr node via IExpr.setSort(). */
+	public TypeChecker(SymbolTable symTable) {
 		this.symTable = symTable;
 		this.smtConfig = symTable.smtConfig;
-		this.typemap = typemap;
-	}
-	
-	/** Constructs a type checker without keeping a type map */
-	public TypeChecker(SymbolTable symTable) {
-		this(symTable,null);
 	}
 	
 	/** Utility method for recording an error */
@@ -72,7 +62,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 
 	/** The main entry point for type-checking an ISort.*/
 	public static List<IResponse> checkSort(SymbolTable symTable, ISort expr) {
-		TypeChecker f = new TypeChecker(symTable,null);
+		TypeChecker f = new TypeChecker(symTable);
 		try {
 			expr.accept(f);
 		} catch (IVisitor.VisitorException e) {
@@ -82,7 +72,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	}
 
 	public static List<IResponse> checkSortAbbreviation(SymbolTable symTable, IIdentifier id, List<ISort.IParameter> params, ISort expr) {
-		TypeChecker f = new TypeChecker(symTable,null); // FIXME - we should use a factory
+		TypeChecker f = new TypeChecker(symTable); // FIXME - we should use a factory
 		symTable.push();
 		boolean errors = false;
 		try {
@@ -106,7 +96,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	}
 	
 	public static List<IResponse> checkFcn(SymbolTable symTable, IIdentifier id, List<ISort> sorts, ISort result, IPos pos) {
-		TypeChecker f = new TypeChecker(symTable,null);
+		TypeChecker f = new TypeChecker(symTable);
 		try {
 			for (ISort p : sorts) {
 				p.accept(f);
@@ -126,8 +116,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		
 	}
 
-	public static List<IResponse> checkFcn(SymbolTable symTable, Map<IExpr,ISort> typemap, IIdentifier id, List<IDeclaration> params, ISort result, IExpr expr, IPos pos) {
-		TypeChecker f = new TypeChecker(symTable,typemap);
+	public static List<IResponse> checkFcn(SymbolTable symTable, IIdentifier id, List<IDeclaration> params, ISort result, IExpr expr, IPos pos) {
+		TypeChecker f = new TypeChecker(symTable);
 		symTable.push();
 		try {
 			for (IDeclaration p : params) {
@@ -170,9 +160,9 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	/** Checks that parameter sorts and result sort are well-formed, without examining a body expression.
 	 * Sort errors should be caught before the function symbol is added to the symbol table so that
 	 * a failed define-fun-rec does not leave a symbol with a malformed type. */
-	static List<IResponse> checkSorts(SymbolTable symTable, Map<IExpr,ISort> typemap,
+	static List<IResponse> checkSorts(SymbolTable symTable,
 			List<IDeclaration> params, ISort resultSort) {
-		TypeChecker f = new TypeChecker(symTable, typemap);
+		TypeChecker f = new TypeChecker(symTable);
 		try {
 			for (IDeclaration p : params) {
 				if (p.sort().accept(f) == null) break;
@@ -189,7 +179,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	/** Type-checks a define-fun-rec command: verifies the symbol is new, validates sorts,
 	 * pre-adds the function to the symbol table so the body may call it recursively,
 	 * then checks the body expression.  On success the entry's definition is set. */
-	public static List<IResponse> checkFcnRec(SymbolTable symTable, Map<IExpr,ISort> typemap,
+	public static List<IResponse> checkFcnRec(SymbolTable symTable,
 			boolean global, ISymbol id, List<IDeclaration> params, ISort result, IExpr expr, IPos pos) {
 		if (symTable.lookup(params.size(), id) != null) {
 			List<IResponse> errors = new LinkedList<>();
@@ -197,14 +187,14 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 					"Symbol " + symTable.smtConfig.defaultPrinter.toString(id) + " is already defined", id.pos()));
 			return errors;
 		}
-		List<IResponse> sortErrors = checkSorts(symTable, typemap, params, result);
+		List<IResponse> sortErrors = checkSorts(symTable, params, result);
 		if (!sortErrors.isEmpty()) return sortErrors;
 		ISort[] argSorts = new ISort[params.size()];
 		for (int i = 0; i < params.size(); i++) argSorts[i] = params.get(i).sort();
 		ISort.IFcnSort fcnSort = symTable.smtConfig.sortFactory.createFcnSort(argSorts, result);
 		SymbolTable.Entry entry = new SymbolTable.Entry(id, fcnSort, null);
 		symTable.add(entry, global);
-		List<IResponse> bodyErrors = checkFcn(symTable, typemap, id, params, result, expr, pos);
+		List<IResponse> bodyErrors = checkFcn(symTable, id, params, result, expr, pos);
 		if (bodyErrors.isEmpty()) {
 			entry.definition = expr;
 		}
@@ -214,7 +204,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	/** Type-checks a define-funs-rec command: for each declaration verifies the symbol is new and
 	 * sorts are valid, pre-adds all functions to the symbol table for mutual recursion, then
 	 * checks each body expression.  On success all entries' definitions are set. */
-	public static List<IResponse> checkFcnsRec(SymbolTable symTable, Map<IExpr,ISort> typemap,
+	public static List<IResponse> checkFcnsRec(SymbolTable symTable,
 			boolean global, List<IFunctionDeclaration> decls, List<IExpr> bodies) {
 		List<SymbolTable.Entry> entries = new LinkedList<>();
 		for (IFunctionDeclaration decl : decls) {
@@ -225,7 +215,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 						decl.symbol().pos()));
 				return errors;
 			}
-			List<IResponse> sortErrors = checkSorts(symTable, typemap, decl.parameters(), decl.sort());
+			List<IResponse> sortErrors = checkSorts(symTable, decl.parameters(), decl.sort());
 			if (!sortErrors.isEmpty()) return sortErrors;
 			ISort[] argSorts = new ISort[decl.parameters().size()];
 			for (int i = 0; i < decl.parameters().size(); i++) argSorts[i] = decl.parameters().get(i).sort();
@@ -236,7 +226,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		}
 		for (int i = 0; i < decls.size(); i++) {
 			IFunctionDeclaration decl = decls.get(i);
-			List<IResponse> bodyErrors = checkFcn(symTable, typemap, decl.symbol(),
+			List<IResponse> bodyErrors = checkFcn(symTable, decl.symbol(),
 					decl.parameters(), decl.sort(), bodies.get(i), null);
 			if (!bodyErrors.isEmpty()) return bodyErrors;
 			entries.get(i).definition = bodies.get(i);
@@ -246,7 +236,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 
 	/** The main entry point for type-checking an IExpr (expected to be a Bool)*/
 	public static List<IResponse> check(SymbolTable symTable, IExpr expr) {
-		TypeChecker f = new TypeChecker(symTable,null);
+		TypeChecker f = new TypeChecker(symTable);
 		try {
 			ISort topsort = expr.accept(f);
 			if (topsort != null && !topsort.isBool()) {
@@ -264,10 +254,12 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		}
 		return f.result;
 	}
-	
-	/** The main entry point for type-checking an IExpr (expected to be a Bool)*/
-	public static List<IResponse> check(SymbolTable symTable, IExpr expr, Map<IExpr,ISort> typemap) {
-		TypeChecker f = new TypeChecker(symTable,typemap);
+
+	/** The main entry point for type-checking an assert expression (expected to be a Bool); unlike
+	 * {@link #check(SymbolTable,IExpr)}, this checks the expression within a pushed scope that is
+	 * merged into the enclosing scope on success (or popped on error). */
+	public static List<IResponse> checkAssertion(SymbolTable symTable, IExpr expr) {
+		TypeChecker f = new TypeChecker(symTable);
 		symTable.push();
 		try {
 			ISort topsort = expr.accept(f);
@@ -290,8 +282,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		return f.result;
 	}
 
-	public static List<IResponse> check(SymbolTable symTable, IExpr expr, Map<IExpr,ISort> typemap, List<IExpr.IDeclaration> decls) {
-		TypeChecker f = new TypeChecker(symTable,typemap);
+	public static List<IResponse> check(SymbolTable symTable, IExpr expr, List<IExpr.IDeclaration> decls) {
+		TypeChecker f = new TypeChecker(symTable);
 		try {
 			for (IExpr.IDeclaration d: decls) {
 				f.currentScope.put(d.parameter(),new Variable(d.parameter(),d.sort(),null));
@@ -314,10 +306,33 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	}
 
 	public /*@Nullable*/ ISort save(/*@NonNull*/IExpr e, /*@Nullable*/ISort s) {
-		if (typemap != null) typemap.put(e,s);
+		e.setSort(s);
 		return s;
 	}
-	
+
+	/** Walks the given expression subtree, nulling out the sort recorded on each node
+	 * (e.g. because it is leaving the live assertion set, on pop or reset-assertions). */
+	public static void clearSorts(IExpr expr) throws IVisitor.VisitorException {
+		expr.accept(new IVisitor.TreeVisitor<Void>() {
+			@Override public Void visit(IAttributedExpr e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
+			@Override public Void visit(IBinaryLiteral e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
+			@Override public Void visit(IDecimal e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
+			@Override public Void visit(IExists e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
+			@Override public Void visit(IFcnExpr e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
+			@Override public Void visit(IForall e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
+			@Override public Void visit(IHexLiteral e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
+			@Override public Void visit(ILet e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
+			@Override public Void visit(INumeral e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
+			@Override public Void visit(IParameterizedIdentifier e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
+			@Override public Void visit(IAsIdentifier e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
+			@Override public Void visit(IStringLiteral e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
+			@Override public Void visit(ISymbol e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
+			@Override public Void visit(IError e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
+			@Override public Void visit(IMatch e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
+		});
+	}
+
+
 	@Override
 	public /*@Nullable*/ ISort visit(INumeral e) {
 		IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("NUMERAL"));

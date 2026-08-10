@@ -90,7 +90,7 @@ public class TypeCheckRoot {
 				Assert.assertTrue("Null expression and null error message - internal bug",!listener.msgs.isEmpty());
 				Assert.assertTrue(((IResponse.IError)listener.msgs.get(0)).errorMsg(),false);
 			}
-			List<IResponse> errors = TypeChecker.check(solver.symTable,e,null); 
+			List<IResponse> errors = TypeChecker.checkAssertion(solver.symTable,e);
 			Iterator<IResponse> iter = errors.iterator();
 			for (String er: error) {
 				Assert.assertEquals(er,!iter.hasNext() ? null : ((IResponse.IError)iter.next()).errorMsg());

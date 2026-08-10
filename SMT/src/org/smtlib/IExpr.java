@@ -18,10 +18,15 @@ import org.smtlib.IPos.IPosable;
 
 /** This interface represents the functionality for any class implementing an SMT-LIB term or formula */
 public interface IExpr extends INode, IPosable, IAttributeValue {
-    
+
     default boolean isError() { return false; }
 
-	
+	/** The sort computed for this expression by the type checker, or null if not yet (or never) computed. */
+	/*@Nullable*/ ISort sort();
+	/** Records the sort computed for this expression by the type checker. */
+	void setSort(/*@Nullable*/ ISort sort);
+
+
 	/** The interface defining the factory type for producing objects of various subtypes of IExpr;
 	 * the IPos argument is an optional argument giving information about the textual position of an expression. */
 	static public interface IFactory {

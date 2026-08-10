@@ -372,7 +372,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 
 	
 	public /*@Nullable*/String translate(IExpr expr) throws IVisitor.VisitorException {
-		Translator t = new Translator(typemap,smtConfig);
+		Translator t = new Translator(smtConfig);
 		String r = expr.accept(t);
 		if (t.conjuncts.isEmpty()) return r;
 		String and = "(AND ";
@@ -488,12 +488,10 @@ public class Solver_simplify extends Solver_test implements ISolver {
 	
 	static public class Translator implements IVisitor<String> {
 		boolean isFormula = true;
-		final private Map<IExpr,ISort> typemap;
 		final private SMT.Configuration smtConfig;
 		private List<String> conjuncts = new LinkedList<String>();
-		
-		public Translator(Map<IExpr,ISort> typemap, SMT.Configuration smtConfig) {
-			this.typemap = typemap;
+
+		public Translator(SMT.Configuration smtConfig) {
 			this.smtConfig = smtConfig;
 		}
 
@@ -544,7 +542,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 						this.isFormula = false;
 					} else {
 						IExpr arg = e.args().get(1); // Use argument 1 for ite's sake
-						ISort sort = typemap.get(arg);
+						ISort sort = arg.sort();
 						if (sort == null) {
 							throw new VisitorException("INTERNAL ERROR: Encountered an un-sorted expression node: " + smtConfig.defaultPrinter.toString(arg),arg.pos());
 						}
@@ -562,7 +560,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 					this.isFormula = false;
 				}
 
-				ISort s = typemap.get(e);
+				ISort s = e.sort();
 				if (s == null) {
 					throw new VisitorException("INTERNAL ERROR: Encountered an un-sorted expression node: " + smtConfig.defaultPrinter.toString(e),e.pos());
 				}
@@ -701,7 +699,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 		@Override
 		public String visit(ISymbol e) throws IVisitor.VisitorException {
 			// Symbols do not necessarily have sorts - e.g. if they are function names
-			ISort sort = typemap.get(e);
+			ISort sort = e.sort();
 			if (!isFormula && sort != null && sort.isBool()) {
 				throw new VisitorException("Use of boolean in a term position is not yet implemented in the Simplify adapter",e.pos()); // FIXME - booleans as terms
 			}
@@ -737,7 +735,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 
 		@Override
 		public String visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
-			if (!isFormula && typemap.get(e).isBool()) {
+			if (!isFormula && e.sort().isBool()) {
 				throw new VisitorException("Use of boolean in a term position is not yet implemented in the Simplify adapter",e.pos()); // FIXME - booleans as terms
 			}
 			// Since there is no overloading, the head will be a new symbol
@@ -832,7 +830,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 			// and then use that.
 			for (IBinding b : e.bindings()) {
 				String r = b.expr().accept(this);
-				ISort s = typemap.get(b.expr());
+				ISort s = b.expr().sort();
 				// FIXME - don't use toString - also need to map to a unique new temporary
 				r = (s.isBool()? "(IFF " : "(EQ ") + b.parameter().accept(this) + " " + r + " )";
 				conjuncts.add(r);

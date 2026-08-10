@@ -20,7 +20,7 @@ public abstract class SMTExpr implements IExpr {
 	public static SMT.Configuration smtConfig;
 
 	/** Abstract base class for all literal value AST nodes; holds the typed value and provides a shared implementation. */
-	static abstract public class Literal<T> extends Pos.Printable {
+	static abstract public class Literal<T> extends Pos.AbstractExpr {
 		protected T value;
 
 		/** Creates a literal with the given value. */
@@ -150,7 +150,7 @@ public abstract class SMTExpr implements IExpr {
 	}
 
 	/** This class represents an SMT as-identifier AST */
-	static public class AsIdentifier extends Pos.Printable implements IAsIdentifier {
+	static public class AsIdentifier extends Pos.AbstractExpr implements IAsIdentifier {
 		protected IIdentifier head;
 		protected ISort qualifier;
 
@@ -190,7 +190,7 @@ public abstract class SMTExpr implements IExpr {
 	}
 
 	/** This class represents an SMT parameterized-identifier AST (e.g. {@code (_ BitVec 32)}). */
-	static public class ParameterizedIdentifier extends Pos.Printable implements IParameterizedIdentifier {
+	static public class ParameterizedIdentifier extends Pos.AbstractExpr implements IParameterizedIdentifier {
 		protected IIdentifier head;
 		protected List<IIndex> indices;
 
@@ -235,7 +235,7 @@ public abstract class SMTExpr implements IExpr {
 	}
 
 	/** This class represents an SMT Symbol */
-	static public class Symbol extends Pos.Printable implements ISymbol {
+	static public class Symbol extends Pos.AbstractExpr implements ISymbol {
 
 		// FIXME - this incorporates some concrete syntax
 
@@ -293,7 +293,7 @@ public abstract class SMTExpr implements IExpr {
 	}
 
 	/** Represents a function-application expression: a qualified identifier applied to a list of argument expressions. */
-	static public class FcnExpr extends Pos.Printable implements IFcnExpr {
+	static public class FcnExpr extends Pos.AbstractExpr implements IFcnExpr {
 		protected IQualifiedIdentifier id;
 		protected List<IExpr> args;
 
@@ -379,7 +379,7 @@ public abstract class SMTExpr implements IExpr {
 	}
 
 	/** Represents an SMT-LIB let expression: a list of bindings and a body expression. */
-	static public class Let extends Pos.Printable implements ILet {
+	static public class Let extends Pos.AbstractExpr implements ILet {
 		protected List<IBinding> bindings;
 		protected IExpr expression;
 
@@ -401,7 +401,7 @@ public abstract class SMTExpr implements IExpr {
 	}
 
 	/** Represents an SMT-LIB existential quantifier expression. */
-	static public class Exists extends Pos.Printable implements IExists {
+	static public class Exists extends Pos.AbstractExpr implements IExists {
 		protected List<IDeclaration> parameters;
 		protected IExpr expression;
 
@@ -423,7 +423,7 @@ public abstract class SMTExpr implements IExpr {
 	}
 
 	/** Represents an SMT-LIB universal quantifier expression. */
-	static public class Forall extends Pos.Printable implements IForall {
+	static public class Forall extends Pos.AbstractExpr implements IForall {
 		protected List<IDeclaration> parameters;
 		protected IExpr expression;
 
@@ -610,7 +610,7 @@ public abstract class SMTExpr implements IExpr {
 	}
 
 	/** Represents an SMT-LIB attributed expression ({@code (! expr attrs...)}). */
-	static public class AttributedExpr extends Pos.Printable implements IAttributedExpr {
+	static public class AttributedExpr extends Pos.AbstractExpr implements IAttributedExpr {
 		protected IExpr expression;
 		protected List<IAttribute<?>> attributes;
 
@@ -728,7 +728,7 @@ public abstract class SMTExpr implements IExpr {
 	}
 
 	/** Represents an expression-level error node inserted during parsing to allow error recovery. */
-	static public class Error extends Pos.Printable implements IError {
+	static public class Error extends Pos.AbstractExpr implements IError {
 		protected String message;
 
 		/** Creates an error expression node with the given informational message. */
@@ -782,7 +782,7 @@ public abstract class SMTExpr implements IExpr {
 	}
 
 	/** Represents an SMT-LIB 2.7 match expression: an expression matched against a list of cases. */
-	static public class Match extends Pos.Printable implements IExpr.IMatch {
+	static public class Match extends Pos.AbstractExpr implements IExpr.IMatch {
 		protected IExpr expression;
 		protected List<IExpr.IMatchCase> cases;
 

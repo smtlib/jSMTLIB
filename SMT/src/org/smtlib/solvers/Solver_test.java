@@ -50,11 +50,6 @@ public class Solver_test implements ISolver {
 	@Override
 	public /*@Nullable*/IResponse checkSatStatus() { return checkSatStatus; }
 
-	/** A map holding the sorts of subexpressions, used for distinguishing formulas and terms
-	 * for solvers for which that needs to be done.
-	 */
-	protected Map<IExpr,ISort> typemap = new HashMap<IExpr,ISort>(); // FIXME - should this be part of TypeChecker instead?
-	
 	/** The data structure that maintains the current values of options and info items for this solver. */
 	protected Map<String,IAttributeValue> options = new HashMap<String,IAttributeValue>();
 	
@@ -89,7 +84,6 @@ public class Solver_test implements ISolver {
 		assertionSetStack.clear();
 		assertionSetStack.add(0,new LinkedList<IExpr>());
 		symTable.clear(false);
-		typemap.clear();
 		logicSet = null;
 		// Set all options and info to default values
 		options.putAll(smt().utils.defaults);
@@ -112,10 +106,14 @@ public class Solver_test implements ISolver {
 		// Remove all pushed frames
 		IResponse r = pop(assertionSetStack.size()-1);
 		// Remove assertions, but not necessarily global declarations
+		try {
+			for (IExpr e: assertionSetStack.get(0)) TypeChecker.clearSorts(e);
+		} catch (IVisitor.VisitorException e) {
+			// ignore - clearing sorts is best-effort hygiene, not correctness-critical
+		}
 		assertionSetStack.get(0).clear();
 		if (!isGlobal()) {
 			symTable.clear(true);
-			// FIXME - should we do anything with typemap? In general isn't typemap a big leaky thing?
 		}
 		return r;
 	}
@@ -142,7 +140,7 @@ public class Solver_test implements ISolver {
 		if (logicSet == null) {
 			return smtConfig.responseFactory.error("The logic must be set before an assert command is issued");
 		}
-		List<IResponse> errs = TypeChecker.check(this.symTable,expr,typemap);
+		List<IResponse> errs = TypeChecker.checkAssertion(this.symTable,expr);
 		if (errs != null && !errs.isEmpty()) {
 			return errs.get(0); // FIXME - return all errors, not just the first
 		}
@@ -315,8 +313,13 @@ public class Solver_test implements ISolver {
 			return smtConfig.responseFactory.error("The argument to a pop command is too large: " + number + " vs. a maximum of " + (assertionSetStack.size()-1));
 		} else {
 			while (--number >= 0) {
-				assertionSetStack.remove(0); 
-				symTable.pop(); 
+				List<IExpr> popped = assertionSetStack.remove(0);
+				try {
+					for (IExpr e: popped) TypeChecker.clearSorts(e);
+				} catch (IVisitor.VisitorException e) {
+					// ignore - clearing sorts is best-effort hygiene, not correctness-critical
+				}
+				symTable.pop();
 			}
 		}
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("###stack size " + assertionSetStack.size());
@@ -522,7 +525,7 @@ public class Solver_test implements ISolver {
 			return smtConfig.responseFactory.error("The logic must be set before a define-fun command is issued");
 		}
 		String encodedName = encode(cmd.symbol());
-		List<IResponse> list = TypeChecker.checkFcn(symTable, typemap, cmd.symbol(), cmd.parameters(),cmd.resultSort(),cmd.expression(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
+		List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.parameters(),cmd.resultSort(),cmd.expression(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
 		if (list.isEmpty()) {
 			ISort args[] = new ISort[cmd.parameters().size()];
 			int i = 0;
@@ -549,7 +552,7 @@ public class Solver_test implements ISolver {
 		if (logicSet == null) {
 			return smtConfig.responseFactory.error("The logic must be set before a define-fun-rec command is issued");
 		}
-		List<IResponse> list = TypeChecker.checkFcnRec(symTable, typemap, isGlobal(), cmd.symbol(),
+		List<IResponse> list = TypeChecker.checkFcnRec(symTable, isGlobal(), cmd.symbol(),
 				cmd.parameters(), cmd.resultSort(), cmd.expression(),
 				cmd instanceof IPosable ? ((IPosable) cmd).pos() : null);
 		if (list.isEmpty()) {
@@ -565,7 +568,7 @@ public class Solver_test implements ISolver {
 		if (logicSet == null) {
 			return smtConfig.responseFactory.error("The logic must be set before a define-funs-rec command is issued");
 		}
-		List<IResponse> list = TypeChecker.checkFcnsRec(symTable, typemap, isGlobal(),
+		List<IResponse> list = TypeChecker.checkFcnsRec(symTable, isGlobal(),
 				cmd.declarations(), cmd.bodies());
 		if (list.isEmpty()) {
 			checkSatStatus = null;
