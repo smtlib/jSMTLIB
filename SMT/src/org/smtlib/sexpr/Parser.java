@@ -343,7 +343,7 @@ public class Parser extends Lexer implements IParser {
 			ISymbol head = parseSymbolOrReservedWord("Expected a symbol here, not a #");
 			if (head.toString().equals("as")) {
 				return parseAsIdentifierRest(lp);
-			} else if (head.toString().equals("_")) {
+			} else if (head.toString().equals(Utils.PARAM)) {
 				return parseIdentifierRest(lp);
 			} else {
 				throw error("Invalid beginning of an identifer: expected either 'as' or '_' here", head.pos());
@@ -373,7 +373,7 @@ public class Parser extends Lexer implements IParser {
 		} else {
 			ILexToken lp = parseLP();
 			ISymbol head = parseSymbolOrReservedWord("Expected a symbol here, not a #");
-			if (head.toString().equals("_")) {
+			if (head.toString().equals(Utils.PARAM)) {
 				return parseIdentifierRest(lp);
 			} else {
 				throw error("Invalid beginning of an identifer: expected a '_' here", head.pos());
@@ -463,9 +463,9 @@ public class Parser extends Lexer implements IParser {
 				return setPos(smtConfig.exprFactory.match(scrutinee, cases), pos(lp.pos(), rp.pos()));
 			} else if (Utils.AS.equals(s)) {
 				return parseAsIdentifierRest(lp);
-			} else if (Utils.UNDERSCORE.equals(s)) {
+			} else if (Utils.PARAM.equals(s)) {
 				return parseIdentifierRest(lp);
-			} else if (Utils.NAMED_EXPR.equals(s)) {
+			} else if (Utils.ATTRIBUTE.equals(s)) {
 				IExpr expr = parseExpr();
 				List<IAttribute<?>> list = parseAttributeSequence();
 				ILexToken rp = parseRP();
@@ -649,14 +649,6 @@ public class Parser extends Lexer implements IParser {
 		throw error("Expected a numeral here, instead of a #", token);
 	}
 
-	/** Parses a numeral, returning null with the given message if an error occurs; if
-	 * the next token is not a numeral, the token is not consumed, */
-	public /*@Nullable*/Numeral parseNumeral(String msg) throws ParserException {
-		ILexToken token = getToken(INumeral.class);
-		if (token instanceof Numeral) return (Numeral)token;
-		throw error(msg, token);
-	}
-
 	/** Parses a decimal, returning null with the given message if an error occurs; if
 	 * the next token is not a decimal, the token is not consumed, */
 	@Override
@@ -702,16 +694,6 @@ public class Parser extends Lexer implements IParser {
 		throw error("Expected a keyword (beginning with a colon) here, instead of a #", token);
 	}
 
-	/** Parses a keyword, returning null with messages if an error occurs.  The error message
-	 * is given by the argument; it may contain a '#' character that will be replaced by the
-	 * kind() of the token actually observed; if
-	 * the next token is not a keyword, the token is not consumed. */
-	public /*@Nullable*/Keyword parseKeyword(String msg) throws ParserException {
-		ILexToken token = getToken(Keyword.class);
-		if (token instanceof Keyword) return (Keyword)token;
-		throw error(msg, token);
-	}
-
 	/** Parses a sort, returning null with error messages if a valid sort is not in the 
 	 * next parser tokens.
 	 */
@@ -739,7 +721,7 @@ public class Parser extends Lexer implements IParser {
 			if (!isLP()) {
 				ISymbol head = parseSymbolOrReservedWord("Expected a symbol or _ here, not a #");
 				if (false) { // no longer reachable
-				} else if (head.toString().equals("_")) {
+				} else if (head.toString().equals(Utils.PARAM)) {
 					IIdentifier id = parseIdentifierRest(lp);
 					return setPos(new Sort.Application(id),id.pos());
 				}
@@ -820,16 +802,9 @@ public class Parser extends Lexer implements IParser {
 					IAttributeValue v = (IAttributeValue)t;
 					return setPos(smtConfig.exprFactory.attribute(keyword,v),pos(keyword.pos(),v.pos()));
 				} else {
-					throw new ParserException("The value for the keyword " + 
+					throw new ParserException("The value for the keyword " +
 							smtConfig.defaultPrinter.toString(keyword) + " is not a legal attribute value", t.pos());
 				}
-//			} else if (keyword.toString().equals(":pattern")) {
-//				parseLP();
-//				IExpr value = parseExpr();
-//				if (value == null) return null;
-//				parseRP();
-//				// FIXME - value should be a list of IExpr
-//				return setPos(smtConfig.exprFactory.attribute(keyword,value),pos(keyword.pos(),value.pos()));
 			} else {
 				ISexpr value = parseSexpr();
 				return setPos(smtConfig.exprFactory.attribute(keyword,value),pos(keyword.pos(),value.pos()));
@@ -971,17 +946,6 @@ public class Parser extends Lexer implements IParser {
 		throw error("Expected a right parenthesis here, instead of a #", token);
 	}
 
-	/** Parses a right parenthesis, returning null and emitting an error message
-	 *  if there isn't one (and the next token is not consumed); the error message
-	 *  is the argument, with any '# character replaced by the kind() of the actual next
-	 *  token.
-	 */
-	public /*@Nullable*/ILexToken parseRP(String msg) throws ParserException {
-		ILexToken token = peekToken();
-		if (token.isRP()) return getToken();
-		throw error(msg, token);
-	}
-	
 	/** Creates a ParserException with the given message and position; callers should throw the result. */
 	public ParserException error(String msg, /*@Nullable*//*@ReadOnly*/IPos pos) {
 		return new ParserException(msg, pos);
@@ -1023,7 +987,7 @@ public class Parser extends Lexer implements IParser {
 	/** Parses a symbol in pattern position: accepts _ as a wildcard (reserved elsewhere) */
 	private Symbol parsePatternSymbol() throws ParserException {
 		ILexToken token = peekToken();
-		if (token instanceof Symbol && "_".equals(token.toString())) {
+		if (token instanceof Symbol && Utils.WILDCARD.equals(token.toString())) {
 			return (Symbol) getToken();
 		}
 		return parseSymbol();

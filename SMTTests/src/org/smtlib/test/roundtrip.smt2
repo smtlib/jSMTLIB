@@ -106,4 +106,38 @@
 ; ISexpr.ISeq: s-expression sequence as a set-info attribute value
 (set-info :x ( a b c ))
 
+; IParameterizedIdentifier: indexed literal (_ bvN M) and indexed sort (_ BitVec N)
+(assert (_ bv5 8))
+(declare-fun bvf ((_ BitVec 32) ) (_ BitVec 32))
+
+; IAsIdentifier: (as identifier sort) for type-qualified constants
+(assert (as x Bool))
+
+; IApplication with sort parameters: covers the parameters.size()>0 branch in visit(IApplication)
+(declare-fun arr ((Array Int Bool) ) Bool)
+
+; IApplication with a parameterized-identifier head: covers the else branch in parseSort
+(declare-fun fsorted (((_ SomeSort 2) Int) ) Bool)
+
+; IAttributedExpr with two attributes: covers the multi-attribute loop
+(assert (! true :named foo :weight 3))
+
+; parseAttribute branch: keyword immediately before ')' (isRP branch, line 792)
+(assert (! true :weight))
+
+; parseAttribute branch: keyword immediately followed by another keyword (line 796)
+(assert (! true :chainable :named foo))
+
+; parseAttribute branch: keyword followed by '(' — parseSexpr path (line 816)
+(assert (! true :x ( a b c )))
+
+; :pattern attribute: value is a sequence of terms (ISexpr.ISeq printed with spaces)
+(assert (forall ((x Int) ) (! (> x 0) :pattern ( ( > x 0 ) ))))
+
+; let with two bindings: covers the multi-binding loop in visit(ILet)
+(assert (let ((x true) (y false) ) (and x y)))
+
+; IFunctionDeclaration with one parameter: covers non-empty parameter loop in visit(IFunctionDeclaration)
+(define-funs-rec ((g ((x Bool) ) Bool) ) ((not x) ))
+
 ; trailing comment to verify EOF handling

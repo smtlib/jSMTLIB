@@ -18,9 +18,11 @@ public class Utils {
 	/** Concrete syntax for the special STRING token */
 	public static final String STRING     = "STRING";
 	/** Concrete syntax for the token that starts a parameterized identifier */
-	public static final String UNDERSCORE = "_";
-	/** Concrete syntax for the token that starts a named expression */
-	public static final String NAMED_EXPR = "!";
+	public static final String PARAM = "_";
+	/** The _ wildcard in match patterns */
+	public static final String WILDCARD = org.smtlib.Utils.WILDCARD;
+	/** Concrete syntax for the token that starts an attributed expression */
+	public static final String ATTRIBUTE = "!";
 
 	// SMT-LIB keyword strings used by the sexpr parser and printer; values
 	// match org.smtlib.Utils but are held here so Parser/Printer need only one Utils import.
@@ -38,8 +40,8 @@ public class Utils {
 	static public final Set<String> reservedWords;
 	static {
 		Set<String> notCmds = new HashSet<>();
-		notCmds.add(NAMED_EXPR);
-		notCmds.add(UNDERSCORE);
+		notCmds.add(ATTRIBUTE);
+		notCmds.add(PARAM);
 		notCmds.add(AS);
 		notCmds.add(DECIMAL);
 		notCmds.add(EXISTS);

@@ -198,8 +198,8 @@ public class Solver_z3_4_5 extends AbstractSolver implements ISolver {
 	
 	protected IResponse parseResponse(String response) {
 		try {
-			if (response.startsWith("stderr")) response = response.replace("stderr", "\"stderr\"");
-			else if (response.startsWith("stdout")) response = response.replace("stdout", "\"stdout\"");
+			if (response.startsWith(Utils.STDERR)) response = response.replace(Utils.STDERR, "\"" + Utils.STDERR + "\"");
+			else if (response.startsWith(Utils.STDOUT)) response = response.replace(Utils.STDOUT, "\"" + Utils.STDOUT + "\"");
 			Pattern oldbv = Pattern.compile("bv([0-9]+)\\[([0-9]+)\\]");
 			Matcher mm = oldbv.matcher(response);
 			while (mm.find()) {

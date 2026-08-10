@@ -202,10 +202,10 @@ public class AbstractSolver implements ISolver {
 	public IResponse set_option(IKeyword key, IAttributeValue value) {
 		String option = key.value();
 		if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
-			String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : "stdout";
-			if (name.equals("stdout")) {
+			String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : Utils.STDOUT;
+			if (name.equals(Utils.STDOUT)) {
 				smtConfig.log.out = smtConfig.stdout;
-			} else if (name.equals("stderr")) {
+			} else if (name.equals(Utils.STDERR)) {
 				smtConfig.log.out = smtConfig.stderr;
 			} else {
 				try {
@@ -218,10 +218,10 @@ public class AbstractSolver implements ISolver {
 			return successOrEmpty(smtConfig);
 		}
 		if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
-			String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : "stderr";
-			if (name.equals("stdout")) {
+			String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : Utils.STDERR;
+			if (name.equals(Utils.STDOUT)) {
 				smtConfig.log.diag = smtConfig.stdout;
-			} else if (name.equals("stderr")) {
+			} else if (name.equals(Utils.STDERR)) {
 				smtConfig.log.diag = smtConfig.stderr;
 			} else {
 				try {

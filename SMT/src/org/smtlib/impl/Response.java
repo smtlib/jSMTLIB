@@ -31,11 +31,11 @@ public class Response implements IResponse {
 	final static public SMTExpr.Symbol UNKNOWN = new SMTExpr.Symbol("unknown");
 	final static public SMTExpr.Symbol SAT = new SMTExpr.Symbol("sat");
 	final static public SMTExpr.Symbol UNSAT = new SMTExpr.Symbol("unsat");
-	final static public SMTExpr.Symbol IMMEDIATE_EXIT = new SMTExpr.Symbol("immediate-exit");
-	final static public SMTExpr.Symbol CONTINUED_EXECUTION = new SMTExpr.Symbol("continued-execution");
-	final static public SMTExpr.Symbol MEMOUT = new SMTExpr.Symbol("memout");
+	final static public SMTExpr.Symbol IMMEDIATE_EXIT = new SMTExpr.Symbol(Utils.IMMEDIATE_EXIT);
+	final static public SMTExpr.Symbol CONTINUED_EXECUTION = new SMTExpr.Symbol(Utils.CONTINUED_EXECUTION);
+	final static public SMTExpr.Symbol MEMOUT = new SMTExpr.Symbol(Utils.MEMOUT);
 	final static public SMTExpr.Symbol TIMEOUT = new SMTExpr.Symbol("timeout"); // TODO - timeout is not standard SMTLIB
-	final static public SMTExpr.Symbol INCOMPLETE = new SMTExpr.Symbol("incomplete"); // TODO - incomplete is not standard SMTLIB
+	final static public SMTExpr.Symbol INCOMPLETE = new SMTExpr.Symbol(Utils.INCOMPLETE); // TODO - incomplete is not standard SMTLIB
 	
 	/** Implements the IResponse.IPair interface */
 	static public class Pair<T1,T2> implements IResponse.IPair<T1,T2>{

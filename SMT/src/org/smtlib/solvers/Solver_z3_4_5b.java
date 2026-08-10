@@ -114,8 +114,8 @@ public class Solver_z3_4_5b extends Solver_smt implements ISolver {
 	protected IResponse parseResponse(String response) {
 		try {
 			Pattern oldbv = Pattern.compile("bv([0-9]+)\\[([0-9]+)\\]");
-			if (response.startsWith("stderr")) response = response.replace("stderr", "\"stderr\"");
-			else if (response.startsWith("stdout")) response = response.replace("stdout", "\"stdout\"");
+			if (response.startsWith(Utils.STDERR)) response = response.replace(Utils.STDERR, "\"" + Utils.STDERR + "\"");
+			else if (response.startsWith(Utils.STDOUT)) response = response.replace(Utils.STDOUT, "\"" + Utils.STDOUT + "\"");
 			Matcher mm = oldbv.matcher(response);
 			while (mm.find()) {
 				long val = Long.parseLong(mm.group(1));
@@ -199,10 +199,10 @@ public class Solver_z3_4_5b extends Solver_smt implements ISolver {
 		} else if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
 			// Actually, v should never be anything but IStringLiteral - that should
 			// be checked during parsing
-			String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : "stderr";
-			if (name.equals("stdout")) {
+			String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : Utils.STDERR;
+			if (name.equals(Utils.STDOUT)) {
 				smtConfig.log.diag = smtConfig.stdout;
-			} else if (name.equals("stderr")) {
+			} else if (name.equals(Utils.STDERR)) {
 				smtConfig.log.diag = smtConfig.stderr;
 			} else {
 				try {
@@ -215,10 +215,10 @@ public class Solver_z3_4_5b extends Solver_smt implements ISolver {
 		} else if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
 			// Actually, v should never be anything but IStringLiteral - that should
 			// be checked during parsing
-			String name = (value instanceof IStringLiteral)?((IStringLiteral)value).value() : "stdout";
-			if (name.equals("stdout")) {
+			String name = (value instanceof IStringLiteral)?((IStringLiteral)value).value() : Utils.STDOUT;
+			if (name.equals(Utils.STDOUT)) {
 				smtConfig.log.out = smtConfig.stdout;
-			} else if (name.equals("stderr")) {
+			} else if (name.equals(Utils.STDERR)) {
 				smtConfig.log.out = smtConfig.stderr;
 			} else {
 				try {

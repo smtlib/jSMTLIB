@@ -217,10 +217,10 @@ public class Solver_yices extends Solver_test implements ISolver {
 		} else if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
 			// Actually, v should never be anything but IStringLiteral - that should
 			// be checked during parsing
-			String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : "stderr";
-			if (name.equals("stdout")) {
+			String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : Utils.STDERR;
+			if (name.equals(Utils.STDOUT)) {
 				smtConfig.log.diag = smtConfig.stdout;
-			} else if (name.equals("stderr")) {
+			} else if (name.equals(Utils.STDERR)) {
 				smtConfig.log.diag = smtConfig.stderr;
 			} else {
 				try {
@@ -233,10 +233,10 @@ public class Solver_yices extends Solver_test implements ISolver {
 		} else if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
 			// Actually, v should never be anything but IStringLiteral - that should
 			// be checked during parsing
-			String name = (value instanceof IStringLiteral)?((IStringLiteral)value).value() : "stdout";
-			if (name.equals("stdout")) {
+			String name = (value instanceof IStringLiteral)?((IStringLiteral)value).value() : Utils.STDOUT;
+			if (name.equals(Utils.STDOUT)) {
 				smtConfig.log.out = smtConfig.stdout;
-			} else if (name.equals("stderr")) {
+			} else if (name.equals(Utils.STDERR)) {
 				smtConfig.log.out = smtConfig.stderr;
 			} else {
 				try {
@@ -265,8 +265,8 @@ public class Solver_yices extends Solver_test implements ISolver {
 		IAttributeValue lit;
 		if (":error-behavior".equals(option)) {
 			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION); // FIXME
-		} else if (":status".equals(option)) {
-			return checkSatStatus==null ? smtConfig.responseFactory.unsupported() : checkSatStatus; 
+		} else if (Utils.STATUS.toString().equals(option)) {
+			return checkSatStatus==null ? smtConfig.responseFactory.unsupported() : checkSatStatus;
 		} else if (":all-statistics".equals(option)) {
 			return smtConfig.responseFactory.unsupported(); // FIXME
 		} else if (":reason-unknown".equals(option)) {

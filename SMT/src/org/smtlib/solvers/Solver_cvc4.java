@@ -314,7 +314,7 @@ public class Solver_cvc4 extends AbstractSolver implements ISolver {
 			try {
 			if (v instanceof IStringLiteral) {
 				String s = ((IStringLiteral)v).value();
-				if (key.toString().equals(":random-seed")) {
+				if (key.toString().equals(Utils.RANDOM_SEED)) {
 					try {
 						resp = smtConfig.exprFactory.numeral(s);
 					} catch (Exception e) {

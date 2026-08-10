@@ -107,22 +107,24 @@ public class SMTCommandLineTests {
         Assert.assertFalse("Expected no error", output().contains("(error"));
     }
 
-    // Helper: write a minimal logic file in dir; version is a raw SMT-LIB token (e.g. 2.7 or "2.6")
+    // Helper: write a minimal logic file in dir.
+    // Pass null for version to omit :smt-lib-version; null for theories to omit :theories.
     private void writeTempLogic(File dir, String name, String version, String theories) throws Exception {
         try (java.io.PrintWriter pw = new java.io.PrintWriter(new File(dir, name + ".smt2"))) {
             pw.println("(logic " + name);
-            pw.println(" :smt-lib-version " + version);
-            pw.println(" :theories (" + theories + ")");
+            if (version != null)  pw.println(" :smt-lib-version " + version);
+            if (theories != null) pw.println(" :theories (" + theories + ")");
             pw.println(" :language \"test\"");
             pw.println(")");
         }
     }
 
-    // Helper: write a minimal theory file in dir; version is a raw SMT-LIB token
+    // Helper: write a minimal theory file in dir.
+    // Pass null for version to omit :smt-lib-version.
     private void writeTempTheory(File dir, String name, String version) throws Exception {
         try (java.io.PrintWriter pw = new java.io.PrintWriter(new File(dir, name + ".smt2"))) {
             pw.println("(theory " + name);
-            pw.println(" :smt-lib-version " + version);
+            if (version != null) pw.println(" :smt-lib-version " + version);
             pw.println(" :sorts ()");
             pw.println(" :funs ()");
             pw.println(" :definition \"test theory\"");
@@ -234,6 +236,105 @@ public class SMTCommandLineTests {
             assertError(run("-L", tmpDir.getAbsolutePath(),
                             "--solver", "test", "--text", "(set-logic TLOGIC4)"),
                 "Failed to");
+        } finally { cleanTmpDir(tmpDir); }
+    }
+
+    @Test public void logicMissingVersionAttr() throws Exception {
+        // Logic file with no :smt-lib-version → loadLogic(ILogic,...) errors (checkVersion skips null)
+        File tmpDir = Files.createTempDirectory("smtlogics").toFile();
+        try {
+            writeTempLogic(tmpDir, "NOVER", null, "");
+            assertError(run("-L", tmpDir.getAbsolutePath(),
+                            "--solver", "test", "--text", "(set-logic NOVER)"),
+                "is missing the :smt-lib-version attribute");
+        } finally { cleanTmpDir(tmpDir); }
+    }
+
+    @Test public void logicMissingTheoriesAttr() throws Exception {
+        // Logic file with no :theories attribute → loadLogic(ILogic,...) errors on null/non-seq value
+        File tmpDir = Files.createTempDirectory("smtlogics").toFile();
+        try {
+            writeTempLogic(tmpDir, "NOTHEO", "2.7", null);
+            assertError(run("-L", tmpDir.getAbsolutePath(),
+                            "--solver", "test", "--text", "(set-logic NOTHEO)"),
+                "Expected a list of theories");
+        } finally { cleanTmpDir(tmpDir); }
+    }
+
+    @Test public void theoryMissingVersionAttr() throws Exception {
+        // Theory file with no :smt-lib-version → loadTheory(ITheory,...) errors (checkVersion skips null)
+        File tmpDir = Files.createTempDirectory("smtlogics").toFile();
+        try {
+            writeTempLogic(tmpDir, "NOTHVER", "2.7", "MISSINGVER");
+            writeTempTheory(tmpDir, "MISSINGVER", null);
+            assertError(run("-L", tmpDir.getAbsolutePath(),
+                            "--solver", "test", "--text", "(set-logic NOTHVER)"),
+                "is missing the :smt-lib-version attribute");
+        } finally { cleanTmpDir(tmpDir); }
+    }
+
+    @Test public void logicTheoryNotFound() throws Exception {
+        // Logic file lists a theory that does not exist on path or classpath
+        File tmpDir = Files.createTempDirectory("smtlogics").toFile();
+        try {
+            writeTempLogic(tmpDir, "MISSINGT", "2.7", "NOSUCHTHEORY");
+            assertError(run("-L", tmpDir.getAbsolutePath(),
+                            "--solver", "test", "--text", "(set-logic MISSINGT)"),
+                "No logic file found for NOSUCHTHEORY");
+        } finally { cleanTmpDir(tmpDir); }
+    }
+
+    @Test public void logicWrongFirstKeyword() throws Exception {
+        // Logic file starts with wrong keyword instead of "logic"
+        File tmpDir = Files.createTempDirectory("smtlogics").toFile();
+        try {
+            try (java.io.PrintWriter pw = new java.io.PrintWriter(new File(tmpDir, "BADKW.smt2"))) {
+                pw.println("(badkeyword BADKW :smt-lib-version 2.7 :theories () :language \"test\")");
+            }
+            assertError(run("-L", tmpDir.getAbsolutePath(),
+                            "--solver", "test", "--text", "(set-logic BADKW)"),
+                "should have the keyword 'logic'");
+        } finally { cleanTmpDir(tmpDir); }
+    }
+
+    @Test public void logicExtraContentAfterClose() throws Exception {
+        // Logic file has trailing content after the closing paren
+        File tmpDir = Files.createTempDirectory("smtlogics").toFile();
+        try {
+            try (java.io.PrintWriter pw = new java.io.PrintWriter(new File(tmpDir, "EXTRAL.smt2"))) {
+                pw.println("(logic EXTRAL :smt-lib-version 2.7 :theories () :language \"test\") extra");
+            }
+            assertError(run("-L", tmpDir.getAbsolutePath(),
+                            "--solver", "test", "--text", "(set-logic EXTRAL)"),
+                "Expected the end of file after the right parenthesis");
+        } finally { cleanTmpDir(tmpDir); }
+    }
+
+    @Test public void theoryWrongFirstKeyword() throws Exception {
+        // Theory file starts with wrong keyword instead of "theory"
+        File tmpDir = Files.createTempDirectory("smtlogics").toFile();
+        try {
+            writeTempLogic(tmpDir, "TLOGIC5", "2.7", "BADTHKW");
+            try (java.io.PrintWriter pw = new java.io.PrintWriter(new File(tmpDir, "BADTHKW.smt2"))) {
+                pw.println("(badkeyword BADTHKW :smt-lib-version 2.7 :sorts () :funs () :definition \"t\")");
+            }
+            assertError(run("-L", tmpDir.getAbsolutePath(),
+                            "--solver", "test", "--text", "(set-logic TLOGIC5)"),
+                "should have the keyword 'theory'");
+        } finally { cleanTmpDir(tmpDir); }
+    }
+
+    @Test public void theoryExtraContentAfterClose() throws Exception {
+        // Theory file has trailing content after the closing paren
+        File tmpDir = Files.createTempDirectory("smtlogics").toFile();
+        try {
+            writeTempLogic(tmpDir, "TLOGIC6", "2.7", "EXTRATH");
+            try (java.io.PrintWriter pw = new java.io.PrintWriter(new File(tmpDir, "EXTRATH.smt2"))) {
+                pw.println("(theory EXTRATH :smt-lib-version 2.7 :sorts () :funs () :definition \"t\") extra");
+            }
+            assertError(run("-L", tmpDir.getAbsolutePath(),
+                            "--solver", "test", "--text", "(set-logic TLOGIC6)"),
+                "Expected the end of file after the right parenthesis");
         } finally { cleanTmpDir(tmpDir); }
     }
 

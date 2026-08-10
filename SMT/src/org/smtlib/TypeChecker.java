@@ -710,7 +710,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	public /*@Nullable*/ ISort visit(ISymbol e) {
 		IFcnSort sort = null;
 		String value = e.value();
-		if ("_".equals(value)) {
+		if (Utils.WILDCARD.equals(value)) {
 			error("The _ wildcard may only appear in match patterns", e.pos());
 			return null;
 		}
@@ -1022,7 +1022,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				IExpr.IPattern pat = mc.pattern();
 
 				if (pat.params().isEmpty()) {
-					if ("_".equals(pat.constructor().value())) {
+					if (Utils.WILDCARD.equals(pat.constructor().value())) {
 						if (!smtConfig.atLeastVersion(SMTLIB.V27)) {
 							error("The _ wildcard in match patterns requires SMT-LIB V2.7 or later", pat.constructor().pos());
 							anyErrors = true;
@@ -1055,7 +1055,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 						List<IExpr.ISymbol> params = pat.params();
 						Set<String> patternVarsSeen = new HashSet<>();
 						for (int i = 0; i < params.size(); i++) {
-							if ("_".equals(params.get(i).value())) {
+							if (Utils.WILDCARD.equals(params.get(i).value())) {
 								if (!smtConfig.atLeastVersion(SMTLIB.V27)) {
 									error("The _ wildcard in match patterns requires SMT-LIB V2.7 or later", params.get(i).pos());
 									anyErrors = true;

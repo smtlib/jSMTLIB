@@ -376,10 +376,10 @@ public class Solver_test implements ISolver {
 		} else if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
 			// Actually, v should never be anything but IStringLiteral - that should
 			// be checked during parsing
-			String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : "stderr";
-			if (name.equals("stdout")) {
+			String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : Utils.STDERR;
+			if (name.equals(Utils.STDOUT)) {
 				smtConfig.log.diag = smtConfig.stdout;
-			} else if (name.equals("stderr")) {
+			} else if (name.equals(Utils.STDERR)) {
 				smtConfig.log.diag = smtConfig.stderr;
 			} else {
 				try {
@@ -392,10 +392,10 @@ public class Solver_test implements ISolver {
 		} else if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
 			// Actually, v should never be anything but IStringLiteral - that should
 			// be checked during parsing
-			String name = (value instanceof IStringLiteral)?((IStringLiteral)value).value() : "stdout";
-			if (name.equals("stdout")) {
+			String name = (value instanceof IStringLiteral)?((IStringLiteral)value).value() : Utils.STDOUT;
+			if (name.equals(Utils.STDOUT)) {
 				smtConfig.log.out = smtConfig.stdout;
-			} else if (name.equals("stderr")) {
+			} else if (name.equals(Utils.STDERR)) {
 				smtConfig.log.out = smtConfig.stderr;
 			} else {
 				try {

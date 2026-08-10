@@ -147,13 +147,6 @@ public class Utils {
 	/** The string designating the smtlib attribute within a logic or theory */
 	public static final IKeyword SMTLIB_VERSION = new Factory().keyword(":smt-lib-version");
 
-	/** The version of SMT-LIB that is expected of theory and logic definitions */
-	public static final String SMTLIB_VERSION_20 = "2.0";
-    public static final String SMTLIB_VERSION_25 = "2.5";
-    public static final String SMTLIB_VERSION_26 = "2.6";
-    public static final String SMTLIB_VERSION_27 = "2.7";
-	public static       String SMTLIB_VERSION_CURRENT = SMTLIB_VERSION_27;
-
 	/** The attribute tag for defining sorts in a theory */
 	public static final IKeyword SORTS = new Factory().keyword(":sorts");
 
@@ -196,11 +189,8 @@ public class Utils {
 	/** The String for the as reserved word */
 	public static final String EXISTS = "exists";
 
-	/** The String for the ! reserved word */
-	public static final String ATTRIBUTE = "!";
-
-	/** The String for the _ reserved word */
-	public static final String PARAM = "_";
+	/** The String for the _ wildcard in match patterns */
+	public static final String WILDCARD = "_";
 
 	/** The String for the stdout predefined string */
 	public static final String STDOUT = "stdout";
@@ -650,8 +640,6 @@ public class Utils {
 
 		IAttributeValue version = logicExpr.value(SMTLIB_VERSION);
 		if (version == null) return smtConfig.responseFactory.error("Logic definition for " + logicName + " is missing the " + SMTLIB_VERSION + " attribute");
-		if (!(version instanceof IDecimal)) return smtConfig.responseFactory.error("The value of " + SMTLIB_VERSION + " must be expressed as a decimal");
-		if (version.toString().compareTo(SMTLIB_VERSION_CURRENT) > 0) return smtConfig.responseFactory.error("Only implemented version " + SMTLIB_VERSION_CURRENT + " of smtConfig-lib, not " + version);
 
 		IAttributeValue o = logicExpr.value(THEORIES);
 		if (!(o instanceof ISexpr.ISeq)) {
@@ -712,8 +700,6 @@ public class Utils {
 
 		IAttributeValue version = theory.value(SMTLIB_VERSION);
 		if (version == null) return smtConfig.responseFactory.error("Theory definition for " + theoryName + " is missing the " + SMTLIB_VERSION + " attribute");
-		if (!(version instanceof IDecimal)) return smtConfig.responseFactory.error("The value of " + SMTLIB_VERSION + " must be expressed as a decimal");
-		if (version.toString().compareTo(SMTLIB_VERSION_CURRENT) > 0) return smtConfig.responseFactory.error("Only implemented version " + SMTLIB_VERSION_CURRENT + " of smtConfig-lib, not " + version);
 
 		for (IAttributeValue sortsVal : theory.values(SORTS)) {
 			if (!(sortsVal instanceof ISexpr.ISeq)) {
@@ -780,6 +766,8 @@ public class Utils {
 						attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword) key, key2),
 								new Pos(key.pos().charStart(), key2.pos().charEnd(), key.pos().source())));
 						if (!iter2.hasNext()) break;
+						// keyword-with-value followed by more attributes (e.g. ":weight 3 :chainable");
+						// no current theory exercises this path but it is correct and must remain.
 						key = iter2.next();
 					}
 				} else {

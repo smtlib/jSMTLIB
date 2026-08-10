@@ -277,7 +277,7 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
 		IAttributeValue lit;
 		if (":error-behavior".equals(option)) {
 			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION); // FIXME
-		} else if (":status".equals(option)) {
+		} else if (Utils.STATUS.toString().equals(option)) {
 			return checkSatStatus==null ? smtConfig.responseFactory.unsupported() : checkSatStatus; 
 		} else if (":all-statistics".equals(option)) {
 			return smtConfig.responseFactory.unsupported(); // FIXME
