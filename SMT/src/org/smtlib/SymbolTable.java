@@ -41,6 +41,7 @@ public class SymbolTable {
 	// Used only while we have @ built in
 	public boolean hoTheorySet = false;
 
+
 	/** Maps each datatype sort name to its constructors (in declaration order); populated by declare-datatype/declare-datatypes */
 	public Map<String, List<ISymbol>> datatypeConstructors = new HashMap<>();
 
@@ -190,7 +191,7 @@ public class SymbolTable {
 			for (List<SymbolTable.Entry> ee: e.values()) {
 				for (SymbolTable.Entry entry: ee) {
 					// We have already checked that there is no shadowing
-					add(entry);
+					add(entry, false);
 				}
 			}
 		}
@@ -231,42 +232,41 @@ public class SymbolTable {
 	 * @param symbol the symbol to add
 	 * @return true if successfully added, false if already present
 	 */
-	public boolean addSortParameter(ISymbol symbol) {
-		ISort.IDefinition previous = sorts.put(symbol, smtConfig.sortFactory.createSortParameter(symbol));
+	public boolean addSortParameter(ISymbol symbol, boolean global) {
+		Map<IIdentifier, ISort.IDefinition> target = global ? sortStack.get(sortStack.size()-1) : sorts;
+		ISort.IDefinition previous = target.put(symbol, smtConfig.sortFactory.createSortParameter(symbol));
 		if (previous == null) return true;
-		sorts.put(symbol, previous);
+		target.put(symbol, previous);
 		return false;
 	}
-	
-	/** Adds a new sort declaration to the top frame
-	 * 
+
+	/** Adds a new sort declaration to the given frame (global = background, else current).
+	 *
 	 * @param identifier the identifier of the new Sort definition
 	 * @param arity the arity of the new Sort definition
-	 * @return true if successfully added, false if there already is a sort 
-	 * (in any scope) with this identifier
+	 * @param global if true, add to the background frame; otherwise add to the current frame
+	 * @return true if successfully added, false if there already is a sort (in any scope) with this identifier
 	 */
-	public boolean addSortDefinition(IIdentifier identifier, INumeral arity) {
-		// We don't allow shadowing of previous sort definitions, so check for them
+	public boolean addSortDefinition(IIdentifier identifier, INumeral arity, boolean global) {
 		ISort.IDefinition s = lookupSort(identifier);
 		if (s != null) return false;
-		
 		ISort.IDefinition def = smtConfig.sortFactory.createSortFamily(identifier,arity);
-		sorts.put(identifier, def);
+		(global ? sortStack.get(sortStack.size()-1) : sorts).put(identifier, def);
 		return true;
 	}
-	
-	/** Adds a new sort abbreviation definition to the top frame
-	 * 
+
+	/** Adds a new sort abbreviation definition to the given frame (global = background, else current).
+	 *
 	 * @param identifier the name of the new Sort definition
 	 * @param parameters the names of the parameters of the Sort abbreviation
 	 * @param definition the expression of the Sort abbreviation
-	 * @return true if successfully added, false if there already is a sort by 
-	 * this name in the top scope
-	 */ // FIXME - why is this only the top scope and the previous call is any scope?
-	public boolean addSortDefinition(IIdentifier identifier, List<IParameter> parameters, ISort definition) {
-		ISort.IDefinition s = sorts.get(identifier);
-		if (s != null) return false;
-		sorts.put(identifier, smtConfig.sortFactory.createSortAbbreviation(identifier,parameters,definition));
+	 * @param global if true, add to the background frame; otherwise add to the current frame
+	 * @return true if successfully added, false if there already is a sort by this name in the target scope
+	 */
+	public boolean addSortDefinition(IIdentifier identifier, List<IParameter> parameters, ISort definition, boolean global) {
+		Map<IIdentifier, ISort.IDefinition> target = global ? sortStack.get(sortStack.size()-1) : sorts;
+		if (target.get(identifier) != null) return false;
+		target.put(identifier, smtConfig.sortFactory.createSortAbbreviation(identifier,parameters,definition));
 		return true;
 	}
 	
@@ -443,9 +443,9 @@ public class SymbolTable {
 	/** Adds the given entry to the symbol table.
 	 * @param entry the Entry to add
 	 */
-	public void add(Entry entry) {
+	public void add(Entry entry, boolean global) {
 		Map<IIdentifier,Map<Integer,List<Entry>>> lnames = names;
-		if (smtConfig.globalDeclarations) {
+		if (global) {
 			lnames = symStack.get(symStack.size()-1);
 		}
 		Map<Integer,List<Entry>> arityMap = lnames.get(entry.name);
@@ -469,9 +469,9 @@ public class SymbolTable {
 	 * 
 	 * @param entry the Entry to add
 	 */
-	public boolean add(Entry entry, boolean overload) {
+	public boolean add(Entry entry, boolean global, boolean overload) {
 		// Check if the entry is already present in any scope;
-		// return false if it is.  Allow overloading if the second argument is true.
+		// return false if it is.  Allow overloading if overload is true.
 		if (!overload) {
 			for (Map<IIdentifier,Map<Integer,List<Entry>>> set: symStack) {
 				if (set.get(entry.name) != null) {
@@ -480,7 +480,7 @@ public class SymbolTable {
 			}
 		}
 		// Symbol is not present or overloading is allowed, so add it
-		add(entry);
+		add(entry, global);
 		return true;
 	}
 }

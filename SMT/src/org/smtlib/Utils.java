@@ -111,6 +111,9 @@ public class Utils {
 	public static final String PRODUCE_UNSAT_CORES = ":produce-unsat-cores";
 
 	/** The string designating an option item */
+	public static final String PRODUCE_UNSAT_ASSUMPTIONS = ":produce-unsat-assumptions";
+
+	/** The string designating an option item */
 	public static final String PRODUCE_MODELS = ":produce-models";
 
 	/** The string designating an info item */
@@ -381,6 +384,7 @@ public class Utils {
 			if (smtConfig.atLeastVersion(SMTLIB.V25)) boolOptions.add(GLOBAL_DECLARATIONS);
 			boolOptions.add(PRODUCE_PROOFS);
 			boolOptions.add(PRODUCE_UNSAT_CORES);
+			boolOptions.add(PRODUCE_UNSAT_ASSUMPTIONS);
 			boolOptions.add(PRODUCE_MODELS);
 			boolOptions.add(PRODUCE_ASSIGNMENTS);
 			numericOptions.add(RANDOM_SEED);
@@ -394,6 +398,7 @@ public class Utils {
 			if (smtConfig.atLeastVersion(SMTLIB.V25)) defaults.put(GLOBAL_DECLARATIONS, FALSE);
 			defaults.put(PRODUCE_PROOFS, FALSE);
 			defaults.put(PRODUCE_UNSAT_CORES, FALSE);
+			defaults.put(PRODUCE_UNSAT_ASSUMPTIONS, FALSE);
 			defaults.put(PRODUCE_MODELS, FALSE);
 			defaults.put(PRODUCE_ASSIGNMENTS, FALSE);
 			defaults.put(RANDOM_SEED, new SMTExpr.Numeral(0));
@@ -590,11 +595,7 @@ public class Utils {
 			return e.errorResponse;
 		}
 		symTable.logicInUse = sx;
-		boolean g = smtConfig.globalDeclarations;
-		smtConfig.globalDeclarations = false;
-		IResponse b = loadLogic(sx, symTable);
-		smtConfig.globalDeclarations = g;
-		return b;
+		return loadLogic(sx, symTable);
 	}
 
 	/**
@@ -645,54 +646,46 @@ public class Utils {
 		if (!(o instanceof ISexpr.ISeq)) {
 			return smtConfig.responseFactory.error("Expected a list of theories for the value of the " + THEORIES + " attribute");
 		}
-		/* @Mutable */ IResponse res = null;
-		try {
-			symTable.push();
-			res = loadTheory(CORE, symTable);
-			if (res != null) return res;
-			ISexpr.ISeq theories = (ISexpr.ISeq) o;
-			for (ISexpr theory : theories.sexprs()) {
-				if (!(theory instanceof IExpr.ISymbol)) return smtConfig.responseFactory.error("Expected a simple symbol to designate a theory");
-				ISymbol theoryName = (IExpr.ISymbol) theory;
-				if (CORE.equals(theoryName.value())) continue;
-				if ("ALL".equals(logicName)) {
-					boolean savedRelax = smtConfig.relax;
-					String savedSmtlib = smtConfig.smtlib;
-					smtConfig.relax = true;
-					smtConfig.smtlib = null;
-					ITheory th;
-					try {
-						th = findTheory(theoryName.value(), smtConfig.logicPath);
-					} catch (SMTLIBException e) {
-						res = e.errorResponse;
-						return res;
-					} finally {
-						smtConfig.relax = savedRelax;
-						smtConfig.smtlib = savedSmtlib;
-					}
-					IAttributeValue tv = th.value(SMTLIB_VERSION);
-					if (tv instanceof IDecimal) {
-						SMT.Configuration.SMTLIB ver = SMT.Configuration.SMTLIB.find("V" + tv.toString());
-						if (ver != null && !smtConfig.atLeastVersion(ver)) continue;
-					}
-					res = loadTheory(th, symTable);
-					if (res == null) {
-						String tname = th.theoryName().value();
-						if (tname.equals("ArraysEx")) symTable.arrayTheorySet = true;
-						if (tname.equals("Fixed_Size_BitVectors") || tname.equals("FixedSizeBitVectors")) symTable.bitVectorTheorySet = true;
-						if (tname.equals("Reals_Ints")) symTable.realsIntsTheorySet = true;
-						if (tname.equals("HO-Core")) symTable.hoTheorySet = true;
-					}
-				} else {
-					res = loadTheory(theoryName.value(), symTable);
+		IResponse res = loadTheory(CORE, symTable);
+		if (res != null) return res;
+		ISexpr.ISeq theories = (ISexpr.ISeq) o;
+		for (ISexpr theory : theories.sexprs()) {
+			if (!(theory instanceof IExpr.ISymbol)) return smtConfig.responseFactory.error("Expected a simple symbol to designate a theory");
+			ISymbol theoryName = (IExpr.ISymbol) theory;
+			if (CORE.equals(theoryName.value())) continue;
+			if ("ALL".equals(logicName)) {
+				boolean savedRelax = smtConfig.relax;
+				String savedSmtlib = smtConfig.smtlib;
+				smtConfig.relax = true;
+				smtConfig.smtlib = null;
+				ITheory th;
+				try {
+					th = findTheory(theoryName.value(), smtConfig.logicPath);
+				} catch (SMTLIBException e) {
+					return e.errorResponse;
+				} finally {
+					smtConfig.relax = savedRelax;
+					smtConfig.smtlib = savedSmtlib;
 				}
-				if (res != null) return res;
+				IAttributeValue tv = th.value(SMTLIB_VERSION);
+				if (tv instanceof IDecimal) {
+					SMT.Configuration.SMTLIB ver = SMT.Configuration.SMTLIB.find("V" + tv.toString());
+					if (ver != null && !smtConfig.atLeastVersion(ver)) continue;
+				}
+				res = loadTheory(th, symTable);
+				if (res == null) {
+					String tname = th.theoryName().value();
+					if (tname.equals("ArraysEx")) symTable.arrayTheorySet = true;
+					if (tname.equals("Fixed_Size_BitVectors") || tname.equals("FixedSizeBitVectors")) symTable.bitVectorTheorySet = true;
+					if (tname.equals("Reals_Ints")) symTable.realsIntsTheorySet = true;
+					if (tname.equals("HO-Core")) symTable.hoTheorySet = true;
+				}
+			} else {
+				res = loadTheory(theoryName.value(), symTable);
 			}
-		} finally {
-			if (res != null) symTable.pop();
-			else symTable.moveToBackground();
+			if (res != null) return res;
 		}
-		return res;
+		return null;
 	}
 
 	public /* @Nullable */ IResponse loadTheory(ITheory theory, SymbolTable symTable) {
@@ -710,7 +703,7 @@ public class Utils {
 				ISexpr.ISeq sx = (ISexpr.ISeq) iter.next();
 				IExpr.ISymbol name = (IExpr.ISymbol) sx.sexprs().get(0);
 				INumeral arity = (IExpr.INumeral) sx.sexprs().get(1);
-				symTable.addSortDefinition(name, arity);
+				symTable.addSortDefinition(name, arity, true);
 				if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Added sort " + name);
 			}
 		}
@@ -722,9 +715,9 @@ public class Utils {
 		if (theoryName.equals("ArraysEx")) {
 			ISort.IFcnSort fs = smtConfig.sortFactory.createFcnSort(new ISort[0], null);
 			SymbolTable.Entry e = new SymbolTable.Entry(smtConfig.exprFactory.symbol("store"), fs, null);
-			symTable.add(e);
+			symTable.add(e, true);
 			e = new SymbolTable.Entry(smtConfig.exprFactory.symbol("select"), fs, null);
-			symTable.add(e);
+			symTable.add(e, true);
 		}
 
 		return null;
@@ -776,7 +769,7 @@ public class Utils {
 				}
 			}
 			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(sorts.toArray(new ISort[sorts.size()]), result);
-			boolean b = symTable.add(new SymbolTable.Entry(sym, fcnSort, attrs), true);
+			boolean b = symTable.add(new SymbolTable.Entry(sym, fcnSort, attrs), true, true);
 			if (!b) return smtConfig.responseFactory.error("Failed to add to symbol table: " + smtConfig.defaultPrinter.toString(sym) + " " + smtConfig.defaultPrinter.toString(fcnSort));
 			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Added symbol " + name);
 		}

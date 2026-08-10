@@ -88,7 +88,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		try {
             symTable.logicInUse.checkSortDeclaration(id,params,expr);
 			if (params != null) for (ISort.IParameter p : params) {
-				boolean b = symTable.addSortParameter(p.symbol());
+				boolean b = symTable.addSortParameter(p.symbol(), false);
 				if (!b) {
 					f.error("Duplicate sort parameters: " + p.symbol(),p.pos());
 					errors = true;
@@ -134,7 +134,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				if (p.sort().accept(f) != null) {
 					ISort.IFcnSort fs = symTable.smtConfig.sortFactory.createFcnSort(new ISort[0],p.sort());
 					SymbolTable.Entry entry = new SymbolTable.Entry(p.parameter(),fs,null);
-					symTable.add(entry,true);
+					symTable.add(entry, false, true);
 				}
 			}
 			if (f.result.isEmpty()) {
@@ -190,7 +190,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	 * pre-adds the function to the symbol table so the body may call it recursively,
 	 * then checks the body expression.  On success the entry's definition is set. */
 	public static List<IResponse> checkFcnRec(SymbolTable symTable, Map<IExpr,ISort> typemap,
-			ISymbol id, List<IDeclaration> params, ISort result, IExpr expr, IPos pos) {
+			boolean global, ISymbol id, List<IDeclaration> params, ISort result, IExpr expr, IPos pos) {
 		if (symTable.lookup(params.size(), id) != null) {
 			List<IResponse> errors = new LinkedList<>();
 			errors.add(symTable.smtConfig.responseFactory.error(
@@ -203,7 +203,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		for (int i = 0; i < params.size(); i++) argSorts[i] = params.get(i).sort();
 		ISort.IFcnSort fcnSort = symTable.smtConfig.sortFactory.createFcnSort(argSorts, result);
 		SymbolTable.Entry entry = new SymbolTable.Entry(id, fcnSort, null);
-		symTable.add(entry);
+		symTable.add(entry, global);
 		List<IResponse> bodyErrors = checkFcn(symTable, typemap, id, params, result, expr, pos);
 		if (bodyErrors.isEmpty()) {
 			entry.definition = expr;
@@ -215,7 +215,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	 * sorts are valid, pre-adds all functions to the symbol table for mutual recursion, then
 	 * checks each body expression.  On success all entries' definitions are set. */
 	public static List<IResponse> checkFcnsRec(SymbolTable symTable, Map<IExpr,ISort> typemap,
-			List<IFunctionDeclaration> decls, List<IExpr> bodies) {
+			boolean global, List<IFunctionDeclaration> decls, List<IExpr> bodies) {
 		List<SymbolTable.Entry> entries = new LinkedList<>();
 		for (IFunctionDeclaration decl : decls) {
 			if (symTable.lookup(decl.parameters().size(), decl.symbol()) != null) {
@@ -231,7 +231,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			for (int i = 0; i < decl.parameters().size(); i++) argSorts[i] = decl.parameters().get(i).sort();
 			ISort.IFcnSort fcnSort = symTable.smtConfig.sortFactory.createFcnSort(argSorts, decl.sort());
 			SymbolTable.Entry entry = new SymbolTable.Entry(decl.symbol(), fcnSort, null);
-			symTable.add(entry);
+			symTable.add(entry, global);
 			entries.add(entry);
 		}
 		for (int i = 0; i < decls.size(); i++) {
@@ -852,7 +852,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 					}
 					ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(new ISort[0],resultSort);
 					SymbolTable.Entry entry = new SymbolTable.Entry((ISymbol)v,fcnSort,null);
-					if (!symTable.add(entry,false)) { 
+					if (!symTable.add(entry, false, false)) { 
 						result.add(smtConfig.responseFactory.error("Symbol " + v.toString() + " is already defined",v.pos())); // FIXME - encode name
 						errors = true;
 					}

@@ -11,180 +11,193 @@ import org.smtlib.IExpr.IStringLiteral;
 
 
 /** This is the interface to be implemented by any solver adapter;
- * there is an abstract method for each SMT-LIB command */
+ * there is a method for each SMT-LIB command. */
 public interface ISolver {
 
 	/** Returns the configuration object with which the solver is initialized */
 	SMT.Configuration smt();
-	
-	/** Current check-sat status; returns sat, unsat, unknown, error, or null */ // TODO - be more specific
+
+	/** Returns the result of the most recent check-sat or check-sat-assuming, or null if none has been issued
+	 * since the last push/pop/assert/declare/define. */
 	/*@Nullable*/ IResponse checkSatStatus();
-	
+
+	/** A public, user-readable name for the solver adapter class */
+	String solverName();
+
 	/** Starts the solver; this is not an SMT-LIB command, but it is convenient in some implementations
 	 * to separate the starting and initialization from the construction of the solver instance.
-	 * @return success or error
+	 * @return success or an SMT error response
 	 */
 	IResponse start();
-	
-	/** Reset the solver to the start state.
-	 * @return success or error
+
+	/** Resets the solver to the initial state, clearing all assertions, declarations, and options.
+	 * @return success or an SMT error response
 	 */
 	IResponse reset();
-	
-	/** Remove asserted assertions, depending on the value of :global-declarations.
-	 * @return success or error
+
+	/** Removes asserted formulae (but not global declarations when :global-declarations is true).
+	 * @return success or an SMT error response
 	 */
 	IResponse reset_assertions();
-	
-	/** Terminate the solver; no further commands are permitted.
-	 * @return success or error
+
+	/** Terminates the solver; no further commands are permitted.
+	 * @return success or an SMT error response
 	 */
 	IResponse exit();
-	
-	/** Terminate the solver forcibly, without using commands
-	 */
+
+	/** Terminates the solver forcibly without sending commands (e.g. by killing the process). */
 	void forceExit();
-	
-	/** Echo the argument */
+
+	/** Echoes the argument string back to the output channel.
+	 * @return the argument as an IResponse
+	 */
 	IResponse echo(IStringLiteral arg);
-	
-	/** Send comment text - the argument must be white-space + legitimate comment text */
+
+	/** Passes comment text to the solver (for logging/tracing); the argument is the comment body
+	 * without the leading semicolon. */
 	void comment(String comment);
-	
-	/** Sets the logic the solver should use; the position argument is
-	 * just used for position information in error messages.
-	 * @return success or error
+
+	/** Sets the logic the solver should use.
+	 * @param logicName the name of the logic
+	 * @param pos source position used only for error messages; may be null
+	 * @return success or unsupported or an SMT error response
 	 */
 	IResponse set_logic(String logicName, /*@Nullable*/ IPos pos);
-	
-	/** Adds the given number of empty stack frames to the solver state.
-	 * @param number non-negative number of stack frames to push
-	 * @return success or error
+
+	/** Adds the given number of empty assertion-stack frames to the solver state.
+	 * @param number non-negative number of frames to push
+	 * @return success or an SMT error response
 	 */
 	//@ requires number >= 0;
 	IResponse push(int number);
-	
-	/** Pops the given number of stack frames from the solver state.
-	 * @param number non-negative number of stack frames to pop
-	 * @return success or error
+
+	/** Removes the given number of assertion-stack frames from the solver state.
+	 * @param number non-negative number of frames to pop
+	 * @return success or an SMT error response
 	 */
 	//@ requires number >= 0;
 	IResponse pop(int number);
-	
-	/** Asserts the given expression into the solver state (in the top stack frame);
-	 * the expression is expected to be already checked that it is a valid, well-formed and well-sorted
-	 * expression in the current logic; returns success or error */
-	IResponse assertExpr(IExpr expr); // Not named assert because that is a Java reserved word, though
-										// the SMT-LIB command is 'assert'
-	
-	/** Checks whether the current state is satisfiable in the current logic.
-	 * @return sat, unsat, unknown or error
+
+	/** Adds the given expression to the current assertion-stack frame.
+	 * The SMT-LIB command name is {@code assert}; the Java method name differs to avoid the Java reserved word.
+	 * @return success or an SMT error response
+	 */
+	IResponse assertExpr(IExpr expr);
+
+	/** Checks whether the current assertion set is satisfiable under the current logic.
+	 * @return sat, unsat, unknown, or an SMT error response
 	 */
 	IResponse check_sat();
-	
-	/** Checks whether the current state is satisfiable in the current logic, under specified assumptions.
-	 * @return sat, unsat, unknown or error
+
+	/** Checks satisfiability under the current assertion set plus the given propositional assumptions.
+	 * @return sat, unsat, unknown, or an SMT error response
 	 */
-	IResponse check_sat_assuming(IExpr...  exprs);
-	
-    /** Defines a new uninterpreted constant; returns success or error*/
-    IResponse declare_const(Ideclare_const cmd); // FIXME - use ISymbol, ISort as arguments?
-    
-    /** Defines a new datatype sort; returns success or error*/
-    IResponse declare_datatype(Ideclare_datatype cmd); // FIXME - use ISymbol, ISort as arguments?
-    
-    /** Defines mutual datatype sorts; returns success or error*/
-    IResponse declare_datatypes(Ideclare_datatypes cmd); // FIXME - use ISymbol, ISort as arguments?
-    
-	/** Defines a new uninterpreted constant or function; returns success or error*/
+	IResponse check_sat_assuming(IExpr... exprs);
+
+	/** Declares a new uninterpreted constant; returns success or an SMT error response */
+	IResponse declare_const(Ideclare_const cmd);
+
+	/** Declares a new datatype sort; returns success or an SMT error response */
+	IResponse declare_datatype(Ideclare_datatype cmd);
+
+	/** Declares mutually recursive datatype sorts; returns success or an SMT error response */
+	IResponse declare_datatypes(Ideclare_datatypes cmd);
+
+	/** Declares a new uninterpreted function (or constant); returns success or an SMT error response */
 	IResponse declare_fun(Ideclare_fun cmd);
-	
-    /** Declares a new basic sort; returns success or error */
-    IResponse declare_sort(Ideclare_sort cmd);
 
-    /** Declares a new sort parameter; returns success or error */
-    IResponse declare_sort_parameter(Ideclare_sort_parameter cmd);
+	/** Declares a new uninterpreted sort; returns success or an SMT error response */
+	IResponse declare_sort(Ideclare_sort cmd);
 
-    /** Defines a new constant or function; returns success or error */
-    IResponse define_fun(Idefine_fun cmd);
-    
-    /** Defines a new recursive function; returns success or error */
-    IResponse define_fun_rec(Idefine_fun_rec cmd);
-    
-    /** Defines new mutually recursive functions; returns success or error */
-    IResponse define_funs_rec(Idefine_funs_rec cmd);
-    
-	/** Defines a new sort abbreviation; returns success or error */
+	/** Declares a new sort parameter (polymorphic sort variable); returns success or an SMT error response */
+	IResponse declare_sort_parameter(Ideclare_sort_parameter cmd);
+
+	/** Defines a named constant — syntactic sugar for {@code define-fun} with no parameters;
+	 * returns success or an SMT error response */
+	IResponse define_const(Idefine_const cmd);
+
+	/** Defines a named function or constant; returns success or an SMT error response */
+	IResponse define_fun(Idefine_fun cmd);
+
+	/** Defines a named recursive function; returns success or an SMT error response */
+	IResponse define_fun_rec(Idefine_fun_rec cmd);
+
+	/** Defines a group of mutually recursive functions; returns success or an SMT error response */
+	IResponse define_funs_rec(Idefine_funs_rec cmd);
+
+	/** Defines a sort abbreviation; returns success or an SMT error response */
 	IResponse define_sort(Idefine_sort cmd);
-	
-	/** Sets an SMT-LIB option
-	 * @param option the option whose value is to be set
-	 * @param value the value to which to set it
-	 * @return SUCCESS or an error or unsupported
+
+	/** Sets an SMT-LIB option.
+	 * @param option the keyword naming the option
+	 * @param value the value to set
+	 * @return success, unsupported, or an SMT error response
 	 */
 	IResponse set_option(IKeyword option, IAttributeValue value);
 
-	/** Sets an SMT-LIB info value
-	 * @param key the info item whose value is to be set
-	 * @param value the value to which to set it
-	 * @return SUCCESS or an error or unsupported
+	/** Annotates the problem with an info attribute (e.g. {@code :status sat}).
+	 * @param key the info keyword
+	 * @param value the attribute value
+	 * @return success, unsupported, or an SMT error response
 	 */
 	IResponse set_info(IKeyword key, IAttributeValue value);
-	
-	/** Returns a list of all the formulae that have been asserted in the current state.
-	 * If the solver prints the list of assertions itself, then this method simply returns success.
-	 * May only be used in interactive mode.  If interactive mode is not implemented,
-	 * this command may return unsupported.
-	 * @return success or a list of formulae (as Strings or terms?) // TODO is this what we want?
+
+	/** Returns the list of formulae in the current assertion set, in the order they were asserted.
+	 * Requires :produce-assertions to be enabled; returns an error if it is not.
+	 * SMT-LIB does not stipulate the order of the terms in the returned list.
+	 * @return a sequence of asserted terms, unsupported, or an SMT error response
 	 */
 	IResponse get_assertions();
-	
-	/** Returns a proof that the current state is unsatisfiable. If the solver prints the proof itself,
-	 * then it returns simply success. // TODO check is this what we want
-	 * May only be issued if the :produce-proofs option is enabled.
-	 * Supporting proof production is optional.
-	 * @return error or success or unsupported (if proof production is not supported) or a proof
+
+	/** Returns a proof of unsatisfiability for the current assertion set.
+	 * Requires :produce-proofs to be enabled; returns an error if it is not.
+	 * @return a proof, unsupported, or an SMT error response
 	 */
 	IResponse get_proof();
-	
-	/** Returns a model of current satisfiable state */
+
+	/** Returns a satisfying model for the current assertion set.
+	 * Requires :produce-models to be enabled and the last check-sat to have returned sat;
+	 * returns an error if these preconditions are not met.
+	 * @return a model, unsupported, or an SMT error response
+	 */
 	IResponse get_model();
-	
-	/** Returns the named assumptions that caused the most recent check-sat-assuming to return unsat.
-	 * May only be issued if :produce-unsat-assumptions is enabled.
-	 * @return unsupported or error or a list of assumption names
+
+	/** Returns the subset of check-sat-assuming assumptions that caused the result to be unsat.
+	 * Requires :produce-unsat-assumptions to be enabled; returns an error if it is not.
+	 * @return a list of assumption literals, unsupported, or an SMT error response
 	 */
 	IResponse get_unsat_assumptions();
 
-	
-	/** Returns a list of the names of formulae in the unsat core of the current (unsatisfiable) state.
-	 * May only be issued if :produce-unsat-core is enabled.
-	 * @return unsupported or error or a list of names (as ids)
+	/** Returns the named formulae that form an unsatisfiable core of the current assertion set.
+	 * Requires :produce-unsat-cores to be enabled; returns an error if it is not.
+	 * @return a list of formula names, unsupported, or an SMT error response
 	 */
 	IResponse get_unsat_core();
-	
-	/** Returns a list of values for the given expressions.
-	 * May only be used if :produce-models is enabled.
-	 * @param terms expressions whose value in the current (Satisfiable) state is to be determined
-	 * @return error or list of values (which may include IError instances)
+
+	/** Returns the values of the given expressions in the current satisfying model.
+	 * Requires :produce-models to be enabled and the last check-sat to have returned sat;
+	 * returns an error if these preconditions are not met.
+	 * @param terms expressions to evaluate
+	 * @return a list of term–value pairs, unsupported, or an SMT error response
 	 */
 	IResponse get_value(IExpr... terms);
 
-	/** Retrieves values for all named formulae in the current (satisfiable) state.
-	 * May only be used if :produce-assignments is enabled.
-	 * @return error or a list of name-value pairs
+	/** Returns the truth-value assignments for all named Boolean formulae in the current model.
+	 * Requires :produce-assignments to be enabled and the last check-sat to have returned sat;
+	 * returns an error if these preconditions are not met.
+	 * @return a list of name–Boolean pairs, unsupported, or an SMT error response
 	 */
 	IResponse get_assignment();
 
-	/** Gets the value of an SMT-LIB option.
-	 * @param option the option whose value is desired
-	 * @return the current value of the option, or an error or unsupported response
+	/** Returns the current value of the named option.
+	 * @param option the keyword naming the option
+	 * @return the option value, or unsupported, or an SMT error response
 	 */
 	IResponse get_option(IKeyword option);
 
-	/** Gets the value of an SMT-LIB information item.
-	 * @param option the info keyword whose value is desired
-	 * @return the info attribute list, or an error or unsupported response
+	/** Returns the value of the named info item.
+	 * @param option the info keyword
+	 * @return the info value, or unsupported, or an SMT error response
 	 */
 	IResponse get_info(IKeyword option);
 }

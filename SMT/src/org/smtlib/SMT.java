@@ -172,9 +172,6 @@ public class SMT {
 		 */
 		/*@Nullable*/ public String logic;
 		
-		/** Whether declarations are global */
-		public boolean globalDeclarations;
-		
 		/** The solver to use */
 		/*@Nullable*/ public String solvername = null;
 		

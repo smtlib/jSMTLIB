@@ -20,11 +20,15 @@ import org.smtlib.impl.Response;
  * commands are used correctly; it does not do any proving.
  */
 public class Solver_test implements ISolver {
-	
+    
+    @Override
+    public String solverName() { return "test"; }
+
 	/** A reference to the configuration used by this SMT instance. */
 	protected SMT.Configuration smtConfig;
-	
+
 	/** Returns the reference to the configuration currently in use. */
+	@Override
 	public SMT.Configuration smt() { return smtConfig; }
 
 	/** The symbol table used by this solver */
@@ -37,18 +41,19 @@ public class Solver_test implements ISolver {
 	protected String logicSet = null;
 	
 	/** Internal state variable - set to sat, unsat, unknown when check-sat is run
-	 * and then to null whenever an additional push, popo, assert, declare- or define-
+	 * and then to null whenever an additional push, pop, assert, declare- or define-
 	 * command is executed.  This is used in checking those commands that depend on the
 	 * above set of conditions.
 	 */
-	protected /*@Nullable*/IResponse checkSatStatus;
+	protected /*@Nullable*/IResponse checkSatStatus = null;
 	
+	@Override
 	public /*@Nullable*/IResponse checkSatStatus() { return checkSatStatus; }
 
 	/** A map holding the sorts of subexpressions, used for distinguishing formulas and terms
 	 * for solvers for which that needs to be done.
 	 */
-	protected Map<IExpr,ISort> typemap = new HashMap<IExpr,ISort>();
+	protected Map<IExpr,ISort> typemap = new HashMap<IExpr,ISort>(); // FIXME - should this be part of TypeChecker instead?
 	
 	/** The data structure that maintains the current values of options and info items for this solver. */
 	protected Map<String,IAttributeValue> options = new HashMap<String,IAttributeValue>();
@@ -65,19 +70,22 @@ public class Solver_test implements ISolver {
 		this.smtConfig = smtConfig;
 		options.putAll(smt().utils.defaults);
 		this.symTable = new SymbolTable(smtConfig);
-		checkSatStatus = null;
+	}
+
+	private boolean isGlobal() {
+		return Utils.TRUE.equals(options.get(Utils.GLOBAL_DECLARATIONS));
 	}
 	
 	@Override
 	public IResponse start() {
 		assertionSetStack.add(0,new LinkedList<IExpr>());
-		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#start");
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#start " + solverName());
 		return smtConfig.responseFactory.success();
 	}
 	
 	@Override
 	public IResponse reset() {
-		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#reset");
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#reset " + solverName());
 		assertionSetStack.clear();
 		assertionSetStack.add(0,new LinkedList<IExpr>());
 		symTable.clear(false);
@@ -89,7 +97,6 @@ public class Solver_test implements ISolver {
 		smtConfig.verbose = 0;
 		smtConfig.log.out = smtConfig.stdout;
 		smtConfig.log.diag = smtConfig.stderr;
-		smtConfig.globalDeclarations = false;
 		checkSatStatus = null;
 
 		return smtConfig.responseFactory.success();
@@ -106,7 +113,7 @@ public class Solver_test implements ISolver {
 		IResponse r = pop(assertionSetStack.size()-1);
 		// Remove assertions, but not necessarily global declarations
 		assertionSetStack.get(0).clear();
-		if (!smt().globalDeclarations) {
+		if (!isGlobal()) {
 			symTable.clear(true);
 			// FIXME - should we do anything with typemap? In general isn't typemap a big leaky thing?
 		}
@@ -115,14 +122,14 @@ public class Solver_test implements ISolver {
 
 	@Override
 	public IResponse exit() {
-		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#exit");
-		return smtConfig.responseFactory.success();
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#exit " + solverName());
+		return smtConfig.responseFactory.success(); // FIXME - should forbid any actions after exited
 	}
 	
 	@Override
 	public void forceExit() {
-		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#forceexit");
-	}
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#forceexit " + solverName());
+	} // FIXME - should forbid any actions after exited
 	
 	@Override
 	public IResponse echo(IStringLiteral arg) {
@@ -277,8 +284,8 @@ public class Solver_test implements ISolver {
 
     @Override
     public IResponse get_unsat_assumptions() {
-        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_UNSAT_CORES)))) { // FIXME - is this corrrect?
-            return smtConfig.responseFactory.error("The get-unsat-assumptions command is only valid if :produce-unsat-cores has been enabled");
+        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_UNSAT_ASSUMPTIONS)))) {
+            return smtConfig.responseFactory.error("The get-unsat-assumptions command is only valid if :produce-unsat-assumptions has been enabled");
         }
         if (checkSatStatus != smtConfig.responseFactory.unsat()) {
             return smtConfig.responseFactory.error("The get-unsat-assumptions command is only valid immediately after check-sat-assumptions returned unsat");
@@ -405,8 +412,6 @@ public class Solver_test implements ISolver {
 					return smtConfig.responseFactory.error("Failed to open or write to the regular output " + e.getMessage(),value.pos());
 				}
 			}
-		} else if (Utils.GLOBAL_DECLARATIONS.equals(option)) {
-			smtConfig.globalDeclarations = Utils.TRUE.equals(value);
 		}
 		if (Utils.INTERACTIVE_MODE.equals(option) && !smtConfig.isVersion(SMTLIB.V20)) option = Utils.PRODUCE_ASSERTIONS;
 		options.put(option,value);
@@ -474,7 +479,7 @@ public class Solver_test implements ISolver {
 		if (list.isEmpty()) {
 			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(new ISort[0],cmd.resultSort());
 			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null);
-			if (symTable.add(entry,false)) { 
+			if (symTable.add(entry, isGlobal(), false)) {
 				checkSatStatus = null;
 				return smtConfig.responseFactory.success();
 			} else {
@@ -485,7 +490,7 @@ public class Solver_test implements ISolver {
 		}
 	}
 
-	@Override 
+	@Override
 	public IResponse declare_fun(Ideclare_fun cmd) {
 		if (logicSet == null) {
 			return smtConfig.responseFactory.error("The logic must be set before a declare-fun command is issued");// FIXME - position and on other similar statements
@@ -495,7 +500,7 @@ public class Solver_test implements ISolver {
 		if (list.isEmpty()) {
 			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(cmd.argSorts().toArray(new ISort[cmd.argSorts().size()]),cmd.resultSort());
 			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null);
-			if (symTable.add(entry,false)) { 
+			if (symTable.add(entry, isGlobal(), false)) {
 				checkSatStatus = null;
 				return smtConfig.responseFactory.success();
 			} else {
@@ -504,6 +509,11 @@ public class Solver_test implements ISolver {
 		} else {
 			return list.get(0); // FIXME - return all?
 		}
+	}
+
+	@Override
+	public IResponse define_const(Idefine_const cmd) {
+		return define_fun(cmd);
 	}
 
 	@Override
@@ -523,7 +533,7 @@ public class Solver_test implements ISolver {
 			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(args,cmd.resultSort());
 			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null);
 			entry.definition = cmd.expression();
-			if (symTable.add(entry,false)) { 
+			if (symTable.add(entry, isGlobal(), false)) {
 				checkSatStatus = null;
 				return smtConfig.responseFactory.success();
 			} else {
@@ -533,13 +543,13 @@ public class Solver_test implements ISolver {
 			return list.get(0); // FIXME - return all?
 		}
 	}
-	
+
 	@Override
 	public IResponse define_fun_rec(Idefine_fun_rec cmd) {
 		if (logicSet == null) {
 			return smtConfig.responseFactory.error("The logic must be set before a define-fun-rec command is issued");
 		}
-		List<IResponse> list = TypeChecker.checkFcnRec(symTable, typemap, cmd.symbol(),
+		List<IResponse> list = TypeChecker.checkFcnRec(symTable, typemap, isGlobal(), cmd.symbol(),
 				cmd.parameters(), cmd.resultSort(), cmd.expression(),
 				cmd instanceof IPosable ? ((IPosable) cmd).pos() : null);
 		if (list.isEmpty()) {
@@ -555,7 +565,7 @@ public class Solver_test implements ISolver {
 		if (logicSet == null) {
 			return smtConfig.responseFactory.error("The logic must be set before a define-funs-rec command is issued");
 		}
-		List<IResponse> list = TypeChecker.checkFcnsRec(symTable, typemap,
+		List<IResponse> list = TypeChecker.checkFcnsRec(symTable, typemap, isGlobal(),
 				cmd.declarations(), cmd.bodies());
 		if (list.isEmpty()) {
 			checkSatStatus = null;
@@ -574,7 +584,7 @@ public class Solver_test implements ISolver {
         boolean b = list.isEmpty();
         if (b) {
             INumeral sortArity = cmd.arity();
-            b = symTable.addSortDefinition(cmd.sortSymbol(),sortArity);
+            b = symTable.addSortDefinition(cmd.sortSymbol(), sortArity, isGlobal());
             if (!b) return smtConfig.responseFactory.error("The identifier is already declared to be a sort: " + 
                     smtConfig.defaultPrinter.toString(cmd.sortSymbol()), cmd.sortSymbol().pos());
             checkSatStatus = null;
@@ -594,7 +604,7 @@ public class Solver_test implements ISolver {
         boolean b = symTable.lookupSort(cmd.sortSymbol()) != null;
         if (b) return smtConfig.responseFactory.error("The identifier is already declared to be a sort: " +
                                 smtConfig.defaultPrinter.toString(cmd.sortSymbol()), cmd.sortSymbol().pos());
-        symTable.addSortParameter(cmd.sortSymbol());
+        symTable.addSortParameter(cmd.sortSymbol(), isGlobal());
         checkSatStatus = null;
         return smtConfig.responseFactory.success();
     }
@@ -607,7 +617,7 @@ public class Solver_test implements ISolver {
 		List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable,cmd.sortSymbol(),cmd.parameters(),cmd.expression());
 		boolean b = list.isEmpty();
 		if (b) {
-			b = symTable.addSortDefinition(cmd.sortSymbol(),cmd.parameters(),cmd.expression());
+			b = symTable.addSortDefinition(cmd.sortSymbol(), cmd.parameters(), cmd.expression(), isGlobal());
 			if (!b) return smtConfig.responseFactory.error("The identifier is already declared to be a sort: " + 
 				smtConfig.defaultPrinter.toString(cmd.sortSymbol()), cmd.sortSymbol().pos());
 			else {
@@ -631,7 +641,7 @@ public class Solver_test implements ISolver {
             Collections.singletonList(cmd.sortDeclaration()),
             Collections.singletonList(dt));
         if (!nameErrors.isEmpty()) return nameErrors.get(0);
-        if (!symTable.addSortDefinition(sortName, arity)) {
+        if (!symTable.addSortDefinition(sortName, arity, isGlobal())) {
             return smtConfig.responseFactory.error("The sort is already declared: " + smtConfig.defaultPrinter.toString(sortName), sortName.pos());
         }
         IResponse err = registerDatatypeConstructors(sortName, dt);
@@ -651,7 +661,7 @@ public class Solver_test implements ISolver {
         if (!nameErrors.isEmpty()) return nameErrors.get(0);
         // Register all sort names first so constructors can cross-reference them
         for (ISortDeclaration sd : sortDecls) {
-            if (!symTable.addSortDefinition(sd.symbol(), sd.arity())) {
+            if (!symTable.addSortDefinition(sd.symbol(), sd.arity(), isGlobal())) {
                 return smtConfig.responseFactory.error("The sort is already declared: " + smtConfig.defaultPrinter.toString(sd.symbol()), sd.symbol().pos());
             }
         }
@@ -673,14 +683,14 @@ public class Solver_test implements ISolver {
             List<IResponse> errs = TypeChecker.checkFcn(symTable, ctor.symbol(), argSorts, declaredSort, ctor.symbol().pos());
             if (!errs.isEmpty()) return errs.get(0);
             ISort.IFcnSort ctorSort = smtConfig.sortFactory.createFcnSort(argSorts.toArray(new ISort[0]), declaredSort);
-            symTable.add(new SymbolTable.Entry(ctor.symbol(), ctorSort, null), false);
+            symTable.add(new SymbolTable.Entry(ctor.symbol(), ctorSort, null), isGlobal(), false);
             ctorList.add(ctor.symbol());
             for (ISelector sel : ctor.selectors()) {
                 ISort[] selArgs = new ISort[]{ declaredSort };
                 List<IResponse> selErrs = TypeChecker.checkFcn(symTable, sel.symbol(), Arrays.asList(selArgs), sel.sort(), sel.symbol().pos());
                 if (!selErrs.isEmpty()) return selErrs.get(0);
                 ISort.IFcnSort selSort = smtConfig.sortFactory.createFcnSort(selArgs, sel.sort());
-                symTable.add(new SymbolTable.Entry(sel.symbol(), selSort, null), false);
+                symTable.add(new SymbolTable.Entry(sel.symbol(), selSort, null), isGlobal(), false);
             }
         }
         symTable.datatypeConstructors.put(sortName.value(), ctorList);

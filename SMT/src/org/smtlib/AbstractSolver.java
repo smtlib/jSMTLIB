@@ -48,6 +48,11 @@ public class AbstractSolver implements ISolver {
 	protected Map<String, IAttributeValue> options = new HashMap<String, IAttributeValue>();
 	
 	@Override
+	public String solverName() {
+	    return getClass().toString().substring(6);
+	}
+	
+	@Override
 	public void forceExit() {
 		if (solverProcess != null) solverProcess.exit();
 	}
@@ -144,6 +149,12 @@ public class AbstractSolver implements ISolver {
 	public IResponse check_sat_assuming(IExpr ... exprs) {
 		throw new UnsupportedOperationException("AbstractSolver.check_sat_assuming");
 	}
+
+    /** @see org.smtlib.ISolver#define_const(ICommand.Idefine_const)  */
+    @Override
+    public IResponse define_const(Idefine_const cmd) {
+        return define_fun(cmd);
+    }
 
     /** @see org.smtlib.ISolver#define_fun(ICommand.Idefine_fun)  */
     @Override

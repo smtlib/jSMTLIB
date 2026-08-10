@@ -44,7 +44,7 @@ public class C_define_const extends C_define_fun implements Idefine_const {
 
 	@Override
 	public IResponse execute(ISolver solver) {
-		return solver.define_fun(this);
+		return solver.define_const(this);
 	}
 
 	@Override

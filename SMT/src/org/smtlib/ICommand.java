@@ -214,14 +214,9 @@ public interface ICommand extends INode {
         ISymbol sortSymbol();
     }
 
-	/** Interface for the SMT-LIB {@code define-const} command. */
-    static public interface Idefine_const extends ICommand {
-    	/** Returns the name of the constant being defined. */
-        ISymbol symbol();
-        /** Returns the sort of the constant. */
-        ISort resultSort();
-        /** Returns the defining expression. */
-        IExpr expression();
+	/** Interface for the SMT-LIB {@code define-const} command.
+	 *  Syntactic sugar for {@code define-fun} with an empty parameter list. */
+    static public interface Idefine_const extends Idefine_fun {
     }
 
 	/** Interface for the SMT-LIB {@code define-fun} command. */
