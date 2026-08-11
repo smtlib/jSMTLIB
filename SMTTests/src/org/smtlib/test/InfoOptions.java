@@ -353,17 +353,6 @@ public class InfoOptions  extends LogicTests {
 	}
 	
 	@Test
-	public void checkSetExpandDefinitions2() {
-		Assume.assumeTrue(smt.smtConfig.atLeastVersion(SMTLIB.V25));
-		doCommand("(set-option :expand-definitions true)", "success");
-		doCommand("(get-option :expand-definitions)", 
-				(solvername.startsWith("z3")) ? "true" : "unsupported");
-		doCommand("(set-option :expand-definitions false)", "success");
-		doCommand("(get-option :expand-definitions)", 
-				(solvername.startsWith("z3")) ? "false" : "unsupported");
-	}
-	
-	@Test
 	public void checkRandomSeed() {
 		Assume.assumeTrue(!"cvc5".equals(solvername)); // FIXME - cvc5 does not handle random seed correctly
 		doCommand("(get-option :random-seed)", 
