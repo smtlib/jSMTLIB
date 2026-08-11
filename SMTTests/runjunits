@@ -13,6 +13,8 @@ if [ -n "${COV++}" ]; then
 fi
 source setup
 
+echo "Solvers: ${SMT_TEST_SOLVERS:-test}"
+
 JUNIT_JAR="lsp/libs/junit-4.13.2.jar"
 HAMCREST_JAR="lsp/libs/hamcrest-core-1.3.jar"
 # setup already set SMT_JAR to an absolute path; use COV_CLASSES only when coverage is on.

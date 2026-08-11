@@ -354,7 +354,7 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetExpandDefinitions2() {
-		Assume.assumeTrue(smtlib_version >= v25);
+		Assume.assumeTrue(smt.smtConfig.atLeastVersion(SMTLIB.V25));
 		doCommand("(set-option :expand-definitions true)", "success");
 		doCommand("(get-option :expand-definitions)", 
 				(solvername.startsWith("z3")) ? "true" : "unsupported");

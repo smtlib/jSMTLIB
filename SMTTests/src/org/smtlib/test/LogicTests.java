@@ -21,35 +21,31 @@ import org.smtlib.SMT;
 import org.smtlib.Utils;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IParser.ParserException;
+import org.smtlib.SMT.Configuration.SMTLIB;
 
 
 public class LogicTests {
-	static final int v20 = 0;
-	static final int v25 = 1;
-	static final int v26 = 2;
-	
-	static int smtlib_version = v20;
 
-	public static final String[] solvers = new String[] {
-            "test",
-          "z3_4_3",
-          "z3_4_8",
-          "cvc5", // 1.8
-          "cvc5", // 0.0.2
-//           "z3_4_5", 
-//          "z3_4_6", 
-//          "z3_4_7", 
-            //"yices", 
-//            "cvc5", 
-//            "simplify", 
-            } ;
+	/** The solvers to test against: the whitespace-separated names in the SMT_TEST_SOLVERS
+	 * environment variable (e.g. "test z3_4_3 z3_4_8 cvc5"), or just "test" if unset -- this
+	 * is the one controlling place for the solver list; runjunits/runtests read the same
+	 * variable so all test-running paths stay in sync. */
+	public static final String[] solvers = solversFromEnv();
+
+	private static String[] solversFromEnv() {
+		String env = System.getenv("SMT_TEST_SOLVERS");
+		if (env == null || env.trim().isEmpty()) return new String[] { "test" };
+		return env.trim().split("\\s+");
+	}
 	
     @Parameters
     public static Collection<String[]> data() {
-    	List<String[]> list = new ArrayList<>(solvers.length * 3);
+    	SMTLIB[] versions = SMTLIB.values();
+    	List<String[]> list = new ArrayList<>(solvers.length * versions.length);
     	for (String solver: solvers) {
-    		list.add(new String[]{solver, "V2.0"});
-    		list.add(new String[]{solver, "V2.5"});
+    		for (SMTLIB v: versions) {
+    			list.add(new String[]{solver, v.id});
+    		}
     	}
         return list;
     }

@@ -16,6 +16,13 @@ ifndef SMT_SOLVER_DIR
 endif
 export SMT_SOLVER_DIR
 
+## The solvers to test against (space-separated names, read by runjunits/runtests and by
+## LogicTests.java/FileTests.java). Default is just the built-in pure-Java "test" solver,
+## which needs no external binary. Override on the command line or in the environment, e.g.:
+##   make test SMT_TEST_SOLVERS="test z3_4_3 z3_4_8 cvc5"
+SMT_TEST_SOLVERS ?= test
+export SMT_TEST_SOLVERS
+
 test tests:
 	$(MAKE) junit-tests
 
@@ -23,7 +30,7 @@ script-tests:
 	bash ./runscripts
 
 smt-tests:
-	bash ./runtests --solvers "test z3_4_3"
+	bash ./runtests
 
 junit-tests:
 	bash ./runjunits

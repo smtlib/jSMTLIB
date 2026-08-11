@@ -22,9 +22,11 @@ public class LogicsBadPath extends LogicTests {
 
 	@Test
 	public void testLogic() {
+		// "xxx" is not a real directory, so this is caught by the upfront logic-path
+		// validation in Utils.openLogicStream -- before any classpath fallback is tried.
 		doCommand("(set-logic QF_UF)",
 				solvername.startsWith("z3") || solvername.startsWith("cvc5") || solvername.startsWith("yices2") || solvername.startsWith("z3_4_4")? "success" : // FIXME
-				smt.smtConfig.isVersion(SMTLIB.V20) ? "(error \"No logic file found for QF_UF on path \\\"xxx\\\"\")"
-		                                                : "(error \"No logic file found for QF_UF on path \"\"xxx\"\"\")");
+				smt.smtConfig.isVersion(SMTLIB.V20) ? "(error \"Invalid logic path: \\\"xxx\\\" is not a directory\")"
+		                                                : "(error \"Invalid logic path: \"\"xxx\"\" is not a directory\")");
 	}
 }

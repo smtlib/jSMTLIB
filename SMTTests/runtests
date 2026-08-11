@@ -8,13 +8,11 @@ fi
 source setup
 rm -f tempout
 
-# Windows ships z3-4.3.2.exe (not 4.3.1), which differs in error messages, version
-# strings, and other behaviors; skip z3_4_3 there and test only the built-in solver.
-if [[ "$PLATFORM" == "windows" ]]; then
-    solvers="test"
-else
-    solvers="test z3_4_3"
-fi
+# SMT_TEST_SOLVERS is the one controlling place for the solver list (default "test");
+# --solvers below overrides it explicitly for this run. Note: Windows ships z3-4.3.2.exe
+# (not 4.3.1), which differs in error messages, version strings, and other behaviors --
+# be aware if you add z3_4_3 to SMT_TEST_SOLVERS on Windows.
+solvers="${SMT_TEST_SOLVERS:-test}"
 
 while [[ $# -gt 0 && "$1" == --* ]]; do
     case "$1" in

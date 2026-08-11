@@ -143,9 +143,13 @@ public class QuantTests extends LogicTests {
 	public void forallBoolUnSat() {
 		Assume.assumeTrue(!"simplify".equals(solvername)); // FIXME - simplify does not implement Bool terms
 		Assume.assumeTrue(!"yices2".equals(solvername)); // FIXME - yices2 does not implement quantifiers yet
-		String result = solvername.equals("z3_2_11") 
-				|| solvername.equals("yices") 
+		String result = solvername.equals("z3_2_11")
+				|| solvername.equals("yices")
 				? "unknown" : "unsat";  // FIXME - unknown vs. unsat ?????
+		// UF.smt2 only exists in the classpath's versioned V2.0/ subfolder, not at the
+		// current top-level (V2.7) logic set, so force V2.0 here regardless of the
+		// parameterized version so the UF logic file actually resolves.
+		smt.smtConfig.smtlib = SMTLIB.V20.id;
 		doCommand("(set-logic UF)");
 		doCommand("(assert (forall ((q Bool)) (not q)))");
 		doCommand("(check-sat)",result);

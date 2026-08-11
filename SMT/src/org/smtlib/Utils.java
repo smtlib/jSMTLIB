@@ -499,32 +499,43 @@ public class Utils {
 		String filename = name + SUFFIX;
 		String path = smtConfig.logicPath;
 		try {
-			if (path == null) {
-				// No explicit path: try versioned subfolder in classpath first, then top-level.
-				List<String> candidates = new ArrayList<>();
-				if (smtConfig.smtlib != null) {
-					SMTLIB cv = SMTLIB.find(smtConfig.smtlib);
-					SMTLIB latest = SMTLIB.values()[SMTLIB.values().length - 1];
-					if (cv != null && cv != latest) candidates.add(cv.id + "/" + filename);
+			if (path != null) {
+				// Explicit path: each component must be a real directory -- a mistyped
+				// component is a configuration error and should fail loudly rather than be
+				// silently treated as "not found here, try the next component". Components
+				// use the same separator character as the Java classpath (File.pathSeparator).
+				for (String d : path.split(File.pathSeparator)) {
+					if (!new File(d).isDirectory()) {
+						throw new SMTLIBException(smtConfig.responseFactory.error(
+								"Invalid logic path: \"" + d + "\" is not a directory", pos));
+					}
 				}
-				candidates.add(filename);
-				for (String candidate : candidates) {
-					URL url = ClassLoader.getSystemResource(candidate);
-					if (url != null) return url.openStream();
-				}
-				throw new SMTLIBException(smtConfig.responseFactory.error(
-						"No logic file found for " + name, pos));
-			} else {
-				// Explicit path: search path directories, then classpath top-level.
 				for (String d : path.split(File.pathSeparator)) {
 					File f = new File(d + File.separator + filename);
 					if (f.exists()) return new FileInputStream(f);
 				}
-				URL url = ClassLoader.getSystemResource(filename);
-				if (url != null) return url.openStream();
-				throw new SMTLIBException(smtConfig.responseFactory.error(
-						"No logic file found for " + name + " on path \"" + path + "\"", pos));
+				// Not overridden on this (valid) path: an explicit logic path may deliberately
+				// supply only some logics/theories and rely on the built-in definitions for
+				// everything else, so always fall through to the classpath below.
 			}
+			// No explicit path, or not found on a valid explicit path: try the versioned
+			// subfolder in the classpath first (built-in definitions are organized by
+			// SMT-LIB version), then the top-level (latest-version) copy.
+			List<String> candidates = new ArrayList<>();
+			if (smtConfig.smtlib != null) {
+				SMTLIB cv = SMTLIB.find(smtConfig.smtlib);
+				SMTLIB latest = SMTLIB.values()[SMTLIB.values().length - 1];
+				if (cv != null && cv != latest) candidates.add(cv.id + "/" + filename);
+			}
+			candidates.add(filename);
+			for (String candidate : candidates) {
+				URL url = ClassLoader.getSystemResource(candidate);
+				if (url != null) return url.openStream();
+			}
+			throw new SMTLIBException(smtConfig.responseFactory.error(
+					path == null ? "No logic file found for " + name
+							: "No logic file found for " + name + " on path \"" + path + "\"",
+					pos));
 		} catch (IOException e) {
 			throw new SMTLIBException(smtConfig.responseFactory.error(
 					"Failed to open logic file for " + name + ": " + e, pos));

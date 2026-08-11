@@ -51,8 +51,6 @@ public class FileTests extends LogicTests {
     // Parameter discovery
     // -----------------------------------------------------------------------
 
-    private static final String[] SOLVERS = { "test", "z3_4_3" };
-
     @Parameters
     public static Collection<String[]> datax() {
         Collection<String[]> data = new ArrayList<String[]>();
@@ -60,7 +58,7 @@ public class FileTests extends LogicTests {
         List<File> tstFiles = new ArrayList<File>();
         collectTstFiles(testsDir, tstFiles);
         for (File f : tstFiles) {
-            for (String solver : SOLVERS) {
+            for (String solver : solvers) {
                 data.add(new String[]{solver, f.getAbsolutePath()});
             }
         }

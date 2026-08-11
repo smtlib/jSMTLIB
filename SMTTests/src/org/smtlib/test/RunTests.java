@@ -23,7 +23,9 @@ public class RunTests {
 	@Test
 	public void apiExample() {
 		try {
-			Process p = Runtime.getRuntime().exec("bash",new String[]{"api.sh"}, new File("tests"));
+			ProcessBuilder pb = new ProcessBuilder("bash", "api.sh");
+			pb.directory(new File("tests"));
+			Process p = pb.start();
 		} catch (java.io.IOException e) {
 			Assert.fail(e.getMessage());
 		}
