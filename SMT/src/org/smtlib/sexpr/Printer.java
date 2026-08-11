@@ -816,15 +816,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(IResponse e) throws IVisitor.VisitorException {
-		// Since S-expressions are not in the abstract syntax, they
-		// end up here
-		if (e instanceof ISexpr.ISeq) {
-			return visit((ISexpr.ISeq)e);
-		} else if (e instanceof ISexpr.IToken<?>) {
-			return visit((ISexpr.IToken<?>)e);
-		} else {
-			throw new VisitorException("Undelegated IResponse in Printer for " + e.getClass(),null);
-		}
+		// ISexpr.ISeq/IToken now dispatch directly to their own visit() overloads below;
+		// anything reaching here is a genuinely unexpected kind of IResponse.
+		throw new VisitorException("Undelegated IResponse in Printer for " + e.getClass(),null);
 	}
 
 	/** Utility function to create an exception using the message from the first argument and the
@@ -926,12 +920,13 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 		return null;
 	}
 
+	@Override
 	public Void visit(ISexpr.IToken<?> e) throws IVisitor.VisitorException {
 		append(String.valueOf(e.value()));
 		return null;
 	}
 
-	/*@Nullable*/
+	@Override
 	public Void visit(ISexpr.ISeq e) throws IVisitor.VisitorException {
 		append("(");
 		for (ISexpr expr: e.sexprs()) {

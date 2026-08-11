@@ -28,6 +28,7 @@ import org.smtlib.IResponse.IUnsatCoreResponse;
 import org.smtlib.IResponse.IValueResponse;
 import org.smtlib.ISort.IAbbreviation;
 import org.smtlib.ISort.IApplication;
+import org.smtlib.sexpr.ISexpr;
 import org.smtlib.ISort.IFamily;
 import org.smtlib.ISort.IFcnSort;
 import org.smtlib.ISort.IParameter;
@@ -976,6 +977,18 @@ public class Solver_simplify extends Solver_test implements ISolver {
 
 		@Override
 		public String visit(IAttributeList e) throws VisitorException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public String visit(ISexpr.ISeq e) throws VisitorException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public String visit(ISexpr.IToken<?> e) throws VisitorException {
 			// TODO Auto-generated method stub
 			return null;
 		}

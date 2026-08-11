@@ -14,6 +14,7 @@ import org.smtlib.IExpr.*;
 import org.smtlib.IExpr.IError;
 import org.smtlib.IResponse.*;
 import org.smtlib.ISort.*;
+import org.smtlib.sexpr.ISexpr;
 
 /** This is a visitor interface for visitors over IExpr ASTs. Each AST class implements
  * an accept method that calls the appropriate element of the IVisitor class. An implementation
@@ -105,6 +106,9 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 	public /*@Nullable*/T visit(IResponse.IUnsatCoreResponse e) throws VisitorException;
 	public /*@Nullable*/T visit(IResponse.IUnsatAssumptionsResponse e) throws VisitorException;
 	public /*@Nullable*/T visit(IResponse.IAttributeList e) throws VisitorException;
+
+	public /*@Nullable*/T visit(ISexpr.ISeq e) throws VisitorException;
+	public /*@Nullable*/T visit(ISexpr.IToken<?> e) throws VisitorException;
 
 	/** This class is an implementation of IVisitor, meant to be used as a base class
 	 * for further derivation; it implements all of the visitors to simply return null
@@ -344,6 +348,16 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 
 		@Override
 		public T visit(IAttributeList e) throws VisitorException {
+			return null;
+		}
+
+		@Override
+		public T visit(ISexpr.ISeq e) throws VisitorException {
+			return null;
+		}
+
+		@Override
+		public T visit(ISexpr.IToken<?> e) throws VisitorException {
 			return null;
 		}
 
@@ -766,6 +780,19 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 			for (IAttribute<?> a : e.attributes()) {
 				a.accept(this);
 			}
+			return null;
+		}
+
+		@Override
+		public T visit(ISexpr.ISeq e) throws VisitorException {
+			for (ISexpr expr : e.sexprs()) {
+				expr.accept(this);
+			}
+			return null;
+		}
+
+		@Override
+		public T visit(ISexpr.IToken<?> e) throws VisitorException {
 			return null;
 		}
 
