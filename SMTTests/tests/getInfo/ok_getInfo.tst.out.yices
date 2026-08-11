@@ -1,4 +1,0 @@
-(:authors "SRI" )
-(:name "yices" )
-(:version "1.0.28" )
-(:error-behavior continued-execution )

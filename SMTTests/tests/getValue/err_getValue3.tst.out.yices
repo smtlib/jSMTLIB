@@ -1,9 +1,0 @@
-unsupported
-success
-success
-success
-sat
-success
-(get-value (x)) ; invalid because of the push
-^^^^^^^^^^^^^^^
-(error "The get-value command is only valid if :produce-models has been enabled")
