@@ -1,0 +1,3 @@
+(set-logic UFLRA)
+(assert (exists ((q Bool)) (not q)))
+(check-sat)

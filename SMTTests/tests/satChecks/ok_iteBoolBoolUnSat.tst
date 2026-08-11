@@ -1,0 +1,6 @@
+(set-logic QF_LIA)
+(declare-fun p () Bool)
+(declare-fun x () Bool)
+(declare-fun y () Bool)
+(assert (ite p (and x (not x)) (and y (not y)) ))
+(check-sat)

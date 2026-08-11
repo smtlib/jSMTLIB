@@ -1,0 +1,6 @@
+(set-logic QF_UF)
+(declare-fun x () Bool)
+(declare-fun y () Bool)
+(declare-fun z () Bool)
+(assert (distinct x y z))
+(check-sat)

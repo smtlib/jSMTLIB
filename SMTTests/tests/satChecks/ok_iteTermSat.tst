@@ -1,0 +1,6 @@
+(set-logic QF_LIA)
+(declare-fun p () Bool)
+(declare-fun x () Int)
+(declare-fun y () Int)
+(assert (= (+ 1 (ite p x (+ x 2))) 7  ))
+(check-sat)

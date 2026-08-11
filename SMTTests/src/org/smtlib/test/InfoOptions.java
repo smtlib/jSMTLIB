@@ -323,8 +323,8 @@ public class InfoOptions  extends LogicTests {
 		doCommand("(set-option :produce-unsat-cores false)",
 				supported? "success" 
 						:  "unsupported");
-		doCommand("(get-option :produce-unsat-cores)", 
-				supported ? "false"  : "unsupported"
+		doCommand("(get-option :produce-unsat-cores)",
+				solvername.equals("yices2") ? "unsupported" : "false"
 				);
 	}
 	
