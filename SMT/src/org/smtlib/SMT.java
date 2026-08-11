@@ -542,6 +542,12 @@ public class SMT {
 		if (smtConfig.logic != null) solver.set_logic(smtConfig.logic,null);
 		// FIXME: if (smtConfig.verboseSolver) 
 		int retcode = 0;
+		// :smt-lib-version may only be set as the first command of a script, or immediately
+		// after a reset (which conceptually returns to the state right after start, though
+		// the standard does not explicitly address this case) -- tracked here rather than in
+		// the solver itself, since this is about script structure, not solver state, and
+		// applies uniformly regardless of which solver backend is in use.
+		boolean smtlibVersionAllowed = true;
 		try {
 			IResponse result = null;
 			ICommand command = null;
@@ -583,19 +589,29 @@ public class SMT {
 						smtConfig.log.logDiag(smtConfig.defaultPrinter.toString(command));
 					}
 					else if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Command to execute: " +  command);
-					try {
-						result = command.execute(solver);
-					} catch (UnsupportedOperationException e) {
+					boolean isSmtlibVersionInfo = command instanceof ICommand.Iset_info
+							&& Utils.SMTLIB_VERSION.equals(((ICommand.Iset_info) command).infoflag());
+					if (isSmtlibVersionInfo && !smtlibVersionAllowed) {
 						result = smtConfig.responseFactory.error(
-							"The " + smtConfig.solvername + " solver does not support this operation: " + e.getMessage(),
+							"The :smt-lib-version attribute may only be set as the first command of a script, or immediately after a reset command",
 							command instanceof IPosable ? ((IPosable)command).pos() : null);
-					}
-					if (!result.isError() && command instanceof ICommand.Iset_info) {
-						ICommand.Iset_info si = (ICommand.Iset_info) command;
-						if (Utils.SMTLIB_VERSION.equals(si.infoflag()) && si.value() instanceof IExpr.IStringLiteral) {
-							smtConfig.smtlib = ((IExpr.IStringLiteral) si.value()).value();
+					} else {
+						try {
+							result = command.execute(solver);
+						} catch (UnsupportedOperationException e) {
+							result = smtConfig.responseFactory.error(
+								"The " + smtConfig.solvername + " solver does not support this operation: " + e.getMessage(),
+								command instanceof IPosable ? ((IPosable)command).pos() : null);
+						}
+						if (!result.isError() && isSmtlibVersionInfo) {
+							ICommand.Iset_info si = (ICommand.Iset_info) command;
+							if (si.value() instanceof IExpr.IStringLiteral) {
+								smtConfig.smtlib = ((IExpr.IStringLiteral) si.value()).value();
+							}
 						}
 					}
+					smtlibVersionAllowed = (command instanceof ICommand.Ireset)
+							|| (isSmtlibVersionInfo && !result.isError());
 					if (result.isError()) {
 						IResponse.IError eresult = (IResponse.IError)result;
 						if (eresult.pos() == null && command instanceof IPosable) {

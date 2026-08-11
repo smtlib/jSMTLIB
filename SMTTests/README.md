@@ -3,6 +3,9 @@
 Test suite for jSMTLIB. All tests run as JUnit (`make test`); a couple of legacy
 bash-driven paths remain for interactive debugging (see below).
 
+CAUTION: The test infrastructure is not yet thread-safe.  Tests can be run sequentially,
+or concurrently in separate JVMs, but the JUnit tests may not be run reliably in parallel.
+
 ---
 
 ## Running tests

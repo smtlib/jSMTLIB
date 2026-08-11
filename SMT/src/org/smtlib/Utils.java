@@ -90,6 +90,9 @@ public class Utils {
 	public static final String RANDOM_SEED = ":random-seed";
 
 	/** The string designating an option item */
+	public static final String REPRODUCIBLE_RESOURCE_LIMIT = ":reproducible-resource-limit";
+
+	/** The string designating an option item */
 	public static final String VERBOSITY = ":verbosity";
 
 	/** The string designating an option item */
@@ -303,7 +306,7 @@ public class Utils {
 	static final public HashSet<IKeyword> infoKeywords = new HashSet<IKeyword>();
 	static {
 		for (IKeyword k : new IKeyword[] { NAME, AUTHORS, VERSION, ERROR_BEHAVIOR,
-				REASON_UNKNOWN, ALL_STATISTICS }) {
+				REASON_UNKNOWN, ALL_STATISTICS, ASSERTION_STACK_LEVELS }) {
 			infoKeywords.add(k);
 		}
 
@@ -466,6 +469,7 @@ public class Utils {
 			boolOptions.add(PRODUCE_MODELS);
 			boolOptions.add(PRODUCE_ASSIGNMENTS);
 			numericOptions.add(RANDOM_SEED);
+			numericOptions.add(REPRODUCIBLE_RESOURCE_LIMIT);
 			numericOptions.add(VERBOSITY);
 			stringOptions.add(REGULAR_OUTPUT_CHANNEL);
 			stringOptions.add(DIAGNOSTIC_OUTPUT_CHANNEL);
@@ -480,6 +484,7 @@ public class Utils {
 			defaults.put(PRODUCE_MODELS, FALSE);
 			defaults.put(PRODUCE_ASSIGNMENTS, FALSE);
 			defaults.put(RANDOM_SEED, new SMTExpr.Numeral(0));
+			defaults.put(REPRODUCIBLE_RESOURCE_LIMIT, new SMTExpr.Numeral(0));
 			defaults.put(VERBOSITY, new SMTExpr.Numeral(0));
 			defaults.put(REGULAR_OUTPUT_CHANNEL, new SMTExpr.StringLiteral(STDOUT,
 					false));

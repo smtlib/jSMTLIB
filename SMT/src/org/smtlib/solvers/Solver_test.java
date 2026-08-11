@@ -203,7 +203,7 @@ public class Solver_test implements ISolver {
 		for (IExpr e: exprs) {
 			if (e instanceof IFcnExpr && ((IFcnExpr)e).args().size() != 0) {
 				IFcnExpr f = (IFcnExpr)e;
-				if (f.args().size() != 1 || !f.head().toString().equals("not")) {
+				if (f.args().size() != 1 || !Utils.NOT.equals(f.head())) {
 					return smtConfig.responseFactory.error("Each element of a check-sat-assuming command must be either p or (not p), where p is a Bool constant (required in V2.6 and earlier)");
 				}
 				e = f.args().get(0);
@@ -351,6 +351,7 @@ public class Solver_test implements ISolver {
 			symTable.clear(false);
 			assertionSetStack.clear();
 			assertionSetStack.add(0,new LinkedList<IExpr>());
+			checkSatStatus = null;
 		}
 		IResponse res = smtConfig.utils.loadLogic(logicName,symTable,pos);
 		if (res != null) return res;
