@@ -165,6 +165,11 @@ public class SymbolTable {
 		if (keepBackground) {
 			while (sortStack.size() > 1) sortStack.remove(0);
 			while (symStack.size() > 1) symStack.remove(0);
+			// add()/addSortParameter() write through the sorts/names fields, not through
+			// symStack/sortStack directly -- without this they'd keep pointing at the
+			// frame Map just removed above, silently losing any subsequent declaration.
+			sorts = sortStack.get(0);
+			names = symStack.get(0);
 		} else {
 			sortStack = new LinkedList<Map<IIdentifier,ISort.IDefinition>>();
 			symStack = new LinkedList<Map<IIdentifier,Map<Integer,List<Entry>>>>();

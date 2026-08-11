@@ -458,6 +458,10 @@ public class Solver_test implements ISolver {
 			return smtConfig.responseFactory.unsupported();
 		} else if (Utils.ALL_STATISTICS.equals(option)) {
 			return smtConfig.responseFactory.unsupported();
+		} else if (Utils.ASSERTION_STACK_LEVELS.equals(option)) {
+			// assertionSetStack always has one base frame (added by start()/reset()), plus
+			// one additional frame per unmatched push -- so size-1 is the push depth.
+			lit = smtConfig.exprFactory.numeral(assertionSetStack.size() - 1);
 			
 //		} else if ((value = Utils.stringInfo.get(option)) != null) {
 //			lit = smtConfig.exprFactory.unquotedString(value);

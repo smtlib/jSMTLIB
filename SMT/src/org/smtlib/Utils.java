@@ -137,6 +137,9 @@ public class Utils {
 	/** The string designating an info item */
 	public static final IKeyword ALL_STATISTICS = new Factory().keyword(":all-statistics");
 
+	/** The string designating an info item */
+	public static final IKeyword ASSERTION_STACK_LEVELS = new Factory().keyword(":assertion-stack-levels");
+
 	/** The response to the :authors info item */
 	public static final String AUTHORS_VALUE = "David R. Cok";
 
