@@ -20,7 +20,7 @@ if [ ! -e "$test" ]; then
     echo "ERROR: test file not found: $test"
     exit 1
 fi
-source solvers
+SMT_EXE="$SMT_CMD --solver $solver"
 
 ### Portable per-test timeout (exit 124 = timed out)
 ### On Windows the system 'timeout' has incompatible syntax; use the bash fallback there.
