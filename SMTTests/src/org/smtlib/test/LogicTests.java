@@ -115,7 +115,11 @@ public class LogicTests {
 		smt.smtConfig.log.clearListeners();
 		smt.smtConfig.log.addListener(listener);
 		smt.smtConfig.solvername = solvername;
-		smt.smtConfig.logfile = "solver.out";
+		// Uncomment for debugging a single test: logs the raw solver-communication
+		// transcript to this fixed, unparameterized path. Left on generally, every
+		// parameterized instance across the whole suite would overwrite the same file,
+		// making the suite thread-unsafe and unable to run in parallel.
+		// smt.smtConfig.logfile = "solver.out";
 		smt.smtConfig.smtlib = version;
 		ISolver s = smt.startSolver(smt.smtConfig,solvername,null);
 		if (s == null) throw new RuntimeException("Failed to create or start solver");

@@ -2,3 +2,5 @@
 /tempout
 /cov/
 **/.DS_Store
+**/*.actual
+**/*.actual.tmp

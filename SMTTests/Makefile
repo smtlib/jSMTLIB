@@ -36,8 +36,8 @@ junit-tests:
 	bash ./runjunits
 
 clean:
-	rm -f tempout scripts/tempout
-	rm -f tests/*.actual tests/*.actual.tmp scripts/*.actual scripts/*.actual.tmp
+	rm -f tempout scripts/tempout solver.out
+	find tests scripts \( -name '*.actual' -o -name '*.actual.tmp' \) -delete
 	rm -f bin/org/smtlib/test/UnitTests.class bin/org/smtlib/test/UnitTests\$$*.class
 
 build:
