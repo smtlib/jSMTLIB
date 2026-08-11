@@ -18,6 +18,7 @@ import org.smtlib.IResponse;
 import org.smtlib.ISolver;
 import org.smtlib.ISource;
 import org.smtlib.SMT;
+import org.smtlib.Utils;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IParser.ParserException;
 
@@ -137,7 +138,7 @@ public class LogicTests {
 			try {
 				IKeyword k = p.parseKeyword();
 				IResponse r = solver.get_option(k);
-				if (!r.toString().equals("false")) {
+				if (!Utils.FALSE.equals(r)) {
 					Assert.assertEquals(result,smt.smtConfig.defaultPrinter.toString(res));
 				}
 			} catch (ParserException e) {

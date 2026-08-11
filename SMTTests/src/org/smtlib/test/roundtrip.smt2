@@ -111,6 +111,9 @@
 (assert (match c ( (red true) (blue false))))
 (assert (match c ( ((cons h t) h) (nil 0))))
 
+; match pattern wildcard: _ as a bare default-case pattern (parsePatternSymbol's wildcard branch)
+(assert (match c ( (red true) (_ false))))
+
 ; ISexpr.ISeq: s-expression sequence as a set-info attribute value
 (set-info :x ( a b c ))
 

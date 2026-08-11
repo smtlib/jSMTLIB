@@ -356,4 +356,15 @@ public class ParseCommand {
 				"Datatype Bad is not well-founded (no finite base case)");
 	}
 
+	/** parseResponse() is only otherwise called from solver backends reading real process
+	 * output - exercise it directly here since it has no other test coverage. */
+	@Test
+	public void parseResponseError() throws Exception {
+		String response = "(error \"boom\")";
+		org.smtlib.sexpr.Parser p = new org.smtlib.sexpr.Parser(config, config.smtFactory.createSource(response, null));
+		IResponse r = p.parseResponse(response);
+		Assert.assertTrue(r instanceof IResponse.IError);
+		Assert.assertEquals("boom", ((IResponse.IError) r).errorMsg());
+	}
+
 }

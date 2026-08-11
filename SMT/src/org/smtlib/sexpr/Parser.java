@@ -341,9 +341,9 @@ public class Parser extends Lexer implements IParser {
 		} else {
 			ILexToken lp = parseLP(); // will succeed since isLP() was true
 			ISymbol head = parseSymbolOrReservedWord("Expected a symbol here, not a #");
-			if (head.toString().equals("as")) {
+			if (head.value().equals(Utils.AS)) {
 				return parseAsIdentifierRest(lp);
-			} else if (head.toString().equals(Utils.PARAM)) {
+			} else if (head.value().equals(Utils.PARAM)) {
 				return parseIdentifierRest(lp);
 			} else {
 				throw error("Invalid beginning of an identifer: expected either 'as' or '_' here", head.pos());
@@ -373,7 +373,7 @@ public class Parser extends Lexer implements IParser {
 		} else {
 			ILexToken lp = parseLP();
 			ISymbol head = parseSymbolOrReservedWord("Expected a symbol here, not a #");
-			if (head.toString().equals(Utils.PARAM)) {
+			if (head.value().equals(Utils.PARAM)) {
 				return parseIdentifierRest(lp);
 			} else {
 				throw error("Invalid beginning of an identifer: expected a '_' here", head.pos());
@@ -605,13 +605,14 @@ public class Parser extends Lexer implements IParser {
 	public /*@Nullable*/Symbol parseSymbol(/*@Nullable*/String msg) throws ParserException {
 		ILexToken token = peekToken();
 		if (token instanceof Symbol) {
+			ISymbol sym = (ISymbol)token;
 			if (smtConfig.relax) {
-				if (smtConfig.reservedWordsNotCommands.contains(token.toString())) {
+				if (smtConfig.reservedWordsNotCommands.contains(sym.value())) {
 					error("A reserved word may not be used as a symbol here: " + token.toString(),token.pos());
 					return null;
 				}
 			} else {
-				if (smtConfig.reservedWords.contains(token.toString())) {
+				if (smtConfig.reservedWords.contains(sym.value())) {
 					throw error("A reserved word may not be used as a symbol here: " + token.toString(),token.pos());
 				}
 			}
@@ -721,7 +722,7 @@ public class Parser extends Lexer implements IParser {
 			if (!isLP()) {
 				ISymbol head = parseSymbolOrReservedWord("Expected a symbol or _ here, not a #");
 				if (false) { // no longer reachable
-				} else if (head.toString().equals(Utils.PARAM)) {
+				} else if (head.value().equals(Utils.PARAM)) {
 					IIdentifier id = parseIdentifierRest(lp);
 					return setPos(new Sort.Application(id),id.pos());
 				}
@@ -915,7 +916,7 @@ public class Parser extends Lexer implements IParser {
 		if (sexpr instanceof ISexpr.ISeq) {
 			List<ISexpr> list = ((ISexpr.ISeq)sexpr).sexprs();
 			if (list.size() >= 2) {
-				if (list.get(0).toString().equals("error") && list.get(1) instanceof IStringLiteral) {
+				if (list.get(0) instanceof ISymbol && ((ISymbol)list.get(0)).value().equals("error") && list.get(1) instanceof IStringLiteral) {
 					return f.error(((IStringLiteral)list.get(1)).value());
 				}
 				if (list.get(0) instanceof IKeyword) {
@@ -987,7 +988,7 @@ public class Parser extends Lexer implements IParser {
 	/** Parses a symbol in pattern position: accepts _ as a wildcard (reserved elsewhere) */
 	private Symbol parsePatternSymbol() throws ParserException {
 		ILexToken token = peekToken();
-		if (token instanceof Symbol && Utils.WILDCARD.equals(token.toString())) {
+		if (token instanceof Symbol && Utils.WILDCARD.equals(((Symbol)token).value())) {
 			return (Symbol) getToken();
 		}
 		return parseSymbol();

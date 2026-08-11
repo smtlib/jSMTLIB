@@ -34,18 +34,29 @@ fi
 mkdir -p "${TEST_BIN}/org/smtlib/test"
 cp src/org/smtlib/test/*.smt2 "${TEST_BIN}/org/smtlib/test/" 2>/dev/null || true
 
+## Discover test sources dynamically so a newly-added file is never silently
+## left out of either the compile or the run list. Every source under
+## src/org/smtlib/test is compiled; a source is added to the JUnitCore run
+## list only if it contains at least one @Test annotation itself (base/helper
+## classes like LogicTests, LogicsBase, TypeCheckRoot, JUnitListener have none
+## and are compiled-only, matched by their subclasses' own @Test methods).
+TEST_SOURCES=()
+for f in src/org/smtlib/test/*.java; do
+    TEST_SOURCES+=("$f")
+done
+
+TEST_CLASSES=()
+for f in "${TEST_SOURCES[@]}"; do
+    if grep -q '@Test' "$f"; then
+        TEST_CLASSES+=("org.smtlib.test.$(basename "$f" .java)")
+    fi
+done
+
 ## Compile any unit-test sources that are newer than their .class files.
 echo "Compiling unit tests..."
 javac -cp "$CP" -d "$TEST_BIN" \
     src/org/junit/runners/ParameterizedWithNames.java \
-    src/org/smtlib/test/JUnitListener.java \
-    src/org/smtlib/test/LogicTests.java \
-    src/org/smtlib/test/UnitTests.java \
-    src/org/smtlib/test/RoundTripTest.java \
-    src/org/smtlib/test/ParseCommand.java \
-    src/org/smtlib/test/FileTests.java \
-    src/org/smtlib/test/ScriptTests.java \
-    src/org/smtlib/test/SMTCommandLineTests.java
+    "${TEST_SOURCES[@]}"
 ret=$?
 if [ $ret -ne 0 ]; then
     echo "Compilation FAILED"
@@ -54,13 +65,7 @@ fi
 
 ## Run unit tests under the JaCoCo agent (COV_AGENT is empty when coverage is off).
 echo "Running unit tests..."
-java ${COV_AGENT:-} -cp "$CP" org.junit.runner.JUnitCore \
-    org.smtlib.test.UnitTests \
-    org.smtlib.test.RoundTripTest \
-    org.smtlib.test.ParseCommand \
-    org.smtlib.test.FileTests \
-    org.smtlib.test.ScriptTests \
-    org.smtlib.test.SMTCommandLineTests
+java ${COV_AGENT:-} -cp "$CP" org.junit.runner.JUnitCore "${TEST_CLASSES[@]}"
 ret=$?
 [ $ret -eq 0 ] && echo "Unit tests SUCCEEDED" || echo "Unit tests FAILED"
 exit $ret
