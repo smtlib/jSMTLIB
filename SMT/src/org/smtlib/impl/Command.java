@@ -10,30 +10,13 @@ import java.io.IOException;
 
 import org.smtlib.*;
 import org.smtlib.IParser;
-import org.smtlib.IPos.IPosable;
 import org.smtlib.sexpr.Printer;
 
 /** This abstract class is the base class for all commands within this implementation. */
-public abstract class Command implements ICommand, IPosable {
-	/** Default constructor - the base class Command's state just has the IPos value */
-	public Command() {
-		super();
-		pos = null;
-	}
-	
-	public /*@Nullable*//*@ReadOnly*/ String prefixText; 
-	
-	/** The textual position of the command, if any */
-	protected /*@Nullable*//*@ReadOnly*/IPos pos;
-	
-	/** The textual position of the command, if any */
-	@Override
-	public /*@Nullable*//*@ReadOnly*/IPos pos() { return pos; }
-	
-	/** Setting the textual position of the command, if any */
-	@Override
-	public void setPos(/*@Nullable*//*@ReadOnly*/ IPos p) { pos = p; }
-	
+public abstract class Command extends Pos.Printable implements ICommand {
+
+	public /*@Nullable*//*@ReadOnly*/ String prefixText;
+
 	/** The command name */
 	abstract public String commandName();
 
@@ -54,11 +37,4 @@ public abstract class Command implements ICommand, IPosable {
 		return new IParser.ParserException(msg, pos);
 	}
 
-	/** For debugging only - use a Printer for real printing */
-	@Override
-	public String toString() {
-		// FIXME - change to print from the parser source
-		return (new org.smtlib.sexpr.Printer(null)).toString(this);
-	}
-	
 }

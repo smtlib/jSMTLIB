@@ -207,6 +207,81 @@ public class Utils {
 	/** String constant for boolean false. */
 	static public final ISymbol FALSE = new SMTExpr.Symbol("false".intern());
 
+	// The following are canonical ISymbol constants for operator/family names that are
+	// compared structurally (via ISymbol.equals(), never via .toString()) at dispatch
+	// sites in TypeChecker and the logic/*.java classes. Compare the actual ISymbol
+	// expression against these constants, not a String extracted from it.
+	// Furthermore, these symbols may have different sorts in different contexts,
+	// so don't actually use them as part of a parsed AST.
+
+	static public final ISymbol NOT = new SMTExpr.Symbol("not".intern());
+	static public final ISymbol AND = new SMTExpr.Symbol("and".intern());
+	static public final ISymbol OR = new SMTExpr.Symbol("or".intern());
+	static public final ISymbol IMPLIES = new SMTExpr.Symbol("=>".intern());
+	static public final ISymbol EQ = new SMTExpr.Symbol("=".intern());
+	static public final ISymbol DISTINCT = new SMTExpr.Symbol("distinct".intern());
+	static public final ISymbol ITE = new SMTExpr.Symbol("ite".intern());
+
+	static public final ISymbol MINUS = new SMTExpr.Symbol("-".intern());
+	static public final ISymbol MULT = new SMTExpr.Symbol("*".intern());
+	static public final ISymbol SLASH = new SMTExpr.Symbol("/".intern());
+	static public final ISymbol DIV = new SMTExpr.Symbol("div".intern());
+	static public final ISymbol MOD = new SMTExpr.Symbol("mod".intern());
+	static public final ISymbol ABS = new SMTExpr.Symbol("abs".intern());
+	static public final ISymbol EXP = new SMTExpr.Symbol("**".intern());
+
+	static public final ISymbol GE = new SMTExpr.Symbol(">=".intern());
+	static public final ISymbol GT = new SMTExpr.Symbol(">".intern());
+	static public final ISymbol LE = new SMTExpr.Symbol("<=".intern());
+	static public final ISymbol LT = new SMTExpr.Symbol("<".intern());
+
+	static public final ISymbol STORE = new SMTExpr.Symbol("store".intern());
+	static public final ISymbol SELECT = new SMTExpr.Symbol("select".intern());
+	static public final ISymbol ARRAY = new SMTExpr.Symbol("Array".intern());
+	static public final ISymbol ARROW = new SMTExpr.Symbol("->".intern());
+	static public final ISymbol AT = new SMTExpr.Symbol("@".intern());
+
+	static public final ISymbol BVNOT = new SMTExpr.Symbol("bvnot".intern());
+	static public final ISymbol BVNEG = new SMTExpr.Symbol("bvneg".intern());
+	static public final ISymbol BVAND = new SMTExpr.Symbol("bvand".intern());
+	static public final ISymbol BVOR = new SMTExpr.Symbol("bvor".intern());
+	static public final ISymbol BVADD = new SMTExpr.Symbol("bvadd".intern());
+	static public final ISymbol BVMUL = new SMTExpr.Symbol("bvmul".intern());
+	static public final ISymbol BVUDIV = new SMTExpr.Symbol("bvudiv".intern());
+	static public final ISymbol BVUREM = new SMTExpr.Symbol("bvurem".intern());
+	static public final ISymbol BVSHL = new SMTExpr.Symbol("bvshl".intern());
+	static public final ISymbol BVLSHR = new SMTExpr.Symbol("bvlshr".intern());
+	static public final ISymbol BVNAND = new SMTExpr.Symbol("bvnand".intern());
+	static public final ISymbol BVNOR = new SMTExpr.Symbol("bvnor".intern());
+	static public final ISymbol BVXOR = new SMTExpr.Symbol("bvxor".intern());
+	static public final ISymbol BVXNOR = new SMTExpr.Symbol("bvxnor".intern());
+	static public final ISymbol BVSUB = new SMTExpr.Symbol("bvsub".intern());
+	static public final ISymbol BVSDIV = new SMTExpr.Symbol("bvsdiv".intern());
+	static public final ISymbol BVSREM = new SMTExpr.Symbol("bvsrem".intern());
+	static public final ISymbol BVSMOD = new SMTExpr.Symbol("bvsmod".intern());
+	static public final ISymbol BVASHR = new SMTExpr.Symbol("bvashr".intern());
+	static public final ISymbol BVCOMP = new SMTExpr.Symbol("bvcomp".intern());
+	static public final ISymbol BVULT = new SMTExpr.Symbol("bvult".intern());
+	static public final ISymbol BVULE = new SMTExpr.Symbol("bvule".intern());
+	static public final ISymbol BVUGT = new SMTExpr.Symbol("bvugt".intern());
+	static public final ISymbol BVUGE = new SMTExpr.Symbol("bvuge".intern());
+	static public final ISymbol BVSLT = new SMTExpr.Symbol("bvslt".intern());
+	static public final ISymbol BVSLE = new SMTExpr.Symbol("bvsle".intern());
+	static public final ISymbol BVSGT = new SMTExpr.Symbol("bvsgt".intern());
+	static public final ISymbol BVSGE = new SMTExpr.Symbol("bvsge".intern());
+	static public final ISymbol CONCAT = new SMTExpr.Symbol("concat".intern());
+	static public final ISymbol EXTRACT = new SMTExpr.Symbol("extract".intern());
+	static public final ISymbol REPEAT = new SMTExpr.Symbol("repeat".intern());
+	static public final ISymbol ZERO_EXTEND = new SMTExpr.Symbol("zero_extend".intern());
+	static public final ISymbol SIGN_EXTEND = new SMTExpr.Symbol("sign_extend".intern());
+	static public final ISymbol ROTATE_LEFT = new SMTExpr.Symbol("rotate_left".intern());
+	static public final ISymbol ROTATE_RIGHT = new SMTExpr.Symbol("rotate_right".intern());
+
+	/** Canonical ISymbol form of BITVEC, for structural comparison against a parsed
+	 * identifier's head symbol (see TypeChecker.isBitVec() and SymbolTable's bit-vector
+	 * family check) instead of comparing via .toString(). */
+	static public final ISymbol BITVEC_SYM = new SMTExpr.Symbol(BITVEC.intern());
+
 	// The following are not static, because they depend on the version
 	
 	/** The set of standard options with boolean values */

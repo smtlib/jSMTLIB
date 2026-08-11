@@ -7,7 +7,11 @@ package org.smtlib;
 
 /** This interface is defined and implemented as a marker that
  * the accept method is available and to ensure that
- * subtypes implement the accept method
+ * subtypes implement the accept method.
+ * <p>Most implementations extend {@code org.smtlib.impl.Pos.Printable}, whose
+ * {@code toString()} delegates to the default {@code Printer} for debugger/IDE
+ * display only - never rely on {@code toString()} for program logic; use
+ * {@code IPrinter}/{@code Printer} explicitly for real output.
  * @author David Cok
  */
 public interface INode {

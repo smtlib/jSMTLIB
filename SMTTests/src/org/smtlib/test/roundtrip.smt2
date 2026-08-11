@@ -2,6 +2,14 @@
 ; write() output must exactly reproduce the input text.
 ; Covers all command write() methods and their branches (0-element vs
 ; 1+-element loops, attribute with/without value, etc.).
+;
+; Sort coverage here is necessarily limited to ISort.IApplication (see the various
+; sort-valued command arguments below) and ISort.IParameter (see the define-sort
+; parameter lists below): ISort.IFamily, ISort.IAbbreviation, and ISort.IFcnSort are
+; symbol-table definition objects that are never printed as part of any command's own
+; concrete syntax (declare-sort/define-sort print their name/arity/parameter fields
+; directly, not one of these objects), so they cannot appear in a command round-trip
+; line here - see PrinterCoverageTest.java for their coverage instead.
 
 ; assert: exercises IFcnExpr (0,1,2+ args), IForall/IExists (1 and 2 decls),
 ;         ILet (1 binding), IAttributedExpr (:named attribute), IDeclaration,

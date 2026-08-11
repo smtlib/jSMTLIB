@@ -30,7 +30,8 @@ public class AUFLIRA extends Logic {
 	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
 		if (expr != null) checkArraySort(expr, id,
 				"(Array Int Real) or (Array Int (Array Int Real))",
-				"(Array Int Real)", "(Array Int (Array Int Real))");
+				sortApp("Array", sortApp("Int"), sortApp("Real")),
+				sortApp("Array", sortApp("Int"), sortApp("Array", sortApp("Int"), sortApp("Real"))));
 	}
 
 }

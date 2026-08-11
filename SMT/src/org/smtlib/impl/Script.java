@@ -14,7 +14,7 @@ import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IParser.ParserException;
 
 /** This class implements the IScript interface, representing SMT-LIB command scripts */
-public class Script implements IScript {
+public class Script extends Pos.Printable implements IScript {
 	// This class can hold either a filename from which to read commands
 	// or a sequence of commands held directly; it should not have both
 	

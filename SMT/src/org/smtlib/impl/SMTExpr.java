@@ -631,7 +631,7 @@ public abstract class SMTExpr implements IExpr {
 
 	}
 
-	static public class Logic implements ILogic {
+	static public class Logic extends Pos.Printable implements ILogic {
 		/** The name of the logic */
 		protected ISymbol logicName;
 
@@ -676,7 +676,7 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 
-	static public class Theory implements ITheory {
+	static public class Theory extends Pos.Printable implements ITheory {
 		/** The name of the theory */
 		protected ISymbol theoryName;
 

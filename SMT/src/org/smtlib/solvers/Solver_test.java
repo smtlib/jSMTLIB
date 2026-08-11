@@ -370,7 +370,7 @@ public class Solver_test implements ISolver {
 				((Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
 			}
 		}
-		if (logicSet != null && (Utils.INTERACTIVE_MODE.equals(option)||Utils.PRODUCE_ASSERTIONS.equals(option))) {
+		if (logicSet != null && (Utils.GLOBAL_DECLARATIONS.equals(option)||Utils.INTERACTIVE_MODE.equals(option)||Utils.PRODUCE_ASSERTIONS.equals(option))) {
 			return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
 		}
 //		if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 

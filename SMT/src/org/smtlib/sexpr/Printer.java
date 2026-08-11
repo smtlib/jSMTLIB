@@ -728,11 +728,10 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(IFamily s) throws IVisitor.VisitorException {
-		append("( ");
+		// A sort family is referenced by its bare identifier; the full
+		// (declare-sort name arity) syntax is printed separately by
+		// visit(ICommand.Ideclare_sort), never by way of an IFamily.
 		s.identifier().accept(this);
-		append(") ");
-		s.arity().accept(this);
-		append(" )");
 		return null;
 	}
 
@@ -741,9 +740,11 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 		append("(");
 		s.identifier().accept(this);
 		append(" (");
-		for (ISort ss: s.parameters()) {
-			ss.accept(this);
-			append(" ");
+		boolean first = true;
+		for (ISort.IParameter p: s.parameters()) {
+			if (!first) append(" ");
+			p.accept(this);
+			first = false;
 		}
 		append(") ");
 		s.sortExpression().accept(this);
@@ -769,10 +770,14 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(IFcnSort s) throws IVisitor.VisitorException {
-		append("( ");
+		// Not real SMT-LIB syntax (function sorts aren't first-class there) - an
+		// internal diagnostic form only; see e.g. Utils.java's symbol-table error messages.
+		append("(");
+		boolean first = true;
 		for (ISort ss: s.argSorts()) {
+			if (!first) append(" ");
 			ss.accept(this);
-			append(" ");
+			first = false;
 		}
 		append(") -> ");
 		s.resultSort().accept(this);
@@ -815,6 +820,8 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 		// end up here
 		if (e instanceof ISexpr.ISeq) {
 			return visit((ISexpr.ISeq)e);
+		} else if (e instanceof ISexpr.IToken<?>) {
+			return visit((ISexpr.IToken<?>)e);
 		} else {
 			throw new VisitorException("Undelegated IResponse in Printer for " + e.getClass(),null);
 		}
@@ -919,12 +926,10 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 		return null;
 	}
 
-//	public Void visit(ISexpr.IToken<?> e) throws IVisitor.VisitorException {
-//		try {
-//			expr.accept(this);
-//		} catch (IOException ex) { throw new IVisitor.VisitorException(ex); }
-//		return null;
-//	}
+	public Void visit(ISexpr.IToken<?> e) throws IVisitor.VisitorException {
+		append(String.valueOf(e.value()));
+		return null;
+	}
 
 	/*@Nullable*/
 	public Void visit(ISexpr.ISeq e) throws IVisitor.VisitorException {

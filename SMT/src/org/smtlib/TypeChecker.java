@@ -365,9 +365,9 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		} else {
 			head = (IIdentifier)qhead;
 		}
-		boolean bvperhaps = symTable.bitVectorTheorySet && head.toString().startsWith("bv");
+		boolean bvperhaps = symTable.bitVectorTheorySet && head.headSymbol().value().startsWith("bv");
 		String name = head.toString();
-		if (name.equals("=") || name.equals("distinct")) {
+		if (head.equals(Utils.EQ) || head.equals(Utils.DISTINCT)) {
 			// FIXME - this is just here until we get par types implemented
 			// FIXME - /= is not part of SMT - put it in relax?
 			ISort ss = null;
@@ -375,10 +375,10 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				if (ss == null) ss = s;
 				else if (!ss.equals(s)) {
 					if (symTable.realsIntsTheorySet &&
-							(ss.toString().equals("Real") && s.toString().equals("Int"))) {
+							(isRealSort(ss) && isIntSort(s))) {
 						// OK
 					} else if (symTable.realsIntsTheorySet &&
-								(s.toString().equals("Real") && ss.toString().equals("Int"))) {
+								(isRealSort(s) && isIntSort(ss))) {
 						ss = s;
 					} else {
 						String msg = "Mismatched sorts of arguments: " + 
@@ -392,7 +392,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			ISort b = smtConfig.sortFactory.Bool();
 			b.accept(this);
 			return save(e,b);
-		} else if (name.equals("ite")) {
+		} else if (head.equals(Utils.ITE)) {
 			// FIXME - this is just here until we get par types implemented
 			if (!argSorts.get(0).isBool()) {
 				error("The first argument of ite must have sort Bool",e.pos());
@@ -403,7 +403,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				return null;
 			}
 			return save(e,argSorts.get(1));
-		} else if (symTable.arrayTheorySet && name.equals("store")) {
+		} else if (symTable.arrayTheorySet && head.equals(Utils.STORE)) {
 			if (argSorts.size() != 3) {
 				error(" The store function should have three arguments",head.pos());
 				return null;
@@ -412,7 +412,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			ISort sort1 = argSorts.get(0);
 			if (sort1 instanceof ISort.IApplication) {
 				ISort.IApplication asort = (ISort.IApplication)sort1;
-				if (!(asort.family().headSymbol().toString().equals("Array"))) {
+				if (!Utils.ARRAY.equals(asort.family().headSymbol())) {
 					error("The first argument of the store function should be an Array sort, not " + sort1,e.pos());
 					return null;
 				}
@@ -431,7 +431,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			// FIXME - this is just here until we get par types implemented; it also should depend on which theories are installed
 			return save(e,argSorts.get(0));
 		}
-		if (symTable.arrayTheorySet && name.equals("select")) {
+		if (symTable.arrayTheorySet && head.equals(Utils.SELECT)) {
 			// FIXME - this is just here until we get par types implemented; it also should depend on which theories are installed
 			if (argSorts.size() != 2) {
 				error(" The select function should have two arguments",head.pos());
@@ -441,7 +441,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			ISort sort1 = argSorts.get(0);
 			if (sort1 instanceof ISort.IApplication) {
 				ISort.IApplication asort = (ISort.IApplication)sort1;
-				if (!(asort.family().headSymbol().toString().equals("Array"))) {
+				if (!Utils.ARRAY.equals(asort.family().headSymbol())) {
 					error("The first argument of the select function should be an Array sort, not " + sort1,e.pos());
 					return null;
 				}
@@ -457,7 +457,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			sort1 = ((ISort.IApplication)sort1).parameters().get(1);
 			return save(e,sort1);
 		}
-		if (symTable.hoTheorySet && name.equals("@")) {
+		if (symTable.hoTheorySet && head.equals(Utils.AT)) {
 			// FIXME - this is just here until we get par types implemented
 			if (argSorts.size() != 2) {
 				error("The @ function requires exactly two arguments",head.pos());
@@ -465,7 +465,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			}
 			ISort sort1 = argSorts.get(0);
 			if (!(sort1 instanceof ISort.IApplication) ||
-					!((ISort.IApplication)sort1).family().headSymbol().toString().equals("->")) {
+					!Utils.ARROW.equals(((ISort.IApplication)sort1).family().headSymbol())) {
 				error("The first argument of @ must have a -> sort, not " + smtConfig.defaultPrinter.toString(sort1),e.pos());
 				return null;
 			}
@@ -478,7 +478,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		}
 		boolean useext = true;
 		if (bvperhaps) {
-			if (name.equals("bvnot") || name.equals("bvneg")) {
+			if (head.equals(Utils.BVNOT) || head.equals(Utils.BVNEG)) {
 				if (argSorts.size() != 1) {
 					error(" The " + name + " function should have one argument",head.pos());
 					return null;
@@ -490,13 +490,13 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				}
 				return save(e,s);
 				
-			} else if (name.equals("bvand") || name.equals("bvor") 
-					|| name.equals("bvadd") || name.equals("bvmul")
-					|| name.equals("bvudiv") || name.equals("bvurem")
-					|| name.equals("bvshl") || name.equals("bvlshr") ||
-					(useext && (name.equals("bvnand") || name.equals("bvnor") || name.equals("bvxor") || name.equals("bvxnor")
-							|| name.equals("bvsub") || name.equals("bvsdiv") || name.equals("bvsrem") || name.equals("bvsmod")
-							|| name.equals("bvashr") || name.equals("bvcomp") 
+			} else if (head.equals(Utils.BVAND) || head.equals(Utils.BVOR)
+					|| head.equals(Utils.BVADD) || head.equals(Utils.BVMUL)
+					|| head.equals(Utils.BVUDIV) || head.equals(Utils.BVUREM)
+					|| head.equals(Utils.BVSHL) || head.equals(Utils.BVLSHR) ||
+					(useext && (head.equals(Utils.BVNAND) || head.equals(Utils.BVNOR) || head.equals(Utils.BVXOR) || head.equals(Utils.BVXNOR)
+							|| head.equals(Utils.BVSUB) || head.equals(Utils.BVSDIV) || head.equals(Utils.BVSREM) || head.equals(Utils.BVSMOD)
+							|| head.equals(Utils.BVASHR) || head.equals(Utils.BVCOMP)
 					))
 					) {
 				if (argSorts.size() != 2) {
@@ -517,13 +517,13 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 					error("The sorts must match: " + pr(s) + " vs. " + pr(ss),e.pos());
 					return null;
 				}
-				if (name.equals("bvcomp")) {
+				if (head.equals(Utils.BVCOMP)) {
 					s = makeBitVec(1);
 					return save(e,s);
 				}
 				return save(e,s);
-			} else if (name.equals("bvult") || (useext && (name.equals("bvule") || name.equals("bvugt") || name.equals("bvuge")
-					|| name.equals("bvslt") || name.equals("bvsle") || name.equals("bvsgt") || name.equals("bvsge")
+			} else if (head.equals(Utils.BVULT) || (useext && (head.equals(Utils.BVULE) || head.equals(Utils.BVUGT) || head.equals(Utils.BVUGE)
+					|| head.equals(Utils.BVSLT) || head.equals(Utils.BVSLE) || head.equals(Utils.BVSGT) || head.equals(Utils.BVSGE)
 					)
 					)) {
 				if (argSorts.size() != 2) {
@@ -550,7 +550,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			}
 					
 		}
-		if (symTable.bitVectorTheorySet && name.equals("concat")) {
+		if (symTable.bitVectorTheorySet && head.equals(Utils.CONCAT)) {
 			if (argSorts.size() != 2) {
 				error(" The " + name + " function should have two arguments",head.pos());
 				return null;
@@ -568,11 +568,11 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			s = makeBitVec(bitvecSize(s)+bitvecSize(ss));
 			return save(e,s);
 		}
-		String pname = null;
-		if (head instanceof IParameterizedIdentifier) pname = ((IParameterizedIdentifier)head).headSymbol().toString();
-		if (symTable.bitVectorTheorySet && 
+		ISymbol pheadSymbol = null;
+		if (head instanceof IParameterizedIdentifier) pheadSymbol = ((IParameterizedIdentifier)head).headSymbol();
+		if (symTable.bitVectorTheorySet &&
 				head instanceof IParameterizedIdentifier &&
-				pname.equals("extract")) {
+				Utils.EXTRACT.equals(pheadSymbol)) {
 			if (argSorts.size() != 1) {
 				error(" The " + name + " function should have one argument",head.pos());
 				return null;
@@ -599,10 +599,9 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			return save(e,s);
 
 		}
-		if (useext && symTable.bitVectorTheorySet && 
+		if (useext && symTable.bitVectorTheorySet &&
 				head instanceof IParameterizedIdentifier &&
-				(pname.equals("repeat")
-				)) {
+				Utils.REPEAT.equals(pheadSymbol)) {
 			if (argSorts.size() != 1) {
 				error(" The " + name + " function should have one argument",head.pos());
 				return null;
@@ -624,9 +623,9 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 
 		}
 		
-		if (useext && symTable.bitVectorTheorySet && 
+		if (useext && symTable.bitVectorTheorySet &&
 				head instanceof IParameterizedIdentifier &&
-				(pname.equals("zero_extend") || pname.equals("sign_extend")
+				(Utils.ZERO_EXTEND.equals(pheadSymbol) || Utils.SIGN_EXTEND.equals(pheadSymbol)
 				)) {
 			if (argSorts.size() != 1) {
 				error(" The " + name + " function should have one argument",head.pos());
@@ -644,9 +643,9 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			return save(e,s);
 
 		}
-		if (useext && symTable.bitVectorTheorySet && 
+		if (useext && symTable.bitVectorTheorySet &&
 				head instanceof IParameterizedIdentifier &&
-				(pname.equals("rotate_left") || pname.equals("rotate_right")
+				(Utils.ROTATE_LEFT.equals(pheadSymbol) || Utils.ROTATE_RIGHT.equals(pheadSymbol)
 				)) {
 			if (argSorts.size() != 1) {
 				error(" The " + name + " function should have one argument",head.pos());
@@ -667,12 +666,12 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		if (entry == null && symTable.realsIntsTheorySet) {
 			ISort realSort = null;
 			for (ISort sort: argSorts) {
-				if (sort.toString().equals("Real")) realSort = sort; 
+				if (isRealSort(sort)) realSort = sort;
 			}
 			if (realSort != null) {
 				List<ISort> newargs = new LinkedList<ISort>();
 				for (ISort sort: argSorts) {
-					if (sort.toString().equals("Int")) {
+					if (isIntSort(sort)) {
 						newargs.add(realSort);
 					} else {
 						newargs.add(sort);
@@ -698,7 +697,21 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		ISort.IApplication se = (ISort.IApplication)s;
 		if (!(se.family() instanceof IParameterizedIdentifier)) return false;
 		IParameterizedIdentifier pid = (IParameterizedIdentifier)se.family();
-		return pid.headSymbol().toString().equals(Utils.BITVEC); // FIXME - compare against a stored symbol?
+		return Utils.BITVEC_SYM.equals(pid.headSymbol());
+	}
+
+	// Real/Int sort checks are only needed here, for the Int-to-Real coercion rule
+	// in visit(IFcnExpr) - kept local rather than promoted to a general ISort
+	// capability like isBool(), since nothing else in the codebase needs them.
+	private static final ISymbol REAL_SYM = new SMTExpr.Symbol("Real".intern());
+	private static final ISymbol INT_SYM = new SMTExpr.Symbol("Int".intern());
+
+	private boolean isRealSort(ISort s) {
+		return (s instanceof ISort.IApplication) && REAL_SYM.equals(((ISort.IApplication)s).family().headSymbol());
+	}
+
+	private boolean isIntSort(ISort s) {
+		return (s instanceof ISort.IApplication) && INT_SYM.equals(((ISort.IApplication)s).family().headSymbol());
 	}
 
 	private int bitvecSize(ISort s) {
@@ -729,7 +742,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			error("The _ wildcard may only appear in match patterns", e.pos());
 			return null;
 		}
-		if (Utils.TRUE.equals(value) || Utils.FALSE.equals(value)) {
+		if (Utils.TRUE.equals(e) || Utils.FALSE.equals(e)) {
 			return save(e,symTable.smtConfig.sortFactory.Bool());
 		} else {
 			Variable v = currentScope.get(e);
@@ -818,8 +831,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		requireVersionForSymbolIndex(e);
 		IFcnSort sort = null;
 		boolean useext = true;
-		String pname = e.headSymbol().toString();
-		if (useext && symTable.bitVectorTheorySet && 
+		String pname = e.headSymbol().value();
+		if (useext && symTable.bitVectorTheorySet &&
 				(pname.matches("bv(0|[1-9][0-9]*)") // TODO - allow leading zeros?
 				)) {
 			if (!checkNumeralIndices(e, 1, "Expected exactly one numeral in a bv identifier")) return null;
@@ -1285,7 +1298,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		if (e instanceof ISymbol) return true;
 		if (e instanceof IFcnExpr) {
 			IFcnExpr f = (IFcnExpr) e;
-			return f.head().toString().equals("not") && f.args().size() == 1 && f.args().get(0) instanceof ISymbol;
+			return Utils.NOT.equals(f.head()) && f.args().size() == 1 && f.args().get(0) instanceof ISymbol;
 		}
 		return false;
 	}
@@ -1429,7 +1442,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	private static boolean anyDeltaInSort(ISort sort, Set<String> deltaNames) {
 		if (!(sort instanceof ISort.IApplication)) return false;
 		ISort.IApplication app = (ISort.IApplication) sort;
-		if (deltaNames.contains(app.family().toString())) return true;
+		if (deltaNames.contains(app.family().headSymbol().value())) return true;
 		for (ISort arg : app.parameters()) {
 			if (anyDeltaInSort(arg, deltaNames)) return true;
 		}
@@ -1440,7 +1453,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	private static boolean anyDeltaNotInSet(ISort sort, Set<String> deltaNames, Set<String> wellFounded) {
 		if (!(sort instanceof ISort.IApplication)) return false;
 		ISort.IApplication app = (ISort.IApplication) sort;
-		String head = app.family().toString();
+		String head = app.family().headSymbol().value();
 		if (deltaNames.contains(head) && !wellFounded.contains(head)) return true;
 		for (ISort arg : app.parameters()) {
 			if (anyDeltaNotInSet(arg, deltaNames, wellFounded)) return true;

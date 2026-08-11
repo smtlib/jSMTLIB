@@ -65,7 +65,7 @@ public interface ISort extends INode, IPosable {
 	
 	/** A super-interface for definitions of new sort ids.
 	 */
-	static public interface IDefinition extends INode {
+	static public interface IDefinition extends INode, IPosable {
 		/** The identifier for the sort symbol */
 		//@ pure
 		IIdentifier identifier();

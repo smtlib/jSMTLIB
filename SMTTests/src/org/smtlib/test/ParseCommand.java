@@ -338,4 +338,22 @@ public class ParseCommand {
 				"User-defined symbols may not begin with . or @");
 	}
 
+	@Test
+	public void check_sat_assuming_not_literal() throws Exception {
+		config.smtlib = "V2.6";
+		testCommand("(check-sat-assuming ((and p q)))",
+				"Arguments to check-sat-assuming must be a symbol or (not symbol) in SMT-LIB V2.6 and earlier");
+	}
+
+	@Test
+	public void declare_datatype_recursive_wellfounded() throws Exception {
+		testCommand("(declare-datatype List ((nil) (cons (head Int) (tail List)) ))");
+	}
+
+	@Test
+	public void declare_datatype_not_wellfounded() throws Exception {
+		testCommand("(declare-datatype Bad ((mk (sel Bad) ) ))",
+				"Datatype Bad is not well-founded (no finite base case)");
+	}
+
 }

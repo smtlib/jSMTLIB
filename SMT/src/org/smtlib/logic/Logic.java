@@ -33,7 +33,7 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
 		IVisitor<Void> visitor = new IVisitor.TreeVisitor<Void>() {
 			@Override
 			public Void visit(IExpr.IFcnExpr e) throws IVisitor.VisitorException {
-				if (e.head().toString().equals("**"))
+				if (Utils.EXP.equals(e.head()))
 					throw new IVisitor.VisitorException("The exponentiation operator ** is not allowed in the " + logicName + " logic", e.pos());
 				return super.visit(e);
 			}
@@ -52,20 +52,26 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
 		if (expr == null) throw new IVisitor.VisitorException("New sorts are not allowed in this logic",id.pos());
 	}
 
+	/** Creates the sort expression {@code name(params...)}, e.g. {@code sortApp("Array", intSort, intSort)}
+	 *  for {@code (Array Int Int)}. Used to build canonical sorts for structural comparison
+	 *  (via {@link ISort#equalsNoExpand}), rather than comparing printed text. */
+	protected static ISort sortApp(String name, ISort... params) {
+		return SMTExpr.smtConfig.sortFactory.createSortExpression(SMTExpr.smtConfig.exprFactory.symbol(name), params);
+	}
+
 	/** Checks that the sort expression contains no Array sort outside the allowed set.
 	 *  Skips the check for Array sorts whose parameters include sort parameters (parameterized abbreviations).
 	 *  @param allowedMsg  human-readable list of allowed Array sorts, used in the error message
-	 *  @param allowedSorts  exact toString() representations of allowed Array sorts */
-	protected void checkArraySort(ISort sort, IIdentifier id, String allowedMsg, String... allowedSorts) throws IVisitor.VisitorException {
+	 *  @param allowedSorts  the allowed Array sorts, compared structurally (see {@link #sortApp}) */
+	protected void checkArraySort(ISort sort, IIdentifier id, String allowedMsg, ISort... allowedSorts) throws IVisitor.VisitorException {
 		if (!(sort instanceof ISort.IApplication)) return;
 		ISort.IApplication app = (ISort.IApplication) sort;
-		if (app.family().headSymbol().toString().equals("Array")) {
+		if (Utils.ARRAY.equals(app.family().headSymbol())) {
 			for (ISort param : app.parameters()) {
 				if (param instanceof ISort.IParameter) return;
 			}
-			String sortStr = sort.toString();
-			for (String allowed : allowedSorts) {
-				if (sortStr.equals(allowed)) return;
+			for (ISort allowed : allowedSorts) {
+				if (sort.equalsNoExpand(allowed)) return;
 			}
 			throw new IVisitor.VisitorException("Array sorts must be " + allowedMsg + " in this logic", id.pos());
 		}
@@ -79,7 +85,7 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
 		if (expr instanceof IExpr.INumeral) return true;
 		if (!(expr instanceof IExpr.IFcnExpr)) return false;
 		IExpr.IFcnExpr f = (IExpr.IFcnExpr)expr;
-		if (f.head().toString().equals("-") && f.args().size() == 1) {
+		if (Utils.MINUS.equals(f.head()) && f.args().size() == 1) {
 			expr = f.args().get(0);
 			if (expr instanceof IExpr.INumeral) return true;
 			return false;
@@ -99,14 +105,14 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
 			IVisitor<Void> visitor = new IVisitor.TreeVisitor<Void>() {
 				@Override
 				public Void visit(IExpr.IFcnExpr e) throws IVisitor.VisitorException {
-					String fcn = e.head().toString();
-					if (fcn.equals("*") && e.args().size() == 2) {
+					IQualifiedIdentifier fcn = e.head();
+					if (Utils.MULT.equals(fcn) && e.args().size() == 2) {
 						IExpr lhs = e.args().get(0);
 						IExpr rhs = e.args().get(1);
 						if (!((isInteger(lhs) && isFreeConstant(rhs)) || (isFreeConstant(lhs) && isInteger(rhs))))
 							throw new IVisitor.VisitorException("nonlinear", null);
 						return null;
-					} else if (fcn.equals("div") || fcn.equals("mod") || fcn.equals("abs")) {
+					} else if (Utils.DIV.equals(fcn) || Utils.MOD.equals(fcn) || Utils.ABS.equals(fcn)) {
 						throw new IVisitor.VisitorException("nonlinear", null);
 					}
 					return super.visit(e);
@@ -124,14 +130,14 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
 			IVisitor<Void> visitor = new IVisitor.TreeVisitor<Void>() {
 				@Override
 				public Void visit(IExpr.IFcnExpr e) throws IVisitor.VisitorException {
-					String fcn = e.head().toString();
-					if (fcn.equals("*") && e.args().size() == 2) {
+					IQualifiedIdentifier fcn = e.head();
+					if (Utils.MULT.equals(fcn) && e.args().size() == 2) {
 						IExpr lhs = e.args().get(0);
 						IExpr rhs = e.args().get(1);
 						if (!((isRealConst(lhs) && isFreeConstant(rhs)) || (isFreeConstant(lhs) && isRealConst(rhs))))
 							throw new IVisitor.VisitorException("nonlinear", null);
 						return null;
-					} else if (fcn.equals("/") && e.args().size() == 2) {
+					} else if (Utils.SLASH.equals(fcn) && e.args().size() == 2) {
 						if (!(isRealConst(e.args().get(0)) && isRealConst(e.args().get(1))))
 							throw new IVisitor.VisitorException("nonlinear", null);
 						return null;
@@ -151,11 +157,11 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
 		if (expr instanceof IExpr.IDecimal) return true;
 		if (!(expr instanceof IExpr.IFcnExpr)) return false;
 		IExpr.IFcnExpr f = (IExpr.IFcnExpr)expr;
-		if (f.head().toString().equals("-") && f.args().size() == 1) {
+		if (Utils.MINUS.equals(f.head()) && f.args().size() == 1) {
 			IExpr arg = f.args().get(0);
 			return (arg instanceof IExpr.INumeral) || (arg instanceof IExpr.IDecimal);
 		}
-		if (f.head().toString().equals("/") && f.args().size() == 2) {
+		if (Utils.SLASH.equals(f.head()) && f.args().size() == 2) {
 			return isInteger(f.args().get(0)) && (f.args().get(1) instanceof IExpr.INumeral)
 				&& ((IExpr.INumeral)f.args().get(1)).intValue() != 0;
 		}

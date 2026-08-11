@@ -152,16 +152,16 @@ public class Response implements IResponse {
 	}
 	
 	/** Implements the IResponse.IError interface */
-	static public class Error extends Pos.Posable implements IResponse.IError, IPosable {
-		
+	static public class Error extends Pos.Printable implements IResponse.IError {
+
 		private String msg;
-		
+
 		public Error(String errorMsg) {
 			this(errorMsg,null);
 		}
 
 		public Error(String errorMsg, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-			this.pos = pos;
+			setPos(pos);
 			this.msg = errorMsg;
 		}
 
@@ -174,17 +174,12 @@ public class Response implements IResponse {
 		public boolean isError() {
 			return true;
 		}
-		
-		@Override
-		public String toString() {
-			return "(error " + smtConfig.utils.quote(msg) + ")";
-		}
-		
+
 		@Override
 		public String errorMsg() {
 			return msg;
 		}
-		
+
 		/** Setting the textual position of the command */
 		public <T extends IPosable> T setPos(T t, /*@Nullable*/ IPos p) { t.setPos(p); return t; }
 
@@ -195,17 +190,16 @@ public class Response implements IResponse {
 	}
 
 	/** Implements the IResponse.IAssignmentResponse interface */
-	static public class AssignmentResponse implements IResponse.IAssignmentResponse {
+	static public class AssignmentResponse extends Pos.Printable implements IResponse.IAssignmentResponse {
 		private List<IPair<IExpr.ISymbol,Boolean>> assignments = new LinkedList<IPair<IExpr.ISymbol,Boolean>>();
-		@Override 
+		@Override
 		public List<IPair<IExpr.ISymbol,Boolean>> assignments() { return assignments; }
 		public AssignmentResponse(List<IPair<IExpr.ISymbol,Boolean>> assignments) {
 			this.assignments = assignments;
 		}
-		
+
 		@Override public boolean isOK() { return false; }
 		@Override public boolean isError() { return false; }
-		public IPos pos() { return null; }  // FIXME - should override?
 		public void add(IExpr.ISymbol name, Boolean value) {
 			assignments.add(new Pair<IExpr.ISymbol,Boolean>(name,value));
 		}
@@ -217,7 +211,7 @@ public class Response implements IResponse {
 	}
 
 	/** Implements the IResponse.IValueResponse interface */
-	static public class ValueResponse implements IResponse.IValueResponse {
+	static public class ValueResponse extends Pos.Printable implements IResponse.IValueResponse {
 		private List<IPair<IExpr,IExpr>> values = new LinkedList<IPair<IExpr,IExpr>>();
 		@Override public List<IPair<IExpr,IExpr>> values() { return values; }
 		public ValueResponse(List<IPair<IExpr,IExpr>> values) {
@@ -236,7 +230,7 @@ public class Response implements IResponse {
 	}
 
 	/** Implements the IResponse.IAssertionsResponse interface */
-	static public class AssertionsResponse implements IResponse.IAssertionsResponse {
+	static public class AssertionsResponse extends Pos.Printable implements IResponse.IAssertionsResponse {
 		private List<IExpr> assertions = new LinkedList<IExpr>();
 		@Override public List<IExpr> assertions() { return assertions; }
 		public AssertionsResponse(List<IExpr> assertions) {
@@ -255,7 +249,7 @@ public class Response implements IResponse {
 	}
 
     /** Implements the IResponse.IUnsatAssumptionsResponse interface */
-    static public class UnsatAssumptionsResponse implements IResponse.IUnsatAssumptionsResponse {
+    static public class UnsatAssumptionsResponse extends Pos.Printable implements IResponse.IUnsatAssumptionsResponse {
         private List<ISymbol> names = new LinkedList<ISymbol>();
         @Override 
         public List<ISymbol> names() { return names; }
@@ -276,7 +270,7 @@ public class Response implements IResponse {
     }
 
     /** Implements the IResponse.IUnsatCoreResponse interface */
-    static public class UnsatCoreResponse implements IResponse.IUnsatCoreResponse {
+    static public class UnsatCoreResponse extends Pos.Printable implements IResponse.IUnsatCoreResponse {
         private List<ISymbol> names = new LinkedList<ISymbol>();
         @Override 
         public List<ISymbol> names() { return names; }
@@ -297,13 +291,12 @@ public class Response implements IResponse {
     }
 
 	/** Implements the IResponse.IProofResponse interface */
-	static public class ProofResponse implements IResponse.IProofResponse {
+	static public class ProofResponse extends Pos.Printable implements IResponse.IProofResponse {
 		// TODO - no implementation for proofs as yet
 		public ProofResponse() {}
 		@Override public Object proof() { return null; }
 		@Override public boolean isOK() { return false; }
 		@Override public boolean isError() { return false; }
-		public IPos pos() { return null; }
 
 		@Override
 		public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
@@ -312,18 +305,18 @@ public class Response implements IResponse {
 	}
 
 	/** Implementation of IAttributeList: a list of attributes returned by get-info. */
-	static public class Seq extends Pos.Posable implements IAttributeList {
+	static public class Seq extends Pos.Printable implements IAttributeList {
 		List<IAttribute<? extends IAttributeValue>> list = new LinkedList<IAttribute<? extends IAttributeValue>>();
 
 		public <T extends IAttributeValue> Seq(IAttribute<T> attr) {
 			list.add(attr);
 		}
-		
+
 		public Seq(List<IAttribute<? extends IAttributeValue>> list) {
 			this.list = list;
 		}
-		
-		@Override 
+
+		@Override
 		public List<IAttribute<? extends IAttributeValue>> attributes() { return list; }
 
 
@@ -335,13 +328,6 @@ public class Response implements IResponse {
 		@Override
 		public boolean isError() {
 			return false;
-		}
-		
-		@Override
-		public String toString() {
-			StringBuilder sb = new StringBuilder("(");
-			for (IAttribute<?> a : list) sb.append(" ").append(a.toString());
-			return sb.append(" )").toString();
 		}
 
 		@Override

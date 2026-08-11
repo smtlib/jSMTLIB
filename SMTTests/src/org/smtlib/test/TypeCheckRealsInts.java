@@ -28,6 +28,18 @@ public class TypeCheckRealsInts extends TypeCheckRoot {
 		doCommand("(assert (< a b))");
 		doCommand("(assert (< q r))");
 	}
-	
+
+	/** Exercises the Int-to-Real coercion paths in TypeChecker: the =/distinct
+	 * argument-sort-matching loop, and the generic-operator symbol-table lookup
+	 * fallback (an Int argument mixed with a Real argument in the same call). */
+	@Test
+	public void checkIntRealCoercion() {
+		doCommand("(declare-fun q () Int)");
+		doCommand("(declare-fun a () Real)");
+		doCommand("(assert (= a q))");
+		doCommand("(assert (= q a))");
+		doCommand("(assert (>= a q))");
+		doCommand("(assert (>= q a))");
+	}
 
 }

@@ -6,9 +6,11 @@ import java.util.List;
 import org.smtlib.IExpr;
 import org.smtlib.ISort;
 import org.smtlib.IVisitor;
+import org.smtlib.Utils;
 import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.INumeral;
+import org.smtlib.IExpr.IQualifiedIdentifier;
 import org.smtlib.IExpr.ISymbol;
 
 public class QF_IDL extends Logic {
@@ -21,11 +23,11 @@ public class QF_IDL extends Logic {
 		noQuantifiers(expression);
 		IVisitor<Void> visitor = new IVisitor.TreeVisitor<Void>() {
 			public Void visit(IExpr.IFcnExpr e) throws IVisitor.VisitorException {
-				String fcn = e.head().toString();
-				if (fcn.equals("and") || fcn.equals("or") || fcn.equals("not") || fcn.equals("=>")) return (Void)null;
-				if (fcn.equals("=") || fcn.equals("distinct")) return (Void)null;
+				IQualifiedIdentifier fcn = e.head();
+				if (Utils.AND.equals(fcn) || Utils.OR.equals(fcn) || Utils.NOT.equals(fcn) || Utils.IMPLIES.equals(fcn)) return (Void)null;
+				if (Utils.EQ.equals(fcn) || Utils.DISTINCT.equals(fcn)) return (Void)null;
 				// FIXME - need to restrict = and distinct for Int
-				if (e.args().size() == 2 && (fcn.equals(">=") || fcn.equals(">") || fcn.equals("<") || fcn.equals("<="))) {
+				if (e.args().size() == 2 && (Utils.GE.equals(fcn) || Utils.GT.equals(fcn) || Utils.LT.equals(fcn) || Utils.LE.equals(fcn))) {
 					IExpr lhs = e.args().get(0);
 					IExpr rhs = e.args().get(1);
 					if (lhs instanceof ISymbol) {
@@ -39,8 +41,7 @@ public class QF_IDL extends Logic {
 						throw new IVisitor.VisitorException("lhs must be a symbol or a difference", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
 					}
                     IExpr.IFcnExpr f = (IExpr.IFcnExpr)lhs;
-					fcn = f.head().toString();
-					if (!fcn.equals("-")) {
+					if (!Utils.MINUS.equals(f.head())) {
 						throw new IVisitor.VisitorException("lhs must be a symbol or a difference", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
 					}
 					if (f.args().size()  == 2 && f.args().get(0) instanceof ISymbol && f.args().get(1) instanceof ISymbol) {
@@ -54,7 +55,7 @@ public class QF_IDL extends Logic {
 						throw new IVisitor.VisitorException("The rhs must be an integer", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
 					} else {
 						f = (IExpr.IFcnExpr)rhs;
-						if (f.args().size() == 1 && f.head().toString().equals("-") && f.args().get(0) instanceof INumeral) {
+						if (f.args().size() == 1 && Utils.MINUS.equals(f.head()) && f.args().get(0) instanceof INumeral) {
 						    // OK
 						} else {
 							throw new IVisitor.VisitorException("The rhs must be a numeral or negation of numeral", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());

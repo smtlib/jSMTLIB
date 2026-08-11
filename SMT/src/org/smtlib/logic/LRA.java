@@ -7,6 +7,7 @@ import org.smtlib.IExpr;
 import org.smtlib.ILanguage;
 import org.smtlib.ISort;
 import org.smtlib.IVisitor;
+import org.smtlib.Utils;
 import org.smtlib.IExpr.*;
 import org.smtlib.impl.SMTExpr;
 
@@ -22,13 +23,13 @@ public class LRA extends Logic {
 		if (expr instanceof IExpr.IDecimal) return true;
 		if (!(expr instanceof IExpr.IFcnExpr)) return false;
 		IExpr.IFcnExpr f = (IExpr.IFcnExpr)expr;
-		if (f.head().toString().equals("-") && f.args().size() == 1) {
+		if (Utils.MINUS.equals(f.head()) && f.args().size() == 1) {
 			expr = f.args().get(0);
 			if (expr instanceof IExpr.INumeral) return true;
 			if (expr instanceof IExpr.IDecimal) return true;
 			return false;
 		}
-		if (f.head().toString().equals("/") && f.args().size() == 2) {
+		if (Utils.SLASH.equals(f.head()) && f.args().size() == 2) {
 			expr = f.args().get(0);
 			if (!isInteger(expr)) return false;
 			expr = f.args().get(1);
@@ -47,12 +48,12 @@ public class LRA extends Logic {
 			@Override
 			public Void visit(IExpr.IFcnExpr e) throws IVisitor.VisitorException {
 				if (e.args().size() == 2) {
-					String fcn = e.head().toString();
-					if (fcn.equals("*")) {
+					IQualifiedIdentifier fcn = e.head();
+					if (Utils.MULT.equals(fcn)) {
 						if (!(isConst(e.args().get(0)) || isConst(e.args().get(1)))) {
 								throw new IVisitor.VisitorException("The expression must be linear: ", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
 						}
-					} else if (fcn.equals("/")) {
+					} else if (Utils.SLASH.equals(fcn)) {
 						if (!(isConst(e.args().get(0)) && isConst(e.args().get(1)))) {
 							throw new IVisitor.VisitorException("The expression must be linear: ", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
 						}

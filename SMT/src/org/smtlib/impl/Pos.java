@@ -51,7 +51,7 @@ public class Pos implements IPos {
 		public void setPos(IPos pos) { this.pos = pos; }
 
 		// Defined here (rather than on INode) because Java forbids interface default methods from overriding
-		// Object methods. Identity semantics is the correct default for AST nodes: the typemap and other
+		// Object methods. Identity semantics is the correct default for AST nodes: 
 		// internal maps always key on the same parsed object instance. Classes requiring structural equality
 		// (Numeral, Symbol, Keyword, etc.) override these explicitly.
 		@Override
@@ -60,7 +60,11 @@ public class Pos implements IPos {
 		public int hashCode() { return System.identityHashCode(this); }
 	}
 
-	/** A Posable that also implements INode, with toString() delegating to Printer */
+	/** A Posable that also implements INode, with toString() delegating to Printer.
+	 *  This toString() exists purely for debugger/IDE display convenience - it must
+	 *  never be relied on for program logic or real output. Production code that needs
+	 *  to render a node must go through IPrinter/Printer explicitly (e.g.
+	 *  smtConfig.defaultPrinter.toString(...)), not this method. */
 	public static abstract class Printable extends Posable implements INode {
 		@Override
 		public String toString() {

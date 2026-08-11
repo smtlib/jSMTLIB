@@ -10,15 +10,16 @@ import java.util.*;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.INumeral;
 import org.smtlib.*;
+import org.smtlib.impl.SMTExpr.Numeral;
 import org.smtlib.impl.SMTExpr.Symbol;
 
 /** This class implements the abstract ISort interface */
-public abstract class Sort extends Pos.Posable implements ISort {
+public abstract class Sort extends Pos.Printable implements ISort {
 	
 	/** Returns true iff the receiver is a Sort expression designating the pre-defined Bool sort */
 	@Override
 	public boolean isBool() {
-		return this == Bool || ((this instanceof IApplication) &&  ((IApplication)this).family().toString().equals(BOOL));
+		return this == Bool || ((this instanceof IApplication) && Bool.family().equals(((IApplication)this).family()));
 	}
 
 	/** Returns the pre-defined Bool sort */
@@ -31,9 +32,15 @@ public abstract class Sort extends Pos.Posable implements ISort {
 	
 	/** A cached instance of the pre-defined Bool sort */
 	static final private Sort.Application Bool = new Sort.Application(new Symbol(BOOL), new LinkedList<ISort>());
+	static {
+		// Application.equals()/expand() require definition() to be set (as symTable-driven
+		// sort resolution normally does via Family.eval()); without this, comparing this
+		// singleton against a distinct (non-identical) Bool instance NPEs inside expand().
+		Bool.definition(new Sort.Family(new Symbol(BOOL), new Numeral(0)));
+	}
 
 	/** Represents a new sort symbol, with a given identifier and arity */
-	static public class Family implements IFamily {
+	static public class Family extends Pos.Printable implements IFamily {
 		protected IIdentifier identifier;
 		protected INumeral arity;
 		/** Creates a sort family with the given identifier and arity. */
@@ -72,20 +79,14 @@ public abstract class Sort extends Pos.Posable implements ISort {
 			return identifier.hashCode();
 		}
 		
-		/** Use this just for debugging - proper conversion to a String is performed by an IPrinter */
-		@Override
-		public String toString() {
-			return identifier.toString();
-		}
-		
 		@Override
 		public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
 			return v.visit(this);
 		}
 	}
-	
+
 	/** Implements a Sort abbreviation (parameterized definition, possibly with no parameters) */
-	static public class Abbreviation implements IAbbreviation {
+	static public class Abbreviation extends Pos.Printable implements IAbbreviation {
 
 		protected IIdentifier identifier;
 		protected List<IParameter> parameters;
@@ -141,29 +142,12 @@ public abstract class Sort extends Pos.Posable implements ISort {
 			return identifier().hashCode(); 
 		}
 		
-		/** Use this just for debugging - proper conversion to a String is performed by an IPrinter */
-		@Override
-		public String toString() {
-			StringBuilder sb = new StringBuilder();
-			sb.append("(");
-			sb.append(identifier.toString());
-			sb.append(" (");
-			for (IParameter p : parameters) {
-				sb.append(" ");
-				sb.append(p.toString());
-			}
-			sb.append(") ");
-			sb.append(sortExpression.toString());
-			sb.append(")");
-			return sb.toString();
-		}
-
 		@Override
 		public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
 			return v.visit(this);
 		}
 	}
-	
+
 	/** Represents a sort expression consisting of a sort symbol or sort abbreviation symbol applied to a
 	 * corresponding number of sort arguments 
 	 */
@@ -345,27 +329,12 @@ public abstract class Sort extends Pos.Posable implements ISort {
 			return e;
 		}
 		
-		/** Use this just for debugging - proper conversion to a String is performed by an IPrinter */
-		@Override
-		public String toString() {
-			if (sortParameters.size() == 0) return sortID.toString();
-			StringBuilder sb = new StringBuilder();
-			sb.append("(");
-			sb.append(sortID.toString());
-			for (ISort s: sortParameters) {
-				sb.append(" ");
-				sb.append(s.toString());
-			}
-			sb.append(")");
-			return sb.toString();
-		}
-
 		@Override
 		public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
 			return v.visit(this);
 		}
 	}
-	
+
 	/** Represents the class of the sort of a function symbol.  This is not a 
 	 * sort that can be expressed in SMT-LIB sort grammar, except implicitly 
 	 * when function ids are defined in define-fun and declare-fun
@@ -450,26 +419,12 @@ public abstract class Sort extends Pos.Posable implements ISort {
 			return new FcnSort(newArgs,newResult);
 		}
 		
-		/** Use this just for debugging - proper conversion to a String is performed by an IPrinter */
-		@Override
-		public String toString() {
-			StringBuilder sb = new StringBuilder();
-			sb.append("(");
-			for (ISort s: argSorts) {
-				sb.append(s.toString());
-				sb.append(" ");
-			}
-			sb.append(resultSort.toString());
-			sb.append(")");
-			return sb.toString();
-		}
-		
 		@Override
 		public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
 			return v.visit(this);
 		}
 	}
-	
+
 	/** Represents a Sort parameter, such as in either the parameter list or the expression of a Sort abbreviation */
 	static public class Parameter extends Sort implements IParameter {
 		protected IExpr.ISymbol symbol;
@@ -524,17 +479,11 @@ public abstract class Sort extends Pos.Posable implements ISort {
 			return System.identityHashCode(this);
 		}
 		
-		/** Use this just for debugging - proper conversion to a String is performed by an IPrinter */
-		@Override
-		public String toString() {
-			return symbol.value().toString();
-		}
-
 		@Override
 		public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
 			return v.visit(this);
 		}
-		
+
 		@Override
 		public IIdentifier identifier() {
 			return symbol;
@@ -554,20 +503,19 @@ public abstract class Sort extends Pos.Posable implements ISort {
 	}
 
 	/** A placeholder sort definition used when a sort declaration is ill-formed, to suppress cascading errors. */
-	static public class ErrorDefinition implements ISort.IErrorDefinition {
+	static public class ErrorDefinition extends Pos.Printable implements ISort.IErrorDefinition {
 		protected IIdentifier id;
 		protected String error;
-		protected IPos pos;
 
 		/** Creates an error placeholder for the given identifier, error message, and source position. */
 		public ErrorDefinition(IIdentifier id, String error, IPos pos) {
 			this.id = id;
 			this.error = error;
-			this.pos = pos;
+			setPos(pos);
 		}
 
 		@Override public String errorMessage() { return error; }
-		@Override public IPos errorPos() { return pos; }
+		@Override public IPos errorPos() { return pos(); }
 		@Override public IIdentifier identifier() { return id; }
 		@Override public ISort eval(List<ISort> sorts) { return null; }
 		@Override public int intArity() { return 0; }

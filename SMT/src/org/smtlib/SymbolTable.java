@@ -285,7 +285,7 @@ public class SymbolTable {
 		// FIXME _ improve so this is not hard coded
 		if (name instanceof IParameterizedIdentifier) {
 			IParameterizedIdentifier pf = (IParameterizedIdentifier)name;
-			if (bitVectorTheorySet && pf.headSymbol().toString().equals("BitVec")) { // FIXME -  toString() or value()?
+			if (bitVectorTheorySet && Utils.BITVEC_SYM.equals(pf.headSymbol())) {
 				if (pf.indices().size() != 1 || !(pf.indices().get(0) instanceof INumeral)) {
 					return smtConfig.sortFactory.createErrorDefinition(name,"A bit-vector sort must have exactly one numeral",
 							pf.indices().size() > 1 ? pf.indices().get(1).pos()
