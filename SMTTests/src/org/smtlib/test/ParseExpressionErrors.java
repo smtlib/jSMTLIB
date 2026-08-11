@@ -30,7 +30,14 @@ public class ParseExpressionErrors {
 		config.log.addListener(listener);
 		ISource source = config.smtFactory.createSource(input,null);
 		IParser p = new org.smtlib.sexpr.Parser(config,source);
-		IExpr e = p.parseExpr();
+		IExpr e = null;
+		try {
+			e = p.parseExpr();
+		} catch (ParserException ex) {
+			// A null message means the error was already logged (e.g. by the lexer);
+			// a non-null message is reported here, at the top level, as parseCommand() does.
+			if (ex.getMessage() != null) config.log.logError(config.responseFactory.error(ex.getMessage(),ex.pos()));
+		}
 		Assert.assertTrue("Response was not an error",listener.msgs.get(0) instanceof IResponse.IError);
 		Assert.assertEquals(msg,((IResponse.IError)listener.msgs.get(0)).errorMsg());// expected,actual
 		IPos pos = ((IResponse.IError)listener.msgs.get(0)).pos();
@@ -40,23 +47,24 @@ public class ParseExpressionErrors {
 	}
 
 	public void testSExpr(String input, String output) throws Exception {
+		SMT.Configuration config = new SMT.Configuration();
+		config.smtlib = version;
+		config.log.clearListeners();
+		config.log.addListener(listener);
+		ISource source = config.smtFactory.createSource(input,null);
+		IParser p = new org.smtlib.sexpr.Parser(config,source);
+		IAttributeValue e = null;
 		try {
-			SMT.Configuration config = new SMT.Configuration();
-			config.smtlib = version;
-			config.log.clearListeners();
-			config.log.addListener(listener);
-			ISource source = config.smtFactory.createSource(input,null);
-			IParser p = new org.smtlib.sexpr.Parser(config,source);
-			IAttributeValue e = p.parseAttributeValue();
-//			Assert.assertTrue("Response was not an error",listener.msg instanceof IResponse.IError);
-//			Assert.assertEquals(output,((IResponse.IError)listener.msg).errorMsg());// expected,actual
-			StringWriter sw = new StringWriter();
-			if (e != null) org.smtlib.sexpr.Printer.write(sw,e);
-			if (!listener.msgs.isEmpty()) sw.append(config.defaultPrinter.toString(listener.msgs.get(0))); // FIXME - append them all?
-			Assert.assertEquals(output,sw.toString()); // expected,actual
-		} catch (ParserException e) {
-			Assert.assertEquals(output,"ParserException: " + e.getMessage()); // expected,actual
+			e = p.parseAttributeValue();
+		} catch (ParserException ex) {
+			// A null message means the error was already logged (e.g. by the lexer);
+			// a non-null message is reported here, at the top level, as parseCommand() does.
+			if (ex.getMessage() != null) config.log.logError(config.responseFactory.error(ex.getMessage(),ex.pos()));
 		}
+		StringWriter sw = new StringWriter();
+		if (e != null) org.smtlib.sexpr.Printer.write(sw,e);
+		if (!listener.msgs.isEmpty()) sw.append(config.defaultPrinter.toString(listener.msgs.get(0))); // FIXME - append them all?
+		Assert.assertEquals(output,sw.toString()); // expected,actual
 	}
 
 	@Test
@@ -169,20 +177,8 @@ public class ParseExpressionErrors {
 		testSExpr("|","(error \"Bar(|)-enclosed symbol is not terminated: |\")");
 	}
 
-	@Test
-	public void forall() throws Exception {
-		testExpr("(forall ((a Bool)(|a| Bool) ) (or a b))","Parameter list has a duplicate name: |a|",18,21);
-	}
-
-	@Test
-	public void exists() throws Exception {
-		testExpr("(exists ((a Bool)(|a| Bool) ) (or a b))","Parameter list has a duplicate name: |a|",18,21);
-	}
-
-	@Test
-	public void let() throws Exception {
-		testExpr("(let ((a 5) (|a| true) ) (ite b a 9))","Parameter list has a duplicate name: |a|",13,16);
-	}
-
+	// forall/exists/let duplicate-parameter-name errors moved to TypeChecks.java: that check
+	// lives in TypeChecker (scope tracking across bindings), not in Parser, so parseExpr()
+	// alone never produces them -- see forallDuplicateName/existsDuplicateName/letDuplicateName.
 
 }
