@@ -415,12 +415,16 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 			return new WithLines(w);
 		}
 
-		/** Writes the given expression to the given stream */
-		static public <T extends INode> void write(PrintStream w, T e) throws IVisitor.VisitorException {
-			Writer wr = new OutputStreamWriter(w);
-			WithLines p = new WithLines(wr);
+		/** Writes the given expression to the given writer */
+		static public <T extends INode> void write(Writer w, T e) throws IVisitor.VisitorException {
+			WithLines p = new WithLines(w);
 			e.accept(p);
 			p.flush();
+		}
+
+		/** Writes the given expression to the given stream */
+		static public <T extends INode> void write(PrintStream w, T e) throws IVisitor.VisitorException {
+			write(new OutputStreamWriter(w), e);
 		}
 
 		@Override

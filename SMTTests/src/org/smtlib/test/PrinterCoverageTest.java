@@ -7,6 +7,7 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.smtlib.ICommand;
 import org.smtlib.IExpr;
 import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.INumeral;
@@ -18,6 +19,7 @@ import org.smtlib.ISort;
 import org.smtlib.ISource;
 import org.smtlib.ITheory;
 import org.smtlib.SMT;
+import org.smtlib.sexpr.Printer;
 import org.smtlib.sexpr.Sexpr;
 
 /**
@@ -50,6 +52,8 @@ import org.smtlib.sexpr.Sexpr;
  * constructed by the parser either - the parser builds the real typed leaf AST classes
  * directly instead of going through {@code ISexpr.IToken}, and {@code ISexpr.IFactory}
  * itself isn't actually wired up anywhere in {@code SMT.Configuration}.
+ * <li>{@link Printer.WithLines} has no callers anywhere in the codebase, so it needs its
+ * own direct test to confirm the line-numbering behavior it adds actually works.
  * </ul>
  */
 public class PrinterCoverageTest {
@@ -191,5 +195,45 @@ public class PrinterCoverageTest {
     public void sexprExpr() throws Exception {
         Sexpr.Expr wrapped = new Sexpr.Expr(config.exprFactory.symbol("wrapped"));
         Assert.assertEquals("wrapped", wrapped.toString());
+    }
+
+    /** {@link Printer.WithLines} has no callers anywhere in the codebase; this confirms it
+     * still works - printing a script the same way the base {@link Printer} does, except
+     * with each top-level command prefixed by its 1-based position. Exercises the
+     * {@code Writer} and {@code PrintStream} overloads of the static {@code write()}, plus
+     * the instance {@code newPrinter()}/{@code print()} path - all three must agree. */
+    @Test
+    public void withLines() throws Exception {
+        String text = "((set-logic QF_UF)(declare-fun p () Bool)(assert p))";
+        ISource source = config.smtFactory.createSource(text, "withLines");
+        IParser parser = new org.smtlib.sexpr.Parser(config, source);
+        ICommand.IScript script = parser.parseScript();
+        Assert.assertNotNull(script);
+        List<ICommand> commands = script.commands();
+        Assert.assertEquals(3, commands.size());
+
+        String eol = System.getProperty("line.separator");
+        StringBuilder expected = new StringBuilder("(" + eol);
+        int n = 0;
+        for (ICommand c : commands) {
+            expected.append(++n).append(": ").append(c.toString()).append(eol);
+        }
+        expected.append(")");
+
+        StringWriter sw = new StringWriter();
+        Printer.WithLines.write(sw, script);
+        Assert.assertEquals(expected.toString(), sw.toString());
+
+        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        Printer.WithLines.write(new java.io.PrintStream(baos), script);
+        Assert.assertEquals(expected.toString(), baos.toString());
+
+        // newPrinter() creates a fresh printer of the same (WithLines) type, as IPrinter
+        // promises; print() drives it through the same visitor path as write() above.
+        Printer.WithLines seed = new Printer.WithLines(new StringWriter());
+        StringWriter sw2 = new StringWriter();
+        Printer.WithLines fresh = seed.newPrinter(sw2);
+        fresh.print(script);
+        Assert.assertEquals(expected.toString(), sw2.toString());
     }
 }
