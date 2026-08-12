@@ -1,5 +1,5 @@
 ; check-sat-assuming in V2.6 with a numeral argument (not a symbol or (not symbol))
-(set-info :smt-lib-version "V2.6")
+(set-info :smt-lib-version 2.6)
 (set-logic QF_UF)
 (declare-fun p () Bool)
 (check-sat-assuming ( 1 ))

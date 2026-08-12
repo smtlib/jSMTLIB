@@ -605,8 +605,8 @@ public class SMT {
 						}
 						if (!result.isError() && isSmtlibVersionInfo) {
 							ICommand.Iset_info si = (ICommand.Iset_info) command;
-							if (si.value() instanceof IExpr.IStringLiteral) {
-								smtConfig.smtlib = ((IExpr.IStringLiteral) si.value()).value();
+							if (si.value() instanceof IExpr.IDecimal) {
+								smtConfig.smtlib = "V" + si.value().toString();
 							}
 						}
 					}

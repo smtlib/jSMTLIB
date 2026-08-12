@@ -1,6 +1,6 @@
 ; Tests version error: _ wildcard as a parameter in a structured match pattern
 ; requires SMT-LIB V2.7; bare _ wildcard is tested in err_version_matchWildcard.tst
-(set-info :smt-lib-version "V2.6")
+(set-info :smt-lib-version 2.6)
 (set-logic QF_UF)
 (declare-datatype Tree ((leaf) (node (left Tree) (right Tree))))
 (declare-fun t () Tree)

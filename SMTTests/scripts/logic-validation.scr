@@ -49,7 +49,7 @@ cat > "$_tmpdir/QF_UF.smt2" <<'EOF'
 )
 EOF
 cat > "$_tmpdir/t2.smt2" <<'EOF'
-(set-info :smt-lib-version "V2.5")
+(set-info :smt-lib-version 2.5)
 (set-logic QF_UF)
 EOF
 out=$($SMT_CMD -L "$_tmpdir" --solver test "$_tmpdir/t2.smt2" 2>/dev/null)
@@ -103,7 +103,7 @@ cat > "$_tmpdir/Core.smt2" <<'EOF'
 )
 EOF
 cat > "$_tmpdir/t4.smt2" <<'EOF'
-(set-info :smt-lib-version "V2.5")
+(set-info :smt-lib-version 2.5)
 (set-logic QF_UF)
 EOF
 out=$($SMT_CMD -L "$_tmpdir" --solver test "$_tmpdir/t4.smt2" 2>/dev/null)
