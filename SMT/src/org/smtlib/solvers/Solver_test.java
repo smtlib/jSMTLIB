@@ -190,8 +190,21 @@ public class Solver_test implements ISolver {
 		if (logicSet == null) {
 			return smtConfig.responseFactory.error("The logic must be set before a check-sat command is issued");
 		}
-		checkSatStatus = smtConfig.responseFactory.unknown();
+		checkSatStatus = statusResult();
 		return checkSatStatus;
+	}
+
+	/** Since this solver never actually proves anything, check-sat/check-sat-assuming never
+	 * error out on a status mismatch the way a real solver is expected to; instead, if :status
+	 * has been declared via set-info, they adopt that value (sat/unsat/unknown) as their own
+	 * result, otherwise returning unknown. This lets tests exercise the get-model/get-value/
+	 * get-proof/get-unsat-core/get-unsat-assumptions/get-assignment preconditions (which all
+	 * depend on the check-sat result) without a real proving solver. */
+	private IResponse statusResult() {
+		IAttributeValue status = options.get(Utils.STATUS.value());
+		if (smtConfig.responseFactory.sat().equals(status)) return smtConfig.responseFactory.sat();
+		if (smtConfig.responseFactory.unsat().equals(status)) return smtConfig.responseFactory.unsat();
+		return smtConfig.responseFactory.unknown();
 	}
 	
 	@Override
@@ -201,31 +214,14 @@ public class Solver_test implements ISolver {
 			return smtConfig.responseFactory.error("The logic must be set before a check-sat-assuming command is issued");
 		}
 		for (IExpr e: exprs) {
-			if (e instanceof IFcnExpr && ((IFcnExpr)e).args().size() != 0) {
-				IFcnExpr f = (IFcnExpr)e;
-				if (f.args().size() != 1 || !Utils.NOT.equals(f.head())) {
-					return smtConfig.responseFactory.error("Each element of a check-sat-assuming command must be either p or (not p), where p is a Bool constant (required in V2.6 and earlier)");
-				}
-				e = f.args().get(0);
-			}
-			if (!(e instanceof IIdentifier)) {
-				return smtConfig.responseFactory.error("Expected a simple identifier: " + e); // FIXME - use pretty printer?
-			}
 			List<IResponse> responses = TypeChecker.check(symTable, e);
 			if (!responses.isEmpty()) return responses.get(0); // FIXME - return all?
-			List<SymbolTable.Entry> entries = symTable.lookup((IIdentifier)e).get(0);
-			if (entries.size() != 1) {
-				return smtConfig.responseFactory.error("No zero-arity declaration of symbol " + e); // FIXME - use pretty printer?
-			}
-			if (!entries.get(0).sort.isBool()) {
-				return smtConfig.responseFactory.error("Expected a Bool symbol: " + e + " has sort " + entries.get(0).sort); // FIXME - use pretty printer?
-			}
 		}
 		
-		checkSatStatus = smtConfig.responseFactory.unknown();
+		checkSatStatus = statusResult();
 		return checkSatStatus;
 	}
-	
+
 	@Override
 	public IResponse get_value(IExpr... terms) {
 		TypeChecker tc = new TypeChecker(symTable);
@@ -252,7 +248,7 @@ public class Solver_test implements ISolver {
 		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSIGNMENTS)))) {
 			return smtConfig.responseFactory.error("The get-assignment command is only valid if :produce-assignments has been enabled");
 		}
-		if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
+		if (!smtConfig.responseFactory.sat().equals(checkSatStatus) && !smtConfig.responseFactory.unknown().equals(checkSatStatus)) {
 			return smtConfig.responseFactory.error("The get-assignment command is only valid immediately after check-sat returned sat or unknown");
 		}
 		return smtConfig.responseFactory.unsupported();
@@ -263,7 +259,7 @@ public class Solver_test implements ISolver {
 		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_PROOFS)))) {
 			return smtConfig.responseFactory.error("The get-proof command is only valid if :produce-proofs has been enabled");
 		}
-		if (checkSatStatus != smtConfig.responseFactory.unsat()) {
+		if (!smtConfig.responseFactory.unsat().equals(checkSatStatus)) {
 			return smtConfig.responseFactory.error("The get-proof command is only valid immediately after check-sat returned unsat");
 		}
 		return smtConfig.responseFactory.unsupported();
@@ -274,7 +270,7 @@ public class Solver_test implements ISolver {
 		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
 			return smtConfig.responseFactory.error("The get-model command is only valid if :produce-models has been enabled");
 		}
-		if (checkSatStatus == smtConfig.responseFactory.unsat()) {
+		if (!smtConfig.responseFactory.sat().equals(checkSatStatus) && !smtConfig.responseFactory.unknown().equals(checkSatStatus)) {
 			return smtConfig.responseFactory.error("The get-model command is only valid immediately after check-sat returned sat or unknown");
 		}
 		return smtConfig.responseFactory.unsupported();
@@ -285,7 +281,7 @@ public class Solver_test implements ISolver {
         if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_UNSAT_ASSUMPTIONS)))) {
             return smtConfig.responseFactory.error("The get-unsat-assumptions command is only valid if :produce-unsat-assumptions has been enabled");
         }
-        if (checkSatStatus != smtConfig.responseFactory.unsat()) {
+        if (!smtConfig.responseFactory.unsat().equals(checkSatStatus)) {
             return smtConfig.responseFactory.error("The get-unsat-assumptions command is only valid immediately after check-sat-assumptions returned unsat");
         }
         return smtConfig.responseFactory.unsupported();
@@ -296,7 +292,7 @@ public class Solver_test implements ISolver {
         if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_UNSAT_CORES)))) {
             return smtConfig.responseFactory.error("The get-unsat-core command is only valid if :produce-unsat-cores has been enabled");
         }
-        if (checkSatStatus != smtConfig.responseFactory.unsat()) {
+        if (!smtConfig.responseFactory.unsat().equals(checkSatStatus)) {
             return smtConfig.responseFactory.error("The get-unsat-core command is only valid immediately after check-sat returned unsat");
         }
         return smtConfig.responseFactory.unsupported();
