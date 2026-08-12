@@ -1,0 +1,9 @@
+success
+success
+success
+success
+success
+success
+success
+success
+(error "The first argument of the store function should be an Array sort, not (A I V)")

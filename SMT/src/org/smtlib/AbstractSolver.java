@@ -327,8 +327,19 @@ public class AbstractSolver implements ISolver {
 		return set_option_impl(key, value);
 	}
 
-	/** Override in subclasses to handle solver-specific options. Channel options are handled by set_option and never reach here. */
+	/** Override in subclasses to handle solver-specific options. Channel options are handled by set_option and never reach here.
+	 *  This default handles :print-success client-side (see {@link #checkPrintSuccess}):
+	 *  the solver process is always left with :print-success true at the wire level (see
+	 *  start()/sendCommand()) -- without that, we'd get no acknowledgment at all for other
+	 *  commands once a script turns it off -- so it is answered entirely client-side,
+	 *  matching the local smtConfig.nosuccess flag, and is never itself forwarded to the
+	 *  solver process. A subclass that overrides set_option_impl for other reasons (e.g.
+	 *  to also track option values locally) needs its own checkPrintSuccess call, same as
+	 *  it always has -- this default is only reached by a subclass that doesn't override
+	 *  set_option_impl at all. */
 	protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
+		IResponse r = checkPrintSuccess(smtConfig, key, value);
+		if (r != null) return r;
 		return sendCommand(smtConfig.commandFactory.set_option(key, value));
 	}
 
@@ -519,6 +530,10 @@ public class AbstractSolver implements ISolver {
 	/** @see org.smtlib.ISolver#get_option(IExpr.IKeyword)*/
 	@Override
 	public IResponse get_option(IKeyword option){
+		// :print-success is answered client-side (see set_option()); the solver process
+		// itself is always left at :print-success true, so asking it directly would
+		// always report true regardless of the script's own nosuccess state.
+		if (option.equals(printSuccess)) return smtConfig.nosuccess ? Utils.FALSE : Utils.TRUE;
 		return sendCommand(smtConfig.commandFactory.get_option(option));
 	}
 

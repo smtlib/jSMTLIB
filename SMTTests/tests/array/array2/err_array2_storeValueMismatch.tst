@@ -1,0 +1,8 @@
+; store's third argument must match the array's value sort
+(set-logic QF_AX)
+(declare-sort I 0)
+(declare-sort V 0)
+(declare-fun i () I)
+(declare-fun v () V)
+(declare-fun a () (Array I V))
+(assert (= i (store a i i)))

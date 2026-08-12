@@ -1,0 +1,4 @@
+; a quantifier pattern must not reference an undeclared symbol
+(set-logic AUFLIA)
+(declare-fun le (Int Int) Bool)
+(assert (forall ((x Int)(y Int)(z Int)) (! (=> (and (le x y)(le y z)) (le x z))  :pattern ((le yy yy))  )))

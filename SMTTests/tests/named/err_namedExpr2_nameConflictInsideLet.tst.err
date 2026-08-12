@@ -1,0 +1,2 @@
+(assert (let ((r true)) (! r :named R)))
+                                    ^

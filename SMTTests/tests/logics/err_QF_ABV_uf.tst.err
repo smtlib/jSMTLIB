@@ -1,0 +1,2 @@
+(declare-fun f ((_ BitVec 8)) (_ BitVec 8))
+             ^

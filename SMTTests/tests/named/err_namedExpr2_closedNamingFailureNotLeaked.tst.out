@@ -1,0 +1,4 @@
+success
+success
+(error "The expression being named is not closed - this symbol is a variable: r")
+success

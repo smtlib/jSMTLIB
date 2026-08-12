@@ -1,0 +1,2 @@
+success
+(error "line 3 column 26: invalid declaration, builtin symbol store")

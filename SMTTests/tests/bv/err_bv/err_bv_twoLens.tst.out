@@ -1,0 +1,2 @@
+success
+(error "A bit-vector sort must have exactly one numeral")

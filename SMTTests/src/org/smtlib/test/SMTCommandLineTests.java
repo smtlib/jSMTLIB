@@ -410,10 +410,12 @@ public class SMTCommandLineTests {
     }
 
     @Test public void solverNoExecutable() {
-        // "nosuchsolver" has no Solver_nosuchsolver class and no properties entry,
-        // so startSolver cannot find an executable or command for it.
+        // "nosuchsolver" has no Solver_nosuchsolver class and no properties entry, so
+        // startSolver defaults to treating the solver name itself as the executable
+        // (resolved against SMT_SOLVER_DIR) -- which then fails to launch since no such
+        // program exists. Match on a path-independent substring of the failure.
         assertError(run("--solver", "nosuchsolver", "--text", "(exit)"),
-            "Neither an executable nor a command specified for a solver named nosuchsolver");
+            "nosuchsolver failed to start");
     }
 
     // -----------------------------------------------------------------------

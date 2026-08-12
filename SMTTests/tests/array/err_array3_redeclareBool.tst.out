@@ -1,0 +1,2 @@
+success
+(error "The identifier is already declared to be a sort: Bool")

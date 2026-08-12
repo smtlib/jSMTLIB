@@ -1,0 +1,4 @@
+success
+success
+success
+(error "Error while checking sort abbreviation: New sorts are not allowed in this logic")

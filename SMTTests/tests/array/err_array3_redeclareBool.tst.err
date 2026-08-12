@@ -1,0 +1,2 @@
+(declare-sort Bool 0)
+              ^^^^

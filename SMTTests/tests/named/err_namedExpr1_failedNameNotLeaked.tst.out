@@ -1,0 +1,6 @@
+success
+success
+success
+success
+(error "Symbol P is already defined")
+(error "Unknown constant symbol PP")

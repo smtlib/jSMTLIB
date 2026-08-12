@@ -1,0 +1,4 @@
+success
+success
+success
+(error "Declarations of uninterpreted functions are not allowed in this logic")

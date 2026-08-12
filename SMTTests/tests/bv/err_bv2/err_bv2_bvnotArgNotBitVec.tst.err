@@ -1,0 +1,2 @@
+(assert (= (bvnot true) #b1011))
+                  ^^^^

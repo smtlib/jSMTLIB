@@ -1,0 +1,5 @@
+; QF_NRA forbids quantifiers
+(set-logic QF_NRA)
+(declare-const a Real)
+(declare-const b Real)
+(assert (forall ((z Real)) (>= z 0.0)))

@@ -1,0 +1,5 @@
+; QF_LRA forbids uninterpreted function declarations
+(set-logic QF_LRA)
+(declare-const x Real)
+(declare-const y Real)
+(declare-fun g (Real) Real)

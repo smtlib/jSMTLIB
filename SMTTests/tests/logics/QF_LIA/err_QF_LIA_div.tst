@@ -1,0 +1,6 @@
+; div is nonlinear (covers Logic.isLinearInteger div branch)
+(set-logic QF_LIA)
+(declare-const x Int)
+(declare-const y Int)
+(declare-const z Int)
+(assert (= z (div x y)))

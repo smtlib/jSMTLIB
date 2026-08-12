@@ -1,0 +1,5 @@
+success
+success
+success
+success
+(error "lhs must be a symbol or a difference")

@@ -1,0 +1,6 @@
+; QF_LIA forbids quantifiers
+(set-logic QF_LIA)
+(declare-const x Int)
+(declare-const y Int)
+(declare-const z Int)
+(assert (forall ((a Int)) (>= a 0)))

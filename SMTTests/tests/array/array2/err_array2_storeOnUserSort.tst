@@ -1,0 +1,10 @@
+; store applied to a user-declared 2-arity sort that is not the Array theory sort
+(set-logic QF_AX)
+(declare-sort I 0)
+(declare-sort V 0)
+(declare-fun i () I)
+(declare-fun v () V)
+(declare-fun a () (Array I V))
+(declare-sort A 2)
+(declare-fun aa () (A I V))
+(assert (= aa (store aa i v)))

@@ -1,0 +1,6 @@
+; mod is nonlinear (covers Logic.isLinearInteger mod branch)
+(set-logic QF_LIA)
+(declare-const x Int)
+(declare-const y Int)
+(declare-const z Int)
+(assert (= z (mod x y)))

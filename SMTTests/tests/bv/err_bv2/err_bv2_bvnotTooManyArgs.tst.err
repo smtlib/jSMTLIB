@@ -1,0 +1,2 @@
+(assert (= (bvnot x y) #b1011))
+            ^^^^^

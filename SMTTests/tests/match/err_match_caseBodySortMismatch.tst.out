@@ -1,0 +1,4 @@
+success
+success
+success
+(error "Match cases have incompatible sorts: Bool vs. Int")

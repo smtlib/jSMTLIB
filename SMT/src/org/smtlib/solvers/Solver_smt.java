@@ -19,8 +19,9 @@ import org.smtlib.impl.Pos;
  *  specific deviation — a Bool-quantifier workaround, see {@link
  *  org.smtlib.solvers.Printer}), plus {@link #start()}/{@link #exit()} (process
  *  lifecycle, which AbstractSolver deliberately leaves unimplemented) and {@link
- *  #set_option_impl(IKeyword,IAttributeValue)} (real :print-success/:verbosity
- *  special-casing). Every other ISolver command — including get_assertions/get_value/
+ *  #set_option_impl(IKeyword,IAttributeValue)} (real :verbosity special-casing;
+ *  :print-success is handled generically by AbstractSolver itself). Every other
+ *  ISolver command — including get_assertions/get_value/
  *  get_assignment/get_unsat_core/get_unsat_assumptions, whose precondition checks and
  *  structured-response parsing now live in AbstractSolver — is inherited unchanged.
  *  <p>
@@ -65,7 +66,7 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 	@Override
 	public IResponse start() {
 		try {
-			solverProcess.start(true);
+			solverProcess.start(false);
 			if (smtConfig.solverVerbosity > 0) solverProcess.sendNoListen("(set-option :verbosity ",Integer.toString(smtConfig.solverVerbosity),")");
 			//if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
 			// Can't turn off printing success, or we get no feedback
@@ -99,18 +100,13 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 
 	@Override
 	protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
+		// :print-success and the sendCommand fallback are handled by
+		// AbstractSolver.set_option_impl(); only :verbosity is a real local addition here.
 		String option = key.value();
-		if (Utils.PRINT_SUCCESS.equals(option)) {
-			if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
-				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
-			}
-			// Already sent during start(); don't re-send.
-			return smtConfig.responseFactory.success();
-		}
 		if (Utils.VERBOSITY.equals(option)) {
 			smtConfig.verbose = (value instanceof INumeral) ? ((INumeral)value).intValue() : 0;
 		}
-		return sendCommand(smtConfig.commandFactory.set_option(key, value));
+		return super.set_option_impl(key, value);
 	}
 
 }

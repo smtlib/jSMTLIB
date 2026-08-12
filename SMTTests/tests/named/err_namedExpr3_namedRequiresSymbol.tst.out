@@ -1,0 +1,2 @@
+success
+(error "Expected a symbol after :named")

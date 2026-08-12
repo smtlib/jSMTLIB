@@ -1,0 +1,6 @@
+; QF_IDL forbids quantifiers
+(set-logic QF_IDL)
+(declare-const x Int)
+(declare-const y Int)
+(declare-const z Int)
+(assert (forall ((a Int)) (>= a 0)))

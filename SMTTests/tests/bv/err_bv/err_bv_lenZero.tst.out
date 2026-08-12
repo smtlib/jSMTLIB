@@ -1,0 +1,2 @@
+success
+(error "A bit-vector sort must have a length of at least 1")

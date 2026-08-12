@@ -1,0 +1,4 @@
+success
+success
+success
+(error "The exponentiation operator ** is not allowed in the QF_NIA logic")

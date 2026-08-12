@@ -1,0 +1,5 @@
+; Array is not a declared sort under QF_UF (no array theory in scope)
+(set-logic QF_UF)
+(declare-sort I 0)
+(declare-sort V 0)
+(declare-fun a () (Array I V))

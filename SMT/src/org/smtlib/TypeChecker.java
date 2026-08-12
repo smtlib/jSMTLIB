@@ -839,7 +839,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			int size = ((INumeral) e.indices().get(0)).intValue();
 			BigInteger value = new BigInteger(pname.substring(2));
 			if (value.bitLength() > size) {
-				error("The value of the bitvector constant is too large for the given size (" + value.bitLength() + " vs. " + size + "bits)",e.pos());
+				error("The value of the bitvector constant is too large for the given size (" + value.bitLength() + " vs. " + size + " bits)",e.pos());
 				return null;
 			}
 			ISort s = makeBitVec(size);

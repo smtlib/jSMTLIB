@@ -916,9 +916,12 @@ public class SMT {
 			if (command != null && executable != null) command[0] = executable;
 			
 			if (executable == null && command == null) {
-				error("Neither an executable nor a command specified for a solver named " + solvername );
-				usage();
-				return null;
+				// No jsmtlib.properties entry for this solver name at all: default to
+				// treating the solver name itself as the executable, resolved against
+				// SMT_SOLVER_DIR like any configured .exec value would be. This lets a
+				// solver be used just by name (e.g. --solver cvc5-1.3.2) without requiring
+				// a properties entry.
+			    executable = resolveExecutablePath(solvername, System.getenv("SMT_SOLVER_DIR"));
 			}
 		} else {
 			adapterClass = org.smtlib.solvers.Solver_test.class;

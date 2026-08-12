@@ -1,0 +1,5 @@
+success
+success
+success
+success
+(error "Mismatched sorts of arguments: (_ BitVec 8) vs. (_ BitVec 4)")

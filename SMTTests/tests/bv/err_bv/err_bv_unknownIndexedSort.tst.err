@@ -1,0 +1,2 @@
+(declare-fun k () (_ BitVecx 0))
+                  ^^^^^^^^^^^^^

@@ -1,0 +1,2 @@
+(assert (= (bvand x false) #b111))
+                    ^^^^^

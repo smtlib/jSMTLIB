@@ -1,0 +1,7 @@
+success
+success
+success
+success
+success
+success
+(error "The second argument of the store function must match the array index sort: V vs. I")

@@ -1,0 +1,5 @@
+success
+success
+success
+success
+(error "Expected exactly two numerals in an extract identifier")

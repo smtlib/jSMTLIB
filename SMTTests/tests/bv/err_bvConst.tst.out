@@ -1,2 +1,2 @@
 success
-(error "The value of the bitvector constant is too large for the given size (4 vs. 3bits)")
+(error "The value of the bitvector constant is too large for the given size (4 vs. 3 bits)")
