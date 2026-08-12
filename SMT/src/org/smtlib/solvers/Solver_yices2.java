@@ -128,6 +128,46 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
 		}
 	}
 
+	/** Pushed down from Solver_smt: older Yices output used legacy {@code bvVALUE[WIDTH]}
+	 *  bitvector literal syntax instead of standard {@code #bBITS}, and could emit
+	 *  multiple error fragments in one response. Moved here (rather than kept as a
+	 *  blanket default for every Solver_smt subclass) so a genuinely compliant solver
+	 *  isn't defensively second-guessed; kept for yices2 until it's confirmed unneeded
+	 *  against a current build. */
+	@Override
+	protected IResponse parseResponse(String response) {
+		try {
+			Pattern oldbv = Pattern.compile("bv([0-9]+)\\[([0-9]+)\\]");
+			Matcher mm = oldbv.matcher(response);
+			while (mm.find()) {
+				long val = Long.parseLong(mm.group(1));
+				int base = Integer.parseInt(mm.group(2));
+				String bits = "";
+				for (int i=0; i<base; i++) { bits = ((val&1)==0 ? "0" : "1") + bits; val = val >>> 1; }
+				response = response.substring(0,mm.start()) + "#b" + bits + response.substring(mm.end(),response.length());
+				mm = oldbv.matcher(response);
+			}
+			if (response.contains("error")) {
+				// returns an s-expr (always?)
+				Pattern p = Pattern.compile("\\p{Space}*\\(\\p{Blank}*error\\p{Blank}+\"(([\\p{Print}\\p{Space}&&[^\"\\\\]]|\\\\\")*)\"\\p{Blank}*\\)");
+				Matcher m = p.matcher(response);
+				String concat = "";
+				while (m.lookingAt()) {
+					if (!concat.isEmpty()) concat = concat + "; ";
+					String matched = m.group(1);
+					concat = concat + matched;
+					m.region(m.end(0),m.regionEnd());
+				}
+				if (!concat.isEmpty()) response = concat;
+				return smtConfig.responseFactory.error(response);
+			}
+			responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source(response,null));
+			return responseParser.parseResponse(response);
+		} catch (ParserException e) {
+			return smtConfig.responseFactory.error("ParserException while parsing response: " + response + " " + e);
+		}
+	}
+
 	@Override
 	public IResponse get_option(IKeyword key) {
 		IResponse r = super.get_option(key);

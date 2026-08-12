@@ -5,37 +5,38 @@
  */
 package org.smtlib.solvers;
 
-// Items not implemented:
-//   attributed expressions
-//   get-values get-assignment get-proof get-unsat-core
-//   some error detection and handling
-
-import java.io.IOException;
 import java.io.StringWriter;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.smtlib.*;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.INumeral;
-import org.smtlib.IParser.ParserException;
 import org.smtlib.impl.Pos;
 
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into SMT
- *  commands over a solver process speaking plain SMT-LIB. It is otherwise a concrete
- *  instance of {@link AbstractSolver}: only {@link #translate(INode)} and {@link
- *  #parseResponse(String)} are overridden (real, solver-specific deviations from strict
- *  compliance), plus {@link #start()}/{@link #exit()} (process lifecycle, which
- *  AbstractSolver deliberately leaves unimplemented) and the handful of commands whose
- *  structured response AbstractSolver has no generic way to build. */
+ *  commands over a solver process speaking plain SMT-LIB, for a solver assumed to be
+ *  fully SMT-LIB compliant. It is otherwise a concrete, silent inheritor of {@link
+ *  AbstractSolver}: only {@link #translate(INode)} is overridden (a real, solver-
+ *  specific deviation — a Bool-quantifier workaround, see {@link
+ *  org.smtlib.solvers.Printer}), plus {@link #start()}/{@link #exit()} (process
+ *  lifecycle, which AbstractSolver deliberately leaves unimplemented) and {@link
+ *  #set_option_impl(IKeyword,IAttributeValue)} (real :print-success/:verbosity
+ *  special-casing). Every other ISolver command — including get_assertions/get_value/
+ *  get_assignment/get_unsat_core/get_unsat_assumptions, whose precondition checks and
+ *  structured-response parsing now live in AbstractSolver — is inherited unchanged.
+ *  <p>
+ *  Subclasses of a genuinely non-compliant solver should override {@link
+ *  #parseResponse(String)} for their own quirks rather than assuming this class's
+ *  behavior; see {@link Solver_yices2#parseResponse(String)} for an example (legacy
+ *  bitvector literal syntax, multi-fragment error text) that used to live here as a
+ *  blanket default for every Solver_smt subclass, which was more defensive than this
+ *  fully-compliant-by-default adapter should assume. */
 public class Solver_smt extends AbstractSolver implements ISolver {
 
 	/** The command-line arguments for launching the solver */
 	String cmds[];
 
-	/** The parser that parses responses from the solver */
+	/** The parser that parses responses from the solver; also used by subclasses that
+	 *  override {@link #parseResponse(String)}. */
 	protected org.smtlib.sexpr.Parser responseParser;
 
 	/** Creates an instance of the adapter */
@@ -88,88 +89,12 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 	}
 
 	@Override
-	protected IResponse parseResponse(String response) {
-		try {
-			//FIXME
-			Pattern oldbv = Pattern.compile("bv([0-9]+)\\[([0-9]+)\\]");
-			Matcher mm = oldbv.matcher(response);
-			while (mm.find()) {
-				long val = Long.parseLong(mm.group(1));
-				int base = Integer.parseInt(mm.group(2));
-				String bits = "";
-				for (int i=0; i<base; i++) { bits = ((val&1)==0 ? "0" : "1") + bits; val = val >>> 1; }
-				response = response.substring(0,mm.start()) + "#b" + bits + response.substring(mm.end(),response.length());
-				mm = oldbv.matcher(response);
-			}
-			if (response.contains("error")) {
-				// returns an s-expr (always?)
-				// FIXME - (1) the {Print} also needs {Space}; (2) err_getValueTypes.tst returns a non-error s-expr and then an error s-expr - this fails for that case
-				//Pattern p = Pattern.compile("\\p{Space}*\\(\\p{Blank}*error\\p{Blank}+\"(([\\p{Space}\\p{Print}^[\\\"\\\\]]|\\\\\")*)\"\\p{Blank}*\\)\\p{Space}*");
-				Pattern p = Pattern.compile("\\p{Space}*\\(\\p{Blank}*error\\p{Blank}+\"(([\\p{Print}\\p{Space}&&[^\"\\\\]]|\\\\\")*)\"\\p{Blank}*\\)");
-				Matcher m = p.matcher(response);
-				String concat = "";
-				while (m.lookingAt()) {
-					if (!concat.isEmpty()) concat = concat + "; ";
-					String matched = m.group(1);
-					concat = concat + matched;
-					m.region(m.end(0),m.regionEnd());
-				}
-				if (!concat.isEmpty()) response = concat;
-				return smtConfig.responseFactory.error(response);
-			}
-			responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source(response,null));
-			return responseParser.parseResponse(response);
-		} catch (ParserException e) {
-			return smtConfig.responseFactory.error("ParserException while parsing response: " + response + " " + e);
-		}
-	}
-
-	@Override
 	public IResponse exit() {
 		IResponse response = sendCommand(smtConfig.commandFactory.exit());
 		solverProcess.exit();
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended SMT ");
 		solverProcess = null;
 		return response;
-	}
-
-	@Override
-	public IResponse get_assertions() {
-		// FIXME - do we really want to call get-option here? it involves going to the solver?
-		try {
-			StringBuilder sb = new StringBuilder();
-			String s;
-			int parens = 0;
-			do {
-				s = solverProcess.sendAndListen("(get-assertions)\n");
-				int p = -1;
-				while (( p = s.indexOf('(',p+1)) != -1) parens++;
-				p = -1;
-				while (( p = s.indexOf(')',p+1)) != -1) parens--;
-				sb.append(s.replace('\n',' ').replace("\r",""));
-			} while (parens > 0);
-			s = sb.toString();
-			org.smtlib.sexpr.Parser p = new org.smtlib.sexpr.Parser(smtConfig,new org.smtlib.impl.Pos.Source(s,null));
-			List<IExpr> exprs = new LinkedList<IExpr>();
-			try {
-				if (p.isLP()) {
-					p.parseLP();
-					while (!p.isRP() && !p.isEOD()) {
-						IExpr e = p.parseExpr();
-						exprs.add(e);
-					}
-					if (p.isRP()) {
-						p.parseRP();
-						if (p.isEOD()) return smtConfig.responseFactory.get_assertions_response(exprs);
-					}
-				}
-			} catch (Exception e ) {
-				// continue - fall through
-			}
-			return smtConfig.responseFactory.error("Unexpected output from the solver: " + s);
-		} catch (IOException e) {
-			return smtConfig.responseFactory.error("IOException while reading solver's reponse");
-		}
 	}
 
 	@Override
@@ -186,26 +111,6 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 			smtConfig.verbose = (value instanceof INumeral) ? ((INumeral)value).intValue() : 0;
 		}
 		return sendCommand(smtConfig.commandFactory.set_option(key, value));
-	}
-
-	@Override
-	public IResponse get_proof() {
-		return sendCommand(smtConfig.commandFactory.get_proof());
-	}
-
-	@Override
-	public IResponse get_unsat_core() {
-		return sendCommand(smtConfig.commandFactory.get_unsat_core());
-	}
-
-	@Override
-	public IResponse get_assignment() {
-		return sendCommand(smtConfig.commandFactory.get_assignment());
-	}
-
-	@Override
-	public IResponse get_value(IExpr... terms) {
-		return sendCommand(smtConfig.commandFactory.get_value(java.util.Arrays.asList(terms)));
 	}
 
 }
