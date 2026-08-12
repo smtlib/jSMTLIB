@@ -12,49 +12,32 @@ package org.smtlib.solvers;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.smtlib.*;
-import org.smtlib.ICommand.Ideclare_fun;
-import org.smtlib.ICommand.Ideclare_sort;
-import org.smtlib.ICommand.Idefine_fun;
-import org.smtlib.ICommand.Idefine_sort;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.INumeral;
-import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.impl.Pos;
 
-/** This class is an adapter that takes the SMT-LIB ASTs and translates them into SMT commands */
+/** This class is an adapter that takes the SMT-LIB ASTs and translates them into SMT
+ *  commands over a solver process speaking plain SMT-LIB. It is otherwise a concrete
+ *  instance of {@link AbstractSolver}: only {@link #translate(INode)} and {@link
+ *  #parseResponse(String)} are overridden (real, solver-specific deviations from strict
+ *  compliance), plus {@link #start()}/{@link #exit()} (process lifecycle, which
+ *  AbstractSolver deliberately leaves unimplemented) and the handful of commands whose
+ *  structured response AbstractSolver has no generic way to build. */
 public class Solver_smt extends AbstractSolver implements ISolver {
-		
-	/** The command-line arguments for launching the solver */
-	String cmds[]; 
 
-	/** The object that interacts with external processes */
-	protected SolverProcess solverProcess;
-	
+	/** The command-line arguments for launching the solver */
+	String cmds[];
+
 	/** The parser that parses responses from the solver */
 	protected org.smtlib.sexpr.Parser responseParser;
-	
-	/** The checkSatStatus returned by check-sat, if sufficiently recent, otherwise null */
-	protected /*@Nullable*/ IResponse checkSatStatus = null;
-	
-	@Override
-	public /*@Nullable*/IResponse checkSatStatus() { return checkSatStatus; }
 
-//	// FIXME - get rid of this?
-//	/** Map that keeps current values of options */
-//	protected Map<String,IAttributeValue> options = new HashMap<String,IAttributeValue>();
-//	{ 
-//		options.putAll(Utils.defaults);
-//	}
-	
 	/** Creates an instance of the adapter */
 	public Solver_smt(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
 		this.smtConfig = smtConfig;
@@ -69,15 +52,15 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 		solverProcess = new SolverProcess(cmds,prompt(),smtConfig.logfile); // FIXME - what prompt?
 		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
 	}
-	
+
 	public String[] cmd(String exec) {
 		return new String[] { exec };
 	}
-	
+
 	public String prompt() {
 		return "\n";
 	}
-	
+
 	@Override
 	public IResponse start() {
 		try {
@@ -93,39 +76,18 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
 		}
 	}
-	
-	/** Translates an S-expression into SMT syntax */
+
+	/** Translates an S-expression into SMT syntax; this solver uses the standard
+	 *  S-expression concrete syntax except for a Bool-quantifier workaround (see
+	 *  {@link org.smtlib.solvers.Printer}). */
+	@Override
 	protected String translate(INode sexpr) throws IVisitor.VisitorException {
-		return translateSMT(sexpr);
-	}
-	
-	/** Translates an S-expression into standard SMT syntax */
-	protected String translateSMT(INode sexpr) throws IVisitor.VisitorException {
 		StringWriter sw = new StringWriter();
 		org.smtlib.solvers.Printer.write(sw,sexpr);
 		return sw.toString();
 	}
-	
-	public IResponse sendCommand(ICommand cmd) {
-		String translatedCmd = null;
-		try {
-			translatedCmd = translate(cmd);
-			return parseResponse(solverProcess.sendAndListen(translatedCmd,"\n"));
-		} catch (IOException e) {
-			return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
-		} catch (IVisitor.VisitorException e) {
-			return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
-		}
-	}
-	
-	public IResponse sendCommand(String cmd) {
-		try {
-			return parseResponse(solverProcess.sendAndListen(cmd,"\n"));
-		} catch (IOException e) {
-			return smtConfig.responseFactory.error("Error writing to solver: " + cmd + " " + e);
-		}
-	}
-	
+
+	@Override
 	protected IResponse parseResponse(String response) {
 		try {
 			//FIXME
@@ -164,36 +126,16 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 
 	@Override
 	public IResponse exit() {
-			IResponse response = sendCommand("(exit)");
-			solverProcess.exit();
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended SMT ");
-			solverProcess = null;
-			return response;
-	}
-	
-	public void forceExit() {
-		if (solverProcess != null) solverProcess.exit();
-		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended Z3 forcibly");
+		IResponse response = sendCommand(smtConfig.commandFactory.exit());
+		solverProcess.exit();
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended SMT ");
+		solverProcess = null;
+		return response;
 	}
 
-
-
-	@Override
-	public IResponse assertExpr(IExpr sexpr) {
-		try {
-			return sendCommand("(assert " + translate(sexpr) + ")");
-		} catch (IVisitor.VisitorException e) {
-			return smtConfig.responseFactory.error("Failed to assert expression: " + e + " " + sexpr);
-		} catch (Exception e) {
-			return smtConfig.responseFactory.error("Failed to assert expression: " + e + " " + sexpr);
-		}
-	}
-	
 	@Override
 	public IResponse get_assertions() {
 		// FIXME - do we really want to call get-option here? it involves going to the solver?
-		
-		// FIXME - try sendCOmmand
 		try {
 			StringBuilder sb = new StringBuilder();
 			String s;
@@ -218,7 +160,7 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 					}
 					if (p.isRP()) {
 						p.parseRP();
-						if (p.isEOD()) return smtConfig.responseFactory.get_assertions_response(exprs); 
+						if (p.isEOD()) return smtConfig.responseFactory.get_assertions_response(exprs);
 					}
 				}
 			} catch (Exception e ) {
@@ -229,44 +171,6 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 			return smtConfig.responseFactory.error("IOException while reading solver's reponse");
 		}
 	}
-	
-
-
-	@Override
-	public IResponse check_sat() {
-		IResponse res;
-		try {
-			// Try sendCommand
-			String s = solverProcess.sendAndListen("(check-sat)\n");
-			//smtConfig.log.logDiag("HEARD: " + s);  // FIXME - detect errors - parseResponse?
-			
-			if (s.contains("unsat")) res = smtConfig.responseFactory.unsat();
-			else if (s.contains("sat")) res = smtConfig.responseFactory.sat();
-			else res = smtConfig.responseFactory.unknown();
-			checkSatStatus = res;
-		} catch (IOException e) {
-			res = smtConfig.responseFactory.error("Failed to check-sat");
-		}
-		return res;
-	}
-
-	@Override
-	public IResponse pop(int number) {
-	    return sendCommand("(pop " + number + ")");
-	}
-
-	@Override
-	public IResponse push(int number) {
-		return sendCommand("(push " + number + ")");
-	}
-
-	@Override
-	public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
-		// FIXME - discrimninate among logics
-		
-		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#set-logic " + logicName);
-		return sendCommand("(set-logic " + logicName + ")");
-	}
 
 	@Override
 	protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
@@ -275,84 +179,33 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 			if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
 				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
 			}
+			// Already sent during start(); don't re-send.
+			return smtConfig.responseFactory.success();
 		}
 		if (Utils.VERBOSITY.equals(option)) {
 			smtConfig.verbose = (value instanceof INumeral) ? ((INumeral)value).intValue() : 0;
 		}
-		if (!Utils.PRINT_SUCCESS.equals(option)) {
-			return sendCommand(new org.smtlib.command.C_set_option(key, value));
-		} else {
-			return smtConfig.responseFactory.success();
-		}
+		return sendCommand(smtConfig.commandFactory.set_option(key, value));
 	}
 
 	@Override
-	public IResponse get_option(IKeyword key) {
-		return sendCommand(new org.smtlib.command.C_get_option(key));
-	}
-
-	@Override
-	public IResponse get_info(IKeyword key) {
-		return sendCommand(new org.smtlib.command.C_get_info(key));
-	}
-	
-	@Override
-	public IResponse set_info(IKeyword key, IAttributeValue value) {
-		return sendCommand(new org.smtlib.command.C_set_info(key,value));
-	}
-
-
-	@Override
-	public IResponse declare_fun(Ideclare_fun cmd) {
-		return sendCommand(cmd);
-	}
-
-	@Override
-	public IResponse define_fun(Idefine_fun cmd) {
-		return sendCommand(cmd);
-	}
-
-	@Override
-	public IResponse declare_sort(Ideclare_sort cmd) {
-		return sendCommand(cmd);
-	}
-
-	@Override
-	public IResponse define_sort(Idefine_sort cmd) {
-		return sendCommand(cmd);
-	}
-	
-	@Override 
 	public IResponse get_proof() {
-		return sendCommand("(get-proof)");
+		return sendCommand(smtConfig.commandFactory.get_proof());
 	}
 
-	@Override 
+	@Override
 	public IResponse get_unsat_core() {
-		return sendCommand("(get-unsat-core)");
+		return sendCommand(smtConfig.commandFactory.get_unsat_core());
 	}
 
-	@Override 
+	@Override
 	public IResponse get_assignment() {
-		return sendCommand("(get-assignment)");
+		return sendCommand(smtConfig.commandFactory.get_assignment());
 	}
 
-	@Override 
+	@Override
 	public IResponse get_value(IExpr... terms) {
-		try {
-			solverProcess.sendNoListen("(get-value (");
-			for (IExpr e: terms) {
-				solverProcess.sendNoListen(" ",translate(e));
-			}
-			String r = solverProcess.sendAndListen("))\n");
-			IResponse response = parseResponse(r);
-			return response;
-		} catch (IOException e) {
-			return smtConfig.responseFactory.error("Error writing to solver: " + e);
-		} catch (IVisitor.VisitorException e) {
-			return smtConfig.responseFactory.error("Error writing to solver: " + e);
-		}
+		return sendCommand(smtConfig.commandFactory.get_value(java.util.Arrays.asList(terms)));
 	}
-
 
 }

@@ -3,5 +3,5 @@ success
 success
 success
 success
-(error "The z3_4_3 solver does not support this operation: AbstractSolver.check_sat_assuming")
-(error "The z3_4_3 solver does not support this operation: AbstractSolver.get_unsat_assumptions")
+unsupported
+(error "The get-unsat-assumptions command is only valid immediately after check-sat-assumptions returned unsat")

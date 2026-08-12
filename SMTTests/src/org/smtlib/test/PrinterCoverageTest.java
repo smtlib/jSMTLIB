@@ -140,12 +140,40 @@ public class PrinterCoverageTest {
         Assert.assertEquals("(" + eol + "true" + eol + ")", r.toString());
     }
 
+    /** {@link org.smtlib.sexpr.Parser#parseAssertionList()} — used by
+     *  {@code AbstractSolver.get_assertions()} to build a real {@link
+     *  IResponse.IAssertionsResponse} from a get-assertions response's raw text, instead
+     *  of falling through to the generic {@code parseResponse} (whose raw-sexpr fallback
+     *  prints with different spacing than the real response type). */
+    @Test
+    public void parseAssertionList() throws Exception {
+        String text = "(true false)";
+        ISource source = config.smtFactory.createSource(text, "parseAssertionList");
+        org.smtlib.sexpr.Parser parser = new org.smtlib.sexpr.Parser(config, source);
+        List<IExpr> exprs = parser.parseAssertionList();
+        IResponse.IAssertionsResponse r = config.responseFactory.get_assertions_response(exprs);
+        String eol = System.getProperty("line.separator");
+        Assert.assertEquals("(" + eol + "true" + eol + "false" + eol + ")", r.toString());
+    }
+
     @Test
     public void assignmentResponse() throws Exception {
         List<IResponse.IPair<ISymbol, Boolean>> pairs = Collections.singletonList(
                 config.responseFactory.pair(config.exprFactory.symbol("x"), Boolean.TRUE));
         IResponse.IAssignmentResponse r = config.responseFactory.get_assignment_response(pairs);
         Assert.assertEquals("((x true))", r.toString());
+    }
+
+    /** {@link org.smtlib.sexpr.Parser#parseAssignmentList()} — same rationale as
+     *  {@link #parseAssertionList()}, for {@code AbstractSolver.get_assignment()}. */
+    @Test
+    public void parseAssignmentList() throws Exception {
+        String text = "((p true)(q false))";
+        ISource source = config.smtFactory.createSource(text, "parseAssignmentList");
+        org.smtlib.sexpr.Parser parser = new org.smtlib.sexpr.Parser(config, source);
+        List<IResponse.IPair<ISymbol, Boolean>> pairs = parser.parseAssignmentList();
+        IResponse.IAssignmentResponse r = config.responseFactory.get_assignment_response(pairs);
+        Assert.assertEquals("((p true)(q false))", r.toString());
     }
 
     @Test
@@ -163,11 +191,38 @@ public class PrinterCoverageTest {
         Assert.assertEquals("((x 1))", r.toString());
     }
 
+    /** {@link org.smtlib.sexpr.Parser#parseValueList()} — same rationale as
+     *  {@link #parseAssertionList()}, for {@code AbstractSolver.get_value(IExpr...)}.
+     *  Before this, a real get-value response fell through to the generic sexpr fallback
+     *  and printed as {@code "( ( x 1 ) )"} instead of the canonical {@code "((x 1))"}. */
+    @Test
+    public void parseValueList() throws Exception {
+        String text = "((x 1)(y 2))";
+        ISource source = config.smtFactory.createSource(text, "parseValueList");
+        org.smtlib.sexpr.Parser parser = new org.smtlib.sexpr.Parser(config, source);
+        List<IResponse.IPair<IExpr, IExpr>> pairs = parser.parseValueList();
+        IResponse.IValueResponse r = config.responseFactory.get_value_response(pairs);
+        Assert.assertEquals("((x 1)(y 2))", r.toString());
+    }
+
     @Test
     public void unsatCoreResponse() throws Exception {
         List<ISymbol> names = Collections.singletonList(config.exprFactory.symbol("a"));
         IResponse.IUnsatCoreResponse r = config.responseFactory.get_unsat_core_response(names);
         Assert.assertEquals("(a )", r.toString());
+    }
+
+    /** {@link org.smtlib.sexpr.Parser#parseSymbolList()} — same rationale as
+     *  {@link #parseAssertionList()}, for {@code AbstractSolver.get_unsat_core()} and
+     *  {@code get_unsat_assumptions()}. */
+    @Test
+    public void parseSymbolList() throws Exception {
+        String text = "(a b)";
+        ISource source = config.smtFactory.createSource(text, "parseSymbolList");
+        org.smtlib.sexpr.Parser parser = new org.smtlib.sexpr.Parser(config, source);
+        List<ISymbol> names = parser.parseSymbolList();
+        IResponse.IUnsatCoreResponse r = config.responseFactory.get_unsat_core_response(names);
+        Assert.assertEquals("(a b )", r.toString());
     }
 
     @Test

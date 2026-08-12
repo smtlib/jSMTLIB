@@ -8,24 +8,46 @@ package org.smtlib;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.smtlib.ICommand.*;
 import org.smtlib.IExpr.IKeyword;
+import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.SMT.Configuration;
 import org.smtlib.sexpr.Parser;
 
 
-/** This class implements all the operations of the org.smtlib.ISolver interface
- *  to throw an UnsupportedOperationException.
- *  Thus it can be used as a base class for a solver adapter class, if you want the 
- *  convenience of not having to implement all the operations at once.  The adapter
- *  class can simply remove AbstractSolver as a base class and retain ISolver as
- *  an interface to check that all ISolver methods are indeed present in the derived
- *  class.
- *  
+/** This class implements the operations of the org.smtlib.ISolver interface that map
+ *  directly onto a single translated command sent to the solver process, with the
+ *  expected response of a fully SMT-LIB compliant solver (a flat success/error/sat/unsat/
+ *  unknown/unsupported, or a bare value/attribute-pair for get-option/get-info): the
+ *  command is translated with {@link #translate(INode)} and sent via {@link
+ *  #sendCommand(ICommand)}. get_assertions/get_value/get_assignment/get_unsat_core/
+ *  get_unsat_assumptions additionally reparse a non-flat response as the structured list
+ *  they're actually specified to return (a {@code (term value)} pair list, a name list,
+ *  etc. — see {@link org.smtlib.sexpr.Parser#parseValueList()} and its siblings), since
+ *  {@link #parseResponse(String)}'s generic parse only handles flat outcomes and just
+ *  returns a raw s-expression for anything else. A subclass whose target solver deviates
+ *  from strict SMT-LIB concrete syntax or response format overrides {@link
+ *  #translate(INode)} and/or {@link #parseResponse(String)}; a subclass whose target
+ *  solver deviates in some other way overrides the individual ISolver method itself,
+ *  same as before.
+ *  <p>
+ *  Two operations still throw UnsupportedOperationException, because AbstractSolver has
+ *  no generic way to provide them: {@link #start()} and {@link #exit()} manage the
+ *  solver process's lifecycle (constructing it, choosing a command line, deciding
+ *  whether/how to wait for a reply before killing it).
+ *  <p>
+ *  Thus this class can still be used as a base class for a solver adapter class that
+ *  wants the convenience of not having to implement every operation at once (remove
+ *  AbstractSolver as a base class and retain ISolver as an interface to check that all
+ *  ISolver methods are indeed present in the derived class), while getting working
+ *  default behavior for the operations that don't need solver-specific handling.
+ *
  * @author David Cok
  *
  */
@@ -46,7 +68,11 @@ public class AbstractSolver implements ISolver {
 
 	/** Map that keeps current values of options. */
 	protected Map<String, IAttributeValue> options = new HashMap<String, IAttributeValue>();
-	
+
+	/** The result of the most recent check-sat or check-sat-assuming, or null if none has
+	 *  been issued since the last state-changing command. */
+	protected /*@Nullable*/ IResponse checkSatStatus = null;
+
 	@Override
 	public String solverName() {
 	    return getClass().toString().substring(6);
@@ -79,7 +105,48 @@ public class AbstractSolver implements ISolver {
 		}
 		return null;
 	}
-	
+
+	/** Translates an in-memory node into the text sent to the solver process. The base
+	 *  behavior assumes the solver is fully SMT-LIB compliant, so it is exactly what the
+	 *  default printer produces. Override in a subclass whose target solver deviates from
+	 *  strict SMT-LIB concrete syntax. */
+	protected String translate(INode sexpr) throws IVisitor.VisitorException {
+		StringWriter sw = new StringWriter();
+		org.smtlib.sexpr.Printer.write(sw, sexpr);
+		return sw.toString();
+	}
+
+	/** Parses the solver's raw response text. The base behavior assumes the response is
+	 *  exactly standard SMT-LIB concrete syntax: success/sat/unsat/unknown/unsupported/
+	 *  true/false, an {@code (error "...")} s-expression, a bare value (get-option), or a
+	 *  single {@code (:keyword value)} attribute pair (get-info). It does not build the
+	 *  richer structured IResponse subtypes that get_value/get_model/get_proof/
+	 *  get_assertions/get_unsat_core/get_unsat_assumptions/get_assignment need, nor does it
+	 *  correct for any real solver's non-compliant quirks (e.g. legacy bit-vector literal
+	 *  syntax) — override in a subclass whose target solver needs either. */
+	protected IResponse parseResponse(String response) {
+		try {
+			return new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseResponse(response);
+		} catch (IParser.ParserException e) {
+			return smtConfig.responseFactory.error("ParserException while parsing response: " + response + " " + e);
+		}
+	}
+
+	/** Translates the given command and sends it to the solver process, returning the
+	 *  parsed response. This is the mechanism behind the default implementations below;
+	 *  a subclass may also call it directly to send a command built some other way. */
+	protected IResponse sendCommand(ICommand cmd) {
+		String translatedCmd = null;
+		try {
+			translatedCmd = translate(cmd);
+			return parseResponse(solverProcess.sendAndListen(translatedCmd, "\n"));
+		} catch (IOException e) {
+			return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
+		} catch (IVisitor.VisitorException e) {
+			return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
+		}
+	}
+
 	/** @see org.smtlib.ISolver#start() */
 	@Override
 	public IResponse start() {
@@ -95,7 +162,7 @@ public class AbstractSolver implements ISolver {
 
 	@Override
 	public IResponse echo(IStringLiteral arg) {
-		throw new UnsupportedOperationException("AbstractSolver.echo");
+		return sendCommand(smtConfig.commandFactory.echo(arg));
 	}
 
 	@Override public void comment(String comment) {
@@ -105,49 +172,57 @@ public class AbstractSolver implements ISolver {
 	/** @see org.smtlib.ISolver#set_logic(String,IPos) */
 	@Override
 	public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
-		throw new UnsupportedOperationException("AbstractSolver.set_logic");
+		checkSatStatus = null;
+		return sendCommand(smtConfig.commandFactory.set_logic(smtConfig.exprFactory.symbol(logicName)));
 	}
 
 	/** @see org.smtlib.ISolver#reset() */
 	@Override
 	public IResponse reset() {
-		throw new UnsupportedOperationException("AbstractSolver.reset");
+		checkSatStatus = null;
+		return sendCommand(smtConfig.commandFactory.reset());
 	}
 
 	/** @see org.smtlib.ISolver#reset_assertions() */
 	@Override
 	public IResponse reset_assertions() {
-		throw new UnsupportedOperationException("AbstractSolver.reset_assertions");
+		checkSatStatus = null;
+		return sendCommand(smtConfig.commandFactory.reset_assertions());
 	}
 
 	/** @see org.smtlib.ISolver#push(int) */
 	@Override
 	public IResponse push(int number) {
-		throw new UnsupportedOperationException("AbstractSolver.push");
+		checkSatStatus = null;
+		return sendCommand(smtConfig.commandFactory.push(smtConfig.exprFactory.numeral(number)));
 	}
 
 	/** @see org.smtlib.ISolver#pop(int) */
 	@Override
 	public IResponse pop(int number) {
-		throw new UnsupportedOperationException("AbstractSolver.pop");
+		checkSatStatus = null;
+		return sendCommand(smtConfig.commandFactory.pop(smtConfig.exprFactory.numeral(number)));
 	}
 
 	/** @see org.smtlib.ISolver#assertExpr(IExpr) */
 	@Override
 	public IResponse assertExpr(IExpr sexpr) {
-		throw new UnsupportedOperationException("AbstractSolver.assertExpr");
+		checkSatStatus = null;
+		return sendCommand(smtConfig.commandFactory.assertCommand(sexpr));
 	}
 
 	/** @see org.smtlib.ISolver#check_sat()*/
 	@Override
 	public IResponse check_sat() {
-		throw new UnsupportedOperationException("AbstractSolver.check_sat");
+		checkSatStatus = sendCommand(smtConfig.commandFactory.check_sat());
+		return checkSatStatus;
 	}
 
 	/** @see org.smtlib.ISolver#check_sat_assuming(IExpr...)*/
 	@Override
 	public IResponse check_sat_assuming(IExpr ... exprs) {
-		throw new UnsupportedOperationException("AbstractSolver.check_sat_assuming");
+		checkSatStatus = sendCommand(smtConfig.commandFactory.check_sat_assuming(java.util.Arrays.asList(exprs)));
+		return checkSatStatus;
 	}
 
     /** @see org.smtlib.ISolver#define_const(ICommand.Idefine_const)  */
@@ -159,22 +234,23 @@ public class AbstractSolver implements ISolver {
     /** @see org.smtlib.ISolver#define_fun(ICommand.Idefine_fun)  */
     @Override
     public IResponse define_fun(Idefine_fun cmd) {
-        throw new UnsupportedOperationException("AbstractSolver.define_fun");
+        checkSatStatus = null;
+        return sendCommand(cmd);
     }
-    
+
     /** @see org.smtlib.ISolver#define_fun_rec(ICommand.Idefine_fun_rec)  */
     @Override
     public IResponse define_fun_rec(Idefine_fun_rec cmd) {
-        throw new UnsupportedOperationException("AbstractSolver.define_fun_rec");
+        checkSatStatus = null;
+        return sendCommand(cmd);
     }
-    
+
     /** @see org.smtlib.ISolver#define_funs_rec(ICommand.Idefine_funs_rec)  */
     @Override
     public IResponse define_funs_rec(Idefine_funs_rec cmd) {
-        throw new UnsupportedOperationException("AbstractSolver.define_funs_rec");
+        checkSatStatus = null;
+        return sendCommand(cmd);
     }
-    
-	// FIXME - define_fun_rec define_funs_rec
 
 	/** @see org.smtlib.ISolver#declare_const(ICommand.Ideclare_const)  */
 	@Override
@@ -187,25 +263,29 @@ public class AbstractSolver implements ISolver {
 	/** @see org.smtlib.ISolver#declare_fun(ICommand.Ideclare_fun)  */
 	@Override
 	public IResponse declare_fun(Ideclare_fun cmd) {
-		throw new UnsupportedOperationException("AbstractSolver.declare_fun");
+		checkSatStatus = null;
+		return sendCommand(cmd);
 	}
 
 	/** @see org.smtlib.ISolver#define_sort(ICommand.Idefine_sort)  */
 	@Override
 	public IResponse define_sort(Idefine_sort cmd){
-		throw new UnsupportedOperationException("AbstractSolver.define_sort");
+		checkSatStatus = null;
+		return sendCommand(cmd);
 	}
 
     /** @see org.smtlib.ISolver#declare_sort(ICommand.Ideclare_sort)  */
     @Override
     public IResponse declare_sort(Ideclare_sort cmd) {
-        throw new UnsupportedOperationException("AbstractSolver.declare_sort");
+        checkSatStatus = null;
+        return sendCommand(cmd);
     }
 
     /** @see org.smtlib.ISolver#declare_sort_parameter(ICommand.Ideclare_sort_parameter)  */
     @Override
     public IResponse declare_sort_parameter(Ideclare_sort_parameter cmd) {
-        throw new UnsupportedOperationException("AbstractSolver.declare_sort_parameter");
+        checkSatStatus = null;
+        return sendCommand(cmd);
     }
 
 	/** @see org.smtlib.ISolver#set_option(IExpr.IKeyword,IExpr.IAttributeValue)  */
@@ -249,67 +329,203 @@ public class AbstractSolver implements ISolver {
 
 	/** Override in subclasses to handle solver-specific options. Channel options are handled by set_option and never reach here. */
 	protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
-		return smtConfig.responseFactory.unsupported();
+		return sendCommand(smtConfig.commandFactory.set_option(key, value));
 	}
 
 	/** @see org.smtlib.ISolver#set_info(IExpr.IKeyword, IExpr.IAttributeValue)  */
 	@Override
 	public IResponse set_info(IKeyword key, IAttributeValue value){
-		throw new UnsupportedOperationException("AbstractSolver.set_info");
+		return sendCommand(smtConfig.commandFactory.set_info(key, value));
 	}
 
-	/** @see org.smtlib.ISolver#check_sat()*/
+	/** Returns an error response if the given option has not been enabled (per
+	 *  {@link #get_option(IKeyword)}), else null. */
+	protected /*@Nullable*/ IResponse requireOptionEnabled(String commandName, String option) {
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(option)))) {
+			return smtConfig.responseFactory.error("The " + commandName + " command is only valid if " + option + " has been enabled");
+		}
+		return null;
+	}
+
+	/** Returns an error response unless {@link #checkSatStatus} is sat or unknown, else null. */
+	protected /*@Nullable*/ IResponse requireSatOrUnknown(String commandName) {
+		if (!smtConfig.responseFactory.sat().equals(checkSatStatus) && !smtConfig.responseFactory.unknown().equals(checkSatStatus)) {
+			return smtConfig.responseFactory.error("The " + commandName + " command is only valid immediately after check-sat returned sat or unknown");
+		}
+		return null;
+	}
+
+	/** Returns an error response unless {@link #checkSatStatus} is unsat, else null. */
+	protected /*@Nullable*/ IResponse requireUnsat(String commandName, String afterWhat) {
+		if (!smtConfig.responseFactory.unsat().equals(checkSatStatus)) {
+			return smtConfig.responseFactory.error("The " + commandName + " command is only valid immediately after " + afterWhat + " returned unsat");
+		}
+		return null;
+	}
+
+	/** True if the given raw response text is a flat outcome (empty/success/unsupported/an
+	 *  {@code (error ...)} s-expression) rather than a structured list — used by the
+	 *  get_assertions/get_value/get_assignment/get_unsat_core/get_unsat_assumptions
+	 *  defaults below to decide whether to delegate to {@link #parseResponse(String)} or
+	 *  reparse the response as the structured list they actually expect. */
+	protected boolean isFlatResponse(String response) {
+		String r = response.trim();
+		return r.isEmpty() || r.equals("success") || r.equals("unsupported") || r.startsWith("(error");
+	}
+
+	/** @see org.smtlib.ISolver#get_assertions() */
 	@Override
 	public IResponse get_assertions(){
-		throw new UnsupportedOperationException("AbstractSolver.get_assertions");
+		String key = smtConfig.atLeastVersion(SMT.Configuration.SMTLIB.V25) ? Utils.PRODUCE_ASSERTIONS : Utils.INTERACTIVE_MODE;
+		IResponse err = requireOptionEnabled("get-assertions", key);
+		if (err != null) return err;
+		String response = null;
+		try {
+			// A single read may not capture a multi-line response, so keep reading
+			// (paren-balance tracked across all reads so far) until it's complete.
+			String cmdText = translate(smtConfig.commandFactory.get_assertions());
+			StringBuilder sb = new StringBuilder();
+			String s;
+			int parens = 0;
+			do {
+				s = solverProcess.sendAndListen(cmdText, "\n");
+				int p = -1;
+				while ((p = s.indexOf('(',p+1)) != -1) parens++;
+				p = -1;
+				while ((p = s.indexOf(')',p+1)) != -1) parens--;
+				sb.append(s.replace('\n',' ').replace("\r",""));
+			} while (parens > 0);
+			response = sb.toString();
+			if (isFlatResponse(response)) return parseResponse(response);
+			List<IExpr> exprs = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseAssertionList();
+			return smtConfig.responseFactory.get_assertions_response(exprs);
+		} catch (IOException e) {
+			return smtConfig.responseFactory.error("Error writing to solver: " + e);
+		} catch (IVisitor.VisitorException e) {
+			return smtConfig.responseFactory.error("Error writing to solver: " + e);
+		} catch (IParser.ParserException e) {
+			return smtConfig.responseFactory.error("Unexpected output from the solver: " + response);
+		}
 	}
 
 	/** @see org.smtlib.ISolver#get_proof()*/
 	@Override
 	public IResponse get_proof(){
-		throw new UnsupportedOperationException("AbstractSolver.get_proof");
+		IResponse err = requireOptionEnabled("get-proof", Utils.PRODUCE_PROOFS);
+		if (err != null) return err;
+		err = requireUnsat("get-proof", "check-sat");
+		if (err != null) return err;
+		return sendCommand(smtConfig.commandFactory.get_proof());
 	}
 
-	/** @see org.smtlib.ISolver#get_proof()*/
+	/** @see org.smtlib.ISolver#get_model()*/
 	@Override
 	public IResponse get_model(){
-		throw new UnsupportedOperationException("AbstractSolver.get_model");
+		IResponse err = requireOptionEnabled("get-model", Utils.PRODUCE_MODELS);
+		if (err != null) return err;
+		err = requireSatOrUnknown("get-model");
+		if (err != null) return err;
+		return sendCommand(smtConfig.commandFactory.get_model());
 	}
 
     /** @see org.smtlib.ISolver#get_unsat_assumptions()*/
     @Override
     public IResponse get_unsat_assumptions(){
-        throw new UnsupportedOperationException("AbstractSolver.get_unsat_assumptions");
+        IResponse err = requireOptionEnabled("get-unsat-assumptions", Utils.PRODUCE_UNSAT_ASSUMPTIONS);
+        if (err != null) return err;
+        err = requireUnsat("get-unsat-assumptions", "check-sat-assumptions");
+        if (err != null) return err;
+        String response = null;
+        try {
+            response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_unsat_assumptions()), "\n");
+            if (isFlatResponse(response)) return parseResponse(response);
+            List<ISymbol> names = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseSymbolList();
+            return smtConfig.responseFactory.get_unsat_assumptions_response(names);
+        } catch (IOException e) {
+            return smtConfig.responseFactory.error("Error writing to solver: " + e);
+        } catch (IVisitor.VisitorException e) {
+            return smtConfig.responseFactory.error("Error writing to solver: " + e);
+        } catch (IParser.ParserException e) {
+            return smtConfig.responseFactory.error("Unexpected output from the solver: " + response);
+        }
     }
 
     /** @see org.smtlib.ISolver#get_unsat_core()*/
     @Override
     public IResponse get_unsat_core(){
-        throw new UnsupportedOperationException("AbstractSolver.get_unsat_core");
+        IResponse err = requireOptionEnabled("get-unsat-core", Utils.PRODUCE_UNSAT_CORES);
+        if (err != null) return err;
+        err = requireUnsat("get-unsat-core", "check-sat");
+        if (err != null) return err;
+        String response = null;
+        try {
+            response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_unsat_core()), "\n");
+            if (isFlatResponse(response)) return parseResponse(response);
+            List<ISymbol> names = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseSymbolList();
+            return smtConfig.responseFactory.get_unsat_core_response(names);
+        } catch (IOException e) {
+            return smtConfig.responseFactory.error("Error writing to solver: " + e);
+        } catch (IVisitor.VisitorException e) {
+            return smtConfig.responseFactory.error("Error writing to solver: " + e);
+        } catch (IParser.ParserException e) {
+            return smtConfig.responseFactory.error("Unexpected output from the solver: " + response);
+        }
     }
 
 	/** @see org.smtlib.ISolver#get_value(IExpr... )*/
 	@Override
 	public IResponse get_value(IExpr... terms){
-		throw new UnsupportedOperationException("AbstractSolver.get_value");
+		IResponse err = requireOptionEnabled("get-value", Utils.PRODUCE_MODELS);
+		if (err != null) return err;
+		err = requireSatOrUnknown("get-value");
+		if (err != null) return err;
+		String response = null;
+		try {
+			response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_value(java.util.Arrays.asList(terms))), "\n");
+			if (isFlatResponse(response)) return parseResponse(response);
+			List<IResponse.IPair<IExpr,IExpr>> values = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseValueList();
+			return smtConfig.responseFactory.get_value_response(values);
+		} catch (IOException e) {
+			return smtConfig.responseFactory.error("Error writing to solver: " + e);
+		} catch (IVisitor.VisitorException e) {
+			return smtConfig.responseFactory.error("Error writing to solver: " + e);
+		} catch (IParser.ParserException e) {
+			return smtConfig.responseFactory.error("Unexpected output from the solver: " + response);
+		}
 	}
 
 	/** @see org.smtlib.ISolver#get_assignment()*/
 	@Override
 	public IResponse get_assignment(){
-		throw new UnsupportedOperationException("AbstractSolver.get_assignment");
+		IResponse err = requireOptionEnabled("get-assignment", Utils.PRODUCE_ASSIGNMENTS);
+		if (err != null) return err;
+		err = requireSatOrUnknown("get-assignment");
+		if (err != null) return err;
+		String response = null;
+		try {
+			response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_assignment()), "\n");
+			if (isFlatResponse(response)) return parseResponse(response);
+			List<IResponse.IPair<ISymbol,Boolean>> assignments = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseAssignmentList();
+			return smtConfig.responseFactory.get_assignment_response(assignments);
+		} catch (IOException e) {
+			return smtConfig.responseFactory.error("Error writing to solver: " + e);
+		} catch (IVisitor.VisitorException e) {
+			return smtConfig.responseFactory.error("Error writing to solver: " + e);
+		} catch (IParser.ParserException e) {
+			return smtConfig.responseFactory.error("Unexpected output from the solver: " + response);
+		}
 	}
 
 	/** @see org.smtlib.ISolver#get_option(IExpr.IKeyword)*/
 	@Override
 	public IResponse get_option(IKeyword option){
-		throw new UnsupportedOperationException("AbstractSolver.get_option");
+		return sendCommand(smtConfig.commandFactory.get_option(option));
 	}
 
 	/** @see org.smtlib.ISolver#get_info(IExpr.IKeyword)*/
 	@Override
 	public IResponse get_info(IKeyword option){
-		throw new UnsupportedOperationException("AbstractSolver.get_info");
+		return sendCommand(smtConfig.commandFactory.get_info(option));
 	}
 
 	/** @see org.smtlib.ISolver#smt()*/
@@ -321,18 +537,20 @@ public class AbstractSolver implements ISolver {
 	/** @see org.smtlib.ISolver#checkSatStatus()*/
 	@Override
 	public IResponse checkSatStatus() {
-		throw new UnsupportedOperationException("AbstractSolver.checkSatStatus");
+		return checkSatStatus;
 	}
 
 
     @Override
     public IResponse declare_datatype(Ideclare_datatype cmd) {
-        throw new UnsupportedOperationException("AbstractSolver.declare_datatype");
+        checkSatStatus = null;
+        return sendCommand(cmd);
     }
 
 
     @Override
     public IResponse declare_datatypes(Ideclare_datatypes cmd) {
-        throw new UnsupportedOperationException("AbstractSolver.declare_datatypes");
+        checkSatStatus = null;
+        return sendCommand(cmd);
     }
 }

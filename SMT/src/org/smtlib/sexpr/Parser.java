@@ -898,6 +898,47 @@ public class Parser extends Lexer implements IParser {
 		return new SMTExpr.Theory(name,attributes);
 	}
 	
+	/** Parses a parenthesized list of terms, as returned by a get-assertions response. */
+	public List<IExpr> parseAssertionList() throws ParserException {
+		return parseList(this::parseExpr, "assertion", true);
+	}
+
+	/** Parses a parenthesized list of names, as returned by a get-unsat-core or
+	 *  get-unsat-assumptions response. */
+	public List<ISymbol> parseSymbolList() throws ParserException {
+		return parseList(this::parseSymbol, "name", true);
+	}
+
+	/** Parses one {@code (term value)} pair, as found in a get-value response. */
+	public IResponse.IPair<IExpr,IExpr> parseValuePair() throws ParserException {
+		parseLP();
+		IExpr term = parseExpr();
+		IExpr value = parseExpr();
+		parseRP();
+		return smtConfig.responseFactory.pair(term, value);
+	}
+
+	/** Parses a parenthesized list of {@code (term value)} pairs, as returned by a
+	 *  get-value response. */
+	public List<IResponse.IPair<IExpr,IExpr>> parseValueList() throws ParserException {
+		return parseList(this::parseValuePair, "value pair", false);
+	}
+
+	/** Parses one {@code (symbol bool)} pair, as found in a get-assignment response. */
+	public IResponse.IPair<ISymbol,Boolean> parseAssignmentPair() throws ParserException {
+		parseLP();
+		ISymbol sym = parseSymbol();
+		ISymbol val = parseSymbol();
+		parseRP();
+		return smtConfig.responseFactory.pair(sym, Boolean.valueOf(val.value()));
+	}
+
+	/** Parses a parenthesized list of {@code (symbol bool)} pairs, as returned by a
+	 *  get-assignment response. */
+	public List<IResponse.IPair<ISymbol,Boolean>> parseAssignmentList() throws ParserException {
+		return parseList(this::parseAssignmentPair, "assignment", true);
+	}
+
 	//@Override // FIXME - put this in the interface
 	public /*@Nullable*/ IResponse parseResponse(String response) throws ParserException {
 		IResponse.IFactory f = smtConfig.responseFactory;
