@@ -70,10 +70,18 @@ runs:
           name=$(basename "$exe")
           case "$name" in
             *.dll|*.lib|*.xml) continue ;;
-            *.jar) cmd=(java -jar "$exe" -version) ;;
-            *)     cmd=("$exe" --version) ;;
+            *.jar)
+              out=$(java -jar "$exe" -version 2>&1); ok=$?
+              ;;
+            *)
+              out=$("$exe" --version 2>&1); ok=$?
+              ## Some older solvers (e.g. z3 4.3.x) predate the --version convention.
+              if [ $ok -ne 0 ]; then
+                out=$("$exe" -version 2>&1); ok=$?
+              fi
+              ;;
           esac
-          if out=$("${cmd[@]}" 2>&1); then
+          if [ $ok -eq 0 ]; then
             echo "OK   $name: $(echo "$out" | head -1)"
           else
             echo "FAIL $name:"
