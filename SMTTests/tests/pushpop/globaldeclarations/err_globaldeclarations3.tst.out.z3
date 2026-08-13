@@ -3,4 +3,4 @@ success
 success
 success
 true
-(error "The logic must be set before an assert command is issued")
+(error "line 6 column 8: unknown constant a")

@@ -151,11 +151,27 @@ public class SolverProcess {
         i = sb.indexOf("(");
         if (i < 0) return true;
         int count = 1;
+        // Tracks whether the scan is currently inside a double-quoted string literal, so
+        // that a stray '(' or ')' in a solver's own error-message prose (e.g. z3's
+        // "Expecting sort list '(': ...") doesn't permanently unbalance the paren count and
+        // make this recognizer wait forever. A doubled "" (SMT-LIB's escaped-quote form)
+        // toggles twice with nothing in between, so this naive per-character toggle still
+        // ends up in the right state without needing full escape-aware parsing. Scanning
+        // from the start of the buffer (not just from i) keeps the in-string state correct
+        // even if a quote appears before the first '('.
+        boolean inString = false;
+        for (int j = 0; j < i; ++j) {
+            if (sb.charAt(j) == '"') inString = !inString;
+        }
         i++;
         for (; i < sblen; ++i) {
             char c = sb.charAt(i);
-            if (c == '(') count++;
-            else if (c == ')') count--;
+            if (c == '"') {
+                inString = !inString;
+            } else if (!inString) {
+                if (c == '(') count++;
+                else if (c == ')') count--;
+            }
         }
         return count == 0;
     }
@@ -317,13 +333,25 @@ public class SolverProcess {
 	            int len = end != null ? end.length() : 0;
 	            int p = 0; // Number of characters read
 	            int parens = 0;
+	            // Tracks whether the scan is currently inside a double-quoted string literal, so
+	            // that a stray '(' or ')' in a solver's own error-message prose (e.g. z3's
+	            // "Expecting sort list '(': ...") doesn't permanently unbalance the paren count
+	            // and make this method read forever. A doubled "" (SMT-LIB's escaped-quote form)
+	            // toggles twice with nothing in between, so this naive per-character toggle still
+	            // ends up in the right state without needing full escape-aware parsing.
+	            boolean inString = false;
 	            while (end != null || r.ready()) {
 	                //if (log != null) log.write("ABOUT TO READ " + p + eol);
 	                int i = r.read(buf,p,buf.length-p);
 	                if (i == -1) break; // End of Input
 	                for (int ii=0; ii<i; ++ii) {
-	                    if (buf[p+ii] == '(') ++parens;
-	                    else if (buf[p+ii] == ')') --parens;
+	                    char c = buf[p+ii];
+	                    if (c == '"') {
+	                        inString = !inString;
+	                    } else if (!inString) {
+	                        if (c == '(') ++parens;
+	                        else if (c == ')') --parens;
+	                    }
 	                }
 	                p += i;
 	                //if (log != null) log.write("HEARD: " + new String(buf,0,p) + eol);

@@ -19,11 +19,16 @@ import org.smtlib.impl.Response;
 public class InfoOptions  extends LogicTests {
 
 	boolean isTest;
-	
+	/** True for the minimal AbstractSolver-based adapter used by recent z3 releases
+	 *  (Solver_z3_recent, registered as "z3-VERSION" -- distinct from the legacy
+	 *  underscore-named z3_4_x adapters, which carry their own client-side workarounds). */
+	boolean isZ3Recent;
+
     public InfoOptions(String solvername, String version) {
-    	this.solvername = solvername; 
+    	this.solvername = solvername;
     	this.version = version;
     	this.isTest = "test".equals(solvername);
+    	this.isZ3Recent = solvername.startsWith("z3-");
     }
     
     public void checkGetInfo(String keyword, String expected) {
@@ -51,6 +56,9 @@ public class InfoOptions  extends LogicTests {
 				: solvername.startsWith("cvc") ? null // Long text that we don't check // TODO
 				: solvername.startsWith("z3_4_3") ? "Leonardo de Moura and Nikolaj Bjorner"
 				: solvername.startsWith("z3_") ? "Leonardo de Moura, Nikolaj Bjorner and Christoph Wintersteiger"
+				: solvername.equals("z3-4.14.1") ? "Leonardo de Moura, Nikolaj Bjorner, Lev Nachmanson and Christoph Wintersteiger"
+				: solvername.equals("z3-4.16.0") ? "Leonardo de Moura, Nikolaj Bjorner, Lev Nachmanson and Christoph Wintersteiger"
+				: isZ3Recent ? "Leonardo de Moura, Nikolaj Bjorner and Christoph Wintersteiger" // z3-4.8.12/4.10.2/4.12.6: authors text before "Lev Nachmanson" was added
 				: solvername.startsWith("z3") ? "Leonardo de Moura and Nikolaj Bjorner"
 				: "???" )
 				);
@@ -74,6 +82,11 @@ public class InfoOptions  extends LogicTests {
 				: solvername.equals("z3_4_7") ? "4.7.1"
 				: solvername.equals("z3_4_8") ? "4.8.12"
 				: solvername.equals("z3_2_11") ? "2.11"
+				: solvername.equals("z3-4.8.12") ? "4.8.12"
+				: solvername.equals("z3-4.10.2") ? "4.10.2"
+				: solvername.equals("z3-4.12.6") ? "4.12.6"
+				: solvername.equals("z3-4.14.1") ? "4.14.1"
+				: solvername.equals("z3-4.16.0") ? "4.16.0"
 				: "???" )
 				);
 	}
@@ -107,6 +120,7 @@ public class InfoOptions  extends LogicTests {
 //				solvername.equals("z3_4_4") ? "success" :
 				solvername.equals("yices2") ? "(error \"can't overwrite :name\")" :
 				solvername.equals("cvc5-1.3.2") ? "success" : // cvc5-1.3.2 permits setting pre-defined info keywords
+				isZ3Recent ? "success" : // z3-4.8.12+ silently accepts (and ignores) this rather than erroring -- a real non-conformance
 				"(error \"Setting the value of a pre-defined keyword is not permitted: :name\")");
 	}
 
@@ -117,6 +131,7 @@ public class InfoOptions  extends LogicTests {
 				solvername.equals("yices2") ?
 				"(error \"can't overwrite :authors\")" :
 				solvername.equals("cvc5-1.3.2") ? "success" : // cvc5-1.3.2 permits setting pre-defined info keywords
+				isZ3Recent ? "success" : // z3-4.8.12+ silently accepts (and ignores) this rather than erroring -- a real non-conformance
 				"(error \"Setting the value of a pre-defined keyword is not permitted: :authors\")");
 	}
 	
@@ -143,7 +158,7 @@ public class InfoOptions  extends LogicTests {
 	public void checkRegularOutput() {
 		// The correct result is a quote-delimited string
 		doCommand("(get-option :regular-output-channel)",
-						solvername.equals("cvc5-1.3.2") ? "stdout" : // cvc5-1.3.2 returns this unquoted
+						solvername.equals("cvc5-1.3.2") || isZ3Recent ? "stdout" : // returned unquoted, before any set-option
 						"\"stdout\""
 				);
 	}
@@ -162,7 +177,7 @@ public class InfoOptions  extends LogicTests {
 		// The correct result is a quote-delimited string
 		doCommand("(get-option :diagnostic-output-channel)",
 //				solvername.startsWith("cvc5")? "unsupported" :
-						solvername.equals("cvc5-1.3.2") ? "stderr" : // cvc5-1.3.2 returns this unquoted
+						solvername.equals("cvc5-1.3.2") || isZ3Recent ? "stderr" : // returned unquoted, before any set-option
 						"\"stderr\""
 				);
 	}
@@ -244,6 +259,7 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkSetProduceProofs() {
 		boolean supported = isTest ||  (!solvername.equals("z3_4_3") && solvername.startsWith("z3_") )
+		                        || isZ3Recent
 		                        || solvername.startsWith("cvc");
 		doCommand("(set-option :produce-proofs true)", 
 				supported ? "success" 
@@ -267,6 +283,7 @@ public class InfoOptions  extends LogicTests {
 		doCommand("(get-option :produce-models)",
 		        solvername.equals("cvc5-1.3.2") ? "false" : // defaults false here; other cvc-family adapters force it on via a startup flag
 		        solvername.startsWith("cvc") ? "true" : // FIXME - is this automatically true?
+		        isZ3Recent ? "true" : // z3-4.8.12+ defaults this true, not the spec's false -- no known CLI flag to change it
 				"false"
 				);
 	}
@@ -296,8 +313,8 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceAssignments() {
-		boolean supported = isTest || solvername.startsWith("cvc") || solvername.equals("yices2") || (!solvername.equals("z3_4_3") && solvername.startsWith("z3_") ) ;
-		
+		boolean supported = isTest || solvername.startsWith("cvc") || solvername.equals("yices2") || (!solvername.equals("z3_4_3") && solvername.startsWith("z3_") ) || isZ3Recent ;
+
 		doCommand("(set-option :produce-assignments true)",
 					supported? "success" 
 						: "unsupported");
@@ -334,7 +351,9 @@ public class InfoOptions  extends LogicTests {
 				supported? "success" 
 						:  "unsupported");
 		doCommand("(get-option :produce-unsat-cores)",
-				solvername.equals("yices2") ? "unsupported" : "false"
+				solvername.equals("yices2") ? "unsupported" :
+				isZ3Recent ? "true" : // genuine z3-4.8.12+ bug: get-option keeps reporting the earlier "true" even after this set to false
+				"false"
 				);
 	}
 	
@@ -344,6 +363,7 @@ public class InfoOptions  extends LogicTests {
 		boolean supported = !solvername.equals("yices2");
 		supported |= solvername.startsWith("cvc5"); // cvc5 supports option in V2.5
 		supported &= !solvername.equals("cvc5-1.3.2"); // cvc5-1.3.2 does not implement this deprecated V2.0-era option
+		supported &= !isZ3Recent; // z3-4.8.12+ does not implement this deprecated option (self-consistently unsupported for both get and set)
 		doCommand("(get-option :expand-definitions)",
 				supported ? "false" : "unsupported"
 				);
@@ -354,6 +374,7 @@ public class InfoOptions  extends LogicTests {
 		boolean supported = smt.smtConfig.isVersion(SMT.Configuration.SMTLIB.V20) && !solvername.equals("yices2") && !solvername.equals("z3_4_4") && !solvername.equals("z3_4_5");
 		supported = true; // FIXME - it is optional, but it is permitted to set
 		supported &= !solvername.equals("cvc5-1.3.2"); // cvc5-1.3.2 does not implement this deprecated V2.0-era option
+		supported &= !isZ3Recent; // z3-4.8.12+ does not implement this deprecated option (self-consistently unsupported for both get and set)
 		doCommand("(set-option :expand-definitions true)",
 				!supported ? "unsupported" : "success");
 		doCommand("(get-option :expand-definitions)",

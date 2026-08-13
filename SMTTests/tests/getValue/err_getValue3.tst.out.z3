@@ -4,4 +4,4 @@ success
 success
 sat
 success
-(error "line 8 column 15: model is not available")
+(error "The get-value command is only valid immediately after check-sat returned sat or unknown")

@@ -154,16 +154,35 @@ public class FileTests extends LogicTests {
     // Skip logic
     // -----------------------------------------------------------------------
 
+    /** A "family" fallback lets several versions of the same solver (e.g. z3-4.8.12,
+     *  z3-4.10.2) share one golden file instead of duplicating identical content per
+     *  exact version: strips a trailing "-N..." or "_N..." version suffix (e.g.
+     *  "z3-4.8.12" -&gt; "z3", "z3_4_3" -&gt; "z3", "cvc5-1.3.2" -&gt; "cvc5"). Returns null
+     *  if the name has no such suffix (e.g. "yices2", "test") -- family is only used
+     *  when it differs from the exact solver name.
+     *  IMPORTANT: this must stay in sync with the "family=..." computation in
+     *  SMTTests/runtest. If you change the rule here, change it there too, and vice versa. */
+    private static String family(String name) {
+        String f = name.replaceAll("[_-][0-9].*$", "");
+        return f.equals(name) ? null : f;
+    }
+
     private void checkSkip() {
         String base = tstFile.getAbsolutePath();
-        String[] suffixes = {
+        String family = family(solvername);
+        List<String> suffixes = new ArrayList<String>(Arrays.asList(
             ".skip." + solvername + "." + PLATFORM_ARCH,
             ".skip." + solvername + "." + PLATFORM,
-            ".skip." + solvername,
-            ".skip." + PLATFORM_ARCH,
-            ".skip." + PLATFORM,
-            ".skip"
-        };
+            ".skip." + solvername
+        ));
+        if (family != null) {
+            suffixes.add(".skip." + family + "." + PLATFORM_ARCH);
+            suffixes.add(".skip." + family + "." + PLATFORM);
+            suffixes.add(".skip." + family);
+        }
+        suffixes.add(".skip." + PLATFORM_ARCH);
+        suffixes.add(".skip." + PLATFORM);
+        suffixes.add(".skip");
         for (String suffix : suffixes) {
             File skipFile = new File(base + suffix);
             if (skipFile.exists()) {
@@ -181,15 +200,20 @@ public class FileTests extends LogicTests {
 
     private File findGoldenFile(String ext) {
         String base = tstFile.getAbsolutePath();
-        String[] candidates = {
+        String family = family(solvername);
+        List<String> candidates = new ArrayList<String>(Arrays.asList(
             base + ext + "." + solvername + "." + PLATFORM_ARCH,
             base + ext + "." + solvername + "." + PLATFORM,
             base + ext + "." + solvername,
-            base + ext + "." + solvername + ".bad",
-            base + ext + "." + PLATFORM_ARCH,
-            base + ext + "." + PLATFORM,
-            base + ext,
-        };
+            base + ext + "." + solvername + ".bad"
+        ));
+        if (family != null) {
+            candidates.add(base + ext + "." + family);
+            candidates.add(base + ext + "." + family + ".bad");
+        }
+        candidates.add(base + ext + "." + PLATFORM_ARCH);
+        candidates.add(base + ext + "." + PLATFORM);
+        candidates.add(base + ext);
         for (String c : candidates) {
             File f = new File(c);
             if (f.exists()) return f;
@@ -234,11 +258,11 @@ public class FileTests extends LogicTests {
         new File(tstFile.getAbsolutePath() + ext + ".actual").delete();
     }
 
-    /** Drops lines containing {@code (:memory} — memory usage varies between runs. */
+    /** Drops lines containing {@code (:memory} or {@code (:max-memory} — memory usage varies between runs. */
     private static String filterMemoryLines(String s) {
         StringBuilder sb = new StringBuilder();
         for (String line : s.split("\n", -1)) {
-            if (!line.contains("(:memory")) sb.append(line).append('\n');
+            if (!line.contains("(:memory") && !line.contains("(:max-memory")) sb.append(line).append('\n');
         }
         return sb.toString();
     }

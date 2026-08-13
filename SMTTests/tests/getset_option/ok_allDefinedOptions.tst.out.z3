@@ -1,13 +1,13 @@
 true
 0
+unsupported
 false
 false
 false
+true
 false
-false
-false
-"stdout"
-"stderr"
+stdout
+stderr
 0
 false
 false

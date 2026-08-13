@@ -534,6 +534,18 @@ public class AbstractSolver implements ISolver {
 		// itself is always left at :print-success true, so asking it directly would
 		// always report true regardless of the script's own nosuccess state.
 		if (option.equals(printSuccess)) return smtConfig.nosuccess ? Utils.FALSE : Utils.TRUE;
+		// :regular-output-channel and :diagnostic-output-channel are likewise answered
+		// client-side once set (see set_option()): that method only redirects jSMTLIB's own
+		// log streams and never forwards the command to the solver process, so forwarding
+		// get-option to the solver here would just report the solver's own unchanged
+		// default forever, regardless of what the script actually set. Before any
+		// set-option, fall through and ask the solver (or let it error) so its own default
+		// is used, matching pre-set-option behavior for every other option.
+		String opt = option.value();
+		if (Utils.REGULAR_OUTPUT_CHANNEL.equals(opt) || Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(opt)) {
+			IAttributeValue cached = options.get(opt);
+			if (cached != null) return cached;
+		}
 		return sendCommand(smtConfig.commandFactory.get_option(option));
 	}
 

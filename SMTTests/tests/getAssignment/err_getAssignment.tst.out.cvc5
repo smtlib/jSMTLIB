@@ -1,7 +1,3 @@
 success
-(get-assignment)
-^^^^^^^^^^^^^^^^
-(error "Cannot get the current assignment when produce-assignments option is off.")
-(get-assignment xxx)
-                ^^^
+(error "The get-assignment command is only valid if :produce-assignments has been enabled")
 (error "A get-assignment command takes no arguments")

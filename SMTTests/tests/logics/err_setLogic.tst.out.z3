@@ -4,4 +4,4 @@
 (error "Expected a symbol here, not a hex-literal")
 (error "Expected a symbol here, not a string-literal")
 (error "Too many arguments or extraneous material after the command or missing right parenthesis")
-WARNING
+unsupported

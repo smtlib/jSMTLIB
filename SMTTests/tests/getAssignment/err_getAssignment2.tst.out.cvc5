@@ -1,5 +1,3 @@
 success
 success
-(get-assignment)
-^^^^^^^^^^^^^^^^
-(error "Cannot get the current assignment unless immediately preceded by SAT/INVALID or UNKNOWN response.")
+(error "The get-assignment command is only valid immediately after check-sat returned sat or unknown")

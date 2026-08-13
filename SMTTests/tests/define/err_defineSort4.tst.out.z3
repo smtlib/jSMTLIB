@@ -1,2 +1,2 @@
 success
-(error "line 3 column 18: unknown sort 'B'")
+(error "line 2 column 18: unknown sort 'B'")

@@ -3,4 +3,4 @@ success
 success
 sat
 success
-(error "line 7 column 10: proof is not available")
+(error "The get-proof command is only valid immediately after check-sat returned unsat")

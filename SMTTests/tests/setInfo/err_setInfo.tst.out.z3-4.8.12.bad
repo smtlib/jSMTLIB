@@ -1,0 +1,8 @@
+success
+(:name "Z3" )
+success
+(:authors "Leonardo de Moura, Nikolaj Bjorner and Christoph Wintersteiger" )
+success
+(:version "4.8.12" )
+success
+(:error-behavior continued-execution )

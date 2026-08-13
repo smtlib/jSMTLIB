@@ -1,5 +1,5 @@
 success
 success
 success
-unsupported
-(error "line 5 column 22: invalid declaration, constant 'a' (whith the given signature) already declared")
+success
+(error "line 5 column 22: invalid declaration, constant 'a' (with the given signature) already declared")

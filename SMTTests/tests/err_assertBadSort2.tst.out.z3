@@ -1,2 +1,2 @@
 success
-(error "line 3 column 9: invalid assert command, term is not Boolean")
+(error "line 2 column 9: invalid assert command, term is not Boolean")

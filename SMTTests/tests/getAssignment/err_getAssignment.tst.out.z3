@@ -1,3 +1,3 @@
 success
-(error "line 3 column 15: model is not available")
+(error "The get-assignment command is only valid if :produce-assignments has been enabled")
 (error "A get-assignment command takes no arguments")

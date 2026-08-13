@@ -13,6 +13,15 @@ if [ $# -lt 2 ]; then
 fi
 solver=$1
 test=$2
+
+### A "family" fallback lets several versions of the same solver (e.g. z3-4.8.12,
+### z3-4.10.2) share one golden file instead of duplicating identical content per
+### exact version: strip a trailing "-N..." or "_N..." version suffix (e.g.
+### "z3-4.8.12" -> "z3", "z3_4_3" -> "z3", "cvc5-1.3.2" -> "cvc5"). Solver names with
+### no such suffix (e.g. "yices2", "test") are left alone -- family is only used when
+### it differs from the exact solver name.
+family=$(echo "$solver" | sed -E 's/[_-][0-9].*//')
+if [ "$family" == "$solver" ]; then family=""; fi
 if [ ! -e "$test" ] && [ -e "$test.tst" ]; then
     test="$test.tst"
 fi
@@ -52,6 +61,15 @@ elif [ -e "${test}.skip.$solver.$PLATFORM" ]; then
 elif [ -e "${test}.skip.$solver" ]; then
     echo "SKIP $solver $test: $(cat "${test}.skip.$solver")"
     exit 77
+elif [ -n "$family" ] && [ -e "${test}.skip.$family.$PLATFORM_ARCH" ]; then
+    echo "SKIP $solver $test: $(cat "${test}.skip.$family.$PLATFORM_ARCH")"
+    exit 77
+elif [ -n "$family" ] && [ -e "${test}.skip.$family.$PLATFORM" ]; then
+    echo "SKIP $solver $test: $(cat "${test}.skip.$family.$PLATFORM")"
+    exit 77
+elif [ -n "$family" ] && [ -e "${test}.skip.$family" ]; then
+    echo "SKIP $solver $test: $(cat "${test}.skip.$family")"
+    exit 77
 elif [ -e "${test}.skip.$PLATFORM_ARCH" ]; then
     echo "SKIP $solver $test: $(cat "${test}.skip.$PLATFORM_ARCH")"
     exit 77
@@ -83,9 +101,13 @@ fi
 ### IMPORTANT: the priority order in these two 'for f in' loops must stay in sync
 ### with the candidates array in FileTests.java (SMTTests/src/org/smtlib/test/FileTests.java).
 ### If you change the order here, change it there too, and vice versa.
+err_candidates=("${test}.err.$solver.$PLATFORM_ARCH" "${test}.err.$solver.$PLATFORM" "${test}.err.$solver")
+if [ -n "$family" ]; then err_candidates+=("${test}.err.$family"); fi
+err_candidates+=("${test}.err.$PLATFORM_ARCH" "${test}.err.$PLATFORM" "${test}.err")
+
 errok=0
 while true; do ## The while true is just to allow a break from the inner test loop
-    for f in "${test}.err.$solver.$PLATFORM_ARCH" "${test}.err.$solver.$PLATFORM" "${test}.err.$solver" "${test}.err.$PLATFORM_ARCH" "${test}.err.$PLATFORM" "${test}.err" ; do
+    for f in "${err_candidates[@]}"; do
       if [ -e "$f" ]; then
         diff "${test}.err.actual" "$f"
         errok=$?
@@ -118,11 +140,15 @@ done
         
 
 ### Check the regular output
+out_candidates=("${test}.out.$solver.$PLATFORM_ARCH" "${test}.out.$solver.$PLATFORM" "${test}.out.$solver" "${test}.out.$solver.bad")
+if [ -n "$family" ]; then out_candidates+=("${test}.out.$family" "${test}.out.$family.bad"); fi
+out_candidates+=("${test}.out.$PLATFORM_ARCH" "${test}.out.$PLATFORM" "${test}.out")
+
 comparison=""
 while true; do ## The while true is just to allow a break from the inner test loop
-    for f in "${test}.out.$solver.$PLATFORM_ARCH" "${test}.out.$solver.$PLATFORM" "${test}.out.$solver" "${test}.out.$solver.bad" "${test}.out.$PLATFORM_ARCH" "${test}.out.$PLATFORM" "${test}.out" ; do
+    for f in "${out_candidates[@]}"; do
       if [ -e "$f" ]; then
-        diff -b -I '[(]:memory' "${test}.out.actual" "$f"
+        diff -b -I '[(]:memory' -I '[(]:max-memory' "${test}.out.actual" "$f"
         diffresult=$?
         comparison="$f"
         break 2

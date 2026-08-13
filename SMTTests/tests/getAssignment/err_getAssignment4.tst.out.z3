@@ -2,4 +2,4 @@ success
 success
 success
 unsat
-(error "line 6 column 15: model is not available")
+(error "The get-assignment command is only valid immediately after check-sat returned sat or unknown")

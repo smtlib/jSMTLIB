@@ -1,5 +1,0 @@
-(error "line 2 column 11: state of the most recent check-sat command is not unknown")
-(:memory 0.13 )
-success
-(error "line 5 column 10: state of the most recent check-sat command is not unknown")
-(:memory 0.13 )
