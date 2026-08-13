@@ -6,4 +6,3 @@ Bundle-Version: 0.9.10.5
 Export-Package: org.smtlib,
  org.smtlib.command,
  org.smtlib.impl
-Require-Bundle: org.junit
