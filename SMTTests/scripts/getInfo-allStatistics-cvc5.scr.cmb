@@ -1,0 +1,5 @@
+PASS: get-info :all-statistics is supported
+PASS: response starts with (:all-statistics
+PASS: response has balanced parentheses
+
+All 3 all-statistics checks PASSED

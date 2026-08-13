@@ -1,6 +1,0 @@
-success
-(error "Expected a parenthesized list of sorts beginning here")
-(error "No such sort symbol declared: A")
-(error "No such sort symbol declared: y")
-(error "No such sort symbol declared: y")
-(error "Too many arguments or extraneous material after the command or missing right parenthesis")

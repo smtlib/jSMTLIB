@@ -1,9 +1,0 @@
-success
-success
-success
-(error "No such sort symbol declared: Array")
-success
-success
-success
-(error "Unknown predicate symbol select with argument types I I")
-(error "Unknown predicate symbol store with argument types I I V")

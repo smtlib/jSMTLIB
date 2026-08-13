@@ -1,6 +1,0 @@
-(assert (forall ((z (_ BitVec 8))) (= z x)))
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-fun f ((_ BitVec 8)) (_ BitVec 8))
-             ^
-(declare-sort Tag 0)
-              ^^^

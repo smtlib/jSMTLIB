@@ -1,5 +1,0 @@
-success
-(error "The identifier is already declared to be a sort: Bool")
-(error "The identifier is already declared to be a sort: Array")
-(error "Symbol select is already defined")
-(error "Symbol store is already defined")

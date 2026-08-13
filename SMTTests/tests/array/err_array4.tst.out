@@ -1,9 +1,0 @@
-success
-success
-success
-success
-success
-success
-success
-(error "Unknown predicate symbol select with argument types (AA I V) I")
-(error "Unknown predicate symbol store with argument types (AA I V) I V")

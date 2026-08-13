@@ -10,12 +10,12 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.smtlib.ICommand.Ideclare_datatypes;
-import org.smtlib.IExpr.ISortDeclaration;
+import org.smtlib.IExpr.*;
 import org.smtlib.ISort;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.IResponse;
 import org.smtlib.ISolver;
-import org.smtlib.IVisitor;
+import org.smtlib.*;
 import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
 import org.smtlib.sexpr.Printer;
@@ -50,8 +50,8 @@ public class C_declare_datatypes extends Command implements Ideclare_datatypes {
 		p.parseLP();
 		while (!p.isRP() && !p.isEOD()) {
 			p.parseLP();
-			var sym = p.parseSymbol();
-			var arity = p.parseNumeral();
+			ISymbol sym = p.parseSymbol();
+			INumeral arity = p.parseNumeral();
 			p.parseRP();
 			sortDecls.add(p.smt().exprFactory.sortDeclaration(sym, arity));
 		}

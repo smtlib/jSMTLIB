@@ -1,5 +1,0 @@
-success
-success
-success
-(error "line 5 column 107: invalid function application, sort mismatch on argument at position 2")
-(error "line 6 column 100: unknown constant yy")

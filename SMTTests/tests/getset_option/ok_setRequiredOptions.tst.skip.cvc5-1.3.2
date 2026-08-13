@@ -1,0 +1,1 @@
+cvc5 genuinely redirects its diagnostic-output stream to the named file (real conforming :diagnostic-output-channel behavior), but the get-option response querying the channel's value right after redirecting arrives late/out of order on the pipe jSMTLIB reads, desyncing response/command attribution -- not observable through jSMTLIB's synchronous pipe-based protocol

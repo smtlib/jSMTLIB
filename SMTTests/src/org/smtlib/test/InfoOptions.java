@@ -65,6 +65,7 @@ public class InfoOptions  extends LogicTests {
 				: solvername.equals("yices2") ? "2.3.1"
 				: solvername.equals("cvc5") ? "1.8"
 				: solvername.equals("cvc5") ? "0.0.2"
+				: solvername.equals("cvc5-1.3.2") ? "1.3.2"
 				: solvername.equals("z3_4_3") ? "4.3"
 				: solvername.equals("z3_4_3_2") ? "4.3.2"
 				: solvername.equals("z3_4_4") ? "4.4.0"
@@ -105,15 +106,17 @@ public class InfoOptions  extends LogicTests {
 		doCommand("(set-info :name \"xx\")",
 //				solvername.equals("z3_4_4") ? "success" :
 				solvername.equals("yices2") ? "(error \"can't overwrite :name\")" :
+				solvername.equals("cvc5-1.3.2") ? "success" : // cvc5-1.3.2 permits setting pre-defined info keywords
 				"(error \"Setting the value of a pre-defined keyword is not permitted: :name\")");
 	}
-	
+
 	@Test
 	public void checkSetAuthors() {
 		doCommand("(set-info :authors \"xx\")",
 //				solvername.equals("z3_4_4") ? "success" :
 				solvername.equals("yices2") ?
 				"(error \"can't overwrite :authors\")" :
+				solvername.equals("cvc5-1.3.2") ? "success" : // cvc5-1.3.2 permits setting pre-defined info keywords
 				"(error \"Setting the value of a pre-defined keyword is not permitted: :authors\")");
 	}
 	
@@ -139,7 +142,8 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkRegularOutput() {
 		// The correct result is a quote-delimited string
-		doCommand("(get-option :regular-output-channel)", 
+		doCommand("(get-option :regular-output-channel)",
+						solvername.equals("cvc5-1.3.2") ? "stdout" : // cvc5-1.3.2 returns this unquoted
 						"\"stdout\""
 				);
 	}
@@ -156,8 +160,9 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkDiagnosticOutput() {
 		// The correct result is a quote-delimited string
-		doCommand("(get-option :diagnostic-output-channel)", 
+		doCommand("(get-option :diagnostic-output-channel)",
 //				solvername.startsWith("cvc5")? "unsupported" :
+						solvername.equals("cvc5-1.3.2") ? "stderr" : // cvc5-1.3.2 returns this unquoted
 						"\"stderr\""
 				);
 	}
@@ -175,8 +180,10 @@ public class InfoOptions  extends LogicTests {
     public void checkInteractiveMode() {
         Assume.assumeTrue(version.equals("V2.0")||version.equals("V2.5"));
         boolean supported = !solvername.equals("yices2") && !solvername.equals("cvc5");
-        doCommand("(get-option :interactive-mode)", 
-                !supported ? "unsupported" : "false"
+        doCommand("(get-option :interactive-mode)",
+                !supported ? "unsupported" :
+                solvername.equals("cvc5-1.3.2") ? "true" : // cvc5-1.3.2 defaults this true (a side effect of the required --interactive startup flag)
+                "false"
                 );
     }
     
@@ -184,8 +191,10 @@ public class InfoOptions  extends LogicTests {
     public void checkProduceAssertions() {
         Assume.assumeTrue(!version.equals("V2.0")&&!version.equals("V2.5"));
         boolean supported = !solvername.equals("yices2");
-        doCommand("(get-option :produce-assertions)", 
-                !supported ? "unsupported" : "false" 
+        doCommand("(get-option :produce-assertions)",
+                !supported ? "unsupported" :
+                solvername.equals("cvc5-1.3.2") ? "true" : // cvc5-1.3.2 defaults this true (a side effect of the required --interactive startup flag)
+                "false"
                 );
     }
     
@@ -256,6 +265,7 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkProduceModels() {
 		doCommand("(get-option :produce-models)",
+		        solvername.equals("cvc5-1.3.2") ? "false" : // defaults false here; other cvc-family adapters force it on via a startup flag
 		        solvername.startsWith("cvc") ? "true" : // FIXME - is this automatically true?
 				"false"
 				);
@@ -333,7 +343,8 @@ public class InfoOptions  extends LogicTests {
 		//boolean supported = smt.smtConfig.isVersion(SMT.Configuration.SMTLIB.V20) && !solvername.equals("yices2");
 		boolean supported = !solvername.equals("yices2");
 		supported |= solvername.startsWith("cvc5"); // cvc5 supports option in V2.5
-		doCommand("(get-option :expand-definitions)", 
+		supported &= !solvername.equals("cvc5-1.3.2"); // cvc5-1.3.2 does not implement this deprecated V2.0-era option
+		doCommand("(get-option :expand-definitions)",
 				supported ? "false" : "unsupported"
 				);
 	}
@@ -342,13 +353,14 @@ public class InfoOptions  extends LogicTests {
 	public void checkSetExpandDefinitions() {
 		boolean supported = smt.smtConfig.isVersion(SMT.Configuration.SMTLIB.V20) && !solvername.equals("yices2") && !solvername.equals("z3_4_4") && !solvername.equals("z3_4_5");
 		supported = true; // FIXME - it is optional, but it is permitted to set
-		doCommand("(set-option :expand-definitions true)", 
+		supported &= !solvername.equals("cvc5-1.3.2"); // cvc5-1.3.2 does not implement this deprecated V2.0-era option
+		doCommand("(set-option :expand-definitions true)",
 				!supported ? "unsupported" : "success");
-		doCommand("(get-option :expand-definitions)", 
+		doCommand("(get-option :expand-definitions)",
 				!supported ? "unsupported" : "true");
-		doCommand("(set-option :expand-definitions false)", 
+		doCommand("(set-option :expand-definitions false)",
 				!supported ? "unsupported" : "success");
-		doCommand("(get-option :expand-definitions)", 
+		doCommand("(get-option :expand-definitions)",
 				!supported ? "unsupported" : "false");
 	}
 	
@@ -375,8 +387,9 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkVerbosity() {
-		doCommand("(get-option :verbosity)", 
+		doCommand("(get-option :verbosity)",
 		        "cvc5".equals(solvername) ? "-1" : // FIXME - why this difference
+		        "cvc5-1.3.2".equals(solvername) ? "-1" :
 				"0"
 				);
 	}

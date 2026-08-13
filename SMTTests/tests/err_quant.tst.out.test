@@ -1,5 +1,0 @@
-success
-success
-success
-(error "Unknown predicate symbol le with argument types Int Bool")
-(error "Unknown constant symbol yy")

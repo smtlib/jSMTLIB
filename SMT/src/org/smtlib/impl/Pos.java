@@ -176,9 +176,13 @@ public class Pos implements IPos {
 		//@ ensures \result >= pos;
 		protected int nextLineTermination(int pos) {
 			char c;
-			if (pos >= chars().length()) return chars().length()-1; // If the length is indeterminate, length() should be INT_MAX
-			while ((c=charAt(pos)) != '\n' && c != '\r' && c != CharSequenceInfinite.endChar) ++pos;
-			if (c == '\r' && charAt(pos+1) == '\n') ++pos;
+			int len = chars().length();
+			if (pos >= len) return len-1; // If the length is indeterminate, length() should be INT_MAX
+			// A bounded sequence (e.g. a solver response) may end before any \n, \r, or
+			// endChar sentinel is found; stop at the last valid index rather than reading past it.
+			while (pos < len-1 && (c=charAt(pos)) != '\n' && c != '\r' && c != CharSequenceInfinite.endChar) ++pos;
+			c = charAt(pos);
+			if (c == '\r' && pos+1 < len && charAt(pos+1) == '\n') ++pos;
 			else if (c == CharSequenceInfinite.endChar) --pos;
 			return pos;
 		}

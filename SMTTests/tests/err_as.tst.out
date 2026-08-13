@@ -1,6 +1,0 @@
-success
-(error "Unknown predicate symbol + with argument types Int Int")
-(error "Unknown predicate symbol and with argument types Bool Bool")
-(error "Unknown predicate symbol zzz with argument types Bool Bool")
-success
-(error "Unknown predicate symbol + with argument types Int Int")

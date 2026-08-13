@@ -1,6 +1,0 @@
-(declare-fun a () (Array I V))
-                   ^^^^^
-(assert (= v (select a i)))
-             ^^^^^^^^^^^^
-(assert (= a (store a i v)))
-             ^^^^^^^^^^^^^

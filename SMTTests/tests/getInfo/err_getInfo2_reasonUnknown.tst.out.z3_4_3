@@ -1,0 +1,3 @@
+(error "line 3 column 11: state of the most recent check-sat command is not unknown")
+success
+(error "line 5 column 10: state of the most recent check-sat command is not unknown")

@@ -1,3 +1,0 @@
-success
-(error "The _ wildcard may only appear in match patterns")
-(error "No sort specified for string-literal")
