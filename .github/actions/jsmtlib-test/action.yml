@@ -32,9 +32,11 @@ runs:
         ## Normalize to forward slashes so Java path handling works on Windows.
         SOLVER_DIR="${SOLVER_DIR//\\/\/}"
 
-        ## Make solver binaries executable (no-op on Windows).
+        ## Make every solver binary executable (no-op on Windows). Blanket glob rather
+        ## than a per-solver-name list, which would need updating each time a solver
+        ## is added; harmless here since these dirs hold nothing but solver binaries.
         if [[ "${{ runner.os }}" != "Windows" ]]; then
-          chmod +x "$SOLVER_DIR"/z3-* "$SOLVER_DIR"/cvc5-* "$SOLVER_DIR"/yices2-* "$SOLVER_DIR"/bitwuzla-* "$SOLVER_DIR"/alt-ergo-* 2>/dev/null || true
+          chmod +x "$SOLVER_DIR"/* 2>/dev/null || true
         fi
 
         ## Windows ships z3-4.3.2.exe; jsmtlib.properties references z3-4.3.1.
@@ -53,15 +55,21 @@ runs:
     ## separately, yices2/bitwuzla/alt-ergo/smtinterpol after that) — this just confirms
     ## every solver binary present for this platform actually executes on this runner
     ## (e.g. that macOS's freshly-built libcudd and brew-installed gmp/mpfr resolve),
-    ## before sinking time into the full test suite below.
+    ## before sinking time into the full test suite below. Iterates every file in
+    ## SMT_SOLVER_DIR rather than a per-solver-name list, which would go stale as
+    ## solvers are added; Solvers-windows is the one directory with non-solver files
+    ## (Z3's .dll/.lib/.xml JNI bindings and runtime redistributables) alongside the
+    ## .exe's, so those extensions are skipped. A solver failing to run here is a
+    ## warning, not a build failure — this step always exits 0.
     - name: Smoke test solver binaries
       shell: bash
       run: |
         echo "Solver smoke test on ${{ runner.os }}-${{ runner.arch }}"
-        for exe in "$SMT_SOLVER_DIR"/z3-* "$SMT_SOLVER_DIR"/cvc5-* "$SMT_SOLVER_DIR"/yices2-* "$SMT_SOLVER_DIR"/bitwuzla-* "$SMT_SOLVER_DIR"/alt-ergo-* "$SMT_SOLVER_DIR"/*.jar; do
+        for exe in "$SMT_SOLVER_DIR"/*; do
           [ -f "$exe" ] || continue
           name=$(basename "$exe")
           case "$name" in
+            *.dll|*.lib|*.xml) continue ;;
             *.jar) cmd=(java -jar "$exe" -version) ;;
             *)     cmd=("$exe" --version) ;;
           esac
@@ -72,6 +80,7 @@ runs:
             echo "$out" | sed 's/^/       /'
           fi
         done
+        exit 0
 
     - name: Run jSMTLIB tests
       shell: bash
