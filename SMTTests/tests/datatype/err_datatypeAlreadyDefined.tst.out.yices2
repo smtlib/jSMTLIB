@@ -1,0 +1,5 @@
+success
+success
+(error "at line 3, column 18: syntax error: declare-datatype is not a command")
+success
+(error "at line 5, column 18: syntax error: declare-datatype is not a command")

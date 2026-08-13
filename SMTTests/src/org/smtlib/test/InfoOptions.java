@@ -23,12 +23,16 @@ public class InfoOptions  extends LogicTests {
 	 *  (Solver_z3_recent, registered as "z3-VERSION" -- distinct from the legacy
 	 *  underscore-named z3_4_x adapters, which carry their own client-side workarounds). */
 	boolean isZ3Recent;
+	/** True for yices2-2.6.5/2.7.0 (registered as "yices2-VERSION") -- distinct from the
+	 *  bare "yices2" name, whose behavior these checks otherwise assume. */
+	boolean isYices2Recent;
 
     public InfoOptions(String solvername, String version) {
     	this.solvername = solvername;
     	this.version = version;
     	this.isTest = "test".equals(solvername);
     	this.isZ3Recent = solvername.startsWith("z3-");
+    	this.isYices2Recent = solvername.startsWith("yices2-");
     }
     
     public void checkGetInfo(String keyword, String expected) {
@@ -51,6 +55,7 @@ public class InfoOptions  extends LogicTests {
 		checkGetInfo(":authors",
 				(solvername.equals("test") ? "David R. Cok"
 				: solvername.equals("simplify") ? "David Detlefs and Greg Nelson and James B. Saxe"
+				: solvername.startsWith("yices2-") ? "Bruno Dutertre, Dejan Jovanović, Ian A. Mason, Stéphane Graham-Lengrand"
 				: solvername.startsWith("yices") ? "Bruno Dutertre"
 				: solvername.equals("cvc") ? "Clark Barrett, Cesare Tinelli, and others"
 				: solvername.startsWith("cvc") ? null // Long text that we don't check // TODO
@@ -69,8 +74,9 @@ public class InfoOptions  extends LogicTests {
 		checkGetInfo(":version",
 				(solvername.equals("test") ? "0.0"
 				: solvername.equals("simplify") ? "1.5.4"
-				: solvername.equals("yices") ? "1.0.28"
 				: solvername.equals("yices2") ? "2.3.1"
+				: solvername.equals("yices2-2.6.5") ? "2.6.5"
+				: solvername.equals("yices2-2.7.0") ? "2.7.0"
 				: solvername.equals("cvc5") ? "1.8"
 				: solvername.equals("cvc5") ? "0.0.2"
 				: solvername.equals("cvc5-1.3.2") ? "1.3.2"
@@ -96,8 +102,7 @@ public class InfoOptions  extends LogicTests {
 		checkGetInfo(":name",
 						solvername.equals("test") ? "test"
 						: solvername.equals("simplify") ? "simplify"
-						: solvername.equals("yices") ? "yices"
-						: solvername.equals("yices2") ? "Yices"
+						: solvername.startsWith("yices2") ? "Yices"
 						: solvername.equals("cvc") ? "CVC3"
 						: solvername.startsWith("cvc5") ? "cvc5"
 						: solvername.startsWith("cvc5") ? "cvc5"
@@ -118,7 +123,7 @@ public class InfoOptions  extends LogicTests {
 	public void checkSetName() {
 		doCommand("(set-info :name \"xx\")",
 //				solvername.equals("z3_4_4") ? "success" :
-				solvername.equals("yices2") ? "(error \"can't overwrite :name\")" :
+				solvername.equals("yices2") || isYices2Recent ? "(error \"can't overwrite :name\")" :
 				solvername.equals("cvc5-1.3.2") ? "success" : // cvc5-1.3.2 permits setting pre-defined info keywords
 				isZ3Recent ? "success" : // z3-4.8.12+ silently accepts (and ignores) this rather than erroring -- a real non-conformance
 				"(error \"Setting the value of a pre-defined keyword is not permitted: :name\")");
@@ -128,7 +133,7 @@ public class InfoOptions  extends LogicTests {
 	public void checkSetAuthors() {
 		doCommand("(set-info :authors \"xx\")",
 //				solvername.equals("z3_4_4") ? "success" :
-				solvername.equals("yices2") ?
+				solvername.equals("yices2") || isYices2Recent ?
 				"(error \"can't overwrite :authors\")" :
 				solvername.equals("cvc5-1.3.2") ? "success" : // cvc5-1.3.2 permits setting pre-defined info keywords
 				isZ3Recent ? "success" : // z3-4.8.12+ silently accepts (and ignores) this rather than erroring -- a real non-conformance
@@ -194,7 +199,7 @@ public class InfoOptions  extends LogicTests {
     @Test
     public void checkInteractiveMode() {
         Assume.assumeTrue(version.equals("V2.0")||version.equals("V2.5"));
-        boolean supported = !solvername.equals("yices2") && !solvername.equals("cvc5");
+        boolean supported = !solvername.equals("yices2") && !isYices2Recent && !solvername.equals("cvc5");
         doCommand("(get-option :interactive-mode)",
                 !supported ? "unsupported" :
                 solvername.equals("cvc5-1.3.2") ? "true" : // cvc5-1.3.2 defaults this true (a side effect of the required --interactive startup flag)
@@ -205,7 +210,7 @@ public class InfoOptions  extends LogicTests {
     @Test
     public void checkProduceAssertions() {
         Assume.assumeTrue(!version.equals("V2.0")&&!version.equals("V2.5"));
-        boolean supported = !solvername.equals("yices2");
+        boolean supported = !solvername.equals("yices2") && !isYices2Recent;
         doCommand("(get-option :produce-assertions)",
                 !supported ? "unsupported" :
                 solvername.equals("cvc5-1.3.2") ? "true" : // cvc5-1.3.2 defaults this true (a side effect of the required --interactive startup flag)
@@ -216,8 +221,8 @@ public class InfoOptions  extends LogicTests {
     @Test
     public void checkSetInteractiveMode() {
         Assume.assumeTrue(version.equals("V2.0")||version.equals("V2.5"));
-        boolean supported = !solvername.equals("yices2") && !solvername.equals("cvc5");
-        doCommand("(set-option :interactive-mode true)", 
+        boolean supported = !solvername.equals("yices2") && !isYices2Recent && !solvername.equals("cvc5");
+        doCommand("(set-option :interactive-mode true)",
                 !supported ? "unsupported" :
                 "success");
         doCommand("(get-option :interactive-mode)", 
@@ -235,23 +240,23 @@ public class InfoOptions  extends LogicTests {
     public void checkSetProduceAssertions() {
         Assume.assumeTrue(!version.equals("V2.0")&&!version.equals("V2.5"));
         doCommand("(set-option :produce-assertions true)", 
-                solvername.equals("yices2") ? "unsupported" :
+                solvername.equals("yices2") || isYices2Recent ? "unsupported" :
                 "success");
-        doCommand("(get-option :produce-assertions)", 
-                solvername.equals("yices2") ? "unsupported" :
+        doCommand("(get-option :produce-assertions)",
+                solvername.equals("yices2") || isYices2Recent ? "unsupported" :
                 "true");
-        doCommand("(set-option :produce-assertions false)", 
-                solvername.equals("yices2") ? "unsupported" :
+        doCommand("(set-option :produce-assertions false)",
+                solvername.equals("yices2") || isYices2Recent ? "unsupported" :
                 "success");
-        doCommand("(get-option :produce-assertions)", 
-                solvername.equals("yices2") ? "unsupported" :
+        doCommand("(get-option :produce-assertions)",
+                solvername.equals("yices2") || isYices2Recent ? "unsupported" :
                 "false");
     }
     
 	@Test
 	public void checkProduceProofs() {
-		boolean supported = !solvername.equals("yices2");
-		doCommand("(get-option :produce-proofs)", 
+		boolean supported = !solvername.equals("yices2") && !isYices2Recent;
+		doCommand("(get-option :produce-proofs)",
 				!supported ? "unsupported" : "false"
 				);
 	}
@@ -265,16 +270,16 @@ public class InfoOptions  extends LogicTests {
 				supported ? "success" 
 						: solvername.startsWith("cvc5")? "success"
 						:  "unsupported");
-		doCommand("(get-option :produce-proofs)", 
+		doCommand("(get-option :produce-proofs)",
 				supported ? "true"
-			    : solvername.equals("yices2") ? "unsupported"
+			    : solvername.equals("yices2") || isYices2Recent ? "unsupported"
 				:  "false");
-		doCommand("(set-option :produce-proofs false)", 
-				supported ? "success" 
+		doCommand("(set-option :produce-proofs false)",
+				supported ? "success"
 						: solvername.startsWith("cvc5")? "success"
 						:  "unsupported");
-		doCommand("(get-option :produce-proofs)", 
-			    solvername.equals("yices2") ? "unsupported" :
+		doCommand("(get-option :produce-proofs)",
+			    solvername.equals("yices2") || isYices2Recent ? "unsupported" :
 				"false");
 	}
 	
@@ -290,7 +295,7 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceModels() {
-		boolean support = isTest || solvername.startsWith("z3") || solvername.startsWith("cvc") || "yices2".equals(solvername);
+		boolean support = isTest || solvername.startsWith("z3") || solvername.startsWith("cvc") || "yices2".equals(solvername) || isYices2Recent;
 		doCommand("(set-option :produce-models true)", 
 				support? "success" 
 						: "unsupported");
@@ -313,7 +318,7 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceAssignments() {
-		boolean supported = isTest || solvername.startsWith("cvc") || solvername.equals("yices2") || (!solvername.equals("z3_4_3") && solvername.startsWith("z3_") ) || isZ3Recent ;
+		boolean supported = isTest || solvername.startsWith("cvc") || solvername.equals("yices2") || isYices2Recent || (!solvername.equals("z3_4_3") && solvername.startsWith("z3_") ) || isZ3Recent ;
 
 		doCommand("(set-option :produce-assignments true)",
 					supported? "success" 
@@ -339,7 +344,7 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkSetProduceUnsatCores() {
 		Assume.assumeTrue(!solvername.equals("cvc5b"));
-		boolean supported = !solvername.equals("z3_4_3") && !solvername.startsWith("yices");
+		boolean supported = isYices2Recent || (!solvername.equals("z3_4_3") && !solvername.startsWith("yices"));
 		doCommand("(set-option :produce-unsat-cores true)",
 				supported ? "success" 
 						:  "unsupported");
@@ -364,6 +369,7 @@ public class InfoOptions  extends LogicTests {
 		supported |= solvername.startsWith("cvc5"); // cvc5 supports option in V2.5
 		supported &= !solvername.equals("cvc5-1.3.2"); // cvc5-1.3.2 does not implement this deprecated V2.0-era option
 		supported &= !isZ3Recent; // z3-4.8.12+ does not implement this deprecated option (self-consistently unsupported for both get and set)
+		supported &= !isYices2Recent; // yices2-2.6.5+ does not implement this deprecated option either
 		doCommand("(get-option :expand-definitions)",
 				supported ? "false" : "unsupported"
 				);
@@ -375,6 +381,7 @@ public class InfoOptions  extends LogicTests {
 		supported = true; // FIXME - it is optional, but it is permitted to set
 		supported &= !solvername.equals("cvc5-1.3.2"); // cvc5-1.3.2 does not implement this deprecated V2.0-era option
 		supported &= !isZ3Recent; // z3-4.8.12+ does not implement this deprecated option (self-consistently unsupported for both get and set)
+		supported &= !isYices2Recent; // yices2-2.6.5+ does not implement this deprecated option either
 		doCommand("(set-option :expand-definitions true)",
 				!supported ? "unsupported" : "success");
 		doCommand("(get-option :expand-definitions)",

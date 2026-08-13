@@ -1,0 +1,4 @@
+success
+success
+success
+(error "at line 4, column 12: invalid :named attribute (name is already used)")

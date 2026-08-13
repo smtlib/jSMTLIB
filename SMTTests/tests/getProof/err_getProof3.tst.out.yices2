@@ -3,6 +3,4 @@ success
 success
 sat
 success
-(get-proof)
-^^^^^^^^^^^
-(error "get-proof is not supported")
+(error "The get-proof command is only valid if :produce-proofs has been enabled")

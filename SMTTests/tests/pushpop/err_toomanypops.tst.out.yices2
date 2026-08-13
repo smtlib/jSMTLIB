@@ -1,6 +1,4 @@
 success
 success
-(pop 3)
-^^^^^^^
 (error "can't pop more than one level")
 success

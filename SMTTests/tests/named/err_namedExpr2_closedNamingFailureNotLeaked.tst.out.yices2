@@ -1,0 +1,4 @@
+(error "logic AUFNIRA is not supported")
+(error "no logic set")
+(error "at line 3, column 66: invalid :named attribute (name is already used)")
+(error "Error writing to solver: (assert (and (let ((r true)) (and r (! q :named R))) (let ((r false)) (and r (! q :named R))))) java.io.IOException: Stream closed")

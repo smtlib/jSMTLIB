@@ -1,0 +1,8 @@
+(set-logic UFLRA)
+^^^^^^^^^^^^^^^^^
+(declare-const a Real)
+^^^^^^^^^^^^^^^^^^^^^^
+(declare-const b Real)
+^^^^^^^^^^^^^^^^^^^^^^
+(assert (= b (* a a)))
+^^^^^^^^^^^^^^^^^^^^^^

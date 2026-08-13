@@ -1,3 +1,1 @@
-(declare-sort A 0)
-^^^^^^^^^^^^^^^^^^
 (error "no logic set")

@@ -1,0 +1,6 @@
+success
+success
+success
+(error "quantifiers are not allowed in logic QF_AUFLIA")
+(error "Error writing to solver: (assert (= y (* x x))) java.io.IOException: Stream closed")
+(error "Error writing to solver: (define-sort BadArr () (Array Int Real)) java.io.IOException: Stream closed")

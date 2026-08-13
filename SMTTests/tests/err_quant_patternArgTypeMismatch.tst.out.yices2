@@ -1,0 +1,3 @@
+(error "logic AUFLIA is not supported")
+(error "at line 2, column 18: undefined sort: Int")
+(error "Error writing to solver: (assert (forall ((x Int) (y Int) (z Int) ) (! (=> (and (le x y) (le y z)) (le x z)) :pattern ( ( le x true ) )))) java.io.IOException: Stream closed")

@@ -1,0 +1,4 @@
+(error "logic AUFNIRA is not supported")
+(error "no logic set")
+(error "at line 3, column 40: undefined term: q")
+(error "Error writing to solver: (assert (let ((r true) ) (! r :named R))) java.io.IOException: Stream closed")

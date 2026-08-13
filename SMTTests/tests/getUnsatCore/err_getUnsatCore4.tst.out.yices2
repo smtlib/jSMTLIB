@@ -1,7 +1,5 @@
-unsupported
+success
 success
 success
 sat
-(get-unsat-core)
-^^^^^^^^^^^^^^^^
-(error "get-unsat-core is not supported")
+(error "The get-unsat-core command is only valid immediately after check-sat returned unsat")

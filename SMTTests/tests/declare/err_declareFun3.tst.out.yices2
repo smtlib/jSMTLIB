@@ -1,3 +1,1 @@
-(declare-fun x () Bool)
-^^^^^^^^^^^^^^^^^^^^^^^
 (error "no logic set")

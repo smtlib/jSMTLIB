@@ -1,15 +1,9 @@
 unsupported
 success
 success
-(
-error
-"get-assertions is not supported"
-)
+(error "The get-assertions command is only valid if :produce-assertions has been enabled")
 success
 success
 success
 success
-(
-error
-"get-assertions is not supported"
-)
+(error "The get-assertions command is only valid if :produce-assertions has been enabled")

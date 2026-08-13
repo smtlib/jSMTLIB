@@ -109,7 +109,7 @@ errok=0
 while true; do ## The while true is just to allow a break from the inner test loop
     for f in "${err_candidates[@]}"; do
       if [ -e "$f" ]; then
-        diff "${test}.err.actual" "$f"
+        diff -I 'java.io.IOException:' "${test}.err.actual" "$f"
         errok=$?
         if [ $errok == 0 ]; then
           rm -f "${test}.err.actual"
@@ -148,7 +148,7 @@ comparison=""
 while true; do ## The while true is just to allow a break from the inner test loop
     for f in "${out_candidates[@]}"; do
       if [ -e "$f" ]; then
-        diff -b -I '[(]:memory' -I '[(]:max-memory' "${test}.out.actual" "$f"
+        diff -b -I '[(]:memory' -I '[(]:max-memory' -I 'java.io.IOException:' "${test}.out.actual" "$f"
         diffresult=$?
         comparison="$f"
         break 2

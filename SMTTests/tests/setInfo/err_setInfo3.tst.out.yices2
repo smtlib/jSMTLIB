@@ -1,0 +1,3 @@
+(error "can't overwrite :all-statistics")
+(error "can't overwrite :reason-unknown")
+(error "no logic set")

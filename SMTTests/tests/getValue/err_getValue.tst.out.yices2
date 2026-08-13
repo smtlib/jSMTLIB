@@ -1,5 +1,3 @@
 success
 success
-(get-value (x))
-^^^^^^^^^^^^^^^
-(error "can't build a model. Call (check-sat) first")
+(error "The get-value command is only valid if :produce-models has been enabled")

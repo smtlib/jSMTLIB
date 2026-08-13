@@ -1,0 +1,4 @@
+success
+success
+success
+(error "at line 4, column 10: in equality: incompatible types")

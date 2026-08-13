@@ -1,0 +1,2 @@
+success
+(error "at line 2, column 14: can't redefine term: store")

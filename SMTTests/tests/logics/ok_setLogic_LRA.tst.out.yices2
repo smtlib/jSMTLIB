@@ -1,0 +1,1 @@
+(error "the exists/forall solver does not work in incremental mode")

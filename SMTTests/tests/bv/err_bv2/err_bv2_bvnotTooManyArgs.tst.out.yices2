@@ -1,0 +1,5 @@
+success
+success
+success
+success
+(error "at line 5, column 13: wrong number of arguments in bvnot")

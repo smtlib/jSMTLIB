@@ -1,0 +1,3 @@
+(error "logic AUFLIA is not supported")
+(error "at line 2, column 19: undefined sort: Int")
+(error "Error writing to solver: (assert (match x ( (y y)))) java.io.IOException: Stream closed")

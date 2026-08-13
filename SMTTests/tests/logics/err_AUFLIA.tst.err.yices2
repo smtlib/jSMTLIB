@@ -1,0 +1,10 @@
+(set-logic AUFLIA)
+^^^^^^^^^^^^^^^^^^
+(declare-const x Int)
+^^^^^^^^^^^^^^^^^^^^^
+(declare-const y Int)
+^^^^^^^^^^^^^^^^^^^^^
+(assert (= y (* x x)))
+^^^^^^^^^^^^^^^^^^^^^^
+(define-sort BadArr () (Array Int Real))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,0 +1,4 @@
+(set-info :smt-lib-version 2.7)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort-parameter T)
+^^^^^^^^^^^^^^^^^^^^^^^^^^

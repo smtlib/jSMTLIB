@@ -101,11 +101,11 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
 //		return "yices> ";
 //	}
 	
-	static String cmd[] = new String[]{ null, "--incremental", "--interactive" };
-	
 	public String[] cmd(String exec) {
-		cmd[0] = exec;
-		return cmd;
+		java.util.List<String> args = new java.util.ArrayList<String>(
+				java.util.Arrays.asList(exec, "--incremental", "--interactive"));
+		if (smtConfig.timeout > 0) args.add("--timeout=" + (int)Math.ceil(smtConfig.timeout));
+		return args.toArray(new String[args.size()]);
 	}
 	
 
@@ -128,46 +128,15 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
 		}
 	}
 
-	/** Pushed down from Solver_smt: older Yices output used legacy {@code bvVALUE[WIDTH]}
-	 *  bitvector literal syntax instead of standard {@code #bBITS}, and could emit
-	 *  multiple error fragments in one response. Moved here (rather than kept as a
-	 *  blanket default for every Solver_smt subclass) so a genuinely compliant solver
-	 *  isn't defensively second-guessed; kept for yices2 until it's confirmed unneeded
-	 *  against a current build. */
-	@Override
-	protected IResponse parseResponse(String response) {
-		try {
-			Pattern oldbv = Pattern.compile("bv([0-9]+)\\[([0-9]+)\\]");
-			Matcher mm = oldbv.matcher(response);
-			while (mm.find()) {
-				long val = Long.parseLong(mm.group(1));
-				int base = Integer.parseInt(mm.group(2));
-				String bits = "";
-				for (int i=0; i<base; i++) { bits = ((val&1)==0 ? "0" : "1") + bits; val = val >>> 1; }
-				response = response.substring(0,mm.start()) + "#b" + bits + response.substring(mm.end(),response.length());
-				mm = oldbv.matcher(response);
-			}
-			if (response.contains("error")) {
-				// returns an s-expr (always?)
-				Pattern p = Pattern.compile("\\p{Space}*\\(\\p{Blank}*error\\p{Blank}+\"(([\\p{Print}\\p{Space}&&[^\"\\\\]]|\\\\\")*)\"\\p{Blank}*\\)");
-				Matcher m = p.matcher(response);
-				String concat = "";
-				while (m.lookingAt()) {
-					if (!concat.isEmpty()) concat = concat + "; ";
-					String matched = m.group(1);
-					concat = concat + matched;
-					m.region(m.end(0),m.regionEnd());
-				}
-				if (!concat.isEmpty()) response = concat;
-				return smtConfig.responseFactory.error(response);
-			}
-			responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source(response,null));
-			return responseParser.parseResponse(response);
-		} catch (ParserException e) {
-			return smtConfig.responseFactory.error("ParserException while parsing response: " + response + " " + e);
-		}
-	}
-
+	// parseResponse() used to be overridden here (pushed down from Solver_smt) for two
+	// legacy-yices workarounds: converting old bvVALUE[WIDTH] bitvector literal syntax to
+	// standard #bBITS, and a naive response.contains("error") check meant to catch
+	// multi-fragment error text. Removed: current yices2 emits standard #b/#x bitvector
+	// literals (the conversion was a no-op), and the "error" substring check was actively
+	// wrong -- it misfired on any non-error response that merely contains "error" as a
+	// substring, e.g. "(:error-behavior immediate-exit)" from get-info, which it wrapped
+	// in a bogus error response. AbstractSolver's default (a real S-expression parse) is
+	// correct for current yices2.
 	@Override
 	public IResponse get_option(IKeyword key) {
 		IResponse r = super.get_option(key);
@@ -178,33 +147,14 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
 		return r;
 	}
 
-	@Override
-	public IResponse check_sat() {
-		IResponse res = super.check_sat();
-		if (res.isError()) return res;
-
-		try {
-			if (smtConfig.timeout>0) {
-				String sq = solverProcess.sendAndListen("(set-timeout "+(int)smtConfig.timeout+")\r\n");
-				if (sq.contains(errorIndication)) {
-					return smtConfig.responseFactory.error(sq);
-				}
-				
-			}
-			String s = solverProcess.sendAndListen("(check)\r\n");
-			if (s.contains(errorIndication)) {
-				return smtConfig.responseFactory.error(s);
-			}
-			//System.out.println("HEARD: " + s);
-			if (s.contains("unsat")) res = smtConfig.responseFactory.unsat();
-			else if (s.contains("sat")) res = smtConfig.responseFactory.sat();
-			else res = smtConfig.responseFactory.unknown();
-			checkSatStatus = res;
-		} catch (IOException e) {
-			res = smtConfig.responseFactory.error("Failed to check-sat");
-		}
-		return res;
-	}
+	// check_sat() used to re-send a legacy native "(check)" command after the standard
+	// "(check-sat)" and trust *that* response instead -- current yices2 rejects "(check)"
+	// as a syntax error ("check is not a command"), so this unconditionally overwrote
+	// every real sat/unsat result with "unknown". Removed; AbstractSolver's default
+	// check_sat() (just "(check-sat)", trusted as-is) is correct. The timeout it used to
+	// apply via a runtime "(set-timeout N)" command is now applied at startup instead,
+	// via the --timeout=N CLI flag (see cmd()), matching how Solver_z3_recent applies
+	// its timeout as a CLI flag rather than a runtime command.
 
 //	@Override
 //	public IResponse pop(int number) {
@@ -311,29 +261,22 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
 //		return value;
 //	}
 
+	/** :status is the only real special case left here: yices2 has no native get-info
+	 *  support for it ({@code (error "no info for :status")}), so it's answered from the
+	 *  locally-tracked checkSatStatus instead. Everything else used to be hardcoded here
+	 *  too (:error-behavior, :all-statistics, :reason-unknown, :authors, :version, :name,
+	 *  and an "unsupported" catch-all for every other keyword) with stale values from a
+	 *  much older yices2 that apparently didn't implement get-info -- current yices2
+	 *  answers all of those correctly itself (confirmed :error-behavior is actually
+	 *  "immediate-exit", not the hardcoded "continued-execution"; :all-statistics returns
+	 *  a real statistics dump, not "unsupported"), so they're now left to
+	 *  AbstractSolver's default (forward to the solver). */
 	@Override
 	public IResponse get_info(IKeyword key) {
-		String option = key.value();
-		IAttributeValue lit;
-		if (":error-behavior".equals(option)) {
-			lit = smtConfig.exprFactory.symbol(Utils.CONTINUED_EXECUTION); // FIXME
-		} else if (Utils.STATUS.toString().equals(option)) {
-			return checkSatStatus==null ? smtConfig.responseFactory.unsupported() : checkSatStatus; 
-		} else if (":all-statistics".equals(option)) {
-			return smtConfig.responseFactory.unsupported(); // FIXME
-		} else if (":reason-unknown".equals(option)) {
-			return smtConfig.responseFactory.unsupported(); // FIXME
-		} else if (":authors".equals(option)) {
-			lit = smtConfig.exprFactory.unquotedString("SRI");
-		} else if (":version".equals(option)) {
-			lit = smtConfig.exprFactory.unquotedString("2.1");
-		} else if (":name".equals(option)) {
-			lit = smtConfig.exprFactory.unquotedString("yices2");
-		} else {
-			return smtConfig.responseFactory.unsupported();
+		if (Utils.STATUS.toString().equals(key.value())) {
+			return checkSatStatus==null ? smtConfig.responseFactory.unsupported() : checkSatStatus;
 		}
-		IAttribute<?> attr = smtConfig.exprFactory.attribute(key,lit);
-		return smtConfig.responseFactory.get_info_response(attr);
+		return super.get_info(key);
 	}
 	
 //	@Override

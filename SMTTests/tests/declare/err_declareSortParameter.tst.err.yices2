@@ -1,0 +1,6 @@
+(set-info :smt-lib-version 2.7)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort-parameter .bad)
+                        ^^^^
+(declare-sort-parameter @bad)
+                        ^^^^

@@ -1,0 +1,2 @@
+(error "logic AUFLIA is not supported")
+(error "at line 2, column 16: syntax error: define-fun-rec is not a command")

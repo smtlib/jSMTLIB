@@ -1,0 +1,9 @@
+success
+success
+success
+(error "at line 4, column 12: invalid :named attribute (name is already used)")
+(error "Error writing to solver: (assert (! p :named P)) java.io.IOException: Stream closed")
+(error "Error writing to solver: (assert (! q :named P)) java.io.IOException: Stream closed")
+(error "Error writing to solver: (declare-fun P () Bool) java.io.IOException: Stream closed")
+(error "Error writing to solver: (assert (and (! p :named PP) (! q :named P))) java.io.IOException: Stream closed")
+(error "Error writing to solver: (assert PP) java.io.IOException: Stream closed")

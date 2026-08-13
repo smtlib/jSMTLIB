@@ -1,0 +1,4 @@
+(set-logic AUFLIA)
+^^^^^^^^^^^^^^^^^^
+(define-fun-rec f ((x Int)) Bool x)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

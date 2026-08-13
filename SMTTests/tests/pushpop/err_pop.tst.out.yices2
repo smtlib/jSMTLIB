@@ -1,4 +1,2 @@
 success
-(pop 1)
-^^^^^^^
 (error "pop not allowed at the bottom level")

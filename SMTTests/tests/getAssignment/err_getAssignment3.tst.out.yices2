@@ -3,6 +3,4 @@ success
 success
 sat
 success
-(get-assignment)
-^^^^^^^^^^^^^^^^
-(error "can't build the assignment. Call (check-sat) first")
+(error "The get-assignment command is only valid immediately after check-sat returned sat or unknown")

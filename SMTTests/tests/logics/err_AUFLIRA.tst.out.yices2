@@ -1,0 +1,6 @@
+(error "logic AUFLIRA is not supported")
+(error "at line 2, column 19: undefined sort: Real")
+(error "Error writing to solver: (declare-fun b () Real) java.io.IOException: Stream closed")
+(error "Error writing to solver: (assert (= b (* a a))) java.io.IOException: Stream closed")
+(error "Error writing to solver: (assert (= b (/ a 2.0))) java.io.IOException: Stream closed")
+(error "Error writing to solver: (define-sort BadArr () (Array Int Int)) java.io.IOException: Stream closed")

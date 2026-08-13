@@ -1,0 +1,11 @@
+success
+success
+success
+success
+success
+(error "at line 6, column 18: undefined identifier: bv2int")
+(error "Error writing to solver: (declare-fun nn () Int) java.io.IOException: Stream closed")
+(error "Error writing to solver: (assert (= nn ((_ bv2int 8) bb))) java.io.IOException: Stream closed")
+(error "Error writing to solver: (assert (bvult b #xf0)) java.io.IOException: Stream closed")
+(error "Error writing to solver: (assert (not (and (>= nn n) (>= (+ n 15) nn) (= (mod nn 16) 0)))) java.io.IOException: Stream closed")
+(error "Error writing to solver: (check-sat) java.io.IOException: Stream closed")

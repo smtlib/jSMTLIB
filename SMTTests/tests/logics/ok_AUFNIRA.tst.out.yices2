@@ -1,0 +1,7 @@
+(error "logic AUFNIRA is not supported")
+(error "no logic set")
+(error "at line 3, column 19: undefined sort: Int")
+(error "Error writing to solver: (declare-fun y () Int) java.io.IOException: Stream closed")
+(error "Error writing to solver: (declare-fun f (Int Int ) Int) java.io.IOException: Stream closed")
+(error "Error writing to solver: (assert (= y (* x x))) java.io.IOException: Stream closed")
+(error "Error writing to solver: (assert (forall ((z Int) ) (>= z 0))) java.io.IOException: Stream closed")

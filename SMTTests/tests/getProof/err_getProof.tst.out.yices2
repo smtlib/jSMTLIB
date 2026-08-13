@@ -1,7 +1,3 @@
 success
-(get-proof)
-^^^^^^^^^^^
-(error "get-proof is not supported")
-(get-proof xxx)
-           ^^^
+(error "The get-proof command is only valid if :produce-proofs has been enabled")
 (error "A get-proof command takes no arguments")

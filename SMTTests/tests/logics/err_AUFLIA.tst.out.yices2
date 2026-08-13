@@ -1,0 +1,5 @@
+(error "logic AUFLIA is not supported")
+(error "at line 2, column 19: undefined sort: Int")
+(error "Error writing to solver: (declare-fun y () Int) java.io.IOException: Stream closed")
+(error "Error writing to solver: (assert (= y (* x x))) java.io.IOException: Stream closed")
+(error "Error writing to solver: (define-sort BadArr () (Array Int Real)) java.io.IOException: Stream closed")

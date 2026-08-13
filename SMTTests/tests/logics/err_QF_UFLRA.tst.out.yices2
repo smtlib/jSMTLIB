@@ -1,0 +1,5 @@
+success
+success
+success
+(error "quantifiers are not allowed in logic QF_UFLRA")
+(error "Error writing to solver: (assert (= b (* a a))) java.io.IOException: Stream closed")

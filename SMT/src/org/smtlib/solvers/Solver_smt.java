@@ -8,8 +8,6 @@ package org.smtlib.solvers;
 import java.io.StringWriter;
 
 import org.smtlib.*;
-import org.smtlib.IExpr.IKeyword;
-import org.smtlib.IExpr.INumeral;
 import org.smtlib.impl.Pos;
 
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into SMT
@@ -18,10 +16,12 @@ import org.smtlib.impl.Pos;
  *  AbstractSolver}: only {@link #translate(INode)} is overridden (a real, solver-
  *  specific deviation — a Bool-quantifier workaround, see {@link
  *  org.smtlib.solvers.Printer}), plus {@link #start()}/{@link #exit()} (process
- *  lifecycle, which AbstractSolver deliberately leaves unimplemented) and {@link
- *  #set_option_impl(IKeyword,IAttributeValue)} (real :verbosity special-casing;
- *  :print-success is handled generically by AbstractSolver itself). Every other
- *  ISolver command — including get_assertions/get_value/
+ *  lifecycle, which AbstractSolver deliberately leaves unimplemented). :verbosity is
+ *  just forwarded to the solver like any other option (via AbstractSolver's default
+ *  set_option_impl) -- an earlier version of this class instead used a script's
+ *  :verbosity value to toggle jSMTLIB's own internal --verbose debug tracing
+ *  (smtConfig.verbose), which leaked "#Command to execute: ..." trace lines into the
+ *  solver's own response stream. Every other ISolver command — including get_assertions/get_value/
  *  get_assignment/get_unsat_core/get_unsat_assumptions, whose precondition checks and
  *  structured-response parsing now live in AbstractSolver — is inherited unchanged.
  *  <p>
@@ -96,17 +96,6 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended SMT ");
 		solverProcess = null;
 		return response;
-	}
-
-	@Override
-	protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
-		// :print-success and the sendCommand fallback are handled by
-		// AbstractSolver.set_option_impl(); only :verbosity is a real local addition here.
-		String option = key.value();
-		if (Utils.VERBOSITY.equals(option)) {
-			smtConfig.verbose = (value instanceof INumeral) ? ((INumeral)value).intValue() : 0;
-		}
-		return super.set_option_impl(key, value);
 	}
 
 }

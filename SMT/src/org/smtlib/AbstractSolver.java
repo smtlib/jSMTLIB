@@ -139,7 +139,15 @@ public class AbstractSolver implements ISolver {
 		String translatedCmd = null;
 		try {
 			translatedCmd = translate(cmd);
-			return parseResponse(solverProcess.sendAndListen(translatedCmd, "\n"));
+			String response = solverProcess.sendAndListen(translatedCmd, "\n");
+			// A null response (observed rarely, likely a SolverProcess read-timing race)
+			// would otherwise reach parseResponse() and surface as an uncaught
+			// NullPointerException from deep in the parser, crashing the whole run
+			// instead of just this one command.
+			if (response == null) {
+				return smtConfig.responseFactory.error("No response received from the solver for: " + translatedCmd);
+			}
+			return parseResponse(response);
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
 		} catch (IVisitor.VisitorException e) {

@@ -1,0 +1,6 @@
+success
+(error "at line 2, column 18: syntax error: declare-datatype is not a command")
+(error "at line 3, column 19: undefined sort: Pair")
+(error "Error writing to solver: (assert (= p (mk-pair true false))) java.io.IOException: Stream closed")
+(error "Error writing to solver: (assert (= (fst p) true)) java.io.IOException: Stream closed")
+(error "Error writing to solver: (assert (= (snd p) false)) java.io.IOException: Stream closed")

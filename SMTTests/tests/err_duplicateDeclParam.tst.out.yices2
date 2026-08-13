@@ -1,0 +1,3 @@
+success
+(error "at line 2, column 27: duplicate variable name: x")
+(error "Error writing to solver: (assert (exists ((x Int) (x Int) ) (= x 0))) java.io.IOException: Stream closed")

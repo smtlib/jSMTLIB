@@ -1,0 +1,2 @@
+(error "logic AUFNIRA is not supported")
+(error "at line 2, column 66: invalid :named attribute (name is already used)")

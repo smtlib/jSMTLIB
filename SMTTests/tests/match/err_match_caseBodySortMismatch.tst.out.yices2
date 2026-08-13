@@ -1,0 +1,4 @@
+(error "logic AUFLIA is not supported")
+(error "at line 2, column 18: syntax error: declare-datatype is not a command")
+(error "at line 3, column 19: undefined sort: Tree")
+(error "Error writing to solver: (assert (match t ( (leaf true) ((node l r) 0)))) java.io.IOException: Stream closed")

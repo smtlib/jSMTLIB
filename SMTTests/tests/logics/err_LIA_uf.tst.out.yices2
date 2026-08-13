@@ -1,0 +1,4 @@
+(error "the exists/forall solver does not work in incremental mode")
+(error "at line 2, column 19: undefined sort: Int")
+(error "Error writing to solver: (declare-fun y () Int) java.io.IOException: Stream closed")
+(error "Error writing to solver: (declare-fun f (Int ) Int) java.io.IOException: Stream closed")

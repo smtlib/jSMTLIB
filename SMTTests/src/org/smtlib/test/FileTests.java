@@ -247,6 +247,8 @@ public class FileTests extends LogicTests {
 
         String cmpExpected = normalize ? filterMemoryLines(expected) : expected;
         String cmpActual   = normalize ? filterMemoryLines(actual)   : actual;
+        cmpExpected = filterIOExceptionLines(cmpExpected);
+        cmpActual   = filterIOExceptionLines(cmpActual);
 
         if (!cmpExpected.equals(cmpActual)) {
             writeActual(ext, actual);
@@ -256,6 +258,22 @@ public class FileTests extends LogicTests {
         }
         // On success: do not write .actual (and delete any stale one)
         new File(tstFile.getAbsolutePath() + ext + ".actual").delete();
+    }
+
+    /** Drops lines containing {@code java.io.IOException:} -- these appear in an "Error
+     *  writing to solver: ..." response when a script keeps sending commands to a solver
+     *  process that has already exited/closed its pipe (e.g. after an unsupported
+     *  construct kills it). The exact message text ("Stream closed", "Broken pipe",
+     *  etc.) depends on OS-level timing of the underlying pipe failure and is not
+     *  reproducible run to run, even for the identical script against the identical
+     *  solver binary -- same non-determinism, same "drop the line" treatment as
+     *  {@link #filterMemoryLines}. */
+    private static String filterIOExceptionLines(String s) {
+        StringBuilder sb = new StringBuilder();
+        for (String line : s.split("\n", -1)) {
+            if (!line.contains("java.io.IOException:")) sb.append(line).append('\n');
+        }
+        return sb.toString();
     }
 
     /** Drops lines containing {@code (:memory} or {@code (:max-memory} — memory usage varies between runs. */

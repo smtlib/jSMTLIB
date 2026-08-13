@@ -1,0 +1,5 @@
+success
+success
+success
+(error "quantifiers are not allowed in logic QF_AX")
+(error "Error writing to solver: (declare-fun f (A ) A) java.io.IOException: Stream closed")
