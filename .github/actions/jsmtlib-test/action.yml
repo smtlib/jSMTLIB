@@ -64,6 +64,13 @@ runs:
     - name: Smoke test solver binaries
       shell: bash
       run: |
+        ## GitHub Actions runs bash steps with `set -e` by default. A bare
+        ## `out=$(cmd)` assignment (not inside if/&&/||) trips errexit the moment
+        ## any solver's --version exits nonzero, aborting this whole step *and*
+        ## skipping "Run jSMTLIB tests" (composite actions stop at the first
+        ## failing sub-step) - silently skipping the real suite entirely. `set +e`
+        ## makes that structurally impossible regardless of exact command syntax.
+        set +e
         echo "Solver smoke test on ${{ runner.os }}-${{ runner.arch }}"
         for exe in "$SMT_SOLVER_DIR"/*; do
           [ -f "$exe" ] || continue
