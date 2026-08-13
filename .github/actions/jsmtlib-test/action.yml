@@ -34,7 +34,7 @@ runs:
 
         ## Make solver binaries executable (no-op on Windows).
         if [[ "${{ runner.os }}" != "Windows" ]]; then
-          chmod +x "$SOLVER_DIR"/z3-* "$SOLVER_DIR"/cvc5-* 2>/dev/null || true
+          chmod +x "$SOLVER_DIR"/z3-* "$SOLVER_DIR"/cvc5-* "$SOLVER_DIR"/yices2-* 2>/dev/null || true
         fi
 
         ## Windows ships z3-4.3.2.exe; jsmtlib.properties references z3-4.3.1.
@@ -48,6 +48,24 @@ runs:
         ## Export SMT_SOLVER_DIR so the Java resolver prepends it to relative exec names
         ## from jsmtlib.properties (e.g. z3-4.3.1 → $SMT_SOLVER_DIR/z3-4.3.1).
         echo "SMT_SOLVER_DIR=$SOLVER_DIR" >> "$GITHUB_ENV"
+
+    ## Not wired into jsmtlib.properties yet (cvc5/z3 adapter work is happening
+    ## separately, yices2 after that) — this just confirms the raw binaries actually
+    ## execute on this runner (e.g. that macOS's freshly-built libcudd resolves).
+    - name: Smoke test cvc5 / yices2 binaries
+      shell: bash
+      run: |
+        echo "Solver smoke test on ${{ runner.os }}-${{ runner.arch }}"
+        for exe in "$SMT_SOLVER_DIR"/cvc5-* "$SMT_SOLVER_DIR"/yices2-*; do
+          [ -f "$exe" ] || continue
+          name=$(basename "$exe")
+          if out=$("$exe" --version 2>&1); then
+            echo "OK   $name: $(echo "$out" | head -1)"
+          else
+            echo "FAIL $name:"
+            echo "$out" | sed 's/^/       /'
+          fi
+        done
 
     - name: Run jSMTLIB tests
       shell: bash

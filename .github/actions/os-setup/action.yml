@@ -11,6 +11,12 @@ runs:
         ## Install Rosetta 2 so that x86_64 solver binaries in Solvers-macos run on ARM runners.
         softwareupdate --install-rosetta --agree-to-license || true
 
+        ## yices2 binaries dynamically link libcudd (MCSAT support); no Homebrew formula
+        ## exists, so build it from source at the exact version/path the binaries expect.
+        curl -fsL -o /tmp/cudd.tar.gz "https://github.com/ivmai/cudd/archive/refs/tags/cudd-3.0.0.tar.gz"
+        tar -xzf /tmp/cudd.tar.gz -C /tmp
+        ( cd /tmp/cudd-cudd-3.0.0 && ./configure --enable-shared --prefix=/usr/local && make && sudo make install )
+
     - name: Windows additions
       if: runner.os == 'Windows'
       shell: pwsh
