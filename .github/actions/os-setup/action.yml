@@ -17,6 +17,9 @@ runs:
         tar -xzf /tmp/cudd.tar.gz -C /tmp
         ( cd /tmp/cudd-cudd-3.0.0 && ./configure --enable-shared --prefix=/usr/local && make && sudo make install )
 
+        ## bitwuzla dynamically links GMP and MPFR from the Homebrew prefix.
+        brew install gmp mpfr
+
     - name: Windows additions
       if: runner.os == 'Windows'
       shell: pwsh

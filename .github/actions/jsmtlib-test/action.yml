@@ -34,7 +34,7 @@ runs:
 
         ## Make solver binaries executable (no-op on Windows).
         if [[ "${{ runner.os }}" != "Windows" ]]; then
-          chmod +x "$SOLVER_DIR"/z3-* "$SOLVER_DIR"/cvc5-* "$SOLVER_DIR"/yices2-* 2>/dev/null || true
+          chmod +x "$SOLVER_DIR"/z3-* "$SOLVER_DIR"/cvc5-* "$SOLVER_DIR"/yices2-* "$SOLVER_DIR"/bitwuzla-* "$SOLVER_DIR"/alt-ergo-* 2>/dev/null || true
         fi
 
         ## Windows ships z3-4.3.2.exe; jsmtlib.properties references z3-4.3.1.
@@ -50,16 +50,22 @@ runs:
         echo "SMT_SOLVER_DIR=$SOLVER_DIR" >> "$GITHUB_ENV"
 
     ## Not wired into jsmtlib.properties yet (cvc5/z3 adapter work is happening
-    ## separately, yices2 after that) — this just confirms the raw binaries actually
-    ## execute on this runner (e.g. that macOS's freshly-built libcudd resolves).
-    - name: Smoke test cvc5 / yices2 binaries
+    ## separately, yices2/bitwuzla/alt-ergo/smtinterpol after that) — this just confirms
+    ## every solver binary present for this platform actually executes on this runner
+    ## (e.g. that macOS's freshly-built libcudd and brew-installed gmp/mpfr resolve),
+    ## before sinking time into the full test suite below.
+    - name: Smoke test solver binaries
       shell: bash
       run: |
         echo "Solver smoke test on ${{ runner.os }}-${{ runner.arch }}"
-        for exe in "$SMT_SOLVER_DIR"/cvc5-* "$SMT_SOLVER_DIR"/yices2-*; do
+        for exe in "$SMT_SOLVER_DIR"/z3-* "$SMT_SOLVER_DIR"/cvc5-* "$SMT_SOLVER_DIR"/yices2-* "$SMT_SOLVER_DIR"/bitwuzla-* "$SMT_SOLVER_DIR"/alt-ergo-* "$SMT_SOLVER_DIR"/*.jar; do
           [ -f "$exe" ] || continue
           name=$(basename "$exe")
-          if out=$("$exe" --version 2>&1); then
+          case "$name" in
+            *.jar) cmd=(java -jar "$exe" -version) ;;
+            *)     cmd=("$exe" --version) ;;
+          esac
+          if out=$("${cmd[@]}" 2>&1); then
             echo "OK   $name: $(echo "$out" | head -1)"
           else
             echo "FAIL $name:"
