@@ -3,10 +3,13 @@ package org.smtlib.test;
 import java.io.StringWriter;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.smtlib.ICommand;
 import org.smtlib.IExpr;
 import org.smtlib.IExpr.IAttribute;
@@ -57,6 +60,8 @@ import org.smtlib.sexpr.Sexpr;
  * </ul>
  */
 public class PrinterCoverageTest {
+
+    @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
 
     SMT.Configuration config;
 

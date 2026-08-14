@@ -5,11 +5,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 /**
  * Test-infrastructure self-check (no solver): every logic jSMTLIB ships a definition
@@ -19,6 +22,8 @@ import org.junit.Test;
  * left behind in a version subdirectory without anyone adding matching test coverage.
  */
 public class LogicsCoverageTest {
+
+    @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
 
     private static final Pattern LOGIC_DECL = Pattern.compile("^\\(logic\\s+(\\S+)");
     private static final Pattern SET_LOGIC = Pattern.compile("\\(set-logic\\s+(\\S+?)\\s*\\)");

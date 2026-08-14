@@ -2,10 +2,13 @@ package org.smtlib.test;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.Timeout;
 import org.junit.runners.Parameterized.Parameters;
 import org.smtlib.ICommand;
 import org.smtlib.IParser;
@@ -16,6 +19,8 @@ import org.smtlib.SMT;
 import org.smtlib.Utils.SMTLIBException;
 
 public class LogicsBase {
+
+    @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
 
     @Parameters
     public static Collection<String[]> data() {

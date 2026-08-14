@@ -2,11 +2,14 @@ package org.smtlib.test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.smtlib.IResponse;
 import org.smtlib.Log;
 import org.smtlib.SMT;
@@ -14,6 +17,8 @@ import org.smtlib.Utils;
 
 /** Unit tests for Log listener management and Utils.quote / Utils.unescape. */
 public class UnitTests {
+
+    @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
 
     private SMT.Configuration config;
     private Log log;

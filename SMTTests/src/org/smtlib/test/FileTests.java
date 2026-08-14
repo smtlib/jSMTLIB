@@ -13,13 +13,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.ParameterizedWithNames;
 import org.junit.runners.Parameterized.Parameters;
@@ -28,7 +25,8 @@ import org.smtlib.SMT;
 @RunWith(ParameterizedWithNames.class)
 public class FileTests extends LogicTests {
 
-    @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
+    // Per-test timeout is inherited from LogicTests (shared with InfoOptions/LogicsBadPath,
+    // the other solver-talking subclasses).
 
     // Platform strings matching the bash setup script conventions
     private static final String PLATFORM;
@@ -157,7 +155,7 @@ public class FileTests extends LogicTests {
     /** A "family" fallback lets several versions of the same solver (e.g. z3-4.8.12,
      *  z3-4.10.2) share one golden file instead of duplicating identical content per
      *  exact version: strips a trailing "-N..." or "_N..." version suffix (e.g.
-     *  "z3-4.8.12" -&gt; "z3", "z3_4_3" -&gt; "z3", "cvc5-1.3.2" -&gt; "cvc5"). Returns null
+     *  "z3-4.8.12" -&gt; "z3", "z3-4.3" -&gt; "z3", "cvc5-1.3.2" -&gt; "cvc5"). Returns null
      *  if the name has no such suffix (e.g. "yices2", "test") -- family is only used
      *  when it differs from the exact solver name.
      *  IMPORTANT: this must stay in sync with the "family=..." computation in

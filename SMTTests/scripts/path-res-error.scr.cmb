@@ -1,2 +1,2 @@
 (error "Failed to start process nonexistent-solver-xyz : Cannot run program ""nonexistent-solver-xyz"": error=2, No such file or directory")
-(error "z3_4_3 failed to start: Failed to start process nonexistent-solver-xyz : Cannot run program ""nonexistent-solver-xyz"": error=2, No such file or directory")
+(error "z3-4.3 failed to start: Failed to start process nonexistent-solver-xyz : Cannot run program ""nonexistent-solver-xyz"": error=2, No such file or directory")

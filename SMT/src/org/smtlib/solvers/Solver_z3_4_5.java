@@ -48,9 +48,14 @@ public class Solver_z3_4_5 extends AbstractSolver implements ISolver {
 	
 	/** The command-line arguments for launching the Z3 solver */
 	protected String cmds[];
-	protected String cmds_win[] = new String[]{ "", "/smt2","/in","SMTLIB2_COMPLIANT=true"}; 
-	protected String cmds_mac[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true"}; 
-	protected String cmds_unix[] = new String[]{ "", "-smt2","-in"}; 
+	// WARNING=false suppresses z3's own diagnostic WARNING messages: these print as a bare
+	// "WARNING" line with no parens before the rest of the message follows on a later
+	// flush, which fools SolverProcess's paren-balance response-completion heuristic into
+	// treating the response as already complete and truncating it (see the identical fix
+	// in Solver_z3_recent).
+	protected String cmds_win[] = new String[]{ "", "/smt2","/in","SMTLIB2_COMPLIANT=true","WARNING=false"};
+	protected String cmds_mac[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
+	protected String cmds_unix[] = new String[]{ "", "-smt2","-in","WARNING=false"};
 
 	/** The object that interacts with external processes */
 	protected SolverProcess solverProcess;

@@ -1,3 +1,3 @@
 ##EXITCODE 1
 # Case (d): relative exec with no SMT_SOLVER_DIR and not on PATH — should produce an error.
-SMT_SOLVER_DIR= $SMT_CMD --solver z3_4_3 --exec nonexistent-solver-xyz $SCRIPTS/ok_sat.smt2
+SMT_SOLVER_DIR= $SMT_CMD --solver z3-4.3 --exec nonexistent-solver-xyz $SCRIPTS/ok_sat.smt2

@@ -2,4 +2,4 @@
 # Case (c): relative exec with no SMT_SOLVER_DIR — falls back to PATH lookup.
 # Add the solver directory to PATH for this invocation, clear SMT_SOLVER_DIR.
 _abs_dir="$(cd "$SMT_SOLVER_DIR" && pwd)"
-PATH="$_abs_dir:$PATH" SMT_SOLVER_DIR= $SMT_CMD --solver z3_4_3 --exec z3-4.3.1 $SCRIPTS/ok_sat.smt2
+PATH="$_abs_dir:$PATH" SMT_SOLVER_DIR= $SMT_CMD --solver z3-4.3 --exec z3-4.3.1 $SCRIPTS/ok_sat.smt2

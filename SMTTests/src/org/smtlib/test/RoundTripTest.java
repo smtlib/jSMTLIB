@@ -6,10 +6,13 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.smtlib.ICommand;
 import org.smtlib.IParser;
 import org.smtlib.ISource;
@@ -25,6 +28,8 @@ import org.smtlib.SMT;
  * without invoking any solver.
  */
 public class RoundTripTest {
+
+    @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
 
     JUnitListener listener;
     SMT.Configuration config;

@@ -7,10 +7,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.Timeout;
 import org.junit.runners.Parameterized.Parameters;
 import org.smtlib.ICommand;
 import org.smtlib.IParser;
@@ -26,8 +29,14 @@ import org.smtlib.SMT.Configuration.SMTLIB;
 
 public class LogicTests {
 
+	/** Per-test timeout, so a solver that hangs on some command fails that one
+	 *  parameterized test case (solver+file+version combination) after a minute instead
+	 *  of blocking the whole suite indefinitely. Shared by every subclass that talks to a
+	 *  live solver process (FileTests, InfoOptions, LogicsBadPath). */
+	@Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
+
 	/** The solvers to test against: the whitespace-separated names in the SMT_TEST_SOLVERS
-	 * environment variable (e.g. "test z3_4_3 z3_4_8 cvc5"), or just "test" if unset -- this
+	 * environment variable (e.g. "test z3-4.3 z3_4_8 cvc5"), or just "test" if unset -- this
 	 * is the one controlling place for the solver list; runjunits/runtests read the same
 	 * variable so all test-running paths stay in sync. */
 	public static final String[] solvers = solversFromEnv();

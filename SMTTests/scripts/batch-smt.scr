@@ -1,2 +1,2 @@
 ##EXITCODE 0
-$SMT_CMD --solver z3_4_3 $SCRIPTS/ok_sat.smt2
+$SMT_CMD --solver z3-4.3 $SCRIPTS/ok_sat.smt2

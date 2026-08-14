@@ -17,7 +17,7 @@ test=$2
 ### A "family" fallback lets several versions of the same solver (e.g. z3-4.8.12,
 ### z3-4.10.2) share one golden file instead of duplicating identical content per
 ### exact version: strip a trailing "-N..." or "_N..." version suffix (e.g.
-### "z3-4.8.12" -> "z3", "z3_4_3" -> "z3", "cvc5-1.3.2" -> "cvc5"). Solver names with
+### "z3-4.8.12" -> "z3", "z3-4.3" -> "z3", "cvc5-1.3.2" -> "cvc5"). Solver names with
 ### no such suffix (e.g. "yices2", "test") are left alone -- family is only used when
 ### it differs from the exact solver name.
 family=$(echo "$solver" | sed -E 's/[_-][0-9].*//')

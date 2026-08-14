@@ -9,9 +9,11 @@ source setup
 rm -f tempout
 
 # SMT_TEST_SOLVERS is the one controlling place for the solver list (default "test");
-# --solvers below overrides it explicitly for this run. Note: Windows ships z3-4.3.2.exe
-# (not 4.3.1), which differs in error messages, version strings, and other behaviors --
-# be aware if you add z3_4_3 to SMT_TEST_SOLVERS on Windows.
+# --solvers below overrides it explicitly for this run. "z3-4.3" resolves to z3-4.3.1 on
+# Unix/macOS and z3-4.3.2.exe on Windows -- see the platform-suffixed
+# org.smtlib.solver_z3-4.3.exec.windows / .adapter.windows properties in jsmtlib.properties,
+# which account for the Windows build's own behavioral differences (e.g. its push-command
+# bug), so no special handling is needed here.
 solvers="${SMT_TEST_SOLVERS:-test}"
 
 while [[ $# -gt 0 && "$1" == --* ]]; do

@@ -2,8 +2,10 @@ package org.smtlib.test;
 
 import java.io.StringWriter;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.*;
+import org.junit.rules.Timeout;
 import org.smtlib.ICommand;
 import org.smtlib.IParser;
 import org.smtlib.IResponse;
@@ -13,7 +15,9 @@ import org.smtlib.TypeChecker;
 
 /** Tests parsing commands, without invoking solvers */
 public class ParseCommand {
-	
+
+	@Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
+
 	final String eol = System.getProperty("line.separator");
 	JUnitListener listener;
 	SMT.Configuration config;

@@ -20,8 +20,10 @@ public class InfoOptions  extends LogicTests {
 
 	boolean isTest;
 	/** True for the minimal AbstractSolver-based adapter used by recent z3 releases
-	 *  (Solver_z3_recent, registered as "z3-VERSION" -- distinct from the legacy
-	 *  underscore-named z3_4_x adapters, which carry their own client-side workarounds). */
+	 *  (Solver_z3_recent, registered as "z3-VERSION" -- distinct from the legacy z3_4_x
+	 *  adapters, which carry their own client-side workarounds). "z3-4.3" is excluded even
+	 *  though it now shares the same dash-prefixed naming convention: it still resolves to
+	 *  the legacy Solver_z3_4_3 adapter, not Solver_z3_recent. */
 	boolean isZ3Recent;
 	/** True for yices2-2.6.5/2.7.0 (registered as "yices2-VERSION") -- distinct from the
 	 *  bare "yices2" name, whose behavior these checks otherwise assume. */
@@ -34,7 +36,7 @@ public class InfoOptions  extends LogicTests {
     	this.solvername = solvername;
     	this.version = version;
     	this.isTest = "test".equals(solvername);
-    	this.isZ3Recent = solvername.startsWith("z3-");
+    	this.isZ3Recent = solvername.startsWith("z3-") && !solvername.equals("z3-4.3");
     	this.isYices2Recent = solvername.startsWith("yices2-");
     	this.isSmtInterpol = solvername.startsWith("smtinterpol");
     }
@@ -63,7 +65,7 @@ public class InfoOptions  extends LogicTests {
 				: solvername.startsWith("yices") ? "Bruno Dutertre"
 				: solvername.equals("cvc") ? "Clark Barrett, Cesare Tinelli, and others"
 				: solvername.startsWith("cvc") ? null // Long text that we don't check // TODO
-				: solvername.startsWith("z3_4_3") ? "Leonardo de Moura and Nikolaj Bjorner"
+				: solvername.equals("z3-4.3") || solvername.startsWith("z3_4_3") ? "Leonardo de Moura and Nikolaj Bjorner"
 				: solvername.startsWith("z3_") ? "Leonardo de Moura, Nikolaj Bjorner and Christoph Wintersteiger"
 				: solvername.equals("z3-4.14.1") ? "Leonardo de Moura, Nikolaj Bjorner, Lev Nachmanson and Christoph Wintersteiger"
 				: solvername.equals("z3-4.16.0") ? "Leonardo de Moura, Nikolaj Bjorner, Lev Nachmanson and Christoph Wintersteiger"
@@ -85,7 +87,7 @@ public class InfoOptions  extends LogicTests {
 				: solvername.equals("cvc5") ? "1.8"
 				: solvername.equals("cvc5") ? "0.0.2"
 				: solvername.equals("cvc5-1.3.2") ? "1.3.2"
-				: solvername.equals("z3_4_3") ? "4.3"
+				: solvername.equals("z3-4.3") ? "4.3"
 				: solvername.equals("z3_4_3_2") ? "4.3.2"
 				: solvername.equals("z3_4_4") ? "4.4.0"
 				: solvername.equals("z3_4_5") ? "4.5.0"
@@ -180,7 +182,7 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkSetRegularOutput() {
 		Assume.assumeTrue(false);
-		doCommand("(set-option :regular-output-channel \"test-output\")", "success"); // FIXME - writes success to test-output? - hangs for z3_4_3 ?
+		doCommand("(set-option :regular-output-channel \"test-output\")", "success"); // FIXME - writes success to test-output? - hangs for z3-4.3 ?
 		doCommand("(get-option :regular-output-channel)", "\"test-output\"");
 		doCommand("(set-option :regular-output-channel \"stdout\")", "success");
 		doCommand("(get-option :regular-output-channel)", "\"stdout\"");
@@ -199,7 +201,7 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkSetDiagnosticOutput() {
 		Assume.assumeTrue(false);
-		doCommand("(set-option :regular-diagnostic-channel \"test-output\")", "success"); // FIXME - writes success to test-output? - hangs for z3_4_3 ?
+		doCommand("(set-option :regular-diagnostic-channel \"test-output\")", "success"); // FIXME - writes success to test-output? - hangs for z3-4.3 ?
 		doCommand("(get-option :regular-diagnostic-channel)", "\"test-output\"");
 		doCommand("(set-option :regular-diagnostic-channel \"stderr\")", "success");
 		doCommand("(get-option :regular-diagnostic-channel)", "\"stderr\"");
@@ -272,7 +274,7 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceProofs() {
-		boolean supported = isTest ||  (!solvername.equals("z3_4_3") && solvername.startsWith("z3_") )
+		boolean supported = isTest ||  solvername.startsWith("z3_")
 		                        || isZ3Recent
 		                        || isSmtInterpol
 		                        || solvername.startsWith("cvc");
@@ -328,7 +330,7 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceAssignments() {
-		boolean supported = isTest || solvername.startsWith("cvc") || solvername.equals("yices2") || isYices2Recent || (!solvername.equals("z3_4_3") && solvername.startsWith("z3_") ) || isZ3Recent || isSmtInterpol ;
+		boolean supported = isTest || solvername.startsWith("cvc") || solvername.equals("yices2") || isYices2Recent || solvername.startsWith("z3_") || isZ3Recent || isSmtInterpol ;
 
 		doCommand("(set-option :produce-assignments true)",
 					supported? "success" 
@@ -354,7 +356,7 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkSetProduceUnsatCores() {
 		Assume.assumeTrue(!solvername.equals("cvc5b"));
-		boolean supported = isYices2Recent || (!solvername.equals("z3_4_3") && !solvername.startsWith("yices"));
+		boolean supported = isYices2Recent || (!solvername.equals("z3-4.3") && !solvername.startsWith("yices"));
 		doCommand("(set-option :produce-unsat-cores true)",
 				supported ? "success" 
 						:  "unsupported");

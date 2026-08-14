@@ -6,7 +6,7 @@ SHELL = /bin/bash
 ##   make cov-test cov-report COV_CLASSES=../SMT/bin
 COV_CLASSES ?= ../SMT/jSMTLIB.jar
 
-.PHONY: test tests clean script-tests smt-tests junit-tests build cov-test cov-clean cov-report cov-show reports
+.PHONY: test tests clean script-tests smt-tests junit-tests build cov-test cov-clean cov-report cov-show reports time-solvers
 
 ## Resolve the platform-appropriate solver directory, honouring any value already in the
 ## environment (CI sets it via GITHUB_ENV before invoking make; developers can export it
@@ -19,8 +19,8 @@ export SMT_SOLVER_DIR
 ## The solvers to test against (space-separated names, read by runjunits/runtests and by
 ## LogicTests.java/FileTests.java). Default is just the built-in pure-Java "test" solver,
 ## which needs no external binary. Override on the command line or in the environment, e.g.:
-##   make test SMT_TEST_SOLVERS="test z3_4_3 z3_4_8 cvc5"
-SMT_TEST_SOLVERS ?=test z3_4_3 cvc5-1.3.2 z3-4.8.12 z3-4.10.2 z3-4.12.6 z3-4.14.1 z3-4.16.0 yices2-2.6.5 yices2-2.7.0 smtinterpol-2.5
+##   make test SMT_TEST_SOLVERS="test z3-4.3 z3_4_8 cvc5"
+SMT_TEST_SOLVERS ?=test z3-4.3 cvc5-1.3.2 z3-4.8.12 z3-4.10.2 z3-4.12.6 z3-4.14.1 z3-4.16.0 yices2-2.6.5 yices2-2.7.0 smtinterpol-2.5
 export SMT_TEST_SOLVERS
 
 test tests:
@@ -32,6 +32,38 @@ script-tests:
 smt-tests:
 	bash ./runtests
 
+## Run the smt-tests suite against each solver in SMT_TEST_SOLVERS, one at a time,
+## timing how long the full suite takes against each. Every line of output (each test as
+## it runs), prefixed with elapsed seconds since that solver's run started, goes to a
+## single log time-solvers-logs/time-solvers-<start-timestamp>.log (and matching summary
+## file) -- timestamped so a second, concurrently-started run doesn't collide with or
+## overwrite the first one's log. The terminal stays quiet during each solver's run
+## (tail -f the log if you want to watch it live); only the "=== Timing <solver> ==="
+## header and that solver's own concluding SUCCEEDED/FAILURES line are printed there, as
+## soon as that solver finishes, and a summary (elapsed time + that line) is printed
+## again in full at the end. Override the solver list the same way as SMT_TEST_SOLVERS,
+## e.g.:
+##   make time-solvers SMT_TEST_SOLVERS="z3-4.16.0 cvc5-1.3.2"
+time-solvers:
+	@mkdir -p time-solvers-logs
+	@ts=$$(date +%Y%m%d-%H%M%S); \
+	log=time-solvers-logs/time-solvers-$$ts.log; \
+	summary=time-solvers-logs/summary-$$ts.txt; \
+	: > "$$log"; \
+	for solver in $(SMT_TEST_SOLVERS); do \
+		echo "=== Timing $$solver ===" | tee -a "$$log"; \
+		start=$$(date +%s); \
+		bash ./runtests --solvers "$$solver" 2>&1 \
+			| while IFS= read -r line; do printf '[%3ds] %s\n' "$$(($$(date +%s) - start))" "$$line"; done \
+			>> "$$log"; \
+		end=$$(date +%s); \
+		elapsed=$$((end - start)); \
+		result=$$(grep -E "SUCCEEDED|FAILURES" "$$log" | tail -1 | sed -E 's/^\[[ 0-9]+s\] //'); \
+		echo "$$result"; \
+		printf '%-20s %6ds   %s\n' "$$solver" "$$elapsed" "$$result" >> "$$summary"; \
+	done; \
+	echo; echo "=== time-solvers summary ($$log) ==="; cat "$$summary"
+
 junit-tests:
 	bash ./runjunits
 
@@ -40,6 +72,7 @@ clean:
 	find tests scripts \( -name '*.actual' -o -name '*.actual.tmp' \) -delete
 	rm -f bin/org/smtlib/test/UnitTests.class bin/org/smtlib/test/UnitTests\$$*.class
 	rm -f reports/ALL-report.md reports/Options.md
+	rm -rf time-solvers-logs
 
 ## Regenerate the solver capability/options reports (SMTTests/reports/*.md) by
 ## probing every discovered solver binary directly. Slow (the capability

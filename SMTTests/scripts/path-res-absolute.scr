@@ -2,4 +2,4 @@
 # Case (a): absolute exec path is used directly — SMT_SOLVER_DIR is irrelevant even if wrong.
 # Build the absolute path from $SMT_SOLVER_DIR so the test is self-contained.
 _abs_z3="$(cd "$SMT_SOLVER_DIR" && pwd)/z3-4.3.1"
-SMT_SOLVER_DIR=/nonexistent $SMT_CMD --solver z3_4_3 --exec "$_abs_z3" $SCRIPTS/ok_sat.smt2
+SMT_SOLVER_DIR=/nonexistent $SMT_CMD --solver z3-4.3 --exec "$_abs_z3" $SCRIPTS/ok_sat.smt2

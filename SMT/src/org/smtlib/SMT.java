@@ -847,6 +847,16 @@ public class SMT {
 		return exec; // rely on PATH
 	}
 
+	/** "windows", "macos", or "linux" -- matches the PLATFORM values computed by the bash
+	 *  setup script, so a single naming convention (platform-suffixed property keys,
+	 *  golden files, skip markers) works the same whether driven from Java or from shell. */
+	static String platformName() {
+		String os = System.getProperty("os.name","").toLowerCase();
+		if (os.contains("win")) return "windows";
+		if (os.contains("mac")) return "macos";
+		return "linux";
+	}
+
 	/** Starts the solver with the given name and executable, preset according to the given configuration.
 	 * If executable is null, then an executable path is looked for in the org.smtlib.SMT_EXE_solvername
 	 * property or the SMT_EXE_solvername environment variable.
@@ -865,9 +875,16 @@ public class SMT {
 		// Find the adapter, executable, command
 		if (!solvername.equals(Utils.TEST_SOLVER)) {
 			String solvernameNormalized = solvername.replace('-','_').replace('.', '_');
-			// But use this if it is specified
+			// A platform-specific override (.adapter.<platform>) is checked before the bare
+			// .adapter, for solvers whose behavior genuinely differs by platform (not just
+			// their executable's filename) -- e.g. the Windows z3-4.3.2 binary has its own
+			// push-command bug that the Unix/macOS z3-4.3.1 binary doesn't, needing its own
+			// adapter subclass. Mirrors the same convention used for .exec.<platform>.
 			if (props != null) {
-				adapterClassName = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_ADAPTER_SUFFIX);
+				adapterClassName = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_ADAPTER_SUFFIX + "." + platformName());
+				if (adapterClassName == null) {
+					adapterClassName = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_ADAPTER_SUFFIX);
+				}
 				if (adapterClassName != null) try {
 					adapterClass = Class.forName(adapterClassName);
 				} catch (ClassNotFoundException e) {
@@ -905,7 +922,15 @@ public class SMT {
 			}
 
 			if (executable == null && props != null) {
-				executable = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX);
+				// A platform-specific override (.exec.<platform>) is checked before the bare
+				// .exec, for solvers whose executable filename itself differs by platform
+				// (not just its directory) -- e.g. z3-4.3 ships as z3-4.3.1 on Unix/macOS but
+				// z3-4.3.2 on Windows. Mirrors the platform-suffix convention already used
+				// throughout the test suite's golden files.
+				executable = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX + "." + platformName());
+				if (executable == null) {
+					executable = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX);
+				}
 				if (executable != null && executable.trim().isEmpty()) executable = null;
 			}
 

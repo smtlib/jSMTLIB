@@ -2,10 +2,13 @@ package org.smtlib.test;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.Timeout;
 import org.smtlib.ICommand;
 import org.smtlib.IExpr;
 import org.smtlib.IParser;
@@ -16,6 +19,8 @@ import org.smtlib.TypeChecker;
 import org.smtlib.solvers.Solver_test;
 
 public class TypeCheckRoot {
+
+	@Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
 
 	IParser p;
 	Solver_test solver;

@@ -6,11 +6,14 @@ import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.smtlib.ISolver;
 import org.smtlib.SMT;
 
@@ -23,6 +26,8 @@ import org.smtlib.SMT;
  * usage() output follows immediately on the same stream.
  */
 public class SMTCommandLineTests {
+
+    @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
 
     private SMT smt;
     private ByteArrayOutputStream outBuf;

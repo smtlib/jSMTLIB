@@ -35,8 +35,8 @@ if not set to another default in the Makefile:
 
 ```
 make test                                          # SMT_TEST_SOLVERS=test (default)
-make test SMT_TEST_SOLVERS="test z3_4_3"           # add a real solver
-SMT_TEST_SOLVERS="test z3_4_3" bash ./runjunits     # same, without make
+make test SMT_TEST_SOLVERS="test z3-4.3"           # add a real solver
+SMT_TEST_SOLVERS="test z3-4.3" bash ./runjunits     # same, without make
 ```
 
 `runjunits` prints `Solvers: ...` at the start of every run so it's always
@@ -210,9 +210,13 @@ foo.tst.out                      <- bare default, used by any solver without its
 - `foo.tst.skip`, `foo.tst.skip.<solver>`, `foo.tst.skip.<platform>`, etc. skip
   the test entirely (as a JUnit `Assume` failure) for that scope; file content
   is the skip reason, shown in the JUnit output.
-- A trailing `.bad` variant (e.g. `foo.tst.out.z3_4_3.bad`) is not consulted by
-  `findGoldenFile` — these are inert, historical "known-bad" snapshots kept
-  for reference, not live goldens.
+- A trailing `.bad` variant (e.g. `foo.tst.out.z3-4.3.bad`) documents solver
+  output that is genuinely non-conforming (not just differently-worded) --
+  e.g. a claimed success that silently didn't take effect. `findGoldenFile`
+  consults it as a fallback (after the exact and family goldens, before the
+  bare default), so the test still passes deterministically against the
+  known-bad output instead of failing every run; promote real conforming
+  output to a normal golden instead of `.bad`.
 
 ---
 

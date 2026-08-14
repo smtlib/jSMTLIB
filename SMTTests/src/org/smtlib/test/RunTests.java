@@ -2,13 +2,18 @@ package org.smtlib.test;
 
 
 import java.io.File;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 public class RunTests {
+
+	@Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
 
 	@Before
 	public void setUp() throws Exception {

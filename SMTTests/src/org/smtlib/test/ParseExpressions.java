@@ -1,8 +1,10 @@
 package org.smtlib.test;
 
 import java.io.StringWriter;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.*;
+import org.junit.rules.Timeout;
 import org.smtlib.IAttributeValue;
 import org.smtlib.IExpr;
 import org.smtlib.IParser;
@@ -12,6 +14,8 @@ import org.smtlib.IParser.ParserException;
 
 /** Tests parsing valid expressions without invoking solvers */
 public class ParseExpressions {
+
+	@Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
 
 	static JUnitListener listener;
 	String version;
