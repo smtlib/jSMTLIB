@@ -4,3 +4,6 @@
 **/.DS_Store
 **/*.actual
 **/*.actual.tmp
+/reports/ALL-report.md
+/reports/Options.md
+/reports/__pycache__/

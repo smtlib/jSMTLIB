@@ -6,7 +6,7 @@ SHELL = /bin/bash
 ##   make cov-test cov-report COV_CLASSES=../SMT/bin
 COV_CLASSES ?= ../SMT/jSMTLIB.jar
 
-.PHONY: test tests clean script-tests smt-tests junit-tests build cov-test cov-clean cov-report cov-show
+.PHONY: test tests clean script-tests smt-tests junit-tests build cov-test cov-clean cov-report cov-show reports
 
 ## Resolve the platform-appropriate solver directory, honouring any value already in the
 ## environment (CI sets it via GITHUB_ENV before invoking make; developers can export it
@@ -39,6 +39,15 @@ clean:
 	rm -f tempout scripts/tempout solver.out
 	find tests scripts \( -name '*.actual' -o -name '*.actual.tmp' \) -delete
 	rm -f bin/org/smtlib/test/UnitTests.class bin/org/smtlib/test/UnitTests\$$*.class
+	rm -f reports/ALL-report.md reports/Options.md
+
+## Regenerate the solver capability/options reports (SMTTests/reports/*.md) by
+## probing every discovered solver binary directly. Slow (the capability
+## report alone runs ~750 probes across every z3/yices2 version found), so
+## it's a separate target rather than part of the default test run.
+reports:
+	cd reports && python3 capability-report.py
+	cd reports && python3 options-report.py
 
 build:
 	$(MAKE) -C ../SMT build
