@@ -147,7 +147,15 @@ public class AbstractSolver implements ISolver {
 			if (response == null) {
 				return smtConfig.responseFactory.error("No response received from the solver for: " + translatedCmd);
 			}
-			return parseResponse(response);
+			IResponse result = parseResponse(response);
+			// parseResponse() (or a subclass override) can itself return null for some
+			// malformed/edge-case response text without throwing -- same defensive
+			// reasoning as the null-response guard above: surface it as an error rather
+			// than let a null IResponse propagate up and crash the caller.
+			if (result == null) {
+				return smtConfig.responseFactory.error("Could not parse response from the solver for: " + translatedCmd + " -- raw response: " + response);
+			}
+			return result;
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
 		} catch (IVisitor.VisitorException e) {

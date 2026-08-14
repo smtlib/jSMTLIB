@@ -1,0 +1,2 @@
+success
+(error "<stdin>:2:12: Application of function (and Bool Bool Bool) does not type check.")

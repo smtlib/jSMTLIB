@@ -26,6 +26,9 @@ public class InfoOptions  extends LogicTests {
 	/** True for yices2-2.6.5/2.7.0 (registered as "yices2-VERSION") -- distinct from the
 	 *  bare "yices2" name, whose behavior these checks otherwise assume. */
 	boolean isYices2Recent;
+	/** True for smtinterpol-2.5 (Solver_smtinterpol, a Java solver launched as
+	 *  "java -jar ..."). */
+	boolean isSmtInterpol;
 
     public InfoOptions(String solvername, String version) {
     	this.solvername = solvername;
@@ -33,6 +36,7 @@ public class InfoOptions  extends LogicTests {
     	this.isTest = "test".equals(solvername);
     	this.isZ3Recent = solvername.startsWith("z3-");
     	this.isYices2Recent = solvername.startsWith("yices2-");
+    	this.isSmtInterpol = solvername.startsWith("smtinterpol");
     }
     
     public void checkGetInfo(String keyword, String expected) {
@@ -65,10 +69,11 @@ public class InfoOptions  extends LogicTests {
 				: solvername.equals("z3-4.16.0") ? "Leonardo de Moura, Nikolaj Bjorner, Lev Nachmanson and Christoph Wintersteiger"
 				: isZ3Recent ? "Leonardo de Moura, Nikolaj Bjorner and Christoph Wintersteiger" // z3-4.8.12/4.10.2/4.12.6: authors text before "Lev Nachmanson" was added
 				: solvername.startsWith("z3") ? "Leonardo de Moura and Nikolaj Bjorner"
+				: isSmtInterpol ? "Juergen Christ, Jochen Hoenicke, Alexander Nutz, and Tanja Schindler"
 				: "???" )
 				);
 	}
-    
+
 	@Test
 	public void checkVersion() {
 		checkGetInfo(":version",
@@ -93,15 +98,17 @@ public class InfoOptions  extends LogicTests {
 				: solvername.equals("z3-4.12.6") ? "4.12.6"
 				: solvername.equals("z3-4.14.1") ? "4.14.1"
 				: solvername.equals("z3-4.16.0") ? "4.16.0"
+				: isSmtInterpol ? "2.5-1453-gedae1f37"
 				: "???" )
 				);
 	}
-    
+
 	@Test
 	public void checkName() {
 		checkGetInfo(":name",
 						solvername.equals("test") ? "test"
 						: solvername.equals("simplify") ? "simplify"
+						: isSmtInterpol ? "SMTInterpol"
 						: solvername.startsWith("yices2") ? "Yices"
 						: solvername.equals("cvc") ? "CVC3"
 						: solvername.startsWith("cvc5") ? "cvc5"
@@ -126,6 +133,7 @@ public class InfoOptions  extends LogicTests {
 				solvername.equals("yices2") || isYices2Recent ? "(error \"can't overwrite :name\")" :
 				solvername.equals("cvc5-1.3.2") ? "success" : // cvc5-1.3.2 permits setting pre-defined info keywords
 				isZ3Recent ? "success" : // z3-4.8.12+ silently accepts (and ignores) this rather than erroring -- a real non-conformance
+				isSmtInterpol ? "success" : // smtinterpol-2.5 silently accepts (and ignores) this rather than erroring -- a real non-conformance
 				"(error \"Setting the value of a pre-defined keyword is not permitted: :name\")");
 	}
 
@@ -137,6 +145,7 @@ public class InfoOptions  extends LogicTests {
 				"(error \"can't overwrite :authors\")" :
 				solvername.equals("cvc5-1.3.2") ? "success" : // cvc5-1.3.2 permits setting pre-defined info keywords
 				isZ3Recent ? "success" : // z3-4.8.12+ silently accepts (and ignores) this rather than erroring -- a real non-conformance
+				isSmtInterpol ? "success" : // smtinterpol-2.5 silently accepts (and ignores) this rather than erroring -- a real non-conformance
 				"(error \"Setting the value of a pre-defined keyword is not permitted: :authors\")");
 	}
 	
@@ -265,6 +274,7 @@ public class InfoOptions  extends LogicTests {
 	public void checkSetProduceProofs() {
 		boolean supported = isTest ||  (!solvername.equals("z3_4_3") && solvername.startsWith("z3_") )
 		                        || isZ3Recent
+		                        || isSmtInterpol
 		                        || solvername.startsWith("cvc");
 		doCommand("(set-option :produce-proofs true)", 
 				supported ? "success" 
@@ -295,7 +305,7 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceModels() {
-		boolean support = isTest || solvername.startsWith("z3") || solvername.startsWith("cvc") || "yices2".equals(solvername) || isYices2Recent;
+		boolean support = isTest || solvername.startsWith("z3") || solvername.startsWith("cvc") || "yices2".equals(solvername) || isYices2Recent || isSmtInterpol;
 		doCommand("(set-option :produce-models true)", 
 				support? "success" 
 						: "unsupported");
@@ -318,7 +328,7 @@ public class InfoOptions  extends LogicTests {
 	
 	@Test
 	public void checkSetProduceAssignments() {
-		boolean supported = isTest || solvername.startsWith("cvc") || solvername.equals("yices2") || isYices2Recent || (!solvername.equals("z3_4_3") && solvername.startsWith("z3_") ) || isZ3Recent ;
+		boolean supported = isTest || solvername.startsWith("cvc") || solvername.equals("yices2") || isYices2Recent || (!solvername.equals("z3_4_3") && solvername.startsWith("z3_") ) || isZ3Recent || isSmtInterpol ;
 
 		doCommand("(set-option :produce-assignments true)",
 					supported? "success" 
@@ -370,6 +380,7 @@ public class InfoOptions  extends LogicTests {
 		supported &= !solvername.equals("cvc5-1.3.2"); // cvc5-1.3.2 does not implement this deprecated V2.0-era option
 		supported &= !isZ3Recent; // z3-4.8.12+ does not implement this deprecated option (self-consistently unsupported for both get and set)
 		supported &= !isYices2Recent; // yices2-2.6.5+ does not implement this deprecated option either
+		supported &= !isSmtInterpol; // smtinterpol-2.5 does not implement this deprecated option either
 		doCommand("(get-option :expand-definitions)",
 				supported ? "false" : "unsupported"
 				);
@@ -382,6 +393,7 @@ public class InfoOptions  extends LogicTests {
 		supported &= !solvername.equals("cvc5-1.3.2"); // cvc5-1.3.2 does not implement this deprecated V2.0-era option
 		supported &= !isZ3Recent; // z3-4.8.12+ does not implement this deprecated option (self-consistently unsupported for both get and set)
 		supported &= !isYices2Recent; // yices2-2.6.5+ does not implement this deprecated option either
+		supported &= !isSmtInterpol; // smtinterpol-2.5 does not implement this deprecated option either
 		doCommand("(set-option :expand-definitions true)",
 				!supported ? "unsupported" : "success");
 		doCommand("(get-option :expand-definitions)",
@@ -395,7 +407,8 @@ public class InfoOptions  extends LogicTests {
 	@Test
 	public void checkRandomSeed() {
 		Assume.assumeTrue(!"cvc5".equals(solvername)); // FIXME - cvc5 does not handle random seed correctly
-		doCommand("(get-option :random-seed)", 
+		doCommand("(get-option :random-seed)",
+				isSmtInterpol ? "11350294" : // smtinterpol-2.5's default is some fixed non-zero value, not the spec's 0 -- but deterministic (confirmed across repeated runs)
 				"0"
 				);
 	}
@@ -418,6 +431,7 @@ public class InfoOptions  extends LogicTests {
 		doCommand("(get-option :verbosity)",
 		        "cvc5".equals(solvername) ? "-1" : // FIXME - why this difference
 		        "cvc5-1.3.2".equals(solvername) ? "-1" :
+		        isSmtInterpol ? "2" : // smtinterpol-2.5's default is 2, not the spec's 0
 				"0"
 				);
 	}

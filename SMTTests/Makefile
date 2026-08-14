@@ -20,7 +20,7 @@ export SMT_SOLVER_DIR
 ## LogicTests.java/FileTests.java). Default is just the built-in pure-Java "test" solver,
 ## which needs no external binary. Override on the command line or in the environment, e.g.:
 ##   make test SMT_TEST_SOLVERS="test z3_4_3 z3_4_8 cvc5"
-SMT_TEST_SOLVERS ?=test z3_4_3 cvc5-1.3.2
+SMT_TEST_SOLVERS ?=test z3_4_3 cvc5-1.3.2 z3-4.8.12 z3-4.10.2 z3-4.12.6 z3-4.14.1 z3-4.16.0 yices2-2.6.5 yices2-2.7.0 smtinterpol-2.5
 export SMT_TEST_SOLVERS
 
 test tests:

@@ -1,0 +1,4 @@
+(:authors "Juergen Christ, Jochen Hoenicke, Alexander Nutz, and Tanja Schindler" )
+(:name "SMTInterpol" )
+(:version "2.5-1453-gedae1f37" )
+(:error-behavior continued-execution )

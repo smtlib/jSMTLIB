@@ -1,0 +1,5 @@
+success
+(error "<stdin>:2:12: Sort mismatch")
+(error "<stdin>:3:12: Sort mismatch")
+(error "<stdin>:4:12: Sort mismatch")
+(error "<stdin>:5:12: Sort mismatch")

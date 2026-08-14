@@ -1,0 +1,11 @@
+success
+success
+success
+success
+success
+(error "<stdin>:6:14: Unknown function symbol bv2int.")
+success
+(error "<stdin>:8:15: Unknown function symbol bv2int.")
+success
+success
+sat

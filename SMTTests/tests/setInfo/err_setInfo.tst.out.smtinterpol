@@ -1,0 +1,8 @@
+success
+(:name "SMTInterpol" )
+success
+(:authors "Juergen Christ, Jochen Hoenicke, Alexander Nutz, and Tanja Schindler" )
+success
+(:version "2.5-1453-gedae1f37" )
+(error "<stdin>:7:10: Value should be continued-execution or immediate-exit")
+(:error-behavior continued-execution )

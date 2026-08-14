@@ -1,0 +1,3 @@
+(error "<stdin>:1:25: Status not unknown")
+success
+(error "<stdin>:3:25: Status not unknown")

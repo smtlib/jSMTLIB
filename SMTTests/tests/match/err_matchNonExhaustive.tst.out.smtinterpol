@@ -1,0 +1,4 @@
+success
+success
+success
+(error "<stdin>:4:9: Either match term contains a pattern consisting of a variable or all constructors must occur in one of the patterns.")

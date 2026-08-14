@@ -1,0 +1,2 @@
+success
+(error "<stdin>:2:12: Application of function (+ Int Int Int) does not type check.")

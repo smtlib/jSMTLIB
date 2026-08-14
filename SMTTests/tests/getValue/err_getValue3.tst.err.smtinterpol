@@ -1,0 +1,2 @@
+(get-value (x)) ; invalid because of the push
+^^^^^^^^^^^^^^^

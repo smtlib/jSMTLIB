@@ -1,0 +1,10 @@
+(declare-const x Int)
+^^^^^^^^^^^^^^^^^^^^^
+(declare-const y Int)
+^^^^^^^^^^^^^^^^^^^^^
+(assert (forall ((z Int)) (>= z 0)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun f (Int) Int)
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort S 0)
+^^^^^^^^^^^^^^^^^^

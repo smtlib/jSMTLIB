@@ -1,0 +1,15 @@
+unsupported
+(error "<stdin>:2:18: Undeclared sort (Int 0)")
+(error "<stdin>:3:18: Undeclared sort (Int 0)")
+(error "<stdin>:4:11: No logic set!")
+(error "<stdin>:5:11: No logic set!")
+(error "<stdin>:6:11: No logic set!")
+(error "<stdin>:7:11: No logic set!")
+(error "<stdin>:8:12: No logic set!")
+(error "<stdin>:9:12: No logic set!")
+(error "<stdin>:10:11: No logic set!")
+(error "<stdin>:11:18: No logic set!")
+(error "<stdin>:12:11: No logic set!")
+(error "<stdin>:13:11: No logic set!")
+(error "<stdin>:14:16: No logic set!")
+Unexpected

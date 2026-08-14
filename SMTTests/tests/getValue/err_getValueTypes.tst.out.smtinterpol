@@ -1,0 +1,8 @@
+success
+success
+success
+success
+success
+success
+sat
+(error "<stdin>:9:18: Application of function (and Bool Bool Bool) does not type check.")

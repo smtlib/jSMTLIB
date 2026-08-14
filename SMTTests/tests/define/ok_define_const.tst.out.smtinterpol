@@ -1,0 +1,4 @@
+success
+(error "<stdin>:2:1: Syntax Error")
+(error "<stdin>:3:8: Unknown function symbol x.")
+sat

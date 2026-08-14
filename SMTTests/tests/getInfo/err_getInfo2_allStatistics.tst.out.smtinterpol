@@ -1,0 +1,3 @@
+(:all-statistics ( ) )
+success
+(:all-statistics ( ( :Core ( ( Conflicts 0 ) ( Propagations 0 ) ( Theory_propagations 0 ) ( Decides 0 ) ( Random_splits 0 ) ( Num_Atoms 0 ) ( Solved_Atoms 0 ) ( Clauses 0 ) ( Axioms 1 ) ( Times ( ( Explain 0 ) ( Propagation 0 ) ( Set 0 ) ( Check 0 ) ( Backtrack 0 ) ) ) ) ) ( :CC ( ( Merges 0 ) ( Closure 0 ) ( Times ( ( Invert 0 ) ( Eq 0 ) ( Closure 0 ) ( SetRep 0 ) ) ) ) ) ) )

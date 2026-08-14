@@ -1,0 +1,4 @@
+success
+success
+success
+(error "<stdin>:4:13: Free functions are not allowed in this logic!")

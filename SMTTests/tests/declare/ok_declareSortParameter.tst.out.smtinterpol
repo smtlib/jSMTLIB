@@ -1,0 +1,4 @@
+success
+success
+(error "<stdin>:3:1: Syntax Error")
+(error "<stdin>:4:16: Undeclared sort (T 0)")

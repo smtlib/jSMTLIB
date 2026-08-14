@@ -1,0 +1,6 @@
+unsupported
+(error "<stdin>:2:18: Undeclared sort (Int 0)")
+(error "<stdin>:3:18: Undeclared sort (Int 0)")
+(error "<stdin>:4:20: Undeclared sort (Int 0)")
+(error "<stdin>:5:16: Undeclared sort (Int 0)")
+(error "<stdin>:6:14: No logic set!")

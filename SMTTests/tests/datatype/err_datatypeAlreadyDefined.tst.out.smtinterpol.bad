@@ -1,0 +1,5 @@
+success
+success
+Unexpected
+(error "Error writing to solver: (declare-fun g (Bool ) Bool) java.io.IOException: Stream closed")
+(error "Error writing to solver: (declare-datatype E ((ctor (g Bool)) )) java.io.IOException: Stream closed")

@@ -25,7 +25,7 @@ public class LogicsBadPath extends LogicTests {
 		// "xxx" is not a real directory, so this is caught by the upfront logic-path
 		// validation in Utils.openLogicStream -- before any classpath fallback is tried.
 		doCommand("(set-logic QF_UF)",
-				solvername.startsWith("z3") || solvername.startsWith("cvc5") || solvername.startsWith("yices2") || solvername.startsWith("z3_4_4")? "success" : // FIXME
+				solvername.startsWith("z3") || solvername.startsWith("cvc5") || solvername.startsWith("yices2") || solvername.startsWith("z3_4_4") || solvername.startsWith("smtinterpol")? "success" : // FIXME
 				smt.smtConfig.isVersion(SMTLIB.V20) ? "(error \"Invalid logic path: \\\"xxx\\\" is not a directory\")"
 		                                                : "(error \"Invalid logic path: \"\"xxx\"\" is not a directory\")");
 	}

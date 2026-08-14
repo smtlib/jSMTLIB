@@ -1,0 +1,6 @@
+success
+success
+success
+(error "<stdin>:4:35: Quantifier in quantifier-free logic")
+success
+(error "<stdin>:6:34: Undeclared sort (Real 0)")

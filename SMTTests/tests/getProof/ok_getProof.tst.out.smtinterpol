@@ -1,0 +1,5 @@
+success
+success
+success
+unsat
+( ! ( res false ( assume false ) false- ) :proves ( ) :input )
