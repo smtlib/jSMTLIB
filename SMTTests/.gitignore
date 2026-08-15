@@ -7,3 +7,4 @@
 /reports/*.md
 /reports/__pycache__/
 /time-solvers-logs/
+/junit-logs/

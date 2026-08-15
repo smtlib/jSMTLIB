@@ -262,6 +262,18 @@ public class SolverProcess {
 	/** Sends all the given text arguments, then (if listen is true) listens for the designated end marker text */
 	public /*@Nullable*/ String send(boolean listen, String ... args) throws IOException {
 		if (toProcess == null) throw new ProverException("The solver has not been started");
+		// Check liveness *before* writing, rather than relying on the write/read to fail on
+		// its own. Writes to an already-exited process's pipe are not reliably synchronous
+		// with the process's death: the OS may buffer several KB before a write actually
+		// fails, and a subsequent listen() can then race between the process being reported
+		// dead and the stderr StreamGobbler thread finishing its last read -- observed as
+		// intermittent, non-deterministic gaps in cascaded post-death error output (some
+        // commands got a clean deterministic error, others silently got an empty response
+        // that wasn't recognized as an error at all). Failing fast here, uniformly, once
+        // death is known, removes that race for every command after the first.
+		if (process != null && !process.isAlive()) {
+			throw new IOException("Solver process has already exited");
+		}
 		for (String arg: args) {
 			if (log != null) log.write(arg);
 			toProcess.write(arg);

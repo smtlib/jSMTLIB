@@ -1,0 +1,178 @@
+##EXITCODE 1
+# Validate :print-success default value (per declared SMT-LIB version) and full
+# success-emission behavior for z3, cvc5, yices2, and SMTInterpol solvers
+# (commands sent directly to each solver -- no jSMTLIB involved).
+#
+# Known-failing (##EXITCODE 1, not 0): every solver checked gets the
+# version-conditioned default wrong for at least one of 2.5/2.6/2.7 -- see
+# README.md for the confirmed per-family breakdown (z3/cvc5/yices2 hardcode
+# false always; SMTInterpol hardcodes true always). Success-emission
+# mechanics are compliant for z3/cvc5/yices2; SMTInterpol fails to
+# acknowledge "exit" with "success".
+#
+# This cannot be tested via a .tst file: jSMTLIB handles :print-success
+# entirely client-side and always leaves the real solver process pinned at
+# :print-success true at the wire level (see AbstractSolver.java's
+# checkPrintSuccess doc comment), so a .tst test can never observe a raw
+# solver's own native default or native suppression/resumption behavior.
+#
+# Expected defaults asserted here (see README.md for the full per-release
+# history -- 2.6 had four releases over 2017-2024; earlier ones stated true,
+# but the current/final 2.6 document (2024-09-20), the one actually
+# authoritative for a script declaring "2.6" today, states false, matching
+# 2.7. Each version number is judged against its own current controlling
+# document, not against superseded earlier drafts of the same number):
+#   - SMT-LIB 2.5: default true
+#   - SMT-LIB 2.6: default false
+#   - SMT-LIB 2.7: default false
+# All three are checked here by declaring the version with an initial
+# (set-info :smt-lib-version X) -- the first command of the script, as the
+# standard requires -- before ever touching :print-success, then querying
+# (get-option :print-success) with nothing else in between.
+#
+# Separately, the *mechanics* of success-emission are checked: once
+# :print-success is set, "success" must be emitted for every command that
+# only acknowledges (set-logic, declare-fun, assert, set-option, and
+# critically exit -- easy to get wrong since a solver could just terminate
+# silently instead of acknowledging first) -- and must NOT be emitted for a
+# command with a substantive answer (check-sat), regardless of whether
+# print-success is on or off at the time (a substantive answer must never be
+# suppressed, only the bare "success" acknowledgement is subject to the
+# option).
+
+declare -a _Z3_SOLVERS=()
+for _exe in "$SMT_SOLVER_DIR"/z3-*;  do [ -x "$_exe" ] && _Z3_SOLVERS+=("$_exe");  done
+
+declare -a _CVC5_SOLVERS=()
+for _exe in "$SMT_SOLVER_DIR"/cvc5-*; do [ -x "$_exe" ] && _CVC5_SOLVERS+=("$_exe"); done
+
+declare -a _YICES2_SOLVERS=()
+for _exe in "$SMT_SOLVER_DIR"/yices2-*; do [ -x "$_exe" ] && _YICES2_SOLVERS+=("$_exe"); done
+
+declare -a _SMTINTERPOL_SOLVERS=()
+for _exe in "$SMT_SOLVER_DIR"/smtinterpol-*.jar; do [ -e "$_exe" ] && _SMTINTERPOL_SOLVERS+=("$_exe"); done
+
+if [ ${#_Z3_SOLVERS[@]} -eq 0 ] && [ ${#_CVC5_SOLVERS[@]} -eq 0 ] \
+   && [ ${#_YICES2_SOLVERS[@]} -eq 0 ] && [ ${#_SMTINTERPOL_SOLVERS[@]} -eq 0 ]; then
+    echo "SKIP: no solver executables found in $SMT_SOLVER_DIR"
+    exit 0
+fi
+
+_fail=0
+_tmpdir=$(mktemp -d /tmp/print_success_test.XXXXXX)
+trap 'rm -rf "$_tmpdir"' EXIT
+
+# Pipes stdin (the SMT-LIB script) to the solver named by $_exe, dispatching on
+# $_mode for the invocation style each family needs. Writes stdout to $1.
+_run() {
+    local _outfile="$1"
+    case "$_mode" in
+        z3)          timeout 10 "$_exe" -smt2 -in > "$_outfile" 2>/dev/null ;;
+        cvc5|yices2) timeout 10 "$_exe" > "$_outfile" 2>/dev/null ;;
+        smtinterpol) timeout 10 java -jar "$_exe" -q > "$_outfile" 2>/dev/null ;;
+    esac
+}
+
+# ---------------------------------------------------------------------------
+# Part 1: version-conditioned default value of :print-success.
+# ---------------------------------------------------------------------------
+_check_default() {
+    local _name="$1"
+    for _ver in 2.5 2.6 2.7; do
+        local _script="(set-info :smt-lib-version $_ver)
+(get-option :print-success)
+(exit)
+"
+        local _outfile="$_tmpdir/${_name}_default_${_ver}.out"
+        printf '%s' "$_script" | _run "$_outfile"
+        # get-option's answer is the only line that isn't a bare "success" ack (from
+        # set-info or exit, present or absent depending on the very default being
+        # measured) or a solver-specific "unsupported version" error -- so filtering
+        # those out and taking what's left is robust regardless of whether those
+        # acks are shown, suppressed, or accompanied by an extra error line.
+        local _val
+        _val=$(grep -v -E '^(success)?$|^\(error ' "$_outfile" | tail -1)
+        case "$_ver" in
+            2.5)
+                if [ "$_val" = "true" ]; then
+                    echo "PASS: $_name default @2.5 = true (spec-correct)"
+                else
+                    (( _fail++ ))
+                    echo "FAIL: $_name default @2.5: expected true, got '$_val'"
+                fi
+                ;;
+            2.6)
+                if [ "$_val" = "false" ]; then
+                    echo "PASS: $_name default @2.6 = false (spec-correct)"
+                else
+                    (( _fail++ ))
+                    echo "FAIL: $_name default @2.6: expected false, got '$_val'"
+                fi
+                ;;
+            2.7)
+                if [ "$_val" = "false" ]; then
+                    echo "PASS: $_name default @2.7 = false (spec-correct)"
+                else
+                    (( _fail++ ))
+                    echo "FAIL: $_name default @2.7: expected false, got '$_val'"
+                fi
+                ;;
+        esac
+    done
+}
+
+# ---------------------------------------------------------------------------
+# Part 2: full success-emission mechanics -- shown for every plain
+# acknowledgement (including exit) when on, suppressed when off, and a
+# substantive answer (check-sat) is never suppressed either way.
+# ---------------------------------------------------------------------------
+_behavior_script='(set-option :print-success true)
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(assert (= p p))
+(set-option :print-success false)
+(assert (= p p))
+(check-sat)
+(set-option :print-success true)
+(exit)
+'
+# Expected response stream: the four initial commands each ack once print-success
+# is true; the switch-to-false command's own ack is itself suppressed (the new
+# value is already in effect by ack time); the following assert is suppressed;
+# check-sat's real answer is never suppressed; the switch back to true and exit
+# both ack normally.
+_expected='success
+success
+success
+success
+sat
+success
+success'
+
+_check_behavior() {
+    local _name="$1"
+    local _outfile="$_tmpdir/${_name}_behavior.out"
+    printf '%s' "$_behavior_script" | _run "$_outfile"
+    if diff -q <(printf '%s\n' "$_expected") "$_outfile" > /dev/null 2>&1; then
+        echo "PASS: $_name success-emission mechanics"
+    else
+        (( _fail++ ))
+        echo "FAIL: $_name success-emission mechanics: expected:"
+        printf '%s\n' "$_expected" | sed 's/^/    /'
+        echo "  got:"
+        sed 's/^/    /' "$_outfile"
+    fi
+}
+
+for _mode_solvers in "z3:_Z3_SOLVERS" "cvc5:_CVC5_SOLVERS" "yices2:_YICES2_SOLVERS" "smtinterpol:_SMTINTERPOL_SOLVERS"; do
+    _mode="${_mode_solvers%%:*}"
+    _arrname="${_mode_solvers#*:}"
+    eval "_list=(\"\${${_arrname}[@]}\")"
+    for _exe in "${_list[@]}"; do
+        _name=$(basename "$_exe" .jar)
+        _check_default "$_name"
+        _check_behavior "$_name"
+    done
+done
+
+[ "$_fail" -eq 0 ]

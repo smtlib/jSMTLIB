@@ -5,9 +5,13 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Stream;
 
 import org.junit.Assert;
 import org.junit.Assume;
@@ -43,13 +47,23 @@ public class ScriptTests {
     public static Collection<String[]> datax() {
         Collection<String[]> data = new ArrayList<>();
         File scriptsDir = findScriptsFolder();
-        File[] scrFiles = scriptsDir.listFiles(f -> f.getName().endsWith(".scr"));
-        if (scrFiles != null) {
-            Arrays.sort(scrFiles);
-            for (File f : scrFiles) {
-                String name = f.getName().replaceAll("\\.scr$", "");
-                data.add(new String[]{name, f.getAbsolutePath()});
-            }
+        // Recurse into subdirectories (e.g. scripts/solverBehavior/) so a script does not
+        // have to live flat in scripts/ to be discovered. The display name is the path
+        // relative to scripts/ (with .scr stripped), so scripts in a subdirectory are
+        // still distinguishable from a same-named top-level script.
+        List<File> scrFiles = new ArrayList<>();
+        try (Stream<Path> walk = Files.walk(scriptsDir.toPath())) {
+            walk.filter(p -> p.getFileName().toString().endsWith(".scr"))
+                .forEach(p -> scrFiles.add(p.toFile()));
+        } catch (IOException e) {
+            // scriptsDir doesn't exist or isn't readable -- data stays empty, same as
+            // the old listFiles()==null case.
+        }
+        Collections.sort(scrFiles);
+        Path scriptsPath = scriptsDir.toPath();
+        for (File f : scrFiles) {
+            String rel = scriptsPath.relativize(f.toPath()).toString().replaceAll("\\.scr$", "");
+            data.add(new String[]{rel, f.getAbsolutePath()});
         }
         return data;
     }
@@ -73,7 +87,11 @@ public class ScriptTests {
     public void checkScript() throws Exception {
         checkSkip();
 
-        File smtTestsDir = scrFile.getParentFile().getParentFile();
+        // Not scrFile.getParentFile().getParentFile() -- that assumed every script lives
+        // exactly one level under scripts/, which broke for scripts/solverBehavior/*.scr.
+        // findScriptsFolder()'s parent is always the true SMTTests root regardless of how
+        // deep under scripts/ the script itself is nested.
+        File smtTestsDir = findScriptsFolder().getParentFile();
         ProcessBuilder pb = new ProcessBuilder("bash", "runscript", scrFile.getAbsolutePath());
         pb.directory(smtTestsDir);
         pb.redirectErrorStream(true);

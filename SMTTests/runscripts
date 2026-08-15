@@ -19,7 +19,9 @@ else
 fi
 
 if [ $# -eq 0 ]; then
-    files=( "$SCRIPTS"/*.scr )
+    # Recurse (e.g. into scripts/solverBehavior/), not just the top level.
+    files=()
+    while IFS= read -r -d '' f; do files+=( "$f" ); done < <(find "$SCRIPTS" -name '*.scr' -print0 | sort -z)
 else
     files=()
     for arg in "$@"; do

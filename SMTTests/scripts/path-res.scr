@@ -1,0 +1,25 @@
+##EXITCODE 0
+# Consolidated: --exec <path> resolution for the three ways it can succeed.
+# Each is a fresh $SMT_CMD invocation against the same trivial script:
+#   (a) absolute exec path — SMT_SOLVER_DIR is irrelevant even if wrong/unset.
+#   (b) relative exec path — resolved by prepending $SMT_SOLVER_DIR.
+#   (c) relative exec path, no SMT_SOLVER_DIR — falls back to PATH lookup.
+# (The failure case -- relative exec, no SMT_SOLVER_DIR, and not on PATH --
+# is tested separately in path-res-error.scr, since it expects a different
+# exit code than these three.)
+
+# (a) absolute exec path
+_abs_z3="$(cd "$SMT_SOLVER_DIR" && pwd)/z3-4.3.1"
+SMT_SOLVER_DIR=/nonexistent $SMT_CMD --solver z3-4.3 --exec "$_abs_z3" $SCRIPTS/ok_sat.smt2
+
+# (b) relative exec path, resolved via SMT_SOLVER_DIR
+$SMT_CMD --solver z3-4.3 --exec z3-4.3.1 $SCRIPTS/ok_sat.smt2
+
+# (c) relative exec path, no SMT_SOLVER_DIR, resolved via PATH.
+# Skipped on Windows: PATH modification in bash does not propagate to Java
+# ProcessBuilder there, so this case cannot be exercised the same way (see
+# the .out.windows/.err.windows/.cmb.windows goldens, which omit it).
+if [[ "$PLATFORM" != "windows" ]]; then
+    _abs_dir="$(cd "$SMT_SOLVER_DIR" && pwd)"
+    PATH="$_abs_dir:$PATH" SMT_SOLVER_DIR= $SMT_CMD --solver z3-4.3 --exec z3-4.3.1 $SCRIPTS/ok_sat.smt2
+fi

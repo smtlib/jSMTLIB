@@ -141,30 +141,46 @@ classified each. **39 confirmed accurate.** 7 open findings below.
    to prevent this). This golden almost certainly now matches bare and should
    be re-verified (and likely deleted) once solver runs are allowed again.
 
-### Identical to bare, kept deliberately (13)
-These look redundant by content but are load-bearing under the *current*
-fallback layout: deleting them (tried and reverted earlier this session)
-causes the harness to fall through past the missing exact-version file to a
-**family-level `.bad`** that documents a *different, newer* solver version's
-non-conformance — incorrectly applying it to the older version that actually
-behaves correctly. All 13 are `z3-4.3` (7), `yices2`(1)/`z3`(family, 5)
-shadowing a `z3.bad`/`yices2.bad`/`yices2-2.6.5.bad` sibling. Example:
-`ok_reproducibleResourceLimit.tst.out.z3-4.3` — z3-4.3 supports the feature
-and matches bare; `z3-4.8.12`+ don't, hence
-`ok_reproducibleResourceLimit.tst.out.z3.bad` exists at the family level.
-Removing the version-specific file would wrongly apply the family `.bad` to
-z3-4.3 too.
+### Identical to bare, kept deliberately (13) — RESOLVED
 
-**Recommended fix direction (not applied — no edits during the active test
-run):** invert the polarity of these 13. The family-level file should default
-to representing *compliant* behavior (delete `ok_reproducibleResourceLimit.tst.out.z3.bad`,
-let the family `.z3` fall through to bare, which already matches), and the
-*specific newer versions* that are actually non-conformant should each get
-their own explicit `.bad` override (e.g. `ok_reproducibleResourceLimit.tst.out.z3-4.8.12.bad`).
-That way the default assumption for any future/untested z3 version is
-"compliant until shown otherwise," rather than "broken until explicitly
-carved out" — and these 13 redundant-with-bare files become deletable again
-once the family default is fixed to not need shadowing.
+Correction on closer inspection: only **5 of the 13** actually shadowed a real
+`.bad` file (`ok_reproducibleResourceLimit`, `ok_printSuccess`, `ok_quant`,
+`ok_globaldeclarations`, `ok_globaldeclarations4`) — those got the polarity
+inversion described below. The other 8 (`ok_getProof`/`ok_getUnsatCore` `.err`,
+`ok_getValue`, `ok_allDefinedOptions`, `ok_getRequiredOptions`,
+`ok_regularOutput`, `ok_setOptionalOptions`, `ok_statusSat`) were shadowing a
+plain, non-`.bad`, legitimately-different family golden — that's the
+fallback mechanism working exactly as intended, not a compliance issue, and
+needed no change.
+
+For the 5 real cases: re-tested against every currently-active version and
+found **all 5 family-level `.bad` files were themselves stale** — none of
+z3-4.8.12 through z3-4.16.0 (or either yices2 version) still exhibit the
+documented bug (the `ok_quant`/`ok_globaldeclarations{,4}` ones were fixed by
+this session's `WARNING=false` change; `ok_printSuccess` no longer reproduces
+on either yices2 build). Fixed:
+- `ok_quant`, `ok_globaldeclarations`, `ok_globaldeclarations4`: deleted the
+  stale family `.z3.bad` and the redundant identical-to-bare `.z3-4.3`; z3-4.3
+  itself still has the real bug (confirmed: the `WARNING`-misread-as-response
+  issue for `ok_quant`, and `reset-assertions` not clearing declarations for
+  the other two), so that content now lives at `.z3-4.3.bad`.
+- `ok_printSuccess`: both yices2 builds are now fully compliant — deleted the
+  stale `.yices2.bad` and the now-fully-redundant plain `.yices2` (family
+  falls through cleanly to bare).
+- `ok_reproducibleResourceLimit`: all 5 of z3-4.8.12–4.16.0 still don't
+  support this option (confirmed unchanged) — deleted the family `.z3.bad`
+  and the redundant `.z3-4.3`, replaced with 5 explicit per-version `.bad`
+  files (`z3-4.8.12.bad` through `z3-4.16.0.bad`), so a future/untested z3
+  version now defaults to "compliant" via family fallthrough instead of
+  inheriting an old version's bug.
+
+Side finding while re-verifying: `ok_allDefinedOptions`'s existing `.z3`
+family golden (captured from z3-4.8.12 earlier this session) turned out not
+to hold for z3-4.14.1/4.16.0, which gained support for one more option
+in between — added `.z3-4.14.1`/`.z3-4.16.0` overrides.
+
+All of the above verified against the real harness across every active z3/
+yices2 version — passing.
 
 ### No bare golden (90)
 77 are `.err` (stderr) files — no bare `.tst.err` exists for most tests at all

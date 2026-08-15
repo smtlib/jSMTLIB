@@ -27,3 +27,36 @@ Untouched per your instruction — you said it's a real binary you haven't re-en
 
 Categories 1–2 are legitimate as-is. Category 3 (yices2) is the one open item from my original assessment I haven't remediated — want me to do that next, same treatment as the z3_4_3/cvc5 work?
 
+SCRIPT FILES
+
+Of the 48 .scr files under SMTTests/scripts/, most use jSMTLIB's built-in pure-Java test solver (either --solver test explicitly, or no --solver flag at all — the default in jsmtlib.properties falls back to test). Only these actually depend on a real external solver binary:
+
+Genuinely need a working external solver to pass:
+
+┌────────────────────────────────┬────────────────────┬───────────────────────────────────────────────────────────┐
+│             Script             │       Solver       │                       How resolved                        │
+├────────────────────────────────┼────────────────────┼───────────────────────────────────────────────────────────┤
+│ batch-smt.scr                  │ z3-4.3.x           │ via SMT_SOLVER_DIR/PATH                                   │
+├────────────────────────────────┼────────────────────┼───────────────────────────────────────────────────────────┤
+│ path-res-absolute.scr          │ z3-4.3.1           │ absolute path                                             │
+├────────────────────────────────┼────────────────────┼───────────────────────────────────────────────────────────┤
+│ path-res-path.scr              │ z3-4.3.1           │ via PATH                                                  │
+├────────────────────────────────┼────────────────────┼───────────────────────────────────────────────────────────┤
+│ path-res-solverdir.scr         │ z3-4.3.1           │ via SMT_SOLVER_DIR                                        │
+├────────────────────────────────┼────────────────────┼───────────────────────────────────────────────────────────┤
+│ zapi.scr                       │ z3-4.3.1           │ hardcoded in APIExample.java (Solver_z3_4_3), not visible │
+│                                │                    │  in the .scr text itself                                  │
+├────────────────────────────────┼────────────────────┼───────────────────────────────────────────────────────────┤
+│ solver-output-channel.scr      │ every z3-*/cvc5-*  │ invokes solvers directly, bypassing jSMTLIB; gracefully   │
+│                                │ found              │ SKIPs (exit 0) if none found                              │
+├────────────────────────────────┼────────────────────┼───────────────────────────────────────────────────────────┤
+│ getInfo-allStatistics-cvc5.scr │ cvc5-1.3.2         │ gracefully SKIPs (exit 77) if absent                      │
+│                                │ specifically       │                                                           │
+└────────────────────────────────┴────────────────────┴───────────────────────────────────────────────────────────┘
+
+Reference a solver but only to exercise jSMTLIB's own error-handling — don't actually need a working solver, expect EXITCODE 1:
+- batch-smt2.scr, batch-smt3.scr, batch-smt4.scr (unconfigured/bogus simplify solver — batch-smt3.scr even has a comment noting it's a stale hardcoded Windows path)
+- path-res-error.scr (deliberately nonexistent exec)
+
+Everything else (31 files) runs entirely against the built-in test solver, no external binary needed.
+

@@ -73,6 +73,7 @@ clean:
 	rm -f bin/org/smtlib/test/UnitTests.class bin/org/smtlib/test/UnitTests\$$*.class
 	rm -f reports/*.md
 	rm -rf time-solvers-logs
+	rm -rf junit-logs
 
 ## Regenerate the solver capability/options/logics reports (SMTTests/reports/*.md)
 ## by probing every discovered solver binary directly. Slow (the ALL-logic

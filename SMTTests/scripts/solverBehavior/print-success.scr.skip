@@ -1,0 +1,1 @@
+Skipped: tests solver binaries directly; PASS/FAIL is stable but per-version informational output is not portable across CI platforms

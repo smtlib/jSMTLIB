@@ -66,8 +66,13 @@ if [ $ret -ne 0 ]; then
 fi
 
 ## Run unit tests under the JaCoCo agent (COV_AGENT is empty when coverage is off).
+## RunAll is a thin wrapper around JUnitCore that additionally logs progress and
+## failures to a timestamped file as they happen (see LoggingRunListener) -- the
+## stock `java org.junit.runner.JUnitCore <classes>` CLI only prints a summary at
+## the very end, which isn't useful for watching a long multi-solver run live
+## (e.g. `tail -f junit-logs/junit-<timestamp>.log`).
 echo "Running unit tests..."
-java ${COV_AGENT:-} -cp "$CP" org.junit.runner.JUnitCore "${TEST_CLASSES[@]}"
+java ${COV_AGENT:-} -cp "$CP" org.smtlib.test.RunAll junit-logs "${TEST_CLASSES[@]}"
 ret=$?
 [ $ret -eq 0 ] && echo "Unit tests SUCCEEDED" || echo "Unit tests FAILED"
 exit $ret
