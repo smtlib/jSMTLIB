@@ -49,11 +49,12 @@ import re
 import subprocess
 import sys
 import tempfile
+import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
-# Solver discovery (mirrors capability-report.py; kept standalone/duplicated
+# Solver discovery (mirrors ALL-logic-report.py; kept standalone/duplicated
 # so each script in this folder can be run independently)
 # ---------------------------------------------------------------------------
 
@@ -475,14 +476,34 @@ def run_row(name: str, path: Path, is_jar: bool, row: Row, timeout: float, workd
 GRADE_SYMBOL = {"Y": "✅", "P": "⚠️", "N": "❌"}
 
 
+def visual_width(s: str) -> int:
+    """Best-effort *display* width, not len(). ✅/❌ are Unicode
+    East-Asian-Width "Wide" and render as two monospace columns in any
+    editor/terminal, though Python's len() counts them as one; the warning
+    sign renders wide too once paired with the variation-selector that makes
+    it "emoji style" (its own formal width is "Narrow", but that's not how
+    it actually displays here), and that selector itself draws no column of
+    its own. Not a general Unicode-width implementation -- just enough to
+    keep this report's fixed, known set of table-cell symbols aligned."""
+    width = 0
+    for ch in s:
+        if ch == "\uFE0F":  # variation selector-16: zero-width modifier
+            continue
+        if ch in ("✅", "❌", "⚠") or unicodedata.east_asian_width(ch) in ("W", "F"):
+            width += 2
+        else:
+            width += 1
+    return width
+
+
 def render_table(header: list[str], rows: list[list[str]]) -> list[str]:
     """Render a GitHub-markdown table with cells padded to a common column
     width, so it's readable as plain text (not just when rendered)."""
     all_rows = [header] + rows
-    widths = [max(len(r[i]) for r in all_rows) for i in range(len(header))]
+    widths = [max(visual_width(r[i]) for r in all_rows) for i in range(len(header))]
 
     def fmt_row(r: list[str]) -> str:
-        return "| " + " | ".join(cell.ljust(widths[i]) for i, cell in enumerate(r)) + " |"
+        return "| " + " | ".join(cell + " " * (widths[i] - visual_width(cell)) for i, cell in enumerate(r)) + " |"
 
     lines = [fmt_row(header), "|" + "|".join("-" * (w + 2) for w in widths) + "|"]
     lines += [fmt_row(r) for r in rows]

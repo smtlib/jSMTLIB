@@ -59,7 +59,7 @@ time-solvers:
 		end=$$(date +%s); \
 		elapsed=$$((end - start)); \
 		result=$$(grep -E "SUCCEEDED|FAILURES" "$$log" | tail -1 | sed -E 's/^\[[ 0-9]+s\] //'); \
-		echo "$$result"; \
+		echo "[$$elapsed] $$result"; \
 		printf '%-20s %6ds   %s\n' "$$solver" "$$elapsed" "$$result" >> "$$summary"; \
 	done; \
 	echo; echo "=== time-solvers summary ($$log) ==="; cat "$$summary"
@@ -71,16 +71,17 @@ clean:
 	rm -f tempout scripts/tempout solver.out
 	find tests scripts \( -name '*.actual' -o -name '*.actual.tmp' \) -delete
 	rm -f bin/org/smtlib/test/UnitTests.class bin/org/smtlib/test/UnitTests\$$*.class
-	rm -f reports/ALL-report.md reports/Options.md
+	rm -f reports/*.md
 	rm -rf time-solvers-logs
 
-## Regenerate the solver capability/options reports (SMTTests/reports/*.md) by
-## probing every discovered solver binary directly. Slow (the capability
+## Regenerate the solver capability/options/logics reports (SMTTests/reports/*.md)
+## by probing every discovered solver binary directly. Slow (the ALL-logic
 ## report alone runs ~750 probes across every z3/yices2 version found), so
 ## it's a separate target rather than part of the default test run.
 reports:
-	cd reports && python3 capability-report.py
+	cd reports && python3 ALL-logic-report.py
 	cd reports && python3 options-report.py
+	cd reports && python3 logics-report.py
 
 build:
 	$(MAKE) -C ../SMT build

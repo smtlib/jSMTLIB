@@ -4,7 +4,6 @@
 **/.DS_Store
 **/*.actual
 **/*.actual.tmp
-/reports/ALL-report.md
-/reports/Options.md
+/reports/*.md
 /reports/__pycache__/
 /time-solvers-logs/
