@@ -1,6 +1,10 @@
-##EXITCODE 0
+##EXITCODE 1
 # Validate (get-info :all-statistics) for z3, cvc5, yices2, and SMTInterpol
-# (commands sent directly to each solver -- no jSMTLIB involved).
+# (commands sent directly to each solver -- no jSMTLIB involved). Not skipped:
+# unlike print-success.scr/solver-output-channel.scr, every check here is a
+# fixed structural PASS/FAIL per solver (never a raw memory/timing value), so
+# it runs as part of the normal test suite rather than being deferred to an
+# on-demand assessment.
 #
 # :all-statistics is a generic/vendor-specific info request (see the comment
 # in tests/getInfo/err_getInfo2_allStatistics.tst): the standard does not
@@ -19,10 +23,27 @@
 #   - cvc5 and SMTInterpol wrap everything under a single ":all-statistics"
 #     key whose value is itself a nested list, e.g.
 #     "(:all-statistics ((...) (...)))".
-# So the check below only asserts the generic shape common to both: the
+# So the well-formedness check only asserts the shape common to both: the
 # command is supported (response isn't literally "unsupported"), the
 # response opens with "(", contains at least one ":keyword" attribute name,
 # and has balanced parentheses -- not any specific wrapper key.
+#
+# Mode requirement (per the SMT-LIB 2.7 reference, Sec. 4.1.8): ":all-statistics
+# ... mode: sat, unsat -- Executions of get-info with :all-statistics are
+# allowed only when the solver is in sat or unsat mode." Combined with the
+# general requirement in Sec. 4.1.1, "The solver must respond with an error
+# when given a command not permitted in the current mode," a compliant
+# solver MUST reply with (error ...) -- not statistics data -- if
+# :all-statistics is requested before any check-sat (start/assert mode).
+# Three single-session runs per solver test this:
+#   A. before any check-sat (assert mode) -- MUST get (error ...)
+#   B. after a check-sat that reports sat (sat mode)   -- MUST get well-formed data
+#   C. after a check-sat that reports unsat (unsat mode) -- MUST get well-formed data
+#
+# The exit-code directive above is 1: known-failing. Every solver checked
+# (all families) answers with well-formed statistics data even in run A,
+# instead of the (error ...) the standard requires -- see README.md for the
+# confirmed per-family breakdown. Runs B and C pass for all of them.
 
 declare -a _Z3_SOLVERS=()
 for _exe in "$SMT_SOLVER_DIR"/z3-*;  do [ -x "$_exe" ] && _Z3_SOLVERS+=("$_exe");  done
@@ -57,60 +78,150 @@ _run() {
     esac
 }
 
-_script='(set-logic QF_UF)
+# Drops leading lines that are exactly "success" (the pure acks a solver with
+# :print-success default true, i.e. SMTInterpol, emits for set-logic/
+# declare-fun/assert before the response we actually care about). Never
+# drops a "success" line once a non-"success" line has been seen, since a
+# real response line is never itself the bare text "success".
+_strip_leading_success() {
+    awk 'BEGIN{skip=1} skip && $0=="success" {next} {skip=0; print}' "$1"
+}
+
+# Categorizes a get-info response as unsupported / error / data.
+_classify() {
+    local _resp="$1"
+    if [ "$_resp" = "unsupported" ]; then
+        echo unsupported
+    elif [[ "$_resp" == "(error "* ]]; then
+        echo error
+    else
+        echo data
+    fi
+}
+
+# Applies the shape checks (open paren, :keyword present, balanced parens) to
+# a response already known to be a "data" response (not error/unsupported).
+_check_wellformed() {
+    local _name="$1" _label="$2" _resp="$3"
+
+    case "$_resp" in
+        "("*)
+            echo "PASS: $_name: $_label response opens with '('"
+            ;;
+        *)
+            (( _fail++ ))
+            echo "FAIL: $_name: $_label response opens with '(' (got: $_resp)"
+            ;;
+    esac
+
+    if printf '%s' "$_resp" | grep -q ':[A-Za-z]'; then
+        echo "PASS: $_name: $_label response contains at least one :keyword attribute"
+    else
+        (( _fail++ ))
+        echo "FAIL: $_name: $_label response contains at least one :keyword attribute (got: $_resp)"
+    fi
+
+    local _opens _closes
+    _opens=$(printf '%s' "$_resp" | tr -cd '(' | wc -c)
+    _closes=$(printf '%s' "$_resp" | tr -cd ')' | wc -c)
+    if [ "$_opens" -gt 0 ] && [ "$_opens" -eq "$_closes" ]; then
+        echo "PASS: $_name: $_label response has balanced parentheses"
+    else
+        (( _fail++ ))
+        echo "FAIL: $_name: $_label response has balanced parentheses (got $_opens open, $_closes close)"
+    fi
+}
+
+_script_before_checksat='(set-logic QF_UF)
+(declare-fun p () Bool)
+(get-info :all-statistics)
+(exit)
+'
+_script_sat='(set-logic QF_UF)
+(declare-fun p () Bool)
+(assert p)
+(check-sat)
+(get-info :all-statistics)
+(exit)
+'
+_script_unsat='(set-logic QF_UF)
+(declare-fun p () Bool)
+(assert p)
+(assert (not p))
+(check-sat)
 (get-info :all-statistics)
 (exit)
 '
 
 _check() {
     local _name="$1"
-    local _outfile="$_tmpdir/${_name}.out"
-    printf '%s' "$_script" | _run "$_outfile"
 
-    # SMTInterpol defaults :print-success to true (see print-success.scr), so
-    # its output has a leading "success" ack for set-logic that the other
-    # three families (which default to false) don't produce. Strip it before
-    # judging the get-info response itself.
-    local _response
-    if [ "$(head -1 "$_outfile")" = "success" ]; then
-        _response=$(tail -n +2 "$_outfile")
-    else
-        _response=$(cat "$_outfile")
-    fi
-
-    if [ "$_response" = "unsupported" ]; then
-        (( _fail++ ))
-        echo "FAIL: $_name: get-info :all-statistics is supported (got: unsupported)"
-        return
-    fi
-    echo "PASS: $_name: get-info :all-statistics is supported"
-
-    case "$_response" in
-        "("*)
-            echo "PASS: $_name: response opens with '('"
+    # Run A: before any check-sat -- assert mode, not sat/unsat. The whole
+    # (stripped) output is the get-info response, since nothing else in the
+    # script produces a specific response.
+    local _outA="$_tmpdir/${_name}_A.out"
+    printf '%s' "$_script_before_checksat" | _run "$_outA"
+    local _respA
+    _respA=$(_strip_leading_success "$_outA")
+    local _classA
+    _classA=$(_classify "$_respA")
+    case "$_classA" in
+        unsupported)
+            echo "INFO: $_name: get-info :all-statistics is unsupported -- skipping mode checks"
+            return
             ;;
-        *)
+        error)
+            echo "PASS: $_name: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode)"
+            ;;
+        data)
             (( _fail++ ))
-            echo "FAIL: $_name: response opens with '(' (got: $_response)"
+            echo "FAIL: $_name: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...): $_respA"
             ;;
     esac
 
-    if printf '%s' "$_response" | grep -q ':[A-Za-z]'; then
-        echo "PASS: $_name: response contains at least one :keyword attribute"
+    # Run B: after a check-sat expected to report sat -- sat mode.
+    local _outB="$_tmpdir/${_name}_B.out"
+    printf '%s' "$_script_sat" | _run "$_outB"
+    local _strippedB _checksatB _respB
+    _strippedB=$(_strip_leading_success "$_outB")
+    _checksatB=$(printf '%s\n' "$_strippedB" | head -1)
+    _respB=$(printf '%s\n' "$_strippedB" | tail -n +2)
+    if [ "$_checksatB" = "sat" ]; then
+        echo "PASS: $_name: check-sat reports sat (as expected, to enter sat mode)"
     else
         (( _fail++ ))
-        echo "FAIL: $_name: response contains at least one :keyword attribute (got: $_response)"
+        echo "FAIL: $_name: check-sat reports sat (as expected, to enter sat mode) (got: $_checksatB)"
     fi
+    case "$(_classify "$_respB")" in
+        unsupported) echo "INFO: $_name: get-info :all-statistics is unsupported in sat mode" ;;
+        error)
+            (( _fail++ ))
+            echo "FAIL: $_name: get-info :all-statistics succeeds in sat mode (got error instead: $_respB)"
+            ;;
+        data) _check_wellformed "$_name" "sat-mode" "$_respB" ;;
+    esac
 
-    local _opens _closes
-    _opens=$(printf '%s' "$_response" | tr -cd '(' | wc -c)
-    _closes=$(printf '%s' "$_response" | tr -cd ')' | wc -c)
-    if [ "$_opens" -gt 0 ] && [ "$_opens" -eq "$_closes" ]; then
-        echo "PASS: $_name: response has balanced parentheses"
+    # Run C: after a check-sat expected to report unsat -- unsat mode.
+    local _outC="$_tmpdir/${_name}_C.out"
+    printf '%s' "$_script_unsat" | _run "$_outC"
+    local _strippedC _checksatC _respC
+    _strippedC=$(_strip_leading_success "$_outC")
+    _checksatC=$(printf '%s\n' "$_strippedC" | head -1)
+    _respC=$(printf '%s\n' "$_strippedC" | tail -n +2)
+    if [ "$_checksatC" = "unsat" ]; then
+        echo "PASS: $_name: check-sat reports unsat (as expected, to enter unsat mode)"
     else
         (( _fail++ ))
-        echo "FAIL: $_name: response has balanced parentheses (got $_opens open, $_closes close)"
+        echo "FAIL: $_name: check-sat reports unsat (as expected, to enter unsat mode) (got: $_checksatC)"
     fi
+    case "$(_classify "$_respC")" in
+        unsupported) echo "INFO: $_name: get-info :all-statistics is unsupported in unsat mode" ;;
+        error)
+            (( _fail++ ))
+            echo "FAIL: $_name: get-info :all-statistics succeeds in unsat mode (got error instead: $_respC)"
+            ;;
+        data) _check_wellformed "$_name" "unsat-mode" "$_respC" ;;
+    esac
 }
 
 for _mode_solvers in "z3:_Z3_SOLVERS" "cvc5:_CVC5_SOLVERS" "yices2:_YICES2_SOLVERS" "smtinterpol:_SMTINTERPOL_SOLVERS"; do

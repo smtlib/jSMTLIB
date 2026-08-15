@@ -12,19 +12,28 @@ executable under `$SMT_SOLVER_DIR` and runs the same checks against each, so a
 newly-installed solver version is covered automatically with no script
 changes needed. (`solver-output-channel.scr` predates the yices2/SMTInterpol
 support added for the other two and still only covers z3/cvc5 — see its own
-section below.) All are marked `.skip` (portability: exact output depends on
-which solver versions happen to be installed locally) — run them directly for
-an up-to-date assessment:
+section below.)
+
+`solver-output-channel.scr` and `print-success.scr` are marked `.skip`
+(portability: some of what they report — e.g. per-version informational
+output, exact platform behavior — depends on which solver versions happen to
+be installed locally) — run them directly for an up-to-date assessment:
 
 ```
 bash runscript scripts/solverBehavior/solver-output-channel.scr
 bash runscript scripts/solverBehavior/print-success.scr
-bash runscript scripts/solverBehavior/all-statistics.scr
 ```
 
 (`runscript` respects the `.skip` marker; invoke the `.scr` file with plain
 `bash` instead to bypass it, as both commands above do implicitly through
 the direct-run examples in each script's own header.)
+
+`all-statistics.scr` is **not** skipped: every check it makes is a fixed
+structural PASS/FAIL (never a raw memory/timing value), so it runs as part
+of the normal `./runscripts`/JUnit suite like any other `.scr` test — its
+`.out`/`.err`/`.cmb` goldens list whichever solvers happen to be installed
+locally, so they need regenerating (delete and rerun) if the local solver
+set changes.
 
 ## solver-output-channel.scr
 
@@ -136,22 +145,25 @@ producing none.
 
 ## all-statistics.scr
 
-Checks `(get-info :all-statistics)` for z3, cvc5, yices2, and SMTInterpol.
-This is a generic/vendor-specific info request (see the comment in
-`tests/getInfo/err_getInfo2_allStatistics.tst`): the standard requires only
-that the response be a list of attribute-value pairs, not any particular
-shape or content, and every solver's response embeds live, non-deterministic
-values (timings, memory/allocation counts, term/type counts) that can never
-be matched against a fixed golden. This was previously checked only for
-cvc5-1.3.2 (the now-removed `scripts/getInfo-allStatistics-cvc5.scr`);
-generalized here across all four families and moved alongside the other
-raw-solver checks.
+Checks `(get-info :all-statistics)` for z3, cvc5, yices2, and SMTInterpol,
+on two axes: response **shape** and the standard's explicit **mode**
+requirement. This was previously checked only for cvc5-1.3.2 (the
+now-removed `scripts/getInfo-allStatistics-cvc5.scr`); generalized here
+across all four families and moved alongside the other raw-solver checks.
+Unlike the other two scripts in this folder, it is **not** `.skip`ed, since
+every assertion it makes is a fixed PASS/FAIL classification, never a raw
+value comparison.
 
-**Current assessment** (all 9 z3 versions, cvc5-1.3.2, both yices2 versions,
-SMTInterpol 2.5 — 13 solvers, `##EXITCODE 0`, all PASS): every solver
-supports the request and returns a well-formed, balanced-parenthesis
-attribute list. Two response shapes are both seen and both accepted, since
-the standard doesn't mandate one over the other:
+**Response shape.** `:all-statistics` is a generic/vendor-specific info
+request (see the comment in `tests/getInfo/err_getInfo2_allStatistics.tst`):
+the standard requires only that the response be a list of attribute-value
+pairs, not any particular shape or content, and every solver's response
+embeds live, non-deterministic values (timings, memory/allocation counts,
+term/type counts) that can never be matched against a fixed golden — the
+check only verifies the response opens with `(`, contains at least one
+`:keyword` attribute name, and has balanced parentheses. Two response shapes
+are both seen in practice and both accepted, since the standard doesn't
+mandate one over the other:
 
 - z3 and yices2 return a **flat attribute-list** directly, e.g.
   `(:max-memory 0.29 :memory 0.29 :num-allocs 633 :rlimit-count 1)` — no
@@ -160,7 +172,43 @@ the standard doesn't mandate one over the other:
   key whose value is itself a nested list, e.g.
   `(:all-statistics ((:Core (...)) (:CC (...))))`.
 
-Neither shape is more correct than the other under the standard's loose
-requirement, so the check only asserts the shape common to both: supported,
-opens with `(`, contains at least one `:keyword` attribute name, and has
-balanced parentheses.
+All 13 solvers checked PASS the shape check in both sat and unsat mode
+(see below).
+
+**Mode requirement.** The SMT-LIB 2.7 reference (§4.1.8) states:
+`:all-statistics ... mode: sat, unsat` — "Executions of get-info with
+:all-statistics are allowed only when the solver is in sat or unsat mode."
+Combined with the general requirement in §4.1.1, "The solver must respond
+with an error when given a command not permitted in the current mode," a
+compliant solver **must** reply with `(error ...)` — not statistics data —
+if `:all-statistics` is requested before any `check-sat` (start/assert
+mode). Three single-session runs per solver test this:
+
+- **A** — before any `check-sat` (assert mode): must get `(error ...)`.
+- **B** — after a `check-sat` that reports `sat` (sat mode): must get
+  well-formed data.
+- **C** — after a `check-sat` that reports `unsat` (unsat mode): must get
+  well-formed data.
+
+**Current assessment** (all 9 z3 versions, cvc5-1.3.2, both yices2 versions,
+SMTInterpol 2.5 — 13 solvers total; `##EXITCODE 1` reflects a confirmed real
+failure, not a script bug):
+
+| Family | Run A (want error) | Run B (sat mode) | Run C (unsat mode) |
+|---|---|---|---|
+| z3 (all 9 versions) | **FAIL** (well-formed data instead) | PASS | PASS |
+| cvc5-1.3.2 | **FAIL** (well-formed data instead) | PASS | PASS |
+| yices2 (both versions) | **FAIL** (well-formed data instead) | PASS | PASS |
+| SMTInterpol 2.5 | **FAIL** (well-formed data instead) | PASS | PASS |
+
+**Every one of the 13 solvers checked violates the mode requirement**: none
+of them reject a pre-`check-sat` `:all-statistics` request with an error —
+all of them silently compute and return statistics anyway (memory/allocation
+counts for z3, term/type counts for yices2, full solver-internal stat trees
+for cvc5/SMTInterpol), even though nothing has been solved yet and the
+standard says this is not a permitted mode for the command. Runs B and C
+(the two modes the standard actually allows) pass cleanly for all 13 — the
+statistics content differs materially before vs. after `check-sat` (e.g. z3's
+`:num-allocs`/`:rlimit-count`, cvc5's timing fields), so this isn't a case of
+solvers ignoring the state machine entirely — they just don't enforce the
+precondition on this particular command.
