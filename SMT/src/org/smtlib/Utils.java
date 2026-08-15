@@ -282,6 +282,15 @@ public class Utils {
 	static public final ISymbol SIGN_EXTEND = new SMTExpr.Symbol("sign_extend".intern());
 	static public final ISymbol ROTATE_LEFT = new SMTExpr.Symbol("rotate_left".intern());
 	static public final ISymbol ROTATE_RIGHT = new SMTExpr.Symbol("rotate_right".intern());
+	/** Bitvector/Int conversions and overflow predicates (SMT-LIB 2.7 FixedSizeBitVectors). */
+	static public final ISymbol UBV_TO_INT = new SMTExpr.Symbol("ubv_to_int".intern());
+	static public final ISymbol SBV_TO_INT = new SMTExpr.Symbol("sbv_to_int".intern());
+	static public final ISymbol INT_TO_BV = new SMTExpr.Symbol("int_to_bv".intern());
+	static public final ISymbol BVNEGO = new SMTExpr.Symbol("bvnego".intern());
+	static public final ISymbol BVUADDO = new SMTExpr.Symbol("bvuaddo".intern());
+	static public final ISymbol BVSADDO = new SMTExpr.Symbol("bvsaddo".intern());
+	static public final ISymbol BVUMULO = new SMTExpr.Symbol("bvumulo".intern());
+	static public final ISymbol BVSMULO = new SMTExpr.Symbol("bvsmulo".intern());
 
 	/** Canonical ISymbol form of BITVEC, for structural comparison against a parsed
 	 * identifier's head symbol (see TypeChecker.isBitVec() and SymbolTable's bit-vector

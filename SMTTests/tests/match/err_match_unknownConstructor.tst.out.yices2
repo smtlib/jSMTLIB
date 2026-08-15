@@ -1,4 +1,4 @@
-(error "logic AUFLIA is not supported")
+success
 (error "at line 2, column 18: syntax error: declare-datatype is not a command")
 (error "at line 3, column 19: undefined sort: Color")
 (error "Error writing to solver: (assert (match c ( ((unknown x y) true)))) java.io.IOException: Stream closed")

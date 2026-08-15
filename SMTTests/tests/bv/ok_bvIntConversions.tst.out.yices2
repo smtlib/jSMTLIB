@@ -1,0 +1,11 @@
+success
+success
+success
+success
+(error "at line 5, column 15: undefined term: ubv_to_int")
+(error "Error writing to solver: (declare-fun m () Int) java.io.IOException: Stream closed")
+(error "Error writing to solver: (assert (= m (sbv_to_int b))) java.io.IOException: Stream closed")
+(error "Error writing to solver: (declare-fun c () (_ BitVec 8)) java.io.IOException: Stream closed")
+(error "Error writing to solver: (assert (= c ((_ int_to_bv 8) 20))) java.io.IOException: Stream closed")
+(error "Error writing to solver: (assert (not (and (= n 255) (= m (- 1)) (= c #x14)))) java.io.IOException: Stream closed")
+(error "Error writing to solver: (check-sat) java.io.IOException: Stream closed")

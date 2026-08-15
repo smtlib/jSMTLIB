@@ -1,0 +1,2 @@
+(assert (= x (ubv_to_int x)))
+                         ^

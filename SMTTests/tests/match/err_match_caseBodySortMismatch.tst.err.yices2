@@ -1,5 +1,3 @@
-(set-logic AUFLIA)
-^^^^^^^^^^^^^^^^^^
 (declare-datatype Tree ((leaf) (node (left Tree) (right Tree))))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (declare-fun t () Tree)

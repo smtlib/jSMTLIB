@@ -1,6 +1,4 @@
 success
 success
-(pop 3)
-^^^^^^^
-(error "Parse Error: <shell>:1.5: Attempted to pop above the top stack frame.")
-success
+(error "Parse Error: <shell>:1.6: Unknown exception")
+(error "Error writing to solver: (exit) java.io.IOException: Stream closed")

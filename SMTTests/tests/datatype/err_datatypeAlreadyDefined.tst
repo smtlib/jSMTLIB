@@ -1,5 +1,5 @@
 ; declare-datatype: constructor or selector name already defined
-(set-logic QF_UF)
+(set-logic ALL)
 (declare-fun f (Bool) Bool)
 (declare-datatype D ((f (x Bool))))
 (declare-fun g (Bool) Bool)

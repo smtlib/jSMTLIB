@@ -1,5 +1,5 @@
 ; match error: non-exhaustive patterns (no variable/wildcard, not all constructors)
-(set-logic QF_UF)
+(set-logic ALL)
 (declare-datatype Color ((red) (green) (blue)))
 (declare-fun c () Color)
 (assert (match c ((red true) (green false))))

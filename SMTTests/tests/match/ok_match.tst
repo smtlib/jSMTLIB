@@ -1,5 +1,5 @@
 ; match expressions: bare constructor patterns and constructor-with-params patterns
-(set-logic QF_UF)
+(set-logic ALL)
 (declare-datatype Color ((red) (green) (blue)))
 (declare-datatype Tree ((leaf) (node (left Tree) (right Tree))))
 (declare-fun c () Color)

@@ -1,6 +1,2 @@
 success
-(assert 1)
-^^^^^^^^^^
-(error "Expected Bool
-The assertion : 1
-Its type      : Int")
+(error "Expected term with sort Bool")

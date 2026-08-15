@@ -1,5 +1,5 @@
 ; a match pattern's constructor must belong to the scrutinee's datatype
-(set-logic AUFLIA)
+(set-logic ALL)
 (declare-datatype Color ((red) (green) (blue)))
 (declare-datatype Tree ((leaf) (node (left Tree) (right Tree))))
 (declare-fun c () Color)

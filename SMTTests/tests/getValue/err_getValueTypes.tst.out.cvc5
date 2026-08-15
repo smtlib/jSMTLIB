@@ -5,6 +5,4 @@ success
 success
 success
 sat
-(get-value (x y (and x y) ))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "expecting a Boolean subexpression")
+(error "Parse Error: <shell>:1.26: expecting a Boolean subexpression")

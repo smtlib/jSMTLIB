@@ -1,0 +1,10 @@
+; SMT-LIB 2.7 bitvector overflow predicates: bvnego bvuaddo bvsaddo bvumulo bvsmulo
+(set-logic QF_BV)
+(declare-fun b () (_ BitVec 4))
+(declare-fun c () (_ BitVec 4))
+(assert (bvnego b))
+(assert (bvuaddo b c))
+(assert (bvsaddo b c))
+(assert (bvumulo b c))
+(assert (bvsmulo b c))
+(check-sat)  ; result should be sat -- e.g. b = #x8 (-8, the most negative value), c = #xf (-1)

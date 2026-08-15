@@ -1,2 +1,2 @@
-(set-logic QF_UF)
+(set-logic ALL)
 (declare-datatype Color ((red) (green) (blue)))

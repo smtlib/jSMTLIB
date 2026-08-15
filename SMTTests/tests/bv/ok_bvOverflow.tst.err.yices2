@@ -1,0 +1,12 @@
+(assert (bvnego b))
+^^^^^^^^^^^^^^^^^^^
+(assert (bvuaddo b c))
+^^^^^^^^^^^^^^^^^^^^^^
+(assert (bvsaddo b c))
+^^^^^^^^^^^^^^^^^^^^^^
+(assert (bvumulo b c))
+^^^^^^^^^^^^^^^^^^^^^^
+(assert (bvsmulo b c))
+^^^^^^^^^^^^^^^^^^^^^^
+(check-sat)  ; result should be sat -- e.g. b = #x8 (-8, the most negative value), c = #xf (-1)
+^^^^^^^^^^^

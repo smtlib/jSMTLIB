@@ -1,5 +1,3 @@
-(set-logic AUFLIA)
-^^^^^^^^^^^^^^^^^^
 (declare-datatype Color ((red) (green) (blue)))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (declare-datatype Tree ((leaf) (node (left Tree) (right Tree))))

@@ -1,0 +1,9 @@
+success
+success
+success
+(error "<stdin>:4:18: Unsupported internal function bvnego")
+(error "<stdin>:5:21: Unsupported internal function bvuaddo")
+(error "<stdin>:6:21: Unsupported internal function bvsaddo")
+(error "<stdin>:7:21: Unsupported internal function bvumulo")
+(error "<stdin>:8:21: Unsupported internal function bvsmulo")
+sat

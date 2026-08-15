@@ -1,4 +1,4 @@
 success
 success
 success
-(error "<stdin>:4:47: Unknown function symbol is.")
+(error "<stdin>:4:47: Application of function null does not type check.")

@@ -1,4 +1,0 @@
-(declare-datatype D ((f (x Bool))))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-datatype E ((ctor (g Bool))))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

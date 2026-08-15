@@ -1,6 +1,2 @@
-(declare-datatype Color ((red) (green) (blue)))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-fun c () Color)
-^^^^^^^^^^^^^^^^^^^^^^^^
 (assert (match c ( ((unknown x y) true) )))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

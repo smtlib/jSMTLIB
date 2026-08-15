@@ -524,6 +524,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				return save(e,s);
 			} else if (head.equals(Utils.BVULT) || (useext && (head.equals(Utils.BVULE) || head.equals(Utils.BVUGT) || head.equals(Utils.BVUGE)
 					|| head.equals(Utils.BVSLT) || head.equals(Utils.BVSLE) || head.equals(Utils.BVSGT) || head.equals(Utils.BVSGE)
+					|| head.equals(Utils.BVUADDO) || head.equals(Utils.BVSADDO) || head.equals(Utils.BVUMULO) || head.equals(Utils.BVSMULO)
 					)
 					)) {
 				if (argSorts.size() != 2) {
@@ -547,8 +548,21 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				ISort b = smtConfig.sortFactory.Bool(); // FIXME - get something from the symbol table?
 				b.accept(this);
 				return save(e,b);
+			} else if (useext && head.equals(Utils.BVNEGO)) {
+				if (argSorts.size() != 1) {
+					error(" The " + name + " function should have one argument",head.pos());
+					return null;
+				}
+				ISort s = argSorts.get(0);
+				if (!isBitVec(s)) {
+					error("The argument must have a BitVec sort, not " + pr(s),e.args().get(0).pos());
+					return null;
+				}
+				ISort b = smtConfig.sortFactory.Bool();
+				b.accept(this);
+				return save(e,b);
 			}
-					
+
 		}
 		if (symTable.bitVectorTheorySet && head.equals(Utils.CONCAT)) {
 			if (argSorts.size() != 2) {
@@ -567,6 +581,24 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			}
 			s = makeBitVec(bitvecSize(s)+bitvecSize(ss));
 			return save(e,s);
+		}
+		if (symTable.bitVectorTheorySet && symTable.realsIntsTheorySet &&
+				(head.equals(Utils.UBV_TO_INT) || head.equals(Utils.SBV_TO_INT))) {
+			if (argSorts.size() != 1) {
+				error(" The " + name + " function should have one argument",head.pos());
+				return null;
+			}
+			ISort s = argSorts.get(0);
+			if (!isBitVec(s)) {
+				error("The argument must have a BitVec sort, not " + pr(s),e.args().get(0).pos());
+				return null;
+			}
+			ISort i = makeInt();
+			if (i == null) {
+				error("No Int sort available for " + name,head.pos());
+				return null;
+			}
+			return save(e,i);
 		}
 		ISymbol pheadSymbol = null;
 		if (head instanceof IParameterizedIdentifier) pheadSymbol = ((IParameterizedIdentifier)head).headSymbol();
@@ -596,6 +628,29 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				return null;
 			}
 			s = makeBitVec(end-start+1);
+			return save(e,s);
+
+		}
+		if (symTable.bitVectorTheorySet && symTable.realsIntsTheorySet &&
+				head instanceof IParameterizedIdentifier &&
+				Utils.INT_TO_BV.equals(pheadSymbol)) {
+			if (argSorts.size() != 1) {
+				error(" The " + name + " function should have one argument",head.pos());
+				return null;
+			}
+			ISort s = argSorts.get(0);
+			if (!isIntSort(s)) {
+				error("The argument must have Int sort, not " + pr(s),e.args().get(0).pos());
+				return null;
+			}
+			IParameterizedIdentifier pid = (IParameterizedIdentifier)head;
+			if (!checkNumeralIndices(pid, 1, "Expected exactly one numeral in an int_to_bv identifier")) return null;
+			int val = ((INumeral) pid.indices().get(0)).intValue();
+			if (val <= 0) {
+				error("The numeral must be greater than 0 in int_to_bv",pid.indices().get(0).pos());
+				return null;
+			}
+			s = makeBitVec(val);
 			return save(e,s);
 
 		}
@@ -731,6 +786,13 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		ISort s = smtConfig.sortFactory.createSortExpression(id, new ISort[0]);
 		s.accept(this);
 		return s;
+	}
+
+	/** Returns the Int sort as installed by the active theories (Ints/Reals_Ints), or
+	 * null if none is installed -- mirrors how numeral literals are sorted (visit(INumeral)). */
+	private /*@Nullable*/ ISort makeInt() {
+		IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("NUMERAL"));
+		return sort == null ? null : sort.resultSort();
 	}
 
 	@Override
