@@ -1,3 +1,0 @@
-(push 0)
-^^^^^^^^
-(error "Parse Error: <shell>:1.4: set-logic must appear before this point.")

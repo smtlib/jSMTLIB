@@ -1,8 +1,0 @@
-success
-success
-success
-success
-success
-(declare-fun xx () B)
-^^^^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.19: Symbol 'B' not declared as a type")

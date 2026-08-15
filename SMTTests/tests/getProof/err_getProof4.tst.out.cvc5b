@@ -1,9 +1,0 @@
-(set-option :produce-proofs true)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "Error in option parsing: option `produce-proofs' requires a proofs-enabled build of CVC4; this binary was not built with proof support")
-success
-success
-sat
-(get-proof)
-^^^^^^^^^^^
-(error "This build of CVC4 doesn't have proof support.")

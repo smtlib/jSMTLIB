@@ -1,6 +1,0 @@
-(error "line 2 column 71: logic identifier expected as argument to logic")
-(error "line 3 column 15: logic identifier expected as argument to logic")
-success
-success
-success
-success

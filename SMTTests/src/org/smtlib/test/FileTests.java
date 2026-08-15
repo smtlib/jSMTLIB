@@ -255,7 +255,7 @@ public class FileTests extends LogicTests {
                 cmpExpected, cmpActual);
         }
         // On success: do not write .actual (and delete any stale one)
-        new File(tstFile.getAbsolutePath() + ext + ".actual").delete();
+        new File(actualPath(ext)).delete();
     }
 
     /** Drops lines containing {@code java.io.IOException:} -- these appear in an "Error
@@ -287,8 +287,16 @@ public class FileTests extends LogicTests {
     // Helpers
     // -----------------------------------------------------------------------
 
+    /** Path for the actual-output capture file for this (test, solver, ext) combination --
+     *  named the same way a custom golden file would be (base + ext + "." + solvername),
+     *  plus ".actual", so that distinct solvers tested against the same .tst file never
+     *  share (and clobber) one another's capture file. */
+    private String actualPath(String ext) {
+        return tstFile.getAbsolutePath() + ext + "." + solvername + ".actual";
+    }
+
     private void writeActual(String ext, String content) {
-        File out = new File(tstFile.getAbsolutePath() + ext + ".actual");
+        File out = new File(actualPath(ext));
         try (BufferedWriter w = new BufferedWriter(new FileWriter(out))) {
             w.write(content);
         } catch (IOException ignored) {}

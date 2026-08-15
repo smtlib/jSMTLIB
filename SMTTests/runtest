@@ -2,10 +2,13 @@
 
 ## Note: Files ending in .tst are test scripts
 ##       Files ending in .tst.out are the corresponding expected outputs
-##       Files ending in .tst.out.actual are the actual stdout if the test fails
+##       Files ending in .tst.out.<solver>.actual are the actual stdout if the test fails
 ##       Files ending in .tst.err are the expected err output if non-empty
-##       Files ending in .tst.err.actual are the actual stderr if the test fails
+##       Files ending in .tst.err.<solver>.actual are the actual stderr if the test fails
 ##       Files ending in .tst.skip.<solver> or .tst.skip skip this test (content is the reason)
+##       The solver name is embedded in the .actual filename (not just .tst.out.actual) so that
+##       distinct solvers tested against the same .tst file never share -- and clobber -- one
+##       another's capture file.
 
 if [ $# -lt 2 ]; then
     echo "Usage: runtest <solver> <testfile>"
@@ -81,10 +84,12 @@ elif [ -e "${test}.skip" ]; then
     exit 77
 fi
 
-rm -f "${test}.out.actual" "${test}.err.actual"
+outactual="${test}.out.${solver}.actual"
+erractual="${test}.err.${solver}.actual"
+rm -f "$outactual" "$erractual"
 echo Running $solver "	" $test
 
-_timeout "$TEST_TIMEOUT" $SMT_EXE "$test" > "${test}.out.actual" 2> "${test}.err.actual"
+_timeout "$TEST_TIMEOUT" $SMT_EXE "$test" > "$outactual" 2> "$erractual"
 _exit=$?
 if [ $_exit -eq 124 ]; then
     echo "TIMEOUT (${TEST_TIMEOUT}s) $solver $test"
@@ -93,8 +98,8 @@ fi
 
 ### Strip Windows CR so Unix golden files match
 if [[ "$PLATFORM" == "windows" ]]; then
-    tr -d '\r' < "${test}.out.actual" > "${test}.out.actual.tmp" && mv "${test}.out.actual.tmp" "${test}.out.actual"
-    tr -d '\r' < "${test}.err.actual" > "${test}.err.actual.tmp" && mv "${test}.err.actual.tmp" "${test}.err.actual"
+    tr -d '\r' < "$outactual" > "$outactual.tmp" && mv "$outactual.tmp" "$outactual"
+    tr -d '\r' < "$erractual" > "$erractual.tmp" && mv "$erractual.tmp" "$erractual"
 fi
 
 ### Check the error output
@@ -109,16 +114,16 @@ errok=0
 while true; do ## The while true is just to allow a break from the inner test loop
     for f in "${err_candidates[@]}"; do
       if [ -e "$f" ]; then
-        diff -I 'java.io.IOException:' "${test}.err.actual" "$f"
+        diff -I 'java.io.IOException:' "$erractual" "$f"
         errok=$?
         if [ $errok == 0 ]; then
-          rm -f "${test}.err.actual"
+          rm -f "$erractual"
         else
           echo FAILURE - mismatched error output "$f"
           echo "=== ACTUAL STDERR ===" $solver $PLATFORM_ARCH $PLATFORM $comparison
-          if [ -s "${test}.err.actual" ]; then
-              cat "${test}.err.actual"
-          else 
+          if [ -s "$erractual" ]; then
+              cat "$erractual"
+          else
               echo "Actual error output is empty"
           fi
           echo "=== END ACTUAL STDERR ==="
@@ -128,12 +133,12 @@ while true; do ## The while true is just to allow a break from the inner test lo
     done
     ## None of the named output files (for error output) exist
     ## That is OK if there is no error output
-    if [ -s "${test}.err.actual" ]; then
+    if [ -s "$erractual" ]; then
       errok=1
       echo "No expected output for error output"
-      cat "${test}.err.actual"
+      cat "$erractual"
     else
-      rm -rf "${test}.err.actual"
+      rm -rf "$erractual"
     fi
     break
 done
@@ -148,7 +153,7 @@ comparison=""
 while true; do ## The while true is just to allow a break from the inner test loop
     for f in "${out_candidates[@]}"; do
       if [ -e "$f" ]; then
-        diff -b -I '[(]:memory' -I '[(]:max-memory' -I 'java.io.IOException:' "${test}.out.actual" "$f"
+        diff -b -I '[(]:memory' -I '[(]:max-memory' -I 'java.io.IOException:' "$outactual" "$f"
         diffresult=$?
         comparison="$f"
         break 2
@@ -156,19 +161,19 @@ while true; do ## The while true is just to allow a break from the inner test lo
     done
     echo "No expected output for regular output"
     diffresult=1
-    
+
     #echo No output file, creating one
-    #mv "${test}.out.actual" "${test}.out"
+    #mv "$outactual" "${test}.out"
     break
 done
 
 if [ $diffresult != 0 ] ; then
     echo FAILURE - mismatched regular output $comparison
     echo "=== ACTUAL STDOUT ===" $solver $PLATFORM_ARCH $PLATFORM
-    cat "${test}.out.actual"
+    cat "$outactual"
     echo "=== END ACTUAL STDOUT ==="
     exit 1
 else
-	rm -rf "${test}.out.actual"
+	rm -rf "$outactual"
 fi
 exit $errok

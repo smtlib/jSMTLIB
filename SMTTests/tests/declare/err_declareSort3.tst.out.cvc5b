@@ -1,3 +1,0 @@
-(declare-sort A 0)
-^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.12: set-logic must appear before this point.")

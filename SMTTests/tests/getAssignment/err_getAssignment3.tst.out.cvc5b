@@ -1,8 +1,0 @@
-success
-success
-success
-sat
-success
-(get-assignment)
-^^^^^^^^^^^^^^^^
-(error "Cannot get the current assignment unless immediately preceded by SAT/INVALID or UNKNOWN response.")

@@ -1,7 +1,0 @@
-success
-(get-assignment)
-^^^^^^^^^^^^^^^^
-(error "Cannot get the current assignment when produce-assignments option is off.")
-(get-assignment xxx)
-                ^^^
-(error "A get-assignment command takes no arguments")

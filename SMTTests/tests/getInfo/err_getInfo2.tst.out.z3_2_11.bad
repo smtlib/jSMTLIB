@@ -1,9 +1,0 @@
-( ( "reason-unknown" "unsupported" ) )
-( ( "all-statistics" "num. propagations:  0 (binary: 0)
-num. mk bool var:   1
-num. mk enode:      2" ) )
-success
-( ( "reason-unknown" "unsupported" ) )
-( ( "all-statistics" "num. propagations:  0 (binary: 0)
-num. mk bool var:   1
-num. mk enode:      2" ) )

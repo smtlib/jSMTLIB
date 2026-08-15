@@ -1,4 +1,0 @@
-success
-(define-sort A () B)
-^^^^^^^^^^^^^^^^^^^^
-(error "Parse Error: <shell>:1.18: Symbol 'B' not declared as a type")
