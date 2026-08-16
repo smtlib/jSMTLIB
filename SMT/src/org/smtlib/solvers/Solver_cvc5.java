@@ -5,6 +5,7 @@
  */
 package org.smtlib.solvers;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -67,7 +68,7 @@ public class Solver_cvc5 extends AbstractSolver implements ISolver {
 		cmds[0] = executable;
 		// With --quiet, cvc5 never prints an interactive "cvc5> " prompt, so "\n" (like
 		// Solver_smt) is the right end marker, not a prompt string.
-		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile);
+		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
 	}
 
 	@Override

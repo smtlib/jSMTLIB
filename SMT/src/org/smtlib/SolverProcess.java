@@ -8,60 +8,67 @@ package org.smtlib;
 import java.io.BufferedReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.Reader;
 import java.io.Writer;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.nio.charset.Charset;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
-// FIXME - REVIEW
-
-/** This class implements launching, writing to, and reading responses from a 
+/** This class implements launching, writing to, and reading responses from a
  * launched process (in particular, solver processes).
  * @author David Cok
  */
 public class SolverProcess {
-    
-    public int sleepTime = 1;
-    public boolean useNotifyWait = false; // TOOD: Not sure that true works
+
     public boolean useShutdownHooks = true;
-    public boolean useMultiThreading = true;
-	
+
+    /** How long (ms) to keep waiting for more error-stream text once some has already
+     * arrived, before returning it. There is no OS-level signal tying completeness of
+     * stderr to the recognized end marker on stdout, so this is a bounded best-effort
+     * wait, not a guarantee; it is only paid when error text is actually flowing --
+     * the common case of no pending error output returns immediately. */
+    public long errorSettleMillis = 20;
+
+    /** Set true by a caller for the duration of a single command whose expected response
+     * text may contain literal, non-SMT-LIB unbalanced parentheses (e.g. some z3
+     * :reason-unknown text), so the end-marker recognizer does not wait forever for
+     * parentheses to balance. */
+    public boolean badFormat = false;
+
 	final static protected String eol = System.getProperty("line.separator");
-	
+
 	protected StreamGobbler standardOut;
 	protected StreamGobbler errorOut;
-	
+
 	/** Wraps an exception thrown because of a failure in the prover */
 	public static class ProverException extends RuntimeException {
 		private static final long serialVersionUID = 1L;
 
 		public ProverException(String s) { super(s); }
 	}
-	
+
 	/** The command-line arguments that launch a new process */
 	protected String[] app;
+
+	/** The charset used to encode text sent to the process and decode text read back from it */
+	protected Charset charset;
 
 	/** The text that marks the end of the text returned from the process */
 	protected String endMarker;
 
 	/** The Java process object (initialized by start() )*/
 	protected Process process;
-	
+
 	/** The Writer object that writes to the spawned process (initialized by start() )*/
 	protected Writer toProcess;
-	
-	/** The Reader process that reads from the standard output of the spawned process (initialized by start() )*/
-	protected Reader fromProcess;
-	
-	/** The Reader process that reads from the standard error stream of the spawned process (initialized by start() )*/
-	protected Reader errors;
-	
+
 	/** A place (e.g., log file), if non-null, to write all outbound communications for diagnostic purposes */
 	public /*@Nullable*/Writer log;
-	
+
 
 	/** Constructs a SolverProcess object, without actually starting the process as yet.
 	 * @param cmd the command-line that will launch the desired process
@@ -70,7 +77,16 @@ public class SolverProcess {
 	 * @param logfile if not null, the name of a file to log communications to, for diagnostic purposes
 	 */
 	public SolverProcess(String[] cmd, String endMarker, /*@Nullable*/String logfile) {
+		this(cmd, endMarker, logfile, Charset.defaultCharset());
+	}
+
+	/** As {@link #SolverProcess(String[], String, String)}, but explicitly setting the charset
+	 * used to encode text sent to the process and decode text read back from it.
+	 * @param charset the charset to use for the process's stdin/stdout/stderr
+	 */
+	public SolverProcess(String[] cmd, String endMarker, /*@Nullable*/String logfile, Charset charset) {
 		this.endMarker = endMarker;
+		this.charset = charset;
 		try {
 			if (logfile != null) {
 				log = new FileWriter(logfile);
@@ -82,7 +98,12 @@ public class SolverProcess {
 		}
 		setCmd(cmd);
 	}
-	
+
+	/** The charset being used to encode text sent to the process and decode text read back from it */
+	public Charset getCharset() {
+		return charset;
+	}
+
 	/** Enables changing the command-line; must be called prior to start() */
 	public void setCmd(String[] cmd) {
 		this.app = cmd;
@@ -97,35 +118,26 @@ public class SolverProcess {
 			System.err.println("Failed to write to solver log file : " + e);
 		}
 	}
-	
+
 	protected Thread shutdownThread = null;
-	
+
 	/** Starts the process; if the argument is true, then also listens to its output until a prompt is read. */
     public void start(boolean listen) throws ProverException {
     	try {
-    	    String path = System.getenv("PATH");
-    	    if (false && path != null) {
-    	        String[] envp = new String[] { "PATH=" + path };
-    	        process = Runtime.getRuntime().exec(app,envp);
-    	    } else {
-                process = Runtime.getRuntime().exec(app);
-    	    }
+            process = Runtime.getRuntime().exec(app);
     		if (useShutdownHooks) {
     		    shutdownThread = new Thread() { public void run() { process.destroyForcibly(); }};
     		    Runtime.getRuntime().addShutdownHook( shutdownThread );
     		}
-    		toProcess = new OutputStreamWriter(process.getOutputStream());
-    		if (useMultiThreading) {
-                errorOut = new StreamGobbler(process.getErrorStream(), null, useNotifyWait);
-                standardOut = new StreamGobbler(process.getInputStream(), s->endsWith(s,endMarker), useNotifyWait);
-                errorOut.log = log;
-                standardOut.log = log;
-                errorOut.start();
-                standardOut.start();
-    		} else {
-    		    fromProcess = new BufferedReader(new InputStreamReader(process.getInputStream()));
-    		    errors = new InputStreamReader(process.getErrorStream());
-    		}
+    		toProcess = new OutputStreamWriter(process.getOutputStream(), charset);
+            errorOut = new StreamGobbler(process.getErrorStream(), null, charset);
+            standardOut = new StreamGobbler(process.getInputStream(), s->endsWith(s,endMarker), charset);
+            errorOut.log = log;
+            standardOut.log = log;
+            errorOut.setName("stderr-gobbler");
+            standardOut.setName("stdout-gobbler");
+            errorOut.start();
+            standardOut.start();
     		Thread.sleep(1000);
     		if (listen) listen();
     	} catch (IOException e) {
@@ -138,7 +150,7 @@ public class SolverProcess {
     		throw new ProverException(e.getMessage());
     	}
     }
-    
+
     boolean endsWith(StringBuilder sb, String endMarker) {
         int sblen = sb.length();
         int len = endMarker.length();
@@ -173,50 +185,36 @@ public class SolverProcess {
                 else if (c == ')') count--;
             }
         }
-        return count == 0;
+        // badFormat lets a caller (e.g. get_info on :reason-unknown) declare in advance that
+        // the upcoming response text may contain literal unbalanced parentheses, so we do not
+        // wait forever for a balance that will never come.
+        return badFormat || count == 0;
     }
 
-    /** Listens to the process's standard output until the designated endMarker is read 
-     * and to the error output. If there is error output, it is returned;
-     * otherwise the standard output is returned.
+    /** Listens to the process's standard output until the designated endMarker is read,
+     * combined with whatever error output has arrived. If there is error output, it is
+     * returned; otherwise the standard output is returned.
      */
 	public String listen() throws IOException {
-		// FIXME - need to put the two reads in parallel, otherwise one might block on a full buffer, preventing the other from completing
-		if (!useMultiThreading) {
-		    String err = listenThru(errors,null);
-	        String out = listenThru(fromProcess,endMarker);
-	        err = err + listenThru(errors,null);
-	        if (log != null) {
-	            if (!out.isEmpty()) { log.write(";OUT: "); log.write(out); log.write(eol); log.flush(); } // input usually ends with a prompt and no line terminator
-	            if (!err.isEmpty()) { log.write(";ERR: "); log.write(err); } // input usually ends with a line terminator, we think
-	        }
-//if (log != null) { log.write("OUT: " + out.replace('\r', '@').replace('\n', '@') + eol); log.write("ERR: " + err.replace('\r', '@').replace('\n', '@') + eol); }
-	        // In some cases (yices2) the prompt is on the error stream. Our heuristic is that then there is no line-termination
-	        if (err.endsWith("\n") || out.isEmpty()) {
-	            return err.isEmpty() || err.charAt(0) == ';' ? out : err; // Note: the guard against comments (starting with ;) is for Z3
-	        } else {
-                if (out.endsWith(endMarker)) out = out.substring(0,out.length()-endMarker.length());
-	            return out;
-	        }
-		} else {
-		    // FIXME - should not have to busy wait with sleep command and the watsch on a field in another thread
-            String out;
-            if (useNotifyWait) {
-                out = standardOut.getString();  // may block until output is available
-            } else {
-                try { do { Thread.sleep(sleepTime); } while (standardOut.output == null && process.isAlive()); } catch (InterruptedException e) {}
-                out = standardOut.getString();
-            }
-		    String err = errorOut.getString(); // errorOut is set up to not block -- presuming error output is ready if standard out has completed, since there is no indication when the error output is completed
-            if (err.endsWith("\n") || out.isEmpty()) {
-                return err.isEmpty() || err.charAt(0) == ';' ? out : err; // Note: the guard against comments (starting with ;) is for Z3
-            } else {
-                if (out.endsWith(endMarker)) out = out.substring(0,out.length()-endMarker.length());
-                return out;
-            }
-		}
+		String out = standardOut.take(); // blocks until the end marker is recognized, or the process dies
+		// errorOut has no end marker of its own -- there is no OS-level guarantee that error
+		// text for this command has already been fully written and read by the time
+		// standardOut's end marker shows up, so this is a bounded best-effort drain of
+		// whatever has arrived, not a proof of completeness.
+		String err = errorOut.drain(errorSettleMillis);
+	    if (log != null) {
+	        if (!out.isEmpty()) { log.write(";OUT: "); log.write(out); log.write(eol); log.flush(); } // input usually ends with a prompt and no line terminator
+	        if (!err.isEmpty()) { log.write(";ERR: "); log.write(err); } // input usually ends with a line terminator, we think
+	    }
+        // In some cases (yices2) the prompt is on the error stream. Our heuristic is that then there is no line-termination
+        if (err.endsWith("\n") || out.isEmpty()) {
+            return err.isEmpty() || err.charAt(0) == ';' ? out : err; // Note: the guard against comments (starting with ;) is for Z3
+        } else {
+            if (out.endsWith(endMarker)) out = out.substring(0,out.length()-endMarker.length());
+            return out;
+        }
 	}
-	
+
 	/** Returns true if the process is still running; this relies on exceptions
 	 * for control flow and may be a bit expensive.
 	 */
@@ -225,20 +223,20 @@ public class SolverProcess {
 		try {
 			process.exitValue();
 			if (!expectStopped) {
-				if (log != null) { 
+				if (log != null) {
 					try {
 						log.write("Solver has unexpectedly terminated"); log.write(eol); log.flush();
 					} catch (IOException e) {
 						// ignore
 					}
-				}	
+				}
 			}
 			return false;
 		} catch (IllegalThreadStateException e) {
 			return true;
 		}
 	}
-	
+
 	/** Aborts the process; returns immediately if already stopped */
 	public void exit() {
 		if (process == null) return;
@@ -247,9 +245,16 @@ public class SolverProcess {
 		process.destroyForcibly();
 		process = null;
 		toProcess = null;
+		// destroyForcibly() closes the process's pipes, which drives each gobbler's read()
+		// loop to EOF on its own; joining here just makes shutdown deterministic so repeated
+		// start()/exit() cycles (e.g. across many tests) don't accumulate live threads.
+		joinQuietly(standardOut);
+		joinQuietly(errorOut);
+		standardOut = null;
+		errorOut = null;
 		if (log != null) {
 			try {
-				log.write(";;Exiting solver"); 
+				log.write(";;Exiting solver");
 				log.write(eol);
 				log.flush();
 				log.close();
@@ -258,7 +263,16 @@ public class SolverProcess {
 			}
 		}
 	}
-	
+
+	private static void joinQuietly(Thread t) {
+		if (t == null) return;
+		try {
+			t.join(500);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
+	}
+
 	/** Sends all the given text arguments, then (if listen is true) listens for the designated end marker text */
 	public /*@Nullable*/ String send(boolean listen, String ... args) throws IOException {
 		if (toProcess == null) throw new ProverException("The solver has not been started");
@@ -295,215 +309,135 @@ public class SolverProcess {
 	}
 
 // TODO - combine listen and noListen versions of send?
-	
-	/** A pool of buffers used by listenThru. The listenThru method needs a buffer, which may need to be big.
-	 *  However, the method is called often and we do not want to be continually allocating big buffers that
-	 *  have to wait around to be garbage collected.  Especially since, unless there are multiple SMT processes
-	 *  working simultaneously, we will never need more than one of these.  But in order to be thread-safe we 
-	 *  cannot simply declare a static buffer.
+
+	/** Continuously drains one of the process's output streams (stdout or stderr) on a
+	 *  dedicated thread, so that a solver writing a large amount of text to one stream
+	 *  can never be blocked by the other stream's OS pipe buffer filling up while this
+	 *  process is busy reading elsewhere -- reading stdout and stderr sequentially in a
+	 *  single thread cannot make that guarantee.
+	 *
+	 *  Complete chunks of text are handed off to the consumer through a BlockingQueue,
+	 *  which is what supplies the actual thread-safety here: only this thread ever touches
+	 *  the in-progress StringBuilder, and only complete, immutable Strings cross to another
+	 *  thread, via a queue implementation that already provides the necessary locking and
+	 *  visibility guarantees. No manual synchronized/wait/notify is needed.
 	 */
-	static private List<char[]> bufferCollection = Collections.synchronizedList(new LinkedList<char[]>());
-	
-	/** Gets a buffer out of the shared free-list of buffers 
-	 * @return a free buffer available to be used
-	 */
-	synchronized private static char[] getBuffer() {
-		char[] buf;
-		if (bufferCollection.isEmpty()) {
-			// There is nothing magic about the size of the buffers - just meant to be generally enough to
-			// hold the output of a read, but not so large as to unnecessarily use memory. 
-			// If it is not large enough, it will be expanded.
-			buf = new char[10000];
-		} else {
-			buf = bufferCollection.remove(0);
-		}
-		return buf;
-	}
-	
-	/** Puts a buffer back into the shared free-list.
-	 * @param buf the buffer being released
-	 */
-	synchronized private static void putBuffer(char[] buf) {
-		bufferCollection.add(buf);
-	}
-	
-	/** Reads the given Reader until the given String is read (or end of input is reached);
-	 * may block until input is available; the stopping string must occur at the end of the
-	 * input.  This is typically used to read through a prompt on standard output; when the stopping
-	 * string (the prompt) is read, one knows that the output from the program is complete and not
-	 * to wait for any more.
-	 * 
-	 * @param r the Reader to read characters from
-	 * @param end a stopping String
-	 * @return the String read
-	 * @throws IOException if an IO failure occurs
-	 */
-	public /*@NonNull*/String listenThru(/*@NonNull*/Reader r, /*@Nullable*/ String end) throws IOException {
-	    if (!useMultiThreading) {
-	        char[] buf = getBuffer();
-	        try {
-	            int len = end != null ? end.length() : 0;
-	            int p = 0; // Number of characters read
-	            int parens = 0;
-	            // Tracks whether the scan is currently inside a double-quoted string literal, so
-	            // that a stray '(' or ')' in a solver's own error-message prose (e.g. z3's
-	            // "Expecting sort list '(': ...") doesn't permanently unbalance the paren count
-	            // and make this method read forever. A doubled "" (SMT-LIB's escaped-quote form)
-	            // toggles twice with nothing in between, so this naive per-character toggle still
-	            // ends up in the right state without needing full escape-aware parsing.
-	            boolean inString = false;
-	            while (end != null || r.ready()) {
-	                //if (log != null) log.write("ABOUT TO READ " + p + eol);
-	                int i = r.read(buf,p,buf.length-p);
-	                if (i == -1) break; // End of Input
-	                for (int ii=0; ii<i; ++ii) {
-	                    char c = buf[p+ii];
-	                    if (c == '"') {
-	                        inString = !inString;
-	                    } else if (!inString) {
-	                        if (c == '(') ++parens;
-	                        else if (c == ')') --parens;
-	                    }
-	                }
-	                p += i;
-	                //if (log != null) log.write("HEARD: " + new String(buf,0,p) + eol);
-	                if (p>100 && len == 1) {
-	                    len = len;
-	                }
-	                if (end != null && p >= len) {
-	                    // Need to compare a String to a part of a char array - we iterate by
-	                    // hand to avoid creating a new String or CharBuffer object
-	                    boolean match = true;
-	                    int k = p-len;
-	                    for (int j=0; j<len; j++) {
-	                        if (end.charAt(j) != buf[k++]) { match = false; break; }
-	                    }
-	                    if (match && (badFormat || parens == 0)) break; // stopping string matched
-	                }
-	                if (p == buf.length) { // expand the buffer
-	                    char[] nbuf = new char[2*buf.length];
-	                    System.arraycopy(buf,0,nbuf,0,p);
-	                    buf = nbuf;
-	                }
-	            }
-	            return new String(buf,0,p);
-	        } finally {
-	            putBuffer(buf);
-	        }
-	    } else {
-	        return null;
-	    }
-	}
-	
-	public boolean badFormat = false;
-	
 	public static class StreamGobbler extends Thread {
 
-	    /*@ non_null */java.io.InputStream is;
-        /*@ non_null */StringBuilder accumulator;
-        /*@ nullable */String output;
-	    /*@ nullable */ java.util.function.Function<StringBuilder,Boolean> endRecognizer;
-	    boolean useNotifyWait;
+	    /** One handoff from the gobbler thread to a consumer: either a complete chunk of text
+	     * (an end-marker match, or a raw read for streams with no end marker), a signal that
+	     * the stream reached EOF (with any trailing unmatched text), or the IOException that
+	     * ended the read loop. */
+	    private static final class Chunk {
+	        final String text;
+	        final boolean eof;
+	        final IOException error;
+	        private Chunk(String text, boolean eof, IOException error) {
+	            this.text = text; this.eof = eof; this.error = error;
+	        }
+	        static Chunk text(String s) { return new Chunk(s, false, null); }
+	        static Chunk eof(String s) { return new Chunk(s, true, null); }
+	        static Chunk error(IOException e) { return new Chunk("", true, e); }
+	    }
+
+	    /*@ non_null */ InputStream is;
+	    /*@ nullable */ Function<StringBuilder,Boolean> endRecognizer;
+	    /*@ non_null */ Charset charset;
 	    /*@ nullable */ Writer log;
 
-	    char[] buf = new char[10000];
+	    private final BlockingQueue<Chunk> queue = new LinkedBlockingQueue<Chunk>();
 
-	    public StreamGobbler(/*@ non_null */java.io.InputStream is,
-	                            /*@ nullable */ java.util.function.Function<StringBuilder,Boolean> endRecognizer,
-	                            boolean useNotifyWait) {
+	    public StreamGobbler(/*@ non_null */InputStream is,
+	                            /*@ nullable */ Function<StringBuilder,Boolean> endRecognizer,
+	                            /*@ non_null */ Charset charset) {
 	        this.is = is;
 	        this.endRecognizer = endRecognizer;
-	        this.useNotifyWait = useNotifyWait;
-	        accumulator = new StringBuilder();
+	        this.charset = charset;
+	        setDaemon(true);
 	    }
-	    
+
 	    public void run()
 	    {
+	        char[] buf = new char[10000];
+	        StringBuilder local = new StringBuilder(); // thread-confined: only this thread ever touches it
 	        try (
-	            InputStreamReader isr = new InputStreamReader(is);
+	            InputStreamReader isr = new InputStreamReader(is, charset);
 	            BufferedReader br = new BufferedReader(isr); ){
 	            int n;
-	            while ((n = br.read(buf)) > 0) {
-	                accumulator.append(buf,0,n);
-	                //if (log != null) { try { log.write("OUT/ERR: " + accumulator.toString() + "\n"); log.flush(); } catch (java.io.IOException ignored) {} }
-	                if (endRecognizer != null && endRecognizer.apply(accumulator)) {
-	                    putString();
+	            while ((n = br.read(buf)) != -1) {
+	                local.append(buf,0,n);
+	                if (endRecognizer == null || endRecognizer.apply(local)) {
+	                    offer(Chunk.text(local.toString()));
+	                    local.setLength(0);
 	                }
 	            }
-	            // if n == -1 then end of stream has been reached and the StreamGobbler exits
+	            // end of stream reached -- fall through to report EOF with any trailing text
 	        } catch (IOException ioe) {
-	            throw new RuntimeException(ioe);
+	            offer(Chunk.error(ioe));
+	            return;
+	        }
+	        offer(Chunk.eof(local.toString()));
+	    }
+
+	    private void offer(Chunk c) {
+	        try {
+	            queue.put(c);
+	        } catch (InterruptedException e) {
+	            Thread.currentThread().interrupt();
 	        }
 	    }
-	    
-	    public synchronized void putString() {
-	        output = accumulator.toString();
-	        accumulator.setLength(0);
-            if (useNotifyWait) notifyAll();
-	    }
-	    
-	    public synchronized /*@ nullable */ String getString() {
-	        if (useNotifyWait) {
-	            if (endRecognizer == null) {
-                    String s = accumulator.toString();
-                    accumulator.setLength(0);
-                    return s;
-	            } else {
-	                while (output == null) {
-	                    try {
-	                        wait();
-	                    } catch (InterruptedException e) {}
-	                }
-	                String out = output;
-	                output = null;
-	                return out;
-	            }
-	            
-	        } else {
-	            if (output == null) {
-	                synchronized(accumulator) {
-	                    String s = accumulator.toString();
-	                    accumulator.setLength(0);
-	                    return s;
-	                }
-	            } else {
-	                String s = output;
-	                output = null;
-	                return s;
-	            }
+
+	    /** Blocks until a complete chunk is available: an end-marker match, or -- if the
+	     * process dies first without ever producing one -- whatever trailing text (possibly
+	     * empty) had already arrived. Never blocks forever: EOF always produces a chunk. */
+	    String take() throws IOException {
+	        try {
+	            Chunk c = queue.take();
+	            if (c.error != null) throw c.error;
+	            return c.text;
+	        } catch (InterruptedException e) {
+	            Thread.currentThread().interrupt();
+	            throw new IOException("Interrupted while waiting for solver output", e);
 	        }
+	    }
+
+	    /** Drains whatever text has already arrived (returning immediately, with an empty
+	     * string, if none has); once at least one chunk has arrived, waits up to settleMillis
+	     * for further stragglers before giving up. Always returns -- never blocks
+	     * indefinitely -- once the stream reaches EOF or the settle window elapses. */
+	    String drain(long settleMillis) throws IOException {
+	        StringBuilder out = new StringBuilder();
+	        try {
+	            Chunk c = queue.poll(); // non-blocking: no pending error text is the common case
+	            while (c != null) {
+	                if (c.error != null) throw c.error;
+	                out.append(c.text);
+	                if (c.eof) break;
+	                c = queue.poll(settleMillis, TimeUnit.MILLISECONDS); // brief grace period for stragglers
+	            }
+	        } catch (InterruptedException e) {
+	            Thread.currentThread().interrupt();
+	            throw new IOException("Interrupted while draining solver error output", e);
+	        }
+	        return out.toString();
 	    }
 	}
-	
+
 	public static void main(String ... args) {
         java.util.Scanner in = new java.util.Scanner(System.in);
 	    SolverProcess sp = new SolverProcess(args, "\n", null);
 	    sp.start(false);
 	    while (true) {
-            String s = in.nextLine(); 
+            String s = in.nextLine();
             System.out.println("READ " + s);
             try {
                 System.out.println("WRITING " + s);
-//                sp.toProcess.write(s);
-//                sp.toProcess.write("\n");
-//                sp.toProcess.flush();
                 String out = sp.sendAndListen(s + "\n");
                 System.out.println("HEARD: " + out);
             } catch (java.io.IOException e) {
                 System.out.println("FAILED TO WRITE INPUT " + e);
             }
             try { Thread.sleep(100); } catch (Exception e) {}
-//            if (SolverProcess.useMultiThreading) { 
-//                System.out.println("OUT: " + sp.standardOut.getString());
-//                System.out.println("ERR: " + sp.errorOut.getString());
-//            } else {
-//                try {
-//                    System.out.println("OUT: " + ((BufferedReader)sp.fromProcess).readLine());
-//                    System.out.println("ERR: " + ((InputStreamReader)sp.errors).read());
-//                } catch (java.io.IOException e) {
-//                    System.out.println("FAILED TO READ FROM PROCESS " + e);
-//                }
-//            }
 	    }
 	}
 }

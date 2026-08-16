@@ -19,6 +19,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.nio.charset.StandardCharsets;
 
 import org.smtlib.*;
 import org.smtlib.Utils;
@@ -95,7 +96,7 @@ public class Solver_z3_4_5 extends AbstractSolver implements ISolver {
 			else           args.add("-t:" + Integer.toString((int)timeout));
 			cmds = args.toArray(new String[args.size()]);
 		}
-		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile);
+		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
 		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
 	}
 
@@ -112,7 +113,7 @@ public class Solver_z3_4_5 extends AbstractSolver implements ISolver {
 			else           args.add("-t:" + Integer.toString((int)timeout));
 			cmds = args.toArray(new String[args.size()]);
 		}
-		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile);
+		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
 		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
 	}
 

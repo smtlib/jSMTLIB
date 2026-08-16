@@ -5,6 +5,7 @@
  */
 package org.smtlib.solvers;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -57,7 +58,7 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
 		}
 		cmds[0] = executable;
 		// z3 -in does not print an interactive prompt, so "\n" is the right end marker.
-		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile);
+		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
 	}
 
 	@Override

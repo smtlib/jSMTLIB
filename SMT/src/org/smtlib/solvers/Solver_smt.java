@@ -6,6 +6,7 @@
 package org.smtlib.solvers;
 
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 
 import org.smtlib.*;
 import org.smtlib.impl.Pos;
@@ -44,14 +45,14 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 	public Solver_smt(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
 		this.smtConfig = smtConfig;
 		cmds = cmd(executable);
-		solverProcess = new SolverProcess(cmds,prompt(),smtConfig.logfile); // FIXME - what prompt?
+		solverProcess = new SolverProcess(cmds,prompt(),smtConfig.logfile,StandardCharsets.UTF_8); // FIXME - what prompt?
 		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
 	}
 
 	public Solver_smt(SMT.Configuration smtConfig, /*@NonNull*/ String[] args) {
 		this.smtConfig = smtConfig;
 		cmds = args;
-		solverProcess = new SolverProcess(cmds,prompt(),smtConfig.logfile); // FIXME - what prompt?
+		solverProcess = new SolverProcess(cmds,prompt(),smtConfig.logfile,StandardCharsets.UTF_8); // FIXME - what prompt?
 		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
 	}
 

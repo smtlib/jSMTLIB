@@ -6,6 +6,7 @@
 package org.smtlib.solvers;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -74,7 +75,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 	public Solver_simplify(SMT.Configuration smtConfig, String executable) {
 		super(smtConfig,"");
 		cmds[0] = executable;
-		solverProcess = new SolverProcess(cmds,">\t",smtConfig.logfile);
+		solverProcess = new SolverProcess(cmds,">\t",smtConfig.logfile,StandardCharsets.UTF_8);
 	}
 	
 	@Override

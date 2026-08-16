@@ -5,6 +5,8 @@
  */
 package org.smtlib.solvers;
 
+import java.nio.charset.StandardCharsets;
+
 import org.smtlib.*;
 
 /** This class is an adapter for SMTInterpol (a Java SMT solver launched as
@@ -45,7 +47,7 @@ public class Solver_smtinterpol extends AbstractSolver implements ISolver {
 		}
 		cmds = args.toArray(new String[args.size()]);
 		// SMTInterpol prints no interactive prompt, so "\n" is the right end marker.
-		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile);
+		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
 	}
 
 	@Override
