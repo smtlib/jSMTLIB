@@ -39,6 +39,10 @@ public class SymbolTable {
 	// Used only while we have @ built in
 	public boolean hoTheorySet = false;
 
+	/** true if the FloatingPoint theory has been set */
+	// Used only while we have FloatingPoint built in
+	public boolean floatingPointTheorySet = false;
+
 
 	/** Maps each datatype sort name to its constructors (in declaration order); populated by declare-datatype/declare-datatypes */
 	public Map<String, List<ISymbol>> datatypeConstructors = new HashMap<>();
@@ -308,6 +312,22 @@ public class SymbolTable {
 				}
 				if (((INumeral) pf.indices().get(0)).intValue() == 0) {
 					return smtConfig.sortFactory.createErrorDefinition(name,"A bit-vector sort must have a length of at least 1",pf.indices().get(0).pos());
+				}
+				ISort.IDefinition def = smtConfig.sortFactory.createSortFamily(name,smtConfig.exprFactory.numeral(0),null);
+				sorts.put(name, def);
+				return def;
+			}
+			if (floatingPointTheorySet && Utils.FLOATINGPOINT_SYM.equals(pf.headSymbol())) {
+				if (pf.indices().size() != 2 || !(pf.indices().get(0) instanceof INumeral) || !(pf.indices().get(1) instanceof INumeral)) {
+					return smtConfig.sortFactory.createErrorDefinition(name,"A FloatingPoint sort must have exactly two numerals (eb sb)",
+							pf.indices().size() > 0 ? pf.indices().get(pf.indices().size()-1).pos()
+									: pf.headSymbol().pos());
+				}
+				int eb = ((INumeral) pf.indices().get(0)).intValue();
+				int sb = ((INumeral) pf.indices().get(1)).intValue();
+				if (eb <= 1 || sb <= 1) {
+					return smtConfig.sortFactory.createErrorDefinition(name,"A FloatingPoint sort must have exponent and significand sizes greater than 1",
+							(eb <= 1 ? pf.indices().get(0) : pf.indices().get(1)).pos());
 				}
 				ISort.IDefinition def = smtConfig.sortFactory.createSortFamily(name,smtConfig.exprFactory.numeral(0),null);
 				sorts.put(name, def);

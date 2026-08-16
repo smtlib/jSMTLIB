@@ -1,0 +1,2 @@
+(assert (fp.geq x y b))
+                    ^

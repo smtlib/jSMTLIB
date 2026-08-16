@@ -1,0 +1,5 @@
+success
+success
+success
+success
+(error "<stdin>:5:9: Builtin function fp.leq does not support argument sorts ()")

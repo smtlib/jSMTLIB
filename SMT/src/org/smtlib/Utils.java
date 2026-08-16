@@ -297,6 +297,50 @@ public class Utils {
 	 * family check) instead of comparing via .toString(). */
 	static public final ISymbol BITVEC_SYM = new SMTExpr.Symbol(BITVEC.intern());
 
+	public static final String FLOATINGPOINT = "FloatingPoint";
+	/** Canonical ISymbol form of FLOATINGPOINT, for structural comparison against a parsed
+	 * identifier's head symbol (see TypeChecker.isFloatingPoint() and SymbolTable's
+	 * FloatingPoint family check) instead of comparing via .toString(). */
+	static public final ISymbol FLOATINGPOINT_SYM = new SMTExpr.Symbol(FLOATINGPOINT.intern());
+
+	static public final ISymbol FP = new SMTExpr.Symbol("fp".intern());
+	static public final ISymbol FP_ABS = new SMTExpr.Symbol("fp.abs".intern());
+	static public final ISymbol FP_NEG = new SMTExpr.Symbol("fp.neg".intern());
+	static public final ISymbol FP_ADD = new SMTExpr.Symbol("fp.add".intern());
+	static public final ISymbol FP_SUB = new SMTExpr.Symbol("fp.sub".intern());
+	static public final ISymbol FP_MUL = new SMTExpr.Symbol("fp.mul".intern());
+	static public final ISymbol FP_DIV = new SMTExpr.Symbol("fp.div".intern());
+	static public final ISymbol FP_FMA = new SMTExpr.Symbol("fp.fma".intern());
+	static public final ISymbol FP_SQRT = new SMTExpr.Symbol("fp.sqrt".intern());
+	static public final ISymbol FP_REM = new SMTExpr.Symbol("fp.rem".intern());
+	static public final ISymbol FP_ROUND_TO_INTEGRAL = new SMTExpr.Symbol("fp.roundToIntegral".intern());
+	static public final ISymbol FP_MIN = new SMTExpr.Symbol("fp.min".intern());
+	static public final ISymbol FP_MAX = new SMTExpr.Symbol("fp.max".intern());
+	static public final ISymbol FP_LEQ = new SMTExpr.Symbol("fp.leq".intern());
+	static public final ISymbol FP_LT = new SMTExpr.Symbol("fp.lt".intern());
+	static public final ISymbol FP_GEQ = new SMTExpr.Symbol("fp.geq".intern());
+	static public final ISymbol FP_GT = new SMTExpr.Symbol("fp.gt".intern());
+	static public final ISymbol FP_EQ = new SMTExpr.Symbol("fp.eq".intern());
+	static public final ISymbol FP_IS_NORMAL = new SMTExpr.Symbol("fp.isNormal".intern());
+	static public final ISymbol FP_IS_SUBNORMAL = new SMTExpr.Symbol("fp.isSubnormal".intern());
+	static public final ISymbol FP_IS_ZERO = new SMTExpr.Symbol("fp.isZero".intern());
+	static public final ISymbol FP_IS_INFINITE = new SMTExpr.Symbol("fp.isInfinite".intern());
+	static public final ISymbol FP_IS_NAN = new SMTExpr.Symbol("fp.isNaN".intern());
+	static public final ISymbol FP_IS_NEGATIVE = new SMTExpr.Symbol("fp.isNegative".intern());
+	static public final ISymbol FP_IS_POSITIVE = new SMTExpr.Symbol("fp.isPositive".intern());
+	static public final ISymbol FP_TO_REAL = new SMTExpr.Symbol("fp.to_real".intern());
+	static public final ISymbol FP_TO_UBV = new SMTExpr.Symbol("fp.to_ubv".intern());
+	static public final ISymbol FP_TO_SBV = new SMTExpr.Symbol("fp.to_sbv".intern());
+	/** Zero-arity indexed identifiers, e.g. (_ +oo eb sb) -- head symbols, not full identifiers. */
+	static public final ISymbol FP_POS_INF = new SMTExpr.Symbol("+oo".intern());
+	static public final ISymbol FP_NEG_INF = new SMTExpr.Symbol("-oo".intern());
+	static public final ISymbol FP_POS_ZERO = new SMTExpr.Symbol("+zero".intern());
+	static public final ISymbol FP_NEG_ZERO = new SMTExpr.Symbol("-zero".intern());
+	static public final ISymbol FP_NAN = new SMTExpr.Symbol("NaN".intern());
+	static public final ISymbol TO_FP = new SMTExpr.Symbol("to_fp".intern());
+	static public final ISymbol TO_FP_UNSIGNED = new SMTExpr.Symbol("to_fp_unsigned".intern());
+	static public final ISymbol ROUNDINGMODE_SYM = new SMTExpr.Symbol("RoundingMode".intern());
+
 	// The following are not static, because they depend on the version
 	
 	/** The set of standard options with boolean values */
@@ -733,6 +777,8 @@ public class Utils {
 				symTable.realsIntsTheorySet = true;
 			if (theoryName.equals("HO-Core"))
 				symTable.hoTheorySet = true;
+			if (theoryName.equals("FloatingPoint"))
+				symTable.floatingPointTheorySet = true;
 		}
 		return response;
 	}
@@ -782,6 +828,7 @@ public class Utils {
 					if (tname.equals("Fixed_Size_BitVectors") || tname.equals("FixedSizeBitVectors")) symTable.bitVectorTheorySet = true;
 					if (tname.equals("Reals_Ints")) symTable.realsIntsTheorySet = true;
 					if (tname.equals("HO-Core")) symTable.hoTheorySet = true;
+					if (tname.equals("FloatingPoint")) symTable.floatingPointTheorySet = true;
 				}
 			} else {
 				res = loadTheory(theoryName.value(), symTable);

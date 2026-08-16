@@ -332,6 +332,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			head = (IIdentifier)qhead;
 		}
 		boolean bvperhaps = symTable.bitVectorTheorySet && head.headSymbol().value().startsWith("bv");
+		boolean fpperhaps = symTable.floatingPointTheorySet && (Utils.FP.equals(head) || head.headSymbol().value().startsWith("fp."));
 		String name = head.toString();
 		if (head.equals(Utils.EQ) || head.equals(Utils.DISTINCT)) {
 			// FIXME - this is just here until we get par types implemented
@@ -576,6 +577,183 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			}
 
 		}
+		if (fpperhaps) {
+			if (head.equals(Utils.FP)) {
+				// (fp sign exponent significand): sign is (_ BitVec 1), exponent is
+				// (_ BitVec eb), significand is (_ BitVec sb-1) (the hidden bit is not
+				// represented) -- (eb,sb) is computed from the argument widths, the same
+				// direction concat computes its result width from its arguments, rather
+				// than requiring the target sort to already be known.
+				if (argSorts.size() != 3) {
+					error(" The fp function should have three arguments",head.pos());
+					return null;
+				}
+				ISort sign = argSorts.get(0), exp = argSorts.get(1), sig = argSorts.get(2);
+				if (!isBitVec(sign) || bitvecSize(sign) != 1) {
+					error("The first argument of fp must have sort (_ BitVec 1), not " + pr(sign),e.args().get(0).pos());
+					return null;
+				}
+				if (!isBitVec(exp)) {
+					error("The second argument of fp must have a BitVec sort, not " + pr(exp),e.args().get(1).pos());
+					return null;
+				}
+				if (!isBitVec(sig)) {
+					error("The third argument of fp must have a BitVec sort, not " + pr(sig),e.args().get(2).pos());
+					return null;
+				}
+				// eb>1/sb>1 validity is checked and reported by makeFloatingPoint -> lookupSort,
+				// the same way makeBitVec relies on lookupSort to catch length==0
+				ISort s = makeFloatingPoint(bitvecSize(exp), bitvecSize(sig)+1);
+				return save(e,s);
+			} else if (head.equals(Utils.FP_SQRT) || head.equals(Utils.FP_ROUND_TO_INTEGRAL)) {
+				if (argSorts.size() != 2) {
+					error(" The " + name + " function should have two arguments",head.pos());
+					return null;
+				}
+				if (!isRoundingMode(argSorts.get(0))) {
+					error("The first argument of " + name + " must have RoundingMode sort, not " + pr(argSorts.get(0)),e.args().get(0).pos());
+					return null;
+				}
+				ISort s = argSorts.get(1);
+				if (!isFloatingPoint(s)) {
+					error("The second argument of " + name + " must have a FloatingPoint sort, not " + pr(s),e.args().get(1).pos());
+					return null;
+				}
+				return save(e,s);
+			} else if (head.equals(Utils.FP_ADD) || head.equals(Utils.FP_SUB)
+					|| head.equals(Utils.FP_MUL) || head.equals(Utils.FP_DIV)) {
+				if (argSorts.size() != 3) {
+					error(" The " + name + " function should have three arguments",head.pos());
+					return null;
+				}
+				if (!isRoundingMode(argSorts.get(0))) {
+					error("The first argument of " + name + " must have RoundingMode sort, not " + pr(argSorts.get(0)),e.args().get(0).pos());
+					return null;
+				}
+				ISort s = argSorts.get(1);
+				if (!isFloatingPoint(s)) {
+					error("The second argument of " + name + " must have a FloatingPoint sort, not " + pr(s),e.args().get(1).pos());
+					return null;
+				}
+				ISort ss = argSorts.get(2);
+				if (!isFloatingPoint(ss) || !s.equals(ss)) {
+					error("The sorts must match: " + pr(s) + " vs. " + pr(ss),e.pos());
+					return null;
+				}
+				return save(e,s);
+			} else if (head.equals(Utils.FP_FMA)) {
+				if (argSorts.size() != 4) {
+					error(" The fp.fma function should have four arguments",head.pos());
+					return null;
+				}
+				if (!isRoundingMode(argSorts.get(0))) {
+					error("The first argument of fp.fma must have RoundingMode sort, not " + pr(argSorts.get(0)),e.args().get(0).pos());
+					return null;
+				}
+				ISort s = argSorts.get(1);
+				if (!isFloatingPoint(s)) {
+					error("The second argument of fp.fma must have a FloatingPoint sort, not " + pr(s),e.args().get(1).pos());
+					return null;
+				}
+				for (int i = 2; i <= 3; i++) {
+					ISort ss = argSorts.get(i);
+					if (!isFloatingPoint(ss) || !s.equals(ss)) {
+						error("The sorts must match: " + pr(s) + " vs. " + pr(ss),e.pos());
+						return null;
+					}
+				}
+				return save(e,s);
+			} else if (head.equals(Utils.FP_ABS) || head.equals(Utils.FP_NEG)) {
+				if (argSorts.size() != 1) {
+					error(" The " + name + " function should have one argument",head.pos());
+					return null;
+				}
+				ISort s = argSorts.get(0);
+				if (!isFloatingPoint(s)) {
+					error("The argument of " + name + " must have a FloatingPoint sort, not " + pr(s),e.args().get(0).pos());
+					return null;
+				}
+				return save(e,s);
+			} else if (head.equals(Utils.FP_REM) || head.equals(Utils.FP_MIN) || head.equals(Utils.FP_MAX)) {
+				// fp.rem/fp.min/fp.max are fixed 2-arg -- FloatingPoint.smt2's :funs-description
+				// does not list :left-assoc/:chainable for these (unlike fp.leq & co. below), so
+				// this exact-2 check is deliberate, not the bvand-style oversight fixed elsewhere
+				// in this file for bvand/bvor/bvadd/bvmul.
+				if (argSorts.size() != 2) {
+					error(" The " + name + " function should have two arguments",head.pos());
+					return null;
+				}
+				ISort s = argSorts.get(0);
+				if (!isFloatingPoint(s)) {
+					error("The first argument of " + name + " must have a FloatingPoint sort, not " + pr(s),e.args().get(0).pos());
+					return null;
+				}
+				ISort ss = argSorts.get(1);
+				if (!isFloatingPoint(ss) || !s.equals(ss)) {
+					error("The sorts must match: " + pr(s) + " vs. " + pr(ss),e.pos());
+					return null;
+				}
+				return save(e,s);
+			} else if (head.equals(Utils.FP_LEQ) || head.equals(Utils.FP_LT)
+					|| head.equals(Utils.FP_GEQ) || head.equals(Utils.FP_GT) || head.equals(Utils.FP_EQ)) {
+				// fp.leq/fp.lt/fp.geq/fp.gt/fp.eq are :chainable per FloatingPoint.smt2's
+				// :funs-description prose -- SMT-LIB Sec. 3.7.2: (f t1 t2 ... tn) with n > 2
+				// means (and (f t1 t2) (f t2 t3) ... (f t(n-1) tn)), which for this theory just
+				// means every argument must share the same FloatingPoint sort. This is genuinely
+				// n-ary from the start (a loop over argSorts.size() >= 2), mirroring how
+				// bvand/bvor/bvadd/bvmul were FIXED to be n-ary elsewhere in this file -- they
+				// were originally hardcoded to exactly 2 args despite being :left-assoc, which
+				// is exactly the mistake to not repeat here.
+				if (argSorts.size() < 2) {
+					error(" The " + name + " function should have at least two arguments",head.pos());
+					return null;
+				}
+				ISort s = argSorts.get(0);
+				if (!isFloatingPoint(s)) {
+					error("The argument must have a FloatingPoint sort, not " + pr(s),e.args().get(0).pos());
+					return null;
+				}
+				for (int i = 1; i < argSorts.size(); i++) {
+					ISort ss = argSorts.get(i);
+					if (!isFloatingPoint(ss)) {
+						error("The argument must have a FloatingPoint sort, not " + pr(ss),e.args().get(i).pos());
+						return null;
+					}
+					if (!s.equals(ss)) {
+						error("The sorts must match: " + pr(s) + " vs. " + pr(ss),e.pos());
+						return null;
+					}
+				}
+				ISort b = smtConfig.sortFactory.Bool();
+				b.accept(this);
+				return save(e,b);
+			} else if (head.equals(Utils.FP_IS_NORMAL) || head.equals(Utils.FP_IS_SUBNORMAL)
+					|| head.equals(Utils.FP_IS_ZERO) || head.equals(Utils.FP_IS_INFINITE)
+					|| head.equals(Utils.FP_IS_NAN) || head.equals(Utils.FP_IS_NEGATIVE)
+					|| head.equals(Utils.FP_IS_POSITIVE)) {
+				if (argSorts.size() != 1) {
+					error(" The " + name + " function should have one argument",head.pos());
+					return null;
+				}
+				if (!isFloatingPoint(argSorts.get(0))) {
+					error("The argument of " + name + " must have a FloatingPoint sort, not " + pr(argSorts.get(0)),e.args().get(0).pos());
+					return null;
+				}
+				ISort b = smtConfig.sortFactory.Bool();
+				b.accept(this);
+				return save(e,b);
+			} else if (head.equals(Utils.FP_TO_REAL)) {
+				if (argSorts.size() != 1) {
+					error(" The fp.to_real function should have one argument",head.pos());
+					return null;
+				}
+				if (!isFloatingPoint(argSorts.get(0))) {
+					error("The argument of fp.to_real must have a FloatingPoint sort, not " + pr(argSorts.get(0)),e.args().get(0).pos());
+					return null;
+				}
+				return save(e,makeReal());
+			}
+		}
 		if (symTable.bitVectorTheorySet && head.equals(Utils.CONCAT)) {
 			if (argSorts.size() != 2) {
 				error(" The " + name + " function should have two arguments",head.pos());
@@ -728,7 +906,100 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			return save(e,s);
 
 		}
-		
+		if (symTable.floatingPointTheorySet && symTable.bitVectorTheorySet &&
+				head instanceof IParameterizedIdentifier &&
+				(Utils.FP_TO_UBV.equals(pheadSymbol) || Utils.FP_TO_SBV.equals(pheadSymbol))) {
+			if (argSorts.size() != 2) {
+				error(" The " + name + " function should have two arguments",head.pos());
+				return null;
+			}
+			if (!isRoundingMode(argSorts.get(0))) {
+				error("The first argument of " + name + " must have RoundingMode sort, not " + pr(argSorts.get(0)),e.args().get(0).pos());
+				return null;
+			}
+			if (!isFloatingPoint(argSorts.get(1))) {
+				error("The second argument of " + name + " must have a FloatingPoint sort, not " + pr(argSorts.get(1)),e.args().get(1).pos());
+				return null;
+			}
+			IParameterizedIdentifier pid = (IParameterizedIdentifier)head;
+			if (!checkNumeralIndices(pid, 1, "Expected exactly one numeral in a " + pheadSymbol + " identifier")) return null;
+			int m = ((INumeral) pid.indices().get(0)).intValue();
+			if (m <= 0) {
+				error("The numeral must be greater than 0",pid.indices().get(0).pos());
+				return null;
+			}
+			ISort s = makeBitVec(m);
+			return save(e,s);
+		}
+		if (symTable.floatingPointTheorySet && symTable.bitVectorTheorySet &&
+				head instanceof IParameterizedIdentifier &&
+				Utils.TO_FP_UNSIGNED.equals(pheadSymbol)) {
+			IParameterizedIdentifier pid = (IParameterizedIdentifier)head;
+			if (!checkNumeralIndices(pid, 2, "Expected exactly two numerals (eb sb) in a to_fp_unsigned identifier")) return null;
+			ISort target = makeFloatingPoint(((INumeral) pid.indices().get(0)).intValue(), ((INumeral) pid.indices().get(1)).intValue());
+			if (argSorts.size() != 2) {
+				error(" The to_fp_unsigned function should have two arguments",head.pos());
+				return null;
+			}
+			if (!isRoundingMode(argSorts.get(0))) {
+				error("The first argument of to_fp_unsigned must have RoundingMode sort, not " + pr(argSorts.get(0)),e.args().get(0).pos());
+				return null;
+			}
+			if (!isBitVec(argSorts.get(1))) {
+				error("The second argument of to_fp_unsigned must have a BitVec sort, not " + pr(argSorts.get(1)),e.args().get(1).pos());
+				return null;
+			}
+			return save(e,target);
+		}
+		if (symTable.floatingPointTheorySet &&
+				head instanceof IParameterizedIdentifier &&
+				Utils.TO_FP.equals(pheadSymbol)) {
+			// (_ to_fp eb sb) has four overloads sharing one indexed head name, disambiguated
+			// by argument count then (for count 2) the second argument's sort: (a) 1 BitVec arg
+			// of width eb+sb -- reinterpret bits; (b) RoundingMode + FloatingPoint -- convert
+			// between precisions (source (mb,nb) need not match target); (c) RoundingMode +
+			// Real -- convert from Real; (d) RoundingMode + BitVec -- convert from a signed
+			// 2's-complement integer. Argument count alone separates (a) from (b)-(d); the
+			// second argument's sort alone separates (b)/(c)/(d) -- no case needs more than
+			// "count, then one sort."
+			IParameterizedIdentifier pid = (IParameterizedIdentifier)head;
+			if (!checkNumeralIndices(pid, 2, "Expected exactly two numerals (eb sb) in a to_fp identifier")) return null;
+			int eb = ((INumeral) pid.indices().get(0)).intValue();
+			int sb = ((INumeral) pid.indices().get(1)).intValue();
+			ISort target = makeFloatingPoint(eb, sb); // also re-validates eb>1, sb>1 via lookupSort
+			if (argSorts.size() == 1) {
+				ISort s = argSorts.get(0);
+				if (!symTable.bitVectorTheorySet || !isBitVec(s)) {
+					error("The argument of to_fp/1 must have a BitVec sort, not " + pr(s),e.args().get(0).pos());
+					return null;
+				}
+				if (bitvecSize(s) != eb + sb) {
+					error("The argument's BitVec width must be " + (eb+sb) + ", not " + bitvecSize(s),e.args().get(0).pos());
+					return null;
+				}
+				return save(e,target);
+			} else if (argSorts.size() == 2) {
+				if (!isRoundingMode(argSorts.get(0))) {
+					error("The first argument of to_fp/2 must have RoundingMode sort, not " + pr(argSorts.get(0)),e.args().get(0).pos());
+					return null;
+				}
+				ISort second = argSorts.get(1);
+				if (isFloatingPoint(second)) {
+					return save(e,target);
+				} else if (isRealSort(second)) {
+					return save(e,target);
+				} else if (symTable.bitVectorTheorySet && isBitVec(second)) {
+					return save(e,target);
+				} else {
+					error("The second argument of to_fp/2 must have FloatingPoint, Real, or BitVec sort, not " + pr(second),e.args().get(1).pos());
+					return null;
+				}
+			} else {
+				error(" The to_fp function should have one or two arguments",head.pos());
+				return null;
+			}
+		}
+
 		ISort matchedResultSort = symTable.lookup(head,argSorts,resultSort);
 		if (matchedResultSort == null && symTable.realsIntsTheorySet) {
 			ISort realSort = null;
@@ -796,6 +1067,49 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		// FIXME - use a pre-constructed symbol for BitVec when it does not have a position?
 		IIdentifier id = smtConfig.exprFactory.id(smtConfig.exprFactory.symbol(Utils.BITVEC),nums);
 		ISort s = smtConfig.sortFactory.createSortExpression(id, new ISort[0]);
+		s.accept(this);
+		return s;
+	}
+
+	private boolean isFloatingPoint(ISort s) {
+		if (!(s instanceof ISort.IApplication)) return false;
+		ISort.IApplication se = (ISort.IApplication)s;
+		if (!(se.family() instanceof IParameterizedIdentifier)) return false;
+		IParameterizedIdentifier pid = (IParameterizedIdentifier)se.family();
+		return Utils.FLOATINGPOINT_SYM.equals(pid.headSymbol());
+	}
+
+	private boolean isRoundingMode(ISort s) {
+		return (s instanceof ISort.IApplication) && Utils.ROUNDINGMODE_SYM.equals(((ISort.IApplication)s).family().headSymbol());
+	}
+
+	private int fpExponentSize(ISort s) {
+		if (!isFloatingPoint(s)) return -1;
+		IParameterizedIdentifier pid = (IParameterizedIdentifier)((ISort.IApplication)s).family();
+		return ((INumeral) pid.indices().get(0)).intValue();
+	}
+
+	private int fpSignificandSize(ISort s) {
+		if (!isFloatingPoint(s)) return -1;
+		IParameterizedIdentifier pid = (IParameterizedIdentifier)((ISort.IApplication)s).family();
+		return ((INumeral) pid.indices().get(1)).intValue();
+	}
+
+	private ISort makeFloatingPoint(int eb, int sb) throws IVisitor.VisitorException {
+		List<IExpr.IIndex> nums = new LinkedList<IExpr.IIndex>();
+		nums.add(smtConfig.exprFactory.numeral(eb));
+		nums.add(smtConfig.exprFactory.numeral(sb));
+		IIdentifier id = smtConfig.exprFactory.id(smtConfig.exprFactory.symbol(Utils.FLOATINGPOINT),nums);
+		ISort s = smtConfig.sortFactory.createSortExpression(id, new ISort[0]);
+		s.accept(this);
+		return s;
+	}
+
+	/** Returns the Real sort, as registered generically by whichever theory declares it
+	 * (Reals/Reals_Ints's own :sorts, or FloatingPoint's own :sorts -- FloatingPoint.smt2
+	 * declares Real itself so this does not require Reals_Ints to also be loaded). */
+	private ISort makeReal() throws IVisitor.VisitorException {
+		ISort s = smtConfig.sortFactory.createSortExpression(smtConfig.exprFactory.symbol("Real"), new ISort[0]);
 		s.accept(this);
 		return s;
 	}
@@ -917,6 +1231,16 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				return null;
 			}
 			ISort s = makeBitVec(size);
+			return save(e,s);
+		}
+		if (useext && symTable.floatingPointTheorySet &&
+				(Utils.FP_POS_INF.equals(e.headSymbol()) || Utils.FP_NEG_INF.equals(e.headSymbol())
+				|| Utils.FP_POS_ZERO.equals(e.headSymbol()) || Utils.FP_NEG_ZERO.equals(e.headSymbol())
+				|| Utils.FP_NAN.equals(e.headSymbol()))) {
+			if (!checkNumeralIndices(e, 2, "Expected exactly two numerals (eb sb) in a " + pname + " identifier")) return null;
+			int eb = ((INumeral) e.indices().get(0)).intValue();
+			int sb = ((INumeral) e.indices().get(1)).intValue();
+			ISort s = makeFloatingPoint(eb, sb);
 			return save(e,s);
 		}
 

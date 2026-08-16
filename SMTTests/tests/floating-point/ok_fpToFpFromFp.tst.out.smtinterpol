@@ -1,0 +1,7 @@
+success
+success
+success
+(error "<stdin>:4:38: Unsupported internal sort: (_ FloatingPoint 8 24)")
+(error "<stdin>:5:39: Unsupported internal sort: (_ FloatingPoint 11 53)")
+(error "<stdin>:6:37: Unsupported internal sort: (_ FloatingPoint 11 53)")
+sat

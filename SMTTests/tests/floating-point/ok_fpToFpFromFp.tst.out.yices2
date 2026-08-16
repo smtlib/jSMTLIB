@@ -1,0 +1,7 @@
+success
+(error "at line 2, column 22: undefined identifier: FloatingPoint")
+(error "Error writing to solver: (declare-fun y () (_ FloatingPoint 11 53)) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (assert (= x ((_ to_fp 8 24) RNE 3.0))) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (assert (= y ((_ to_fp 11 53) RNE 3.0))) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (assert (= y ((_ to_fp 11 53) RNE x))) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (check-sat) java.io.IOException: Solver process has already exited")

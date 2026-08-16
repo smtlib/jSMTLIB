@@ -1,0 +1,5 @@
+success
+success
+success
+(error "<stdin>:4:15: Unsupported internal sort: (_ FloatingPoint 8 24)")
+sat

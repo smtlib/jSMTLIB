@@ -1,0 +1,2 @@
+success
+(error "The first argument of fp must have sort (_ BitVec 1), not (_ BitVec 2)")

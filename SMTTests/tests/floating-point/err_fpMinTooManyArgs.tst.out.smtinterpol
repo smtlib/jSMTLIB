@@ -1,0 +1,5 @@
+success
+success
+success
+success
+(error "<stdin>:5:14: Builtin function fp.min does not support argument sorts ()")

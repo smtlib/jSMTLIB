@@ -1,0 +1,3 @@
+success
+success
+(error "The second argument of to_fp/2 must have FloatingPoint, Real, or BitVec sort, not Bool")
