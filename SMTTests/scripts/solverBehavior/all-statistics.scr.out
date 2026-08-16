@@ -1,7 +1,4 @@
-FAIL: z3-4.10.2: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...): (:max-memory   17.03
- :memory       17.03
- :num-allocs   1674
- :rlimit-count 1)
+FAIL: z3-4.10.2: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
 PASS: z3-4.10.2: check-sat reports sat (as expected, to enter sat mode)
 PASS: z3-4.10.2: sat-mode response opens with '('
 PASS: z3-4.10.2: sat-mode response contains at least one :keyword attribute
@@ -10,10 +7,7 @@ PASS: z3-4.10.2: check-sat reports unsat (as expected, to enter unsat mode)
 PASS: z3-4.10.2: unsat-mode response opens with '('
 PASS: z3-4.10.2: unsat-mode response contains at least one :keyword attribute
 PASS: z3-4.10.2: unsat-mode response has balanced parentheses
-FAIL: z3-4.12.6: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...): (:max-memory   17.05
- :memory       17.05
- :num-allocs   7291
- :rlimit-count 1)
+FAIL: z3-4.12.6: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
 PASS: z3-4.12.6: check-sat reports sat (as expected, to enter sat mode)
 PASS: z3-4.12.6: sat-mode response opens with '('
 PASS: z3-4.12.6: sat-mode response contains at least one :keyword attribute
@@ -22,10 +16,7 @@ PASS: z3-4.12.6: check-sat reports unsat (as expected, to enter unsat mode)
 PASS: z3-4.12.6: unsat-mode response opens with '('
 PASS: z3-4.12.6: unsat-mode response contains at least one :keyword attribute
 PASS: z3-4.12.6: unsat-mode response has balanced parentheses
-FAIL: z3-4.14.1: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...): (:max-memory   17.05
- :memory       17.05
- :num-allocs   7385
- :rlimit-count 1)
+FAIL: z3-4.14.1: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
 PASS: z3-4.14.1: check-sat reports sat (as expected, to enter sat mode)
 PASS: z3-4.14.1: sat-mode response opens with '('
 PASS: z3-4.14.1: sat-mode response contains at least one :keyword attribute
@@ -34,10 +25,7 @@ PASS: z3-4.14.1: check-sat reports unsat (as expected, to enter unsat mode)
 PASS: z3-4.14.1: unsat-mode response opens with '('
 PASS: z3-4.14.1: unsat-mode response contains at least one :keyword attribute
 PASS: z3-4.14.1: unsat-mode response has balanced parentheses
-FAIL: z3-4.16.0: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...): (:max-memory   17.05
- :memory       17.05
- :num-allocs   7034
- :rlimit-count 1)
+FAIL: z3-4.16.0: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
 PASS: z3-4.16.0: check-sat reports sat (as expected, to enter sat mode)
 PASS: z3-4.16.0: sat-mode response opens with '('
 PASS: z3-4.16.0: sat-mode response contains at least one :keyword attribute
@@ -46,7 +34,7 @@ PASS: z3-4.16.0: check-sat reports unsat (as expected, to enter unsat mode)
 PASS: z3-4.16.0: unsat-mode response opens with '('
 PASS: z3-4.16.0: unsat-mode response contains at least one :keyword attribute
 PASS: z3-4.16.0: unsat-mode response has balanced parentheses
-FAIL: z3-4.3.1: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...): (:memory 0.24)
+FAIL: z3-4.3.1: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
 PASS: z3-4.3.1: check-sat reports sat (as expected, to enter sat mode)
 PASS: z3-4.3.1: sat-mode response opens with '('
 PASS: z3-4.3.1: sat-mode response contains at least one :keyword attribute
@@ -55,9 +43,7 @@ PASS: z3-4.3.1: check-sat reports unsat (as expected, to enter unsat mode)
 PASS: z3-4.3.1: unsat-mode response opens with '('
 PASS: z3-4.3.1: unsat-mode response contains at least one :keyword attribute
 PASS: z3-4.3.1: unsat-mode response has balanced parentheses
-FAIL: z3-4.5.0: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...): (:max-memory 0.57
- :memory     0.57
- :num-allocs 1669)
+FAIL: z3-4.5.0: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
 PASS: z3-4.5.0: check-sat reports sat (as expected, to enter sat mode)
 PASS: z3-4.5.0: sat-mode response opens with '('
 PASS: z3-4.5.0: sat-mode response contains at least one :keyword attribute
@@ -66,10 +52,7 @@ PASS: z3-4.5.0: check-sat reports unsat (as expected, to enter unsat mode)
 PASS: z3-4.5.0: unsat-mode response opens with '('
 PASS: z3-4.5.0: unsat-mode response contains at least one :keyword attribute
 PASS: z3-4.5.0: unsat-mode response has balanced parentheses
-FAIL: z3-4.6.0: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...): (:max-memory  0.60
- :memory      0.60
- :mk-bool-var 1
- :num-allocs  1795)
+FAIL: z3-4.6.0: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
 PASS: z3-4.6.0: check-sat reports sat (as expected, to enter sat mode)
 PASS: z3-4.6.0: sat-mode response opens with '('
 PASS: z3-4.6.0: sat-mode response contains at least one :keyword attribute
@@ -78,10 +61,7 @@ PASS: z3-4.6.0: check-sat reports unsat (as expected, to enter unsat mode)
 PASS: z3-4.6.0: unsat-mode response opens with '('
 PASS: z3-4.6.0: unsat-mode response contains at least one :keyword attribute
 PASS: z3-4.6.0: unsat-mode response has balanced parentheses
-FAIL: z3-4.7.1: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...): (:max-memory  0.59
- :memory      0.59
- :mk-bool-var 1
- :num-allocs  1776)
+FAIL: z3-4.7.1: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
 PASS: z3-4.7.1: check-sat reports sat (as expected, to enter sat mode)
 PASS: z3-4.7.1: sat-mode response opens with '('
 PASS: z3-4.7.1: sat-mode response contains at least one :keyword attribute
@@ -90,10 +70,7 @@ PASS: z3-4.7.1: check-sat reports unsat (as expected, to enter unsat mode)
 PASS: z3-4.7.1: unsat-mode response opens with '('
 PASS: z3-4.7.1: unsat-mode response contains at least one :keyword attribute
 PASS: z3-4.7.1: unsat-mode response has balanced parentheses
-FAIL: z3-4.8.12: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...): (:max-memory   17.01
- :memory       17.01
- :num-allocs   1637
- :rlimit-count 1)
+FAIL: z3-4.8.12: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
 PASS: z3-4.8.12: check-sat reports sat (as expected, to enter sat mode)
 PASS: z3-4.8.12: sat-mode response opens with '('
 PASS: z3-4.8.12: sat-mode response contains at least one :keyword attribute
@@ -102,7 +79,7 @@ PASS: z3-4.8.12: check-sat reports unsat (as expected, to enter unsat mode)
 PASS: z3-4.8.12: unsat-mode response opens with '('
 PASS: z3-4.8.12: unsat-mode response contains at least one :keyword attribute
 PASS: z3-4.8.12: unsat-mode response has balanced parentheses
-FAIL: cvc5-1.3.2: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...): (:all-statistics (("cvc5::CONSTANT" {  }) ("cvc5::TERM" {  }) ("cvc5::VARIABLE" {  }) ("driver::filename" <stdin>) ("global::totalTime" 0ms) ("resource::resourceUnitsUsed" 0) ("resource::spendResourceCalls" 0) ("resource::steps::inference-id" {  }) ("resource::steps::resource" {  }) ("smt::SolverEngine::checkModelTime" 0ms) ("smt::SolverEngine::checkUnsatCoreTime" 0ms) ("smt::SolverEngine::definitionExpansionTime" 0ms) ("smt::SolverEngine::numAssertionsPostITERemoval" 0) ("smt::SolverEngine::numAssertionsPreITERemoval" 0) ("smt::SolverEngine::numConstantProps" 0) ("smt::SolverEngine::processAssertionsTime" 0ms) ("smt::SolverEngine::pushPopTime" 0ms) ("smt::SolverEngine::simplifiedToFalse" 0) ("smt::SolverEngine::solveTime" 0ms) ("theory::arith::inferencesConflict" {  }) ("theory::arith::inferencesFact" {  }) ("theory::arith::inferencesLemma" {  }) ("theory::arrays::inferencesConflict" {  }) ("theory::arrays::inferencesFact" {  }) ("theory::arrays::inferencesLemma" {  }) ("theory::bags::inferencesConflict" {  }) ("theory::bags::inferencesFact" {  }) ("theory::bags::inferencesLemma" {  }) ("theory::bool::inferencesConflict" {  }) ("theory::bool::inferencesFact" {  }) ("theory::bool::inferencesLemma" {  }) ("theory::builtin::inferencesConflict" {  }) ("theory::builtin::inferencesFact" {  }) ("theory::builtin::inferencesLemma" {  }) ("theory::bv::inferencesConflict" {  }) ("theory::bv::inferencesFact" {  }) ("theory::bv::inferencesLemma" {  }) ("theory::datatypes::inferencesConflict" {  }) ("theory::datatypes::inferencesFact" {  }) ("theory::datatypes::inferencesLemma" {  }) ("theory::ff::inferencesConflict" {  }) ("theory::ff::inferencesFact" {  }) ("theory::ff::inferencesLemma" {  }) ("theory::fp::inferencesConflict" {  }) ("theory::fp::inferencesFact" {  }) ("theory::fp::inferencesLemma" {  }) ("theory::quantifiers::inferencesConflict" {  }) ("theory::quantifiers::inferencesFact" {  }) ("theory::quantifiers::inferencesLemma" {  }) ("theory::sep::inferencesConflict" {  }) ("theory::sep::inferencesFact" {  }) ("theory::sep::inferencesLemma" {  }) ("theory::sets::inferencesConflict" {  }) ("theory::sets::inferencesFact" {  }) ("theory::sets::inferencesLemma" {  }) ("theory::strings::inferencesConflict" {  }) ("theory::strings::inferencesFact" {  }) ("theory::strings::inferencesLemma" {  }) ("theory::uf::inferencesConflict" {  }) ("theory::uf::inferencesFact" {  }) ("theory::uf::inferencesLemma" {  })))
+FAIL: cvc5-1.3.2: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
 PASS: cvc5-1.3.2: check-sat reports sat (as expected, to enter sat mode)
 PASS: cvc5-1.3.2: sat-mode response opens with '('
 PASS: cvc5-1.3.2: sat-mode response contains at least one :keyword attribute
@@ -111,12 +88,7 @@ PASS: cvc5-1.3.2: check-sat reports unsat (as expected, to enter unsat mode)
 PASS: cvc5-1.3.2: unsat-mode response opens with '('
 PASS: cvc5-1.3.2: unsat-mode response contains at least one :keyword attribute
 PASS: cvc5-1.3.2: unsat-mode response has balanced parentheses
-FAIL: yices2-2.6.5: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...): (
- :num-terms 4
- :num-types 3
- :total-run-time 0.002
- :mem-usage 539.738
-)
+FAIL: yices2-2.6.5: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
 PASS: yices2-2.6.5: check-sat reports sat (as expected, to enter sat mode)
 PASS: yices2-2.6.5: sat-mode response opens with '('
 PASS: yices2-2.6.5: sat-mode response contains at least one :keyword attribute
@@ -125,12 +97,7 @@ PASS: yices2-2.6.5: check-sat reports unsat (as expected, to enter unsat mode)
 PASS: yices2-2.6.5: unsat-mode response opens with '('
 PASS: yices2-2.6.5: unsat-mode response contains at least one :keyword attribute
 PASS: yices2-2.6.5: unsat-mode response has balanced parentheses
-FAIL: yices2-2.7.0: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...): (
- :num-terms 4
- :num-types 3
- :total-run-time 0.002
- :mem-usage 539.785
-)
+FAIL: yices2-2.7.0: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
 PASS: yices2-2.7.0: check-sat reports sat (as expected, to enter sat mode)
 PASS: yices2-2.7.0: sat-mode response opens with '('
 PASS: yices2-2.7.0: sat-mode response contains at least one :keyword attribute
@@ -139,46 +106,7 @@ PASS: yices2-2.7.0: check-sat reports unsat (as expected, to enter unsat mode)
 PASS: yices2-2.7.0: unsat-mode response opens with '('
 PASS: yices2-2.7.0: unsat-mode response contains at least one :keyword attribute
 PASS: yices2-2.7.0: unsat-mode response has balanced parentheses
-FAIL: smtinterpol-2.5: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...): (:all-statistics 
-  (
-    (:Core 
-      (
-        (Conflicts 0) 
-        (Propagations 0) 
-        (Theory_propagations 0) 
-        (Decides 0) 
-        (Random_splits 0) 
-        (Num_Atoms 0) 
-        (Solved_Atoms 0) 
-        (Clauses 0) 
-        (Axioms 1) 
-        (Times 
-          (
-            (Explain 0) 
-            (Propagation 0) 
-            (Set 0) 
-            (Check 0) 
-            (Backtrack 0)
-          )
-        )
-      )
-    ) 
-    (:CC 
-      (
-        (Merges 0) 
-        (Closure 0) 
-        (Times 
-          (
-            (Invert 0) 
-            (Eq 0) 
-            (Closure 0) 
-            (SetRep 0)
-          )
-        )
-      )
-    )
-  )
-)
+FAIL: smtinterpol-2.5: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
 PASS: smtinterpol-2.5: check-sat reports sat (as expected, to enter sat mode)
 PASS: smtinterpol-2.5: sat-mode response opens with '('
 PASS: smtinterpol-2.5: sat-mode response contains at least one :keyword attribute

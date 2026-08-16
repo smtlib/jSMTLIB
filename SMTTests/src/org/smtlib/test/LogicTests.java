@@ -32,7 +32,7 @@ public class LogicTests {
 	/** Per-test timeout, so a solver that hangs on some command fails that one
 	 *  parameterized test case (solver+file+version combination) after a minute instead
 	 *  of blocking the whole suite indefinitely. Shared by every subclass that talks to a
-	 *  live solver process (FileTests, InfoOptions, LogicsBadPath). */
+	 *  live solver process (FileTests, LogicsBadPath). */
 	@Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
 
 	/** The solvers to test against: the whitespace-separated names in the SMT_TEST_SOLVERS

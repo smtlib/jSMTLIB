@@ -26,9 +26,11 @@ give it at least one `@Test` method and it's picked up on the next run.
 ### Which solvers get exercised
 
 One environment variable, `SMT_TEST_SOLVERS`, is the single controlling place
-for which solvers the parameterized test classes (`FileTests`, `Logics`,
-`LogicsWithPath`, `LogicsBadPath`, `InfoOptions`, and any future class that
-extends `LogicTests`) run against. It's a space-separated list of solver
+for which solvers the parameterized test classes (`FileTests`,
+`LogicsBadPath`, and any future class that extends `LogicTests`) run
+against. (`LogicsWithPath`, which extends the separate, unparameterized
+`LogicsBase` instead, always runs against the built-in `test` solver only —
+see its own entry below.) It's a space-separated list of solver
 names (as configured in `jsmtlib.properties`); default is just `test`
 (the built-in pure-Java solver that needs no external binary),
 if not set to another default in the Makefile:
@@ -143,14 +145,60 @@ than diffing a whole script's output.
 
 | Class | Covers |
 |---|---|
-| **InfoOptions** | `get-info`/`get-option`/`set-option` round trips and per-solver reported values (author strings, version strings, which options are `unsupported` per solver). Substantially overlaps `tests/getInfo/` and `tests/getset_option/` (which also cover `:global-declarations`, `:produce-unsat-assumptions`, `:reproducible-resource-limit` — options `InfoOptions` doesn't test at all). |
-| **Logics** | `set-logic` acceptance for every logic name, plus the deliberately-bogus `ZZZ` not-found case. Mostly redundant with `tests/logics/*.tst`, which test more (full per-logic operator legality, not just the bare response). |
-| **LogicsWithPath** | Same logic-name matrix, but with an explicit `logicPath` set to a real directory (`../SMT/logics`) — exercises the explicit-path branch of `Utils.openLogicStream`. |
+| **LogicsWithPath** | `set-logic` acceptance for every logic name, plus the deliberately-bogus `ZZZ` not-found case, with an explicit `logicPath` set to a real directory (`../SMT/logics`) — exercises the explicit-path branch of `Utils.openLogicStream`, and is the only place that confirms the full logic-name set actually resolves end-to-end through that branch against the real production logic files (not just synthetic temp-dir content, see `SMTCommandLineTests` below). |
 | **LogicsBadPath** | Same, but with a deliberately-invalid `logicPath` (`"xxx"`) — exercises the upfront path-component validation in `Utils.openLogicStream` (`"Invalid logic path: ... is not a directory"`). |
 
 `SatChecks`, `LetTests`, and `QuantTests` used to be part of this family;
 they've been migrated to `tests/satChecks/`, `tests/letTests/`, and
 `tests/quantTests/` respectively and no longer exist as Java classes.
+`InfoOptions` (`get-info`/`get-option`/`set-option` round trips and
+per-solver reported values) has likewise been retired: every check it made
+was already duplicated, and generally more precisely, by `tests/getInfo/`
+and `tests/getset_option/` `.tst` files (`ok_getInfo.tst`, `err_setInfo.tst`,
+`ok_printSuccess.tst`, `ok_allDefinedOptions.tst`, `ok_setOptionalOptions.tst`,
+`ok_setRequiredOptions.tst`, `ok_getRequiredOptions.tst`,
+`ok_set_produceOptions.tst`, `ok_getOption.tst`), which also cover
+`:global-declarations`, `:produce-unsat-assumptions`, and
+`:reproducible-resource-limit` that `InfoOptions` never tested at all. Two
+caveats worth knowing: (1) `:print-success` and `:regular`/`:diagnostic-
+output-channel` are coopted entirely client-side by jSMTLIB (see
+`AbstractSolver.checkPrintSuccess`/`set_option`), so neither `InfoOptions`
+nor these `.tst` files ever observed a real solver's native behavior for
+those three options — that's covered separately, by bypassing jSMTLIB
+entirely, in `scripts/solverBehavior/print-success.scr` and
+`solver-output-channel.scr`; the `.tst` versions are still worth keeping as
+regression tests of jSMTLIB's own client-side option-handling code. (2)
+`InfoOptions` parameterized over `SMTLIB` version as well as solver, but
+only `:interactive-mode`/`:produce-assertions` actually branched on it, and
+empirically neither option's availability turned out to depend on the
+declared version in practice — so nothing meaningful was lost by not
+replicating that dimension in the `.tst` files, which run under whichever
+SMT-LIB version is ambient by default.
+
+`Logics` (the no-explicit-`logicPath` sibling of `LogicsWithPath`, both
+extending `LogicsBase`) has also been retired: it hardcoded
+`solvername = "test"` (never exercised a real solver), and its own
+`checkResponse` helper doesn't actually assert anything for a successful
+`set-logic` — only the error path does a real string comparison — so in
+practice it only ever verified "no error" for the success cases. All 24
+real logic names it covered have an exact `tests/logics/ok_<NAME>.tst`
+counterpart; `ALL` is covered by `ok_setLogic_ALL.tst` and is also the
+working logic in dozens of other `.tst` files across the suite; the
+deliberately-bogus `ZZZ` case is covered by `err_setLogic.tst`'s
+`(set-logic Q)` line, same error-message format with a different
+placeholder name. The `.tst` versions are strictly stronger: they diff the
+full response text (not just "didn't error"), and run through `FileTests`'
+`SMT_TEST_SOLVERS` parameterization and jSMTLIB's normal `smt.exec()`
+script pipeline, rather than `Logics`' single bare
+`command.execute(solver)` call against the fixed `test` solver.
+(`LogicsBase.data()` also carries a separate, still-open question,
+predating and independent of this retirement: several once-valid logic
+names — `ALIA`, `BV`, `NIA`, `NRA`, `QF_ALIA`, `QF_ANIA`, `QF_AUFNIA`,
+`QF_LIRA`, `QF_NIRA`, `UF`, `UFBV`, `UFIDL`, `UFLIA`, `UFNRA`, `QF_UFNIA`
+— are commented out there because they have no `.smt2` file under the
+current `SMT/logics`; whether any should be restored, e.g. as
+older/non-standard logic names, hasn't been investigated. `LogicsBase.java`
+itself is kept, since `LogicsWithPath` still extends it.)
 
 ### Parse/typecheck tests (no solver semantics)
 
@@ -173,7 +221,7 @@ fidelity, or bare-expression parsing outside any command context.
 | **UnitTests** | `Log` listener add/remove/clear lifecycle; `Utils.quote`/`Utils.unescape` string-escaping rules (V2.0 vs V2.5), called directly as Java methods. |
 | **PrinterCoverageTest** | Directly constructs internal objects that can never arise from parsing SMT-LIB text (`ISort.IFamily`/`IAbbreviation`/`IFcnSort`, structured `IResponse` subtypes built via factory calls, `Sexpr.Token`/`Expr`) and checks their `toString()`. |
 | **RunTests** | Spawns `bash api.sh` (the standalone Java API usage example) via `ProcessBuilder`, checking it runs without throwing. |
-| **LogicsCoverageTest** | Infrastructure self-check: every logic `SMT/logics/*.smt2` ships (searched recursively, including per-version subfolders like `V2.0/`) must have matching `(set-logic ...)` coverage somewhere under `tests/logics/`. |
+| **LogicsCoverageTest** | Infrastructure self-check: every logic `SMT/logics/*.smt2` ships (searched recursively, but deliberately excluding the `V2.0/` subfolder — those logics have no `tests/logics/` coverage yet, a known, self-acknowledged gap) must have matching `(set-logic ...)` coverage somewhere under `tests/logics/`. |
 
 ### Infrastructure / base classes (no `@Test` methods, not run directly)
 
@@ -181,7 +229,7 @@ fidelity, or bare-expression parsing outside any command context.
 |---|---|
 | **JUnitListener** | `Log.IListener` implementation shared by many test classes to capture logged error responses for assertions. |
 | **LogicTests** | Base class for the solver-response family: owns `solvers` (from `SMT_TEST_SOLVERS`), the solver × `SMTLIB.values()` parameterization matrix, `doCommand()`, and `checkResponse()`. |
-| **LogicsBase** | Parallel base class (predates/duplicates some of `LogicTests`) specifically for `Logics`/`LogicsWithPath`/`LogicsBadPath`; hardcodes `solvername = "test"` and owns the logic-name list. |
+| **LogicsBase** | Parallel base class (predates/duplicates some of `LogicTests`), used only by `LogicsWithPath` now that `Logics` has been retired (`LogicsBadPath` extends `LogicTests`, not this); hardcodes `solvername = "test"` and owns the logic-name list. |
 | **TypeCheckRoot** | Base class for the `TypeCheck*` family: starts a `Solver_test` instance and provides `check()` (parse + `TypeChecker.checkAssertion`) and `doCommand()`. |
 
 ---

@@ -25,8 +25,8 @@ import org.smtlib.SMT;
 @RunWith(ParameterizedWithNames.class)
 public class FileTests extends LogicTests {
 
-    // Per-test timeout is inherited from LogicTests (shared with InfoOptions/LogicsBadPath,
-    // the other solver-talking subclasses).
+    // Per-test timeout is inherited from LogicTests (shared with LogicsBadPath,
+    // the other solver-talking subclass).
 
     // Platform strings matching the bash setup script conventions
     private static final String PLATFORM;

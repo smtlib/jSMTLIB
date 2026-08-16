@@ -101,6 +101,13 @@ _classify() {
 
 # Applies the shape checks (open paren, :keyword present, balanced parens) to
 # a response already known to be a "data" response (not error/unsupported).
+# FAIL messages deliberately never echo the raw response text (here or in
+# _check()'s FAIL branches below): a "data" response embeds live, non-
+# deterministic values (timings, memory/allocation counts), and this script's
+# own stdout is diffed byte-for-byte against a fixed golden by runscript/
+# ScriptTests -- echoing it would make the golden impossible to stabilize,
+# especially for the mode-requirement check in _check(), which currently
+# fails (as FAIL, not PASS) on every solver, every run.
 _check_wellformed() {
     local _name="$1" _label="$2" _resp="$3"
 
@@ -110,7 +117,7 @@ _check_wellformed() {
             ;;
         *)
             (( _fail++ ))
-            echo "FAIL: $_name: $_label response opens with '(' (got: $_resp)"
+            echo "FAIL: $_name: $_label response opens with '('"
             ;;
     esac
 
@@ -118,7 +125,7 @@ _check_wellformed() {
         echo "PASS: $_name: $_label response contains at least one :keyword attribute"
     else
         (( _fail++ ))
-        echo "FAIL: $_name: $_label response contains at least one :keyword attribute (got: $_resp)"
+        echo "FAIL: $_name: $_label response contains at least one :keyword attribute"
     fi
 
     local _opens _closes
@@ -175,7 +182,7 @@ _check() {
             ;;
         data)
             (( _fail++ ))
-            echo "FAIL: $_name: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...): $_respA"
+            echo "FAIL: $_name: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)"
             ;;
     esac
 
@@ -196,7 +203,7 @@ _check() {
         unsupported) echo "INFO: $_name: get-info :all-statistics is unsupported in sat mode" ;;
         error)
             (( _fail++ ))
-            echo "FAIL: $_name: get-info :all-statistics succeeds in sat mode (got error instead: $_respB)"
+            echo "FAIL: $_name: get-info :all-statistics succeeds in sat mode (got error instead)"
             ;;
         data) _check_wellformed "$_name" "sat-mode" "$_respB" ;;
     esac
@@ -218,7 +225,7 @@ _check() {
         unsupported) echo "INFO: $_name: get-info :all-statistics is unsupported in unsat mode" ;;
         error)
             (( _fail++ ))
-            echo "FAIL: $_name: get-info :all-statistics succeeds in unsat mode (got error instead: $_respC)"
+            echo "FAIL: $_name: get-info :all-statistics succeeds in unsat mode (got error instead)"
             ;;
         data) _check_wellformed "$_name" "unsat-mode" "$_respC" ;;
     esac
