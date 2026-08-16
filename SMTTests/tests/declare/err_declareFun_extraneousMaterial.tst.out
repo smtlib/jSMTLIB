@@ -1,2 +1,2 @@
 success
-(error "Too many arguments or extraneous material after the command or missing right parenthesis")
+(error "Expected a keyword (beginning with a colon) here, instead of a symbol")

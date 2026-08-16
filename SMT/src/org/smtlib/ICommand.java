@@ -198,6 +198,17 @@ public interface ICommand extends INode {
 		List<ISort> argSorts();
 		/** Returns the result sort. */
 		ISort resultSort();
+		/** Returns any trailing attributes given after the result sort -- an experimental,
+		 * non-standard extension (SMT-LIB's declare-fun has no attribute* production);
+		 * accepting one at all is unconditional at parse time, but the command is rejected at
+		 * type-checking time unless --relax is set. Null or empty if none were given. */
+		default List<IExpr.IAttribute<?>> attributes() { return null; }
+		/** Returns the par-polymorphic type parameters, for the experimental, non-standard
+		 * "(declare-fun par (param+) (name sort+ attribute*))" form -- mirrors exactly the
+		 * par_fun_symbol_decl shape a theory's own :funs entry uses. Accepting this form at
+		 * all is unconditional at parse time, but the command is rejected at type-checking
+		 * time unless --relax is set. Null for an ordinary (non-par) declare-fun. */
+		default List<ISort.IParameter> parameters() { return null; }
 	}
 
 	/** Interface for the SMT-LIB {@code declare-sort} command. */

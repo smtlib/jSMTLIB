@@ -494,7 +494,9 @@ public class Solver_test implements ISolver {
 		if (list.isEmpty()) {
 			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(new ISort[0],cmd.resultSort());
 			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null,null);
-			if (symTable.add(entry, isGlobal(), false)) {
+			// --relax experimentally allows overloading a user-declared symbol (standard
+			// SMT-LIB permits this only for background-scope, theory-declared symbols).
+			if (symTable.add(entry, isGlobal(), smtConfig.relax)) {
 				checkSatStatus = null;
 				return smtConfig.responseFactory.success();
 			} else {
@@ -510,12 +512,34 @@ public class Solver_test implements ISolver {
 		if (logicSet == null) {
 			return smtConfig.responseFactory.error("The logic must be set before a declare-fun command is issued");// FIXME - position and on other similar statements
 		}
+		// C_declare_fun.parse() always accepts a trailing attribute* and the
+		// "(declare-fun par (params) (name sorts attrs))" par-polymorphic form (SMT-LIB's
+		// declare-fun has neither production); whether either is actually allowed is decided
+		// here, at type-checking time, with a message specific to which extension was used,
+		// rather than a parse-time "extraneous material"/"unknown command" one.
+		if (cmd.parameters() != null && !smtConfig.relax) {
+			return smtConfig.responseFactory.error("A par-polymorphic function declaration requires --relax", cmd.symbol().pos());
+		}
+		if (cmd.attributes() != null && !cmd.attributes().isEmpty() && !smtConfig.relax) {
+			return smtConfig.responseFactory.error("Function attributes on declare-fun require --relax", cmd.symbol().pos());
+		}
 		String encodedName = encode(cmd.symbol());
 		List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.argSorts(),cmd.resultSort(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
 		if (list.isEmpty()) {
 			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(cmd.argSorts().toArray(new ISort[cmd.argSorts().size()]),cmd.resultSort());
-			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null,null);
-			if (symTable.add(entry, isGlobal(), false)) {
+			// cmd.attributes()/cmd.parameters() are only ever non-null if --relax was checked
+			// above; passing them straight through lets a user-declared function opt into the
+			// same :left-assoc/etc. n-ary sugar and par-polymorphism SymbolTable.lookup()
+			// already applies to theory-declared ones.
+			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,cmd.attributes(),cmd.parameters());
+			// --relax experimentally allows overloading a user-declared symbol (standard
+			// SMT-LIB permits this only for background-scope, theory-declared symbols) --
+			// always allowed for a par declaration specifically, since requiring it to also be
+			// the sole declaration of its name would be an odd asymmetry (and --relax was
+			// already required above to reach this line at all in that case). This is already
+			// a type-checking-time rejection ("Symbol X is already defined" below, from
+			// symTable.add() returning false), not a parse-time one.
+			if (symTable.add(entry, isGlobal(), cmd.parameters() != null || smtConfig.relax)) {
 				checkSatStatus = null;
 				return smtConfig.responseFactory.success();
 			} else {
