@@ -60,17 +60,6 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		return smtConfig.defaultPrinter.toString(e);
 	}
 
-	/** The main entry point for type-checking an ISort.*/
-	public static List<IResponse> checkSort(SymbolTable symTable, ISort expr) {
-		TypeChecker f = new TypeChecker(symTable);
-		try {
-			expr.accept(f);
-		} catch (IVisitor.VisitorException e) {
-			f.error("Visitor Exception: " + e.getMessage(), e.pos());
-		}
-		return f.result;
-	}
-
 	public static List<IResponse> checkSortAbbreviation(SymbolTable symTable, IIdentifier id, List<ISort.IParameter> params, ISort expr) {
 		TypeChecker f = new TypeChecker(symTable); // FIXME - we should use a factory
 		symTable.push();
@@ -123,7 +112,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			for (IDeclaration p : params) {
 				if (p.sort().accept(f) != null) {
 					ISort.IFcnSort fs = symTable.smtConfig.sortFactory.createFcnSort(new ISort[0],p.sort());
-					SymbolTable.Entry entry = new SymbolTable.Entry(p.parameter(),fs,null);
+					SymbolTable.Entry entry = new SymbolTable.Entry(p.parameter(),fs,null,null);
 					symTable.add(entry, false, true);
 				}
 			}
@@ -192,7 +181,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		ISort[] argSorts = new ISort[params.size()];
 		for (int i = 0; i < params.size(); i++) argSorts[i] = params.get(i).sort();
 		ISort.IFcnSort fcnSort = symTable.smtConfig.sortFactory.createFcnSort(argSorts, result);
-		SymbolTable.Entry entry = new SymbolTable.Entry(id, fcnSort, null);
+		SymbolTable.Entry entry = new SymbolTable.Entry(id, fcnSort, null, null);
 		symTable.add(entry, global);
 		List<IResponse> bodyErrors = checkFcn(symTable, id, params, result, expr, pos);
 		if (bodyErrors.isEmpty()) {
@@ -220,7 +209,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			ISort[] argSorts = new ISort[decl.parameters().size()];
 			for (int i = 0; i < decl.parameters().size(); i++) argSorts[i] = decl.parameters().get(i).sort();
 			ISort.IFcnSort fcnSort = symTable.smtConfig.sortFactory.createFcnSort(argSorts, decl.sort());
-			SymbolTable.Entry entry = new SymbolTable.Entry(decl.symbol(), fcnSort, null);
+			SymbolTable.Entry entry = new SymbolTable.Entry(decl.symbol(), fcnSort, null, null);
 			symTable.add(entry, global);
 			entries.add(entry);
 		}
@@ -278,29 +267,6 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(),expr.pos());
 		} finally {
 			if (!f.result.isEmpty()) symTable.pop();
-		}
-		return f.result;
-	}
-
-	public static List<IResponse> check(SymbolTable symTable, IExpr expr, List<IExpr.IDeclaration> decls) {
-		TypeChecker f = new TypeChecker(symTable);
-		try {
-			for (IExpr.IDeclaration d: decls) {
-				f.currentScope.put(d.parameter(),new Variable(d.parameter(),d.sort(),null));
-			}
-			ISort topsort = expr.accept(f);
-			if (topsort != null && !topsort.isBool()) {
-				f.error("Expected an expression with Bool sort, not " + topsort, expr.pos());
-			}
-			try {
-				symTable.logicInUse.validExpression(expr);
-			} catch (IVisitor.VisitorException e) {
-				f.error(e.getMessage(), e.pos());
-			}
-		} catch (IVisitor.VisitorException e) {
-			f.error("Visitor Exception: " + e.getMessage(), e.pos());
-		} catch (Exception e) {
-			f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(),expr.pos());
 		}
 		return f.result;
 	}
@@ -458,23 +424,42 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			return save(e,sort1);
 		}
 		if (symTable.hoTheorySet && head.equals(Utils.AT)) {
-			// FIXME - this is just here until we get par types implemented
-			if (argSorts.size() != 2) {
+			// HO-Core declares @ as (par (A B) (@ (-> A B :left-assoc) A B)) -- there is no
+			// general par-polymorphic function mechanism (see Utils.loadFuns(), which skips
+			// any :funs entry beginning with "par"; @ is only special-cased here at all
+			// because of that gap), but :left-assoc sugar itself is straightforward to apply
+			// directly: SMT-LIB Sec. 3.7.2 states (@ t1 t2 t3 ...) means (@ (@ t1 t2) t3) ...,
+			// i.e. each argument after the second is applied to the result of the previous
+			// application. So this walks the argument list left to right, at each step
+			// requiring the current (possibly already-applied) sort to be a -> application
+			// and the next argument to match its domain, then continuing with its codomain --
+			// the same domain/codomain decomposition the base 2-argument case already used,
+			// just repeated instead of only ever performed once.
+			if (argSorts.size() < 2) {
 				error("The @ function requires exactly two arguments",head.pos());
 				return null;
 			}
-			ISort sort1 = argSorts.get(0);
-			if (!(sort1 instanceof ISort.IApplication) ||
-					!Utils.ARROW.equals(((ISort.IApplication)sort1).family().headSymbol())) {
-				error("The first argument of @ must have a -> sort, not " + smtConfig.defaultPrinter.toString(sort1),e.pos());
-				return null;
+			// expand() so a -> sort that's still in its flat, un-folded :right-assoc-sugar
+			// form (e.g. the stored result sort of a declare-fun using (-> A B C) directly,
+			// which is never replaced by TypeChecker's own folded value -- see the comment
+			// on Sort.Application.expand()) gets properly nested before this decomposes it;
+			// without this, .parameters().get(1) below would return a raw domain argument
+			// instead of the actual codomain for any curried application beyond the first.
+			ISort current = argSorts.get(0).expand();
+			for (int i = 1; i < argSorts.size(); i++) {
+				if (!(current instanceof ISort.IApplication) ||
+						!Utils.ARROW.equals(((ISort.IApplication)current).family().headSymbol())) {
+					error("The first argument of @ must have a -> sort, not " + smtConfig.defaultPrinter.toString(current),e.pos());
+					return null;
+				}
+				ISort.IApplication asort = (ISort.IApplication)current;
+				if (!asort.parameters().get(0).equals(argSorts.get(i))) {
+					error("The second argument of @ must match the domain sort: " + smtConfig.defaultPrinter.toString(argSorts.get(i)) + " vs. " + smtConfig.defaultPrinter.toString(asort.parameters().get(0)),e.pos());
+					return null;
+				}
+				current = asort.parameters().get(1);
 			}
-			ISort.IApplication asort = (ISort.IApplication)sort1;
-			if (!asort.parameters().get(0).equals(argSorts.get(1))) {
-				error("The second argument of @ must match the domain sort: " + smtConfig.defaultPrinter.toString(argSorts.get(1)) + " vs. " + smtConfig.defaultPrinter.toString(asort.parameters().get(0)),e.pos());
-				return null;
-			}
-			return save(e,asort.parameters().get(1));
+			return save(e,current);
 		}
 		boolean useext = true;
 		if (bvperhaps) {
@@ -491,8 +476,35 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 				return save(e,s);
 				
 			} else if (head.equals(Utils.BVAND) || head.equals(Utils.BVOR)
-					|| head.equals(Utils.BVADD) || head.equals(Utils.BVMUL)
-					|| head.equals(Utils.BVUDIV) || head.equals(Utils.BVUREM)
+					|| head.equals(Utils.BVADD) || head.equals(Utils.BVMUL)) {
+				// bvand, bvor, bvadd, bvmul are :left-assoc per FixedSizeBitVectors.smt2's
+				// :funs-description prose (informal text, not parsed :funs data -- see
+				// Utils.loadFuns -- so unlike +/-/*'s generic SymbolTable.lookup() left-assoc
+				// handling, these schematic BV ops need the check spelled out here): SMT-LIB
+				// Sec. 3.7.2 says (f t1 t2 t3 ...) with n > 2 is sugar for (f (f t1 t2) t3) ...,
+				// which for these ops just means every argument must share the same BitVec sort.
+				if (argSorts.size() < 2) {
+					error(" The " + name + " function should have at least two arguments",head.pos());
+					return null;
+				}
+				ISort s = argSorts.get(0);
+				if (!isBitVec(s)) {
+					error("The argument must have a BitVec sort, not " + pr(s),e.args().get(0).pos());
+					return null;
+				}
+				for (int i = 1; i < argSorts.size(); i++) {
+					ISort ss = argSorts.get(i);
+					if (!isBitVec(ss)) {
+						error("The argument must have a BitVec sort, not " + pr(ss),e.args().get(i).pos());
+						return null;
+					}
+					if (!s.equals(ss)) {
+						error("The sorts must match: " + pr(s) + " vs. " + pr(ss),e.pos());
+						return null;
+					}
+				}
+				return save(e,s);
+			} else if (head.equals(Utils.BVUDIV) || head.equals(Utils.BVUREM)
 					|| head.equals(Utils.BVSHL) || head.equals(Utils.BVLSHR) ||
 					(useext && (head.equals(Utils.BVNAND) || head.equals(Utils.BVNOR) || head.equals(Utils.BVXOR) || head.equals(Utils.BVXNOR)
 							|| head.equals(Utils.BVSUB) || head.equals(Utils.BVSDIV) || head.equals(Utils.BVSREM) || head.equals(Utils.BVSMOD)
@@ -941,7 +953,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 						errors = true;
 					}
 					ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(new ISort[0],resultSort);
-					SymbolTable.Entry entry = new SymbolTable.Entry((ISymbol)v,fcnSort,null);
+					SymbolTable.Entry entry = new SymbolTable.Entry((ISymbol)v,fcnSort,null,null);
 					if (!symTable.add(entry, false, false)) { 
 						result.add(smtConfig.responseFactory.error("Symbol " + v.toString() + " is already defined",v.pos())); // FIXME - encode name
 						errors = true;
@@ -1220,6 +1232,29 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			return null;
 		}
 		if (args.size() != def.intArity()) {
+			// -> is declared :right-assoc in HO-Core.smt2 -- (-> t1 t2 t3) means
+			// (-> t1 (-> t2 t3)) (SMT-LIB Sec. 3.7.2). This is a narrow, ->-specific
+			// special case, not a general :right-assoc/:left-assoc mechanism: there is
+			// currently no sort-level attribute data model at all to generalize from --
+			// Utils.loadTheory()'s :sorts loop only ever reads a declaration's name and
+			// arity, never any trailing attribute, and ISort.IDefinition/Sort.Family have
+			// no attributes field the way SymbolTable.Entry does for functions. -> is also
+			// the only sort declared with any attribute in any shipped theory file (checked
+			// every :sorts declaration), so there is no present need to generalize this the
+			// way @ needed a real fix (six theory functions needed par-polymorphism there,
+			// not just one).
+			if (Utils.ARROW.equals(f.headSymbol()) && def.intArity() == 2 && args.size() > 2 && !errors) {
+				// newargs (not args) since these are the already-type-checked sorts, folded
+				// right-to-left with the same Family.eval() the base 2-arg case already uses
+				ISort result = newargs.get(newargs.size() - 1);
+				for (int i = newargs.size() - 2; i >= 0; i--) {
+					List<ISort> pair = new LinkedList<ISort>();
+					pair.add(newargs.get(i));
+					pair.add(result);
+					result = def.eval(pair);
+				}
+				return result;
+			}
 			error("The sort symbol " + pr(f) + " expects " + def.intArity()
 					+ " arguments, not " + args.size(), s.pos());
 			return null;

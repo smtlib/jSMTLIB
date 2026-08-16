@@ -1,0 +1,3 @@
+success
+success
+(error "<stdin>:3:12: Application of function (/ Real Real Real) does not type check.")

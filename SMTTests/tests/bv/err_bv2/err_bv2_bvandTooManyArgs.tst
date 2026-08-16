@@ -1,4 +1,5 @@
-; bvand takes exactly two arguments
+; bvand is :left-assoc, so 3 arguments is fine by itself, but all arguments must
+; share the same BitVec sort -- here they don't (3 vs 5 vs 8 bits)
 (set-logic QF_BV)
 (declare-fun x () (_ BitVec 3))
 (declare-fun y () (_ BitVec 5))

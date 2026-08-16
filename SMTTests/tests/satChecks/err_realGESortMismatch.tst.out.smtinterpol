@@ -1,0 +1,3 @@
+success
+success
+(error "<stdin>:3:9: Application of function (>= Real Real Bool) does not type check.")
