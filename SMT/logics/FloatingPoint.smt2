@@ -70,7 +70,16 @@
  " 
 
 ; Short name for common floating point sorts
-:sort ((Float16 0) (Float32 0) (Float64 0) (Float128 0))
+; Fixed a typo relative to the official smt-lib.org theory text: singular ":sort" is not
+; a real theory_attribute keyword (SMT-LIB Sec 3.7's sort_symbol_decl attribute is ":sorts",
+; plural) and was silently ignored by every conformant loader, jSMTLIB's included -- these
+; four names have never actually been registered. See jSMTLIB's Utils.loadTheory() for why
+; simply loading them generically now that the keyword is correct would be actively wrong,
+; not just previously-missing: they are documented below as synonyms for specific
+; (_ FloatingPoint eb sb) instances, but the generic :sorts loader has no aliasing concept
+; -- it would register each as its own independent, unrelated 0-arity sort, silently
+; breaking the documented synonym relationship rather than implementing it.
+:sorts ((Float16 0) (Float32 0) (Float64 0) (Float128 0))
 
  :notes "
   -  Float16 is a synonym for (_ FloatingPoint  5  11)

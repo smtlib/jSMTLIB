@@ -334,134 +334,14 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		boolean bvperhaps = symTable.bitVectorTheorySet && head.headSymbol().value().startsWith("bv");
 		boolean fpperhaps = symTable.floatingPointTheorySet && (Utils.FP.equals(head) || head.headSymbol().value().startsWith("fp."));
 		String name = head.toString();
-		if (head.equals(Utils.EQ) || head.equals(Utils.DISTINCT)) {
-			// FIXME - this is just here until we get par types implemented
-			// FIXME - /= is not part of SMT - put it in relax?
-			ISort ss = null;
-			for (ISort s: argSorts) {
-				if (ss == null) ss = s;
-				else if (!ss.equals(s)) {
-					if (symTable.realsIntsTheorySet &&
-							(isRealSort(ss) && isIntSort(s))) {
-						// OK
-					} else if (symTable.realsIntsTheorySet &&
-								(isRealSort(s) && isIntSort(ss))) {
-						ss = s;
-					} else {
-						String msg = "Mismatched sorts of arguments: " + 
-						smtConfig.defaultPrinter.toString(ss) + " vs. " +
-						smtConfig.defaultPrinter.toString(s);
-						error(msg,e.pos());
-						return null;
-					}
-				}
-			}
-			ISort b = smtConfig.sortFactory.Bool();
-			b.accept(this);
-			return save(e,b);
-		} else if (head.equals(Utils.ITE)) {
-			// FIXME - this is just here until we get par types implemented
-			if (!argSorts.get(0).isBool()) {
-				error("The first argument of ite must have sort Bool",e.pos());
-				return null;
-			}
-			if (!argSorts.get(1).equals(argSorts.get(2))) {
-				error("The last two arguments of ite have different sorts",e.pos());
-				return null;
-			}
-			return save(e,argSorts.get(1));
-		} else if (symTable.arrayTheorySet && head.equals(Utils.STORE)) {
-			if (argSorts.size() != 3) {
-				error(" The store function should have three arguments",head.pos());
-				return null;
-			}
-			// FIXME - this needs to be fully expanded of all definitions
-			ISort sort1 = argSorts.get(0);
-			if (sort1 instanceof ISort.IApplication) {
-				ISort.IApplication asort = (ISort.IApplication)sort1;
-				if (!Utils.ARRAY.equals(asort.family().headSymbol())) {
-					error("The first argument of the store function should be an Array sort, not " + sort1,e.pos());
-					return null;
-				}
-				if (!asort.parameters().get(0).equals(argSorts.get(1))) {
-					error("The second argument of the store function must match the array index sort: " + argSorts.get(1) + " vs. " + asort.parameters().get(0), e.pos() );
-					return null;
-				}
-				if (!asort.parameters().get(1).equals(argSorts.get(2))) {
-					error("The third argument of the store function must match the array value sort: " + argSorts.get(2) + " vs. " + asort.parameters().get(1), e.pos() );
-					return null;
-				}
-			} else {
-				error("The first argument of the store function should be an Array sort, not " + sort1,e.pos());
-				return null;
-			}
-			// FIXME - this is just here until we get par types implemented; it also should depend on which theories are installed
-			return save(e,argSorts.get(0));
-		}
-		if (symTable.arrayTheorySet && head.equals(Utils.SELECT)) {
-			// FIXME - this is just here until we get par types implemented; it also should depend on which theories are installed
-			if (argSorts.size() != 2) {
-				error(" The select function should have two arguments",head.pos());
-				return null;
-			}
-			// FIXME - this needs to be fully expanded of all definitions
-			ISort sort1 = argSorts.get(0);
-			if (sort1 instanceof ISort.IApplication) {
-				ISort.IApplication asort = (ISort.IApplication)sort1;
-				if (!Utils.ARRAY.equals(asort.family().headSymbol())) {
-					error("The first argument of the select function should be an Array sort, not " + sort1,e.pos());
-					return null;
-				}
-				if (!asort.parameters().get(0).equals(argSorts.get(1))) {
-					error("The second argument of the select function must match the array index sort: " + argSorts.get(1) + " vs. " + asort.parameters().get(0), e.pos() );
-					return null;
-				}
-			} else {
-				error("The first argument of the select function should be an Array sort, not " + sort1,e.pos());
-				return null;
-			}
-			// FIXME - this is just here until we get par types implemented; it also should depend on which theories are installed
-			sort1 = ((ISort.IApplication)sort1).parameters().get(1);
-			return save(e,sort1);
-		}
-		if (symTable.hoTheorySet && head.equals(Utils.AT)) {
-			// HO-Core declares @ as (par (A B) (@ (-> A B :left-assoc) A B)) -- there is no
-			// general par-polymorphic function mechanism (see Utils.loadFuns(), which skips
-			// any :funs entry beginning with "par"; @ is only special-cased here at all
-			// because of that gap), but :left-assoc sugar itself is straightforward to apply
-			// directly: SMT-LIB Sec. 3.7.2 states (@ t1 t2 t3 ...) means (@ (@ t1 t2) t3) ...,
-			// i.e. each argument after the second is applied to the result of the previous
-			// application. So this walks the argument list left to right, at each step
-			// requiring the current (possibly already-applied) sort to be a -> application
-			// and the next argument to match its domain, then continuing with its codomain --
-			// the same domain/codomain decomposition the base 2-argument case already used,
-			// just repeated instead of only ever performed once.
-			if (argSorts.size() < 2) {
-				error("The @ function requires exactly two arguments",head.pos());
-				return null;
-			}
-			// expand() so a -> sort that's still in its flat, un-folded :right-assoc-sugar
-			// form (e.g. the stored result sort of a declare-fun using (-> A B C) directly,
-			// which is never replaced by TypeChecker's own folded value -- see the comment
-			// on Sort.Application.expand()) gets properly nested before this decomposes it;
-			// without this, .parameters().get(1) below would return a raw domain argument
-			// instead of the actual codomain for any curried application beyond the first.
-			ISort current = argSorts.get(0).expand();
-			for (int i = 1; i < argSorts.size(); i++) {
-				if (!(current instanceof ISort.IApplication) ||
-						!Utils.ARROW.equals(((ISort.IApplication)current).family().headSymbol())) {
-					error("The first argument of @ must have a -> sort, not " + smtConfig.defaultPrinter.toString(current),e.pos());
-					return null;
-				}
-				ISort.IApplication asort = (ISort.IApplication)current;
-				if (!asort.parameters().get(0).equals(argSorts.get(i))) {
-					error("The second argument of @ must match the domain sort: " + smtConfig.defaultPrinter.toString(argSorts.get(i)) + " vs. " + smtConfig.defaultPrinter.toString(asort.parameters().get(0)),e.pos());
-					return null;
-				}
-				current = asort.parameters().get(1);
-			}
-			return save(e,current);
-		}
+		// =, distinct, ite, store, select, and @ are all declared as par_fun_symbol_decl
+		// entries (Core.smt2, ArraysEx.smt2, HO-Core.smt2) and used to be hardcoded here
+		// because Utils.loadFuns() used to skip "par" declarations entirely -- now that it
+		// doesn't, and SymbolTable.lookup() can unify against them (including the
+		// :chainable/:pairwise/:left-assoc n-ary sugar =, distinct, and @ each need), they
+		// fall through to the general lookup below like any other declared function, with
+		// SymbolTable.lookup()'s `reason` output giving as specific a message as these
+		// hardcoded branches used to (see its doc comment).
 		boolean useext = true;
 		if (bvperhaps) {
 			if (head.equals(Utils.BVNOT) || head.equals(Utils.BVNEG)) {
@@ -1000,7 +880,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			}
 		}
 
-		ISort matchedResultSort = symTable.lookup(head,argSorts,resultSort);
+		StringBuilder reason = new StringBuilder();
+		ISort matchedResultSort = symTable.lookup(head,argSorts,resultSort,reason);
 		if (matchedResultSort == null && symTable.realsIntsTheorySet) {
 			ISort realSort = null;
 			for (ISort sort: argSorts) {
@@ -1015,13 +896,22 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 						newargs.add(sort);
 					}
 				}
-				matchedResultSort = symTable.lookup(head,newargs,resultSort);
+				reason.setLength(0);
+				matchedResultSort = symTable.lookup(head,newargs,resultSort,reason);
 			}
 		}
 		if (matchedResultSort == null) {
-			String msg = "Unknown predicate symbol " + name + " with argument types";
-			for (ISort s: argSorts) {
-				msg = msg + " " + smtConfig.defaultPrinter.toString(s);
+			String msg;
+			if (reason.length() > 0) {
+				// A candidate (or candidates) exist for this name but none matched these
+				// argument sorts -- symTable.lookup() already explains why, in more detail
+				// than a generic "unknown symbol" message could.
+				msg = reason.toString();
+			} else {
+				msg = "Unknown predicate symbol " + name + " with argument types";
+				for (ISort s: argSorts) {
+					msg = msg + " " + smtConfig.defaultPrinter.toString(s);
+				}
 			}
 			error(msg,e.pos());
 			return null;
@@ -1072,6 +962,12 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	}
 
 	private boolean isFloatingPoint(ISort s) {
+		// expand() first: a Float16/Float32/Float64/Float128-sorted value (see SymbolTable.
+		// lookupSort's alias handling) has family() literally "Float32" etc, not a
+		// parameterized "FloatingPoint" identifier, until expanded through its
+		// IAbbreviation definition -- without this, isFloatingPoint (and so every fp.*
+		// operator) would wrongly reject an otherwise-legitimate Float32-sorted argument.
+		s = s.expand();
 		if (!(s instanceof ISort.IApplication)) return false;
 		ISort.IApplication se = (ISort.IApplication)s;
 		if (!(se.family() instanceof IParameterizedIdentifier)) return false;
@@ -1084,14 +980,14 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	}
 
 	private int fpExponentSize(ISort s) {
-		if (!isFloatingPoint(s)) return -1;
-		IParameterizedIdentifier pid = (IParameterizedIdentifier)((ISort.IApplication)s).family();
+		if (!isFloatingPoint(s)) return -1; // also confirms expand() below yields an IApplication
+		IParameterizedIdentifier pid = (IParameterizedIdentifier)((ISort.IApplication)s.expand()).family();
 		return ((INumeral) pid.indices().get(0)).intValue();
 	}
 
 	private int fpSignificandSize(ISort s) {
 		if (!isFloatingPoint(s)) return -1;
-		IParameterizedIdentifier pid = (IParameterizedIdentifier)((ISort.IApplication)s).family();
+		IParameterizedIdentifier pid = (IParameterizedIdentifier)((ISort.IApplication)s.expand()).family();
 		return ((INumeral) pid.indices().get(1)).intValue();
 	}
 

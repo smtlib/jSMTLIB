@@ -303,6 +303,16 @@ public class Utils {
 	 * FloatingPoint family check) instead of comparing via .toString(). */
 	static public final ISymbol FLOATINGPOINT_SYM = new SMTExpr.Symbol(FLOATINGPOINT.intern());
 
+	/** Short names for common FloatingPoint sorts (FloatingPoint.smt2's :notes documents
+	 * each as a synonym for a specific (_ FloatingPoint eb sb) instance) -- resolved by
+	 * SymbolTable.lookupSort() to the exact same ISort.IDefinition as that instance, not
+	 * registered as their own independent sorts (see Utils.loadTheory(), which excludes
+	 * them from the generic :sorts loader for the same reason). */
+	static public final ISymbol FLOAT16 = new SMTExpr.Symbol("Float16".intern());
+	static public final ISymbol FLOAT32 = new SMTExpr.Symbol("Float32".intern());
+	static public final ISymbol FLOAT64 = new SMTExpr.Symbol("Float64".intern());
+	static public final ISymbol FLOAT128 = new SMTExpr.Symbol("Float128".intern());
+
 	static public final ISymbol FP = new SMTExpr.Symbol("fp".intern());
 	static public final ISymbol FP_ABS = new SMTExpr.Symbol("fp.abs".intern());
 	static public final ISymbol FP_NEG = new SMTExpr.Symbol("fp.neg".intern());
@@ -859,6 +869,20 @@ public class Utils {
 					return smtConfig.responseFactory.error("Ill-formed attribute in the declaration of sort " + name + ": " + key);
 				}
 				List<IExpr.IAttribute<?>> attrs = parseAttributeTail(iter2, key);
+				// FloatingPoint.smt2's Float16/Float32/Float64/Float128 are documented as
+				// synonyms for specific (_ FloatingPoint eb sb) instances, not independent
+				// sorts -- this generic loop has no aliasing concept (addSortDefinition always
+				// creates a fresh, unrelated 0-arity family), so registering them here would
+				// silently break the documented synonym relationship rather than implement it.
+				// Skip them; they remain deliberately unimplemented (declare-fun ... Float32
+				// still errors "unknown sort") until/unless something actually needs them,
+				// rather than resolving to a sort that is not really interchangeable with the
+				// (_ FloatingPoint eb sb) form it is supposed to mean.
+				if (theoryName.equals("FloatingPoint") && (name.value().equals("Float16")
+						|| name.value().equals("Float32") || name.value().equals("Float64")
+						|| name.value().equals("Float128"))) {
+					continue;
+				}
 				symTable.addSortDefinition(name, arity, attrs, true);
 				if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Added sort " + name);
 			}
@@ -868,24 +892,15 @@ public class Utils {
 			IResponse r = loadFuns(funsVal, theoryName, symTable);
 			if (r != null) return r;
 		}
-		if (theoryName.equals("ArraysEx")) {
-			ISort.IFcnSort fs = smtConfig.sortFactory.createFcnSort(new ISort[0], null);
-			SymbolTable.Entry e = new SymbolTable.Entry(smtConfig.exprFactory.symbol("store"), fs, null, null);
-			symTable.add(e, true);
-			e = new SymbolTable.Entry(smtConfig.exprFactory.symbol("select"), fs, null, null);
-			symTable.add(e, true);
-		}
-		if (theoryName.equals("HO-Core")) {
-			// @ is declared in HO-Core.smt2 as (par (A B) (@ (-> A B :left-assoc) A B)) --
-			// loadFuns() skips any :funs entry beginning with "par" (no par-polymorphic
-			// function support exists), so @ is never registered by the loop above. As with
-			// store/select, register a placeholder entry (empty/null sort: not used for
-			// type-checking, which for @ is still done by TypeChecker.visit(IFcnExpr)'s own
-			// hoTheorySet-gated special case) just so the name is marked defined.
-			ISort.IFcnSort fs = smtConfig.sortFactory.createFcnSort(new ISort[0], null);
-			SymbolTable.Entry e = new SymbolTable.Entry(smtConfig.exprFactory.symbol("@"), fs, null, null);
-			symTable.add(e, true);
-		}
+		// store/select (ArraysEx) and @ (HO-Core) used to need placeholder entries registered
+		// here (empty/null sort, just to mark the name as defined): loadFuns() used to skip
+		// any :funs entry beginning with "par" entirely, so these par-declared names were
+		// never registered by the loop above, and TypeChecker.visit(IFcnExpr) special-cased
+		// them by name instead of consulting the symbol table. Now that loadFuns() parses
+		// "par" declarations (see loadParFun()) and TypeChecker consults the general lookup
+        // path for these names too, real entries are already registered above -- a
+        // placeholder here would only add a second, malformed (null-result-sort) candidate
+        // that the general lookup would then also have to consider.
 
 		return null;
 	}
