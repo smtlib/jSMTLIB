@@ -44,6 +44,8 @@ public class ParseExpressionErrors {
 		}
 		Assert.assertTrue("Response was not an error",listener.msgs.get(0) instanceof IResponse.IError);
 		Assert.assertEquals(msg,((IResponse.IError)listener.msgs.get(0)).errorMsg());// expected,actual
+		// Assumes msgs.get(0) is a positioned response error; a String-path logError (see
+		// JUnitListener's class doc) landing here first would make pos() null and NPE below.
 		IPos pos = ((IResponse.IError)listener.msgs.get(0)).pos();
 		Assert.assertEquals(start,pos.charStart());
 		Assert.assertEquals(end,pos.charEnd());

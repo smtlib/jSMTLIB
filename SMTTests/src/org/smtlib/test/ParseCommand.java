@@ -30,7 +30,15 @@ public class ParseCommand {
 		config.log.addListener(listener);
 	}
 	
-	public void testCommand(String input) throws Exception {
+	/** Parses input as a single command and checks the result: with no errormsgs, expects
+	 *  parsing/validation to succeed and the command to print back out as input; with one or
+	 *  more errormsgs, expects exactly that many errors to have been logged (by the parser
+	 *  and/or by TypeChecker.validate, which itself can report more than one problem for a
+	 *  single command -- see e.g. its declare-const branch), checked in order against
+	 *  listener.msgs. A single-arg overload would previously only ever check msgs.get(0),
+	 *  silently ignoring any further errors; varargs keeps every existing call site (0 or 1
+	 *  error message) source- and binary-compatible while also supporting more. */
+	public void testCommand(String input, String... errormsgs) throws Exception {
 		ISource source = config.smtFactory.createSource(input,null);
 		IParser p = new org.smtlib.sexpr.Parser(config,source);
 		ICommand e = p.parseCommand();
@@ -41,27 +49,31 @@ public class ParseCommand {
 		}
 		StringWriter sw = new StringWriter();
 		if (e != null) org.smtlib.sexpr.Printer.write(sw,e);
-		// Expecting success
-		Assert.assertTrue(listener.msgs.isEmpty() ? "": listener.msgs.get(0).toString(),listener.msgs.isEmpty());
-		Assert.assertEquals(input,sw.toString()); // expected,actual
-		Assert.assertTrue(e != null);
+		if (errormsgs.length == 0) {
+			// Expecting success
+			Assert.assertTrue(listener.msgs.isEmpty() ? "": listener.msgs.get(0).toString(),listener.msgs.isEmpty());
+			Assert.assertEquals(input,sw.toString()); // expected,actual
+			Assert.assertTrue(e != null);
+		} else {
+			// Expecting exactly errormsgs.length errors, in order
+			Assert.assertEquals("Wrong number of error messages", errormsgs.length, listener.msgs.size());
+			for (int i = 0; i < errormsgs.length; i++) {
+				Assert.assertEquals(errormsgs[i], ((IResponse.IError)listener.msgs.get(i)).errorMsg());
+			}
+			Assert.assertTrue(e == null);
+		}
 	}
 
-	public void testCommand(String input, String errormsg) throws Exception {
-		ISource source = config.smtFactory.createSource(input,null);
-		IParser p = new org.smtlib.sexpr.Parser(config,source);
-		ICommand e = p.parseCommand();
-		if (e != null) {
-			List<IResponse> errs = TypeChecker.validate(config, e);
-			for (IResponse err : errs) config.log.logError((IResponse.IError)err);
-			if (!errs.isEmpty()) e = null;
-		}
-		StringWriter sw = new StringWriter();
-		if (e != null) org.smtlib.sexpr.Printer.write(sw,e);
-		// Expecting an error
-		Assert.assertTrue("Expected an error message",!listener.msgs.isEmpty());
-		Assert.assertEquals(errormsg,((IResponse.IError)listener.msgs.get(0)).errorMsg()); // FIXME - check other messages?
-		Assert.assertTrue(e == null);
+	/** declare-const's TypeChecker.validate branch calls requireVersion and validateUserId
+	 *  unconditionally, one after the other with no intervening errors.isEmpty() guard -- so a
+	 *  pre-V2.5 declare-const with a bad symbol genuinely reports two errors from one command.
+	 *  Exercises the multi-message path of testCommand(String, String...) end to end. */
+	@Test
+	public void declare_const_reports_version_and_badsymbol_errors() throws Exception {
+		config.smtlib = "V2.0";
+		testCommand("(declare-const .x Bool)",
+			"The declare-const command requires SMT-LIB V2.5 or later",
+			"User-defined symbols may not begin with . or @");
 	}
 
 	@Test

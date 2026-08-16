@@ -1,0 +1,15 @@
+; ported from TypeCheckRealsInts.checkOverload -- >=/<=/>/< are each overloaded
+; separately for Int and for Real, not mixed
+(set-logic AUFNIRA)
+(declare-fun q () Int)
+(declare-fun r () Int)
+(declare-fun a () Real)
+(declare-fun b () Real)
+(assert (>= a b))
+(assert (>= q r))
+(assert (<= a b))
+(assert (<= q r))
+(assert (> a b))
+(assert (> q r))
+(assert (< a b))
+(assert (< q r))

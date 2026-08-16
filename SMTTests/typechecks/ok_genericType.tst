@@ -1,0 +1,11 @@
+; ported from TypeCheck.checkGenericType
+(set-logic QF_UF)
+(declare-sort X 1)
+(declare-sort Y 0)
+(declare-fun p () Bool)
+(declare-fun q () (X Y))
+(declare-fun qb () (X Bool))
+(declare-fun r () Y)
+(declare-fun f (Y (X Y)) Bool)
+(declare-fun ff (Y (X Bool)) Bool)
+(assert (f r q))

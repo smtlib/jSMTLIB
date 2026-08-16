@@ -30,7 +30,9 @@ for which solvers the parameterized test classes (`FileTests`,
 `LogicsBadPath`, and any future class that extends `LogicTests`) run
 against. (`LogicsWithPath`, which extends the separate, unparameterized
 `LogicsBase` instead, always runs against the built-in `test` solver only —
-see its own entry below.) It's a space-separated list of solver
+see its own entry below. `TypeCheckTests`, which extends `FileTests` but
+overrides `datax()` entirely, likewise always runs against `test` only,
+deliberately — see the `typechecks/` section above.) It's a space-separated list of solver
 names (as configured in `jsmtlib.properties`); default is just `test`
 (the built-in pure-Java solver that needs no external binary),
 if not set to another default in the Makefile:
@@ -75,6 +77,7 @@ picks *which* solvers to run; `SMT_SOLVER_DIR` says *where to find* them.
 SMTTests/
   src/org/smtlib/test/   JUnit test classes (see below)
   tests/                 .tst files: SMT-LIB scripts + golden output, run by FileTests
+  typechecks/            .tst files exercising jSMTLIB's own TypeChecker, run by TypeCheckTests
   scripts/               .scr files: shell-driven scenarios, run by ScriptTests
   bin/                   compiled .class output (javac -d target)
   lsp/libs/               junit-4.13.2.jar, hamcrest-core-1.3.jar
@@ -116,6 +119,63 @@ file. See "Golden file conventions" below for the naming rules.
 `LogicsCoverageTest` (a JUnit test, not a `.tst` file) cross-checks that
 `tests/logics/` covers every logic actually shipped under `SMT/logics/` —
 run it after adding or renaming a logic file.
+
+### `typechecks/` — `.tst` files exercising jSMTLIB's own `TypeChecker`
+
+A sibling of `tests/`, not a subdirectory of it, and run by a separate class,
+`TypeCheckTests` (extends `FileTests`, reusing all its golden/skip/comparison
+machinery, overriding only `datax()`: scans `typechecks/` instead of
+`tests/`, and pairs every file with the built-in `"test"` solver only — not
+parameterized by `SMT_TEST_SOLVERS`, and not cross-producted with real
+solvers at all).
+
+That restriction is deliberate, not a placeholder oversight:
+`Solver_test.assertExpr()` is the *only* `ISolver` implementation that calls
+`TypeChecker.checkAssertion()`. Every real-solver adapter inherits
+`AbstractSolver.assertExpr()`, which forwards the asserted text straight to
+the solver process and never invokes `TypeChecker` at all — so running these
+against a real solver would not exercise the code this directory exists to
+check; the solver would just do its own independent native type-checking
+(or not) on the same input. That is a real, separate, and interesting
+question, deliberately deferred rather than conflated with this one — see
+the "Migration" note below.
+
+Ported from the retired `TypeCheck`/`TypeCheckInt`/`TypeCheckBV`/
+`TypeCheckRealsInts`/`TypeCheckQuantifiers`/`TypeChecks` JUnit classes (see
+the "Parse/typecheck tests" section below for what replaced them and why),
+plus a couple of fixes discovered along the way:
+
+- `err_quantExistsMultiError.tst` (ported from `TypeCheckQuantifiers.
+  checkBadExists`) documents a real, narrow limitation surfaced by the port:
+  the original JUnit test called `TypeChecker.checkAssertion()` directly and
+  observed *two* errors from one expression, but `Solver_test.assertExpr()`
+  only ever returns `errs.get(0)` — the first — per its own
+  `// FIXME - return all errors, not just the first`. A normal `(assert
+  ...)` command can never surface more than the first type error for a
+  single command, so the ported `.tst` golden reflects only that first
+  error; the second is simply not observable this way. Worth a dedicated
+  test of that limitation itself in a future pass.
+- `err_genericTypeArity_declareFunArg.tst` and
+  `err_genericTypeArity_zeroArityUsedWithParam.tst` close a real coverage
+  gap found while porting, not just a straight port: a user-declared
+  parameterized sort (`(declare-sort X 1)`) referenced later with the wrong
+  number of type arguments was untested anywhere — `tests/declare/
+  err_declareSort*.tst` only covers malformed `declare-sort` syntax and
+  re-declaration, and `tests/array/array2/err_array2_arity*.tst` only
+  covers the arity of the built-in `Array` sort.
+
+**Migration status**: this is step (a) of a three-step plan. (a) — port the
+existing `TypeCheck*` JUnit tests faithfully, done. (b) — expand coverage to
+the rest of `TypeChecker`'s ~55 error-producing call sites (match
+expressions, datatypes, sort-abbreviation and numeral/literal-format errors
+are all currently under-tested or untested), and cross-check against what
+the SMT-LIB standard itself actually requires be rejected, not just what
+`TypeChecker.java` happens to implement — not yet started. (c) — eventually,
+run this same `.tst` corpus against real solvers too, to see how completely
+each one's own native type-checking compares (a genuinely different
+question from this directory's, per the mechanism explanation above,
+capturing its own real per-solver goldens) — not yet started, blocked on
+(b).
 
 ### `scripts/` — `.scr` files
 
@@ -211,8 +271,16 @@ fidelity, or bare-expression parsing outside any command context.
 | **ParseCommand** | Parses + typechecks + reprints full commands in isolation (no solver); covers both successful round-trips and `TypeChecker.validate()` error messages. |
 | **ParseExpressions** | Parses bare expression/attribute-value fragments directly (`p.parseExpr()`), not wrapped in a command; asserts print-round-trip. |
 | **ParseExpressionErrors** | Same, for malformed input — asserts the resulting `(error "...")` response and position. Catches `ParserException` at its own top level (mirroring what `parseCommand()` does internally), since `parseExpr()`/`parseAttributeValue()` throw rather than log-and-return-null. |
-| **TypeCheck, TypeCheckBV, TypeCheckInt, TypeCheckQuantifiers, TypeCheckRealsInts** | Call `TypeChecker.checkAssertion()` directly against a symbol table (bypassing the normal `ICommand.execute()` pipeline) to check type-checking of asserted expressions per sort/theory. |
-| **TypeChecks** | Type-check-only errors that can't be produced by the parser alone (e.g. duplicate `forall`/`exists`/`let` bound-variable names — that's a scope-tracking check that lives in `TypeChecker`, not `Parser`). Split out from `ParseExpressionErrors` for exactly this reason. |
+
+`TypeCheck`, `TypeCheckBV`, `TypeCheckInt`, `TypeCheckQuantifiers`,
+`TypeCheckRealsInts`, and `TypeChecks` (which called `TypeChecker.
+checkAssertion()` directly against a symbol table, bypassing the normal
+`ICommand.execute()` pipeline, to check type-checking of asserted
+expressions per sort/theory — `TypeChecks` specifically covered
+duplicate-name scope-tracking errors that the parser alone can't produce)
+have been retired in favor of `typechecks/*.tst`, run by the new
+`TypeCheckTests` class — see the `typechecks/` section above for the full
+migration rationale and status.
 
 ### Pure Java-API unit tests (no SMT-LIB syntax involved)
 
@@ -230,7 +298,6 @@ fidelity, or bare-expression parsing outside any command context.
 | **JUnitListener** | `Log.IListener` implementation shared by many test classes to capture logged error responses for assertions. |
 | **LogicTests** | Base class for the solver-response family: owns `solvers` (from `SMT_TEST_SOLVERS`), the solver × `SMTLIB.values()` parameterization matrix, `doCommand()`, and `checkResponse()`. |
 | **LogicsBase** | Parallel base class (predates/duplicates some of `LogicTests`), used only by `LogicsWithPath` now that `Logics` has been retired (`LogicsBadPath` extends `LogicTests`, not this); hardcodes `solvername = "test"` and owns the logic-name list. |
-| **TypeCheckRoot** | Base class for the `TypeCheck*` family: starts a `Solver_test` instance and provides `check()` (parse + `TypeChecker.checkAssertion`) and `doCommand()`. |
 
 ---
 

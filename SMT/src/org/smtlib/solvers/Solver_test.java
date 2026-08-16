@@ -142,7 +142,18 @@ public class Solver_test implements ISolver {
 		}
 		List<IResponse> errs = TypeChecker.checkAssertion(this.symTable,expr);
 		if (errs != null && !errs.isEmpty()) {
-			return errs.get(0); // FIXME - return all errors, not just the first
+			// The SMT-LIB response protocol accommodates only one response per command --
+			// (error <string>) is a single object, not a list -- so at most one error message
+			// can ever be returned here regardless of how many TypeChecker actually found.
+			// Real solvers (z3, cvc5, yices2, SMTInterpol -- confirmed directly against each)
+			// appear to fail-fast: they stop at the first problem encountered while
+			// elaborating an asserted expression and never discover, let alone report, any
+			// later ones in the same command. TypeChecker.checkAssertion(), by contrast,
+			// does a full pass and can return multiple errors when several are present;
+			// returning only errs.get(0) here matches that real-solver fail-fast behavior
+			// rather than being a shortcut that should eventually return the rest -- there is
+			// no wire format for "the rest" to be returned in.
+			return errs.get(0);
 		}
 		if (assertionSetStack.isEmpty()) {
 			return smtConfig.responseFactory.error("All assertion sets have been popped from the stack");
