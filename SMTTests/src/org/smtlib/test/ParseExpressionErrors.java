@@ -43,6 +43,10 @@ public class ParseExpressionErrors {
 			if (ex.getMessage() != null) config.log.logError(config.responseFactory.error(ex.getMessage(),ex.pos()));
 		}
 		Assert.assertTrue("Response was not an error",listener.msgs.get(0) instanceof IResponse.IError);
+		// Fails loudly rather than silently checking only the first of several errors, the
+		// way this used to; no expression-level input currently produces more than one, but
+		// if a future one does, this will say so instead of quietly passing on a partial check.
+		Assert.assertEquals("Expected exactly one error message", 1, listener.msgs.size());
 		Assert.assertEquals(msg,((IResponse.IError)listener.msgs.get(0)).errorMsg());// expected,actual
 		// Assumes msgs.get(0) is a positioned response error; a String-path logError (see
 		// JUnitListener's class doc) landing here first would make pos() null and NPE below.
@@ -69,7 +73,7 @@ public class ParseExpressionErrors {
 		}
 		StringWriter sw = new StringWriter();
 		if (e != null) org.smtlib.sexpr.Printer.write(sw,e);
-		if (!listener.msgs.isEmpty()) sw.append(config.defaultPrinter.toString(listener.msgs.get(0))); // FIXME - append them all?
+		for (IResponse r : listener.msgs) sw.append(config.defaultPrinter.toString(r));
 		Assert.assertEquals(output,sw.toString()); // expected,actual
 	}
 

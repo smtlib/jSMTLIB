@@ -34,11 +34,15 @@ public class ParseExpressions {
 		testExpr(input,input);
 	}
 	
-	// FIXME - need to catch logged error messages and ParserExceptions
-	
+	// FIXME - ParserExceptions from parseExpr() are not caught here (unlike testSExpr), so an
+	// input that throws would fail the test with that exception rather than being reported
+	// via the "Did not expect an error" assertion below.
+
 	public void testExpr(String input, String output) throws Exception {
 		SMT.Configuration config = new SMT.Configuration();
 		config.smtlib = version;
+		config.log.clearListeners();
+		config.log.addListener(listener);
 		ISource source = config.smtFactory.createSource(input,null);
 		IParser p = new org.smtlib.sexpr.Parser(config,source);
 		IExpr e = p.parseExpr();

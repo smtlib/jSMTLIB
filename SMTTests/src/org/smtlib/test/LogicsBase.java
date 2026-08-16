@@ -97,11 +97,15 @@ public class LogicsBase {
 	}
 	
 	public void checkResponse(IResponse res, /*@Nullable*/String result) {
+		// Guards the assumption the get(0)-only check below relies on: no current test logs
+		// more than one error for a single doCommand() call. If this ever trips, that check
+		// needs generalizing the way testCommand/testExpr were.
+		Assert.assertTrue("More than one error reported: " + listener.msgs, listener.msgs.size() <= 1);
 		if (res == null) {
 			Assert.assertTrue("Response is null",false);
 		} else if (res.isError()) {
 			Assert.assertEquals(result,((IResponse.IError)res).errorMsg());
-		} else if (listener.msgs.size() > 0  && listener.msgs.get(0) instanceof IResponse.IError) { // FIXME - check all the messages?
+		} else if (listener.msgs.size() > 0  && listener.msgs.get(0) instanceof IResponse.IError) {
 			Assert.assertEquals(result,((IResponse.IError)listener.msgs.get(0)).errorMsg());
 		} else if (!res.isOK() && result != null) {
 			Assert.assertEquals(result,res.toString());
