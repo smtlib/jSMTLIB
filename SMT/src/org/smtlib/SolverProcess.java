@@ -26,11 +26,13 @@ public class SolverProcess {
 
     public boolean useShutdownHooks = true;
 
-    /** How long (ms) to keep waiting for more error-stream text once some has already
-     * arrived, before returning it. There is no OS-level signal tying completeness of
-     * stderr to the recognized end marker on stdout, so this is a bounded best-effort
-     * wait, not a guarantee; it is only paid when error text is actually flowing --
-     * the common case of no pending error output returns immediately. */
+    /** How long (ms) to wait for error-stream text to arrive before concluding a command
+     * produced none, and (once some has arrived) how much longer to wait for further
+     * stragglers before returning it. There is no OS-level signal tying completeness of
+     * stderr to the recognized end marker on stdout, so this is a bounded best-effort wait,
+     * not a guarantee; see StreamGobbler.drain() for why even the first check needs this,
+     * not just the straggler wait -- it is paid on every command, including ones with no
+     * error to find, not only when error text is actually flowing. */
     public long errorSettleMillis = 20;
 
     /** Set true by a caller for the duration of a single command whose expected response
@@ -401,14 +403,24 @@ public class SolverProcess {
 	        }
 	    }
 
-	    /** Drains whatever text has already arrived (returning immediately, with an empty
-	     * string, if none has); once at least one chunk has arrived, waits up to settleMillis
-	     * for further stragglers before giving up. Always returns -- never blocks
-	     * indefinitely -- once the stream reaches EOF or the settle window elapses. */
+	    /** Drains whatever text has arrived, waiting up to settleMillis for the *first* chunk
+	     * before concluding there is none, and (once at least one chunk has arrived) up to
+	     * settleMillis again for further stragglers before giving up. Always returns -- never
+	     * blocks indefinitely -- once the stream reaches EOF or a settle window elapses.
+	     *
+	     * The first wait matters as much as the straggler one: this thread only just unblocked
+	     * from standardOut.take(), which guarantees the solver has finished writing this
+	     * response's stdout, but says nothing about whether our own stderr-gobbler thread --
+	     * scheduled completely independently -- has finished reading and queuing whatever
+	     * error text the solver wrote alongside it. A non-blocking first check can catch that
+	     * gobbler thread simply not having caught up yet, even though the solver did write
+	     * error text for this command, and concludes "no error" -- observed as an entire
+	     * command's error-and-echo block silently missing from a script's output, not merely
+	     * truncated at a boundary, while later commands in the same run are unaffected. */
 	    String drain(long settleMillis) throws IOException {
 	        StringBuilder out = new StringBuilder();
 	        try {
-	            Chunk c = queue.poll(); // non-blocking: no pending error text is the common case
+	            Chunk c = queue.poll(settleMillis, TimeUnit.MILLISECONDS); // brief grace period, first chunk
 	            while (c != null) {
 	                if (c.error != null) throw c.error;
 	                out.append(c.text);
