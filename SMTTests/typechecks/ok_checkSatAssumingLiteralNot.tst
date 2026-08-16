@@ -1,0 +1,7 @@
+; check-sat-assuming's literal-format restriction (see ok_checkSatAssumingLiteralSymbol.tst)
+; also accepts (not symbol)
+(set-info :smt-lib-version 2.6)
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(assert (not p))
+(check-sat-assuming ((not p)))

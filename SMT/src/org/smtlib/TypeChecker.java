@@ -729,8 +729,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 
 		}
 		
-		SymbolTable.Entry entry = symTable.lookup(head,argSorts,resultSort);
-		if (entry == null && symTable.realsIntsTheorySet) {
+		ISort matchedResultSort = symTable.lookup(head,argSorts,resultSort);
+		if (matchedResultSort == null && symTable.realsIntsTheorySet) {
 			ISort realSort = null;
 			for (ISort sort: argSorts) {
 				if (isRealSort(sort)) realSort = sort;
@@ -744,10 +744,10 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 						newargs.add(sort);
 					}
 				}
-				entry = symTable.lookup(head,newargs,resultSort);
+				matchedResultSort = symTable.lookup(head,newargs,resultSort);
 			}
 		}
-		if (entry == null) {
+		if (matchedResultSort == null) {
 			String msg = "Unknown predicate symbol " + name + " with argument types";
 			for (ISort s: argSorts) {
 				msg = msg + " " + smtConfig.defaultPrinter.toString(s);
@@ -755,7 +755,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			error(msg,e.pos());
 			return null;
 		} else {
-			return save(e,entry.sort.resultSort());
+			return save(e,matchedResultSort);
 		}
 	}
 	

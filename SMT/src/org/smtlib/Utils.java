@@ -804,9 +804,15 @@ public class Utils {
 			Iterator<ISexpr> iter = ((ISexpr.ISeq) sortsVal).sexprs().iterator();
 			while (iter.hasNext()) {
 				ISexpr.ISeq sx = (ISexpr.ISeq) iter.next();
-				IExpr.ISymbol name = (IExpr.ISymbol) sx.sexprs().get(0);
-				INumeral arity = (IExpr.INumeral) sx.sexprs().get(1);
-				symTable.addSortDefinition(name, arity, true);
+				Iterator<ISexpr> iter2 = sx.sexprs().iterator();
+				IExpr.ISymbol name = (IExpr.ISymbol) iter2.next();
+				INumeral arity = (IExpr.INumeral) iter2.next();
+				ISexpr key = iter2.hasNext() ? iter2.next() : null;
+				if (key != null && !(key instanceof IExpr.IKeyword)) {
+					return smtConfig.responseFactory.error("Ill-formed attribute in the declaration of sort " + name + ": " + key);
+				}
+				List<IExpr.IAttribute<?>> attrs = parseAttributeTail(iter2, key);
+				symTable.addSortDefinition(name, arity, attrs, true);
 				if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Added sort " + name);
 			}
 		}
@@ -817,13 +823,54 @@ public class Utils {
 		}
 		if (theoryName.equals("ArraysEx")) {
 			ISort.IFcnSort fs = smtConfig.sortFactory.createFcnSort(new ISort[0], null);
-			SymbolTable.Entry e = new SymbolTable.Entry(smtConfig.exprFactory.symbol("store"), fs, null);
+			SymbolTable.Entry e = new SymbolTable.Entry(smtConfig.exprFactory.symbol("store"), fs, null, null);
 			symTable.add(e, true);
-			e = new SymbolTable.Entry(smtConfig.exprFactory.symbol("select"), fs, null);
+			e = new SymbolTable.Entry(smtConfig.exprFactory.symbol("select"), fs, null, null);
+			symTable.add(e, true);
+		}
+		if (theoryName.equals("HO-Core")) {
+			// @ is declared in HO-Core.smt2 as (par (A B) (@ (-> A B :left-assoc) A B)) --
+			// loadFuns() skips any :funs entry beginning with "par" (no par-polymorphic
+			// function support exists), so @ is never registered by the loop above. As with
+			// store/select, register a placeholder entry (empty/null sort: not used for
+			// type-checking, which for @ is still done by TypeChecker.visit(IFcnExpr)'s own
+			// hoTheorySet-gated special case) just so the name is marked defined.
+			ISort.IFcnSort fs = smtConfig.sortFactory.createFcnSort(new ISort[0], null);
+			SymbolTable.Entry e = new SymbolTable.Entry(smtConfig.exprFactory.symbol("@"), fs, null, null);
 			symTable.add(e, true);
 		}
 
 		return null;
+	}
+
+	/** Parses a trailing attribute* tail (keyword [value] pairs) from a sort_symbol_decl or
+	 * fun_symbol_decl's sexpr, given the first attribute keyword already read from the
+	 * iterator (or null if there is no attribute tail at all). Shared by loadTheory's sort
+	 * declarations and loadFuns' function declarations, since both end with the same
+	 * attribute* grammar production. */
+	private List<IExpr.IAttribute<?>> parseAttributeTail(Iterator<ISexpr> iter2, /*@Nullable*/ ISexpr firstKey) {
+		List<IExpr.IAttribute<?>> attrs = new LinkedList<IExpr.IAttribute<?>>();
+		ISexpr key = firstKey;
+		if (key != null) while (true) {
+			if (iter2.hasNext()) {
+				ISexpr key2 = iter2.next();
+				if (key2 instanceof IExpr.IKeyword) {
+					attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword) key, null), key.pos()));
+					key = key2;
+				} else {
+					attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword) key, key2),
+							new Pos(key.pos().charStart(), key2.pos().charEnd(), key.pos().source())));
+					if (!iter2.hasNext()) break;
+					// keyword-with-value followed by more attributes (e.g. ":weight 3 :chainable");
+					// no current theory exercises this path but it is correct and must remain.
+					key = iter2.next();
+				}
+			} else {
+				attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword) key, null), key.pos()));
+				break;
+			}
+		}
+		return attrs;
 	}
 
 	private /* @Nullable */ IResponse loadFuns(IAttributeValue funsVal, String theoryName, SymbolTable symTable) {
@@ -837,7 +884,11 @@ public class Utils {
 			if (!(first instanceof IExpr.ISymbol)) continue;
 			IExpr.ISymbol sym = (IExpr.ISymbol) first;
 			String name = sym.value();
-			if (name.equals(PAR)) continue;
+			if (name.equals(PAR)) {
+				IResponse r = loadParFun(sx, theoryName, symTable);
+				if (r != null) return r;
+				continue;
+			}
 			Iterator<ISexpr> iter2 = sx.sexprs().iterator();
 			iter2.next();
 			List<ISort> sorts = new LinkedList<ISort>();
@@ -851,30 +902,68 @@ public class Utils {
 				key = null;
 			}
 			ISort result = sorts.remove(sorts.size() - 1);
-			List<IExpr.IAttribute<?>> attrs = new LinkedList<IExpr.IAttribute<?>>();
-			if (key != null) while (true) {
-				if (iter2.hasNext()) {
-					ISexpr key2 = iter2.next();
-					if (key2 instanceof IExpr.IKeyword) {
-						attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword) key, null), key.pos()));
-						key = key2;
-					} else {
-						attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword) key, key2),
-								new Pos(key.pos().charStart(), key2.pos().charEnd(), key.pos().source())));
-						if (!iter2.hasNext()) break;
-						// keyword-with-value followed by more attributes (e.g. ":weight 3 :chainable");
-						// no current theory exercises this path but it is correct and must remain.
-						key = iter2.next();
-					}
-				} else {
-					attrs.add(setPos(smtConfig.exprFactory.attribute((IExpr.IKeyword) key, null), key.pos()));
-					break;
-				}
-			}
+			List<IExpr.IAttribute<?>> attrs = parseAttributeTail(iter2, key);
 			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(sorts.toArray(new ISort[sorts.size()]), result);
-			boolean b = symTable.add(new SymbolTable.Entry(sym, fcnSort, attrs), true, true);
+			boolean b = symTable.add(new SymbolTable.Entry(sym, fcnSort, attrs, null), true, true);
 			if (!b) return smtConfig.responseFactory.error("Failed to add to symbol table: " + smtConfig.defaultPrinter.toString(sym) + " " + smtConfig.defaultPrinter.toString(fcnSort));
 			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Added symbol " + name);
+		}
+		return null;
+	}
+
+	/** Parses a par_fun_symbol_decl, ( par ( symbol+ ) ( identifier sort+ attribute* ) ),
+	 * registering a poly Entry whose sort/attributes may reference the declared parameters
+	 * as ISort.IParameter placeholders (e.g. HO-Core.smt2's (par (A B) (@ (-> A B) A B
+	 * :left-assoc))). The parameter symbols are bound as arity-0 sorts in a scope pushed
+	 * just for resolving this one declaration -- the same technique
+	 * TypeChecker.checkSortAbbreviation() uses for a define-sort's own parameters -- so that
+	 * asSort() can resolve occurrences of them the same way it resolves any other sort name. */
+	private /* @Nullable */ IResponse loadParFun(ISexpr.ISeq parDecl, String theoryName, SymbolTable symTable) {
+		List<ISexpr> parElems = parDecl.sexprs();
+		if (parElems.size() != 3 || !(parElems.get(1) instanceof ISexpr.ISeq) || !(parElems.get(2) instanceof ISexpr.ISeq)) {
+			return smtConfig.responseFactory.error("Ill-formed par function declaration in theory " + theoryName + ": " + parDecl);
+		}
+		List<ISexpr> paramSyms = ((ISexpr.ISeq) parElems.get(1)).sexprs();
+		ISexpr.ISeq decl = (ISexpr.ISeq) parElems.get(2);
+		if (decl.sexprs().isEmpty() || !(decl.sexprs().get(0) instanceof IExpr.ISymbol)) {
+			return smtConfig.responseFactory.error("Ill-formed par function declaration in theory " + theoryName + ": " + parDecl);
+		}
+		IExpr.ISymbol sym = (IExpr.ISymbol) decl.sexprs().get(0);
+
+		symTable.push();
+		try {
+			List<ISort.IParameter> params = new LinkedList<ISort.IParameter>();
+			for (ISexpr pe : paramSyms) {
+				if (!(pe instanceof IExpr.ISymbol)) {
+					return smtConfig.responseFactory.error("Ill-formed parameter in theory " + theoryName + ": " + pe);
+				}
+				IExpr.ISymbol psym = (IExpr.ISymbol) pe;
+				if (!symTable.addSortParameter(psym, false)) {
+					return smtConfig.responseFactory.error("Duplicate parameter " + psym + " in theory " + theoryName);
+				}
+				params.add((ISort.IParameter) symTable.lookupSort(psym));
+			}
+
+			Iterator<ISexpr> iter2 = decl.sexprs().iterator();
+			iter2.next();
+			List<ISort> sorts = new LinkedList<ISort>();
+			ISexpr key = null;
+			while (iter2.hasNext()) {
+				key = iter2.next();
+				if (key instanceof IExpr.IKeyword) break;
+				ISort ss = asSort(key, symTable);
+				if (ss == null) return smtConfig.responseFactory.error("Unknown sort given: " + key);
+				sorts.add(ss);
+				key = null;
+			}
+			ISort result = sorts.remove(sorts.size() - 1);
+			List<IExpr.IAttribute<?>> attrs = parseAttributeTail(iter2, key);
+			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(sorts.toArray(new ISort[sorts.size()]), result);
+			boolean b = symTable.add(new SymbolTable.Entry(sym, fcnSort, attrs, params), true, true);
+			if (!b) return smtConfig.responseFactory.error("Failed to add to symbol table: " + smtConfig.defaultPrinter.toString(sym));
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Added symbol " + sym.value());
+		} finally {
+			symTable.pop();
 		}
 		return null;
 	}
@@ -884,9 +973,32 @@ public class Utils {
 			IExpr.ISymbol sym = (IExpr.ISymbol) sexpr;
 			ISort.IDefinition def = symtab.lookupSort(sym);
 			if (def == null || def.intArity() != 0) return null;
+			// A par-declared parameter (e.g. A, B in (par (A B) ...)) must be returned as-is,
+			// not wrapped in a fresh sort application: IParameter.equals() is identity-based,
+			// so later substitution/unification needs this to be the very same object that
+			// was bound for this parameter, not a new node that merely refers to it.
+			if (def instanceof ISort.IParameter) return (ISort.IParameter) def;
 			ISort.IApplication sort = smtConfig.sortFactory.createSortExpression(def.identifier());
 			sort.definition(def);
 			return sort;
+		}
+		if (sexpr instanceof ISexpr.ISeq) {
+			// A compound sort expression, e.g. (-> A B): the head must be a declared sort
+			// family (not an abbreviation or parameter -- those aren't callable like this),
+			// and each remaining element is itself resolved recursively (so this also handles
+			// nested compound sorts and parameter references anywhere within).
+			List<ISexpr> elems = ((ISexpr.ISeq) sexpr).sexprs();
+			if (elems.isEmpty() || !(elems.get(0) instanceof IExpr.ISymbol)) return null;
+			ISort.IDefinition def = symtab.lookupSort((IExpr.ISymbol) elems.get(0));
+			if (!(def instanceof ISort.IFamily)) return null;
+			List<ISort> args = new LinkedList<ISort>();
+			for (int i = 1; i < elems.size(); i++) {
+				ISort arg = asSort(elems.get(i), symtab);
+				if (arg == null) return null;
+				args.add(arg);
+			}
+			if (args.size() != def.intArity()) return null;
+			return def.eval(args);
 		}
 		return null;
 	}

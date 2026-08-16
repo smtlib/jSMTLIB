@@ -9,7 +9,12 @@
 
  :sorts ( (-> 2 :right-assoc) )
 
- :funs ( (par (A B) (@ (-> A B :left-assoc) A B) ) )
+ ; TODO - the :left-assoc here was nested inside the (-> A B) sort argument, which the
+ ; documented par_fun_symbol_decl grammar does not allow (attribute* only trails the whole
+ ; declaration, after all of sort+). Moved to that position so it's parseable; check with
+ ; this theory file's original authors whether the upstream text agrees or whether this
+ ; placement had some other intended meaning.
+ :funs ( (par (A B) (@ (-> A B) A B :left-assoc) ) )
 
  :definition
  "For every expanded signature Sigma, the instance of HO-Core with that signature

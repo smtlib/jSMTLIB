@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IParser.ParserException;
@@ -97,12 +96,10 @@ public class C_what extends Command implements Iwhat {
 				ISort.IDefinition sortDef = symTable.lookupSort(s); 
 				if (sortDef != null) smtConfig.log.logOut(printer.toString(s) + " : " + printer.toString(sortDef));
 				else {
-					Map<Integer,List<SymbolTable.Entry>> map = symTable.lookup(s);
-					if (map != null && map.size() != 0) {
-						for (List<SymbolTable.Entry> entrylist : map.values()) {
-							for (SymbolTable.Entry entry: entrylist) {
-								smtConfig.log.logOut(printer.toString(s) + " : " + printer.toString(entry.sort));
-							}
+					List<SymbolTable.Entry> entrylist = symTable.lookup(s);
+					if (entrylist != null && entrylist.size() != 0) {
+						for (SymbolTable.Entry entry: entrylist) {
+							smtConfig.log.logOut(printer.toString(s) + " : " + printer.toString(entry.sort));
 						}
 					} else {
 						smtConfig.log.logOut(printer.toString(s) + " : -no entry- ");

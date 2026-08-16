@@ -52,8 +52,8 @@ public class Factory implements IExpr.IFactory, ISort.IFactory, ICommand.IFactor
 	// The following methods are those of the Sort factory
 
 	@Override
-	public Family createSortFamily(IIdentifier identifier, INumeral arity) {
-		return new Family(identifier,arity);
+	public Family createSortFamily(IIdentifier identifier, INumeral arity, List<IExpr.IAttribute<?>> attributes) {
+		return new Family(identifier,arity,attributes);
 	}
 
 	@Override

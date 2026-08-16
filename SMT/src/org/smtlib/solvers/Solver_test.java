@@ -493,7 +493,7 @@ public class Solver_test implements ISolver {
 		List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), new LinkedList<ISort>(), cmd.resultSort(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
 		if (list.isEmpty()) {
 			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(new ISort[0],cmd.resultSort());
-			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null);
+			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null,null);
 			if (symTable.add(entry, isGlobal(), false)) {
 				checkSatStatus = null;
 				return smtConfig.responseFactory.success();
@@ -514,7 +514,7 @@ public class Solver_test implements ISolver {
 		List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.argSorts(),cmd.resultSort(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
 		if (list.isEmpty()) {
 			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(cmd.argSorts().toArray(new ISort[cmd.argSorts().size()]),cmd.resultSort());
-			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null);
+			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null,null);
 			if (symTable.add(entry, isGlobal(), false)) {
 				checkSatStatus = null;
 				return smtConfig.responseFactory.success();
@@ -546,7 +546,7 @@ public class Solver_test implements ISolver {
 				//newp.add(smtConfig.exprFactory.declaration(d.parameter(),d.sort(),d.pos()));
 			}
 			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(args,cmd.resultSort());
-			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null);
+			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null,null);
 			entry.definition = cmd.expression();
 			if (symTable.add(entry, isGlobal(), false)) {
 				checkSatStatus = null;
@@ -599,7 +599,7 @@ public class Solver_test implements ISolver {
         boolean b = list.isEmpty();
         if (b) {
             INumeral sortArity = cmd.arity();
-            b = symTable.addSortDefinition(cmd.sortSymbol(), sortArity, isGlobal());
+            b = symTable.addSortDefinition(cmd.sortSymbol(), sortArity, null, isGlobal());
             if (!b) return smtConfig.responseFactory.error("The identifier is already declared to be a sort: " + 
                     smtConfig.defaultPrinter.toString(cmd.sortSymbol()), cmd.sortSymbol().pos());
             checkSatStatus = null;
@@ -656,7 +656,7 @@ public class Solver_test implements ISolver {
             Collections.singletonList(cmd.sortDeclaration()),
             Collections.singletonList(dt));
         if (!nameErrors.isEmpty()) return nameErrors.get(0);
-        if (!symTable.addSortDefinition(sortName, arity, isGlobal())) {
+        if (!symTable.addSortDefinition(sortName, arity, null, isGlobal())) {
             return smtConfig.responseFactory.error("The sort is already declared: " + smtConfig.defaultPrinter.toString(sortName), sortName.pos());
         }
         IResponse err = registerDatatypeConstructors(sortName, dt);
@@ -676,7 +676,7 @@ public class Solver_test implements ISolver {
         if (!nameErrors.isEmpty()) return nameErrors.get(0);
         // Register all sort names first so constructors can cross-reference them
         for (ISortDeclaration sd : sortDecls) {
-            if (!symTable.addSortDefinition(sd.symbol(), sd.arity(), isGlobal())) {
+            if (!symTable.addSortDefinition(sd.symbol(), sd.arity(), null, isGlobal())) {
                 return smtConfig.responseFactory.error("The sort is already declared: " + smtConfig.defaultPrinter.toString(sd.symbol()), sd.symbol().pos());
             }
         }
@@ -698,14 +698,14 @@ public class Solver_test implements ISolver {
             List<IResponse> errs = TypeChecker.checkFcn(symTable, ctor.symbol(), argSorts, declaredSort, ctor.symbol().pos());
             if (!errs.isEmpty()) return errs.get(0);
             ISort.IFcnSort ctorSort = smtConfig.sortFactory.createFcnSort(argSorts.toArray(new ISort[0]), declaredSort);
-            symTable.add(new SymbolTable.Entry(ctor.symbol(), ctorSort, null), isGlobal(), false);
+            symTable.add(new SymbolTable.Entry(ctor.symbol(), ctorSort, null, null), isGlobal(), false);
             ctorList.add(ctor.symbol());
             for (ISelector sel : ctor.selectors()) {
                 ISort[] selArgs = new ISort[]{ declaredSort };
                 List<IResponse> selErrs = TypeChecker.checkFcn(symTable, sel.symbol(), Arrays.asList(selArgs), sel.sort(), sel.symbol().pos());
                 if (!selErrs.isEmpty()) return selErrs.get(0);
                 ISort.IFcnSort selSort = smtConfig.sortFactory.createFcnSort(selArgs, sel.sort());
-                symTable.add(new SymbolTable.Entry(sel.symbol(), selSort, null), isGlobal(), false);
+                symTable.add(new SymbolTable.Entry(sel.symbol(), selSort, null, null), isGlobal(), false);
             }
         }
         symTable.datatypeConstructors.put(sortName.value(), ctorList);

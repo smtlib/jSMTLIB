@@ -36,23 +36,28 @@ public abstract class Sort extends Pos.Printable implements ISort {
 		// Application.equals()/expand() require definition() to be set (as symTable-driven
 		// sort resolution normally does via Family.eval()); without this, comparing this
 		// singleton against a distinct (non-identical) Bool instance NPEs inside expand().
-		Bool.definition(new Sort.Family(new Symbol(BOOL), new Numeral(0)));
+		Bool.definition(new Sort.Family(new Symbol(BOOL), new Numeral(0), null));
 	}
 
 	/** Represents a new sort symbol, with a given identifier and arity */
 	static public class Family extends Pos.Printable implements IFamily {
 		protected IIdentifier identifier;
 		protected INumeral arity;
-		/** Creates a sort family with the given identifier and arity. */
-		public Family(IIdentifier identifier, INumeral arity) {
+		protected List<IExpr.IAttribute<?>> attributes;
+		/** Creates a sort family with the given identifier, arity, and attributes (null or empty if none). */
+		public Family(IIdentifier identifier, INumeral arity, /*@Nullable*/ List<IExpr.IAttribute<?>> attributes) {
 			this.identifier = identifier;
 			this.arity = arity;
+			this.attributes = attributes == null ? Collections.<IExpr.IAttribute<?>>emptyList() : attributes;
 		}
 		@Override
 		public IIdentifier identifier() { return identifier; }
-		
+
 		@Override
 		public INumeral arity() { return arity; }
+
+		@Override
+		public List<IExpr.IAttribute<?>> attributes() { return attributes; }
 
 		@Override
 		public int intArity() { return arity().intValue(); }
@@ -204,7 +209,32 @@ public abstract class Sort extends Pos.Printable implements ISort {
 					if (p != param) changed = true;
 				}
 				while (ss instanceof Application) {
-					if (((Application)ss).definition() instanceof IFamily) return ss;
+					Application app = (Application)ss;
+					// -> is declared :right-assoc (SMT-LIB Sec. 3.7.2): a flat application
+					// with more than its declared 2-ary arity, e.g. (-> A B C), is sugar for
+					// the right-nested (-> A (-> B C)). TypeChecker.visit(ISort.IApplication)
+					// already accepts this where a -> sort expression is first type-checked,
+					// but the properly-folded value it computes there isn't always what ends
+					// up stored and later reused -- e.g. declare-fun stores cmd.resultSort(),
+					// the original still-flat parsed AST node (with definition() never set),
+					// directly, not TypeChecker's replacement -- so a flat, un-folded ->
+					// application can still reach here, e.g. via an equals() comparison
+					// against a properly-nested value. Fold on demand rather than assume any
+					// -> application already has the canonical (<=2-parameter) shape.
+					if (Utils.ARROW.equals(app.family().headSymbol()) && app.parameters().size() > 2) {
+						List<ISort> params = app.parameters();
+						ISort result = params.get(params.size() - 1);
+						for (int i = params.size() - 2; i >= 0; i--) {
+							List<ISort> pair = new LinkedList<ISort>();
+							pair.add(params.get(i));
+							pair.add(result);
+							Application step = new Application(app.family(), pair);
+							step.definition(new Family(app.family(), new Numeral(2), null));
+							result = step;
+						}
+						return result;
+					}
+					if (app.definition() instanceof IFamily) return ss;
 					ss = definition().eval(sortParameters);
 				}
 				expanded = ss;

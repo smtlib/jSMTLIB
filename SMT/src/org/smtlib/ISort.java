@@ -100,10 +100,15 @@ public interface ISort extends INode, IPosable {
 		/** The unique identifier for this sort symbol */
 		@Override
 		IIdentifier identifier();
-		
+
 		/** The arity of the sort symbol */
 		//@ ensures \result.intValue() >= 0;
 		INumeral arity();
+
+		/** Any attributes declared on this sort symbol (e.g. :right-assoc, as on -> in
+		 * HO-Core.smt2); empty (never null) if there are none. */
+		//@ pure
+		List<IExpr.IAttribute<?>> attributes();
 	}
 	
 	/** This interface represents a new Sort symbol designating an
@@ -197,8 +202,8 @@ public interface ISort extends INode, IPosable {
 
 	/** The interface for a Sort-creating factory. */
 	static public interface IFactory {
-		/** Creates a sort family with the given identifier and arity. */
-		IFamily createSortFamily(IIdentifier identifier, INumeral arity);
+		/** Creates a sort family with the given identifier, arity, and attributes (null or empty if none). */
+		IFamily createSortFamily(IIdentifier identifier, INumeral arity, /*@Nullable*/ List<IExpr.IAttribute<?>> attributes);
 
 		/** Creates a parameter for a parameterized sort abbreviation. */
 		IParameter createSortParameter(ISymbol symbol);

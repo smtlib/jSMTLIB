@@ -11,8 +11,12 @@ import java.io.OutputStream;
  *  and the current classpath rather than an OS utility like `cat`, so the test does not
  *  depend on what shell utilities happen to be installed on a given OS.
  *
- *  Not a JUnit test itself (no {@code @Test} method): runjunits compiles it, since it lives
- *  under src/org/smtlib/test, but does not run it as a test.
+ *  Not a JUnit test itself (declares no test methods): runjunits compiles it, since it lives
+ *  under src/org/smtlib/test, but should not be picked up as a runnable test class. (Avoid
+ *  writing the JUnit test annotation's name literally in this comment -- runjunits' own
+ *  discovery step is a plain grep for that string in each source file, and a doc comment
+ *  that merely mentions it by name is enough to trigger a false match, which is exactly
+ *  what happened here before this rewording.)
  *
  *  Usage: java org.smtlib.test.EchoProcess [--malformed-stdout] [--malformed-stderr]
  *  Either flag writes a single invalid UTF-8 byte (0x80, a lone continuation byte with no

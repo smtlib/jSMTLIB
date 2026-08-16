@@ -74,7 +74,7 @@ public class PrinterCoverageTest {
     public void sortFamily() throws Exception {
         ISymbol name = config.exprFactory.symbol("MySort");
         INumeral arity = config.exprFactory.numeral(2);
-        ISort.IFamily family = config.sortFactory.createSortFamily(name, arity);
+        ISort.IFamily family = config.sortFactory.createSortFamily(name, arity, null);
         // A family is referenced by its bare identifier; the full
         // "(declare-sort name arity)" syntax is assembled by the declare-sort
         // command's own write(), never by printing an IFamily.

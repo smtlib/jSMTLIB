@@ -8,8 +8,8 @@ success
             ^
 (error "The @ function requires exactly two arguments")
 (assert (= (@ f x y) y))
-            ^
-(error "The @ function requires exactly two arguments")
+           ^^^^^^^^^
+(error "The first argument of @ must have a -> sort, not B")
 (assert (= (@ x f) y))
            ^^^^^^^
 (error "The first argument of @ must have a -> sort, not A")
