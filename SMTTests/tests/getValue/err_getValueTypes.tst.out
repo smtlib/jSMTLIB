@@ -5,4 +5,4 @@ success
 success
 success
 unknown
-(error "Unknown predicate symbol and with argument types A Bool")
+(error "Argument 1 of and has sort A, expected Bool")

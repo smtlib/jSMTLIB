@@ -6,4 +6,4 @@ success
 success
 success
 success
-(error "The first argument of the select function should be an Array sort, not (A I V)")
+(error "Argument 1 of select has sort (A I V), expected sort family Array")

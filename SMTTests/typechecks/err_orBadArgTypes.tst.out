@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "Unknown predicate symbol or with argument types Bool X")
+(error "Argument 2 of or has sort X, expected Bool")

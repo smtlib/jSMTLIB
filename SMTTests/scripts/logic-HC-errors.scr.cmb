@@ -5,14 +5,14 @@ success
 success
 success
 (assert (= (@ f) y))
-            ^
-(error "The @ function requires exactly two arguments")
+           ^^^^^
+(error "The function symbol @ takes two or more arguments")
 (assert (= (@ f x y) y))
            ^^^^^^^^^
-(error "The first argument of @ must have a -> sort, not B")
+(error "Left-associative application of @ fails at argument 3: has sort B, expected sort family ->")
 (assert (= (@ x f) y))
            ^^^^^^^
-(error "The first argument of @ must have a -> sort, not A")
+(error "Argument 1 of @ has sort A, expected sort family ->")
 (assert (= (@ f y) y))
            ^^^^^^^
-(error "The second argument of @ must match the domain sort: B vs. A")
+(error "Argument 2 of @ has sort B, expected A (to match an earlier argument)")

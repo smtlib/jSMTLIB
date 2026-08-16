@@ -4,4 +4,4 @@ success
 success
 success
 success
-(error "The third argument of the store function must match the array value sort: I vs. V")
+(error "Argument 3 of store has sort I, expected V (to match an earlier argument)")

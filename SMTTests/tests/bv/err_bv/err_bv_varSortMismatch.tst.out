@@ -1,4 +1,4 @@
 success
 success
 success
-(error "Mismatched sorts of arguments: (_ BitVec 4) vs. (_ BitVec 1)")
+(error "Argument 2 of = has sort (_ BitVec 1), expected (_ BitVec 4) (to match an earlier argument)")

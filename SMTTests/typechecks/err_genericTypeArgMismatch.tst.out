@@ -7,4 +7,4 @@ success
 success
 success
 success
-(error "Unknown predicate symbol f with argument types Y (X Bool)")
+(error "Argument 2 of f has sort (X Bool), expected (X Y)")

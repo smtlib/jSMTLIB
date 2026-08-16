@@ -4,4 +4,4 @@ success
 success
 success
 success
-(error " The select function should have two arguments")
+(error "select does not accept more than two arguments")

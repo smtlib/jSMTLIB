@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "Unknown predicate symbol not with argument types X")
+(error "Argument 1 of not has sort X, expected Bool")

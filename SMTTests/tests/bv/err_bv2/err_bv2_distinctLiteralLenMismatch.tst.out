@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "Mismatched sorts of arguments: (_ BitVec 1) vs. (_ BitVec 2)")
+(error "Argument 2 of distinct has sort (_ BitVec 2), expected (_ BitVec 1) (to match an earlier argument)")

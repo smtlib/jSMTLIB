@@ -1,2 +1,2 @@
 success
-(error "The @ function requires exactly two arguments")
+(error "The function symbol @ takes two or more arguments")

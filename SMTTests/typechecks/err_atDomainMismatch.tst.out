@@ -1,4 +1,4 @@
 success
 success
 success
-(error "The second argument of @ must match the domain sort: Bool vs. Int")
+(error "Argument 2 of @ has sort Bool, expected Int (to match an earlier argument)")

@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "The last two arguments of ite have different sorts")
+(error "Argument 3 of ite has sort (_ BitVec 2), expected (_ BitVec 1) (to match an earlier argument)")

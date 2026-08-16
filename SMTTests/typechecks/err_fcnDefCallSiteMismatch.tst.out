@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "Mismatched sorts of arguments: Int vs. Bool")
+(error "Argument 2 of = has sort Bool, expected Int (to match an earlier argument)")

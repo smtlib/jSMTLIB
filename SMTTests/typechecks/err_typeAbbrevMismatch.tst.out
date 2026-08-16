@@ -4,4 +4,4 @@ success
 success
 success
 success
-(error "Mismatched sorts of arguments: (X Y) vs. (Z Bool)")
+(error "Argument 2 of = has sort (X Bool), expected (X Y) (to match an earlier argument)")

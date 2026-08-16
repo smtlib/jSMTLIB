@@ -1,5 +1,5 @@
 (assert (= (@ f) y))
-            ^
+           ^^^^^
 (assert (= (@ f x y) y))
            ^^^^^^^^^
 (assert (= (@ x f) y))

@@ -4,4 +4,4 @@ success
 success
 success
 success
-(error "Mismatched sorts of arguments: I vs. V")
+(error "Argument 2 of = has sort V, expected I (to match an earlier argument)")
