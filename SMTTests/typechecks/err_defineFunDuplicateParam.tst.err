@@ -1,0 +1,2 @@
+(define-fun f ((a Bool)(a Bool)) Bool a)
+                        ^

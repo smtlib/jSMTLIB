@@ -1,0 +1,4 @@
+success
+success
+success
+(error "The first argument of ite must have sort Bool")

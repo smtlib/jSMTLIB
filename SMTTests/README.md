@@ -164,18 +164,77 @@ plus a couple of fixes discovered along the way:
   re-declaration, and `tests/array/array2/err_array2_arity*.tst` only
   covers the arity of the built-in `Array` sort.
 
-**Migration status**: this is step (a) of a three-step plan. (a) — port the
-existing `TypeCheck*` JUnit tests faithfully, done. (b) — expand coverage to
-the rest of `TypeChecker`'s ~55 error-producing call sites (match
-expressions, datatypes, sort-abbreviation and numeral/literal-format errors
-are all currently under-tested or untested), and cross-check against what
-the SMT-LIB standard itself actually requires be rejected, not just what
-`TypeChecker.java` happens to implement — not yet started. (c) — eventually,
-run this same `.tst` corpus against real solvers too, to see how completely
-each one's own native type-checking compares (a genuinely different
-question from this directory's, per the mechanism explanation above,
-capturing its own real per-solver goldens) — not yet started, blocked on
-(b).
+**Migration status**: this is a three-step plan. (a) — port the existing
+`TypeCheck*` JUnit tests faithfully, done (27 files). (b) — expand coverage
+to the rest of `TypeChecker`'s ~55 error-producing call sites, and
+cross-check against what the SMT-LIB standard itself actually requires be
+rejected: in progress. A full read-through of `TypeChecker.java` cross-checked
+against the entire `tests/` corpus (not just `typechecks/`) found the
+existing suite far more thorough than initially assumed — `tests/match/`,
+`tests/datatype/`, and `tests/version/` already cover nearly every branch of
+match-expression checking, datatype validation, and version-gating; earlier
+wording here calling those "under-tested" was wrong, based on a shallow scan
+rather than a real check. Five genuine, individually-confirmed gaps have
+been closed so far (19 files beyond the (a) baseline, all direct-probed
+against `--solver test` before being written, same as (a); 46 total):
+  - the entire HO-Core theory (`@` function application, `->` arrow sort)
+    was completely untested — confirmed no standard-defined logic includes
+    HO-Core (checked every file under `SMT/logics/`; only `ALL.smt2` lists
+    it), so every HO-Core test here uses `(set-logic ALL)`. Each of `->`
+    and `@` is tested separately (not conflated) at arity 0/1/2/3
+    (`err_arrowArity0/1.tst`, `ok_arrowArity2.tst`,
+    `ok_arrowRightAssocSugar.tst`; `err_atArity0/1.tst`,
+    `ok_atArity2.tst`, `ok_atLeftAssocSugar.tst`), plus sort checks
+    at the base arity (`err_arrowBadDomainSort.tst`/
+    `err_arrowBadCodomainSort.tst` for `->`; `err_atNotArrowSort.tst`/
+    `err_atDomainMismatch.tst` for `@`). **This surfaced two real,
+    previously undocumented conformance bugs**, found by independently
+    re-deriving expected behavior from the primary SMT-LIB 2.7 spec text
+    (Sec. 3.7.2) rather than from `TypeChecker.java`'s own implementation,
+    then comparing: the spec states plainly that `->` is right-associative
+    (`(-> t1 t2 t3)` is sugar for `(-> t1 (-> t2 t3))`) and, correspondingly,
+    `@` is left-associative (`(@ t1 t2 t3)` is sugar for `(@ (@ t1 t2) t3)`)
+    — but jSMTLIB implements neither: both are rejected outright as a fixed
+    2-argument arity error. `ok_arrowRightAssocSugar.tst` and
+    `ok_atLeftAssocSugar.tst` are named for the behavior the standard
+    actually mandates (`ok_`, since that's what a conformant implementation
+    would do) and their goldens assert that correct behavior — so **both
+    currently, deliberately fail**, as a live regression marker, rather
+    than having a golden that captures the bug and quietly passes. They're
+    expected to start passing once the underlying gap is fixed; nothing
+    else in `typechecks/` is affected (44/46 pass). Meanwhile the
+    *explicit*, fully parenthesized nested form works correctly in both
+    cases right now (`ok_arrowRightAssocExplicit.tst`,
+    `ok_atCurriedExplicit.tst` — the latter also confirms partial
+    application, `(@ f x)` yielding a properly arrow-sorted result, works).
+    Root cause: `TypeChecker.java`'s
+    `visit(IFcnExpr)`/`visit(ISort.IApplication)` only ever check a symbol's
+    own fixed declared arity; there's no general mechanism honoring a
+    theory-declared `:left-assoc`/`:right-assoc`/`:chainable`/`:pairwise`
+    annotation (SMT-LIB Sec. 3.6.2) for anything beyond a handful of
+    hardcoded built-in operators (`and`/`or`/`bvand`/etc.) — new
+    theory-declared symbols like HO-Core's `->` and `@` don't get it,
+    matching `@`'s own
+    `// FIXME - this is just here until we get par types implemented`
+    comment.
+  - `ite`'s condition-must-be-Bool check (`err_iteConditionNotBool.tst`) —
+    only the sibling branch-sort-mismatch check was covered
+  - a plain integer numeral under a no-arithmetic logic
+    (`err_numeralNoArithmeticTheory.tst`) — the analogous decimal-literal
+    case was covered, this wasn't
+  - `define-fun`'s own parameter-list duplicate-name check
+    (`err_defineFunDuplicateParam.tst`) — distinct from the quantifier/`let`
+    and `define-sort` duplicate-name checks that were already covered
+  - `define-funs-rec` declaration/body count mismatch
+    (`err_defineFunsRecCountMismatch.tst`)
+
+Remaining for (b): the broader cross-check against what the standard itself
+mandates (as opposed to what `TypeChecker.java` happens to implement) hasn't
+been done yet. (c) — eventually, run this same `.tst` corpus against real
+solvers too, to see how completely each one's own native type-checking
+compares (a genuinely different question from this directory's, per the
+mechanism explanation above, capturing its own real per-solver goldens) —
+not yet started, blocked on (b).
 
 ### `scripts/` — `.scr` files
 

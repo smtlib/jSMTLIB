@@ -1,0 +1,4 @@
+success
+success
+success
+(error "The first argument of @ must have a -> sort, not Int")
