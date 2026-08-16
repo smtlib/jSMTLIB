@@ -1,5 +1,0 @@
-success
-(error "Parse Error: <shell>:1.27: invalid kind 'STRING_LT', expected Terms with kind STRING_LT must have at least 2 children and at most 2 children (the one under construction has 3)")
-(error "Error writing to solver: (check-sat) java.io.IOException: Solver process has already exited")
-(error "Error writing to solver: (assert (str.< ""a"" ""c"" ""b"")) java.io.IOException: Solver process has already exited")
-(error "Error writing to solver: (check-sat) java.io.IOException: Solver process has already exited")
