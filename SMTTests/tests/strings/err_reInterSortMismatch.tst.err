@@ -1,0 +1,2 @@
+(assert (str.in_re "b" (re.inter (str.to_re "a") (str.to_re "b") b)))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -129,6 +129,12 @@
   We refer to these literals as _string constants_.
  "
 
+; STRING gives string literals a sort, the same way NUMERAL and DECIMAL do
+; for numeral/decimal literals in the Ints/Reals theory declarations (see
+; Sec 3.7.2: "The same can be done for the set of decimal and string
+; constants by using DECIMAL and STRING, respectively.").
+ :funs ((STRING String))
+
  :notes
  "The restriction to printable US ASCII characters in string constants is for
   simplicity since that set is universally supported. Arbitrary Unicode characters

@@ -1,0 +1,5 @@
+success
+(error "line 2 column 26: Unexpected number of arguments to 'str.<' 2 arguments expected 3 given")
+sat
+(error "line 4 column 26: Unexpected number of arguments to 'str.<' 2 arguments expected 3 given")
+sat

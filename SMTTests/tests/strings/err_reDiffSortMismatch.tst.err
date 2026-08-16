@@ -1,0 +1,2 @@
+(assert (str.in_re "x" (re.diff (str.to_re "x") (str.to_re "y") b)))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
