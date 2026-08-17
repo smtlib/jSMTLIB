@@ -9,3 +9,8 @@
 (assert (= y (bvor #b1100 #b1010 #b1001)))
 (assert (= y #b0000))
 (check-sat)
+(declare-fun a () (_ BitVec 6))
+(declare-fun b () (_ BitVec 6))
+(declare-fun c () (_ BitVec 6))
+(assert (distinct (bvor a b c) (bvor (bvor a b) c)))
+(check-sat)

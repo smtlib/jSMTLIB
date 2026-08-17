@@ -9,3 +9,8 @@
 (assert (= y (bvmul #b1100 #b1010 #b1001)))
 (assert (= y #b0001))
 (check-sat)
+(declare-fun a () (_ BitVec 9))
+(declare-fun b () (_ BitVec 9))
+(declare-fun c () (_ BitVec 9))
+(assert (distinct (bvmul a b c) (bvmul (bvmul a b) c)))
+(check-sat)
