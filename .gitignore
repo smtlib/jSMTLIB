@@ -1,6 +1,11 @@
 # Ignore Gradle project-specific cache directory
 .gradle
 
-# Ignore Gradle build output directory
+# Not Gradle's own build output anymore (that build system is gone from this repo) --
+# this bare pattern's actual job today is ignoring SMTTests/lsp/build.
 build
 **/.DS_Store
+
+# Claude Code's own local session/scheduling state (e.g. scheduled_tasks.lock) --
+# appears at multiple directory levels in this repo, machine/session-specific.
+.claude/

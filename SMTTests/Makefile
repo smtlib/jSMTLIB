@@ -10,7 +10,7 @@ SHELL = /bin/bash
 ##   make cov-test cov-report COV_CLASSES=../SMT/bin
 COV_CLASSES ?= ../SMT/jSMTLIB.jar
 
-.PHONY: test tests test-only clean script-tests smt-tests junit-tests build cov-test cov-clean cov-report cov-show reports time-solvers
+.PHONY: test tests test-only clean script-tests smt-tests junit-tests build cov-test cov-clean cov-report cov-show cov-all reports time-solvers
 
 ## Resolve the platform-appropriate solver directory, honouring any value already in the
 ## environment (CI sets it via GITHUB_ENV before invoking make; developers can export it
@@ -77,6 +77,7 @@ junit-tests:
 	bash ./runjunits
 
 clean:
+	$(MAKE) -C ../SMT clean
 	rm -f tempout scripts/tempout solver.out
 	find tests scripts \( -name '*.actual' -o -name '*.actual.tmp' \) -delete
 	rm -f bin/org/smtlib/test/UnitTests.class bin/org/smtlib/test/UnitTests\$$*.class

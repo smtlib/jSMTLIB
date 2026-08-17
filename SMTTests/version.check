@@ -1,5 +1,0 @@
-##EXITCODE 0
-source setup
-VER=$(cat ../SMT/version.txt)
-echo $VER
-$SMT_CMD --version | diff -b - <(echo "$VER")

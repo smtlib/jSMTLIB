@@ -1,0 +1,6 @@
+### Checks that the version reported by --version matches SMT/version.txt, the source
+### of truth baked into the jar at build time (guards against a stale jar/build).
+##EXITCODE 0
+VER=$(cat ../SMT/version.txt)
+echo $VER
+$SMT_CMD --version | diff -b - <(echo "$VER")
