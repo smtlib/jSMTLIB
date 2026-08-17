@@ -592,8 +592,7 @@ public class Solver_test implements ISolver {
 			return smtConfig.responseFactory.error("The logic must be set before a define-fun-rec command is issued");
 		}
 		List<IResponse> list = TypeChecker.checkFcnRec(symTable, isGlobal(), cmd.symbol(),
-				cmd.parameters(), cmd.resultSort(), cmd.expression(),
-				cmd instanceof IPosable ? ((IPosable) cmd).pos() : null);
+				cmd.parameters(), cmd.resultSort(), cmd.expression());
 		if (list.isEmpty()) {
 			checkSatStatus = null;
 			return smtConfig.responseFactory.success();

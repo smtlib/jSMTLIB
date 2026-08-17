@@ -167,27 +167,13 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 
 	/** Type-checks a define-fun-rec command: verifies the symbol is new, validates sorts,
 	 * pre-adds the function to the symbol table so the body may call it recursively,
-	 * then checks the body expression.  On success the entry's definition is set. */
+	 * then checks the body expression.  On success the entry's definition is set.
+	 * Delegates to checkFcnsRec as the N=1 case (a singleton declaration group). */
 	public static List<IResponse> checkFcnRec(SymbolTable symTable,
-			boolean global, ISymbol id, List<IDeclaration> params, ISort result, IExpr expr, IPos pos) {
-		if (symTable.lookup(params.size(), id) != null) {
-			List<IResponse> errors = new LinkedList<>();
-			errors.add(symTable.smtConfig.responseFactory.error(
-					"Symbol " + symTable.smtConfig.defaultPrinter.toString(id) + " is already defined", id.pos()));
-			return errors;
-		}
-		List<IResponse> sortErrors = checkSorts(symTable, params, result);
-		if (!sortErrors.isEmpty()) return sortErrors;
-		ISort[] argSorts = new ISort[params.size()];
-		for (int i = 0; i < params.size(); i++) argSorts[i] = params.get(i).sort();
-		ISort.IFcnSort fcnSort = symTable.smtConfig.sortFactory.createFcnSort(argSorts, result);
-		SymbolTable.Entry entry = new SymbolTable.Entry(id, fcnSort, null, null);
-		symTable.add(entry, global);
-		List<IResponse> bodyErrors = checkFcn(symTable, id, params, result, expr, pos);
-		if (bodyErrors.isEmpty()) {
-			entry.definition = expr;
-		}
-		return bodyErrors;
+			boolean global, ISymbol id, List<IDeclaration> params, ISort result, IExpr expr) {
+		return checkFcnsRec(symTable, global,
+				Collections.singletonList(new SMTExpr.FunctionDeclaration(id, params, result)),
+				Collections.singletonList(expr));
 	}
 
 	/** Type-checks a define-funs-rec command: for each declaration verifies the symbol is new and
