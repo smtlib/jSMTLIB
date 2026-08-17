@@ -1,7 +1,0 @@
-success
-(set-option :interactive-mode true)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(error "The value of the :interactive-mode option must be set before the set-logic command")
-(get-assertions)
-^^^^^^^^^^^^^^^^
-(error "The get-assertions command is only valid if :interactive-mode has been enabled")

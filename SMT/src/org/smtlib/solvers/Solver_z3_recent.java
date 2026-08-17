@@ -15,9 +15,10 @@ import org.smtlib.*;
  *  4.10.2), on the assumption that they are (or should be) fully SMT-LIB compliant: it is a
  *  concrete, silent inheritor of {@link AbstractSolver} -- only the startup command line and
  *  {@link #start()}/{@link #exit()} (process lifecycle) are overridden. Empirically, none of
- *  the z3-4.3-era workarounds in {@link Solver_z3_4_5} (which this class does NOT extend,
- *  unlike {@link Solver_z3_4_8}) are needed any more: :print-success already defaults to true
- *  (no priming command, and so no line-number offset to correct for in error messages),
+ *  the z3-4.3-era workarounds the old version-specific adapters needed (see the git history of
+ *  the now-removed Solver_z3_4_5/4_6/4_7/4_8 classes) are needed any more: :print-success
+ *  already defaults to true (no priming command, and so no line-number offset to correct for
+ *  in error messages),
  *  bitvector literals print in standard #b/#x form (no bv5[8]-style regex conversion needed),
  *  and errors come back as clean, well-formed (error "...") s-expressions that
  *  AbstractSolver's generic parseResponse handles without any massaging.

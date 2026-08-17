@@ -1,7 +1,0 @@
-(:reason-unknown "state of the most recent check-sat command is not known" )
-(:max-memory 0.31 )
-(set-logic QF_UF)
-^^^^^^^^^^^^^^^^^
-(error "line 4 column 11: logic must be set before initialization")
-(:reason-unknown "state of the most recent check-sat command is not known" )
-(:max-memory 18.90 )
