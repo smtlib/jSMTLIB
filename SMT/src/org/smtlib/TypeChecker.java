@@ -105,7 +105,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		
 	}
 
-	public static List<IResponse> checkFcn(SymbolTable symTable, IIdentifier id, List<IDeclaration> params, ISort result, IExpr expr, IPos pos) {
+	public static List<IResponse> checkFcn(SymbolTable symTable, IIdentifier id, List<IDeclaration> params, ISort result, IExpr expr) {
 		TypeChecker f = new TypeChecker(symTable);
 		symTable.push();
 		try {
@@ -202,7 +202,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		for (int i = 0; i < decls.size(); i++) {
 			IFunctionDeclaration decl = decls.get(i);
 			List<IResponse> bodyErrors = checkFcn(symTable, decl.symbol(),
-					decl.parameters(), decl.sort(), bodies.get(i), null);
+					decl.parameters(), decl.sort(), bodies.get(i));
 			if (!bodyErrors.isEmpty()) return bodyErrors;
 			entries.get(i).definition = bodies.get(i);
 		}
