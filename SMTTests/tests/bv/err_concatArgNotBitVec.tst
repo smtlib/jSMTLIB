@@ -1,0 +1,5 @@
+; concat requires both arguments to have a BitVec sort -- x is Int
+(set-logic ALL)
+(declare-fun x () Int)
+(declare-fun y () (_ BitVec 4))
+(assert (= (concat x y) (concat y y)))

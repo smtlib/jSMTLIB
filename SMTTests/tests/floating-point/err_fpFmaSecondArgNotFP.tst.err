@@ -1,0 +1,2 @@
+(assert (= x (fp.fma RNE n x x)))
+                         ^

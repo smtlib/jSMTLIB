@@ -1,0 +1,4 @@
+success
+success
+success
+(error " The (_ int_to_bv 8) function should have one argument")

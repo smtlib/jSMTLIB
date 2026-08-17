@@ -1,0 +1,4 @@
+success
+success
+success
+(error "The first argument of fp.rem must have a FloatingPoint sort, not Int")

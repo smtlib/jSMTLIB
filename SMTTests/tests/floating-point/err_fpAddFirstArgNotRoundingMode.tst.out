@@ -1,0 +1,5 @@
+success
+success
+success
+success
+(error "The first argument of fp.add must have RoundingMode sort, not Bool")

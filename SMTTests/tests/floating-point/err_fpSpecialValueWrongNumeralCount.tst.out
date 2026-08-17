@@ -1,0 +1,2 @@
+success
+(error "Expected exactly two numerals (eb sb) in a +oo identifier")

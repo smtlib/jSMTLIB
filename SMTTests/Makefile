@@ -6,7 +6,7 @@ SHELL = /bin/bash
 ##   make cov-test cov-report COV_CLASSES=../SMT/bin
 COV_CLASSES ?= ../SMT/jSMTLIB.jar
 
-.PHONY: test tests clean script-tests smt-tests junit-tests build cov-test cov-clean cov-report cov-show reports time-solvers
+.PHONY: test tests test-only clean script-tests smt-tests junit-tests build cov-test cov-clean cov-report cov-show reports time-solvers
 
 ## Resolve the platform-appropriate solver directory, honouring any value already in the
 ## environment (CI sets it via GITHUB_ENV before invoking make; developers can export it
@@ -25,6 +25,11 @@ export SMT_TEST_SOLVERS
 
 test tests:
 	$(MAKE) junit-tests
+
+## Run all tests against only the built-in "test" solver (fast, needs no external
+## solver binaries) -- overrides SMT_TEST_SOLVERS regardless of the environment/default.
+test-only: SMT_TEST_SOLVERS := test
+test-only: junit-tests
 
 script-tests:
 	bash ./runscripts

@@ -1,0 +1,2 @@
+(assert (= ((_ to_fp_unsigned 8) RNE b) (_ +zero 8 24)))
+            ^^^^^^^^^^^^^^^^^^^^

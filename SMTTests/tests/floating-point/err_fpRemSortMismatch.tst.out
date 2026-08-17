@@ -1,0 +1,4 @@
+success
+success
+success
+(error "The sorts must match: (_ FloatingPoint 8 24) vs. (_ FloatingPoint 5 11)")

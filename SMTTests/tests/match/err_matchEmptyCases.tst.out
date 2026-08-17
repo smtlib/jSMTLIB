@@ -1,0 +1,4 @@
+success
+success
+success
+(error "A match expression must have at least one case")

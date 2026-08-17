@@ -1,0 +1,2 @@
+(declare-datatype D ((c1 (a Bool)) (c2 (a Bool))))
+                                        ^

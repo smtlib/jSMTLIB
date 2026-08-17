@@ -1,0 +1,2 @@
+(assert (= x (fp.add RNE x y)))
+             ^^^^^^^^^^^^^^^^

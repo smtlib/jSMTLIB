@@ -1,0 +1,3 @@
+success
+success
+(error "The first argument of to_fp/2 must have RoundingMode sort, not Bool")

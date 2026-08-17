@@ -1,0 +1,4 @@
+success
+success
+success
+(error " The (_ zero_extend 2) function should have one argument")

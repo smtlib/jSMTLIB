@@ -1,0 +1,4 @@
+success
+success
+success
+(error "The first argument of fp.sqrt must have RoundingMode sort, not Bool")

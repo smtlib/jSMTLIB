@@ -1,0 +1,2 @@
+(assert (= y (bvshl x y)))
+                    ^

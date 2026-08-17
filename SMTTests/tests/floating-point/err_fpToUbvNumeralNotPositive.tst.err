@@ -1,0 +1,2 @@
+(assert (= b ((_ fp.to_ubv 0) RNE x)))
+                           ^

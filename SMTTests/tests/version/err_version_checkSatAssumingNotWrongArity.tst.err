@@ -1,0 +1,2 @@
+(check-sat-assuming ((not p q)))
+                     ^^^^^^^^^

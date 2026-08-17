@@ -1,0 +1,4 @@
+success
+success
+success
+(error "The second argument of fp.add must have a FloatingPoint sort, not Int")

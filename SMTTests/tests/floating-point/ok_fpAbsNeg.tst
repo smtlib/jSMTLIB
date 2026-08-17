@@ -1,0 +1,10 @@
+; fp.abs/fp.neg each take one FloatingPoint argument and return the same sort.
+(set-logic ALL)
+(declare-fun one () (_ FloatingPoint 8 24))
+(declare-fun negone () (_ FloatingPoint 8 24))
+(assert (= one ((_ to_fp 8 24) RNE 1.0)))
+(assert (= negone ((_ to_fp 8 24) RNE (- 1.0))))
+(assert (= one (fp.neg negone)))
+(assert (= one (fp.abs negone)))
+(assert (= one (fp.abs one)))
+(check-sat)

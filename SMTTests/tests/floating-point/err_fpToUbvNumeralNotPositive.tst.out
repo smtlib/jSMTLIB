@@ -1,0 +1,4 @@
+success
+success
+success
+(error "The numeral must be greater than 0")
