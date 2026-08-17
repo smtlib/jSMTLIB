@@ -1,5 +1,6 @@
 #! /bin/bash
 set -e
+cd "$(dirname "$0")" || exit 1
 
 ## Set JAVA_HOME only if not already set in the environment (e.g. by CI setup-java)
 if [ -z "$JAVA_HOME" ] && command -v /usr/libexec/java_home > /dev/null 2>&1; then
@@ -7,30 +8,59 @@ if [ -z "$JAVA_HOME" ] && command -v /usr/libexec/java_home > /dev/null 2>&1; th
 fi
 [ -z "$JAVA_HOME" ] && { echo "ERROR: JAVA_HOME is not set and /usr/libexec/java_home is not available"; exit 1; }
 
+## Serializes concurrent invocations of this script -- they'd otherwise race on the
+## shared staging directory below (sources.txt, the manifest, and the compiled
+## classes). mkdir is atomic on every filesystem this needs to run on, so it doubles as
+## a portable lock; a bare `flock` command isn't available on macOS by default.
+lockdir=.buildRelease.lock
+until mkdir "$lockdir" 2>/dev/null; do
+  echo "Another ./buildRelease is already running -- waiting for it to finish..."
+  sleep 1
+done
+trap 'rmdir "$lockdir"' EXIT
+
 version=$(cat version.txt)
 echo Building version $version
 sed -e "s/DEV/${version}/" src/org/smtlib/resources/version.template > src/org/smtlib/resources/version.properties
 
-## A process-unique staging directory outside the repo, used for the compiled classes,
-## the javac @argfile, and the jar manifest. Two things this avoids: (1) colliding with
-## Eclipse's own incremental builder, which manages SMT/bin/ as its output folder --
-## this script used to write into that same directory, and Eclipse would then fail with
-## "Resource already exists on disk" the next time it tried to build; (2) two concurrent
-## invocations of this script clobbering each other's file list or class files, which a
-## fixed SMT/temp/ directory was vulnerable to. Removed on exit either way.
-stage=$(mktemp -d "${TMPDIR:-/tmp}/jsmtlib-build.XXXXXX")
-trap 'rm -rf "$stage"' EXIT
+## CLASSDIR (compiled classes) defaults to a directory this script fully controls, not
+## Eclipse's bin/. Tried defaulting it to bin/ instead (to reuse Eclipse's own compiled
+## output): staging the resource copies separately in $stage avoided the original
+## write conflict ("Resource already exists on disk: '/SMT/bin/QF_FP.smt2'"), but
+## reading bin/'s .class files back out to build the jar raced against Eclipse's own
+## live JDT builder mutating that same directory in the background -- files `find`
+## saw would sometimes be gone by the time `jar` tried to read them. That's not
+## something this script can serialize against (the lock below only protects against
+## another ./buildRelease, not Eclipse's independent build process), so bin/ isn't
+## safe to depend on at all, in either direction. CLASSDIR can still be overridden,
+## e.g. CLASSDIR=bin ./buildRelease, if that risk is specifically wanted anyway.
+stage=temp
+mkdir -p "$stage"
+CLASSDIR="${CLASSDIR:-$stage/classes}"
 
 echo Compiling sources
 find src -name "*.java" > "$stage/sources.txt"
-"$JAVA_HOME/bin/javac" -Xdoclint:all,-missing -d "$stage/classes" @"$stage/sources.txt"
-mkdir -p "$stage/classes/org/smtlib/resources"
-cp src/org/smtlib/resources/version.properties "$stage/classes/org/smtlib/resources/version.properties"
-cp -r logics/. "$stage/classes/"
-cp jsmtlib.properties "$stage/classes/jsmtlib.properties"
+"$JAVA_HOME/bin/javac" -Xdoclint:all,-missing -d "$CLASSDIR" @"$stage/sources.txt"
+echo Assembling release
+mkdir -p "$stage/resources/org/smtlib/resources"
+cp src/org/smtlib/resources/version.properties "$stage/resources/org/smtlib/resources/version.properties"
+cp -r logics/. "$stage/resources/"
+cp jsmtlib.properties "$stage/resources/jsmtlib.properties"
 echo "Manifest-Version: 1.0" > "$stage/manifest"
 echo "Main-Class: org.smtlib.SMT" >> "$stage/manifest"
-"$JAVA_HOME/bin/jar" -cfm jSMTLIB.jar "$stage/manifest" -C "$stage/classes" .
+## CLASSDIR is $stage/classes by default (nothing else ever writes there), but if it's
+## overridden to bin/ or anywhere else this script doesn't fully control, it may hold
+## other things too -- Eclipse's own copies of the same resources handled above, stray
+## macOS .DS_Store files, whatever else has accumulated there. Pulling in "." unfiltered
+## risks jar failing outright on a duplicate entry against $stage/resources (as
+## .DS_Store and then ALL.smt2 both did against bin/ while developing this). Only the
+## compiled classes are actually wanted from CLASSDIR, so list exactly those -- and
+## note that `-C dir @listfile` only applies -C to the first entry the listfile expands
+## to, not all of them (confirmed directly: worked for one file, broke on the rest of a
+## real ~300-entry list), so -C has to be repeated inline before every single filename
+## rather than given once up front.
+find "$CLASSDIR" -name "*.class" | sed "s|^$CLASSDIR/||;s|^|-C $CLASSDIR |" > "$stage/classlist.txt"
+"$JAVA_HOME/bin/jar" -cfm jSMTLIB.jar "$stage/manifest" @"$stage/classlist.txt" -C "$stage/resources" .
 "$JAVA_HOME/bin/jar" -cf jSMTLIB-sources.jar -C src .
 make javadoc 2>&1 | grep -v Generating
 echo Build complete
