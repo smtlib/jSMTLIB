@@ -122,7 +122,6 @@ Code Review — SMT/src
 
 Recent:
 -- edit this TODO
--- merge SMT/solvers with Solvers?
 -- should jsmtlib.properties be in github?
 -- clean up version number
 -- Cleanup SMTUI -- connect with SMT
