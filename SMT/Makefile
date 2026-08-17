@@ -6,7 +6,14 @@ build:
 release:
 	./buildRelease
 
+## buildRelease holds .buildRelease.lock (a mkdir-based lock, see that script) for its
+## whole run. Refuse to clean out from under it -- rm -rf temp/ mid-build would corrupt
+## whatever buildRelease is currently compiling/assembling into that same directory.
 clean:
+	@if [ -d .buildRelease.lock ]; then \
+		echo "ERROR: a ./buildRelease build is currently in progress (.buildRelease.lock exists) -- refusing to clean while it's running."; \
+		exit 1; \
+	fi
 	rm -rf bin/ doc/ temp/
 	rm -f jSMTLIB.jar jSMTLIB-sources.jar jSMTLIB.tar.gz
 	rm -f src/org/smtlib/resources/version.properties
