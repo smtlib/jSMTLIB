@@ -2,7 +2,11 @@ SHELL = /bin/bash
 
 ## Class files used for both the JaCoCo runtime agent and the report step.
 ## Must be the same in both places so that JaCoCo's CRC checks pass at report time.
-## Default is the jar; override on the command line if you need .class files instead:
+## Default is the jar; override on the command line if you need .class files instead
+## (note: ../SMT/buildRelease no longer populates ../SMT/bin -- it stages compiled
+## classes in a temporary directory to avoid colliding with Eclipse's own incremental
+## builder, which does still use ../SMT/bin as its output folder -- so this override
+## only has classes to point at after an actual Eclipse build of the SMT project):
 ##   make cov-test cov-report COV_CLASSES=../SMT/bin
 COV_CLASSES ?= ../SMT/jSMTLIB.jar
 

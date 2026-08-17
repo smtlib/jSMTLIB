@@ -11,23 +11,26 @@ version=$(cat version.txt)
 echo Building version $version
 sed -e "s/DEV/${version}/" src/org/smtlib/resources/version.template > src/org/smtlib/resources/version.properties
 
-rm -rf temp
-mkdir temp
+## A process-unique staging directory outside the repo, used for the compiled classes,
+## the javac @argfile, and the jar manifest. Two things this avoids: (1) colliding with
+## Eclipse's own incremental builder, which manages SMT/bin/ as its output folder --
+## this script used to write into that same directory, and Eclipse would then fail with
+## "Resource already exists on disk" the next time it tried to build; (2) two concurrent
+## invocations of this script clobbering each other's file list or class files, which a
+## fixed SMT/temp/ directory was vulnerable to. Removed on exit either way.
+stage=$(mktemp -d "${TMPDIR:-/tmp}/jsmtlib-build.XXXXXX")
+trap 'rm -rf "$stage"' EXIT
 
 echo Compiling sources
-mkdir -p bin
-find src -name "*.java" > temp/sources.txt
-"$JAVA_HOME/bin/javac" -Xdoclint:all,-missing -d bin @temp/sources.txt
-mkdir -p bin/org/smtlib/resources
-cp src/org/smtlib/resources/version.properties bin/org/smtlib/resources/version.properties
-cp -r logics/. bin/
-echo "Manifest-Version: 1.0" > temp/manifest
-echo "Main-Class: org.smtlib.SMT" >> temp/manifest
-cd bin || { echo "Cannot cd to bin"; exit 1; }
-rm -f jsmtlib.properties
-cp ../jsmtlib.properties .
-"$JAVA_HOME/bin/jar" -cfm ../jSMTLIB.jar ../temp/manifest .
-cd ..
+find src -name "*.java" > "$stage/sources.txt"
+"$JAVA_HOME/bin/javac" -Xdoclint:all,-missing -d "$stage/classes" @"$stage/sources.txt"
+mkdir -p "$stage/classes/org/smtlib/resources"
+cp src/org/smtlib/resources/version.properties "$stage/classes/org/smtlib/resources/version.properties"
+cp -r logics/. "$stage/classes/"
+cp jsmtlib.properties "$stage/classes/jsmtlib.properties"
+echo "Manifest-Version: 1.0" > "$stage/manifest"
+echo "Main-Class: org.smtlib.SMT" >> "$stage/manifest"
+"$JAVA_HOME/bin/jar" -cfm jSMTLIB.jar "$stage/manifest" -C "$stage/classes" .
 "$JAVA_HOME/bin/jar" -cf jSMTLIB-sources.jar -C src .
 make javadoc 2>&1 | grep -v Generating
 echo Build complete
