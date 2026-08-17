@@ -132,18 +132,92 @@ K ≤ 100 — worth keeping in mind since it means the real-world payoff of
 addressing this is plausibly much bigger than the experiment's own
 numbers suggest, not smaller.
 
-## Conclusion
+## What do real solvers actually put on stderr?
+
+The risk `errorSettleMillis` guards against is only worth its cost if
+solvers actually do write meaningful diagnostic text to stderr with
+unpredictable timing. That's testable directly: feed each raw solver
+(same launch flags jSMTLIB uses) a script and inspect its *actual*
+OS-level stderr, bypassing jSMTLIB's own output handling entirely.
+
+Two scenarios per solver: a clean script (declare, assert, check-sat,
+all succeeding), and an error-provoking one (`(get-proof)` without
+`:produce-proofs`, followed by a syntactically-unrecognizable command).
+
+| solver | clean script stderr | error script stderr |
+|---|---|---|
+| z3-4.16.0 | empty | one line: `; this-is-not-a-command line: 6 position: 22` |
+| cvc5-1.3.2 | empty | empty — both errors came back as `(error "...")` on **stdout** |
+| yices2-2.7.0 | empty | empty — both errors came back as `(error "...")` on **stdout** |
+| smtinterpol-2.5 | empty | empty — both errors came back as `(error "...")` on **stdout** |
+
+Three of the four solvers currently in use write **nothing** to stderr
+in either scenario — every error, including `get-proof`'s, comes back as
+a proper SMT-LIB `(error "...")` response on stdout, which is what the
+spec calls for and is unaffected by `errorSettleMillis` (that field only
+guards the *stderr* pipe). z3 is the only one that used stderr at all,
+and only for a command it couldn't parse as SMT-LIB syntax at all — not
+for an ordinary semantic error like an unsupported command with
+well-formed syntax — and even then it was one short comment line, not
+the kind of large or delayed diagnostic block the 20ms grace period was
+designed to catch.
+
+This also answers a question raised in review: the caret-annotated
+`(get-proof)` / `^^^^^^^^^^^` block seen in `SMTTests`' own golden files
+for yices2 (`tests/getProof/ok_getProof.tst.err.yices2`) is **not**
+anything the yices2 process itself writes to stderr — confirmed above,
+its raw stderr for that exact scenario is empty. That text is
+synthesized entirely by jSMTLIB itself: `Log.logError(IError)` (in
+`SMT/src/org/smtlib/Log.java`) writes a source-line-and-caret
+`locationIndication(...)` to `Log.diag` (which `SMTTests`' harness
+happens to capture into the same `.err` golden) whenever a response
+parses as an error with position info attached — using jSMTLIB's own
+record of where in the *original script* the offending command was, not
+anything relayed from the solver's stderr pipe. So `.err` golden files
+in this repo are a mix of two unrelated things: genuine captured solver
+stderr (via `SolverProcess.errorOut`, the thing `errorSettleMillis`
+waits on) and jSMTLIB's own synthesized diagnostics (via `Log.diag`,
+synchronous, not subject to any IPC race at all). Only the former is
+relevant to this experiment; based on the table above, it's nearly
+always empty for the solvers actually in use.
+
+(Not exhaustively tested: solver behavior under resource exhaustion,
+memory pressure, or other stress conditions might produce stderr
+warnings this quick pass didn't provoke. The scope here is jSMTLIB's
+actual launch configuration under normal successful-and-erroring
+scripts, which is the overwhelmingly common case for OpenJML's
+correct-by-construction usage.)
+
+## Conclusion and recommendation
 
 The per-command overhead found in `raw-vs-jsmtlib` is, to a close
 approximation, entirely explained by `SolverProcess.errorSettleMillis`.
-It is a deliberate, recently-added correctness fix, not legacy cruft,
-and there is no value of it that is simultaneously fast and fully safe
-against arbitrary stderr timing — only a trade between the two. Given
-that OpenJML's real workload (long, mostly-error-free scripts) pays this
-cost thousands of times per invocation, lowering it is a genuinely
-promising lever for proof turnaround time, but it is a decision to make
-deliberately, with the tradeoff above in view — not something this
-experiment changes on its own.
+It is a deliberate, recently-added correctness fix, not legacy cruft —
+but the risk it guards against turns out to be rare in practice for the
+solvers actually in use: three of four never write to stderr at all
+under normal or erroring conditions, and the fourth (z3) only does so
+for unparseable input, briefly and (in this synchronous test) promptly.
+The actual error *information* is essentially always delivered reliably
+regardless, via the standard `(error "...")` response on stdout — the
+`.err`-golden caret text some tests exercise is a jSMTLIB-side
+convenience for showing script context, not the primary carrier of the
+error, and isn't at risk from a shorter stderr wait.
+
+**Recommendation: drop `errorSettleMillis` from 20ms to something in
+the 1-2ms range**, not all the way to 0. A small nonzero value keeps a
+token grace period for the already-rare case (mainly z3's parse-error
+comments) without meaningfully changing the economics: at 1ms, the
+measured per-command overhead was already down to ~1.5-2.5ms, next to
+~23ms at the current default — an order of magnitude improvement — and
+for OpenJML's few-thousand-command, correct-by-construction scripts
+where the current setting can plausibly cost tens of seconds of pure
+waiting before the real solving even starts, this is likely to matter a
+lot more in practice than the numbers measured directly in this
+experiment. It does not eliminate the theoretical race `errorSettleMillis`
+exists for — no fixed value does, since stderr timing has no OS-level
+guarantee — but the empirical evidence above suggests that risk is
+small and, when it does bite, costs a supplementary diagnostic line, not
+the underlying error result.
 
 ## Reproducing
 

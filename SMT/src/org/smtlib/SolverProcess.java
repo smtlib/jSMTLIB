@@ -30,8 +30,12 @@ public class SolverProcess {
      * stderr to the recognized end marker on stdout, so this is a bounded best-effort wait,
      * not a guarantee; see StreamGobbler.drain() for why even the first check needs this,
      * not just the straggler wait -- it is paid on every command, including ones with no
-     * error to find, not only when error text is actually flowing. */
-    public long errorSettleMillis = 20;
+     * error to find, not only when error text is actually flowing. Kept small rather than 0
+     * because it is paid per command, not per script: see SMT/experiments/error-settle-wait/
+     * for measurements showing z3/cvc5/yices2/smtinterpol write to stderr only rarely under
+     * jSMTLIB's launch flags (z3 does so occasionally, for unparseable input), so a larger
+     * value buys little extra safety at a real per-command cost on long scripts. */
+    public long errorSettleMillis = 1;
 
     /** Set true by a caller for the duration of a single command whose expected response
      * text may contain literal, non-SMT-LIB unbalanced parentheses (e.g. some z3
