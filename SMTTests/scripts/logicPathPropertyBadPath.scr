@@ -1,0 +1,10 @@
+### Companion to logicPathProperty.scr: org.smtlib.logic_path set (via a jsmtlib.properties
+### file) to a directory that doesn't exist is an error, not a silent classpath fallback.
+### Uses a fixed relative "xxx" (matching LogicsBadPath's JUnit equivalent) rather than a
+### path under the tmpdir below, so the error text stays deterministic across runs instead
+### of embedding a fresh mktemp path every time.
+##EXITCODE 1
+tmpdir=$(mktemp -d)
+trap 'rm -rf "$tmpdir"' EXIT
+echo "org.smtlib.logic_path=xxx" > "$tmpdir/jsmtlib.properties"
+(cd "$tmpdir" && $SMT_CMD --solver test --text "(set-logic QF_UF)")

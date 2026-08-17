@@ -1,0 +1,3 @@
+(set-logic QF_UF)
+           ^^^^^
+(error "Invalid logic path: ""xxx"" is not a directory")

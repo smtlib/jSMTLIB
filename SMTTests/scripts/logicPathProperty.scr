@@ -1,0 +1,11 @@
+### Tests that org.smtlib.logic_path, set via a jsmtlib.properties file (as opposed to
+### the --logics/-L command-line option, already covered by SMTCommandLineTests, or
+### setting smtConfig.logicPath directly in Java, covered by LogicsWithPath), is
+### actually read and honored -- runs in an isolated tmp dir (its own working directory,
+### the highest-precedence place readProperties() looks) so this doesn't leave a stray
+### jsmtlib.properties behind for any other test to pick up.
+##EXITCODE 0
+tmpdir=$(mktemp -d)
+trap 'rm -rf "$tmpdir"' EXIT
+echo "org.smtlib.logic_path=$INSTALL/logics" > "$tmpdir/jsmtlib.properties"
+(cd "$tmpdir" && $SMT_CMD --solver test --text "(set-logic QF_UF)")
