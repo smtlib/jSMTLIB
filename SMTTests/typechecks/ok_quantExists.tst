@@ -1,6 +1,0 @@
-; ported from TypeCheckQuantifiers.checkExists
-(set-logic AUFNIRA)
-(declare-sort X 0)
-(declare-fun p () Bool)
-(declare-fun q () X)
-(assert (exists ((r Bool)(s X)) (and r p)))

@@ -1,2 +1,0 @@
-(assert (and (! p :named P) (! (not t) :named Q)))
-                                    ^

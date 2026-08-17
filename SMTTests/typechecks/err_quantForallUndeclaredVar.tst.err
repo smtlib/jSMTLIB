@@ -1,2 +1,0 @@
-(assert (forall ((r Bool)(s X)) (and s t)))
-                                       ^

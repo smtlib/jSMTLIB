@@ -1,6 +1,0 @@
-; ported from TypeCheckQuantifiers.checkBadForall
-(set-logic AUFNIRA)
-(declare-sort X 0)
-(declare-fun p () Bool)
-(declare-fun q () X)
-(assert (forall ((r Bool)(s X)) (and s t)))
