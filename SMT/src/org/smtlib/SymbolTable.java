@@ -24,20 +24,12 @@ import org.smtlib.ISort.IParameter;
  *  The table maps names to Entry objects that hold information about the defined symbol. */
 public class SymbolTable {
 
-	/** true if the Array theory has been set */
-	// Used only while we have store and select built in
-	public boolean arrayTheorySet = false;
-	
 	/** true if the bit-vector theory has been set */
 	// Used only while we have BitVec built in
 	public boolean bitVectorTheorySet = false;
-	
+
 	/** true if the RealsInts theory is set (which allows implicit promotion of ints to reals) */
 	public boolean realsIntsTheorySet = false;
-
-	/** true if the HO-Core theory has been set */
-	// Used only while we have @ built in
-	public boolean hoTheorySet = false;
 
 	/** true if the FloatingPoint theory has been set */
 	// Used only while we have FloatingPoint built in

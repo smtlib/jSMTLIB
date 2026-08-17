@@ -465,6 +465,9 @@ public class Solver_test implements ISolver {
 		} else if (Utils.REASON_UNKNOWN.equals(option)) {
 			return smtConfig.responseFactory.unsupported();
 		} else if (Utils.ALL_STATISTICS.equals(option)) {
+			if (checkSatStatus == null) {
+				return smtConfig.responseFactory.error("The get-info :all-statistics command is only valid after check-sat has been called");
+			}
 			return smtConfig.responseFactory.unsupported();
 		} else if (Utils.ASSERTION_STACK_LEVELS.equals(option)) {
 			// assertionSetStack always has one base frame (added by start()/reset()), plus

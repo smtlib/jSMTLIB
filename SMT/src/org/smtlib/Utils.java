@@ -779,14 +779,10 @@ public class Utils {
 		
 		/* @Nullable */IResponse response = loadTheory(th, symTable);
 		if (response == null) {
-			if (theoryName.equals("ArraysEx"))
-				symTable.arrayTheorySet = true;
 			if (theoryName.equals("Fixed_Size_BitVectors") || theoryName.equals("FixedSizeBitVectors"))
 				symTable.bitVectorTheorySet = true;
 			if (theoryName.equals("Reals_Ints"))
 				symTable.realsIntsTheorySet = true;
-			if (theoryName.equals("HO-Core"))
-				symTable.hoTheorySet = true;
 			if (theoryName.equals("FloatingPoint"))
 				symTable.floatingPointTheorySet = true;
 		}
@@ -834,10 +830,8 @@ public class Utils {
 				res = loadTheory(th, symTable);
 				if (res == null) {
 					String tname = th.theoryName().value();
-					if (tname.equals("ArraysEx")) symTable.arrayTheorySet = true;
 					if (tname.equals("Fixed_Size_BitVectors") || tname.equals("FixedSizeBitVectors")) symTable.bitVectorTheorySet = true;
 					if (tname.equals("Reals_Ints")) symTable.realsIntsTheorySet = true;
-					if (tname.equals("HO-Core")) symTable.hoTheorySet = true;
 					if (tname.equals("FloatingPoint")) symTable.floatingPointTheorySet = true;
 				}
 			} else {
