@@ -1,0 +1,2 @@
+(declare-const define-funs-rec Bool)
+               ^^^^^^^^^^^^^^^

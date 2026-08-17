@@ -1,0 +1,108 @@
+success
+(set-logic QF_UF)(declare-const ! Bool)
+                                ^
+(error "A reserved word may not be used as a symbol here: !")
+success
+(set-logic QF_UF)(declare-const _ Bool)
+                                ^
+(error "A reserved word may not be used as a symbol here: _")
+success
+(set-logic QF_UF)(declare-const as Bool)
+                                ^^
+(error "A reserved word may not be used as a symbol here: as")
+success
+(set-logic QF_UF)(declare-const DECIMAL Bool)
+                                ^^^^^^^
+(error "A reserved word may not be used as a symbol here: DECIMAL")
+success
+(set-logic QF_UF)(declare-const exists Bool)
+                                ^^^^^^
+(error "A reserved word may not be used as a symbol here: exists")
+success
+(set-logic QF_UF)(declare-const forall Bool)
+                                ^^^^^^
+(error "A reserved word may not be used as a symbol here: forall")
+success
+(set-logic QF_UF)(declare-const let Bool)
+                                ^^^
+(error "A reserved word may not be used as a symbol here: let")
+success
+(set-logic QF_UF)(declare-const match Bool)
+                                ^^^^^
+(error "A reserved word may not be used as a symbol here: match")
+success
+(set-logic QF_UF)(declare-const NUMERAL Bool)
+                                ^^^^^^^
+(error "A reserved word may not be used as a symbol here: NUMERAL")
+success
+(set-logic QF_UF)(declare-const par Bool)
+                                ^^^
+(error "A reserved word may not be used as a symbol here: par")
+success
+(set-logic QF_UF)(declare-const STRING Bool)
+                                ^^^^^^
+(error "A reserved word may not be used as a symbol here: STRING")
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success

@@ -1,0 +1,2 @@
+success
+(error "A reserved word may not be used as a symbol here: STRING")

@@ -1,0 +1,55 @@
+## Verifies the --relax exception for reserved words: command names may be used as
+## declared symbol names under --relax (org.smtlib.sexpr.Utils.reservedWords minus
+## reservedWordsNotCommands), but the non-command reserved words remain illegal even
+## under --relax (see Parser.parseSymbol()). Companion to tests/reserved-words/*.tst,
+## which check the (always-illegal, non-relax) baseline against real solvers -- relax
+## mode isn't expressible in a .tst file, so it's checked here instead via direct
+## $SMT_CMD invocations against the "test" solver.
+##EXITCODE 0
+
+# Non-command reserved words: still illegal under --relax
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const ! Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const _ Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const as Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const DECIMAL Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const exists Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const forall Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const let Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const match Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const NUMERAL Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const par Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const STRING Bool)"
+
+# Command names: legal under --relax
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const assert Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const check-sat Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const check-sat-assuming Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const declare-const Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const declare-datatype Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const declare-datatypes Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const declare-fun Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const declare-sort Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const declare-sort-parameter Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const define-const Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const define-fun Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const define-fun-rec Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const define-funs-rec Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const define-sort Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const echo Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const exit Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const get-assertions Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const get-assignment Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const get-info Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const get-model Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const get-option Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const get-proof Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const get-unsat-assumptions Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const get-unsat-core Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const get-value Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const pop Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const push Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const reset Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const reset-assertions Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const set-info Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const set-logic Bool)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-const set-option Bool)"

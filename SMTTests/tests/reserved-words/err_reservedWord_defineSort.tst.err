@@ -1,0 +1,2 @@
+(declare-const define-sort Bool)
+               ^^^^^^^^^^^

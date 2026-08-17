@@ -1,0 +1,2 @@
+(declare-const get-value Bool)
+               ^^^^^^^^^

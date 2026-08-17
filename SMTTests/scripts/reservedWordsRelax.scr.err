@@ -1,0 +1,22 @@
+(set-logic QF_UF)(declare-const ! Bool)
+                                ^
+(set-logic QF_UF)(declare-const _ Bool)
+                                ^
+(set-logic QF_UF)(declare-const as Bool)
+                                ^^
+(set-logic QF_UF)(declare-const DECIMAL Bool)
+                                ^^^^^^^
+(set-logic QF_UF)(declare-const exists Bool)
+                                ^^^^^^
+(set-logic QF_UF)(declare-const forall Bool)
+                                ^^^^^^
+(set-logic QF_UF)(declare-const let Bool)
+                                ^^^
+(set-logic QF_UF)(declare-const match Bool)
+                                ^^^^^
+(set-logic QF_UF)(declare-const NUMERAL Bool)
+                                ^^^^^^^
+(set-logic QF_UF)(declare-const par Bool)
+                                ^^^
+(set-logic QF_UF)(declare-const STRING Bool)
+                                ^^^^^^

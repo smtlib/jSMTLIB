@@ -1,0 +1,2 @@
+(declare-const check-sat-assuming Bool)
+               ^^^^^^^^^^^^^^^^^^

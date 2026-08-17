@@ -1,0 +1,2 @@
+(declare-const set-logic Bool)
+               ^^^^^^^^^
