@@ -1,0 +1,6 @@
+(declare-datatype Tree ((node (data (Array Int (Array Int Int))) (left Tree) (right Tree)) (leaf)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun t () Tree)
+^^^^^^^^^^^^^^^^^^^^^^^
+(assert (= t t))
+^^^^^^^^^^^^^^^^

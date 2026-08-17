@@ -976,18 +976,6 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		return (s instanceof ISort.IApplication) && Utils.ROUNDINGMODE_SYM.equals(((ISort.IApplication)s).family().headSymbol());
 	}
 
-	private int fpExponentSize(ISort s) {
-		if (!isFloatingPoint(s)) return -1; // also confirms expand() below yields an IApplication
-		IParameterizedIdentifier pid = (IParameterizedIdentifier)((ISort.IApplication)s.expand()).family();
-		return ((INumeral) pid.indices().get(0)).intValue();
-	}
-
-	private int fpSignificandSize(ISort s) {
-		if (!isFloatingPoint(s)) return -1;
-		IParameterizedIdentifier pid = (IParameterizedIdentifier)((ISort.IApplication)s.expand()).family();
-		return ((INumeral) pid.indices().get(1)).intValue();
-	}
-
 	private ISort makeFloatingPoint(int eb, int sb) throws IVisitor.VisitorException {
 		List<IExpr.IIndex> nums = new LinkedList<IExpr.IIndex>();
 		nums.add(smtConfig.exprFactory.numeral(eb));

@@ -1,0 +1,2 @@
+(assert (= #b0100 ((_ extract 3 0) x)))
+                                   ^
