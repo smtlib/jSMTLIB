@@ -606,15 +606,9 @@ public class Parser extends Lexer implements IParser {
 		ILexToken token = peekToken();
 		if (token instanceof Symbol) {
 			ISymbol sym = (ISymbol)token;
-			if (smtConfig.relax) {
-				if (smtConfig.reservedWordsNotCommands.contains(sym.value())) {
-					error("A reserved word may not be used as a symbol here: " + token.toString(),token.pos());
-					return null;
-				}
-			} else {
-				if (smtConfig.reservedWords.contains(sym.value())) {
-					throw error("A reserved word may not be used as a symbol here: " + token.toString(),token.pos());
-				}
+			java.util.Set<String> forbidden = smtConfig.relax ? smtConfig.reservedWordsNotCommands : smtConfig.reservedWords;
+			if (forbidden.contains(sym.value())) {
+				throw error("A reserved word may not be used as a symbol here: " + token.toString(),token.pos());
 			}
 			token = getToken();
 			return (Symbol)token;
