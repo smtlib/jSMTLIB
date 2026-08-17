@@ -1,0 +1,8 @@
+(declare-sort S1 0)
+              ^^
+(declare-fun f1 () S1)
+                   ^^
+(declare-fun f2 () S1)
+                   ^^
+(assert (not (= f1 f2)))
+                ^^

@@ -1,0 +1,9 @@
+success
+success
+success
+success
+success
+success
+(error "quantifiers are not allowed in logic ALL")
+(error "Error writing to solver: (assert (exists ((x S) (y S) (z S) ) (=> (and (le x y) (le y z)) (le x z)))) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (assert (forall ((x S) (y S) (z S) ) (! (=> (and (le x y) (le y z)) (le x z)) :pattern ( ( le x zz ) ) :pattern ( ( le y zz ) ( le zz z ) )))) java.io.IOException: Solver process has already exited")

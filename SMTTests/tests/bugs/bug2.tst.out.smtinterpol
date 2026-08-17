@@ -1,0 +1,12 @@
+success
+success
+success
+success
+(error "<stdin>:5:14: Free sorts are not allowed in this logic")
+(error "<stdin>:6:19: Undeclared sort (S1 0)")
+(error "<stdin>:7:19: Undeclared sort (S1 0)")
+success
+success
+(error "<stdin>:10:16: Unknown function symbol f1.")
+success
+unsat

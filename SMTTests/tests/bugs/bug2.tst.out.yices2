@@ -1,0 +1,13 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "uninterpreted sorts are not allowed in logic QF_LIA")
+(error "Error writing to solver: (assert (not (and (<= 0 (ite (< f3 0) (* (- 2) f3) (* 2 f3))) (<= 0 (ite (< f4 0) (* (- 2) f4) (* 2 f4)))))) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (check-sat) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (exit) java.io.IOException: Solver process has already exited")
