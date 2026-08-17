@@ -1,0 +1,4 @@
+success
+success
+success
+(error "at line 4, column 18: wrong number of arguments in extract")

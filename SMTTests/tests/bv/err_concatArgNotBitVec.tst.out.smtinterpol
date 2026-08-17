@@ -1,0 +1,4 @@
+success
+success
+success
+(error "<stdin>:4:12: Builtin function concat does not support argument sorts ()")

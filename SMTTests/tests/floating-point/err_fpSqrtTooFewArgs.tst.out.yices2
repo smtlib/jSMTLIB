@@ -1,0 +1,3 @@
+success
+(error "at line 2, column 22: undefined identifier: FloatingPoint")
+(error "Error writing to solver: (assert (= x (fp.sqrt RNE))) java.io.IOException: Solver process has already exited")

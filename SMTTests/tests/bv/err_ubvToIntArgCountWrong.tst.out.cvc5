@@ -1,0 +1,4 @@
+success
+success
+success
+(error "Parse Error: <shell>:1.29: invalid kind 'BITVECTOR_UBV_TO_INT', expected Terms with kind BITVECTOR_UBV_TO_INT must have at least 1 children and at most 1 children (the one under construction has 2)")

@@ -1,0 +1,4 @@
+success
+success
+success
+(error "<stdin>:4:14: Builtin function fp.sqrt does not support argument sorts ()")

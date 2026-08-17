@@ -1,0 +1,2 @@
+success
+(error "Parse Error: <shell>:1.21: invalid kind 'FLOATINGPOINT_IS_NORMAL', expected PI, REGEXP_NONE, REGEXP_ALL, REGEXP_ALLCHAR or SEP_EMP")

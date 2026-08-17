@@ -1,0 +1,2 @@
+success
+(error "<stdin>:2:27: Builtin function fp does not support argument sorts ()")

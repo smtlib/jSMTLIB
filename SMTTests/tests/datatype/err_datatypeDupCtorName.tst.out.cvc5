@@ -1,0 +1,2 @@
+success
+(error "Parse Error: ctor already declared in this datatype")

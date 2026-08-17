@@ -1,0 +1,2 @@
+success
+(error "<stdin>:2:12: Builtin function to_fp does not support argument sorts ()")

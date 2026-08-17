@@ -1,0 +1,3 @@
+success
+success
+(error "at line 3, column 23: wrong number of arguments in zero_extend")

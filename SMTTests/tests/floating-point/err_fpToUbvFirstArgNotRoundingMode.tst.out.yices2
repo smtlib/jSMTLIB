@@ -1,0 +1,4 @@
+success
+(error "at line 2, column 22: undefined identifier: FloatingPoint")
+(error "Error writing to solver: (declare-fun b () Bool) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (assert (= #b0000 ((_ fp.to_ubv 4) b x))) java.io.IOException: Solver process has already exited")

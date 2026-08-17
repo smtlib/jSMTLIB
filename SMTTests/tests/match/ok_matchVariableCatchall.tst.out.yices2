@@ -1,0 +1,5 @@
+success
+(error "at line 2, column 18: syntax error: declare-datatype is not a command")
+(error "at line 3, column 19: undefined sort: Color")
+(error "Error writing to solver: (assert (match c ( (red true) (other false)))) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (check-sat) java.io.IOException: Solver process has already exited")

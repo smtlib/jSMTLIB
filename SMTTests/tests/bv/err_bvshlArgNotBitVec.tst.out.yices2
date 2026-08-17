@@ -1,0 +1,4 @@
+success
+success
+success
+(error "at line 4, column 15: in bvshl: argument is not a bit-vector term")

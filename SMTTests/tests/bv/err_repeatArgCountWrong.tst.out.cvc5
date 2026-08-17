@@ -1,0 +1,4 @@
+success
+success
+success
+(error "Parse Error: <shell>:1.36: invalid kind 'BITVECTOR_REPEAT', expected Terms with kind BITVECTOR_REPEAT must have at least 1 children and at most 1 children (the one under construction has 2)")

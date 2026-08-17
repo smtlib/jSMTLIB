@@ -1,0 +1,4 @@
+success
+success
+(error "at line 3, column 22: undefined identifier: FloatingPoint")
+(error "Error writing to solver: (assert (fp.leq x y)) java.io.IOException: Solver process has already exited")

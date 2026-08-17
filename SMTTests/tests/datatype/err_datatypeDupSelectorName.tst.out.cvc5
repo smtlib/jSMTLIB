@@ -1,0 +1,2 @@
+success
+(error "Parse Error: a already declared in this datatype")
