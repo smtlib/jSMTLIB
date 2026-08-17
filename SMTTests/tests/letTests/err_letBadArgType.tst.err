@@ -1,0 +1,2 @@
+(assert (let ((r true)(s q)) (not s)))
+                             ^^^^^^^

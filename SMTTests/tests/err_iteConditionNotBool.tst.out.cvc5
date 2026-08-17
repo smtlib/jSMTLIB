@@ -1,0 +1,4 @@
+success
+success
+success
+(error "Parse Error: <shell>:1.26: condition of ITE is not Boolean")

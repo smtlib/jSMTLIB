@@ -1,0 +1,14 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "Parse Error: <shell>:1.16: argument type is not the type of the function's argument type:
+argument:  qb
+has type:  (X Bool)
+not type: (X Y)
+in term : (f r qb)")

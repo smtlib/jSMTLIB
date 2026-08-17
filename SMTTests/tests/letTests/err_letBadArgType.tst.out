@@ -1,0 +1,5 @@
+success
+success
+success
+success
+(error "Argument 1 of not has sort X, expected Bool")

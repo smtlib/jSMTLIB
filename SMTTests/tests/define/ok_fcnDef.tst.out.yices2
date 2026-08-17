@@ -1,0 +1,5 @@
+(error "logic AUFNIRA is not supported")
+(error "at line 2, column 19: undefined sort: Int")
+(error "Error writing to solver: (declare-fun r () Int) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (define-fun f ((a Int)(b Int)) Int (+ a b)) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (f 1 2) 3)) java.io.IOException: Solver process has already exited")

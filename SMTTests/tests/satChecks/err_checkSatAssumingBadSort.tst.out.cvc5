@@ -1,0 +1,4 @@
+success
+success
+success
+(error "Expected term with sort Bool at index 0 in assumptions")

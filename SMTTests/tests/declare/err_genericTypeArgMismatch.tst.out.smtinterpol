@@ -1,0 +1,10 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "<stdin>:10:9: Application of function (f Y (X Y) Bool) does not type check.")

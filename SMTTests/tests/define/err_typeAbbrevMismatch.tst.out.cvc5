@@ -1,0 +1,11 @@
+success
+success
+success
+success
+success
+success
+(error "Parse Error: <shell>:1.16: Subexpressions must have the same type:
+Equation: (= q qb)
+Type 1: (X Y)
+Type 2: (X Bool)
+")

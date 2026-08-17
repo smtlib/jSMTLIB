@@ -1,0 +1,7 @@
+(error "logic AUFNIRA is not supported")
+(error "at line 2, column 19: undefined sort: Int")
+(error "Error writing to solver: (declare-fun a () Real) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (assert (= a q)) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (assert (= q a)) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (assert (>= a q)) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (assert (>= q a)) java.io.IOException: Solver process has already exited")

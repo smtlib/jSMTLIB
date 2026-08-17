@@ -1,0 +1,11 @@
+success
+success
+success
+(error "Parse Error: <shell>:1.15: Subexpressions must have the same type:
+Equation: (= a q)
+Type 1: Real
+Type 2: Int
+")
+(error "Error writing to solver: (assert (= q a)) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (assert (>= a q)) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (assert (>= q a)) java.io.IOException: Solver process has already exited")

@@ -1,0 +1,8 @@
+success
+success
+success
+success
+success
+success
+success
+(error "Parse Error: <shell>:1.19: type constructor arity is wrong: `X' requires 1 parameters but was provided 0")

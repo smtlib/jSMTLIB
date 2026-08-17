@@ -1,0 +1,6 @@
+success
+success
+success
+success
+success
+(error "Parse Error: <shell>:1.23: Symbol 'A' not declared as a type")
