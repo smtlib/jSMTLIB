@@ -122,6 +122,13 @@ public class SolverProcess {
 	protected Thread shutdownThread = null;
 
 	/** Starts the process; if the argument is true, then also listens to its output until a prompt is read.
+	 * @param listen true if the process prints banner/greeting text of its own before it is ready to
+	 * read commands (e.g. a version line, a copyright notice) that must be read and discarded before the
+	 * first real command is sent, lest it be mistaken for that command's response; listen() blocks until
+	 * the end marker is recognized, however long the banner actually takes to arrive, so this does not
+	 * need -- and must not be replaced by -- a fixed delay. Pass false when the process prints nothing
+	 * until it has consumed its first command (true of every solver currently adapted here; each launches
+	 * with a quiet/non-interactive flag specifically to suppress any such banner at the source).
 	 * @throws ProverException if this SolverProcess has already been started (each instance is single-use;
 	 * solver adapters construct a fresh SolverProcess per start() rather than reusing one) */
     public void start(boolean listen) throws ProverException {
@@ -152,7 +159,6 @@ public class SolverProcess {
             standardOut.setName("stdout-gobbler");
             errorOut.start();
             standardOut.start();
-    		Thread.sleep(1000);
     		if (listen) listen();
     	} catch (IOException e) {
     		// Java 21.0.3+ changed the IOException message format for exec failures from
@@ -160,7 +166,7 @@ public class SolverProcess {
     		// Normalize to the older form so test output is stable across JVM versions.
     		String msg = e.getMessage().replaceAll("Exec failed, error: (\\d+) \\((.+?)\\)\\s*$", "error=$1, $2");
     		throw new ProverException(msg);
-    	} catch (RuntimeException|InterruptedException e) {
+    	} catch (RuntimeException e) {
     		throw new ProverException(e.getMessage());
     	}
     }
