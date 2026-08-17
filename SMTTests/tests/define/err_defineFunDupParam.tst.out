@@ -1,0 +1,2 @@
+success
+(error "A name is duplicated in the parameter list: x")

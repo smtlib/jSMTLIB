@@ -1,0 +1,2 @@
+(define-fun f ((x BadSort)) Bool true)
+                  ^^^^^^^

@@ -1,0 +1,2 @@
+(define-fun-rec f ((x Bool)) BadSort x)
+                             ^^^^^^^
