@@ -1,5 +1,5 @@
 unsupported
-unsupported
+(error "The get-info :all-statistics command is only valid after check-sat has been called")
 success
 unsupported
-unsupported
+(error "The get-info :all-statistics command is only valid after check-sat has been called")
