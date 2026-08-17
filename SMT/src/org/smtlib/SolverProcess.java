@@ -24,8 +24,6 @@ import java.util.function.Function;
  */
 public class SolverProcess {
 
-    public boolean useShutdownHooks = true;
-
     /** How long (ms) to wait for error-stream text to arrive before concluding a command
      * produced none, and (once some has arrived) how much longer to wait for further
      * stragglers before returning it. There is no OS-level signal tying completeness of
@@ -123,14 +121,28 @@ public class SolverProcess {
 
 	protected Thread shutdownThread = null;
 
-	/** Starts the process; if the argument is true, then also listens to its output until a prompt is read. */
+	/** Starts the process; if the argument is true, then also listens to its output until a prompt is read.
+	 * @throws ProverException if this SolverProcess has already been started (each instance is single-use;
+	 * solver adapters construct a fresh SolverProcess per start() rather than reusing one) */
     public void start(boolean listen) throws ProverException {
+    	if (process != null) throw new ProverException("SolverProcess.start() called on an already-started process");
     	try {
             process = Runtime.getRuntime().exec(app);
-    		if (useShutdownHooks) {
-    		    shutdownThread = new Thread() { public void run() { process.destroyForcibly(); }};
-    		    Runtime.getRuntime().addShutdownHook( shutdownThread );
-    		}
+    		// Captured into a local rather than reading the 'process' field from within run():
+    		// exit() nulls that field before this process has necessarily finished dying, and if
+    		// the hook fires (JVM shutdown racing ahead of the async removal below) after that
+    		// field is null, reading it from the field would NPE instead of harmlessly re-killing
+    		// an already-dying process.
+    		final Process p = process;
+    		shutdownThread = new Thread() { public void run() { p.destroyForcibly(); }};
+    		Runtime.getRuntime().addShutdownHook( shutdownThread );
+    		// Removing the hook only when we ourselves call exit() would leave it (and the
+    		// SolverProcess it closes over, per the comment on unregisterShutdownHook()) pinned
+    		// in memory for the rest of the JVM's life if the process instead dies on its own
+    		// (crash, killed externally, etc.), since nothing else calls exit() in that case.
+    		// onExit() completes on process termination for any reason, so this is the one place
+    		// that reliably detects "the process is gone" regardless of why.
+    		process.onExit().thenRun(this::unregisterShutdownHook);
     		toProcess = new OutputStreamWriter(process.getOutputStream(), charset);
             errorOut = new StreamGobbler(process.getErrorStream(), null, charset);
             standardOut = new StreamGobbler(process.getInputStream(), s->endsWith(s,endMarker), charset);
@@ -239,11 +251,23 @@ public class SolverProcess {
 		}
 	}
 
+	/** Removes the shutdown hook registered in start(), if it is still registered -- called once
+	 * the process has actually terminated (see the onExit() registration in start()), whether
+	 * that is because of our own destroyForcibly() call below or the process dying on its own.
+	 * This is done rather than leaving the hook registered until the JVM actually exits so it
+	 * doesn't keep this SolverProcess -- and the 'process' it closes over -- pinned in memory for
+	 * the rest of the JVM's lifetime; the JVM's shutdown-hook registry holds a strong reference to
+	 * every registered hook until it is explicitly removed. */
+	private void unregisterShutdownHook() {
+		if (shutdownThread != null) {
+			Runtime.getRuntime().removeShutdownHook(shutdownThread);
+			shutdownThread = null;
+		}
+	}
+
 	/** Aborts the process; returns immediately if already stopped */
 	public void exit() {
 		if (process == null) return;
-		if (shutdownThread != null) Runtime.getRuntime().removeShutdownHook(shutdownThread);
-		shutdownThread = null;
 		process.destroyForcibly();
 		process = null;
 		toProcess = null;
