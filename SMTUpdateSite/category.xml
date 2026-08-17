@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature id="org.smtlib.SMTFeature" version="0.0.0">
+      <category name="org.smtlib.SMT"/>
+   </feature>
+   <category-def name="org.smtlib.SMT" label="jSMTLIB"/>
+</site>
