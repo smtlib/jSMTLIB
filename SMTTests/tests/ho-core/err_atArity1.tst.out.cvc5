@@ -1,0 +1,3 @@
+success
+(error "Parse Error: <shell>:1.31: Symbol '->' not declared as a type")
+(error "Error writing to solver: (assert (@ f)) java.io.IOException: Solver process has already exited")

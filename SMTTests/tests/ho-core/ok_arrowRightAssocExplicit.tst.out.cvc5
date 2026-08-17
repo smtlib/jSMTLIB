@@ -1,0 +1,2 @@
+success
+(error "Parse Error: <shell>:1.39: Symbol '->' not declared as a type")

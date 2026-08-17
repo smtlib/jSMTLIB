@@ -1,0 +1,4 @@
+success
+(error "Parse Error: <shell>:1.31: Symbol '->' not declared as a type")
+(error "Error writing to solver: (declare-fun y () Bool) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (assert (@ f y)) java.io.IOException: Solver process has already exited")

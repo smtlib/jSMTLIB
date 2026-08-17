@@ -1,0 +1,4 @@
+success
+(error "at line 2, column 20: undefined sort constructor: ->")
+(error "Error writing to solver: (declare-fun y () Bool) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (assert (@ f y)) java.io.IOException: Solver process has already exited")

@@ -1,0 +1,10 @@
+success
+success
+success
+success
+success
+(error "<stdin>:6:12: Unknown function symbol @.")
+(error "<stdin>:7:9: Unknown function symbol @.")
+sat
+(error "<stdin>:9:17: Unknown function symbol @.")
+sat

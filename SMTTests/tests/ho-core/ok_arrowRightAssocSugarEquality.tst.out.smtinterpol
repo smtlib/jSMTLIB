@@ -1,0 +1,5 @@
+success
+success
+success
+(error "<stdin>:4:15: Unsupported internal sort: (-> Int (-> Int (-> Int Bool)))")
+sat

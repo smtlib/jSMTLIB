@@ -1,0 +1,10 @@
+success
+(error "at line 2, column 20: undefined sort constructor: ->")
+(error "Error writing to solver: (declare-fun x () Int) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun y () Int) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun h () (-> Int Bool)) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (@ f x) h)) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (assert (@ h y)) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (check-sat) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (assert (not (@ (@ f x) y))) java.io.IOException: Solver process has already exited")
+(error "Error writing to solver: (check-sat) java.io.IOException: Solver process has already exited")
