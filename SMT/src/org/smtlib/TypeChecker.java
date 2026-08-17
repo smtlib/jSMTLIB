@@ -921,6 +921,15 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	}
 	
 	private boolean isBitVec(ISort s) {
+		// expand() first: a user-defined alias for a BitVec sort (e.g.
+		// (define-sort Word32 () (_ BitVec 32))) has family() literally "Word32", not a
+		// parameterized "BitVec" identifier, until expanded through its IAbbreviation
+		// definition -- without this, isBitVec (and so every bv* operator) would wrongly
+		// reject an otherwise-legitimate Word32-sorted argument. Same fix, same reasoning,
+		// as isFloatingPoint() below (added for Float16/32/64/128); isRealSort()/isIntSort()
+		// just below have the identical unfixed gap for a hypothetical Real/Int alias, but
+		// nothing currently exercises one, so they are left as they were.
+		s = s.expand();
 		if (!(s instanceof ISort.IApplication)) return false;
 		ISort.IApplication se = (ISort.IApplication)s;
 		if (!(se.family() instanceof IParameterizedIdentifier)) return false;
@@ -943,6 +952,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	}
 
 	private int bitvecSize(ISort s) {
+		s = s.expand(); // see isBitVec() above
 		if (!(s instanceof ISort.IApplication)) return -1;
 		ISort.IApplication se = (ISort.IApplication)s;
 		if (!(se.family() instanceof IParameterizedIdentifier)) return -1;
@@ -976,6 +986,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	}
 
 	private boolean isRoundingMode(ISort s) {
+		s = s.expand(); // see isBitVec() above
 		return (s instanceof ISort.IApplication) && Utils.ROUNDINGMODE_SYM.equals(((ISort.IApplication)s).family().headSymbol());
 	}
 

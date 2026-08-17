@@ -1,0 +1,6 @@
+success
+success
+success
+success
+success
+(error "The sorts must match: Word32 vs. Word16")

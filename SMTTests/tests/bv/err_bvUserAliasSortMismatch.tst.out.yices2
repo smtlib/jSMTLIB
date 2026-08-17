@@ -1,0 +1,6 @@
+success
+success
+success
+success
+success
+(error "at line 6, column 23: bitvectors have incompatible sizes")
