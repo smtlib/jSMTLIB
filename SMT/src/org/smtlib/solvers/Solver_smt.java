@@ -73,7 +73,7 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 			// Can't turn off printing success, or we get no feedback
 			//if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
 			solverProcess.sendAndListen("(set-option :print-success true)");
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started SMT ");
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
 			return smtConfig.responseFactory.success();
 		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
@@ -88,15 +88,6 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 		StringWriter sw = new StringWriter();
 		org.smtlib.solvers.Printer.write(sw,sexpr);
 		return sw.toString();
-	}
-
-	@Override
-	public IResponse exit() {
-		IResponse response = sendCommand(smtConfig.commandFactory.exit());
-		solverProcess.exit();
-		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended SMT ");
-		solverProcess = null;
-		return response;
 	}
 
 }

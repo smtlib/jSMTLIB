@@ -136,6 +136,22 @@ public class AbstractSolver implements ISolver {
 	 *  parsed response. This is the mechanism behind the default implementations below;
 	 *  a subclass may also call it directly to send a command built some other way. */
 	protected IResponse sendCommand(ICommand cmd) {
+		return sendCommand(cmd, false);
+	}
+
+	/** Sends the exit command, tolerating the solver producing literally no response
+	 *  (SolverProcess.NoResponseException) as a benign, expected outcome rather than an
+	 *  error -- many solvers legitimately print nothing before terminating in response to
+	 *  exit. The tolerated result is "", which Parser.parseResponse("") already turns into
+	 *  a plain empty response -- the same outcome a real empty response (e.g. under
+	 *  :print-success false) already produces, so no separate response-construction case
+	 *  is needed here. A subclass's exit() should call this instead of
+	 *  sendCommand(commandFactory.exit()) directly. */
+	protected IResponse sendExitCommand() {
+		return sendCommand(smtConfig.commandFactory.exit(), true);
+	}
+
+	private IResponse sendCommand(ICommand cmd, boolean tolerateSilentExit) {
 		String translatedCmd = null;
 		try {
 			translatedCmd = translate(cmd);
@@ -156,6 +172,9 @@ public class AbstractSolver implements ISolver {
 				return smtConfig.responseFactory.error("Could not parse response from the solver for: " + translatedCmd + " -- raw response: " + response);
 			}
 			return result;
+		} catch (SolverProcess.NoResponseException e) {
+			if (tolerateSilentExit) return smtConfig.responseFactory.empty();
+			return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
 		} catch (IVisitor.VisitorException e) {
@@ -172,7 +191,11 @@ public class AbstractSolver implements ISolver {
 	/** @see org.smtlib.ISolver#exit() */
 	@Override
 	public IResponse exit() {
-		throw new UnsupportedOperationException("AbstractSolver.exit");
+		IResponse response = sendExitCommand();
+		solverProcess.exit();
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended " + smtConfig.solvername);
+		solverProcess = null;
+		return response;
 	}
 	
 

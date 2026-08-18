@@ -66,20 +66,11 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
 	public IResponse start() {
 		try {
 			solverProcess.start(false);
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started z3 ");
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
 			return smtConfig.responseFactory.success();
 		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
 		}
-	}
-
-	@Override
-	public IResponse exit() {
-		IResponse response = sendCommand(smtConfig.commandFactory.exit());
-		solverProcess.exit();
-		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended z3 ");
-		solverProcess = null;
-		return response;
 	}
 
 }

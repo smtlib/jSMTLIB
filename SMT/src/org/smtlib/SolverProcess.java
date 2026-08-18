@@ -55,6 +55,23 @@ public class SolverProcess {
 		public ProverException(String s) { super(s); }
 	}
 
+	/** Thrown when a command gets literally no response from the solver -- either because
+	 *  the process was already confirmed dead before this command was even written (the
+	 *  pre-write liveness check in send()), or because its output stream closed while
+	 *  listening without ever producing anything on either stream (the forced-EOF check in
+	 *  listen()). Both cases mean the same thing to a caller -- "nothing came back" -- so
+	 *  they're unified under one exception type rather than requiring two separate checks;
+	 *  it still IS-A IOException, so an unaware catch (IOException e) (e.g. every command
+	 *  but exit in AbstractSolver#sendCommand, and every direct sendAndListen() call in the
+	 *  legacy Solver_z3_4_3) keeps working unchanged. Only AbstractSolver#sendExitCommand()
+	 *  catches this specifically, to tolerate a solver that never acknowledges exit (many
+	 *  legitimately don't) as a benign empty response rather than an error. */
+	public static class NoResponseException extends IOException {
+		private static final long serialVersionUID = 1L;
+
+		public NoResponseException(String s) { super(s); }
+	}
+
 	/** The command-line arguments that launch a new process */
 	protected String[] app;
 
@@ -221,11 +238,32 @@ public class SolverProcess {
      */
 	public String listen() throws IOException {
 		String out = standardOut.take(); // blocks until the end marker is recognized, or the process dies
+		boolean outWasForcedEof = standardOut.lastTakeWasForcedEof();
 		// errorOut has no end marker of its own -- there is no OS-level guarantee that error
 		// text for this command has already been fully written and read by the time
 		// standardOut's end marker shows up, so this is a bounded best-effort drain of
 		// whatever has arrived, not a proof of completeness.
 		String err = errorOut.drain(errorSettleMillis);
+		// A forced EOF (stdout closed before ever matching the end marker) with nothing
+		// recovered from *either* stream means the solver died without producing any
+		// response at all for this command. Left unhandled, that's otherwise
+		// indistinguishable from a legitimate empty response (e.g. an end-marker match
+		// with nothing before it, common under :print-success false) -- and this closes a
+		// residual race in send()'s pre-write liveness check: process.isAlive() can still
+		// read true for a command sent immediately after the solver has actually died (OS
+		// process-death bookkeeping lags the pipe closing), so the write goes through, and
+		// this is what used to silently swallow that command's response -- observed as one
+		// cascaded post-death error (always exactly the first command after the one that
+		// actually killed the solver) going completely missing from a script's output
+		// under heavy system load, with no trace in either stream. When stderr *did* catch
+		// something (e.g. a solver crash dump written before the process died), that text
+		// still flows through the normal out-is-empty-so-use-err path below, same as it
+		// always has -- this only applies when both streams came back with nothing.
+		// Always thrown here, unconditionally -- see NoResponseException's javadoc for why
+		// the tolerate-or-not decision belongs one layer up, not here.
+		if (outWasForcedEof && out.isEmpty() && err.isEmpty()) {
+			throw new NoResponseException("Solver process closed its output stream without a response");
+		}
 	    if (log != null) {
 	        if (!out.isEmpty()) { log.write(";OUT: "); log.write(out); log.write(eol); log.flush(); } // input usually ends with a prompt and no line terminator
 	        if (!err.isEmpty()) { log.write(";ERR: "); log.write(err); } // input usually ends with a line terminator, we think
@@ -320,9 +358,16 @@ public class SolverProcess {
 		// intermittent, non-deterministic gaps in cascaded post-death error output (some
         // commands got a clean deterministic error, others silently got an empty response
         // that wasn't recognized as an error at all). Failing fast here, uniformly, once
-        // death is known, removes that race for every command after the first.
+        // death is known, removes that race for every command after the first. Thrown as
+        // NoResponseException, same as listen()'s forced-EOF case -- see that exception's
+        // javadoc for why the tolerate-or-not decision (needed only for the exit command)
+        // belongs one layer up in AbstractSolver, not here: this check applies uniformly
+        // to every command, and must keep reporting an already-dead process as an error
+        // for every command except exit (see tests/bugs/bug2.tst's golden, where several
+        // commands after the one that actually killed the solver are each expected to
+        // show up as a cascaded error, not go silently missing).
 		if (process != null && !process.isAlive()) {
-			throw new IOException("Solver process has already exited");
+			throw new NoResponseException("Solver process has already exited");
 		}
 		for (String arg: args) {
 			if (log != null) log.write(arg);
@@ -336,12 +381,12 @@ public class SolverProcess {
 
 	/** Sends all the given text arguments, then listens for the designated end marker text */
 	public /*@Nullable*/ String sendAndListen(String ... args) throws IOException {
-		return send(true,args);
+		return send(true, args);
 	}
 
 	/** Sends all the given text arguments, but does not wait for a response */
 	public void sendNoListen(String ... args) throws IOException {
-		send(false,args);
+		send(false, args);
 	}
 
 // TODO - combine listen and noListen versions of send?
@@ -430,12 +475,26 @@ public class SolverProcess {
 	        try {
 	            Chunk c = queue.take();
 	            if (c.error != null) throw c.error;
+	            lastTakeWasForcedEof = c.eof;
 	            return c.text;
 	        } catch (InterruptedException e) {
 	            Thread.currentThread().interrupt();
 	            throw new IOException("Interrupted while waiting for solver output", e);
 	        }
 	    }
+
+	    /** Set by the most recent take() call on this (consumer) thread: true if that
+	     * chunk came from the stream physically closing before ever matching the end
+	     * marker, false if it came from a normal end-marker match. Not thread-safe in
+	     * general, but take() and this getter are only ever called back-to-back by the
+	     * same thread (SolverProcess.listen()), so no synchronization is needed -- the
+	     * BlockingQueue handoff inside take() already provides the necessary
+	     * happens-before edge for the write to be visible here. */
+	    boolean lastTakeWasForcedEof() {
+	        return lastTakeWasForcedEof;
+	    }
+
+	    private boolean lastTakeWasForcedEof = false;
 
 	    /** Drains whatever text has arrived, waiting up to settleMillis for the *first* chunk
 	     * before concluding there is none, and (once at least one chunk has arrived) up to

@@ -3,11 +3,3 @@ success
 success
 success
 (error "Parse Error: <shell>:1.2: Free sort symbols not allowed in QF_LIA")
-(error "Error writing to solver: (declare-fun f1 () S1) java.io.IOException: Solver process has already exited")
-(error "Error writing to solver: (declare-fun f2 () S1) java.io.IOException: Solver process has already exited")
-(error "Error writing to solver: (declare-fun f3 () Int) java.io.IOException: Solver process has already exited")
-(error "Error writing to solver: (declare-fun f4 () Int) java.io.IOException: Solver process has already exited")
-(error "Error writing to solver: (assert (not (= f1 f2))) java.io.IOException: Solver process has already exited")
-(error "Error writing to solver: (assert (not (and (<= 0 (ite (< f3 0) (* (- 2) f3) (* 2 f3))) (<= 0 (ite (< f4 0) (* (- 2) f4) (* 2 f4)))))) java.io.IOException: Solver process has already exited")
-(error "Error writing to solver: (check-sat) java.io.IOException: Solver process has already exited")
-(error "Error writing to solver: (exit) java.io.IOException: Solver process has already exited")

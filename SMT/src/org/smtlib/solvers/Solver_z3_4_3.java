@@ -168,6 +168,14 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			solverProcess.exit();
 			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended Z3 ");
 			return successOrEmpty(smtConfig);
+		} catch (SolverProcess.NoResponseException e) {
+			// The response text is discarded either way (this adapter never trusted
+			// z3-4.3's raw responses to begin with -- see the class-level history in
+			// Solver_z3_recent's javadoc), so a silently-closed connection reaches the
+			// same successOrEmpty() outcome as a normal response, not an error.
+			solverProcess.exit();
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended Z3 ");
+			return successOrEmpty(smtConfig);
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
 		}

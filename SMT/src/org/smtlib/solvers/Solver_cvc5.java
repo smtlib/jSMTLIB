@@ -75,20 +75,11 @@ public class Solver_cvc5 extends AbstractSolver implements ISolver {
 	public IResponse start() {
 		try {
 			solverProcess.start(false);
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started cvc5 ");
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
 			return smtConfig.responseFactory.success();
 		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
 		}
-	}
-
-	@Override
-	public IResponse exit() {
-		IResponse response = sendCommand(smtConfig.commandFactory.exit());
-		solverProcess.exit();
-		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended cvc5 ");
-		solverProcess = null;
-		return response;
 	}
 
 }
