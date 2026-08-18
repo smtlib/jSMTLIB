@@ -14,6 +14,11 @@ name: Build jSMTLIB
 
 on:
   workflow_dispatch:
+    inputs:
+      solvers:
+        description: 'Override SMT_TEST_SOLVERS (space-separated, e.g. "test cvc5-1.3.2 z3-4.16.0"). Blank = full default list.'
+        required: false
+        default: ''
   push:
     branches: [ master, dev ]
 
@@ -151,6 +156,9 @@ jobs:
       id: test
       continue-on-error: true
       uses: ./ACTIONS/.github/actions/jsmtlib-test/
+      with:
+        solvers: ${{ inputs.solvers }}
+        label: ${{ matrix.label }}
 
     - name: Fail job if tests failed
       if: steps.test.outcome == 'failure'

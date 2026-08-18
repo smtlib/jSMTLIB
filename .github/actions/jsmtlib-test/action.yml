@@ -8,6 +8,16 @@ description: 'A composite action that runs the jSMTLIB test suite on an existing
 ## SMT_SOLVER_DIR so that the Java resolver prepends it to relative executable names
 ## from SMT/jsmtlib.properties.  No generated jsmtlib.properties file is written.
 
+inputs:
+  solvers:
+    description: 'Override SMT_TEST_SOLVERS (space-separated). Blank = the Makefile default (full solver list).'
+    required: false
+    default: ''
+  label:
+    description: 'Human-readable identifier for this platform leg (e.g. "macos-arm64"), used to keep failure-artifact names unique across the test matrix. Falls back to runner.os-runner.arch if blank.'
+    required: false
+    default: ''
+
 runs:
   using: 'composite'
   steps:
@@ -97,7 +107,36 @@ runs:
         done
         exit 0
 
+    ## Only set SMT_TEST_SOLVERS when an override was actually given -- the Makefile's
+    ## `?=` default only kicks in when the variable is entirely unset in the environment,
+    ## so exporting it as an empty string here (e.g. from an un-filled workflow_dispatch
+    ## input) would leave the suite running against no solvers at all instead of falling
+    ## back to the default list.
+    - name: Apply solver-list override
+      if: inputs.solvers != ''
+      shell: bash
+      run: echo "SMT_TEST_SOLVERS=${{ inputs.solvers }}" >> "$GITHUB_ENV"
+
     - name: Run jSMTLIB tests
       shell: bash
       run: |
         make -C jSMTLIB/SMTTests tests
+
+    ## Captures exactly what's needed to debug a failure after the fact, without needing
+    ## to reproduce it locally: the .actual files FileTests.java writes next to a golden
+    ## on mismatch (the same expected-vs-actual diff seen in the console log, but as a
+    ## standalone file you can pull down and inspect/diff directly) and the timestamped
+    ## junit-logs/*.log that records every test's PASS/FAIL/RUNNING as it happened, for
+    ## correlating ordering and timing across a run. if-no-files-found is set to 'warn'
+    ## (not 'error') since a failure can also come from something before any test ran
+    ## (e.g. a compile error), in which case there may be nothing to collect here.
+    - name: Upload test failure artifacts
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: test-failure-${{ inputs.label != '' && inputs.label || format('{0}-{1}', runner.os, runner.arch) }}
+        path: |
+          jSMTLIB/SMTTests/tests/**/*.actual
+          jSMTLIB/SMTTests/junit-logs/
+        if-no-files-found: warn
+        retention-days: 14
