@@ -21,14 +21,11 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Clone Solvers repo
-      shell: bash
-      run: git clone -b master --depth 1 https://github.com/OpenJML/Solvers
-
-    - name: Configure solver paths for CI
+    ## Computed before cloning so the clone below can be scoped to just this one
+    ## subdirectory instead of pulling every platform's binaries.
+    - name: Determine Solvers subdirectory
       shell: bash
       run: |
-        ## Select the Solvers subdirectory matching this runner's OS and architecture.
         case "${{ runner.os }}-${{ runner.arch }}" in
           macOS-ARM64)  SOLVERS_SUBDIR=Solvers-macos-arm64 ;;
           macOS-X64)    SOLVERS_SUBDIR=Solvers-macos ;;
@@ -37,7 +34,22 @@ runs:
           Windows-X64)  SOLVERS_SUBDIR=Solvers-windows ;;
           *) echo "ERROR: unsupported runner OS/arch: ${{ runner.os }}-${{ runner.arch }}"; exit 1 ;;
         esac
+        echo "SOLVERS_SUBDIR=$SOLVERS_SUBDIR" >> "$GITHUB_ENV"
 
+    ## A blobless (--filter=blob:none), sparse, shallow clone: git still walks the
+    ## full commit/tree metadata for depth 1, but only actually downloads file content
+    ## for paths inside the sparse-checkout cone (set to just this platform's
+    ## subdirectory) -- so each of the 5 matrix legs pulls only its own solver
+    ## binaries instead of every platform's worth every time.
+    - name: Clone Solvers repo (sparse -- this platform only)
+      shell: bash
+      run: |
+        git clone -b master --depth 1 --filter=blob:none --sparse https://github.com/OpenJML/Solvers Solvers
+        git -C Solvers sparse-checkout set "$SOLVERS_SUBDIR"
+
+    - name: Configure solver paths for CI
+      shell: bash
+      run: |
         SOLVER_DIR="$GITHUB_WORKSPACE/Solvers/$SOLVERS_SUBDIR"
         ## Normalize to forward slashes so Java path handling works on Windows.
         SOLVER_DIR="${SOLVER_DIR//\\/\/}"
