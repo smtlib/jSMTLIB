@@ -1,5 +1,5 @@
 ##EXITCODE 1
-$SMT_CMD -L scripts:../SMT/logics --text '(set-logic HC)
+$SMT_CMD -L "scripts${PATHSEP}../SMT/logics" --text '(set-logic HC)
 (declare-sort A 0)
 (declare-sort B 0)
 (declare-const f (-> A B))

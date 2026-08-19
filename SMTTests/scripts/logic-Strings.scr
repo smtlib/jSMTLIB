@@ -1,5 +1,5 @@
 ##EXITCODE 1
-$SMT_CMD -L scripts:../SMT/logics --text '(set-logic ST)
+$SMT_CMD -L "scripts${PATHSEP}../SMT/logics" --text '(set-logic ST)
 (declare-const s String)
 (declare-const r RegLan)
 (declare-const i Int)

@@ -24,6 +24,19 @@ esac
 export ARCH
 export PLATFORM_ARCH="$PLATFORM-$ARCH"
 
+# Separator for multi-component paths passed to jSMTLIB's -L/--logics option (e.g.
+# "scripts:../SMT/logics"), matching Java's own File.pathSeparator: ';' on Windows
+# (even under Git Bash), ':' everywhere else. A .scr script hardcoding ':' breaks on
+# Windows -- the whole string becomes one bogus, nonexistent path component instead of
+# two real ones, since Utils.java's openLogicStream() already correctly splits on
+# File.pathSeparator, not a hardcoded ':'.
+if [[ "$PLATFORM" == "windows" ]]; then
+    PATHSEP=";"
+else
+    PATHSEP=":"
+fi
+export PATHSEP
+
 # Directory containing the solver executables for this platform.
 # Relative names in jsmtlib.properties (e.g. z3-4.3.1) are resolved against this directory.
 # Set SMT_SOLVER_DIR externally to override; the Makefile exports it before running tests.
