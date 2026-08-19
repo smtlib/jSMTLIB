@@ -1,39 +1,3 @@
-FAIL: z3-4.10.2: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
-PASS: z3-4.10.2: check-sat reports sat (as expected, to enter sat mode)
-PASS: z3-4.10.2: sat-mode response opens with '('
-PASS: z3-4.10.2: sat-mode response contains at least one :keyword attribute
-PASS: z3-4.10.2: sat-mode response has balanced parentheses
-PASS: z3-4.10.2: check-sat reports unsat (as expected, to enter unsat mode)
-PASS: z3-4.10.2: unsat-mode response opens with '('
-PASS: z3-4.10.2: unsat-mode response contains at least one :keyword attribute
-PASS: z3-4.10.2: unsat-mode response has balanced parentheses
-FAIL: z3-4.12.6: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
-PASS: z3-4.12.6: check-sat reports sat (as expected, to enter sat mode)
-PASS: z3-4.12.6: sat-mode response opens with '('
-PASS: z3-4.12.6: sat-mode response contains at least one :keyword attribute
-PASS: z3-4.12.6: sat-mode response has balanced parentheses
-PASS: z3-4.12.6: check-sat reports unsat (as expected, to enter unsat mode)
-PASS: z3-4.12.6: unsat-mode response opens with '('
-PASS: z3-4.12.6: unsat-mode response contains at least one :keyword attribute
-PASS: z3-4.12.6: unsat-mode response has balanced parentheses
-FAIL: z3-4.14.1: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
-PASS: z3-4.14.1: check-sat reports sat (as expected, to enter sat mode)
-PASS: z3-4.14.1: sat-mode response opens with '('
-PASS: z3-4.14.1: sat-mode response contains at least one :keyword attribute
-PASS: z3-4.14.1: sat-mode response has balanced parentheses
-PASS: z3-4.14.1: check-sat reports unsat (as expected, to enter unsat mode)
-PASS: z3-4.14.1: unsat-mode response opens with '('
-PASS: z3-4.14.1: unsat-mode response contains at least one :keyword attribute
-PASS: z3-4.14.1: unsat-mode response has balanced parentheses
-FAIL: z3-4.16.0: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
-PASS: z3-4.16.0: check-sat reports sat (as expected, to enter sat mode)
-PASS: z3-4.16.0: sat-mode response opens with '('
-PASS: z3-4.16.0: sat-mode response contains at least one :keyword attribute
-PASS: z3-4.16.0: sat-mode response has balanced parentheses
-PASS: z3-4.16.0: check-sat reports unsat (as expected, to enter unsat mode)
-PASS: z3-4.16.0: unsat-mode response opens with '('
-PASS: z3-4.16.0: unsat-mode response contains at least one :keyword attribute
-PASS: z3-4.16.0: unsat-mode response has balanced parentheses
 FAIL: z3-4.3.1: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
 PASS: z3-4.3.1: check-sat reports sat (as expected, to enter sat mode)
 PASS: z3-4.3.1: sat-mode response opens with '('
@@ -43,42 +7,15 @@ PASS: z3-4.3.1: check-sat reports unsat (as expected, to enter unsat mode)
 PASS: z3-4.3.1: unsat-mode response opens with '('
 PASS: z3-4.3.1: unsat-mode response contains at least one :keyword attribute
 PASS: z3-4.3.1: unsat-mode response has balanced parentheses
-FAIL: z3-4.5.0: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
-PASS: z3-4.5.0: check-sat reports sat (as expected, to enter sat mode)
-PASS: z3-4.5.0: sat-mode response opens with '('
-PASS: z3-4.5.0: sat-mode response contains at least one :keyword attribute
-PASS: z3-4.5.0: sat-mode response has balanced parentheses
-PASS: z3-4.5.0: check-sat reports unsat (as expected, to enter unsat mode)
-PASS: z3-4.5.0: unsat-mode response opens with '('
-PASS: z3-4.5.0: unsat-mode response contains at least one :keyword attribute
-PASS: z3-4.5.0: unsat-mode response has balanced parentheses
-FAIL: z3-4.6.0: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
-PASS: z3-4.6.0: check-sat reports sat (as expected, to enter sat mode)
-PASS: z3-4.6.0: sat-mode response opens with '('
-PASS: z3-4.6.0: sat-mode response contains at least one :keyword attribute
-PASS: z3-4.6.0: sat-mode response has balanced parentheses
-PASS: z3-4.6.0: check-sat reports unsat (as expected, to enter unsat mode)
-PASS: z3-4.6.0: unsat-mode response opens with '('
-PASS: z3-4.6.0: unsat-mode response contains at least one :keyword attribute
-PASS: z3-4.6.0: unsat-mode response has balanced parentheses
-FAIL: z3-4.7.1: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
-PASS: z3-4.7.1: check-sat reports sat (as expected, to enter sat mode)
-PASS: z3-4.7.1: sat-mode response opens with '('
-PASS: z3-4.7.1: sat-mode response contains at least one :keyword attribute
-PASS: z3-4.7.1: sat-mode response has balanced parentheses
-PASS: z3-4.7.1: check-sat reports unsat (as expected, to enter unsat mode)
-PASS: z3-4.7.1: unsat-mode response opens with '('
-PASS: z3-4.7.1: unsat-mode response contains at least one :keyword attribute
-PASS: z3-4.7.1: unsat-mode response has balanced parentheses
-FAIL: z3-4.8.12: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
-PASS: z3-4.8.12: check-sat reports sat (as expected, to enter sat mode)
-PASS: z3-4.8.12: sat-mode response opens with '('
-PASS: z3-4.8.12: sat-mode response contains at least one :keyword attribute
-PASS: z3-4.8.12: sat-mode response has balanced parentheses
-PASS: z3-4.8.12: check-sat reports unsat (as expected, to enter unsat mode)
-PASS: z3-4.8.12: unsat-mode response opens with '('
-PASS: z3-4.8.12: unsat-mode response contains at least one :keyword attribute
-PASS: z3-4.8.12: unsat-mode response has balanced parentheses
+FAIL: z3-4.16.0: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
+PASS: z3-4.16.0: check-sat reports sat (as expected, to enter sat mode)
+PASS: z3-4.16.0: sat-mode response opens with '('
+PASS: z3-4.16.0: sat-mode response contains at least one :keyword attribute
+PASS: z3-4.16.0: sat-mode response has balanced parentheses
+PASS: z3-4.16.0: check-sat reports unsat (as expected, to enter unsat mode)
+PASS: z3-4.16.0: unsat-mode response opens with '('
+PASS: z3-4.16.0: unsat-mode response contains at least one :keyword attribute
+PASS: z3-4.16.0: unsat-mode response has balanced parentheses
 FAIL: cvc5-1.3.2: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
 PASS: cvc5-1.3.2: check-sat reports sat (as expected, to enter sat mode)
 PASS: cvc5-1.3.2: sat-mode response opens with '('
@@ -88,30 +25,3 @@ PASS: cvc5-1.3.2: check-sat reports unsat (as expected, to enter unsat mode)
 PASS: cvc5-1.3.2: unsat-mode response opens with '('
 PASS: cvc5-1.3.2: unsat-mode response contains at least one :keyword attribute
 PASS: cvc5-1.3.2: unsat-mode response has balanced parentheses
-FAIL: yices2-2.6.5: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
-PASS: yices2-2.6.5: check-sat reports sat (as expected, to enter sat mode)
-PASS: yices2-2.6.5: sat-mode response opens with '('
-PASS: yices2-2.6.5: sat-mode response contains at least one :keyword attribute
-PASS: yices2-2.6.5: sat-mode response has balanced parentheses
-PASS: yices2-2.6.5: check-sat reports unsat (as expected, to enter unsat mode)
-PASS: yices2-2.6.5: unsat-mode response opens with '('
-PASS: yices2-2.6.5: unsat-mode response contains at least one :keyword attribute
-PASS: yices2-2.6.5: unsat-mode response has balanced parentheses
-FAIL: yices2-2.7.0: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
-PASS: yices2-2.7.0: check-sat reports sat (as expected, to enter sat mode)
-PASS: yices2-2.7.0: sat-mode response opens with '('
-PASS: yices2-2.7.0: sat-mode response contains at least one :keyword attribute
-PASS: yices2-2.7.0: sat-mode response has balanced parentheses
-PASS: yices2-2.7.0: check-sat reports unsat (as expected, to enter unsat mode)
-PASS: yices2-2.7.0: unsat-mode response opens with '('
-PASS: yices2-2.7.0: unsat-mode response contains at least one :keyword attribute
-PASS: yices2-2.7.0: unsat-mode response has balanced parentheses
-FAIL: smtinterpol-2.5: rejects get-info :all-statistics before check-sat with an error (required: not in sat/unsat mode) -- got well-formed data instead of (error ...)
-PASS: smtinterpol-2.5: check-sat reports sat (as expected, to enter sat mode)
-PASS: smtinterpol-2.5: sat-mode response opens with '('
-PASS: smtinterpol-2.5: sat-mode response contains at least one :keyword attribute
-PASS: smtinterpol-2.5: sat-mode response has balanced parentheses
-PASS: smtinterpol-2.5: check-sat reports unsat (as expected, to enter unsat mode)
-PASS: smtinterpol-2.5: unsat-mode response opens with '('
-PASS: smtinterpol-2.5: unsat-mode response contains at least one :keyword attribute
-PASS: smtinterpol-2.5: unsat-mode response has balanced parentheses

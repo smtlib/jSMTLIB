@@ -6,6 +6,16 @@
 # it runs as part of the normal test suite rather than being deferred to an
 # on-demand assessment.
 #
+# Scoped to exactly the solvers named in SMT_TEST_SOLVERS (never a blanket glob of
+# every binary physically present in $SMT_SOLVER_DIR): the Solvers repo carries old
+# versions no longer wired into jsmtlib.properties (e.g. retired z3-4.5/4.6/4.7
+# adapters) and, on some platforms, near-duplicate builds (e.g. both z3-4.3.0 and
+# z3-4.3.1) that were never meant to be exercised here. Globbing all of them made
+# this script's output -- and therefore its golden -- drift out of sync with
+# whatever jSMTLIB itself is actually configured to test against, on top of
+# invoking real solver subprocesses even under SMT_TEST_SOLVERS=test (the
+# CI test-only isolation step's whole point is to avoid exactly that).
+#
 # :all-statistics is a generic/vendor-specific info request (see the comment
 # in tests/getInfo/err_getInfo2_allStatistics.tst): the standard does not
 # mandate a response shape beyond "a list of attribute-value pairs", and every
@@ -45,17 +55,40 @@
 # instead of the (error ...) the standard requires -- see README.md for the
 # confirmed per-family breakdown. Runs B and C pass for all of them.
 
-declare -a _Z3_SOLVERS=()
-for _exe in "$SMT_SOLVER_DIR"/z3-*;  do [ -x "$_exe" ] && _Z3_SOLVERS+=("$_exe");  done
+# Resolves an SMT_TEST_SOLVERS entry (e.g. "z3-4.3", "cvc5-1.3.2", "test") to the
+# executable path jsmtlib.properties would actually launch for it. "z3-4.3" is the one
+# entry whose exec name doesn't match the solvername verbatim -- it means z3-4.3.1 on
+# every platform except Windows, which ships 4.3.2 under that same solver name (see
+# SMT/jsmtlib.properties). Every other entry's exec name is identical to the solvername
+# (e.g. "z3-4.16.0" launches a binary literally named z3-4.16.0). "test" has no real
+# executable at all -- resolves to nothing, so test-only runs (SMT_TEST_SOLVERS=test)
+# correctly exercise zero real solvers here, matching what "no real solvers" promises.
+_resolve_exec() {
+    local _n="$1" _base
+    case "$_n" in
+        test) return ;;
+        z3-4.3)
+            [[ "$PLATFORM" == "windows" ]] && _base="z3-4.3.2" || _base="z3-4.3.1" ;;
+        smtinterpol-*)
+            echo "$SMT_SOLVER_DIR/$_n.jar"; return ;;
+        *)
+            _base="$_n" ;;
+    esac
+    if [[ "$PLATFORM" == "windows" ]]; then echo "$SMT_SOLVER_DIR/$_base.exe"
+    else echo "$SMT_SOLVER_DIR/$_base"; fi
+}
 
-declare -a _CVC5_SOLVERS=()
-for _exe in "$SMT_SOLVER_DIR"/cvc5-*; do [ -x "$_exe" ] && _CVC5_SOLVERS+=("$_exe"); done
-
-declare -a _YICES2_SOLVERS=()
-for _exe in "$SMT_SOLVER_DIR"/yices2-*; do [ -x "$_exe" ] && _YICES2_SOLVERS+=("$_exe"); done
-
-declare -a _SMTINTERPOL_SOLVERS=()
-for _exe in "$SMT_SOLVER_DIR"/smtinterpol-*.jar; do [ -e "$_exe" ] && _SMTINTERPOL_SOLVERS+=("$_exe"); done
+declare -a _Z3_SOLVERS=() _CVC5_SOLVERS=() _YICES2_SOLVERS=() _SMTINTERPOL_SOLVERS=()
+for _n in ${SMT_TEST_SOLVERS:-test}; do
+    _exe=$(_resolve_exec "$_n")
+    [ -z "$_exe" ] && continue
+    case "$_n" in
+        z3-*)          [ -x "$_exe" ] && _Z3_SOLVERS+=("$_exe") ;;
+        cvc5-*)        [ -x "$_exe" ] && _CVC5_SOLVERS+=("$_exe") ;;
+        yices2-*)      [ -x "$_exe" ] && _YICES2_SOLVERS+=("$_exe") ;;
+        smtinterpol-*) [ -e "$_exe" ] && _SMTINTERPOL_SOLVERS+=("$_exe") ;;
+    esac
+done
 
 if [ ${#_Z3_SOLVERS[@]} -eq 0 ] && [ ${#_CVC5_SOLVERS[@]} -eq 0 ] \
    && [ ${#_YICES2_SOLVERS[@]} -eq 0 ] && [ ${#_SMTINTERPOL_SOLVERS[@]} -eq 0 ]; then
@@ -236,7 +269,12 @@ for _mode_solvers in "z3:_Z3_SOLVERS" "cvc5:_CVC5_SOLVERS" "yices2:_YICES2_SOLVE
     _arrname="${_mode_solvers#*:}"
     eval "_list=(\"\${${_arrname}[@]}\")"
     for _exe in "${_list[@]}"; do
-        _name=$(basename "$_exe" .jar)
+        # Strip both .jar (smtinterpol) and .exe (every Windows binary) so a solver's
+        # displayed name -- and therefore this script's output -- doesn't vary by
+        # platform for reasons unrelated to the solver's actual behavior.
+        _name=$(basename "$_exe")
+        _name="${_name%.jar}"
+        _name="${_name%.exe}"
         _check "$_name"
     done
 done

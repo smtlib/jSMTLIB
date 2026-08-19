@@ -11,6 +11,29 @@ if [[ -z "${SMT_CMD:-}" ]]; then
     source setup
 fi
 
+# PLATFORM/PLATFORM_ARCH are always (re)computed here directly, rather than trusting
+# only the inherited value from the skip-source-setup optimization above: a Windows CI
+# run picked the wrong-platform golden for batch-smt4.scr even though the .windows
+# golden existed and PLATFORM was exported by setup earlier in the same process chain
+# (runjunits -> java -> this script) -- root cause in that inheritance chain not fully
+# pinned down. Two `uname` calls are cheap enough to not need the same
+# skip-when-already-set treatment as the rest of setup (SMT_SOLVER_DIR resolution,
+# SMT_CMD construction, etc.), so this makes golden selection immune to whatever it was.
+_p=$(uname -s | tr '[:upper:]' '[:lower:]')
+case "$_p" in
+  darwin*)               PLATFORM=macos ;;
+  linux*)                PLATFORM=linux ;;
+  mingw*|msys*|cygwin*)  PLATFORM=windows ;;
+  *)                     PLATFORM="$_p" ;;
+esac
+_a=$(uname -m)
+case "$_a" in
+  x86_64|amd64|i686) ARCH=x64 ;;
+  arm64|aarch64)      ARCH=arm64 ;;
+  *)                  ARCH="$_a" ;;
+esac
+PLATFORM_ARCH="$PLATFORM-$ARCH"
+
 f="$1"
 if [ ! -e "$f" ]; then
     echo "File not found: $f" >&2
