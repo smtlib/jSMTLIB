@@ -133,13 +133,15 @@ runs:
     ## subprocess I/O at all) before the full run below. If this hangs too, it isolates a
     ## test-infrastructure/JVM-level cause (e.g. test discovery, JUnit machinery) from a
     ## real-solver-specific one (e.g. a wedged subprocess) -- see the "Run jSMTLIB tests"
-    ## step's own comment for the hang this is diagnosing. Its own timeout-minutes is
-    ## deliberately much smaller than the job's: normal runs finish in ~1-2 minutes, and a
-    ## tight cap here leaves most of the job's overall budget for the real run below even
-    ## if this step is what hangs.
+    ## step's own comment for the hang this is diagnosing. No per-step timeout-minutes
+    ## here: that key is only valid on a workflow job, not a step inside a composite
+    ## action (confirmed the hard way -- an earlier attempt to set one here made the
+    ## whole action fail to load with a template validation error, on every platform,
+    ## before a single step ran). Relies on the job-level timeout-minutes in build.yml
+    ## instead: if this step is what hangs, the CI log will still show it as the step in
+    ## progress when that fires, giving the same diagnostic answer.
     - name: Run jSMTLIB tests (test-only, no real solvers)
       shell: bash
-      timeout-minutes: 5
       run: |
         make -C jSMTLIB/SMTTests test-only
 
