@@ -77,6 +77,31 @@ public class ScriptTests {
         }
     }
 
+    /** Resolves the bash executable to launch runscript with. A bare "bash" is normally
+     *  resolved via PATH, but on Windows that can find C:\Windows\System32\bash.exe -- a
+     *  legacy WSL launcher stub present on the windows-2022 GitHub-hosted runner image --
+     *  ahead of Git Bash's own bash.exe, failing immediately with "Windows Subsystem for
+     *  Linux has no installed distributions." (there is no WSL distro installed on that
+     *  runner). GitHub Actions' own `shell: bash` step type doesn't hit this because it
+     *  invokes Git Bash by its known install path rather than doing a PATH search --
+     *  every other bash step in the CI workflow already works fine on this same runner,
+     *  confirming Git Bash itself is not the problem, just how this one ProcessBuilder
+     *  call finds it. Falls back to the bare "bash" (today's behavior) when that known
+     *  path doesn't exist, e.g. a Windows dev machine with Git installed elsewhere. */
+    private static String resolveBash() {
+        if (PLATFORM.equals("windows")) {
+            String programFiles = System.getenv("ProgramFiles");
+            if (programFiles != null) {
+                // Three chained File(parent, child) calls rather than one path string with
+                // literal '\' separators, so this resolves correctly (and is testable) on
+                // any platform's File.separatorChar, not just Windows's.
+                File gitBash = new File(new File(new File(programFiles, "Git"), "bin"), "bash.exe");
+                if (gitBash.isFile()) return gitBash.getAbsolutePath();
+            }
+        }
+        return "bash";
+    }
+
     private final File scrFile;
 
     public ScriptTests(String name, String scrFilePath) {
@@ -92,7 +117,7 @@ public class ScriptTests {
         // findScriptsFolder()'s parent is always the true SMTTests root regardless of how
         // deep under scripts/ the script itself is nested.
         File smtTestsDir = findScriptsFolder().getParentFile();
-        ProcessBuilder pb = new ProcessBuilder("bash", "runscript", scrFile.getAbsolutePath());
+        ProcessBuilder pb = new ProcessBuilder(resolveBash(), "runscript", scrFile.getAbsolutePath());
         pb.directory(smtTestsDir);
         pb.redirectErrorStream(true);
         Process proc = pb.start();
