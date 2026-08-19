@@ -199,8 +199,20 @@ public class FileTests extends LogicTests {
     private File findGoldenFile(String ext) {
         String base = tstFile.getAbsolutePath();
         String family = family(solvername);
+        // At the two platform-specific tiers, .bad is checked *before* the plain file --
+        // unlike the bare-solvername tier below it, where plain is deliberately checked
+        // before .bad (see feedback_family_golden_represents_newest /
+        // feedback_test_solver_default_golden_restructuring in memory: the bare file is
+        // the trusted, promoted golden there, with .bad only a last-resort fallback). At
+        // the platform tier there is no such promoted/default file to defer to -- a
+        // platform-specific .bad documents a real, solver-own bug specific to that
+        // platform's binary (e.g. a Windows-only miscompiled sort width), and should not
+        // be silently shadowed by a same-tier plain file that isn't expected to coexist
+        // with it for the same test/solver/platform anyway.
         List<String> candidates = new ArrayList<String>(Arrays.asList(
+            base + ext + "." + solvername + "." + PLATFORM_ARCH + ".bad",
             base + ext + "." + solvername + "." + PLATFORM_ARCH,
+            base + ext + "." + solvername + "." + PLATFORM + ".bad",
             base + ext + "." + solvername + "." + PLATFORM,
             base + ext + "." + solvername,
             base + ext + "." + solvername + ".bad"

@@ -1,0 +1,5 @@
+success
+success
+success
+success
+(error "line 14 column 46: invalid function application for and, sort mismatch on argument at position 1, expected Bool but given X")

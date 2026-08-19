@@ -1,0 +1,19 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "line 16 column 14: invalid function application for =, sort mismatch on argument at position 2, expected (_ FP 15 133) but given (_ FP 15 113)")
+success
+(error "line 18 column 21: invalid number of arguments to floating point relation")
+success
+success
+(error "line 21 column 24: unknown function/constant fp.to_real")
+sat

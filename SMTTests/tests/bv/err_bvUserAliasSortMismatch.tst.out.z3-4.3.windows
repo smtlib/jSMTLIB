@@ -1,0 +1,6 @@
+success
+success
+success
+success
+success
+(error "line 8 column 23: invalid function application for bvand, sort mismatch on argument at position 2, expected (_ BitVec 32) but given (_ BitVec 16)")

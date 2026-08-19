@@ -1,0 +1,4 @@
+success
+success
+success
+(error "line 7 column 25: invalid function application for if, sort mismatch on argument at position 1, expected Bool but given X")

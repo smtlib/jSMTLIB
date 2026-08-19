@@ -106,7 +106,7 @@ fi
 ### IMPORTANT: the priority order in these two 'for f in' loops must stay in sync
 ### with the candidates array in FileTests.java (SMTTests/src/org/smtlib/test/FileTests.java).
 ### If you change the order here, change it there too, and vice versa.
-err_candidates=("${test}.err.$solver.$PLATFORM_ARCH" "${test}.err.$solver.$PLATFORM" "${test}.err.$solver" "${test}.err.$solver.bad")
+err_candidates=("${test}.err.$solver.$PLATFORM_ARCH.bad" "${test}.err.$solver.$PLATFORM_ARCH" "${test}.err.$solver.$PLATFORM.bad" "${test}.err.$solver.$PLATFORM" "${test}.err.$solver" "${test}.err.$solver.bad")
 if [ -n "$family" ]; then err_candidates+=("${test}.err.$family" "${test}.err.$family.bad"); fi
 err_candidates+=("${test}.err.$PLATFORM_ARCH" "${test}.err.$PLATFORM" "${test}.err")
 
@@ -145,7 +145,7 @@ done
         
 
 ### Check the regular output
-out_candidates=("${test}.out.$solver.$PLATFORM_ARCH" "${test}.out.$solver.$PLATFORM" "${test}.out.$solver" "${test}.out.$solver.bad")
+out_candidates=("${test}.out.$solver.$PLATFORM_ARCH.bad" "${test}.out.$solver.$PLATFORM_ARCH" "${test}.out.$solver.$PLATFORM.bad" "${test}.out.$solver.$PLATFORM" "${test}.out.$solver" "${test}.out.$solver.bad")
 if [ -n "$family" ]; then out_candidates+=("${test}.out.$family" "${test}.out.$family.bad"); fi
 out_candidates+=("${test}.out.$PLATFORM_ARCH" "${test}.out.$PLATFORM" "${test}.out")
 

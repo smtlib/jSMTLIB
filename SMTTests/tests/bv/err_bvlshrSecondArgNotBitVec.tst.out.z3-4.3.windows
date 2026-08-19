@@ -1,0 +1,4 @@
+success
+success
+success
+(error "line 4 column 24: invalid function application for bvlshr, sort mismatch on argument at position 2, expected (_ BitVec 4) but given Int")

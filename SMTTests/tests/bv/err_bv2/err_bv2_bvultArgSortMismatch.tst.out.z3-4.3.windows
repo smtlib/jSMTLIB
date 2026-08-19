@@ -1,0 +1,5 @@
+success
+success
+success
+success
+(error "line 6 column 18: invalid function application for bvult, sort mismatch on argument at position 2, expected (_ BitVec 3) but given (_ BitVec 5)")

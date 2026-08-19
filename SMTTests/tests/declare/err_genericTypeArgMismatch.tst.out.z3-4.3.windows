@@ -1,0 +1,10 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "line 11 column 15: invalid function application for f, sort mismatch on argument at position 2, expected X but given X")
