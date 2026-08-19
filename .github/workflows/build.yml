@@ -107,6 +107,13 @@ jobs:
   test:
     needs: build
     runs-on: ${{ matrix.os }}
+    # Safety net, not a fix: a real run (even a fully failing one) finishes in single-digit
+    # minutes on every platform observed so far. Without this, a genuine hang burns the
+    # full 6-hour GitHub Actions default job timeout before failing -- happened twice
+    # (runs 32097690084, 32208754026), both times on the two Linux legs specifically, cause
+    # still under investigation. 20 minutes leaves generous headroom over normal runtime
+    # while capping the cost of a repeat.
+    timeout-minutes: 20
     strategy:
       matrix:
         include:

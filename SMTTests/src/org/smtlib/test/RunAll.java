@@ -38,12 +38,47 @@ public class RunAll {
             classes.add(Class.forName(args[i]));
         }
 
+        Thread mainThread = Thread.currentThread();
+        Thread heartbeat = startHeartbeat(mainThread);
+
         try (Writer w = new FileWriter(logFile)) {
             JUnitCore core = new JUnitCore();
             core.addListener(new LoggingRunListener(w));
             core.addListener(new TextListener(System.out)); // keep the familiar dots + final summary
             Result result = core.run(classes.toArray(new Class<?>[0]));
+            heartbeat.interrupt();
             System.exit(result.wasSuccessful() ? 0 : 1);
         }
+    }
+
+    /** Dumps the main thread's stack trace to stdout every 60s until interrupted. A CI hang
+     *  (two 6-hour job timeouts so far, cause unknown -- see runs 32097690084, 32208754026)
+     *  produced literally zero output between "Running unit tests..." and cancellation: not
+     *  one TextListener dot, meaning the JVM never even finished a single test. That leaves
+     *  no way to tell "stuck in a @Parameters method during test discovery" from "stuck
+     *  inside the very first test" from logs alone. This gives that answer directly, and
+     *  for free even on a normal run: printing to stdout (not the JUnit log file) means it
+     *  shows up in the CI step's own log regardless of which phase the hang is in, and a
+     *  daemon thread with no shared state keeps reporting even if the main thread is
+     *  wedged on blocking I/O (e.g. a solver subprocess) that a JUnit @Rule Timeout's
+     *  watcher-thread approach can abandon but not actually interrupt. */
+    private static Thread startHeartbeat(Thread mainThread) {
+        Thread heartbeat = new Thread(() -> {
+            while (true) {
+                try {
+                    Thread.sleep(60_000);
+                } catch (InterruptedException e) {
+                    return;
+                }
+                System.out.println("[heartbeat] main thread stack trace:");
+                for (StackTraceElement el : mainThread.getStackTrace()) {
+                    System.out.println("    at " + el);
+                }
+            }
+        });
+        heartbeat.setDaemon(true);
+        heartbeat.setName("heartbeat");
+        heartbeat.start();
+        return heartbeat;
     }
 }

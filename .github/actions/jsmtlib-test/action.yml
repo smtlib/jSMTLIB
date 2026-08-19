@@ -129,6 +129,25 @@ runs:
       shell: bash
       run: echo "SMT_TEST_SOLVERS=${{ inputs.solvers }}" >> "$GITHUB_ENV"
 
+    ## Runs against the built-in "test" pseudo-solver only (no real solver binaries, no
+    ## subprocess I/O at all) before the full run below. If this hangs too, it isolates a
+    ## test-infrastructure/JVM-level cause (e.g. test discovery, JUnit machinery) from a
+    ## real-solver-specific one (e.g. a wedged subprocess) -- see the "Run jSMTLIB tests"
+    ## step's own comment for the hang this is diagnosing. Its own timeout-minutes is
+    ## deliberately much smaller than the job's: normal runs finish in ~1-2 minutes, and a
+    ## tight cap here leaves most of the job's overall budget for the real run below even
+    ## if this step is what hangs.
+    - name: Run jSMTLIB tests (test-only, no real solvers)
+      shell: bash
+      timeout-minutes: 5
+      run: |
+        make -C jSMTLIB/SMTTests test-only
+
+    ## Two known 6-hour job-timeout hangs so far (runs 32097690084, 32208754026), both on
+    ## the Linux legs specifically, cause still unknown -- see RunAll.java's heartbeat
+    ## (dumps the main thread's stack trace every 60s to this step's own log) and the
+    ## job-level timeout-minutes in build.yml (a safety net, not a fix, so a repeat fails
+    ## in ~20 minutes instead of burning the full 6-hour default).
     - name: Run jSMTLIB tests
       shell: bash
       run: |
