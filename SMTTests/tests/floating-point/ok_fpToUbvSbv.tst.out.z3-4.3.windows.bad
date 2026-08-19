@@ -1,0 +1,6 @@
+success
+success
+success
+(error "line 5 column 33: sort mismatch, expected first argument of RoundingMode sort")
+NOT
+(error "Failed to check-sat")

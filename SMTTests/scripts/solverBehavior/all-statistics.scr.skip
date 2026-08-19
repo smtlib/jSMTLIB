@@ -1,0 +1,7 @@
+Golden is not yet stable across CI environments: the 10s per-check timeout in
+_run() has been hit under real CI load (empty solver output instead of a
+well-formed response), and the golden itself is scoped to the current
+SMT_TEST_SOLVERS trial override rather than the Makefile's full default list,
+so it diverges for local `make test` runs too. Needs a proper fix (longer
+timeout and/or a golden-comparison approach that isn't sensitive to exactly
+which solvers are configured) before re-enabling. See jsmtlib_ci_cross_platform_verification memory (2026-08-19 update) for details.

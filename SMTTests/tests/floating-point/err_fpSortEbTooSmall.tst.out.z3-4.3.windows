@@ -1,0 +1,2 @@
+success
+(error "line 2 column 40: floating point sorts need parameters > 1")

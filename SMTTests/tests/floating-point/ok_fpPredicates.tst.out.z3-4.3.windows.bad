@@ -1,0 +1,14 @@
+success
+success
+success
+(error "line 6 column 27: unsupported floating point operator")
+success
+success
+success
+success
+success
+success
+success
+success
+success
+unsat

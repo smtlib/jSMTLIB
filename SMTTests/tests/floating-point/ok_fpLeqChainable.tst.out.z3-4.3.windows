@@ -1,0 +1,11 @@
+success
+success
+success
+success
+success
+success
+success
+(error "line 9 column 29: invalid number of arguments to floating point relation")
+sat
+(error "line 11 column 29: invalid number of arguments to floating point relation")
+sat
