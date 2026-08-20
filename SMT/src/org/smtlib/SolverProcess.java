@@ -369,12 +369,32 @@ public class SolverProcess {
 		if (process != null && !process.isAlive()) {
 			throw new NoResponseException("Solver process has already exited");
 		}
+		// The pre-write isAlive() check above closes most of the race, but not all of it:
+		// the process can still die between that check and this write/flush actually
+		// reaching the pipe (isAlive()'s OS-level bookkeeping and the pipe's own closure
+		// are not synchronized), producing a raw IOException (e.g. "Broken pipe") that,
+		// left as-is, would reach AbstractSolver's generic catch and be reported as an
+		// ordinary error -- indistinguishable from a real response -- instead of being
+		// recognized as "nothing came back" the same way the pre-write check and
+		// listen()'s forced-EOF check both already are. Wrapped here so all three failure
+		// points funnel through the same NoResponseException, letting the one caller that
+		// needs to tolerate it (AbstractSolver#sendExitCommand) do so uniformly regardless
+		// of exactly which of the three actually fired for a given command. Only the
+		// process pipe itself is wrapped -- a failure writing to the optional diagnostic
+		// log file is a local disk problem, not a signal about the solver, and must not be
+		// mischaracterized as one.
 		for (String arg: args) {
 			if (log != null) log.write(arg);
-			toProcess.write(arg);
+		}
+		try {
+			for (String arg: args) {
+				toProcess.write(arg);
+			}
+			toProcess.flush();
+		} catch (IOException e) {
+			throw new NoResponseException("Solver process closed its input stream while writing: " + e.getMessage());
 		}
 		if (log != null) log.flush();
-		toProcess.flush();
 		if (listen) return listen();
 		return null;
 	}

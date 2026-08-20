@@ -1,0 +1,8 @@
+simplify is not wired into jsmtlib.properties/the solver adapters yet -- this
+script only exists to check jSMTLIB's own error handling when a configured
+solver executable can't be found/launched, not simplify itself, but it's
+premature to test even that until simplify support actually exists. Also
+sidesteps an unresolved Windows-only golden-selection mystery (the .windows
+golden with the correct CreateProcess wording isn't being picked up over the
+stale bare golden; root cause not pinned down -- see the
+jsmtlib_ci_cross_platform_verification memory).
