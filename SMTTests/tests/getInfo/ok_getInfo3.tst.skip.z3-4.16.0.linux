@@ -1,0 +1,7 @@
+Known non-deterministic flake: z3-4.16.0's response to an unsupported
+get-info/set-info key is sometimes a clean "unsupported", sometimes a
+garbled raw help-text dump that jSMTLIB can't parse -- the exact shape
+differs between runs, and even between the two Linux architectures within
+the same CI run. A .bad golden (exact-match) can never stay in sync with
+genuinely non-deterministic output. Also seen on Windows (separate skip
+file); never observed on macOS.
