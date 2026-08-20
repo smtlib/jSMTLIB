@@ -24,7 +24,15 @@ export SMT_SOLVER_DIR
 ## LogicTests.java/FileTests.java). Default is just the built-in pure-Java "test" solver,
 ## which needs no external binary. Override on the command line or in the environment, e.g.:
 ##   make test SMT_TEST_SOLVERS="test z3-4.3 z3_4_8 cvc5"
-SMT_TEST_SOLVERS ?=test z3-4.3 cvc5-1.3.2 z3-4.8.12 z3-4.10.2 z3-4.12.6 z3-4.14.1 z3-4.16.0 yices2-2.6.5 yices2-2.7.0 smtinterpol-2.5
+## yices2 (bare) rather than pinning both yices2-2.6.5/yices2-2.7.0: resolves to whichever
+## version jsmtlib.properties designates default for the current platform, avoiding
+## doubled test volume/golden upkeep for two versions when one representative suffices.
+## z3-4.12.6 dropped entirely (all platforms) -- not carrying its own weight as a distinct
+## data point alongside the surrounding z3-4.8.12/4.10.2/4.14.1/4.16.0 versions already
+## covered here. z3-4.5.0/4.6.0/4.7.1 skipped for now too: inconsistent Solvers-repo
+## availability (4.5.0/4.6.0 exist only on macOS-x64; 4.7.1 is missing from both ARM64
+## platforms) would need per-platform goldens for versions this old to be worth much.
+SMT_TEST_SOLVERS ?=test z3-4.3 cvc5-1.3.2 z3-4.8.12 z3-4.10.2 z3-4.14.1 z3-4.16.0 yices2 smtinterpol-2.5
 export SMT_TEST_SOLVERS
 
 test tests:
