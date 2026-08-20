@@ -1,0 +1,4 @@
+(assert (fp.gt three two one))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (fp.gt three one two))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

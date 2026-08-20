@@ -1,0 +1,4 @@
+(assert (fp.eq one one one))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (fp.eq one one two))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^

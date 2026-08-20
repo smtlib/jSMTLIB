@@ -1,0 +1,4 @@
+(assert (fp.geq three two one))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (fp.geq three one two))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

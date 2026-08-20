@@ -1,0 +1,4 @@
+(assert (fp.leq one two three))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (fp.leq one three two))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
