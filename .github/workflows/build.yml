@@ -164,12 +164,16 @@ jobs:
       continue-on-error: true
       uses: ./ACTIONS/.github/actions/jsmtlib-test/
       with:
-        # Trial solver set, standing in for the Makefile's full default list while
-        # trying out the failure-artifact instrumentation above -- applies to both
-        # workflow_dispatch (when the 'solvers' input is left blank) and push-triggered
-        # runs (inputs.solvers isn't populated at all for those, so it's blank too).
-        # A workflow_dispatch 'solvers' input still overrides this when provided.
-        solvers: ${{ inputs.solvers != '' && inputs.solvers || 'test z3-4.3 cvc5-1.3.2 z3-4.16.0' }}
+        # Passed straight through: blank for a push-triggered run (inputs.solvers isn't
+        # populated at all for those) and blank by default for an unfilled workflow_dispatch
+        # 'solvers' input too. jsmtlib-test's own "Apply solver-list override" step only
+        # sets SMT_TEST_SOLVERS when this is non-blank, so blank here means the Makefile's
+        # own `SMT_TEST_SOLVERS ?= ...` default (SMTTests/Makefile) takes effect --
+        # the single, canonical place both trigger types fall back to, rather than
+        # duplicating (and inevitably drifting from) that list here as well. A
+        # workflow_dispatch 'solvers' input still overrides it when explicitly provided,
+        # e.g. for a targeted single-solver debug run.
+        solvers: ${{ inputs.solvers }}
         label: ${{ matrix.label }}
 
     - name: Fail job if tests failed
