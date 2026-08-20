@@ -1,0 +1,2 @@
+success
+(error "line 3 column 28: invalid indexed sort, index is too big to fit in an unsigned machine integer")

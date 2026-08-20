@@ -1,0 +1,5 @@
+success
+success
+success
+success
+(error "Failed to assert expression: org.smtlib.SolverProcess$NoResponseException: Solver process closed its output stream without a response (= (bvudiv x y z) x)")

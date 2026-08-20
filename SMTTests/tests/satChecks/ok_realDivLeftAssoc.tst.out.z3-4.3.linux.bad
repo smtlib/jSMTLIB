@@ -1,0 +1,5 @@
+success
+(error "Failed to assert expression: org.smtlib.SolverProcess$NoResponseException: Solver process closed its output stream without a response (= (/ 6.0 3.0 2.0) 1.0)")
+(error "Failed to check-sat")
+(error "Failed to assert expression: org.smtlib.SolverProcess$NoResponseException: Solver process has already exited (= (/ 6.0 3.0 2.0) 2.0)")
+(error "Failed to check-sat")
