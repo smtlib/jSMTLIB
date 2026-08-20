@@ -1,0 +1,7 @@
+Known timeout/interrupt flake: z3-4.3 intermittently never responds to the
+first (get-info :reason-unknown) call on this platform, hitting the 1-minute
+JUnit timeout and reporting "Interrupted while waiting for solver output"
+instead of the expected error/success sequence. Not a content mismatch, so
+no golden can fix it. Seen on both macos-arm64 (this file) and linux-arm64,
+never on the x64 counterpart of either OS -- see the
+jsmtlib_ci_cross_platform_verification memory for the full CI history.
