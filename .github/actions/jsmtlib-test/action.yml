@@ -129,35 +129,12 @@ runs:
       shell: bash
       run: echo "SMT_TEST_SOLVERS=${{ inputs.solvers }}" >> "$GITHUB_ENV"
 
-    ## Runs against the built-in "test" pseudo-solver only (no real solver binaries, no
-    ## subprocess I/O at all) before the full run below. If this hangs too, it isolates a
-    ## test-infrastructure/JVM-level cause (e.g. test discovery, JUnit machinery) from a
-    ## real-solver-specific one (e.g. a wedged subprocess) -- see the "Run jSMTLIB tests"
-    ## step's own comment for the hang this is diagnosing. No per-step timeout-minutes
-    ## here: that key is only valid on a workflow job, not a step inside a composite
-    ## action (confirmed the hard way -- an earlier attempt to set one here made the
-    ## whole action fail to load with a template validation error, on every platform,
-    ## before a single step ran). Relies on the job-level timeout-minutes in build.yml
-    ## instead: if this step is what hangs, the CI log will still show it as the step in
-    ## progress when that fires, giving the same diagnostic answer.
-    ##
-    ## `|| true`: this step is purely diagnostic -- an individual test failure here
-    ## (unrelated to the hang this exists to catch) must never block the real "Run
-    ## jSMTLIB tests" step below, which is a composite-action step and so has no
-    ## continue-on-error of its own to reach for (that's a workflow-job-step-only key,
-    ## same restriction as timeout-minutes above). Confirmed the hard way: run
-    ## 32252788554 had two unrelated ScriptTests failures trip this step on every
-    ## platform, aborting the whole composite action before the real run ever started.
-    - name: Run jSMTLIB tests (test-only, no real solvers)
-      shell: bash
-      run: |
-        make -C jSMTLIB/SMTTests test-only || true
-
-    ## Two known 6-hour job-timeout hangs so far (runs 32097690084, 32208754026), both on
-    ## the Linux legs specifically, cause still unknown -- see RunAll.java's heartbeat
-    ## (dumps the main thread's stack trace every 60s to this step's own log) and the
-    ## job-level timeout-minutes in build.yml (a safety net, not a fix, so a repeat fails
-    ## in ~20 minutes instead of burning the full 6-hour default).
+    ## A Linux-only hang used to burn the full 6-hour job timeout here (runs 32097690084,
+    ## 32208754026) -- root-caused and fixed: Solver_z3_recent never primed :print-success,
+    ## so the first real command to a z3-recent process on Linux got no response at all and
+    ## jSMTLIB waited forever, indistinguishable from "just slow" (see Solver_z3_recent.java
+    ## and the jsmtlib_ci_cross_platform_verification history for the full writeup). The
+    ## job-level timeout-minutes in build.yml remains as a safety net regardless.
     - name: Run jSMTLIB tests
       shell: bash
       run: |
