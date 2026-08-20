@@ -148,8 +148,17 @@ runs:
     ## correlating ordering and timing across a run. if-no-files-found is set to 'warn'
     ## (not 'error') since a failure can also come from something before any test ran
     ## (e.g. a compile error), in which case there may be nothing to collect here.
+    ##
+    ## `|| cancelled()`: a job-level timeout-minutes cancellation (build.yml's safety net
+    ## for the Linux hang, now fixed but the safety net stays) reports as cancelled, not
+    ## failed -- failure() alone was silently skipping this step on exactly the runs most
+    ## worth capturing (confirmed: no test-failure-ubuntu* artifact ever appeared on any
+    ## of the several timed-out runs during that investigation). Not always(): that would
+    ## also fire (and upload junit-logs/*.log, which exists on every run, pass or fail) on
+    ## ordinary green runs, which is just noise -- this keeps upload scoped to "something
+    ## worth debugging".
     - name: Upload test failure artifacts
-      if: failure()
+      if: failure() || cancelled()
       uses: actions/upload-artifact@v7
       with:
         name: test-failure-${{ inputs.label != '' && inputs.label || format('{0}-{1}', runner.os, runner.arch) }}

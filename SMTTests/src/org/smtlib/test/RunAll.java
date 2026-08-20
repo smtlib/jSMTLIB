@@ -38,15 +38,20 @@ public class RunAll {
             classes.add(Class.forName(args[i]));
         }
 
-        Thread mainThread = Thread.currentThread();
-        Thread heartbeat = startHeartbeat(mainThread);
+        // Heartbeat disabled: it did its job diagnosing the Linux hang (now fixed, see
+        // Solver_z3_recent.java) but fires on essentially every run regardless of health --
+        // a full suite routinely runs past the 60s interval on its own, so the dump was
+        // never actually a hang signal, just noise on every green run. Left in place
+        // (commented, not deleted) in case a future hang investigation wants it back.
+        // Thread mainThread = Thread.currentThread();
+        // Thread heartbeat = startHeartbeat(mainThread);
 
         try (Writer w = new FileWriter(logFile)) {
             JUnitCore core = new JUnitCore();
             core.addListener(new LoggingRunListener(w));
             core.addListener(new TextListener(System.out)); // keep the familiar dots + final summary
             Result result = core.run(classes.toArray(new Class<?>[0]));
-            heartbeat.interrupt();
+            // heartbeat.interrupt();
             System.exit(result.wasSuccessful() ? 0 : 1);
         }
     }
