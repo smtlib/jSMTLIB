@@ -58,7 +58,13 @@ if [ $fail == 0 ]; then
 else
     echo "$fail FAILURES out of $((count - skip)) tests${skip:+, $skip skipped}"
 fi
-source version.check
+## Same check as scripts/version-check.scr: confirms the jar's reported --version
+## matches the source of truth in SMT/version.txt, catching a stale/un-rebuilt jar.
+VER=$(cat ../SMT/version.txt)
+$SMT_CMD --version | diff -b - <(echo "$VER") >/dev/null
 vercheck=$?
+if [ $vercheck -ne 0 ]; then
+    echo "VERSION MISMATCH: \$SMT_CMD --version does not match SMT/version.txt ($VER)"
+fi
 [ $fail -gt 0 ] || [ $vercheck -ne 0 ] && exit 1
 exit 0
