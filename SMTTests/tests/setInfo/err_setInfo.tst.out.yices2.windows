@@ -3,6 +3,6 @@
 (error "can't overwrite :authors")
 (:authors "Bruno Dutertre, Dejan Jovanović, Ian A. Mason, Stéphane Graham-Lengrand" )
 (error "can't overwrite :version")
-(:version "2.7.0" )
+(:version "2.6.5" )
 (error "can't overwrite :error-behavior")
 (:error-behavior immediate-exit )

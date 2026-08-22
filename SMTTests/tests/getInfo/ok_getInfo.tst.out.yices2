@@ -1,0 +1,4 @@
+(:authors "Bruno Dutertre, Dejan Jovanović, Ian A. Mason, Stéphane Graham-Lengrand" )
+(:name "Yices" )
+(:version "2.7.0" )
+(:error-behavior immediate-exit )
