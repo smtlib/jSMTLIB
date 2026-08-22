@@ -24,21 +24,6 @@ esac
 export ARCH
 export PLATFORM_ARCH="$PLATFORM-$ARCH"
 
-# z3-4.12.6, yices2-2.6.5, and yices2-2.7.0 (including the bare "yices2" name, which
-# resolves to yices2-2.7.0 on non-Windows per jsmtlib.properties) were never built/
-# uploaded for Linux ARM64 in OpenJML/Solvers (confirmed via CI: every other same-family
-# solver version is present and working on this platform, but these fail to launch at
-# all with "No such file or directory"). Filtered out of whatever SMT_TEST_SOLVERS
-# already resolved to -- whether that's the Makefile's own default or an explicit
-# override -- rather than left to fail per-test across the whole suite, since jSMTLIB has
-# no way to distinguish "doesn't exist yet for this platform" from "actually broken"
-# without this. Applies equally to a local ARM64 Linux dev machine, not just CI. Revisit
-# once OpenJML/Solvers ships arm64 builds for these.
-if [[ "$PLATFORM_ARCH" == "linux-arm64" && -n "${SMT_TEST_SOLVERS:-}" ]]; then
-    SMT_TEST_SOLVERS=$(echo "$SMT_TEST_SOLVERS" | tr ' ' '\n' | grep -vE '^(z3-4\.12\.6|yices2|yices2-2\.6\.5|yices2-2\.7\.0)$' | tr '\n' ' ' | sed 's/ *$//')
-    export SMT_TEST_SOLVERS
-fi
-
 # Separator for multi-component paths passed to jSMTLIB's -L/--logics option (e.g.
 # "scripts:../SMT/logics"), matching Java's own File.pathSeparator: ';' on Windows
 # (even under Git Bash), ':' everywhere else. A .scr script hardcoding ':' breaks on

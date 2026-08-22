@@ -847,6 +847,47 @@ public class SMT {
 		return exec; // rely on PATH
 	}
 
+	/** Resolves the executable path {@link #startSolver} would use for the given solver
+	 *  name (absent an explicit caller-supplied override -- startSolver's own executable
+	 *  parameter takes precedence there, which this standalone method has no equivalent
+	 *  of), without instantiating an adapter or starting anything -- lets a caller check
+	 *  whether the file actually exists before committing to run tests against it (see
+	 *  the test harness's LogicTests#solversFromEnv, which filters the solver list against
+	 *  this up front so a missing binary is one WARNING line instead of a wall of
+	 *  per-file failures). Mirrors the same
+	 *  .exec.&lt;platform&gt; / .exec / bare-name-as-executable resolution order startSolver
+	 *  itself uses for that case, but intentionally not reused *by* startSolver: unlike
+	 *  this method, startSolver still needs a real executable value even for a solver
+	 *  configured via .command (to populate command[0]), where existence-checking a
+	 *  single array element in isolation wouldn't be meaningful -- the two methods'
+	 *  correct behavior genuinely diverges on that case, not just their implementation.
+	 *  <p>
+	 *  Returns null for the "test" pseudo-solver (no executable at all -- pure Java) and
+	 *  for a solver configured via a multi-argument .command property, both treated as
+	 *  "don't existence-check this one" by the caller. */
+	/*@Nullable*/
+	public String resolveExecutableForSolver(/*@NonNull*/ String solvername) {
+		if (solvername.equals(Utils.TEST_SOLVER)) return null;
+		if (props != null) {
+			String commandString = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_COMMAND_SUFFIX);
+			if (commandString != null && !commandString.isEmpty()) return null;
+		}
+		String executable = null;
+		if (props != null) {
+			executable = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX + "." + platformName());
+			if (executable == null) {
+				executable = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX);
+			}
+			if (executable != null && executable.trim().isEmpty()) executable = null;
+		}
+		if (executable == null) {
+			// No jsmtlib.properties entry for this solver name at all: same fallback
+			// startSolver uses -- treat the solver name itself as the executable.
+			executable = solvername;
+		}
+		return resolveExecutablePath(executable, System.getenv("SMT_SOLVER_DIR"));
+	}
+
 	/** "windows", "macos", or "linux" -- matches the PLATFORM values computed by the bash
 	 *  setup script, so a single naming convention (platform-suffixed property keys,
 	 *  golden files, skip markers) works the same whether driven from Java or from shell. */

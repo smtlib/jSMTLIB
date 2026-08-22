@@ -1,6 +1,7 @@
 package org.smtlib.test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,13 +39,30 @@ public class LogicTests {
 	/** The solvers to test against: the whitespace-separated names in the SMT_TEST_SOLVERS
 	 * environment variable (e.g. "test z3-4.3 z3_4_8 cvc5"), or just "test" if unset -- this
 	 * is the one controlling place for the solver list; runjunits/runtests read the same
-	 * variable so all test-running paths stay in sync. */
+	 * variable so all test-running paths stay in sync. Names whose configured executable
+	 * does not exist on this platform/arch (e.g. a solver never built for linux-arm64) are
+	 * dropped here, up front, before any @Parameters data() call expands them into test
+	 * cases -- so a genuinely missing binary produces one WARNING line instead of a wall of
+	 * per-file failures indistinguishable from a real bug. */
 	public static final String[] solvers = solversFromEnv();
 
 	private static String[] solversFromEnv() {
 		String env = System.getenv("SMT_TEST_SOLVERS");
-		if (env == null || env.trim().isEmpty()) return new String[] { "test" };
-		return env.trim().split("\\s+");
+		String[] candidates = (env == null || env.trim().isEmpty())
+				? new String[] { "test" } : env.trim().split("\\s+");
+		SMT smt = new SMT();
+		smt.props = smt.readProperties();
+		List<String> present = new ArrayList<String>();
+		for (String name : candidates) {
+			String exec = smt.resolveExecutableForSolver(name);
+			if (exec == null || new File(exec).isFile()) {
+				present.add(name);
+			} else {
+				System.err.println("WARNING: solver executable not found for '" + name
+						+ "': " + exec + " -- excluding from test run");
+			}
+		}
+		return present.toArray(new String[present.size()]);
 	}
 	
     @Parameters
@@ -134,7 +152,7 @@ public class LogicTests {
 		if (s == null) throw new RuntimeException("Failed to create or start solver");
 		solver = s;
 	}
-	
+
 	/** Checks response against result, issuing a JUnit Assert if they do not match appropriately */
 	public void checkResponse(IResponse res, /*@Nullable*/String result) {
 		if (res == null) {
