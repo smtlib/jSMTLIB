@@ -43,7 +43,15 @@ import org.smtlib.sexpr.Printer;
 
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into Z3 commands */
 public class Solver_yices2 extends Solver_smt implements ISolver {
-	
+
+	/** yices2 self-reports (get-info :error-behavior) as immediate-exit and its process
+	 *  does exit after some (not all) errors -- see AbstractSolver#sendCommand(ICommand,
+	 *  boolean), which uses this to pause briefly after any error response, giving a
+	 *  genuinely-exiting process time to finish dying before the next command's
+	 *  liveness check runs. */
+	@Override
+	protected boolean selfReportsImmediateExit() { return true; }
+
 //	protected String NAME_VALUE = "z3-4.3";
 //	protected String AUTHORS_VALUE = "Leonardo de Moura and Nikolaj Bjorner";
 //	protected String VERSION_VALUE = "4.3";

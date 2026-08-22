@@ -73,6 +73,25 @@ public class AbstractSolver implements ISolver {
 	 *  been issued since the last state-changing command. */
 	protected /*@Nullable*/ IResponse checkSatStatus = null;
 
+	/** Overridden by a subclass whose target solver's :error-behavior is immediate-exit
+	 *  (e.g. cvc5, yices2) rather than the SMT-LIB default of continued-execution -- such a
+	 *  solver's process may start exiting asynchronously right after it reports an error,
+	 *  and {@link SolverProcess#send(boolean, String...)}'s own process.isAlive() check can
+	 *  still read true for a brief window afterward (OS process-death bookkeeping lags the
+	 *  actual exit) -- see {@link #sendCommand(ICommand, boolean)}, which uses this to give
+	 *  a solver that just reported an error a moment to actually finish dying before the
+	 *  next command's liveness check runs, closing that race deterministically rather than
+	 *  guessing from the error's content whether the process will actually exit. */
+	protected boolean selfReportsImmediateExit() { return false; }
+
+	/** How long to pause after an error response from a {@link #selfReportsImmediateExit()}
+	 *  solver, before letting the next command reach {@link SolverProcess}'s liveness check
+	 *  -- long enough that a process which is genuinely exiting has, in practice, finished
+	 *  doing so by the time that check runs. Only paid on error responses, not on the
+	 *  (much more frequent) non-error path, so this does not affect ordinary solving
+	 *  performance. */
+	private static final long IMMEDIATE_EXIT_SETTLE_MILLIS = 50;
+
 	@Override
 	public String solverName() {
 	    return getClass().toString().substring(6);
@@ -170,6 +189,13 @@ public class AbstractSolver implements ISolver {
 			// than let a null IResponse propagate up and crash the caller.
 			if (result == null) {
 				return smtConfig.responseFactory.error("Could not parse response from the solver for: " + translatedCmd + " -- raw response: " + response);
+			}
+			if (result.isError() && selfReportsImmediateExit()) {
+				try {
+					Thread.sleep(IMMEDIATE_EXIT_SETTLE_MILLIS);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
 			}
 			return result;
 		} catch (SolverProcess.NoResponseException e) {

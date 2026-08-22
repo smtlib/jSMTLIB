@@ -31,9 +31,15 @@ import org.smtlib.*;
  *  as unsupported) nor {@code (set-info :error-behavior continued-execution)}
  *  (silently accepted but with no actual effect — get-info still reports
  *  immediate-exit and the process still dies) can change this, so there's no way to
- *  ask for the other mode. Scripts that trigger a genuine parse error need a
- *  cvc5-specific golden reflecting that (or a skip marker), not a code change here. */
+ *  ask for the other mode. {@link #selfReportsImmediateExit()} tells {@link
+ *  AbstractSolver#sendCommand(ICommand, boolean)} about this, so once cvc5 reports one
+ *  real error, jSMTLIB pauses briefly before sending anything further, giving the
+ *  process time to actually finish exiting (if it is going to) before the next
+ *  command's liveness check runs. */
 public class Solver_cvc5 extends AbstractSolver implements ISolver {
+
+	@Override
+	protected boolean selfReportsImmediateExit() { return true; }
 
 	/** The command-line arguments for launching the solver. --print-success turns on
 	 *  success replies from the very first command onward (confirmed: --interactive does
