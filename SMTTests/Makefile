@@ -27,15 +27,16 @@ export SMT_SOLVER_DIR
 ## yices2 (bare) rather than pinning both yices2-2.6.5/yices2-2.7.0: resolves to whichever
 ## version jsmtlib.properties designates default for the current platform, avoiding
 ## doubled test volume/golden upkeep for two versions when one representative suffices.
-## z3-4.12.6 dropped entirely (all platforms) -- not carrying its own weight as a distinct
-## data point alongside the surrounding z3-4.8.12/4.10.2/4.14.1/4.16.0 versions already
-## covered here. z3-4.5.0/4.6.0/4.7.1 skipped for now too: inconsistent Solvers-repo
-## availability (4.5.0/4.6.0 exist only on macOS-x64; 4.7.1 is missing from both ARM64
-## platforms) would need per-platform goldens for versions this old to be worth much.
+## Full z3 version lineup is now included -- 4.5.0/4.6.0/4.7.1/4.12.6 were previously
+## dropped over inconsistent Solvers-repo availability on some platforms (missing on one
+## or both ARM64 builds), but LogicTests.solversFromEnv() now filters any solver whose
+## executable isn't present on the current platform out of the run up front (a WARNING,
+## not a failure), so a version missing on some platform/arch no longer needs excluding
+## from the whole list -- it's just silently skipped there and tested everywhere it exists.
 ## z3-5.1.0 has no jsmtlib.properties entry at all -- it relies entirely on the
 ## executable-name-equals-solvername convention plus SMT.startSolver's z3-prefix
 ## fallback to Solver_z3_recent, so it doubles as ongoing coverage for that fallback.
-SMT_TEST_SOLVERS ?=test z3-4.3 cvc5-1.3.2 z3-4.8.12 z3-4.10.2 z3-4.14.1 z3-4.16.0 z3-5.1.0 yices2 smtinterpol-2.5
+SMT_TEST_SOLVERS ?=test z3-4.3 cvc5-1.3.2 z3-4.5.0 z3-4.6.0 z3-4.7.1 z3-4.8.12 z3-4.10.2 z3-4.12.6 z3-4.14.1 z3-4.16.0 z3-5.1.0 yices2 smtinterpol-2.5
 export SMT_TEST_SOLVERS
 
 test tests:
