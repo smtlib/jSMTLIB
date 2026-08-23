@@ -36,7 +36,14 @@ export SMT_SOLVER_DIR
 ## z3-5.1.0 has no jsmtlib.properties entry at all -- it relies entirely on the
 ## executable-name-equals-solvername convention plus SMT.startSolver's z3-prefix
 ## fallback to Solver_z3_recent, so it doubles as ongoing coverage for that fallback.
-SMT_TEST_SOLVERS ?=test z3-4.3 cvc5-1.3.2 z3-4.5.0 z3-4.6.0 z3-4.7.1 z3-4.8.12 z3-4.10.2 z3-4.12.6 z3-4.14.1 z3-4.16.0 z3-5.1.0 yices2 smtinterpol-2.5
+#SMT_TEST_SOLVERS ?=test z3-4.3 cvc5-1.3.2 z3-4.5.0 z3-4.6.0 z3-4.7.1 z3-4.8.12 z3-4.10.2 z3-4.12.6 z3-4.14.1 z3-4.16.0 z3-5.1.0 yices2 smtinterpol-2.5
+## TEMPORARY: narrowed to just the three new, not-yet-CI-verified adapters
+## (bitwuzla, altergo, simplify -- see Solver_bitwuzla.java/Solver_altergo.java and
+## jsmtlib.properties) so CI results are easy to read while getting them working,
+## especially altergo, whose adapter is an unverified first guess with no local
+## binary to test against. Restore the line above (and delete this one) once all
+## three are confirmed working.
+SMT_TEST_SOLVERS ?=test bitwuzla altergo simplify
 export SMT_TEST_SOLVERS
 
 test tests:
