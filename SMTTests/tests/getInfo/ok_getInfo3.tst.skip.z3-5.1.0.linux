@@ -5,5 +5,7 @@ garbled raw help-text dump ("; Suppported get-info parameters: ...") that
 jSMTLIB can't parse -- the exact shape differs between runs, and even
 between the two Linux architectures within the same CI run. A .bad golden
 (exact-match) can never stay in sync with genuinely non-deterministic
-output. Observed on ubuntu-24.04-arm in CI; not reproduced locally on
-macOS, matching the pattern already documented for older z3 versions.
+output. Observed on ubuntu-24.04-arm in CI; also now observed on
+macos-14 (arm64) in a later run (see the separate z3-5.1.0.macos-arm64
+skip), so this is not actually Linux-exclusive -- just not yet caught
+on x86_64 macOS or on ubuntu-24.04 (non-arm) for this exact version.
