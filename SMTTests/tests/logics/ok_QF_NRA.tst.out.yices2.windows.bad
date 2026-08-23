@@ -1,0 +1,2 @@
+(error "logic QF_NRA is not supported since yices was not built with mcsat support")
+(error "at line 2, column 19: undefined sort: Real")

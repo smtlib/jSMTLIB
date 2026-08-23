@@ -1,0 +1,7 @@
+Known non-deterministic flake (same one already skipped for z3-4.14.1,
+z3-4.16.0.linux/.windows, z3-5.1.0.linux, and z3-5.1.0.macos-arm64):
+z3-5.1.0's response to an unsupported get-info/set-info key is sometimes
+a clean "unsupported", sometimes a garbled raw help-text dump ("; Suppported
+get-info parameters: ...") that jSMTLIB can't parse -- the exact shape
+differs between runs. A .bad golden (exact-match) can never stay in sync
+with genuinely non-deterministic output. Observed on windows-2022 in CI.
