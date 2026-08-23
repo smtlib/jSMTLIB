@@ -32,7 +32,10 @@ export SMT_SOLVER_DIR
 ## covered here. z3-4.5.0/4.6.0/4.7.1 skipped for now too: inconsistent Solvers-repo
 ## availability (4.5.0/4.6.0 exist only on macOS-x64; 4.7.1 is missing from both ARM64
 ## platforms) would need per-platform goldens for versions this old to be worth much.
-SMT_TEST_SOLVERS ?=test z3-4.3 cvc5-1.3.2 z3-4.8.12 z3-4.10.2 z3-4.14.1 z3-4.16.0 yices2 smtinterpol-2.5
+## z3-5.1.0 has no jsmtlib.properties entry at all -- it relies entirely on the
+## executable-name-equals-solvername convention plus SMT.startSolver's z3-prefix
+## fallback to Solver_z3_recent, so it doubles as ongoing coverage for that fallback.
+SMT_TEST_SOLVERS ?=test z3-4.3 cvc5-1.3.2 z3-4.8.12 z3-4.10.2 z3-4.14.1 z3-4.16.0 z3-5.1.0 yices2 smtinterpol-2.5
 export SMT_TEST_SOLVERS
 
 test tests:

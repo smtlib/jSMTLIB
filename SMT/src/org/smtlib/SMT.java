@@ -942,6 +942,21 @@ public class SMT {
 				}
 			}
 
+			// No Solver_z3 class exists (see the matching comment in jsmtlib.properties),
+			// so a z3 solver name with neither a configured .adapter property nor a
+			// version-specific adapter class of its own (e.g. an untested/future z3
+			// version) would otherwise fall through to the fully generic Solver_smt below,
+			// losing z3-specific handling that any current z3 build still needs. Default
+			// such names to Solver_z3_recent instead.
+			if (adapterClass == null && solvername.startsWith("z3")) {
+				adapterClassName = "org.smtlib.solvers.Solver_z3_recent";
+				try {
+					adapterClass = Class.forName(adapterClassName);
+				} catch (ClassNotFoundException e) {
+					adapterClass = null;
+				}
+			}
+
 			// But otherwise presume the solver is a standard smt solver
             if (adapterClass == null) {
             	adapterClass = org.smtlib.solvers.Solver_smt.class;
