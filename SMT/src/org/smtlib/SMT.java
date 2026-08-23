@@ -1008,8 +1008,23 @@ public class SMT {
 				executable = resolveExecutablePath(executable, System.getenv("SMT_SOLVER_DIR"));
 			}
 
-			if (command != null && executable != null) command[0] = executable;
-			
+			if (command != null && executable != null) {
+				// %exec% lets a .command entry place the resolved executable at any
+				// position, not just the front -- needed for launchers like
+				// "java,-jar,%exec%,-q" where the resolvable path isn't argv[0].
+				// If no placeholder appears, fall back to substituting argv[0], so a
+				// plain "EXE,arg1,arg2"-style command (executable genuinely first)
+				// still works without needing the placeholder spelled out.
+				boolean substituted = false;
+				for (int i = 0; i < command.length; i++) {
+					if (command[i].equals("%exec%")) {
+						command[i] = executable;
+						substituted = true;
+					}
+				}
+				if (!substituted) command[0] = executable;
+			}
+
 			if (executable == null && command == null) {
 				// No jsmtlib.properties entry for this solver name at all: default to
 				// treating the solver name itself as the executable, resolved against

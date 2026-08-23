@@ -11,8 +11,10 @@ import org.smtlib.*;
 
 /** This class is an adapter for SMTInterpol (a Java SMT solver launched as
  *  {@code java -jar smtinterpol-VERSION.jar}, not a native executable): it is a concrete,
- *  silent inheritor of {@link AbstractSolver} -- only the startup command line and
- *  {@link #start()}/{@link #exit()} (process lifecycle) are overridden. Empirically
+ *  silent inheritor of {@link AbstractSolver} -- the base launch command is declared in
+ *  jsmtlib.properties via {@code org.smtlib.solver_smtinterpol-2.5.command} (see SMT.startSolver's
+ *  {@code %exec%} placeholder substitution), so only the conditional timeout flag and
+ *  {@link #start()}/{@link #exit()} (process lifecycle) are handled here. Empirically
  *  fully SMT-LIB compliant: :print-success already defaults to true (no priming
  *  command needed), errors come back as clean (error "...") s-expressions, and
  *  bitvector values print via the equally-valid {@code (_ bvN W)} indexed-literal
@@ -32,20 +34,21 @@ public class Solver_smtinterpol extends AbstractSolver implements ISolver {
 	/** The command-line arguments for launching the solver. */
 	protected String cmds[];
 
-	/** Creates an instance of the solver */
-	public Solver_smtinterpol(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
+	/** Creates an instance of the solver. The base launch command ("java -jar
+	 *  &lt;jar&gt; -q") comes from the org.smtlib.solver_smtinterpol-2.5.command
+	 *  property; only the timeout flag, which is conditional on smtConfig and so
+	 *  can't be expressed in that static property, is still added here. */
+	public Solver_smtinterpol(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
 		this.smtConfig = smtConfig;
-		java.util.List<String> args = new java.util.ArrayList<String>();
-		args.add("java");
-		args.add("-jar");
-		args.add(executable);
-		args.add("-q");
 		if (smtConfig.timeout > 0) {
 			// -t sets a per-check-sat timeout in milliseconds.
+			java.util.List<String> args = new java.util.ArrayList<String>(java.util.Arrays.asList(command));
 			args.add("-t");
 			args.add(Integer.toString((int)Math.ceil(smtConfig.timeout * 1000)));
+			cmds = args.toArray(new String[args.size()]);
+		} else {
+			cmds = command;
 		}
-		cmds = args.toArray(new String[args.size()]);
 		// SMTInterpol prints no interactive prompt, so "\n" is the right end marker.
 		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
 	}
