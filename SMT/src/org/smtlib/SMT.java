@@ -885,7 +885,21 @@ public class SMT {
 			// startSolver uses -- treat the solver name itself as the executable.
 			executable = solvername;
 		}
-		return resolveExecutablePath(executable, System.getenv("SMT_SOLVER_DIR"));
+		String resolved = resolveExecutablePath(executable, System.getenv("SMT_SOLVER_DIR"));
+		// None of the properties' .exec values (or the bare-solvername fallback above)
+		// include a ".exe" suffix -- the real Windows binaries are named e.g.
+		// "z3-4.3.2.exe", but ProcessBuilder/CreateProcess resolves that suffix
+		// automatically when actually launching a bare "z3-4.3.2", so startSolver's own
+		// resolution (which only ever launches, never checks existence) never needed to
+		// add it. This method's caller does a literal File.isFile() existence check,
+		// which gets none of that OS-level resolution -- without this, every solver on
+		// Windows was being reported as missing (confirmed in CI: all real solvers
+		// showed "not found", silently leaving only the "test" pseudo-solver running).
+		if (resolved != null && platformName().equals("windows") && !resolved.toLowerCase().endsWith(".exe")
+				&& !new File(resolved).isFile()) {
+			resolved = resolved + ".exe";
+		}
+		return resolved;
 	}
 
 	/** "windows", "macos", or "linux" -- matches the PLATFORM values computed by the bash
