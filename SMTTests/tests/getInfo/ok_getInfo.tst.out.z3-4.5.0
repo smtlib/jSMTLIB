@@ -1,0 +1,4 @@
+(:authors "Leonardo de Moura, Nikolaj Bjorner and Christoph Wintersteiger" )
+(:name "Z3" )
+(:version "4.5.0" )
+(:error-behavior continued-execution )

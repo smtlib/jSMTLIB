@@ -1,0 +1,5 @@
+success
+success
+success
+(error "Error writing to solver: (reset-assertions) java.io.IOException: Interrupted while waiting for solver output")
+(error "Error writing to solver: (declare-fun a () Bool) java.io.IOException: Interrupted while waiting for solver output")

@@ -1,0 +1,11 @@
+success
+success
+success
+success
+(error "line 5 column 26: unknown function/constant ubv_to_int")
+success
+(error "line 7 column 26: unknown function/constant sbv_to_int")
+success
+(error "line 9 column 32: invalid use of indexed indentifier, unknown builtin function int_to_bv")
+success
+sat

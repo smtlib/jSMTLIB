@@ -1,0 +1,4 @@
+success
+unsupported
+(error "line 3 column 18: Invalid function declaration: unknown sort 'Tree'")
+(error "line 4 column 11: unknown constant t")

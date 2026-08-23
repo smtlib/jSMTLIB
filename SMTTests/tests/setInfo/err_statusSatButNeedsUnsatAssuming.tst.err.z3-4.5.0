@@ -1,0 +1,4 @@
+(check-sat-assuming ( p ))
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(get-unsat-assumptions)
+^^^^^^^^^^^^^^^^^^^^^^^

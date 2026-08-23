@@ -1,0 +1,2 @@
+success
+(error "line 2 column 20: invalid check-sat-assuming command, '(', expected")

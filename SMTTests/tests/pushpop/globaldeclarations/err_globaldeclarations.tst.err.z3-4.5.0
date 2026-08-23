@@ -1,0 +1,4 @@
+(reset-assertions)
+^^^^^^^^^^^^^^^^^^
+(declare-fun a () Bool)  ; duplicate - ERROR
+^^^^^^^^^^^^^^^^^^^^^^^

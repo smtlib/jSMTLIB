@@ -1,0 +1,5 @@
+success
+(error "line 2 column 26: unknown function/constant str.<")
+sat
+(error "line 4 column 26: unknown function/constant str.<")
+sat

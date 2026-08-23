@@ -1,0 +1,55 @@
+success
+success
+success
+success
+success
+(:assertion-stack-levels 0 )
+(
+)
+success
+success
+(:assertion-stack-levels 1 )
+(
+a
+)
+success
+success
+(:assertion-stack-levels 2 )
+(
+a
+b
+)
+success
+(:assertion-stack-levels 1 )
+(
+a
+)
+success
+success
+(:assertion-stack-levels 3 )
+(
+a
+c
+)
+success
+(:assertion-stack-levels 1 )
+(
+a
+)
+success
+(:assertion-stack-levels 0 )
+(
+)
+(error "line 36 column 18: Invalid function declaration: unknown sort 'Bool'")
+success
+(error "line 38 column 8: unknown constant e")
+(:assertion-stack-levels 1 )
+(
+)
+success
+(:assertion-stack-levels 0 )
+success
+success
+(:assertion-stack-levels 0 )
+(
+)

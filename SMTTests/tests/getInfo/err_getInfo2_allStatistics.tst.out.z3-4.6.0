@@ -1,0 +1,3 @@
+(:max-memory 0.13 )
+(error "line 2 column 11: logic must be set before initialization")
+(:max-memory 2.28 )

@@ -1,0 +1,15 @@
+unsupported
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "line 12 column 20: unknown function/constant **")
+(error "line 13 column 20: unknown function/constant **")
+(error "line 14 column 19: unknown function/constant **")
+success

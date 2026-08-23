@@ -1,0 +1,5 @@
+success
+(error "line 2 column 47: unknown function/constant str.to_re")
+sat
+(error "line 4 column 47: unknown function/constant str.to_re")
+sat

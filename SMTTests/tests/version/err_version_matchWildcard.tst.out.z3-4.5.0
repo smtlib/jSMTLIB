@@ -1,0 +1,5 @@
+success
+success
+unsupported
+(error "line 4 column 18: Invalid function declaration: unknown sort 'Color'")
+(error "line 5 column 15: unknown constant x")
