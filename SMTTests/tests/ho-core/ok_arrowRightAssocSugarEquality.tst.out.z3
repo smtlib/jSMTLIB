@@ -1,5 +1,5 @@
 success
-(error "line 2 column 19: unknown sort '->'")
-(error "line 3 column 19: unknown sort '->'")
-(error "line 4 column 11: unknown constant f")
+success
+success
+(error "line 4 column 14: Sorts (Array Int Int Int Bool) and (Array Int (Array Int (Array Int Bool))) are incompatible")
 sat

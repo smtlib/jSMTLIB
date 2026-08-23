@@ -1,7 +1,7 @@
 success
-(error "line 2 column 19: unknown sort '->'")
 success
-(error "line 4 column 11: unknown constant f")
+success
+(error "line 4 column 14: unknown constant @ ((Array Int Bool) Int) ")
 sat
-(error "line 6 column 16: unknown constant f")
+(error "line 6 column 19: unknown constant @ ((Array Int Bool) Int) ")
 sat

@@ -1,5 +1,3 @@
-(declare-fun f () (-> Int Bool))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (assert (@ f x))
 ^^^^^^^^^^^^^^^^
 (assert (not (@ f x)))

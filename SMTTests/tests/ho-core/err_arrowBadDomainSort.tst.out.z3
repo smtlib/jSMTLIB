@@ -1,2 +1,2 @@
 success
-(error "line 2 column 19: unknown sort '->'")
+(error "line 2 column 22: Invalid function declaration: unknown sort 'BadSort'")
