@@ -1,0 +1,9 @@
+unsupported
+unsupported
+success
+success
+success
+success
+sat
+(error "The get-proof command is only valid if :produce-proofs has been enabled")
+(error "The get-unsat-core command is only valid if :produce-unsat-cores has been enabled")

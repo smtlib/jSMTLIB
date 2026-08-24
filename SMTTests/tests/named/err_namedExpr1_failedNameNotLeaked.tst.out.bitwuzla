@@ -1,0 +1,7 @@
+success
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:6:42: symbol 'P' already defined at line 5 column 21
+")
+(error "Error writing to solver: (assert PP) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

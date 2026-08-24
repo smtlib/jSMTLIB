@@ -1,0 +1,5 @@
+success
+(error "The simplify solver cannot handle string literals")
+sat
+(error "The simplify solver cannot handle string literals")
+sat

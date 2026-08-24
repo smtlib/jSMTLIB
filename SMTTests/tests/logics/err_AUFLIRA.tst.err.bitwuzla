@@ -1,0 +1,12 @@
+(set-logic AUFLIRA)
+^^^^^^^^^^^^^^^^^^^
+(declare-const a Real)
+^^^^^^^^^^^^^^^^^^^^^^
+(declare-const b Real)
+^^^^^^^^^^^^^^^^^^^^^^
+(assert (= b (* a a)))
+^^^^^^^^^^^^^^^^^^^^^^
+(assert (= b (/ a 2.0)))
+^^^^^^^^^^^^^^^^^^^^^^^^
+(define-sort BadArr () (Array Int Int))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

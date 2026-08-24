@@ -1,0 +1,3 @@
+(error "The simplify solver does not yet support the bit-vector theory")
+success
+(error "Declarations of uninterpreted functions are not allowed in this logic")

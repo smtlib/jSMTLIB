@@ -1,0 +1,7 @@
+success
+success
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:7:20: invalid sort 'B'
+")

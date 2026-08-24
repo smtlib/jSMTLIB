@@ -1,0 +1,4 @@
+(assert (str.in_re "x"
+                   ^^^
+(assert (str.in_re "y"
+                   ^^^

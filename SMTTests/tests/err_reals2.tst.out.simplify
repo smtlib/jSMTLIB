@@ -1,0 +1,4 @@
+success
+success
+success
+(error "The simplify solver cannot handle decimal literals")

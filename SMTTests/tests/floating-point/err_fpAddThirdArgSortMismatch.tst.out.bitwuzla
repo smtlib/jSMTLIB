@@ -1,0 +1,5 @@
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:5:28: expected terms of same sort at indices 1 and 2 as argument to 'fp.add'
+")

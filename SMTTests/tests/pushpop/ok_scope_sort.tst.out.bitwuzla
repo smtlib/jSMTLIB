@@ -1,0 +1,10 @@
+success
+success
+success
+success
+success
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:10:17: 'declare-sort' of arity > 0 not supported
+")

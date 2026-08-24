@@ -1,0 +1,14 @@
+success
+success
+success
+success
+success
+success
+success
+success
+(error "Invalid token: [error]")
+(error "Unexpected output from the solver: [error] <stdin>:10:2: unsupported command 'get-assertions' ")
+(error "Error writing to solver: (pop 1) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (not p)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

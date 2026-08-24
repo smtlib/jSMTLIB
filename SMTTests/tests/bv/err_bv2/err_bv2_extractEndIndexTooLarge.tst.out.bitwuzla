@@ -1,0 +1,6 @@
+success
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:6:24: upper index '40' too high for bit-vector of size 8 as argument to 'extract'
+")

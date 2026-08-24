@@ -1,0 +1,19 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "Have not yet implemented parameterized bit-vector functions")
+success
+(error "Have not yet implemented parameterized bit-vector functions")
+success
+(error "The simplify solver cannot handle decimal literals")
+unknown

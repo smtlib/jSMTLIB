@@ -1,0 +1,6 @@
+success
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:6:16: expected bit-vector term at index 0 as argument to 'bvult'
+")

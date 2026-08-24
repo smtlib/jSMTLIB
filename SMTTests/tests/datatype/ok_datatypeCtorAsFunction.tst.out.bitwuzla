@@ -1,0 +1,7 @@
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:2: expected command at 'declare-datatype'
+")
+(error "Error writing to solver: (declare-fun p () Pair) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= p (mk-pair true false))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (fst p) true)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (snd p) false)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

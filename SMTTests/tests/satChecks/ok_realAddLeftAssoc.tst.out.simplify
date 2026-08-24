@@ -1,0 +1,5 @@
+success
+(error "The simplify solver cannot handle decimal literals")
+sat
+(error "The simplify solver cannot handle decimal literals")
+sat

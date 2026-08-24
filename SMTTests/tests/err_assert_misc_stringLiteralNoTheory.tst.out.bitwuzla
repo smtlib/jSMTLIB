@@ -1,0 +1,3 @@
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:9: unexpected token
+")

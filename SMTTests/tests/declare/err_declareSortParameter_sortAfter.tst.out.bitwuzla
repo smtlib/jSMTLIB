@@ -1,0 +1,5 @@
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:2: expected command at 'declare-sort-parameter'
+")
+(error "Error writing to solver: (declare-sort T 0) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

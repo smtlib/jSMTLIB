@@ -1,0 +1,8 @@
+(set-logic UFNIA)
+^^^^^^^^^^^^^^^^^
+(declare-const x Int)
+^^^^^^^^^^^^^^^^^^^^^
+(declare-const y Int)
+^^^^^^^^^^^^^^^^^^^^^
+(assert (= y (** x 2)))
+^^^^^^^^^^^^^^^^^^^^^^^

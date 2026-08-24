@@ -1,0 +1,4 @@
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:32: expected bit-vector or floating-point term at index 1 as argument to 'to_fp'
+")

@@ -1,0 +1,6 @@
+(set-logic AUFLIA)
+^^^^^^^^^^^^^^^^^^
+(declare-fun le (Int Int) Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (forall ((x Int)(y Int)) (! (le x y) :pattern 5)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

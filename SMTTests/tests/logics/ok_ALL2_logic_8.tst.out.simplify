@@ -1,0 +1,11 @@
+unsupported
+success
+success
+success
+success
+success
+success
+success
+(error "Did not expect a Hex literal in an expression to be translated")
+success
+sat

@@ -1,0 +1,6 @@
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:2:12: unsupported logic 'QF_AX'
+")
+(error "Error writing to solver: (declare-sort A 0) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun a () (Array A A)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun x () A) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (select a x) x)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

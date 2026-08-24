@@ -1,0 +1,4 @@
+(error "The simplify solver does not yet support the bit-vector theory")
+success
+success
+(error " The (_ repeat 2) function should have one argument")

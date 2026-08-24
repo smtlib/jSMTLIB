@@ -1,0 +1,6 @@
+success
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:6:21: symbol 'P' already defined at line 5 column 21
+")

@@ -1,0 +1,44 @@
+(error "The simplify solver does not yet support the bit-vector theory")
+success
+success
+success
+success
+(error "Did not expect a Binary literal in an expression to be translated")
+(error "Did not expect a Binary literal in an expression to be translated")
+(error "Did not expect a Binary literal in an expression to be translated")
+(error "Did not expect a Binary literal in an expression to be translated")
+(error "Did not expect a Binary literal in an expression to be translated")
+(error "Did not expect a Binary literal in an expression to be translated")
+(error "Did not expect a Binary literal in an expression to be translated")
+(error "Did not expect a Binary literal in an expression to be translated")
+(error "Did not expect a Binary literal in an expression to be translated")
+(error "Did not expect a Binary literal in an expression to be translated")
+success
+success
+(error "Have not yet implemented parameterized bit-vector functions")
+(error "Did not expect a Hex literal in an expression to be translated")
+(error "Did not expect a Hex literal in an expression to be translated")
+(error "Did not expect a Binary literal in an expression to be translated")
+success
+success
+success
+success
+(error "Did not expect a Binary literal in an expression to be translated")
+(error "Did not expect a Binary literal in an expression to be translated")
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "Have not yet implemented parameterized bit-vector functions")
+(error "Have not yet implemented parameterized bit-vector functions")
+(error "Have not yet implemented parameterized bit-vector functions")
+(error "Have not yet implemented parameterized bit-vector functions")
+(error "Have not yet implemented parameterized bit-vector functions")

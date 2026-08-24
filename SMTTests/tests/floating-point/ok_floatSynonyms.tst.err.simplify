@@ -1,0 +1,6 @@
+(assert (= c ((_ to_fp 8 24) RNE 3.0)))
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (fp.eq (fp.add RNE c c) ((_ to_fp 8 24) RNE 6.0)))
+                                ^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (= (fp.to_real c) 3.0))
+                          ^^^

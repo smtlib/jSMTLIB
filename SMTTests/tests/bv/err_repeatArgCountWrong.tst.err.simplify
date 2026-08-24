@@ -1,0 +1,4 @@
+(set-logic QF_BV)
+           ^^^^^
+(assert (= #b1010 ((_ repeat 2) x y)))
+                   ^^^^^^^^^^^^

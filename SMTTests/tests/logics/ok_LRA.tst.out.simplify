@@ -1,0 +1,55 @@
+success
+success
+success
+success
+success
+(error "The simplify solver cannot handle decimal literals")
+success
+(error "The simplify solver cannot handle decimal literals")
+success
+success
+(error "The simplify solver cannot handle decimal literals")
+success
+(error "The simplify solver cannot handle decimal literals")
+success
+success
+(error "The simplify solver cannot handle decimal literals")
+success
+success
+(error "The simplify solver cannot handle decimal literals")
+success
+(error "The simplify solver cannot handle decimal literals")
+success
+success
+(error "The simplify solver cannot handle decimal literals")
+success
+(error "The simplify solver cannot handle decimal literals")
+success
+success
+(error "The simplify solver cannot handle decimal literals")
+success
+(error "The simplify solver cannot handle decimal literals")
+success
+success
+(error "The simplify solver cannot handle decimal literals")
+success
+(error "The simplify solver cannot handle decimal literals")
+(error "The simplify solver cannot handle decimal literals")
+success
+success
+success
+success
+success
+(error "The simplify solver cannot handle decimal literals")
+(error "The simplify solver cannot handle decimal literals")
+success
+success
+success
+success
+success
+(error "The simplify solver cannot handle decimal literals")
+(error "The simplify solver cannot handle decimal literals")
+(error "Use of boolean in a term position is not yet implemented in the Simplify adapter")
+(error "Use of boolean in a term position is not yet implemented in the Simplify adapter")
+success
+success

@@ -1,0 +1,4 @@
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:2:12: unsupported logic 'AUFLIA'
+")
+(error "Error writing to solver: (assert (exists ((x Int) ) (and (<= 1 x) (<= x 3)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

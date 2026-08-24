@@ -1,0 +1,8 @@
+(set-logic QF_UFBV)
+           ^^^^^^^
+(assert (= x #x00))
+             ^^^^
+(assert (= y (bvadd x #x01)))
+                      ^^^^
+(assert (bvult x #xff))
+                 ^^^^

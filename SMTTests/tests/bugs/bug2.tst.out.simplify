@@ -1,0 +1,13 @@
+success
+success
+success
+success
+(error "Error while checking sort abbreviation: New sorts are not allowed in this logic")
+(error "No such sort symbol declared: S1")
+(error "No such sort symbol declared: S1")
+success
+success
+(error "Unknown constant symbol f1")
+(error "Use of boolean in a term position is not yet implemented in the Simplify adapter")
+sat
+success

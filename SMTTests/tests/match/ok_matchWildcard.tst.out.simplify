@@ -1,0 +1,5 @@
+success
+success
+unsupported
+(error "No such sort symbol declared: Tree")
+(error "Unknown constant symbol t")

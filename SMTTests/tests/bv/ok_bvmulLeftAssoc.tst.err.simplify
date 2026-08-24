@@ -1,0 +1,10 @@
+(set-logic QF_BV)
+           ^^^^^
+(assert (= x (bvmul #b1100 #b1010 #b1001)))
+                    ^^^^^^
+(assert (= x #b1000))
+             ^^^^^^
+(assert (= y (bvmul #b1100 #b1010 #b1001)))
+                    ^^^^^^
+(assert (= y #b0001))
+             ^^^^^^

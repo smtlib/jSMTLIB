@@ -1,0 +1,6 @@
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:17: 'declare-sort' of arity > 0 not supported
+")
+(error "Error writing to solver: (define-sort A () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (define-sort B (X ) (Z X)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (define-sort C () (Z A)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

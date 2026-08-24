@@ -1,0 +1,7 @@
+success
+success
+success
+success
+success
+unsupported
+(error "The get-unsat-assumptions command is only valid immediately after check-sat-assumptions returned unsat")

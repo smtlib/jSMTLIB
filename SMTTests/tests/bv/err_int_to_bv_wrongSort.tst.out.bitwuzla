@@ -1,0 +1,4 @@
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:18: invalid indexed term 'int_to_bv'
+")

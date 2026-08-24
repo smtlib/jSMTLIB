@@ -1,0 +1,4 @@
+(assert (str.<= "a" "a" "b"))
+                ^^^
+(assert (str.<= "b" "a" "c"))
+                ^^^

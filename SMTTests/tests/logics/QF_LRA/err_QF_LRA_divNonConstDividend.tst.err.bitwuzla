@@ -1,0 +1,8 @@
+(set-logic QF_LRA)
+^^^^^^^^^^^^^^^^^^
+(declare-const x Real)
+^^^^^^^^^^^^^^^^^^^^^^
+(declare-const y Real)
+^^^^^^^^^^^^^^^^^^^^^^
+(assert (= y (/ x 2.0)))
+^^^^^^^^^^^^^^^^^^^^^^^^

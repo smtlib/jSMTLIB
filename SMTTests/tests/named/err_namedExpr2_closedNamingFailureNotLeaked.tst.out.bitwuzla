@@ -1,0 +1,5 @@
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:2:12: unsupported logic 'AUFNIRA'
+")
+(error "Error writing to solver: (declare-fun q () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (forall ((r Bool) ) (! r :named R))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (forall ((r Bool) ) (and r (! q :named R)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

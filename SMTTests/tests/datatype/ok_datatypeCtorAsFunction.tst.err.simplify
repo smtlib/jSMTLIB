@@ -1,0 +1,8 @@
+(declare-const p Pair)
+                 ^^^^
+(assert (= p (mk-pair true false)))
+           ^
+(assert (= (fst p) true))
+                ^
+(assert (= (snd p) false))
+                ^

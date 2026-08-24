@@ -1,0 +1,8 @@
+(set-logic QF_UFNRA)
+^^^^^^^^^^^^^^^^^^^^
+(declare-const a Real)
+^^^^^^^^^^^^^^^^^^^^^^
+(declare-const b Real)
+^^^^^^^^^^^^^^^^^^^^^^
+(assert (forall ((z Real)) (>= z 0.0)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

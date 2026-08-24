@@ -1,0 +1,12 @@
+[error] <stdin>:10:2: unsupported command 'get-assertions' 
+^^^^^^^
+(get-assertions)
+^^^^^^^^^^^^^^^^
+(pop 1)
+^^^^^^^
+(get-assertions)
+^^^^^^^^^^^^^^^^
+(assert (not p))
+^^^^^^^^^^^^^^^^
+(get-assertions)
+^^^^^^^^^^^^^^^^

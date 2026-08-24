@@ -1,0 +1,2 @@
+(error "The simplify solver does not yet support the bit-vector theory")
+(error "Unexpected end of data while parsing a parameterized identifier")

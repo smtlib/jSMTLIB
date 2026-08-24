@@ -1,0 +1,4 @@
+(set-logic QF_BV)
+           ^^^^^
+(assert (= x ((_ extract 3 0) x y)))
+              ^^^^^^^^^^^^^^^

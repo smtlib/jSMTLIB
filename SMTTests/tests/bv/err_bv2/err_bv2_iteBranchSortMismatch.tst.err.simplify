@@ -1,0 +1,4 @@
+(set-logic QF_BV)
+           ^^^^^
+(assert (ite true #b0 #b11))
+        ^^^^^^^^^^^^^^^^^^^

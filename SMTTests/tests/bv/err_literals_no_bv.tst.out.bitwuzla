@@ -1,0 +1,4 @@
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:9: asserted term is not a formula
+")
+(error "Error writing to solver: (assert #x0a) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

@@ -1,0 +1,4 @@
+(assert (forall ((r Bool)) (and r (! q :named R))))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (let ((r true)) (! r :named R)))
+                                    ^

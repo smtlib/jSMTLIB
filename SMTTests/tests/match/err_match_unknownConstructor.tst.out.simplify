@@ -1,0 +1,4 @@
+success
+unsupported
+(error "No such sort symbol declared: Color")
+(error "Unknown constant symbol c")

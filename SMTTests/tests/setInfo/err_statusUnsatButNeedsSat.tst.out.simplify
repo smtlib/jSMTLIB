@@ -1,0 +1,11 @@
+unsupported
+unsupported
+success
+success
+success
+success
+success
+unsat
+(error "The get-model command is only valid if :produce-models has been enabled")
+(error "The get-value command is only valid if :produce-models has been enabled")
+(error "The get-assignment command is only valid if :produce-assignments has been enabled")

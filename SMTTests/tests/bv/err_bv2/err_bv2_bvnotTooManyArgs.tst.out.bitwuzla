@@ -1,0 +1,6 @@
+success
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:6:13: expected 1 argument to 'bvnot', got 2
+")

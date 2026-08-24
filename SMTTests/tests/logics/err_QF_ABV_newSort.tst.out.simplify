@@ -1,0 +1,3 @@
+(error "The simplify solver does not yet support the bit-vector theory")
+success
+(error "Error while checking sort abbreviation: New sorts are not allowed in this logic")

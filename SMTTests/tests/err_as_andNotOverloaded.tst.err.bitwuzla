@@ -1,0 +1,4 @@
+(set-logic QF_UFLIA)
+^^^^^^^^^^^^^^^^^^^^
+(assert (= ((as and Bool) true false) false))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

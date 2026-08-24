@@ -1,0 +1,7 @@
+success
+success
+success
+success
+true
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:6:9: undefined symbol 'a'
+")

@@ -1,0 +1,9 @@
+(error "The simplify solver does not yet support the bit-vector theory")
+success
+success
+success
+success
+success
+success
+success
+unknown

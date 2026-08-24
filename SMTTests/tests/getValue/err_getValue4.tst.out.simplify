@@ -1,0 +1,6 @@
+unsupported
+success
+success
+success
+unsat
+(error "The get-value command is only valid if :produce-models has been enabled")

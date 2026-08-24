@@ -1,0 +1,5 @@
+success
+success
+(error "Have not yet implemented parameterized bit-vector functions")
+(error "The simplify solver cannot handle decimal literals")
+sat

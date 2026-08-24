@@ -1,0 +1,4 @@
+(error "The simplify solver does not yet support the bit-vector theory")
+success
+success
+(error " The (_ extract 3 0) function should have one argument")

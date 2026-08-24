@@ -1,0 +1,10 @@
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:5:21: symbol 'q' already defined at line 4 column 14
+")
+(error "Error writing to solver: (assert (! p :named P)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (! q :named P)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun P () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (and (! p :named PP) (! q :named P))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert PP) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

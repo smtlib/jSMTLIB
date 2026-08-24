@@ -1,0 +1,6 @@
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:10: undefined symbol 'str.in_re'
+")
+(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (str.in_re ""y"" (re.diff (re.union (str.to_re ""x"") (str.to_re ""y"") (str.to_re ""z"")) (str.to_re ""y"") (str.to_re ""z"")))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

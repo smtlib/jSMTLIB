@@ -1,0 +1,4 @@
+(set-logic QF_BV)
+           ^^^^^
+(assert (= #b0011 ((_ zero_extend 2) x y)))
+                   ^^^^^^^^^^^^^^^^^

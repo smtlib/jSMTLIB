@@ -1,0 +1,8 @@
+(error "Setting the value of a pre-defined keyword is not permitted: :name")
+(:name "Bitwuzla" )
+(error "Setting the value of a pre-defined keyword is not permitted: :authors")
+(:authors "Aina Niemetz, Mathias Preiner, and contributors" )
+(error "Setting the value of a pre-defined keyword is not permitted: :version")
+(:version "0.9.1" )
+(error "Setting the value of a pre-defined keyword is not permitted: :error-behavior")
+(:error-behavior immediate-exit )

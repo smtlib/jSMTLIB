@@ -1,0 +1,40 @@
+(assert (= a (+ b 1.0)))
+                  ^^^
+(assert (= a (+ 1.0 b)))
+                ^^^
+(assert (= a (- b 1.0)))
+                  ^^^
+(assert (= a (- 1.0 b)))
+                ^^^
+(assert (= a (- 1.0)))
+                ^^^
+(assert (>= a 1.0))
+              ^^^
+(assert (>= 1.0 a))
+            ^^^
+(assert (<= a 1.0))
+              ^^^
+(assert (<= 1.0 a))
+            ^^^
+(assert (> a 1.0))
+             ^^^
+(assert (> 1.0 a))
+           ^^^
+(assert (< a 1.0))
+             ^^^
+(assert (< 1.0 a))
+           ^^^
+(assert (distinct a b 1 1.0))
+                        ^^^
+(assert (= a (* 20.0 b)))
+                ^^^^
+(assert (= a (* (- 20.0) b)))
+                   ^^^^
+(assert (= (* 20.0 b) a))
+              ^^^^
+(assert (= (* (- 20.0) b) a))
+                 ^^^^
+(assert (= a (ite true b b)))
+                  ^^^^
+(assert (= a (ite true 1.0 1)))
+                  ^^^^

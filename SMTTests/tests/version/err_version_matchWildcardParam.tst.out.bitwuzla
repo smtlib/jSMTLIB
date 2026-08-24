@@ -1,0 +1,6 @@
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:2: expected command at 'declare-datatype'
+")
+(error "Error writing to solver: (declare-fun t () Tree) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (match t ( ((node _ r) true) (leaf false)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

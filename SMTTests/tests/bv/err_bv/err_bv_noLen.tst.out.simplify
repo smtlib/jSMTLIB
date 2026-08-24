@@ -1,0 +1,2 @@
+(error "The simplify solver does not yet support the bit-vector theory")
+(error "Expected a numeral here, instead of a )")

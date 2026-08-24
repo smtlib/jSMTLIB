@@ -1,0 +1,3 @@
+(error "The simplify solver does not yet support the bit-vector theory")
+success
+(error "The numeral may not be 0 in a repeat")

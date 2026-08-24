@@ -1,0 +1,4 @@
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:10: undefined symbol 'str.<'
+")

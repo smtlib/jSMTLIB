@@ -1,0 +1,6 @@
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:2:12: unsupported logic 'AUFLIA'
+")
+(error "Error writing to solver: (define-fun f () Bool 5) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (define-fun g () Bool 5) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (define-fun h () Bool 5) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (define-fun i () Bool 5) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

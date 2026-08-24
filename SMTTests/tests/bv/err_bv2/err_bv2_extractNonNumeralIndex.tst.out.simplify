@@ -1,0 +1,5 @@
+(error "The simplify solver does not yet support the bit-vector theory")
+success
+success
+success
+(error "Expected exactly two numerals in an extract identifier")

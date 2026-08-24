@@ -1,0 +1,5 @@
+(error "The simplify solver does not yet support the bit-vector theory")
+success
+success
+success
+(error "Argument 2 of = has sort (_ BitVec 4), expected (_ BitVec 3) (to match an earlier argument)")

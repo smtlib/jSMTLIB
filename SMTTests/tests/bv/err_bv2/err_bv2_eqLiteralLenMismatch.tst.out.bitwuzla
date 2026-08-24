@@ -1,0 +1,6 @@
+success
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:6:18: expected terms of same sort at indices 0 and 1 as argument to '='
+")

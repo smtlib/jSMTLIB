@@ -1,0 +1,5 @@
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:5:23: expected rounding-mode term at index 0 as argument to 'fp.sqrt'
+")

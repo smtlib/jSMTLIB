@@ -1,0 +1,4 @@
+(set-logic QF_UFBV)
+           ^^^^^^^
+(assert (forall ((z (_ BitVec 8))) (= z x)))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

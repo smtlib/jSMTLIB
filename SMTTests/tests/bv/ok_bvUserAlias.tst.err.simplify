@@ -1,0 +1,8 @@
+(set-logic QF_BV)
+           ^^^^^
+(assert (= x #x0000000F))
+             ^^^^^^^^^^
+(assert (= (bvand x #x000000FF) #x0000000F))
+                    ^^^^^^^^^^
+(assert (= (bvand x #x000000FF) #x00000000))
+                    ^^^^^^^^^^

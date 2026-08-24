@@ -1,0 +1,5 @@
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:19: invalid sort 'Int'
+")
+(error "Error writing to solver: (assert (= y (fp.rem n y))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

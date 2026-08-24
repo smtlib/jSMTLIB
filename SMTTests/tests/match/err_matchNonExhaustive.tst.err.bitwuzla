@@ -1,0 +1,6 @@
+(declare-datatype Color ((red) (green) (blue)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun c () Color)
+^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (match c ((red true) (green false))))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

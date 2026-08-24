@@ -1,0 +1,4 @@
+(assert (str.in_re "b" (re.union (str.to_re "a") (str.to_re "b") (str.to_re "c"))))
+                   ^^^
+(assert (str.in_re "d" (re.union (str.to_re "a") (str.to_re "b") (str.to_re "c"))))
+                   ^^^

@@ -1,0 +1,2 @@
+(error "The simplify solver does not yet support the bit-vector theory")
+(error "The value of the bitvector constant is too large for the given size (4 vs. 3 bits)")

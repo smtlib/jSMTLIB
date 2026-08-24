@@ -1,0 +1,14 @@
+(declare-sort X 1)
+^^^^^^^^^^^^^^^^^^
+(declare-sort Y 0)
+^^^^^^^^^^^^^^^^^^
+(declare-fun p () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun q () (X Y))
+^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun qb () (X Bool))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun r () Y)
+^^^^^^^^^^^^^^^^^^^^
+(declare-fun f () X)
+^^^^^^^^^^^^^^^^^^^^

@@ -1,0 +1,11 @@
+success
+success
+success
+success
+(error "The simplify solver cannot handle decimal literals")
+(error "The simplify solver cannot handle decimal literals")
+(error "The simplify solver cannot handle decimal literals")
+success
+success
+(error "The simplify solver cannot handle decimal literals")
+success

@@ -1,0 +1,4 @@
+(set-logic QF_BV)
+           ^^^^^
+(assert (= (bvmul x y) #b111))
+           ^^^^^^^^^^^

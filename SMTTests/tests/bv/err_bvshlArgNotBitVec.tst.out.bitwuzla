@@ -1,0 +1,5 @@
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:19: invalid sort 'Int'
+")
+(error "Error writing to solver: (declare-fun y () (_ BitVec 4)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= y (bvshl x y))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

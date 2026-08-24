@@ -1,0 +1,6 @@
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:2:12: unsupported logic 'AUFNIRA'
+")
+(error "Error writing to solver: (declare-fun q () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun r () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (define-fun f ((a Int)(b Int)) Int (+ a b)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (f 1 2) 3)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

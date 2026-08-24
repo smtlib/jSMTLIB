@@ -1,0 +1,7 @@
+success
+unsupported
+unsupported
+(error "No such sort symbol declared: Color")
+(error "No such sort symbol declared: Tree")
+(error "Unknown constant symbol c")
+(error "Unknown constant symbol t")

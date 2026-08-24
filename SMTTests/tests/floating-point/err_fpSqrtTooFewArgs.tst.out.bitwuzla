@@ -1,0 +1,4 @@
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:15: expected 2 arguments to 'fp.sqrt', got 1
+")

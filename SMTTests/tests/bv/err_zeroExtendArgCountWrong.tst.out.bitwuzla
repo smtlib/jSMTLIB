@@ -1,0 +1,5 @@
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:5:20: expected 1 argument to 'zero_extend', got 2
+")

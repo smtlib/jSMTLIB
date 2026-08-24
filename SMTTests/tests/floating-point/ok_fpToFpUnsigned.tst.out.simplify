@@ -1,0 +1,5 @@
+success
+success
+(error "Did not expect a Binary literal in an expression to be translated")
+(error "Have not yet implemented parameterized bit-vector functions")
+sat

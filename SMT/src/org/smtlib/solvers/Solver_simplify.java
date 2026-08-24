@@ -19,6 +19,10 @@ import java.util.Set;
 
 import org.smtlib.ICommand.IScript;
 import org.smtlib.ICommand.Ideclare_fun;
+import org.smtlib.ICommand.Ideclare_datatype;
+import org.smtlib.ICommand.Ideclare_datatypes;
+import org.smtlib.ICommand.Idefine_fun_rec;
+import org.smtlib.ICommand.Idefine_funs_rec;
 import org.smtlib.*;
 import org.smtlib.ICommand.Idefine_fun;
 import org.smtlib.IResponse.IAssertionsResponse;
@@ -122,7 +126,112 @@ public class Solver_simplify extends Solver_test implements ISolver {
 	public IResponse get_assertions() {
 		return super.get_assertions();
 	}
-	
+
+	/** True if :global-declarations has been set -- mirrors {@link Solver_test}'s own
+	 *  private isGlobal(), which the overrides below need but cannot call directly. */
+	private boolean isGlobal() {
+		return Utils.TRUE.equals(options.get(Utils.GLOBAL_DECLARATIONS));
+	}
+
+	/** check-sat-assuming postdates Simplify by well over a decade (added in SMT-LIB
+	 *  2.6; Simplify's protocol has no concept of it), and this class has no override
+	 *  for it -- without one, it silently inherits {@link Solver_test}'s stub (this
+	 *  class's superclass, the type-check-only pseudo-solver), which never talks to the
+	 *  real Simplify process at all and just echoes back whatever :status a script
+	 *  happened to declare (or "unknown" if none), regardless of whether the assumed
+	 *  literals are actually satisfiable. That's not a graceful "can't do this," it's a
+	 *  wrong answer that looks like a real one. Report it as unsupported instead, matching
+	 *  how every other genuinely-unavailable feature in this class (produce-models,
+	 *  produce-proofs, etc., in {@link #set_option}) is already handled.
+	 *  <p>
+	 *  The validation below (logic-set check, then type-checking each assumed literal)
+	 *  duplicates {@link Solver_test#check_sat_assuming}'s own precondition checks
+	 *  rather than calling {@code super.check_sat_assuming(exprs)} and inspecting the
+	 *  result -- that method's only non-error path sets checkSatStatus to the misleading
+	 *  status this override exists to avoid, as a side effect that would happen before
+	 *  this method ever got a chance to override the *return value*. Real, structural
+	 *  errors (bad sorts, undeclared symbols, logic not yet set) should still be
+	 *  reported precisely, matching what a real solver would catch before ever getting
+	 *  to "I don't support this" -- only well-formed input falls through to unsupported. */
+	@Override
+	public IResponse check_sat_assuming(IExpr... exprs) {
+		if (logicSet == null) {
+			return smtConfig.responseFactory.error("The logic must be set before a check-sat-assuming command is issued");
+		}
+		for (IExpr e: exprs) {
+			List<IResponse> responses = TypeChecker.check(symTable, e);
+			if (!responses.isEmpty()) return responses.get(0);
+		}
+		checkSatStatus = null;
+		return smtConfig.responseFactory.unsupported();
+	}
+
+	/** Recursive function definitions postdate Simplify (added in SMT-LIB 2.6) and its
+	 *  BG_PUSH-based DEFPRED translation (see {@link #define_fun}/{@link #declare_fun})
+	 *  has no way to express recursion. Without an override, {@link Solver_test}'s
+	 *  version would register it in the local type-checking symbol table and report
+	 *  success without the real Simplify process ever learning about it -- misleading,
+	 *  same as {@link #check_sat_assuming}. Validation logic duplicated from {@link
+	 *  Solver_test#define_fun_rec} for the same reason given there: real structural
+	 *  errors (e.g. an undeclared parameter/result sort) must still be reported
+	 *  precisely, not masked behind "unsupported". */
+	@Override
+	public IResponse define_fun_rec(Idefine_fun_rec cmd) {
+		if (logicSet == null) {
+			return smtConfig.responseFactory.error("The logic must be set before a define-fun-rec command is issued");
+		}
+		List<IResponse> list = TypeChecker.checkFcnRec(symTable, isGlobal(), cmd.symbol(),
+				cmd.parameters(), cmd.resultSort(), cmd.expression());
+		if (!list.isEmpty()) return list.get(0);
+		return smtConfig.responseFactory.unsupported();
+	}
+
+	/** See {@link #define_fun_rec}. */
+	@Override
+	public IResponse define_funs_rec(Idefine_funs_rec cmd) {
+		if (logicSet == null) {
+			return smtConfig.responseFactory.error("The logic must be set before a define-funs-rec command is issued");
+		}
+		List<IResponse> list = TypeChecker.checkFcnsRec(symTable, isGlobal(),
+				cmd.declarations(), cmd.bodies());
+		if (!list.isEmpty()) return list.get(0);
+		return smtConfig.responseFactory.unsupported();
+	}
+
+	/** Datatypes postdate Simplify (added in SMT-LIB 2.6) and its untyped translation
+	 *  (see the class javadoc: "Simplify has no type definitions") has no way to express
+	 *  a datatype's constructors/selectors. See {@link #define_fun_rec} for why this
+	 *  needs an explicit override rather than falling through to {@link Solver_test}'s
+	 *  local-symbol-table-only version. Only name-clash validation is duplicated here
+	 *  (via the public, static {@link TypeChecker#validateDatatypeNames}) -- {@link
+	 *  Solver_test}'s deeper per-constructor/selector validation and symbol-table
+	 *  registration lives in a private method this class cannot reach, and isn't worth
+	 *  reimplementing here: nothing declared inside an unsupported datatype could ever
+	 *  usefully resolve against Simplify's real (untyped) process anyway. */
+	@Override
+	public IResponse declare_datatype(Ideclare_datatype cmd) {
+		if (logicSet == null) {
+			return smtConfig.responseFactory.error("The logic must be set before a declare-datatype command is issued");
+		}
+		List<IResponse> nameErrors = TypeChecker.validateDatatypeNames(symTable, smtConfig,
+				Collections.singletonList(cmd.sortDeclaration()),
+				Collections.singletonList(cmd.datatype()));
+		if (!nameErrors.isEmpty()) return nameErrors.get(0);
+		return smtConfig.responseFactory.unsupported();
+	}
+
+	/** See {@link #declare_datatype}. */
+	@Override
+	public IResponse declare_datatypes(Ideclare_datatypes cmd) {
+		if (logicSet == null) {
+			return smtConfig.responseFactory.error("The logic must be set before a declare-datatypes command is issued");
+		}
+		List<IResponse> nameErrors = TypeChecker.validateDatatypeNames(symTable, smtConfig,
+				cmd.sortDeclarations(), cmd.datatypes());
+		if (!nameErrors.isEmpty()) return nameErrors.get(0);
+		return smtConfig.responseFactory.unsupported();
+	}
+
 	@Override
 	public IResponse check_sat() {
 		IResponse res = super.check_sat();

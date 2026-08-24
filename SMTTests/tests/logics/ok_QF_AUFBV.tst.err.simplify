@@ -1,0 +1,6 @@
+(set-logic QF_AUFBV)
+           ^^^^^^^^
+(assert (= x (f #x00)))
+                ^^^^
+(assert (= x (select a #x00)))
+                       ^^^^

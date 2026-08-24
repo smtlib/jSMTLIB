@@ -1,0 +1,6 @@
+success
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:6:20: expected floating-point term at index 2 as argument to 'fp.eq'
+")

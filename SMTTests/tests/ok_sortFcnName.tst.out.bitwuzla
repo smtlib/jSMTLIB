@@ -1,0 +1,7 @@
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:14: symbol 'A' already defined at line 3 column 15
+")
+(error "Error writing to solver: (declare-fun B () A) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= A B)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-sort B 1) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

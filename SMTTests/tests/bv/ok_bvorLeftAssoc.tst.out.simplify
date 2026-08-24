@@ -1,0 +1,14 @@
+(error "The simplify solver does not yet support the bit-vector theory")
+success
+(error "Did not expect a Binary literal in an expression to be translated")
+(error "Did not expect a Binary literal in an expression to be translated")
+sat
+success
+(error "Did not expect a Binary literal in an expression to be translated")
+(error "Did not expect a Binary literal in an expression to be translated")
+sat
+success
+success
+success
+success
+unknown

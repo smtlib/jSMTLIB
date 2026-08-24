@@ -1,0 +1,4 @@
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:2:12: unsupported logic 'QF_LRA'
+")
+(error "Error writing to solver: (declare-fun b () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (/ 6.0 3.0 b) 2.0)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

@@ -1,0 +1,2 @@
+(assert (bvult b #xf0))
+                 ^^^^

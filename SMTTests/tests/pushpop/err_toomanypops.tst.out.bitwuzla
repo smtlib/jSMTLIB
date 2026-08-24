@@ -1,0 +1,4 @@
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:2: attempting to pop '3' but only '3' have been pushed previously
+")

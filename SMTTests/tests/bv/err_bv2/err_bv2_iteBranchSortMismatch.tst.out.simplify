@@ -1,0 +1,5 @@
+(error "The simplify solver does not yet support the bit-vector theory")
+success
+success
+success
+(error "Argument 3 of ite has sort (_ BitVec 2), expected (_ BitVec 1) (to match an earlier argument)")

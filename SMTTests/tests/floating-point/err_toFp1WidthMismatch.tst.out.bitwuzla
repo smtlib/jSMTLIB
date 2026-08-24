@@ -1,0 +1,4 @@
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:29: size of bit-vector term '16 does not match floating-point format '8 24'
+")

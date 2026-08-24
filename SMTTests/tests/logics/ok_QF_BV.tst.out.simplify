@@ -1,0 +1,7 @@
+(error "The simplify solver does not yet support the bit-vector theory")
+success
+success
+(error "Did not expect a Hex literal in an expression to be translated")
+(error "Did not expect a Hex literal in an expression to be translated")
+(error "Did not expect a Hex literal in an expression to be translated")
+success

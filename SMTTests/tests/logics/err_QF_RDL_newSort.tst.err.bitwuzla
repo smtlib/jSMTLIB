@@ -1,0 +1,6 @@
+(set-logic QF_RDL)
+^^^^^^^^^^^^^^^^^^
+(declare-const x Real)
+^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort Tag 0)
+^^^^^^^^^^^^^^^^^^^^

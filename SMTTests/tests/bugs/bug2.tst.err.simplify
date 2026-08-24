@@ -1,0 +1,10 @@
+(declare-sort S1 0)
+              ^^
+(declare-fun f1 () S1)
+                   ^^
+(declare-fun f2 () S1)
+                   ^^
+(assert (not (= f1 f2)))
+                ^^
+(assert (not (and (<= 0 (ite (< f3 0) (* (- 2) f3) (* 2 f3))) (<= 0 (ite (< f4 0) (* (- 2) f4) (* 2 f4))))))
+                             ^^^^^^^^
