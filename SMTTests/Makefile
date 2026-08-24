@@ -36,12 +36,9 @@ export SMT_SOLVER_DIR
 ## z3-5.1.0 has no jsmtlib.properties entry at all -- it relies entirely on the
 ## executable-name-equals-solvername convention plus SMT.startSolver's z3-prefix
 ## fallback to Solver_z3_recent, so it doubles as ongoing coverage for that fallback.
-#SMT_TEST_SOLVERS ?=test z3-4.3 cvc5-1.3.2 z3-4.5.0 z3-4.6.0 z3-4.7.1 z3-4.8.12 z3-4.10.2 z3-4.12.6 z3-4.14.1 z3-4.16.0 z3-5.1.0 yices2 smtinterpol-2.5
-## TEMPORARY: narrowed to just the new, not-yet-fully-CI-verified adapters (see
-## Solver_bitwuzla.java/Solver_altergo.java and jsmtlib.properties) so CI results
-## are easy to read while getting them working. Restore the line above (and delete
-## this one) once all are confirmed working.
-## altergo is deliberately EXCLUDED here, not just unverified: CI run 32671113041
+## bitwuzla and simplify were onboarded and CI-verified clean across all 5 platforms
+## (goldens + adapter fixes) and are now part of the regular default list, same as
+## every other solver here. altergo is deliberately EXCLUDED: CI run 32671113041
 ## confirmed it hangs completely (never responds, not even to the first test) on
 ## every platform where the Solvers repo has a build (linux-x64, macos-arm64) --
 ## each burned the full 20-minute job timeout before being force-canceled. Its
@@ -49,10 +46,7 @@ export SMT_SOLVER_DIR
 ## reading a script from stdin; that assumption is now known wrong, or at least
 ## incomplete, and needs new evidence (ideally a local Linux/Docker repro) before
 ## trying again, not another blind CI iteration at ~20 minutes per guess.
-## yices2 is included alongside bitwuzla/simplify (not just the bare "test" solver)
-## so a real, already-verified solver runs in the same CI matrix -- this is what
-## caught the Windows-only yices2 stderr-echo gap unmasked by the smtinterpol commit.
-SMT_TEST_SOLVERS ?=test bitwuzla simplify yices2
+SMT_TEST_SOLVERS ?=test z3-4.3 cvc5-1.3.2 z3-4.5.0 z3-4.6.0 z3-4.7.1 z3-4.8.12 z3-4.10.2 z3-4.12.6 z3-4.14.1 z3-4.16.0 z3-5.1.0 yices2 smtinterpol-2.5 bitwuzla simplify
 export SMT_TEST_SOLVERS
 
 test tests:
