@@ -44,7 +44,7 @@ runs:
     ## alter this workflow's behavior underneath it.
     - name: Download Solvers for this platform
       id: solvers
-      uses: OpenJML/Solvers/.github/actions/download-solvers@b6d1cdec97b9171afbb046adacca5f7c5d04517f
+      uses: OpenJML/Solvers/.github/actions/download-solvers@1c9951aaa31e60bda5debb697cee44486b5f9356
       with:
         subdir: ${{ env.SOLVERS_SUBDIR }}
 
