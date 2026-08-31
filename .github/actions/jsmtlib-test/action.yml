@@ -36,7 +36,8 @@ runs:
         esac
         echo "SOLVERS_SUBDIR=$SOLVERS_SUBDIR" >> "$GITHUB_ENV"
 
-    ## Delegates the actual clone to OpenJML/Solvers' own shared action -- the same
+    ## Delegates the actual clone to smtlib/Solvers' own shared action (moved there from
+    ## OpenJML/Solvers -- same repo, same history, GitHub redirects the old owner/name) -- the same
     ## blobless (--filter=blob:none), sparse, shallow clone this step used to do inline,
     ## scoped to just this platform's subdirectory so each of the 5 matrix legs pulls
     ## only its own solver binaries instead of every platform's worth every time. Pinned
@@ -44,7 +45,7 @@ runs:
     ## alter this workflow's behavior underneath it.
     - name: Download Solvers for this platform
       id: solvers
-      uses: OpenJML/Solvers/.github/actions/download-solvers@1c9951aaa31e60bda5debb697cee44486b5f9356
+      uses: smtlib/Solvers/.github/actions/download-solvers@8d82565f8fd4b65c01592a2d09a4c3618e90bfb2
       with:
         subdir: ${{ env.SOLVERS_SUBDIR }}
 
