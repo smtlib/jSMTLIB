@@ -36,30 +36,24 @@ runs:
         esac
         echo "SOLVERS_SUBDIR=$SOLVERS_SUBDIR" >> "$GITHUB_ENV"
 
-    ## A blobless (--filter=blob:none), sparse, shallow clone: git still walks the
-    ## full commit/tree metadata for depth 1, but only actually downloads file content
-    ## for paths inside the sparse-checkout cone (set to just this platform's
-    ## subdirectory) -- so each of the 5 matrix legs pulls only its own solver
-    ## binaries instead of every platform's worth every time.
-    - name: Clone Solvers repo (sparse -- this platform only)
-      shell: bash
-      run: |
-        git clone -b master --depth 1 --filter=blob:none --sparse https://github.com/OpenJML/Solvers Solvers
-        git -C Solvers sparse-checkout set "$SOLVERS_SUBDIR"
+    ## Delegates the actual clone to OpenJML/Solvers' own shared action -- the same
+    ## blobless (--filter=blob:none), sparse, shallow clone this step used to do inline,
+    ## scoped to just this platform's subdirectory so each of the 5 matrix legs pulls
+    ## only its own solver binaries instead of every platform's worth every time. Pinned
+    ## to a commit SHA, not a branch, so a future change in that repo can't silently
+    ## alter this workflow's behavior underneath it.
+    - name: Download Solvers for this platform
+      id: solvers
+      uses: OpenJML/Solvers/.github/actions/download-solvers@b6d1cdec97b9171afbb046adacca5f7c5d04517f
+      with:
+        subdir: ${{ env.SOLVERS_SUBDIR }}
 
     - name: Configure solver paths for CI
       shell: bash
       run: |
-        SOLVER_DIR="$GITHUB_WORKSPACE/Solvers/$SOLVERS_SUBDIR"
+        SOLVER_DIR="${{ steps.solvers.outputs.dir }}"
         ## Normalize to forward slashes so Java path handling works on Windows.
         SOLVER_DIR="${SOLVER_DIR//\\/\/}"
-
-        ## Make every solver binary executable (no-op on Windows). Blanket glob rather
-        ## than a per-solver-name list, which would need updating each time a solver
-        ## is added; harmless here since these dirs hold nothing but solver binaries.
-        if [[ "${{ runner.os }}" != "Windows" ]]; then
-          chmod +x "$SOLVER_DIR"/* 2>/dev/null || true
-        fi
 
         ## Windows ships z3-4.3.2.exe; jsmtlib.properties references z3-4.3.1.
         ## Create z3-4.3.1.exe alongside it so the relative name resolves correctly.
