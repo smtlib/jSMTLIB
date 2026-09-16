@@ -40,8 +40,19 @@ public class Lexer {
 	/** Skips the rest of the current line, resetting the matcher to point to the line termination character */
 	public void abortLine() {
 		int i = matcher.regionStart();
-		char c;
-		while ((c=csr.charAt(i))!= '\r' && c != '\n') ++i; // FIXME  - what about end of input?
+		// Checking i < csr.length() on every iteration (rather than snapshotting the bound
+		// once) matters for a growing/interactive source (CharSequenceInfinite): its
+		// length() reports Integer.MAX_VALUE until charAt() itself lazily discovers true
+		// end-of-input, so the fresh check picks up that update on the very call that
+		// produces it. Checking for CharSequenceInfinite.endChar handles that same
+		// true-end-of-input case explicitly: once discovered, charAt() returns endChar for
+		// every subsequent index forever, which is otherwise indistinguishable from more
+		// ordinary characters still arriving.
+		while (i < csr.length()) {
+			char c = csr.charAt(i);
+			if (c == '\r' || c == '\n' || c == CharSequenceInfinite.endChar) break;
+			++i;
+		}
 		matcher.region(i,csr.length());
 	}
 	
