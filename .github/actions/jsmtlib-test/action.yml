@@ -41,11 +41,11 @@ runs:
     ## blobless (--filter=blob:none), sparse, shallow clone this step used to do inline,
     ## scoped to just this platform's subdirectory so each of the 5 matrix legs pulls
     ## only its own solver binaries instead of every platform's worth every time. Pinned
-    ## to a commit SHA, not a branch, so a future change in that repo can't silently
-    ## alter this workflow's behavior underneath it.
+    ## to the download-solvers-v1 tag, not a branch, so a future change in that repo can't
+    ## silently alter this workflow's behavior underneath it.
     - name: Download Solvers for this platform
       id: solvers
-      uses: smtlib/Solvers/.github/actions/download-solvers@8d82565f8fd4b65c01592a2d09a4c3618e90bfb2
+      uses: smtlib/Solvers/.github/actions/download-solvers@download-solvers-v1
       with:
         subdir: ${{ env.SOLVERS_SUBDIR }}
 
