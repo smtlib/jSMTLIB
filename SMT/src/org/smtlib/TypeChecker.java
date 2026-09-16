@@ -1156,6 +1156,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 					if (!(v instanceof ISymbol)) {
 						result.add(smtConfig.responseFactory.error("Expected a symbol after :named",v==null?a.keyword().pos():v.pos()));
 						errors = true;
+						continue;
 					}
 					ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(new ISort[0],resultSort);
 					SymbolTable.Entry entry = new SymbolTable.Entry((ISymbol)v,fcnSort,null,null);

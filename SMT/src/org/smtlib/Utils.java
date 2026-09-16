@@ -622,9 +622,7 @@ public class Utils {
 	 * @throws SMTLIBException if the file cannot be found, parsed, or validated
 	 */
 	public ILogic findLogic(String name, IPos pos) throws SMTLIBException {
-		InputStream input = null;
-		try {
-			input = openLogicStream(name, pos);
+		try (InputStream input = openLogicStream(name, pos)){
 			SMT.Configuration config = smtConfig.clone();
 			config.interactive = false;
 			ISource source = config.smtFactory.createSource(config, input, null);
@@ -647,11 +645,6 @@ public class Utils {
 			throw new SMTLIBException(smtConfig.responseFactory.error(
 					"Failed to read the logic file for " + name + ": " + e, null));
 		} finally {
-			try { if (input != null) input.close(); }
-			catch (IOException e) {
-				throw new SMTLIBException(smtConfig.responseFactory.error(
-						"Failed to close a stream while parsing " + name + ": " + e, null));
-			}
 		}
 	}
 
@@ -697,11 +690,9 @@ public class Utils {
 	// FIXME Fix the use of path here - it actually is used only for error messages and should not be null
 	public ITheory findTheory(String name, /* @Nullable */ String path) throws SMTLIBException {
 		ISource source;
-		InputStream input = null;
-		try {
+		try (var input = openLogicStream(name, null)) {
 			SMT.Configuration config = smtConfig.clone();
 			config.interactive = false;
-			input = openLogicStream(name, null);
 			source = config.smtFactory.createSource(config, input, null);
 			IParser p = config.smtFactory.createParser(config, source);
 			ITheory th = p.parseTheory();
@@ -724,13 +715,6 @@ public class Utils {
 					"Failed to read the theory file " + name + " in " + path
 							+ ": " + e, null)));
 		} finally {
-			try {
-				if (input != null) input.close();
-			} catch (java.io.IOException e) {
-				throw new SMTLIBException(smtConfig.log.logError(smtConfig.responseFactory.error(
-						"Failed to close a stream while parsing " + name
-								+ " in " + path + " : " + e, null)));
-			}
 		}
 	}
 
@@ -936,6 +920,9 @@ public class Utils {
 			ISexpr next = iter.next();
 			if (!(next instanceof ISexpr.ISeq)) continue;
 			ISexpr.ISeq sx = (ISexpr.ISeq) next;
+			if (sx.sexprs().isEmpty()) {
+				return smtConfig.responseFactory.error("Ill-formed function declaration in theory " + theoryName + ": " + sx);
+			}
 			ISexpr first = sx.sexprs().get(0);
 			if (!(first instanceof IExpr.ISymbol)) continue;
 			IExpr.ISymbol sym = (IExpr.ISymbol) first;
@@ -956,6 +943,9 @@ public class Utils {
 				if (ss == null) return smtConfig.responseFactory.error("Unknown sort given: " + key);
 				sorts.add(ss);
 				key = null;
+			}
+			if (sorts.isEmpty()) {
+				return smtConfig.responseFactory.error("Ill-formed function declaration in theory " + theoryName + " (expected at least a result sort): " + sx);
 			}
 			ISort result = sorts.remove(sorts.size() - 1);
 			List<IExpr.IAttribute<?>> attrs = parseAttributeTail(iter2, key);
@@ -1011,6 +1001,9 @@ public class Utils {
 				if (ss == null) return smtConfig.responseFactory.error("Unknown sort given: " + key);
 				sorts.add(ss);
 				key = null;
+			}
+			if (sorts.isEmpty()) {
+				return smtConfig.responseFactory.error("Ill-formed par function declaration in theory " + theoryName + " (expected at least a result sort): " + parDecl);
 			}
 			ISort result = sorts.remove(sorts.size() - 1);
 			List<IExpr.IAttribute<?>> attrs = parseAttributeTail(iter2, key);
@@ -1078,7 +1071,7 @@ public class Utils {
         int n = 0;
         for (T[] a: arrays) n += a.length;
         @SuppressWarnings("unchecked")
-        T[] r = (T[])Array.newInstance(arrays[0].getClass(), n);
+        T[] r = (T[])Array.newInstance(arrays[0].getClass().getComponentType(), n);
         int k = 0;
         for (T[] a: arrays) {
             System.arraycopy(a,  0,  r,  k, a.length);

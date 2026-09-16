@@ -38,19 +38,26 @@ cp src/org/smtlib/test/*.smt2 "${TEST_BIN}/org/smtlib/test/" 2>/dev/null || true
 
 ## Discover test sources dynamically so a newly-added file is never silently
 ## left out of either the compile or the run list. Every source under
-## src/org/smtlib/test is compiled; a source is added to the JUnitCore run
-## list only if it contains at least one @Test annotation itself (base/helper
-## classes like LogicTests, LogicsBase, TypeCheckRoot, JUnitListener have none
-## and are compiled-only, matched by their subclasses' own @Test methods).
+## src/org/smtlib/test (including subdirectories, e.g. src/org/smtlib/test/bugs)
+## is compiled; a source is added to the JUnitCore run list only if it contains
+## at least one @Test annotation itself (base/helper classes like LogicTests,
+## LogicsBase, TypeCheckRoot, JUnitListener have none and are compiled-only,
+## matched by their subclasses' own @Test methods). The run list's class name is
+## derived from each file's own path (not hardcoded to org.smtlib.test), so a
+## subdirectory's contents resolve to their own subpackage (e.g.
+## org.smtlib.test.bugs.Foo), which must match that file's own package
+## declaration.
 TEST_SOURCES=()
-for f in src/org/smtlib/test/*.java; do
+while IFS= read -r -d '' f; do
     TEST_SOURCES+=("$f")
-done
+done < <(find src/org/smtlib/test -name '*.java' -print0 | sort -z)
 
 TEST_CLASSES=()
 for f in "${TEST_SOURCES[@]}"; do
     if grep -q '@Test' "$f"; then
-        TEST_CLASSES+=("org.smtlib.test.$(basename "$f" .java)")
+        rel="${f#src/}"
+        cls="${rel%.java}"
+        TEST_CLASSES+=("${cls//\//.}")
     fi
 done
 

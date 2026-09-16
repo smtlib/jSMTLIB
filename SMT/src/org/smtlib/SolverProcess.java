@@ -195,6 +195,7 @@ public class SolverProcess {
     boolean endsWith(StringBuilder sb, String endMarker) {
         int sblen = sb.length();
         int len = endMarker.length();
+        if (sblen < len) return false;
         int i = len;
         while (i > 0 && endMarker.charAt(len-i) == sb.charAt(sblen-i)) --i;
         if (i != 0) return false;
