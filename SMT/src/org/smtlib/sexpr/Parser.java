@@ -156,8 +156,11 @@ public class Parser extends Lexer implements IParser {
 						savedlp = parseLP();
 					} catch (ParserException e) {
 						// Stray token at command level (e.g. left over from error recovery):
-						// skip silently to the next LP without logging, matching old null-return behavior.
-						do { if (isEOD()) return null; getToken(); } while (!isLP());
+						// skip to the next LP, matching old null-return behavior -- but log
+						// how many tokens were skipped, for debuggability.
+						int skipped = 0;
+						do { if (isEOD()) return null; getToken(); ++skipped; } while (!isLP());
+						if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Skipped " + skipped + " stray token(s) while recovering to the next command");
 						return null;
 					}
 					String prefixText = prefixCommentText;
@@ -346,7 +349,7 @@ public class Parser extends Lexer implements IParser {
 			} else if (head.value().equals(Utils.PARAM)) {
 				return parseIdentifierRest(lp);
 			} else {
-				throw error("Invalid beginning of an identifer: expected either 'as' or '_' here", head.pos());
+				throw error("Invalid beginning of an identifier: expected either 'as' or '_' here", head.pos());
 			}
 		}
 	}
@@ -376,7 +379,7 @@ public class Parser extends Lexer implements IParser {
 			if (head.value().equals(Utils.PARAM)) {
 				return parseIdentifierRest(lp);
 			} else {
-				throw error("Invalid beginning of an identifer: expected a '_' here", head.pos());
+				throw error("Invalid beginning of an identifier: expected a '_' here", head.pos());
 			}
 		}
 	}
