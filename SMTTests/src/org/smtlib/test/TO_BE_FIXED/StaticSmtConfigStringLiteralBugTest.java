@@ -1,4 +1,4 @@
-package org.smtlib.test.bugs;
+package org.smtlib.test.TO_BE_FIXED;
 
 import java.util.concurrent.TimeUnit;
 
@@ -12,7 +12,7 @@ import org.smtlib.impl.SMTExpr;
 /**
  * Pins down a concrete, reachable manifestation of the SMT.Configuration static-state leak
  * (SMT.java:88-90 -- see issue #22) that is worse than the generic aliasing already covered
- * by {@link ConfigurationSharedStateBugTest}: {@code SMTExpr.StringLiteral}'s constructor
+ * by {@link org.smtlib.test.bugs.ConfigurationSharedStateBugTest}: {@code SMTExpr.StringLiteral}'s constructor
  * (impl/SMTExpr.java:78) calls {@code smtConfig.utils.unescape(value)} at *token construction
  * time*, reading the static {@code SMTExpr.smtConfig} field directly -- not whichever
  * Configuration is actually driving the parse that's constructing this token.

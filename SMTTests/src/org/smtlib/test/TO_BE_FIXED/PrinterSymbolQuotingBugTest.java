@@ -1,4 +1,4 @@
-package org.smtlib.test.bugs;
+package org.smtlib.test.TO_BE_FIXED;
 
 import java.io.StringWriter;
 import java.util.concurrent.TimeUnit;

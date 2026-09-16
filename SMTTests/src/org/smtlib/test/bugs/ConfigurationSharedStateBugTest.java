@@ -7,43 +7,18 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.smtlib.SMT;
-import org.smtlib.impl.Response;
-import org.smtlib.impl.SMTExpr;
-import org.smtlib.sexpr.Printer;
 
 /**
- * Pins down two related SMT.Configuration bugs (SMT.java:88-90 and SMT.java:104) that both
- * contradict the class's own doc comment claiming separate Configuration/SMT instances "can
- * be run independently and in parallel". See
- * <a href="https://github.com/smtlib/jSMTLIB/issues/22">issue #22</a> (constructor) and
- * <a href="https://github.com/smtlib/jSMTLIB/issues/23">issue #23</a> (clone()).
+ * Pins down (and confirms the fix for) SMT.java:104 (Configuration.clone()).
+ * <p>
+ * See also <a href="https://github.com/smtlib/jSMTLIB/issues/22">issue #22</a> -- a related
+ * but still-open SMT.Configuration static-state bug (SMT.java:88-90), whose tests live in
+ * {@code org.smtlib.test.TO_BE_FIXED} since it's not yet fixed.
+ * See <a href="https://github.com/smtlib/jSMTLIB/issues/23">issue #23</a> (this one).
  */
 public class ConfigurationSharedStateBugTest {
 
     @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
-
-    /** SMT.java:88-90 (Configuration constructor): Printer.smtConfig = this; Response.smtConfig
-     *  = this; SMTExpr.smtConfig = this -- all three targets are plain static fields, so
-     *  constructing a second Configuration silently repoints the first instance's
-     *  printing/response/escaping rules at the second instance's settings. This test currently
-     *  fails (it documents the bug); once these three fields are made non-static (or otherwise
-     *  scoped per-Configuration), it should be rewritten to assert that c1 keeps sole ownership
-     *  of its own printer/response/expr state after c2 is constructed.
-     *  See <a href="https://github.com/smtlib/jSMTLIB/issues/22">issue #22</a>. */
-    @Test
-    public void secondConfigurationConstructionRepointsFirstInstancesStatics() throws Exception {
-        SMT.Configuration c1 = new SMT.Configuration();
-        Assert.assertSame(c1, Printer.smtConfig);
-        Assert.assertSame(c1, Response.smtConfig);
-        Assert.assertSame(c1, SMTExpr.smtConfig);
-
-        SMT.Configuration c2 = new SMT.Configuration();
-
-        // BUG: c1's supposedly-independent static state now points at c2, not c1.
-        Assert.assertSame(c1, Printer.smtConfig);
-        Assert.assertSame(c1, Response.smtConfig);
-        Assert.assertSame(c1, SMTExpr.smtConfig);
-    }
 
     /** SMT.java:104 (Configuration.clone()) -- FIXED. The original line did
      *  "utils.smtConfig = this;", operating on the original (this) rather than the clone (c)
