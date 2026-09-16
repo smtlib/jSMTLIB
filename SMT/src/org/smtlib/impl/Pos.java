@@ -138,6 +138,7 @@ public class Pos implements IPos {
 		
 		@Override
 		public void close() {
+			if (rdr == null) return;
 			try {
 				rdr.close();
 			} catch (IOException e) {}
