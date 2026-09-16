@@ -101,7 +101,11 @@ public class SMT {
 			c.reservedWords.addAll(reservedWords);
 			c.reservedWordsNotCommands = new HashSet<String>();
 			c.reservedWordsNotCommands.addAll(reservedWordsNotCommands);
-			utils.smtConfig = this;
+			// A fresh Utils, not just repointing the field: c.utils is still the same
+			// object as this.utils (a shallow field copy from super.clone()), so merely
+			// setting c.utils.smtConfig = c would also repoint this.utils.smtConfig at
+			// the clone, since it's literally the same object.
+			c.utils = new Utils(c);
 			return c;
 		}
 		
@@ -763,7 +767,7 @@ public class SMT {
 				options.nosuccess = true;
 			} else if ("--abort".equals(s)) {
 				options.abort = true;
-			} else if ("--relax".equals(s)) {
+			} else if ("--relax".equals(s) || "-r".equals(s)) {
 				options.relax = true;
             } else if ("--noshow".equals(s)) {
                 options.noshow = true;
@@ -1090,7 +1094,7 @@ public class SMT {
 		out.println("Usage: java org.smtlib.SMT [args] [file]");
 		out.println("       --help [-h]");
 		out.println("       --version");
-		out.println("       --verbose [-v] <int>");
+		out.println("       --verbose <int>  (-v is shorthand for --verbose 1)");
 		out.println("       --solver [-s] <solvername>");
 		out.println("       --exec   [-e] <path>");
 		out.println("       --logics [-L] <path>");
@@ -1098,7 +1102,7 @@ public class SMT {
 		out.println("       --diag        <filename or 'stdout' or 'stderr'>");
 		out.println("       --port        <int>");
 		out.println("       --text        <string>");
-		out.println("       --echo   [-e]");
+		out.println("       --echo");
 		out.println("       --abort");
 		out.println("       --noshow");
 		out.println("       --nosuccess   [-q]");
@@ -1123,7 +1127,8 @@ public class SMT {
 		out.println("The recognized options are these:");
 		out.println("    -h, --help : prints this help message and exits");
 		out.println("        --version : prints the version of this application and exits");
-		out.println("    -v, --verbose <int>: enables verbose mode, so more stuff is printed");
+		out.println("        --verbose <int>: enables verbose mode, so more stuff is printed");
+		out.println("    -v: shorthand for --verbose 1");
 // FIXME-NOW - distinguish verbose for app and verbose for solver?
 		out.println("    -s, --solver <name> : indicates the SMT solver to use (or 'test')");
 		out.println("        The name of the adaptor class is \"org.smtlib.solvers.Solver_\" + <name>");

@@ -461,10 +461,10 @@ public class AbstractSolver implements ISolver {
 			// (paren-balance tracked across all reads so far) until it's complete.
 			String cmdText = translate(smtConfig.commandFactory.get_assertions());
 			StringBuilder sb = new StringBuilder();
-			String s;
+			solverProcess.sendNoListen(cmdText, "\n");
 			int parens = 0;
 			do {
-				s = solverProcess.sendAndListen(cmdText, "\n");
+			    String s = solverProcess.listen();
 				int p = -1;
 				while ((p = s.indexOf('(',p+1)) != -1) parens++;
 				p = -1;

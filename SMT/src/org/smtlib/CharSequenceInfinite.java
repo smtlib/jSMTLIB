@@ -168,7 +168,7 @@ public abstract class CharSequenceInfinite implements CharSequence {
 	 */
 	@Override
 	public CharSequence subSequence(int start, int end) {
-		charAt(end-1); // Just to be sure it has been read  // FIXME - what if start == end == 0, or values are negative
+		if (end > start) charAt(end-1); // Just to be sure it has been read
 		return CharBuffer.wrap(buf,start,end-start);
 	}
 }

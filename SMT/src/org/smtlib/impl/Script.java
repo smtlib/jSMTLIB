@@ -58,7 +58,6 @@ public class Script extends Pos.Printable implements IScript {
 	/** Adds a command to the end of the script */
 	//@ requires commands() != null;
 	public void add(ICommand command) {
-		if (commands == null) commands = new LinkedList<ICommand>();  // FIXME - test without this line
 		commands.add(command);
 	}
 	
@@ -67,12 +66,10 @@ public class Script extends Pos.Printable implements IScript {
 	@Override
 	public IResponse execute(ISolver solver) {
 		SMT.Configuration smtConfig = solver.smt();
-		/*@Mutable*/FileReader fileReader = null;
 		List<ICommand> commands = this.commands;
 		if (filename != null) {
 			String filename = this.filename.value();
-			try {
-				fileReader = new FileReader(new File(filename));
+			try (FileReader fileReader = new FileReader(new File(filename))) {
 				ISource source = smtConfig.smtFactory.createSource(new CharSequenceReader(fileReader),filename);
 				IParser p = smtConfig.smtFactory.createParser(smtConfig,source);
 				IScript script = p.parseScript();
@@ -84,14 +81,6 @@ public class Script extends Pos.Printable implements IScript {
 				return smtConfig.responseFactory.error(e.toString(),this.filename.pos());
 			} catch (ParserException e) {
 				return smtConfig.responseFactory.error(e.toString(),e.pos());
-			} finally {
-				if (fileReader != null) {
-					try { 
-						fileReader.close(); 
-					} catch (IOException e) { 
-						return smtConfig.responseFactory.error("Failed to close input file: " + e,this.filename.pos());
-					}
-				}
 			}
 		}
 		if (commands == null) {

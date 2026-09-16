@@ -1,2 +1,0 @@
-success
-(error "Invalid beginning of an identifer: expected a '_' here")

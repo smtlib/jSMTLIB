@@ -124,7 +124,7 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
 		/*@ pure */
 		BigInteger value();
 		
-		//@ ensures value().compareTo(BigInteger.valueOf(Integer.INT_MAX)) <= 0 ==> value().intValue() == \result;
+		//@ ensures value().compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) <= 0 ==> value().intValue() == \result;
 		//@ ensures \result >= 0;
 		/*@ pure */
 		int intValue();

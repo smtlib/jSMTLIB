@@ -2,7 +2,7 @@
 Usage: java org.smtlib.SMT [args] [file]
        --help [-h]
        --version
-       --verbose [-v] <int>
+       --verbose <int>  (-v is shorthand for --verbose 1)
        --solver [-s] <solvername>
        --exec   [-e] <path>
        --logics [-L] <path>
@@ -10,7 +10,7 @@ Usage: java org.smtlib.SMT [args] [file]
        --diag        <filename or 'stdout' or 'stderr'>
        --port        <int>
        --text        <string>
-       --echo   [-e]
+       --echo
        --abort
        --noshow
        --nosuccess   [-q]

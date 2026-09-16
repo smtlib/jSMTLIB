@@ -1,0 +1,2 @@
+success
+(error "Invalid beginning of an identifier: expected a '_' here")

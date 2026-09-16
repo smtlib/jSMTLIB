@@ -763,9 +763,11 @@ public class SymbolTable {
 
 	/** Returns true if the entry contains a value for the given attribute name */ // FIXME - lookup by keyword?
 	private boolean hasAttribute(Entry entry, String attr) {
-		for (IExpr.IAttribute<?> a: entry.attributes) {
-			if (a.keyword().value().equals(attr)) return true;
-		}
+	    if (entry.attributes != null) {
+	        for (IExpr.IAttribute<?> a: entry.attributes) {
+	            if (a.keyword().value().equals(attr)) return true;
+	        }
+	    }
 		return false;
 	}
 	

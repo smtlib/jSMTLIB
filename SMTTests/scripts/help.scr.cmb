@@ -12,7 +12,8 @@ Option names have a long version, beginning with --
 The recognized options are these:
     -h, --help : prints this help message and exits
         --version : prints the version of this application and exits
-    -v, --verbose <int>: enables verbose mode, so more stuff is printed
+        --verbose <int>: enables verbose mode, so more stuff is printed
+    -v: shorthand for --verbose 1
     -s, --solver <name> : indicates the SMT solver to use (or 'test')
         The name of the adaptor class is "org.smtlib.solvers.Solver_" + <name>
     -e, --exec <path> : indicates the SMT solver executable to use
