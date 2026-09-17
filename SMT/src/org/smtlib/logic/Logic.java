@@ -7,8 +7,20 @@ import org.smtlib.*;
 import org.smtlib.IExpr.*;
 import org.smtlib.impl.SMTExpr;
 
-// FIXME - move some of this to ILogic - should the logic classes depend on SMTExpr.Logic?
-//FIXME - document
+/** Common base for this package's per-logic syntactic-restriction classes (QF_IDL, LRA,
+ *  QF_UF, etc). Each subclass overrides {@link ILanguage#validExpression},
+ *  {@link ILanguage#checkFcnDeclaration}, and {@link ILanguage#checkSortDeclaration} to
+ *  reject whatever its own logic's SMT-LIB-mandated grammar forbids (quantifiers,
+ *  uninterpreted functions, nonlinear arithmetic, unrestricted sorts, ...); this class
+ *  supplies the shared helpers those overrides call (noQuantifiers, noFunctions, noSorts,
+ *  checkArraySort, isLinearReal, ...).
+ *  <p>
+ *  Extends {@code SMTExpr.Logic} (the plain, unrestricted {@link ILogic} implementation
+ *  {@code sexpr.Parser} falls back to when no subclass exists for a given logic name -- see
+ *  issue #46) rather than depending only on the bare {@link ILogic} interface, so that a
+ *  subclass which doesn't override one of the three hooks above still gets that hook's
+ *  already-permissive default (an empty/no-op override) for free, instead of every subclass
+ *  having to restate "permit everything" explicitly. */
 public abstract class Logic extends SMTExpr.Logic implements ILanguage {
 
 	public Logic(ISymbol name, Collection<IAttribute<?>> attributes) {
@@ -78,6 +90,42 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
 		for (ISort param : app.parameters()) {
 			checkArraySort(param, id, allowedMsg, allowedSorts);
 		}
+	}
+
+	/** Checks that the sort expression contains no Array sort other than one indexed and
+	 *  valued by BitVec sorts of any width, i.e. (Array (_ BitVec i) (_ BitVec j)) for some
+	 *  i, j &gt; 0 -- the restriction QF_ABV's spec mandates. Predicate-based (unlike
+	 *  {@link #checkArraySort}'s enumerated allowed set) since the BitVec widths are
+	 *  unconstrained, so the allowed shapes can't be enumerated as fixed sorts.
+	 *  Skips the check for Array sorts whose parameters include sort parameters (parameterized
+	 *  abbreviations), mirroring {@link #checkArraySort}. */
+	protected void checkArraySortIsBitVecToBitVec(ISort sort, IIdentifier id) throws IVisitor.VisitorException {
+		if (!(sort instanceof ISort.IApplication)) return;
+		ISort.IApplication app = (ISort.IApplication) sort;
+		if (Utils.ARRAY.equals(app.family().headSymbol())) {
+			for (ISort param : app.parameters()) {
+				if (param instanceof ISort.IParameter) return;
+			}
+			List<ISort> params = app.parameters();
+			if (params.size() != 2 || !isBitVecSort(params.get(0)) || !isBitVecSort(params.get(1))) {
+				throw new IVisitor.VisitorException("Array sorts must be (Array (_ BitVec i) (_ BitVec j)) in this logic", id.pos());
+			}
+			return;
+		}
+		for (ISort param : app.parameters()) {
+			checkArraySortIsBitVecToBitVec(param, id);
+		}
+	}
+
+	/** Recognizes a literal (_ BitVec n) sort. Deliberately does not call {@link ISort#expand()}
+	 *  to also recognize a user-defined alias for one (e.g. (define-sort Word32 () (_ BitVec
+	 *  32))): calling expand() here, mid-define-sort type-checking, hits a pre-existing,
+	 *  unrelated NullPointerException in sort-abbreviation resolution (Sort.Application's
+	 *  definition() is still null at that point) -- so an aliased BitVec sort used as an
+	 *  Array's index/value sort is (rarely) wrongly rejected here rather than accepted, which
+	 *  is an acceptable narrower gap against crashing outright. */
+	private boolean isBitVecSort(ISort s) {
+		return (s instanceof ISort.IApplication) && Utils.BITVEC_SYM.equals(((ISort.IApplication) s).family().headSymbol());
 	}
 
 
