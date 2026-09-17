@@ -134,11 +134,41 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	/*@Nullable*/
 	@Override
-	public Void visit(ISymbol e) throws IVisitor.VisitorException { // FIX - need s-expr representation of ids from anywhere
-		// FIXME: toString() is correct for parsed symbols but not for programmatically
-		// constructed ones with special characters — those need bar-quoting via value().
-		append(e.toString());
+	public Void visit(ISymbol e) throws IVisitor.VisitorException {
+		// toString()/originalString is trusted whenever it's already valid, re-parseable
+		// syntax: either it's already bar-quoted (from parsing bar-quoted source text --
+		// preserved as-is even if the bars weren't strictly necessary, e.g. a deliberately
+		// quoted |a|), or it needs no quoting at all. Only synthesized fresh from value()
+		// when neither holds: a symbol built programmatically from a raw string with a
+		// space or other symbol-breaking character has no bars in originalString at all
+		// (originalString == value() unquoted), which would otherwise print unparseable
+		// output.
+		String orig = e.toString();
+		if ((orig.length() > 0 && orig.charAt(0) == '|') || !needsBarQuoting(e.value())) {
+			append(orig);
+		} else {
+			append("|");
+			append(e.value());
+			append("|");
+		}
 		return null;
+	}
+
+	/** True if a bare (unquoted) symbol cannot represent this value: it's empty, starts
+	 *  with a digit, or contains a character outside the simple-symbol charset (letters,
+	 *  digits, and {@code ~!@$%^&*_-+=<>.?/}) -- per the SMT-LIB grammar for
+	 *  {@code <simple_symbol>}, such a value needs {@code |...|} bar-quoting to print as
+	 *  valid, re-parseable syntax. */
+	private static boolean needsBarQuoting(String v) {
+		if (v.isEmpty()) return true;
+		if (Character.isDigit(v.charAt(0))) return true;
+		for (int i = 0; i < v.length(); i++) {
+			char c = v.charAt(i);
+			if (Character.isLetterOrDigit(c)) continue;
+			if ("~!@$%^&*_-+=<>.?/".indexOf(c) >= 0) continue;
+			return true;
+		}
+		return false;
 	}
 
 	/*@Nullable*/

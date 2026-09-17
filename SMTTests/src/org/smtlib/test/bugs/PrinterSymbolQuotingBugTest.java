@@ -1,4 +1,4 @@
-package org.smtlib.test.TO_BE_FIXED;
+package org.smtlib.test.bugs;
 
 import java.io.StringWriter;
 import java.util.concurrent.TimeUnit;
@@ -30,9 +30,10 @@ import org.smtlib.sexpr.Printer;
  * that isn't valid SMT-LIB syntax (a bare symbol cannot contain whitespace or other
  * symbol-breaking characters per the grammar) and can't be re-parsed.
  * <p>
- * Asserts the correct behavior: printing a symbol whose value requires bar-quoting (contains
- * a space) should produce valid, bar-quoted, re-parseable output. This currently FAILS
- * against today's code (printed unquoted), documenting the bug.
+ * Asserts the correct, now-fixed behavior: printing a symbol whose value requires
+ * bar-quoting (contains a space) produces valid, bar-quoted, re-parseable output --
+ * {@code visit(ISymbol)} now derives the printed form from {@code value()}, quoting when
+ * needed, rather than trusting {@code toString()}/{@code originalString}.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/75">issue #75</a>.
  */
