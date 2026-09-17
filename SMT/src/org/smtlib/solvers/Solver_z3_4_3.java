@@ -289,7 +289,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		}
 		// FIXME - do we really want to call get-option here? it involves going to the solver?
 		if (!smtConfig.relax && !Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSERTIONS)))) {
-			return smtConfig.responseFactory.error("The get-assertions command is only valid if :interactive-mode has been enabled");
+			return smtConfig.responseFactory.error("The get-assertions command is only valid if " + Utils.produceAssertionsKey(smtConfig) + " has been enabled");
 		}
 		try {
 			StringBuilder sb = new StringBuilder();
