@@ -18,10 +18,12 @@ import org.smtlib.IExpr.ISymbol;
 import org.smtlib.ISort.IFcnSort;
 import org.smtlib.ISort.IParameter;
 
-// FIXME - define an interface for symbol table?
-
 /** This class manages a symbol table used for storing definitions and looking up ids in expressions.
- *  The table maps names to Entry objects that hold information about the defined symbol. */
+ *  The table maps names to Entry objects that hold information about the defined symbol.
+ *  <p>
+ *  Deliberately a concrete class rather than an interface: there is exactly one implementation,
+ *  constructed directly by every caller, with no substitutability need to abstract over. See
+ *  issue #36. */
 public class SymbolTable {
 
 	/** true if the bit-vector theory has been set */
@@ -164,7 +166,7 @@ public class SymbolTable {
 		sorts = sortStack.get(0);
 		datatypeConstructors = new HashMap<>(s.datatypeConstructors);
 	}
-	
+
 	/** Returns a fresh iterator over the symbol table's contents */
 	public Iterator iterator() {
 		return new Iterator(this);
@@ -761,7 +763,12 @@ public class SymbolTable {
 		return bindings;
 	}
 
-	/** Returns true if the entry contains a value for the given attribute name */ // FIXME - lookup by keyword?
+	/** Returns true if the entry contains a value for the given attribute name (e.g.
+	 *  ":left-assoc"). Deliberately takes the name as a String and compares against each
+	 *  attribute's keyword by value rather than requiring callers to build/compare IKeyword
+	 *  objects: every call site here passes a literal attribute name, and the list scanned is
+	 *  always tiny, so there is no correctness or performance benefit to keyword-object lookup
+	 *  -- just more ceremony at each call site. See issue #36. */
 	private boolean hasAttribute(Entry entry, String attr) {
 	    if (entry.attributes != null) {
 	        for (IExpr.IAttribute<?> a: entry.attributes) {

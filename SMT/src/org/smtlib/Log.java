@@ -191,14 +191,21 @@ public class Log {
 		return listeners.remove(listener);
 	}
 
-	/** Creates a location indication string from the pos argument; the returned value
-	 * does not have a final line termination.
+	/** Creates a two-line, compiler-style caret diagnostic pointing at the given position; the
+	 *  returned value does not have a final line termination.
+	 *  <p>
+	 *  In non-interactive mode, the first line is the source text line containing {@code pos}
+	 *  (if the error is more than 150 characters into a long line, that line is instead shown
+	 *  starting 20 characters before the error, prefixed with {@code "... "}; if the visible
+	 *  portion would still run past 150 characters, it is cut off there and suffixed with
+	 *  {@code "...\n"}). The second line reproduces the leading whitespace/tabs up to the
+	 *  error's start column -- matched against the prompt's width instead, in interactive mode
+	 *  -- followed by one {@code ^} per character spanning {@code pos}'s start-to-end range.
 	 * @param pos the position to indicate
 	 * @param prompt the prompt with which to begin each line
 	 * @param smtConfig the current configuration
 	 * @return a canonical string representation of the location
 	 */
-	// FIXME - REVIEW AND DOCUMENT more detail on what is actually produced
 	static public String locationIndication(IPos pos, String prompt, SMT.Configuration smtConfig) {
 		int s = pos.charStart();
 		int e = pos.charEnd();
