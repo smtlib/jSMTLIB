@@ -37,12 +37,23 @@ public class Solver_z3_4_3_2 extends Solver_z3_4_3 {
 			// This odd invocation is to correct a bug in Z3 4.3.2, where (push) can print out more than one success message.
 			solverProcess.sendNoListen("(push ",Integer.toString(number),")\n");
 			solverProcess.sendNoListen("(echo \"<<DONE>>\")\n");
+			// Accumulates every listen() call (not just the last one) so a genuine (error
+			// ...) response to the push -- the process stays alive and still echoes the
+			// marker normally -- is seen and reported, instead of being silently
+			// overwritten by a later call and swallowed as success. A dead process is
+			// already handled separately: SolverProcess.listen() throws
+			// NoResponseException on a forced EOF with nothing on either stream, caught
+			// below like any other exception here.
+			StringBuilder drained = new StringBuilder();
 			String s;
 			do {
 				s = solverProcess.listen();
-			} while (!s.contains("<<DONE>>"));
-			// FIXME: If an error occurs, this will loop forever.
-			// We can't use parseResponse to see if it an error, as the function does not expect Z3's buggy output.
+				drained.append(s);
+			} while (!drained.toString().contains("<<DONE>>"));
+			String beforeMarker = drained.substring(0, drained.indexOf("<<DONE>>"));
+			if (beforeMarker.contains("(error")) {
+				return parseResponse(beforeMarker);
+			}
 			return successOrEmpty(smtConfig);
 		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
