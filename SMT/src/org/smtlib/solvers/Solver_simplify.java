@@ -357,12 +357,12 @@ public class Solver_simplify extends Solver_test implements ISolver {
 	@Override
 	public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
 		// FIXME - discrimninate among logics
-		boolean lSet = logicSet != null;
-		IResponse status = super.set_logic(logicName,pos);
-		if (!status.isOK()) return status;
 		if (logicName.contains("BV")) {
 			return smtConfig.responseFactory.error("The simplify solver does not yet support the bit-vector theory",pos);
 		}
+		boolean lSet = logicSet != null;
+		IResponse status = super.set_logic(logicName,pos);
+		if (!status.isOK()) return status;
 		if (lSet) {
 			pushesStack.clear();
 			push(1);

@@ -24,10 +24,7 @@ public class LRA extends Logic {
 		if (!(expr instanceof IExpr.IFcnExpr)) return false;
 		IExpr.IFcnExpr f = (IExpr.IFcnExpr)expr;
 		if (Utils.MINUS.equals(f.head()) && f.args().size() == 1) {
-			expr = f.args().get(0);
-			if (expr instanceof IExpr.INumeral) return true;
-			if (expr instanceof IExpr.IDecimal) return true;
-			return false;
+			return isConst(f.args().get(0));
 		}
 		if (Utils.SLASH.equals(f.head()) && f.args().size() == 2) {
 			expr = f.args().get(0);

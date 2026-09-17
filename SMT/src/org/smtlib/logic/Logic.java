@@ -158,8 +158,7 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
 		if (!(expr instanceof IExpr.IFcnExpr)) return false;
 		IExpr.IFcnExpr f = (IExpr.IFcnExpr)expr;
 		if (Utils.MINUS.equals(f.head()) && f.args().size() == 1) {
-			IExpr arg = f.args().get(0);
-			return (arg instanceof IExpr.INumeral) || (arg instanceof IExpr.IDecimal);
+			return isRealConst(f.args().get(0));
 		}
 		if (Utils.SLASH.equals(f.head()) && f.args().size() == 2) {
 			return isInteger(f.args().get(0)) && (f.args().get(1) instanceof IExpr.INumeral)
