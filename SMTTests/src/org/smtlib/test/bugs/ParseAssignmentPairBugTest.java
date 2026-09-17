@@ -1,4 +1,4 @@
-package org.smtlib.test.TO_BE_FIXED;
+package org.smtlib.test.bugs;
 
 import java.util.concurrent.TimeUnit;
 
@@ -30,8 +30,11 @@ import org.smtlib.sexpr.Parser;
  * protocol violation.
  * <p>
  * Asserts the correct behavior: a value token that is neither "true" nor "false" should be
- * rejected with a parse error, not silently accepted as false. This currently FAILS against
- * today's code (silently returns a pair with Boolean.FALSE), documenting the bug.
+ * rejected with a parse error, not silently accepted as false.
+ * <p>
+ * Fixed by having {@code parseAssignmentPair()} explicitly check the value token is
+ * (case-insensitively) "true" or "false" and raise a {@code ParserException} for anything else,
+ * instead of delegating straight to {@code Boolean.valueOf}'s permissive parsing.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/73">issue #73</a>.
  */

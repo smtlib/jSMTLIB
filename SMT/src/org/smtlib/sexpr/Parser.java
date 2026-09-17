@@ -933,6 +933,9 @@ public class Parser extends Lexer implements IParser {
 		ISymbol sym = parseSymbol();
 		ISymbol val = parseSymbol();
 		parseRP();
+		if (!val.value().equalsIgnoreCase("true") && !val.value().equalsIgnoreCase("false")) {
+			throw new ParserException("Expected 'true' or 'false' here, not '" + val.value() + "'", val.pos());
+		}
 		return smtConfig.responseFactory.pair(sym, Boolean.valueOf(val.value()));
 	}
 
