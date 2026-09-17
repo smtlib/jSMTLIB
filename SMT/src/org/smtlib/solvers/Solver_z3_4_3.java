@@ -44,9 +44,7 @@ import org.smtlib.Utils;
 public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	
 	protected String NAME_VALUE = "z3-4.3";
-	protected String AUTHORS_VALUE = "Leonardo de Moura and Nikolaj Bjorner";
-	protected String VERSION_VALUE = "4.3";
-	
+
 
 	protected int linesOffset = 0;
 	
@@ -192,7 +190,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		try {
 			solverProcess.sendNoListen(comment);
 		} catch (IOException e) {
-			// FIXME;
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Failed to send comment to Z3: " + e);
 		}
 	}
 
@@ -205,14 +203,16 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		return sw.toString();
 	}
 	
-	/** Translates an S-expression into standard SMT syntax */
-	protected String translateSMT(INode sexpr) throws IVisitor.VisitorException {
-		// The z3 solver uses the standard S-expression concrete syntax, but not quite
-		StringWriter sw = new StringWriter();
-		org.smtlib.sexpr.Printer.write(sw,sexpr);
-		return sw.toString();
-	}
-	
+	// No translateSMT(INode) here -- a confirmed dead end, not just unused. It once existed
+	// as a shortcut to print an entire subtree with plain standard SMT-LIB syntax, bypassing
+	// Translator's Z3-specific overrides, but that doesn't compose safely: a subtree handed to
+	// it wholesale might contain other nested nodes that still need Translator's own handling,
+	// which plain printing would silently lose. Translator's visit(IFcnExpr) documents exactly
+	// this ("we can't delegate to translateSMT because it might be a sub-expression") --
+	// Translator's ordinary super.visit(e) fallback (inherited from Printer) already covers
+	// "plain printing for a single node with no override" correctly; only a whole-subtree
+	// bypass was ever the problem. See issue #65.
+
 	protected IResponse parseResponse(String response) {
 		try {
 			Pattern oldbv = Pattern.compile("bv([0-9]+)\\[([0-9]+)\\]");
@@ -225,7 +225,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 				response = response.substring(0,mm.start()) + "#b" + bits + response.substring(mm.end(),response.length());
 				mm = oldbv.matcher(response);
 			}
-			if (isMac && response.startsWith("success")) return smtConfig.responseFactory.success(); // IFXME - this is just to avoid a problem with the Mac Z3 implementation
+			if (isMac && response.startsWith("success")) return smtConfig.responseFactory.success(); // FIXME - this is just to avoid a problem with the Mac Z3 implementation
 			if (response.contains("error")) {
 				// Z3 returns an s-expr (always?)
 				// FIXME - (1) the {Print} also needs {Space}; (2) err_getValueTypes.tst returns a non-error s-expr and then an error s-expr - this fails for that case
@@ -643,34 +643,9 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		}
 	}
 
-	public class Translator extends Printer { //extends IVisitor.NullVisitor<String> {
-		
-		public Translator(Writer w) { super(w); }
+	public class Translator extends Printer {
 
-//		@Override
-//		public String visit(IDecimal e) throws IVisitor.VisitorException {
-//			return translateSMT(e);
-//		}
-//
-//		@Override
-//		public String visit(IStringLiteral e) throws IVisitor.VisitorException {
-//			throw new VisitorException("The Z3 solver cannot handle string literals",e.pos());
-//		}
-//
-//		@Override
-//		public String visit(INumeral e) throws IVisitor.VisitorException {
-//			return e.value().toString();
-//		}
-//
-//		@Override
-//		public String visit(IBinaryLiteral e) throws IVisitor.VisitorException {
-//			return "#b" + e.value();
-//		}
-//
-//		@Override
-//		public String visit(IHexLiteral e) throws IVisitor.VisitorException {
-//			return "#x" + e.value();
-//		}
+		public Translator(Writer w) { super(w); }
 
 		@Override
 		public Void visit(IFcnExpr e) throws IVisitor.VisitorException {
@@ -685,35 +660,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 				super.visit(e);
 			}
 			return null;
-//			String fcnname = fcn.accept(this);
-//			StringBuilder sb = new StringBuilder();
-//			int length = e.args().size();
-//			if (length > 2 && (fcnname.equals("=") || fcnname.equals("<") || fcnname.equals(">") || fcnname.equals("<=") || fcnname.equals(">="))) {
-//				// chainable
-//				return chainable(fcnname,iter);
-//			} else if (fcnname.equals("xor")) {
-//				// left-associative operators that need grouping
-//				return leftassoc(fcnname,length,iter);
-//			} else if (length > 1 && fcnname.equals("-")) {
-//				// left-associative operators that need grouping
-//				return leftassoc(fcnname,length,iter);
-//			} else if (fcnname.equals("=>")) {
-//				// right-associative operators that need grouping
-//				if (!iter.hasNext()) {
-//					throw new VisitorException("=> operation without arguments",e.pos());
-//				}
-//				return rightassoc(fcnname,iter);
-//			} else {
-//				// no associativity 
-//				sb.append("(");
-//				sb.append(fcnname);
-//				while (iter.hasNext()) {
-//					sb.append(" ");
-//					sb.append(iter.next().accept(this));
-//				}
-//				sb.append(")");
-//				return sb.toString();
-//			}
 		}
 
 		//@ requires iter.hasNext();
@@ -777,96 +723,5 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 				throw new IVisitor.VisitorException(ex,null); // FIXME - null ?
 			}
 		}
-
-
-//		@Override
-//		public String visit(ISymbol e) throws IVisitor.VisitorException {
-//			return translateSMT(e);
-//		}
-//
-//		@Override
-//		public String visit(IKeyword e) throws IVisitor.VisitorException {
-//			throw new VisitorException("Did not expect a Keyword in an expression to be translated",e.pos());
-//		}
-//
-//		@Override
-//		public String visit(IError e) throws IVisitor.VisitorException {
-//			throw new VisitorException("Did not expect a Error token in an expression to be translated", e.pos());
-//		}
-//
-//		private final String zeros = "00000000000000000000000000000000000000000000000000";
-//		@Override
-//		public String visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
-//			return translateSMT(e);
-//		}
-//
-//		@Override
-//		public String visit(IAsIdentifier e) throws IVisitor.VisitorException {
-//			return translateSMT(e);
-//		}
-//
-//		@Override
-//		public String visit(IForall e) throws IVisitor.VisitorException {
-//			return translateSMT(e);
-//		}
-//
-//		@Override
-//		public String visit(IExists e) throws IVisitor.VisitorException {
-//			return translateSMT(e);
-//		}
-//
-//		@Override
-//		public String visit(ILet e) throws IVisitor.VisitorException {
-//			return translateSMT(e);
-//		}
-//
-//		@Override
-//		public String visit(IAttribute<?> e) throws IVisitor.VisitorException {
-//			throw new UnsupportedOperationException("visit-IAttribute");
-//		}
-//
-//		@Override
-//		public String visit(IAttributedExpr e) throws IVisitor.VisitorException {
-//			return translateSMT(e);
-//		}
-//
-//		@Override
-//		public String visit(IDeclaration e) throws IVisitor.VisitorException {
-//			throw new UnsupportedOperationException("visit-IDeclaration");
-//		}
-//
-//		@Override
-//		public String visit(ISort.IFamily s) throws IVisitor.VisitorException {
-//			return s.identifier().accept(this);
-//		}
-//		
-//		@Override
-//		public String visit(ISort.IAbbreviation s) throws IVisitor.VisitorException {
-//			throw new UnsupportedOperationException("visit-ISort.IAbbreviation");
-//		}
-//		
-//		@Override
-//		public String visit(ISort.IApplication s) throws IVisitor.VisitorException {
-//			return translateSMT(s);
-//		}
-//		
-//		@Override
-//		public String visit(ISort.IFcnSort s) throws IVisitor.VisitorException {
-//			throw new UnsupportedOperationException("visit-ISort.IFcnSort");
-//		}
-//		
-//		@Override
-//		public String visit(ISort.IParameter s) throws IVisitor.VisitorException {
-//			throw new UnsupportedOperationException("visit-ISort.IParameter");
-//		}
-//		
-//		@Override
-//		public String visit(ICommand command) throws IVisitor.VisitorException {
-//			if (command instanceof ICommand.Iassert) {
-//				return "(assert " + ((ICommand.Iassert)command).expr().accept(this) + ")";
-//			} else {
-//				return translateSMT(command);
-//			}
-//		}
 	}
 }
