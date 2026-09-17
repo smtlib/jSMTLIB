@@ -107,7 +107,12 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
 
 	@Override
 	protected IResponse parseResponse(String response) {
-		if (linesOffset != 0) {
+		// Scoped to responses that actually carry an error message: z3 only ever reports a
+		// line number inside an (error "...") response, never in a success/sat/unsat/model
+		// response -- rewriting unconditionally risked mangling an unrelated "line N"
+		// substring that happened to appear elsewhere, e.g. inside a get-value/get-model
+		// response's returned string literal or model value.
+		if (linesOffset != 0 && response.contains("(error")) {
 			Matcher m = LINE_NUMBER.matcher(response);
 			StringBuilder sb = new StringBuilder();
 			while (m.find()) {
