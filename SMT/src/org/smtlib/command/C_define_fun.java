@@ -47,8 +47,14 @@ public class C_define_fun extends Command implements Idefine_fun {
 	@Override
 	public IExpr expression() { return expression; }
 	
-	// FIXME - typechecking needs to check that the resultSort matches the expression's sort
-	
+	// TypeChecker.checkFcn() already checks the body's sort against resultSort -- called
+	// from Solver_test.define_fun()/Solver_simplify's override, not centralized in
+	// TypeChecker.validate() (the universal pre-dispatch pass every solver adapter goes
+	// through). That's deliberate: real solver adapters intentionally don't duplicate a
+	// semantic check the real solver already performs and reports itself (see #46/#53),
+	// so this check staying test/simplify-only, rather than moving into validate(), matches
+	// that pattern instead of being a gap. See issue #40.
+
 	/** Constructs a command instance */
 	public C_define_fun(ISymbol id, List<IDeclaration> declarations, ISort resultSort, IExpr expr) {
 		this.fcnName = id;
