@@ -119,7 +119,16 @@ public class AbstractSolver implements ISolver {
 	
 	public IResponse checkPrintSuccess(SMT.Configuration smtConfig,IKeyword key, IAttributeValue value) {
 		if (key.equals(printSuccess)) {
-			smtConfig.nosuccess = !value.toString().equals("true");
+			// C_set_option.parse() already rejects this eagerly for any text-driven
+			// script -- but this method is also reachable directly via
+			// smtConfig.commandFactory.set_option(key,value), which bypasses that
+			// parse-time check entirely (see issue #41), so a value that isn't literally
+			// true/false can't just be assumed to be "false" the way the previous
+			// !value.toString().equals("true") check silently did.
+			if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
+				return smtConfig.responseFactory.error("The value of the " + key.value() + " option must be 'true' or 'false'", value.pos());
+			}
+			smtConfig.nosuccess = Utils.FALSE.equals(value);
 			return successOrEmpty(smtConfig);
 		}
 		return null;

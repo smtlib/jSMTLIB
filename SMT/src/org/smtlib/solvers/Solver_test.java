@@ -371,8 +371,12 @@ public class Solver_test implements ISolver {
 		String option = key.value();
 		if (Utils.PRINT_SUCCESS.equals(option)) {
 			if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
-				// This message is duplicated in the C_set_option constructor
-//				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
+				// C_set_option.parse() already rejects this eagerly for any text-driven
+				// script (see its checkOptionType()) -- but this method is also reachable
+				// directly via smtConfig.commandFactory.set_option(key,value), which
+				// bypasses that parse-time check entirely, so this can't just assume the
+				// value was already validated (see issue #41).
+				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'", value.pos());
 			} else {
 				// FIXME - make this more abstract
 				((Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
