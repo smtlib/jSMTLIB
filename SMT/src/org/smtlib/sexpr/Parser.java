@@ -314,7 +314,7 @@ public class Parser extends Lexer implements IParser {
 	 * @throws ParserException FIXME - no more of these?
 	 */
 	public Sexpr.Seq parseSeq(ILexToken lp) throws ParserException {
-		Sexpr.Seq seq = new Sexpr.Seq(); // FIXME - use factory
+		Sexpr.Seq seq = new Sexpr.Seq(); // deliberate direct construction -- see ISexpr's class comment
 		
 		while (true) {
 			ILexToken token = getToken();

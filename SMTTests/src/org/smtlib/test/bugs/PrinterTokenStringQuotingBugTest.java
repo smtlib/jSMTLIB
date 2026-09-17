@@ -22,10 +22,11 @@ import org.smtlib.sexpr.Sexpr;
  * sexpr-token fallback rather than symbols specifically.
  * <p>
  * {@code ISexpr.IToken<T>} is generic and not constructed anywhere in this codebase's own
- * command/parsing paths today (confirmed by inspection: {@code ISexpr.IFactory.createToken}
- * has no callers) -- but {@code IFactory}/{@code Sexpr.Token} are public API surface an
- * external embedder of the library could use directly, so the bug is real even though
- * nothing internal currently exercises it.
+ * command/parsing paths today -- the parser always builds the real typed leaf AST classes
+ * directly instead (see issue #84, which removed the unused {@code ISexpr.IFactory} on that
+ * basis) -- but {@code Sexpr.Token} itself is public API surface an external embedder of the
+ * library could use directly, so the bug is real even though nothing internal currently
+ * exercises it.
  * <p>
  * Fixed by quoting a String-valued token's value the same way {@code visit(IStringLiteral)}
  * does; non-String token values are printed exactly as before ({@code String.valueOf}).

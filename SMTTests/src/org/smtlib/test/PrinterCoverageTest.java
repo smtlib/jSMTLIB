@@ -53,8 +53,9 @@ import org.smtlib.sexpr.Sexpr;
  * they need direct construction too.
  * <li>{@code Sexpr.Token}/{@code Sexpr.Expr} (in {@code org.smtlib.sexpr.Sexpr}) are never
  * constructed by the parser either - the parser builds the real typed leaf AST classes
- * directly instead of going through {@code ISexpr.IToken}, and {@code ISexpr.IFactory}
- * itself isn't actually wired up anywhere in {@code SMT.Configuration}.
+ * directly instead of going through {@code ISexpr.IToken} (see issue #84, which removed
+ * {@code ISexpr.IFactory} on this basis but kept {@code Sexpr.Token} itself as legitimate
+ * directly-constructible public API).
  * <li>{@link Printer.WithLines} has no callers anywhere in the codebase, so it needs its
  * own direct test to confirm the line-numbering behavior it adds actually works.
  * </ul>
