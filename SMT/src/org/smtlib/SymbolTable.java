@@ -154,17 +154,17 @@ public class SymbolTable {
 		clear(false);
 	}
 	
-	/** Makes a copy of the symbol table */
-	public SymbolTable(SymbolTable s) {
-		clear(false);
-		this.smtConfig = s.smtConfig;
-		sortStack = new LinkedList<Map<IIdentifier,ISort.IDefinition>>();
-		symStack = new LinkedList<Map<IIdentifier,List<Entry>>>();
-		sortStack.addAll(s.sortStack);
-		symStack.addAll(s.symStack);
-		names = symStack.get(0);
-		sorts = sortStack.get(0);
-		datatypeConstructors = new HashMap<>(s.datatypeConstructors);
+	/** Disabled -- currently unused (the only constructor called anywhere is the single-arg
+	 *  {@link #SymbolTable(SMT.Configuration)}) and its original implementation was a
+	 *  mutation-aliasing trap: it copied the list of stack frames but not the frames
+	 *  themselves, so mutating an already-present scope (not a newly pushed one) through the
+	 *  "copy" silently mutated the original too, and vice versa. Left private and throwing
+	 *  rather than deleted, so the trap can't resurface silently -- if a real caller ever needs
+	 *  this, implement it as a genuine deep copy (a fresh {@code HashMap<>(frame)} for each
+	 *  frame in {@code sortStack}/{@code symStack}, not just {@code addAll} on the stacks).
+	 *  See issue #29. */
+	private SymbolTable(SymbolTable s) {
+		throw new UnsupportedOperationException("SymbolTable's copy constructor is not implemented -- see issue #29");
 	}
 
 	/** Returns a fresh iterator over the symbol table's contents */
