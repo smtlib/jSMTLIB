@@ -331,27 +331,11 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
 	@Override
 	public IResponse check_sat() {
-		IResponse res;
-		try {
-			if (!logicSet) {
-				return smtConfig.responseFactory.error("The logic must be set before a check-sat command is issued");
-			}
-			String s = solverProcess.sendAndListen("(check-sat)\n");
-			//smtConfig.log.logDiag("HEARD: " + s);  // FIXME - detect errors - parseResponse?
-			
-			if (solverProcess.isRunning(false)) {
-				if (s.contains("unsat")) res = smtConfig.responseFactory.unsat();
-				else if (s.contains("sat")) res = smtConfig.responseFactory.sat();
-				else res = smtConfig.responseFactory.unknown();
-			} else {
-				res = smtConfig.responseFactory.error("Solver has unexpectedly terminated");
-			}
-
-			checkSatStatus = res;
-		} catch (IOException e) {
-			res = smtConfig.responseFactory.error("Failed to check-sat");
+		if (!logicSet) {
+			return smtConfig.responseFactory.error("The logic must be set before a check-sat command is issued");
 		}
-		return res;
+		checkSatStatus = sendCommand(smtConfig.commandFactory.check_sat());
+		return checkSatStatus;
 	}
 	
 	@Override
