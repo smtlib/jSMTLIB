@@ -461,7 +461,7 @@ public class AbstractSolver implements ISolver {
 	/** @see org.smtlib.ISolver#get_assertions() */
 	@Override
 	public IResponse get_assertions(){
-		String key = smtConfig.atLeastVersion(SMT.Configuration.SMTLIB.V25) ? Utils.PRODUCE_ASSERTIONS : Utils.INTERACTIVE_MODE;
+		String key = Utils.produceAssertionsKey(smtConfig);
 		IResponse err = requireOptionEnabled("get-assertions", key);
 		if (err != null) return err;
 		String response = null;

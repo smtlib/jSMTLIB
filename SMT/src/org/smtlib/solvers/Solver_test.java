@@ -170,10 +170,7 @@ public class Solver_test implements ISolver {
 		}
 		// FIXME - do we really want to call get-option here? it involves going to the solver?
 		if (!smtConfig.relax && !Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSERTIONS)))) {
-			String key;
-			if (smtConfig.atLeastVersion(SMTLIB.V25)) key = ":produce-assertions";
-			else key = ":interactive-mode";
-			return smtConfig.responseFactory.error("The get-assertions command is only valid if " + key + " has been enabled");
+			return smtConfig.responseFactory.error("The get-assertions command is only valid if " + Utils.produceAssertionsKey(smtConfig) + " has been enabled");
 		}
 		List<IExpr> combined = new LinkedList<IExpr>();
 		Iterator<List<IExpr>> iter = assertionSetStack.listIterator();
