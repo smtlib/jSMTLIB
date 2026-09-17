@@ -37,9 +37,13 @@ public class Log {
 	 * messages; the Object must register itself by calling Log.addListener.
 	 */
 	public static interface IListener {
-		/** Called when messages are logged to the normal output. */
+		/** Called when messages are logged to the normal output (it is expected that a line termination will be added). */
 		public void logOut(String msg);
-		
+
+		/** Called when a message is sent to the normal output with no line termination (e.g. an
+		 *  interactive prompt, which the user's own input is meant to continue on the same line). */
+		public void logOutNoln(String msg);
+
 		/** Called when a response is logged to the normal output (it is expected that a line termination will be added);
 		 * the argument is converted to text using the defaultPrinter in the smt configuration. */
 		public void logOut(/*@ReadOnly*/ IResponse result);
@@ -69,12 +73,18 @@ public class Log {
 			prompt = chars;
 		}
 		
-		/** Writes the message to the 'out' PrintStream */
+		/** Writes the message to the 'out' PrintStream, adding line termination */
 		@Override
 		public void logOut(String msg) {
+			out.println(msg);
+		}
+
+		/** Writes the message to the 'out' PrintStream with no line termination */
+		@Override
+		public void logOutNoln(String msg) {
 			out.print(msg);
 		}
-		
+
 		/** Writes the given response to the out stream, adding line termination */
 		@Override
 		public void logOut(/*@ReadOnly*/ IResponse response) {
@@ -126,19 +136,18 @@ public class Log {
 		}
 	}
 	
-	// FIXME - the two following calls do not differ - do the callers of the first actually expect line terminations added?
-	
-	/** Prints the argument on the regular output stream and to any listeners*/
+	/** Prints the argument on the regular output stream, with a line termination added, and
+	 *  notifies any listeners. */
 	public void logOut(/*@NonNull*/ String message) {
 		for (IListener listener: listeners) {
 			listener.logOut(message);
 		}
 	}
-	
+
 	/** Prints the argument on the regular output stream with no newline appended, and notifies any listeners. */
 	public void logOutNoln(/*@NonNull*/ String message) {
 		for (IListener listener: listeners) {
-			listener.logOut(message);
+			listener.logOutNoln(message);
 		}
 	}
 

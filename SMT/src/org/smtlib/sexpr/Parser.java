@@ -234,7 +234,7 @@ public class Parser extends Lexer implements IParser {
 						command.prefixText = prefixText;
 					}
 				} catch (IParser.AbortInputException e) {
-					smtConfig.log.logOut("Input aborted\n");
+					smtConfig.log.logOut("Input aborted");
 					smtConfig.topLevel = true;
 					continue;
 				} catch (ParserException e) {

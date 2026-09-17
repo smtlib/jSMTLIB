@@ -68,6 +68,10 @@ public class JUnitListener implements Log.IListener {
 	}
 
 	@Override
+	public void logOutNoln(String msg) {
+	}
+
+	@Override
 	public void logOut(IResponse result) {
 	}
 

@@ -40,6 +40,7 @@ public class ParserLogicClassFallbackBugTest {
     static class RecordingListener implements Log.IListener {
         final List<String> diagStrings = new ArrayList<>();
         @Override public void logOut(String msg) {}
+        @Override public void logOutNoln(String msg) {}
         @Override public void logOut(IResponse r) {}
         @Override public void logError(String msg) {}
         @Override public void logError(IResponse.IError r) {}
