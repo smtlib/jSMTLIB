@@ -1530,13 +1530,16 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V27, "define-const", errors);
 			ICommand.Idefine_const c = (ICommand.Idefine_const)cmd;
 			validateUserId(smtConfig, c.symbol(), errors);
-		} else if (cmd instanceof ICommand.Idefine_fun) {
-			ICommand.Idefine_fun c = (ICommand.Idefine_fun)cmd;
-			validateUserId(smtConfig, c.symbol(), errors);
-			if (errors.isEmpty()) validateUniqueDeclarations(smtConfig, c.parameters(), errors);
 		} else if (cmd instanceof ICommand.Idefine_fun_rec) {
+			// Checked before Idefine_fun below: C_define_fun_rec extends C_define_fun (see
+			// issue #43), so its instances are also instanceof Idefine_fun -- the more specific
+			// interface must be checked first, mirroring Ideclare_const vs. Ideclare_fun above.
 			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "define-fun-rec", errors);
 			ICommand.Idefine_fun_rec c = (ICommand.Idefine_fun_rec)cmd;
+			validateUserId(smtConfig, c.symbol(), errors);
+			if (errors.isEmpty()) validateUniqueDeclarations(smtConfig, c.parameters(), errors);
+		} else if (cmd instanceof ICommand.Idefine_fun) {
+			ICommand.Idefine_fun c = (ICommand.Idefine_fun)cmd;
 			validateUserId(smtConfig, c.symbol(), errors);
 			if (errors.isEmpty()) validateUniqueDeclarations(smtConfig, c.parameters(), errors);
 		} else if (cmd instanceof ICommand.Idefine_funs_rec) {
