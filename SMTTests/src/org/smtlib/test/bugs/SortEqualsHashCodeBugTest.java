@@ -1,4 +1,4 @@
-package org.smtlib.test.TO_BE_FIXED;
+package org.smtlib.test.bugs;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -29,11 +29,12 @@ import org.smtlib.SMT;
  * define-sort/declare-fun and a real parse.
  * <p>
  * Not currently exploited (no existing {@code HashSet<ISort>}/{@code HashMap<ISort,...>} was
- * found in the codebase), but silently breaks the moment any future caller puts {@code ISort}
- * objects in a hash-based collection for deduplication or caching.
+ * found in the codebase), but would have silently broken the moment any future caller put
+ * {@code ISort} objects in a hash-based collection for deduplication or caching.
  * <p>
- * Asserts the correct behavior (equal hash codes for equal sorts). This currently FAILS
- * against today's code, documenting the bug.
+ * Fixed by having {@code hashCode()} expand first too (delegating to the expanded sort's own
+ * {@code hashCode()} whenever {@code expand()} returns something other than {@code this}),
+ * mirroring {@code equals()}'s own expansion exactly.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/70">issue #70</a>.
  */

@@ -242,32 +242,13 @@ public abstract class Sort extends Pos.Printable implements ISort {
 			return expanded;
 		}
 		
-// TODO _ review all the equals implementations
 		@Override
 		public boolean equals(Object sort) {
 			if (this == sort) return true;
 			if (!(sort instanceof ISort)) return false;
 			return expand().equalsNoExpand( ((ISort)sort).expand());
-//			Object esort = sort;
-//			if (sort instanceof IApplication) {
-//				IApplication e = (IApplication)sort;
-//				if (e.family().equals(this.family())) {
-//					boolean matches = true;
-//					int i = 0;
-//					for (ISort p: this.parameters()) {
-//						if (!p.equals(e.param(i++))) { matches = false; break; }
-//					}
-//					if (matches) return true;
-//				}
-//				esort = e.expand();
-//			}
-//			// Substitute abbreviations
-//			ISort ethis = expand();
-//			// If either one was expanded, call equals recursively
-//			if (this != ethis || sort != esort) return ethis.equals(esort);
-//			return false;
 		}
-		
+
 		@Override
 		public boolean equalsNoExpand(ISort sort) {
 			if (this == sort) return true;
@@ -283,68 +264,26 @@ public abstract class Sort extends Pos.Printable implements ISort {
 			} else {
 				return false;
 			}
-		}	
-		
-		@Override
-		public boolean equals(Map<IParameter,ISort> leftmap, ISort sort, Map<IParameter,ISort> rightmap, SymbolTable symTable) {
-			//if (this == sort) return true; // Only the case if the maps are the same
-			Object esort = sort;
-			if (sort instanceof IApplication) {
-				IApplication e = (IApplication)sort;
-				if (e.family().equals(this.family())) {
-					boolean matches = true;
-					int i = 0;
-					for (ISort p: this.parameters()) {
-						if (!p.equals(leftmap,e.param(i++),rightmap,symTable)) { matches = false; break; }
-					}
-					if (matches) return true;
-				}
-				esort = e.expand();
-			}
-			// Substitute abbreviations
-			ISort ethis = expand();
-			// If either one was expanded, call equals recursively
-			if (this != ethis || sort != esort) return ethis.equals(esort);
-			return false;
-			
-			
-			
-// TODO _ delete when tests are successful			
-//			if (this == sort) return true;
-//			if (!(sort instanceof IApplication)) return false;
-//			IApplication e = (IApplication)sort;
-//			if (!(e.family().equals(sortFamily))) {
-//				IDefinition leftdef = symTable.lookupSort(sortFamily);
-//				if (!(leftdef instanceof IAbbreviation)) return sort.equals(rightmap,this,leftmap,symTable);
-//				IAbbreviation leftabbrev = (IAbbreviation)leftdef;
-//				if (leftabbrev.intArity() != e.parameters().size()) {
-//					return false; // FIXME - actually a problem - mismatched aritities?
-//				}
-//				Map<IIdentifier,ISort> newmap = new HashMap<IIdentifier,ISort>();
-//				newmap.putAll(leftmap);
-//				for (int i = 0; i<leftdef.intArity(); ++i) {
-//					newmap.put(leftabbrev.parameters().get(i).symbol(),
-//							e.parameters().get(i));
-//				}
-//				return leftabbrev.sortExpression().equals(newmap,sort,rightmap,symTable);
-//			}
-//			// If the family() is equal, the arity must be equal
-//			int i = 0;
-//			for (ISort p: sortParameters) {
-//				if (!p.equals(e.param(i++))) return false;
-//			}
-//			return true;
 		}
 
 		@Override
 		public int hashCode() {
+			// Must mirror equals(), which expands abbreviations before comparing (a
+			// user-defined alias and its literal expansion are .equals()) -- computing
+			// this directly from the unexpanded sortID/sortParameters instead violates the
+			// equals/hashCode contract for exactly that case. expand() returns this
+			// unchanged (identity) once there's nothing left to expand (e.g. an ordinary,
+			// non-abbreviation family), which is the base case below; expand()'s own
+			// caching keeps the recursion cheap.
+			ISort e = expand();
+			if (e != this) return e.hashCode();
 			int hash = sortID.hashCode();
 			for (ISort s: sortParameters) {
 				hash += s.hashCode();
 			}
 			return hash;
 		}
-		
+
 		@Override
 		public ISort substitute(Map<IParameter,ISort> map) {
 			IIdentifier id = family();
@@ -422,13 +361,6 @@ public abstract class Sort extends Pos.Printable implements ISort {
 			return true;
 		}
 
-
-		@Override
-		public boolean equals(Map<IParameter,ISort> leftmap, ISort sort, Map<IParameter,ISort> rightmap, SymbolTable symTable) {
-			// FcnSorts are not parameterized
-			return equals(sort);
-		}
-
 		@Override
 		public int hashCode() {
 			int hash = resultSort.hashCode();
@@ -488,22 +420,6 @@ public abstract class Sort extends Pos.Printable implements ISort {
 			return this == sort;
 		}
 
-
-		@Override
-		public boolean equals(Map<IParameter,ISort> leftmap, ISort sort, Map<IParameter,ISort> rightmap, SymbolTable symTable) {
-			ISort s = leftmap.get(this);
-			if (s != null) {
-				return sort.equals(rightmap,s,leftmap,symTable);
-			} else if (sort instanceof IParameter) {
-				ISort ss = rightmap.get(sort);
-				if (ss == null) return this == sort;
-				return ss.equals(rightmap,this,leftmap,symTable);
-			} else {
-				if (s == null) s = this;
-				return sort.equals(rightmap,s,leftmap,symTable);
-			}
-		}
-		
 		@Override
 		public int hashCode() {
 			return System.identityHashCode(this);

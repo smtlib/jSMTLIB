@@ -36,16 +36,14 @@ import org.smtlib.IVisitor.VisitorException;
  */
 public interface ISort extends INode, IPosable {
 
-	/** Structural equality after expansion of abbreviations, but without any substitution of free parameters. */
+	/** Structural equality after expansion of abbreviations (an alias and its literal
+	 *  expansion are equal), but without any substitution of free parameters. The general-
+	 *  purpose equality method -- use this unless a caller specifically needs one of the two
+	 *  narrower comparisons below.
+	 *  @see #equalsNoExpand(ISort) */
 	//@ pure
 	@Override
 	boolean equals(Object o);
-
-	/** Structural equality after expansion of abbreviations (as looked up in the symbol table)
-	 * and substitution of free parameters according to the respective maps. 
-	 */
-	//@ pure
-	boolean equals(Map<IParameter,ISort> leftmap, ISort s, Map<IParameter,ISort> rightmap, SymbolTable symTable);
 
 	/** Returns true if the receiver designates the Bool pre-defined Sort. */
 	//@ pure
@@ -59,7 +57,14 @@ public interface ISort extends INode, IPosable {
 	//@ pure
 	ISort substitute(java.util.Map<IParameter,ISort> map);
 
-	/** Compares sort expressions without abbreviation expansion or parameter substitution */
+	/** Raw structural comparison, deliberately without abbreviation expansion or parameter
+	 *  substitution -- so a user-defined alias and its expansion, which {@link
+	 *  #equals(Object)} treats as equal, are NOT equal here. Used internally as {@link
+	 *  #equals(Object)}'s own building block (expand both sides first, then compare
+	 *  structurally with this), and directly by any caller that specifically wants the
+	 *  literal, as-declared shape rather than the expanded one, e.g. {@code
+	 *  Logic.checkArraySort()}, which checks an array sort's declared shape against a fixed
+	 *  set of allowed sorts without expanding through an alias first. */
 	//@ pure
 	boolean equalsNoExpand(ISort sort);
 	
@@ -154,9 +159,6 @@ public interface ISort extends INode, IPosable {
 
 		@Override
 		boolean equals(/*@Nullable*/Object o);
-		
-		@Override
-		boolean equals(Map<IParameter,ISort> leftmap, ISort s, Map<IParameter,ISort> rightmap, SymbolTable symTable);
 
 		@Override
 		boolean equalsNoExpand(ISort sort);
@@ -169,13 +171,10 @@ public interface ISort extends INode, IPosable {
 	static public interface IParameter extends ISort, IDefinition {
 		/** The symbol that names the parameter */
 		ISymbol symbol();
-		
+
 		@Override
 		boolean equals(/*@Nullable*/Object o);
-		
-		@Override
-		boolean equals(Map<IParameter,ISort> leftmap, ISort s, Map<IParameter,ISort> rightmap, SymbolTable symTable);
-		
+
 		@Override
 		boolean equalsNoExpand(ISort sort);
 
