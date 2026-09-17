@@ -956,8 +956,28 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Void visit(ISexpr.IToken<?> e) throws IVisitor.VisitorException {
-		append(String.valueOf(e.value()));
+		Object v = e.value();
+		// A generic token's raw value is meant to be printed as-is when that's already
+		// safe (e.g. "hello" -- PrinterCoverageTest.sexprToken() depends on this staying
+		// bare, unlike visit(IStringLiteral), which always quotes since a string literal
+		// is never valid unquoted). Only a String value containing a character that would
+		// break tokenization if left bare (whitespace, a parenthesis, an embedded double
+		// quote, or a comment-starting ';') needs the same quoting visit(IStringLiteral)
+		// uses, to remain valid, re-parseable SMT-LIB syntax.
+		if (v instanceof String && needsStringQuoting((String) v)) {
+			append(smtConfig.utils.quote((String) v));
+		} else {
+			append(String.valueOf(v));
+		}
 		return null;
+	}
+
+	private static boolean needsStringQuoting(String s) {
+		for (int i = 0; i < s.length(); i++) {
+			char c = s.charAt(i);
+			if (Character.isWhitespace(c) || c == '(' || c == ')' || c == '"' || c == ';') return true;
+		}
+		return false;
 	}
 
 	@Override
