@@ -17,6 +17,11 @@ public class UFNIA extends Logic {
 	}
 
 	@Override
+	public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
+		// May declare constants or functions
+	}
+
+	@Override
 	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
 		noExponentiation(expression);
 	}

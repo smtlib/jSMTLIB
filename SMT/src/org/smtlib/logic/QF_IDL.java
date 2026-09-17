@@ -24,7 +24,10 @@ public class QF_IDL extends Logic {
 		IVisitor<Void> visitor = new IVisitor.TreeVisitor<Void>() {
 			public Void visit(IExpr.IFcnExpr e) throws IVisitor.VisitorException {
 				IQualifiedIdentifier fcn = e.head();
-				if (Utils.AND.equals(fcn) || Utils.OR.equals(fcn) || Utils.NOT.equals(fcn) || Utils.IMPLIES.equals(fcn)) return (Void)null;
+				if (Utils.AND.equals(fcn) || Utils.OR.equals(fcn) || Utils.NOT.equals(fcn) || Utils.IMPLIES.equals(fcn)) {
+					for (IExpr arg : e.args()) arg.accept(this);
+					return (Void)null;
+				}
 				if (Utils.EQ.equals(fcn) || Utils.DISTINCT.equals(fcn)) return (Void)null;
 				// FIXME - need to restrict = and distinct for Int
 				if (e.args().size() == 2 && (Utils.GE.equals(fcn) || Utils.GT.equals(fcn) || Utils.LT.equals(fcn) || Utils.LE.equals(fcn))) {

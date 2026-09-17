@@ -852,7 +852,13 @@ public class Parser extends Lexer implements IParser {
 			Constructor<? extends ILogic> con = clazz.getConstructor(ISymbol.class,Collection.class);
 			return con.newInstance(name,attributes);
 		} catch (ClassNotFoundException e) {
-			// OK - no extension class - no language restrictions
+			// No dedicated restriction class for this logic name - falls back to an
+			// unrestricted logic (no noQuantifiers/sort/function-declaration checks).
+			// Legitimate for logics that genuinely have no extra restriction class yet,
+			// but also what a missing or mistyped class name (e.g. QF_UFNIA) silently
+			// produces, so make the fallback visible rather than silent.
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#No restriction class " + clazzName
+					+ " found for logic " + name + " - using an unrestricted logic");
 		} catch (NoSuchMethodException e) {
 			// error - the class must have the right constructor
 			throw error("The constructor for the class " + clazzName + " does not have a constructor with the correct argument types",

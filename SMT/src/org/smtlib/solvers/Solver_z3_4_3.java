@@ -264,11 +264,11 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	@Override
 	public IResponse assertExpr(IExpr sexpr) {
 		IResponse response;
-		if (pushesDepth <= 0) {
-			return smtConfig.responseFactory.error("All assertion sets have been popped from the stack");
-		}
 		if (!logicSet) {
 			return smtConfig.responseFactory.error("The logic must be set before an assert command is issued");
+		}
+		if (pushesDepth <= 0) {
+			return smtConfig.responseFactory.error("All assertion sets have been popped from the stack");
 		}
 		try {
 			String s = solverProcess.sendAndListen("(assert ",translate(sexpr),")\n");
