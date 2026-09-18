@@ -404,12 +404,12 @@ Some problems profit by defining and using new sorts.
 > (assert (or (= d a)(= d b))) \\
 > (assert (or (= e a)(= e b))) \\
 > (push 1)\\
-> (distinct c d)\\
+> (assert (distinct c d))\\
 > (check-sat)\\
 sat\\
 > (pop 1) \\
 > (push 1) \\
-> (distinct c d e)\\
+> (assert (distinct c d e))\\
 > (check-sat)\\
 unsat\\
 > (pop 1)\\
@@ -1519,7 +1519,7 @@ sat\\
 > (get-value (x)) \\
 ((x 5))\\
 > (get-value ((- x y) (+ 2 y)))\\
-(((- x y) 1) ((+ 2 y) 8))
+(((- x y) 1) ((+ 2 y) 6))
 }
 
 
