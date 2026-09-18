@@ -524,17 +524,17 @@ public class Solver_test implements ISolver {
 		if (cmd.parameters() != null && !smtConfig.relax) {
 			return smtConfig.responseFactory.error("A par-polymorphic function declaration requires --relax", cmd.symbol().pos());
 		}
-		if (cmd.attributes() != null && !cmd.attributes().isEmpty() && !smtConfig.relax) {
+		if (!cmd.attributes().isEmpty() && !smtConfig.relax) {
 			return smtConfig.responseFactory.error("Function attributes on declare-fun require --relax", cmd.symbol().pos());
 		}
 		String encodedName = encode(cmd.symbol());
 		List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.argSorts(),cmd.resultSort(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
 		if (list.isEmpty()) {
 			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(cmd.argSorts().toArray(new ISort[cmd.argSorts().size()]),cmd.resultSort());
-			// cmd.attributes()/cmd.parameters() are only ever non-null if --relax was checked
-			// above; passing them straight through lets a user-declared function opt into the
-			// same :left-assoc/etc. n-ary sugar and par-polymorphism SymbolTable.lookup()
-			// already applies to theory-declared ones.
+			// cmd.attributes() is never null (empty if none); cmd.parameters() is only ever
+			// non-null if --relax was checked above. Passing them straight through lets a
+			// user-declared function opt into the same :left-assoc/etc. n-ary sugar and
+			// par-polymorphism SymbolTable.lookup() already applies to theory-declared ones.
 			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,cmd.attributes(),cmd.parameters());
 			// --relax experimentally allows overloading a user-declared symbol (standard
 			// SMT-LIB permits this only for background-scope, theory-declared symbols) --

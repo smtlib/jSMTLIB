@@ -5,6 +5,7 @@
  */
 package org.smtlib.command;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -31,16 +32,33 @@ public class C_declare_fun extends Command implements Ideclare_fun {
 	/** The name of the function being declared */
 	protected ISymbol fcnName;
 
-	/** The sorts of the arguments of the function being declared */
+	/** The sorts of the arguments of the function being declared -- never null (every
+	 *  construction path, parser or direct, always supplies a real list, empty for a
+	 *  zero-argument function). */
 	protected List<ISort> argSorts;
 
 	/** The result sort of the function being declared */
 	protected ISort resultSort;
 
-	/** Any trailing attributes (see attributes()); null if none. */
+	/** Any trailing attributes (see attributes()) -- never null, {@code Collections.emptyList()}
+	 *  if none (the common case: this is a non-standard extension, only meaningful at all
+	 *  under --relax). Unlike {@link #parameters}, null-vs-empty draws no real distinction
+	 *  here: the concrete syntax has no way to write an explicit-but-empty attribute clause
+	 *  (attributes are a bare trailing sequence, not a bracketed list), so there is nothing for
+	 *  a null/non-null split to usefully encode -- it would just be an arbitrary implementation
+	 *  detail, not a meaningful state. See issue #42 point 2. */
 	protected List<IAttribute<?>> attributes;
 
-	/** The par-polymorphic parameters (see parameters()); null for an ordinary declaration. */
+	/** The par-polymorphic parameters (see parameters()). Unlike {@link #attributes}, null here
+	 *  is load-bearing, not just an empty-list stand-in: it distinguishes an ordinary
+	 *  declaration from the non-standard "(declare-fun par (params) (name sorts attrs))" form
+	 *  (SMT-LIB's declare-fun has no par production at all), and {@link
+	 *  org.smtlib.solvers.Solver_test#declare_fun} branches on that distinction directly (e.g.
+	 *  requiring --relax only when this is non-null) -- collapsing it to
+	 *  {@code Collections.emptyList()} would erase real information (a par-polymorphic
+	 *  declaration's parameter list is never actually empty in practice -- the grammar requires
+	 *  {@code param+} -- so there is no "empty par-form" state this could be confused with).
+	 *  Null for an ordinary declaration. See issue #42 point 2. */
 	protected List<IParameter> parameters;
 
 	/** The command name */
@@ -64,7 +82,7 @@ public class C_declare_fun extends Command implements Ideclare_fun {
 
 	/** Constructs a command instance for an ordinary (non-attributed, non-par) declaration */
 	public C_declare_fun(ISymbol symbol, List<ISort> argSorts, ISort resultSort) {
-		this(symbol, argSorts, resultSort, null);
+		this(symbol, argSorts, resultSort, Collections.emptyList());
 	}
 
 	/** Constructs a command instance for an ordinary declaration, including any trailing
@@ -79,7 +97,7 @@ public class C_declare_fun extends Command implements Ideclare_fun {
 		this.fcnName = symbol;
 		this.argSorts = argSorts;
 		this.resultSort = resultSort;
-		this.attributes = attributes;
+		this.attributes = attributes == null ? Collections.emptyList() : attributes;
 		this.parameters = parameters;
 	}
 
@@ -118,7 +136,7 @@ public class C_declare_fun extends Command implements Ideclare_fun {
 				throw new ParserException("Expected at least a result sort", name.pos());
 			}
 			ISort result = sorts.remove(sorts.size()-1);
-			List<IAttribute<?>> attrs = null;
+			List<IAttribute<?>> attrs = Collections.emptyList();
 			if (!p.isRP()) {
 				attrs = p.parseAttributeSequence();
 			}
@@ -127,7 +145,7 @@ public class C_declare_fun extends Command implements Ideclare_fun {
 		}
 		List<ISort> argSorts = p.parseList(() -> p.parseSort(null), "sort", true);
 		ISort result = p.parseSort(null);
-		List<IAttribute<?>> attrs = null;
+		List<IAttribute<?>> attrs = Collections.emptyList();
 		if (!p.isRP()) {
 			attrs = p.parseAttributeSequence();
 		}
