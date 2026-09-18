@@ -1,0 +1,2607 @@
+%% Based on a TeXnicCenter-Template by Tino Weinkauf.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% TODO 
+%%   fix fonts - which font; do headings also change?
+%%   fix Tex path to find fonts; pick a font
+%%   printed vs. displayed hyperlinks
+%%   hypersetup customization?
+%%   widen margins - DONE  
+%%   use oneside or twoside? 10, 11 12pt ?
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% HEADER
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[12pt,oneside]{report}
+
+
+%% Language %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[USenglish]{babel} %francais, polish, spanish, ...
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage[ansinew]{inputenc}
+\usepackage{makeidx}	  %% needed to create an index
+\usepackage{hyperref}   %% sets hyperlinks within a pdf
+\usepackage{rotating}
+\usepackage{threeparttable}
+\usepackage{verbatim}
+
+%%\usepackage{lmodern} %Type1-font for non-english texts and characters
+
+
+%% Packages for Graphics & Figures %%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{graphicx} %%For loading graphic files
+%\usepackage{subfig} %%Subfigures inside a figure
+%\usepackage{tikz} %%Generate vector graphics from within LaTeX
+
+\usepackage{mathptmx} %% Times fonts, for math as well
+%% NOT WORKING?: \usepackage{mathpazo} %% Palatino fonts
+%% NO: \usepackage{bookman} %% Bookman fonts for text, no change for math
+%%\usepackage{newcent} %% NewCentury fonts for text, no change for math
+%% Others: avant chancery charter helvet lucida palatino pslatex utopia times
+
+%% DOES NOT SEEM TO WORK: \usepackage{fullpage}  %% Makes margins 1"
+
+%% Please note:
+%% Images can be included using \includegraphics{filename}
+%% resp. using the dialog in the Insert menu.
+%% 
+%% The mode "LaTeX => PDF" allows the following formats:
+%%   .jpg  .png  .pdf  .mps
+%% 
+%% The modes "LaTeX => DVI", "LaTeX => PS" und "LaTeX => PS => PDF"
+%% allow the following formats:
+%%   .eps  .ps  .bmp  .pict  .pntg
+
+
+%% Commands for changing the Standardtexts %%%%%%%%%%%%%%%%%%
+%\renewcommand{\ccname}{Copies}
+%\renewcommand{\phonemsg}{Telephone}
+%\renewcommand{\signmsgold}{Our signs}
+%\renewcommand{\signmsgnew}{Our signs, our mail from}
+%\renewcommand{\yourmailmsg}{Your signs, Your mail from}
+%\renewcommand{\psname}{PS}
+%\renewcommand{\enclname}{\tt Anlage(n)}
+
+\newcommand{\bs}{{\tt \char'134}}
+
+\newcommand{\success}{{\tt success}}
+\newcommand{\unsupported}{{\tt unsupported}}
+\newcommand{\keyword}{{\it <keyword>}}
+\newcommand{\attrvalue}{{\it <attr-value>}}
+\newcommand{\constant}{{\it <constant>}}
+\newcommand{\attribute}{{\it <attribute>}}
+\newcommand{\expr}{{\it <expr>}}
+\newcommand{\sym}{{\it <symbol>}}
+\newcommand{\ssym}{{\it <simple-symbol>}}
+\newcommand{\qsym}{{\it <quoted-symbol>}}
+\newcommand{\numeral}{{\it <numeral>}}
+\newcommand{\decimal}{{\it <decimal>}}
+\newcommand{\binary}{{\it <binary>}}
+\newcommand{\hex}{{\it <hex>}}
+\newcommand{\ID}{{\it <identifier>}}
+\newcommand{\sexpr}{{\it <S-expression>}}
+\newcommand{\Bool}{{\tt Bool}}
+\newcommand{\Int}{{\tt Int}}
+\newcommand{\Real}{{\tt Real}}
+\newcommand{\Sort}{{\it <sort-expr>}}
+\newcommand{\getinfo}{{\tt get-info}}
+\newcommand{\strng}{{\it <string>}} %% \string causes big problems
+\newcommand{\boxspace}{\vspace*{6pt}}
+\newcommand{\boxedexample}[1]{\boxspace \\ \fbox{\parbox{6.30in}{\tt #1}}\boxspace\\*}
+\newcommand{\boxedexampleA}[1]{\boxspace \\ \fbox{\parbox{6.00in}{\tt #1}}\boxspace\\*}
+\newcommand{\boxedexampleB}[1]{\boxspace \\ \fbox{\parbox{5.5in}{\tt #1}}\boxspace\\*}
+\newcommand{\boxedexamplefile}[1]{\boxspace \\ \fbox{\parbox{6.30in}{\tt \verbatiminput{#1}}}\boxspace\\*}
+
+\newcommand{\nospace}{\setlength{\itemsep}{0in}\setlength{\parsep}{0in}\setlength{\parskip}{0in}\setlength{\topsep}{0in}}
+\newcommand{\bae}[1]{\begin{array}{l}\\#1\\\end{array}}
+
+\newcommand{\logand}{{\wedge}}
+\newcommand{\logor}{{\vee}}
+\newcommand{\imp}{{\Rightarrow}}
+\newcommand{\inequiv}{{\neq}}
+\makeindex
+
+%% The adjustment amounts depend on the font
+%% -.5 for 12pt, -.875 for 10pt
+%% FIXME: should these be set instead of adjusted?
+\addtolength{\oddsidemargin}{-.5in}
+\addtolength{\evensidemargin}{-.5in}
+\addtolength{\textwidth}{1.0in}
+\addtolength{\topmargin}{-.5in}
+\addtolength{\textheight}{1.0in}
+\begin{document}
+
+
+
+\title{The SMT-LIBv2 Language and Tools: A Tutorial}
+
+\author{David R. Cok \\ GrammaTech, Inc. }
+
+\date{Version 1.2.1 \\ \today \\ \vspace*{.5in}
+The most recent version is available at \url{http://www.grammatech.com/resource/smt/SMTLIBTutorial.pdf}.\\
+ \vspace*{2.5in}
+\parbox{6.30in}{Copyright (c) 2010-2011 by David R. Cok. Permission is granted to make and distribute copies of this document for educational or research purposes, provided that the copyright notice and permission notice are preserved and acknowledgment is given in publications. 
+Modified versions of the document may not be made.
+Incorporating this document within a larger collection, or distributing it for commercial purposes, or including it as part or all of a product for sale is allowed only by separate written permission from the author.}}
+
+\maketitle
+
+
+
+\tableofcontents
+\listoftables
+
+\setlength{\parskip}{2ex plus 0.5ex minus 0.2ex}
+\setlength{\parindent}{0ex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagebreak
+\chapter*{Preface}
+\addcontentsline{toc}{chapter}{Preface}
+
+A tutorial is only as useful as its subject.  This tutorial owes its debt to two groups that have established SMT solvers as they are today.  
+
+The first is the distributed group of SMT solver implementors.  These researchers have pushed the
+capabilities of SMT solvers, making them a significantly useful tool for model checking and software verification, and making great strides in solver performance over recent years.  Without good SMT solvers we would have no need for a standard language, nor a tutorial.
+
+The second and more specific acknowledgment is to Cesare Tinelli, Clark Barett and Aaron Stump, the authors of the SMT-LIB version 2 specification.
+In addition, Tinelli and Silvio Ranise pioneered the SMT-LIB language, and Barrett and Stump, with Leonardo DeMoura, initiated the SMT-COMP solver competition. 
+
+\section*{Version History}
+\addcontentsline{toc}{chapter}{Version History}
+
+\begin{tabular}{llp{4in}}
+2011-02-13 & Version 1.1 & Reported typos corrected \\
+2011-01-24 & Version 1.0 & First round comments incorporated \\
+2010-12-25 & Version 0.2.draft & Updated to 12/21/2010 version of the standard \\
+2010-12-19 & Version 0.1.draft & First draft for comment
+\end{tabular}
+
+\section*{Note}
+\addcontentsline{toc}{chapter}{Note}
+This document almost certainly contains errors. It may anticipate changes that are not yet reflected in the SMT-LIB standard;
+it may anticipate changes that do not become adopted; it may not yet contain changes that have been incorporated into the standard;
+and it may have misinterpreted the standard. If you notice errors, please bring them to the author's attention and they will be corrected 
+in a future edition.
+
+
+%%\part{Part the first}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Introduction}
+
+\section{The SMT-LIB endeavor}
+
+This tutorial builds on two significant developments in automated reasoning over recent years.
+The first development is the considerable advance in SMT solvers.  These solvers (and their siblings, SAT solvers\index{SAT solvers}) are essential to model checking and software verification.  Some such solver is embedded as a background validity checker in most verification systems. 
+
+At the 2010 SMT workshop, 10 different provers competed to demonstrate capability and performance, with an additional 8 other groups competing in 2008 and 2009.
+That competition, SMT-COMP, is a direct contributor to the recent improvements in SMT solver performance. A uniformly available set of benchmark problems provided a measure of solver capability and an objective means of comparing solvers.  As a result, solver performance has increased considerably\cite{BDO+08}\cite{SMTCOMP-2010} over the last several years.
+
+The second key development is the SMT-LIB language itself.
+Integral to the SMT competition is having a language common across solvers in which to express benchmark problems. That is the task of the SMT-LIB language.
+The language was first proposed in 2003\cite{RanTin-PDPAR-03} as the input language for the SMT benchmark problems. However, the language was subsequently revised to meet additional needs.  In particular, an important application of SMT solvers is as a backend constraint solver for software verification.  In this application, a solver receives input from another tool and the driver tool needs capabilities such as asserting and retracting logical expressions or exploring the satisfying assignments produced by the solver. Those requirements led to SMT-LIB version 2, which was announced in 2010\cite{BarST-SMT-10}.  This tutorial describes the December 21, 2010, edition of that standard.
+
+The SMT-LIB standard has the goal of advancing the theory and practice of SMT solvers by providing a common language and set of benchmarks against which to test and compare solvers.  This tutorial is created in support of that goal, but with the additional intent of encouraging 
+wider use of SMT solvers, in application areas in which SMT solvers may currently be unfamiliar.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Purpose and Content}
+
+
+This tutorial is intended for two audiences.  The primary audience is individuals somewhat new to SMT solvers, or at least to the particular input and output format that is SMT-LIB v.2. 
+This tutorial will provide these readers
+\begin{itemize}
+\item a very brief introduction to some of the key concepts of logic and automated theorem proving that are needed to use SMT solvers,
+\item information about the context of SMT solvers, SMT-LIB and the recent significant release (v.2),
+\item examples and description of how SMT-LIB is used to interact with SMT solvers,
+\item pointers to currently available SMT solvers,
+\item and descriptions of some tools and test suites that may be useful to the reader.
+\end{itemize}
+
+For this audience, the tutorial intends to provide sufficient information for new users to experiment with SMT solvers using SMT-LIB and for
+implementors of applications using SMT solvers to effectively use SMT-LIB as the interface language.
+
+A second audience consists of those individuals who are implementing an SMT solver that is compliant with SMT-LIB v.2.  These implementors will be fully versed in SMT solvers, how they work, and the associated logical concepts.  However, this tutorial's discussion of details of the SMT-LIB format, the command language, and command responses may be relevant.  In addition the reference tools and set of compliance tests should be quite useful to someone intending to implement a conforming SMT solver. For this set of readers, the goal of the tutorial and tools is to provide an informal but more accessible overview of the SMT-LIB language and to provide tools that will enable easier and faster development of a solver's front-end.
+
+The tutorial consists of these parts:
+\begin{itemize}
+\item this introductory section;
+\item a set of examples providing readers a quick picture of SMT-LIB scripts;
+\item the details of the SMT-LIB language, including syntax, sorts, declarations, expressions, and commands;
+\item a brief description of the built-in logics and theories;
+\item an introduction to some of the SMT solvers currently available;
+\item a list of tools available to interested SMT users and implementors.
+\end{itemize}
+
+Anyone who would like to hear about updates to this tutorial or its associated tools is encouraged to 
+subscribe to the smt-lib@cs.nyu.edu mailing list; you can register for the mailing list at 
+\url{http://www.cs.nyu.edu/mailman/listinfo/smt-lib}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Mechanics}
+
+The document employs a few definitions and typographical conventions; these are described here.
+
+A {\em conforming} SMT solver is one whose behavior obeys the SMT-LIB v.2 standard.  Such a solver may do more than the standard requires, but not less.  For example, it may define more options or more commands, or it may be less restrictive in interpreting commands.  However, any legal SMT-LIB v2 input must be accepted without complaint and yield the defined response.
+
+This document only describes SMT-LIB version 2; references to SMT-LIB are simply an abbreviated reference to version 2 of the language.
+
+{\bf Verbatim characters.} Text written using a monospaced font, e.g. {\tt font}, represents character sequences that are to be interpreted verbatim. Typically, they are SMT-LIB input or output or fragments of SMT-LIB commands.
+
+{\bf Semantic categories.} This document uses character sequences such as \strng~or \sym~or \binary~(using italics and enclosed in angle brackets) to denote various semantic categories.  For example, \strng~represents an element of the set of character sequences denoting SMT-LIB strings: sequences of characters from a specified set enclosed in \verb|"| characters.
+
+{\bf Examples.} The tutorial includes a number of examples.  Some of them are examples of input to and output from a conforming SMT solver.
+These examples are typeset within a box in-line in the text.  For example, 
+\boxedexample{
+> (set-logic QF\_UF) \\
+success \\
+> (set-logic QF\_UF) \\
+(error "The logic has already been set")
+}\\
+In such examples, the lines beginning with \verb|> | show input that the user provides to the solver, as if the \verb|> | were a prompt; the other lines are the output received from the tool.  In the example above the two (identical) set-logic commands, including the containing parentheses are user input;  the two lines containing the word {\tt success} and the error response are the output.
+In some cases, the input will be continued on a second line, with a second prompt; these lines are shown beginning with \verb|...> |, as in
+\boxedexample{
+> (set-logic \\
+...>   QF\_UF) \\
+success \\
+> (set-logic QF\_UF) \\
+(error "The logic has already been set")
+}\\
+Note that these are two separate lines of user input, not simply a long line having wrapped; that is, the user typed a new line in the middle of the command.  The tutorial sometimes omits the {\tt success} responses to save space.
+
+Comments in the examples --- the text from a semicolon to the end of the line --- are not part of the input or output, but 
+descriptive text to explain aspects of the example.
+
+{\bf Symbols.} The document uses these (infix) symbols for logical operations: $\logand$ (conjunction), $\logor$ (disjunction), $\lnot$ (logical negation), $\imp$ (logical implication), $\equiv$ (logical equivalence), $\inequiv$ (exclusive or - that is, logical inequivalence), $\forall$ (universal quantifier), and $\exists$ (existential quantifier).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Quick Start}
+
+There are a number of components to the SMT-LIB language: lexical structure, how logical expressions are written, the command language, and the various underlying logics.  These are all described in detail in the following chapters. However, they proceed from the ground up, so only at the end can a useful script be written. This approach does not appeal to the person eager to see something work. So this chapter contains several simplified examples that show the general style, but do not explain all the details.  After reviewing these, the reader can simply experiment or can read the following chapters to gain a more thorough 
+understanding of the components.
+
+First, you need an SMT-LIB conforming solver with which to work.  Unfortunately, most solvers, though they may be excellent at solving constraints, are not yet fully SMT-LIB compliant.  Various options for solvers are described in chapter \ref{Solvers}, from which you may choose.
+Some of them can act as SMT-LIB solvers through a Java adapter interface.  The adapter interface is SMT-LIB conforming, but you still need a back-end SMT solver.  Or you can simply use the adapter interface as a command and type checker, without doing any actual constraint solving.
+To be specific, here is the command line for the adapter+simplify solver (where "{\it <path>}" is replaced by an absolute file-system path to the Simplify executable on your system):\\
+\centerline{{\tt java -jar jSMTLIB.jar --solver simplify -exec} {\it <path>}}
+
+The command above will respond with a prompt (\verb|> |). If you like, you can type commands directly at the prompt. However, most users may
+prefer to edit a script in a file, both to save the script and to conveniently correct or change the script. In that case, the command would be (here {\it <file>} is the file-system path to the script file---either absolute or relative to the current working directory):\\
+\centerline{{\tt java -jar jsmtlib.jar --echo --solver simplify -exec} {\it <path>} {\it <file>}}
+
+\subsubsection*{Basic Boolean example}
+
+Here is a first example, which declares a \Bool~value $p$ and asks whether $(p \logand \lnot p)$ is satisfiable:
+\boxedexample{
+> (set-logic QF\_UF) \\
+success \\
+> (declare-fun p () Bool) \\
+success \\
+> (assert (and p (not p))) \\
+success \\
+> (check-sat) \\
+unsat \\
+> (exit) \\
+success
+}\\
+The response to {\tt check-sat} is {\tt unsat}, indicating that the formula is not satisfiable.  There is no value of $p$ for which it is true. Equivalently, its negation is always true. So
+$\lnot (p \logand \lnot p)$ is a tautology.  In SMT-LIB syntax, this is written {\tt (not (and p (not p)))}.  Note that all of the subexpressions
+are written in fully parenthesized, prefix style.
+
+\subsubsection*{Setting options}
+
+Conforming SMT solvers have a number of options that change the behavior of the
+solver. A simple one is {\tt :print-success}; this option controls whether
+{\tt success} is returned in response to each successful command.  Here is the
+first example, with {\tt :print-success} turned off.
+\boxedexample{
+> (set-option :print-success false)\\
+> (set-logic QF\_UF) \\
+> (declare-fun p () Bool) \\
+> (assert (and p (not p))) \\
+> (check-sat) \\
+unsat \\
+> (exit)
+}
+
+\subsubsection*{Integer Arithmetic}
+This next example contains some arithmetic.  For that we use a logic that defines basic arithmetic on integers, the {\tt QF\_LIA} logic. 
+Now we can ask, for example, if there is a solution to the pair of equations $x + 2*y = 20$ and $x - y = 2$.
+\boxedexample{
+> (set-logic QF\_LIA) \\
+success \\
+> (declare-fun x () Int) \\
+success \\
+> (declare-fun y () Int) \\
+success \\
+> (assert (= (+ x (* 2 y)) 20)) \\
+success \\
+> (assert (= (- x y) 2)) \\
+success \\
+> (check-sat) \\
+sat \\
+> (exit) \\
+success
+}
+
+This similar example does not have a solution.  There is a solution if $x$ and $y$ are \Real, but not if they are \Int. 
+\boxedexample{
+> (set-logic QF\_LIA) \\
+success \\
+> (declare-fun x () Int) \\
+success \\
+> (declare-fun y () Int) \\
+success \\
+> (assert (= (+ x (* 2 y)) 20)) \\
+success \\
+> (assert (= (- x y) 3)) \\
+success \\
+> (check-sat) \\
+unsat \\
+> (exit) \\
+success
+}
+
+
+\subsubsection*{Getting values}
+The first example of the previous section determined that the given constraint problem did indeed have a solution, 
+but did not say what the solution is.  To find the solution, one must set a couple options and then use the {\tt get-value}
+command; one must also have a solver that supports reporting the model satisfying a constraint problem.
+\boxedexample{
+> (set-option :print-success false) \\
+> (set-option :produce-models true)\\
+> (set-option :interactive-mode true)\\
+> (set-logic QF\_LIA) \\
+> (declare-fun x () Int) \\
+> (declare-fun y () Int) \\
+> (assert (= (+ x (* 2 y)) 20)) \\
+> (assert (= (- x y) 2)) \\
+> (check-sat) \\
+sat \\
+> (get-value (x y))\\
+((x 8)(y 6))\\
+> (exit)
+}
+%% TBD - the interactive-mode option is not actually needed above
+\subsubsection*{Using scopes to explore multiple problems}
+Sometimes there are multiple problems one would like to explore with the same set of definitions and some of the same assertions.
+To do that, we use the {\tt push} and {\tt pop} commands.
+\boxedexample{
+> (set-option :print-success false) \\
+> (set-logic QF\_LIA) \\
+> (declare-fun x () Int) \\
+> (declare-fun y () Int) \\
+> (assert (= (+ x (* 2 y)) 20)) \\
+> (push 1)\\
+> (assert (= (- x y) 2)) \\
+> (check-sat) \\
+sat \\
+> (pop 1)\\
+> (push 1)\\
+> (assert (= (- x y) 3)) \\
+> (check-sat) \\
+unsat \\
+> (pop 1)\\
+> (exit)
+}
+
+\subsubsection*{Defining new sorts}
+Some problems profit by defining and using new sorts.
+\boxedexample{
+> (set-option :print-success false) \\
+> (set-logic QF\_UF) \\
+> (declare-sort A 0)\\
+> (declare-fun a () A)\\
+> (declare-fun b () A)\\
+> (declare-fun c () A)\\
+> (declare-fun d () A)\\
+> (declare-fun e () A)\\
+> (assert (or (= c a)(= c b))) \\
+> (assert (or (= d a)(= d b))) \\
+> (assert (or (= e a)(= e b))) \\
+> (push 1)\\
+> (distinct c d)\\
+> (check-sat)\\
+sat\\
+> (pop 1) \\
+> (push 1) \\
+> (distinct c d e)\\
+> (check-sat)\\
+unsat\\
+> (pop 1)\\
+> (exit)
+}
+
+\subsubsection*{Getting information}
+Solvers can provide some identifying information, obtained with the {\tt get-info} command:
+\boxedexample{
+> (get-info :name) \\
+(:name "simplify")\\
+> (exit)\\
+success
+}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{The SMT-LIB Language (v2)}
+\section{Some logical concepts}
+
+This tutorial does not provide an introduction to logic or the details of SMT solvers.  However, a reader that understands the following  concepts will be able to use an SMT solver and the SMT-LIB command language more effectively. A reader interested in the formal 
+semantics of SMT-LIB should
+consult chapter 4 of the SMT-LIB definition\cite{BarST-RR-10}.
+
+
+\subsection{Satisfiability and Validity} \index{satisfiability} \index{validity}
+
+The first concept to understand is the dual relationship between satisfiability and validity.  A formula $P$ is {\it valid} if $P$ always evaluates to true for {\it any} assignment of appropriate values to its function symbols.
+A formula $P$ is {\it satisfiable} if there is {\it some} assignment of appropriate values to its function symbols under which $P$ evaluates to true.  Validity is about finding a proof of a statement; satisfiability is about finding a solution to a set of constraints. 
+
+Consider a logical expression $P$ with some free constants, say $x$ and $y$.  We can ask whether $P$ is {\it valid}, that is whether it is always true for any combination of values for $x$ and $y$.  If $P$ is always true, then $\lnot P$ is always false, and then $\lnot P$ will not have any satisfying assignment; that is, $\lnot P$ is unsatisfiable.
+In other words, \\
+\centerline{$P$ is valid precisely when $\lnot P$ is not satisfiable (is unsatisfiable).}
+Alternately,\\
+\centerline{$P$ is satisfiable if and only if $\lnot P$ is not valid (is invalid).}
+
+SMT solvers find satisfying assignments (or report that there are none). To determine whether a formula $P$ is valid, we ask an SMT solver whether $\lnot P$ is satisfiable.  Similarly, to determine if \\
+\centerline{$(P \logand Q ) \imp R$}
+is valid, we ask whether its negation, \\
+\centerline{$P \logand Q \logand \lnot R$,}
+is satisfiable. If the latter is unsatisfiable, the former is valid.
+If $P \logand Q \logand \lnot R$ is satisfiable, a prover is usually able to provide an assignment of values to its
+free symbols that makes the formula true; that assignment serves as a counterexample of why
+$(P \logand Q ) \imp R$ is invalid (why it is not always true).  In general, if we are looking for why
+a formula $P$ is not a theorem, we can look for an assignment that makes $\lnot P$ true.
+
+\subsection{Quantified formulas and SMT solvers}
+\label{Quantified}
+
+The SMT-LIB language permits quantified expressions, stating that an expression is true for all values of a variable, or for at least one value of a variable. Such expressions are, of course, a natural part of first-order logic. However, most SMT solvers do not handle quantified expressions well. The presence of quantified expressions can lead to a solver being unsure whether a potential satisfying assignment is indeed a correct satisfying assignment; this phenomenon can happen because the solver cannot be sure it has instantiated the quantified expression for
+all cases relevant to the satisfiability problem at hand. Thus for some sets of formulae, an SMT solver may respond {\tt unknown} to the question of whether the problem is satisfiable or not. Often in such a case the solver may report an assignment, though the {\tt unknown} 
+response indicates that the solver is not certain it is a truly satisfying assignment.  Handling quantifiers is an
+area of research for SMT solvers; some logics (cf. section \ref{LogicsTheories}) forbid quantifiers and have faster and more certain decision procedures as a result.
+
+
+\subsection{Many-Sorted Logic} \index{sorts} \index{many-sorted logic}
+
+The SMT-LIB language expresses logical problems in a many-sorted first-order logic. 
+Accordingly, each well-formed expression has a unique {\it sort} (known in some other contexts as
+a {\it type}).  The language provides syntax and commands for defining new sorts and for
+expressing the sort of new symbols.  The pre-defined sort \Bool~is the sort of all 
+Boolean propositional expressions.  For example, the propositional connectives {\tt and} and {\tt or} take arguments of sort \Bool~and have a result value of sort \Bool; the 
+equality predicate ({\tt =}) takes two arguments of the same (but arbitrary) sort
+and has a result value of sort \Bool.  Each function symbol requires particular sorts for its arguments and has
+a defined result sort; in some cases, function symbols can be overloaded, but the result of a (disambiguated) function symbol
+applied to specific arguments of the correct sorts always has a unique sort.  Expressions within SMT-LIB are correct only if they
+are {\it well-sorted}, that is, if the arguments of function symbols have the sorts expected by the function.
+
+Some other sorts are defined by specific logics.  For example, \Int~is a sort defined in
+the {\tt QF\_LIA} logic (and others) to denote the integers and \Real~is defined in the {\tt AUFLIRA} logic to mean the conventional Real numbers.
+
+
+\subsection{Formulas and terms}
+
+Some automated reasoning tools make a sharp distinction between formulas and terms.  Informally, formulas are subexpressions with Boolean values and are combined by top-level connectives such as conjunction and disjunction; terms have values and arguments of other sorts, such as {\tt (x+1)}; predicates bridge the gap by taking terms as arguments and having Boolean values. Terms and predicates do not have Boolean values as arguments.
+
+The nuisance with this distinction is that sometimes one wants to have Boolean expressions as arguments of terms or predicates.  Furthermore, making the distinction requires there to be an equality defined for formulas and one for terms, and similarly for inequality and if-then-else. 
+When applying SMT solvers to software verification programs, one has to map programming language boolean types into a logical sort different than the conventional Boolean propositional sort.
+
+The SMT-LIB language does {\em not} make a distinction between formulas and terms: formulas are simply terms whose sort is \Bool. Boolean values can be defined to be the arguments of user-defined term-like functions just as can the values of any other sort. This simplifies the logic and the use of the SMT-LIB language.
+However, in using non-SMT-LIB solvers (such as when converting SMT-LIB constructs to be used by such solvers) it is helpful to remember that
+some solvers enforce this distinction.
+
+\subsection{Abstract and concrete syntax}
+
+The SMT-LIB language is described using an abstract syntax, but it is written with a particular concrete representation. For example, the language is defined using an abstract lexical category \numeral; the concrete syntax for an element of that category is an unsigned decimal digit sequence with no leading zeros.  While that representation is natural, others are not necessarily obvious.  For example, the \Int\ theory defines an add operation that takes two numeric arguments.  The concrete syntax for an instance of that expression is {\tt (+ 1 2)}; but an alternate concrete syntax might just as well be {\tt (1 + 2)} or {\tt (add 1 2)}.  This tutorial only discusses the one concrete syntax described and standardized in \cite{BarST-SMT-10}, but the reader should be aware that alternate concrete syntaxes consistent with the SMT-LIB abstract syntax could also be defined. 
+Note that the SMT-LIB document uses the abstract syntax only to facilitate the definition of the one concrete syntax and its semantics. The abstract syntax is not part of the SMT-LIB 2 standard, only the concrete syntax is.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagebreak
+\section{Character set}
+SMT-LIB content is written using a subset of the ASCII character set\footnote{http://www.asciitable.com/}.  The permitted characters are
+\begin{itemize} \nospace
+\item printable characters: those from \verb|!| (ASCII character 33 (decimal)) through \verb|~| (ASCII character 126), namely
+\begin{itemize}
+\item digits: {\tt 0 1 2 3 4 5 6 7 8 9}
+\item letters: {\tt a} through {\tt z} and {\tt A} through {\tt Z}
+\item punctuation characters: \begin{verbatim} ~ ` ! @ # $ % ^ & * ( ) _ - + = { } [ ] | \ ; : ' " , . < > ? / \end{verbatim}
+\end{itemize}
+\item and whitespace characters
+\begin{itemize}
+\item space (ASCII character 32)
+\item tab (ASCII character 9, often written \verb|\t|)
+\item newline (ASCII character 10, often written \verb|\n|, which is the line termination on UNIX systems)
+\item carriage return (ASCII character 13, often written \verb|\r|; \verb|\r\n| is the two-character line terminator on Windows systems)
+\end{itemize}
+\end{itemize}
+
+Different sets of characters are permitted in different places.  The different subsets of the SMT-LIB character set are defined here for reference.
+\begin{itemize}\nospace
+\item digits: the characters {\tt 0} through {\tt 9}
+\item alphanumeric: the characters {\tt 0} through {\tt 9}, {\tt a} through {\tt z}, {\tt A} through {\tt Z}
+\item whitespace: space, tab, newline, and carriage return, as described above
+\item line terminators: newline and carriage return
+\item symbol characters: alphanumerics plus any of these punctuation symbols \begin{verbatim}          ~ ! @ $ % ^ & * _ - + = < > . ? / \end{verbatim}
+Note that this list excludes the printable characters \begin{verbatim}            " ' ; : | { } [ ] ( ) ` , \ # \end{verbatim}
+\item smt-lib character: any printable or whitespace character
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{S-expressions}
+
+All input to and output from a conforming solver (using the standard concrete syntax) is a sequence of one or more S-expressions expressed using smt-lib characters, with optional interspersed comments.  Comments are all of the text beginning with a semicolon that is not part of a string literal or quoted symbol up to but not
+including the first succeeding line terminator character (or end-of-input); comments are only for human consumption and are completely ignored by the parser. Since comments are always followed by line termination characters, they function as separating white space.
+
+S-expressions have a particularly simple
+form, making them easy to parse and process. An S-expression is either (a) a token (defined in the next subsection) or (b) a sequence of 0 or more S-expressions 
+enclosed in a pair of left and right parentheses.  Tokens must be separated from each other by whitespace; there need be no white space on either side of a left or right parenthesis.
+
+Here are some examples.  The rules about what can be a token are described in the next section.
+\begin{verbatim}
+abc                        ; a single token
+( abcdef   7   +-* )       ; an S-expression consisting of a sequence 
+                           ;      of three tokens
+(+ 5 (* 2 3))              ; a more complex, nested S-expression
+( )                        ; an empty S-expression
+( abc "a b c d") (ghi jkl) ; two successive S-expressions, each
+                           ;      containing two tokens
+( ABC                      ; a comment in the middle of an S-expression
+  def )                    ; the end of an S-expression spanning two lines
+\end{verbatim}
+
+Pairs of left and right parentheses are the only structure given to a sequence of tokens.  A right parenthesis without a 
+corresponding left parenthesis is fairly easy to detect.  However, a missing right parenthesis may not be detected until the 
+end of input (e.g. end of file) is reached; an input parser may have a hard time recovering from mis-matched parentheses---match them carefully! 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Tokens}
+\label{Tokens}
+
+\begin{sidewaystable}
+\begin{tabular}{|l|p{2.8in}|p{2.75in}|p{1.0in}|}
+\hline
+Token type & Format & Regular Expression (POSIX)
+\footnote{In these regular expressions the {\tt ()[]-+*|.$\backslash$}~characters have their usual\cite{POSIX} special meaning, with $\backslash$ being the escape character. }
+ & Examples \\
+\hline
+\numeral 
+& a sequence of digits without leading zeros 
+& {\tt 0\textbf{|}\textbf{([}1\textbf{-}9\textbf{][}0\textbf{-}9\textbf{]*)} } & {\tt 0 1 12 340 } 
+\\ \hline
+
+%%\[ \bae{0}|\left(\left[\bae{1-9}\right]\left[\bae{0-9}\right]^*\right) \] & {\tt 0 1 12 340 }  \\ \hline
+\decimal 
+& a \numeral\ followed by a period followed by a sequence of digits 
+& {\tt (0|([1-9][0-9]*))[.]([0-9]+) } 
+& {\tt 0.0 0.1 1.0 12.0034} 
+\\ \hline
+
+\binary 
+& the two characters {\tt \#b} followed by a non-empty sequence of 0 or 1 
+& \#b[01]+ 
+& {\tt \#b0 \#b1 \#b101010101 \#b11111 } 
+\\ \hline
+
+\hex 
+& the two characters {\tt \#x} followed by a non-empty sequence of hex digits 
+& \#x[0-9a-fA-F]+ 
+& {\tt \#xA \#x0A \#x51dead \#xFeeD1234 } 
+\\ \hline
+
+\strng 
+& a string literal: a sequence of smt-lib characters (including explicit white-space characters), enclosed in " characters; \verb|\"| is interpreted as {\tt "} and \verb|\\| as {\tt $\backslash$} 
+&
+\begin{verbatim}"([]!#-[^-~ \t\r\n]|\\[!-~])*"\end{verbatim}
+&
+\begin{verbatim}"" "a\"b" 
+   "a
+   b" " b"\end{verbatim} 
+\\ \hline
+ 
+\sym 
+& either a \ssym~or a \qsym 
+& 
+& 
+\\ \hline
+
+\ssym 
+& a non-empty sequence of symbol characters, not beginning with a digit, and not a reserved word 
+&\begin{verbatim}[a-zA-Z~!@$%^&*_+=<>.?/-]
+   [0-9a-zA-Z~!@$%^&*_+=<>.?/-]*\end{verbatim}  
+&
+{\tt a b* <= }
+\\ \hline 
+   
+\qsym 
+& a sequence of smt-lib characters, not including $\backslash$ and $|$, enclosed in $|$ characters 
+&\begin{verbatim} |[]!-[^-{}~ \t\r\n]*| \end{verbatim}
+& {\tt |a| || |a +|} \\ \hline
+     
+\keyword 
+& a colon followed by a non-empty sequence of symbol characters 
+&\begin{verbatim}:[0-9a-zA-Z~!@$%^&*_+=<>.?/-]+\end{verbatim}
+& {\tt :abc }
+\\ \hline
+
+Reserved words 
+& character sequences that would otherwise be symbols but are reserved for special purposes and may not be used as symbols 
+& {\tt (let|par|\_|!|as|forall|exists|
+NUMERAL|DECIMAL|STRING)} \hspace*{.5in}
+{\it and all command names}
+%%|assert|
+%%check-sat|declare-fun|
+%%declare-sort|define-fun|define-sort|
+%%exit|get-assertions|get-assignment|
+%%get-info|get-options|get-proof|
+%%get-unsat-core|get-value|pop|push|set-logic|
+%%set-info|set-option
+& {\tt let par \_ assert check-sat}
+\\ \hline
+
+\end{tabular}
+
+\caption{Token types defined in SMT-LIB}
+\label{tab:tokens}
+\end{sidewaystable}
+
+Not every sequence of smt-lib characters is a valid token.  There are different kinds of tokens and they play different roles in different commands.  In this section we describe the various tokens defined by SMT-LIB; a summary of token types is provided in Table \ref{tab:tokens}.  For convenience in referring to tokens, we use designators such as \numeral~so that later we can describe the syntax of commands by, for example, {\tt ( push \numeral~) } as the general case of {\tt (push 0)}, {\tt (push 1)}, and so on.
+
+Although the various kinds of literals have some conventional, intuitive meanings, their semantics is actually determined by
+the definition of the logic being used.  \decimal s might represent rationals in one logic and reals in another; \binary s might
+be bit sequences in one logic and integers in another; even \strng s might be interpretable as integers or sequences.
+
+{\bf Numerals.} A numeric literal is expressed as a conventional sequence of digits. {\bf Caution:} no leading zeros are allowed: {\tt 002} is not a valid \numeral.  Also no leading {\tt +} or {\tt -} signs are allowed: {\tt -1} is a \sym, not a \numeral.
+
+{\bf Decimal literals.} A decimal literal is a \numeral\ followed by a decimal point, followed by more digits. As with \numeral s, a \decimal\ may not have leading zeros or sign characters.  There must however, be at
+least one digit (possibly a {\tt 0}) before and at least one after the decimal point. There is no provision for exponents.
+
+{\bf Binary literals.} These literals, prefixed by {\tt \#b}, denote a simple sequence of {\tt 0}'s and {\tt 1}'s.  Which end is the most significant bit or the beginning or end of a sequence will depend on the definition of the logic.
+
+{\bf Hex literals.} These literals, prefixed by {\tt \#x}, denote a sequence of hex digits.  Though an interpretation as a bit
+sequence or an integer is reasonable, the actual interpretation depends on the logic being used.
+
+{\bf String literals.} String literals are composed of any sequence of printable and whitespace characters (including line terminations),
+enclosed in double quotes ({\tt "}), with special treatment for {\tt "} and {\tt $\backslash$} characters.  A {\tt "} character within the string is designated by the two-character sequence {\tt $\backslash$"}
+and the {\tt $\backslash$$\backslash$} sequence represents a single {\tt $\backslash$}.
+The content of a string literal is uninterpreted.  Any meaning is provided by the context of its use within SMT-LIB (e.g. as the value of
+an option) or by a theory.  No currently defined theory incorporates string literals.  Note that future theories may define escape 
+sequences that allow including any ASCII character in the string, but none are defined at present (besides the two for {\tt $\backslash$}
+and {\tt "}).  So {\tt $\backslash$n} within a string literal just means those two characters, not necessarily a line terminator.
+{\bf Caution:} String literals begin and end with a {\tt "} character.  Since string literals may contain explicit line
+terminator characters, an omitted closing {\tt "} will not be noticed until the next {\tt "} character or until the end of input.  This may be several lines later.
+
+{\bf Reserved words.} Some character sequences are reserved words in SMT-LIB.  They may only be used in specific contexts and 
+may not be used as symbols.  Hence they may not be declared by the user to represent user-defined quantities. The reserved
+words are \\
+\centerline{\bf \tt par NUMERAL DECIMAL STRING \_ ! as let forall exists} 
+and all the commands of the script language.  Note particularly that {\bf \tt \_} and {\bf \tt !} are 
+reserved; their use is described in section \ref{Expressions}.
+The currently defined commands are
+\begin{center}{\bf \tt assert check-sat declare-fun declare-sort define-fun define-sort \\
+exit get-assertions get-assignment get-info get-option get-proof \\
+get-unsat-core get-value pop push set-info set-logic set-option }.\end{center}
+  Though technically there is no need to identify
+reserved words and disallow their use as symbols, SMT-LIB does so as a convenience for (some kinds of) parsers. Thus a {\bf caution:} future
+versions of SMT-LIB might possibly define new commands, which presumably would then disallow their use as symbols, potentially invalidating old
+SMT-LIB scripts in which those new command names were used as ordinary symbols.  One should try to avoid using character sequences as symbols that might become command names in the future!
+
+{\bf Symbols.}  Symbols are used for attribute values, and sort, variable, logic, theory, constant and function names. A symbol can be any sequence of symbol characters that does not
+start with a digit and is not a reserved word. In addition, user-defined symbols may not begin with an {\tt @} or a period ({\tt .}); such
+symbols are reserved for internal use. Some symbols consisting of punctuation characters, such as {\tt +} and {\tt -} have intuitively
+natural meanings as function symbols, though their meaning is always defined solely by the logic being used.  Similarly, symbols that are English words 
+may have obvious meanings.  Good style would suggest avoiding legal but unusual symbols that mix alphanumerics and operator-like characters, such as {\tt a<b} or {\tt ab+-} or {\tt -1}.
+
+{\bf Quoted symbols.} An alternate form of symbol is a sequence of any smt-lib characters except {\tt |} and {\tt $\backslash$}, enclosed in beginning and ending {\tt |} characters.
+This allows a wider choice of characters in forming the symbol.  Note that explicit line terminators are allowed within a quoted symbol, so that
+a quoted symbol might span more than one line.\footnote{Quoted symbols (and strings) containing explicit line terminations can be hard to read. However, SMT-LIB was designed primarily as a machine-to-machine format and readability was not the major concern.}  Note also that, because line terminators are allowed, a missing terminating
+{\tt |} character may not be detected for several lines.  Finally note that using enclosing {\tt |}s does not change the identity of the symbol:
+\verb!|abcde|! is the same symbol as \verb!abcde!.  A symbol such as \verb!|{}|! does not have a corresponding unquoted symbol.
+
+{\bf Keywords.} A keyword consists of a {\tt :} character followed by a sequence of symbol characters. They are used as the names of  attributes, options and information flags. Good style would suggest that only alphanumeric characters (including perhaps the {\tt -} and {\tt \_} characters) be used for user-defined keywords.
+
+{\bf Invalid tokens.}  Some sequences of characters are not valid tokens:
+\begin{itemize} \nospace
+\item unclosed string literals and unclosed quoted symbols
+\item digit sequences or \decimal-like sequences with leading zeros, such as {\tt 00}, {\tt 01}, or {\tt 00.0}.  {\tt 1.000} is a valid \decimal.
+\item decimal-like sequences with no digits after the decimal point (the sequence .123 is a symbol, but since it  begins with a period, 
+it may not be declared by the user)
+\item sequences of symbol characters beginning with digits, such as {\tt 0ABC}
+\item a {\tt \#} character not beginning a valid \binary~or \hex~token
+\item use of printable but non-symbol characters outside of string literals or quoted symbols, such as a comma character
+\item purported keywords and quoted symbols that contain forbidden symbols
+\end{itemize}
+Table \ref{tab:InvalidTokens} shows some examples.
+\begin{table} \center
+\begin{tabular}{|p{3.5in}|p{2in}|}  
+\hline  
+digit sequences with leading zeros & {\tt 00 0123 } \\
+decimals with leading zeros & {\tt 00.123 01.234 } \\
+decimals with no decimal digits & { 1. } \\
+\hangindent=.3in \hangafter=1
+would-be symbols that begin with digits & {\tt 1abc }\\
+would-be symbols containing invalid characters & {\tt abc'def} \\
+invalid binary literals & {\tt \#b222 } \\
+invalid hex literals & {\tt \#xZZZZ }\\
+unclosed strings & {\tt "abc\bs" } \\
+unclosed quoted symbols & {\tt |asd } \\
+quoted symbols with invalid characters & {\tt |abc$\backslash$def| } \\
+keywords with invalid characters & {\tt :abc[def } \\
+\hline
+\end{tabular}
+\caption{Invalid tokens}
+\label{tab:InvalidTokens}
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%\section{Sorts}
+%%
+%%In writing expressions, you may be able to simply use the sorts that are defined
+%%in the logic you are using: the basic {\tt QF\_UF} logic if you just need \Bool~variables; 
+%%the {\tt QF\_LIA} logic if you are using {\tt Int}s as well; 
+%%other logics include various combinations of {\tt Real}s, {\tt Int}s, arrays, and bit-vectors.
+%%
+%%But you may also want to define your own sorts.  A simple sort with a new name,
+%%given by an unused \sym, is declared with the command \\
+%%\centerline{\tt (declare-sort \sym~0)}
+%%The \sym~is now the name of the new sort; the {\tt 0} indicates it is a simple
+%%unparameterized sort.  SMT-LIB is a many-sorted logic, and all symbols and 
+%%expressions have well-defined sorts.  For example you can compare two
+%%values of the new sort; but values of different sorts are not unequal, they cannot
+%%even be compared, as in this example ({\tt success} responses are omitted):
+%%\boxedexample{
+%%> (set-logic QF\_UF) \\
+%%> (declare-sort MySort 0) ; a new sort \\
+%%> (declare-fun x () MySort) ; a new constant x of sort MySort \\
+%%> (declare-fun y () MySort) ; another constant y of sort MySort \\
+%%> (assert (distinct x y)) ; assert that x and y are different \\
+%%> (declare-fun b () Bool) ; b is a new Bool variable \\
+%%> (assert (distinct x b)) ; ILLEGAL\\
+%%(error "There is no function named distinct for argument sorts MySort Bool")
+%%}
+%%
+%%SMT-LIB also allows declaring parameterized sort symbols, which take
+%%sorts as arguments.  For example, the {\tt Array} sort symbol, defined in
+%%the {\tt ArraysEx} theory, takes two arguments: the first is the 
+%%sort of the index of the array; the second is the sort of the value
+%%of the array.  A parameterized sort symbol is declared simply by giving the 
+%%number of parameters the new sort symbol has, as in \\
+%%\centerline{\tt (declare-sort \sym~\numeral)}
+%%The {\tt declare-sort} (and {\tt define-sort}, described below) command is discussed more completely in subsection \ref{SortCommands}.
+%%The parameters of a parameterized sort symbol are always other sorts. A parameterized sort symbol is not itself a sort; only when the symbol is applied to the correct number of sort arguments is the result a sort: {\tt Array} is not a sort; {\tt (Array Int Bool)} is.
+%%
+%%Such a sort symbol might be used as follows ({\tt success} responses are omitted):
+%%\boxedexample{
+%%> (set-logic QF\_UF) \\
+%%> (declare-sort MySort 1) ; a new sort with one parameter \\
+%%> (declare-fun x () (MySort Bool)) ; a new constant x of sort MySort[Bool]
+%%}
+%%
+%%Finally, rather than declaring a new sort, SMT-LIB allows defining a new
+%%\sym~as an abbreviation for a sort expression.  For example, suppose we 
+%%already have defined a two-parameter sort symbol {\tt Array} as described above.
+%%Then we want to define a symbol that is an abbreviation for 
+%%{\tt (Array Int Bool)}.  For this we use the {\tt define-sort} command
+%%as follows ({\tt success} responses are omitted):
+%%\boxedexample{
+%%> (set-logic QF\_LIA) \\
+%%> (declare-sort Array 2) \\
+%%> (define-sort MyArray () (Array Int Bool)) ; MyArray is an abbreviation \\
+%%> (declare-fun x () MyArray)   ; x has sort (Array Int Bool)\\
+%%> (declare-fun y () (Array Int Bool))   ; y has sort (Array Int Bool)\\
+%%> (assert (= x y)) ; x and y are the same sort so we can compare them
+%%}
+%%
+%%We can also define parameterized abbreviations ({\tt success} responses are omitted):
+%%\boxedexample{
+%%> set-logic AUFLIRA) \\
+%%> (declare-sort Array 2) \\
+%%> (define-sort MyArr X (Array X Real)) \\
+%%> (declare-fun x () (MyArr Int)); x is an Array from Int to Real \\
+%%> (declare-fun y () (MyArr Bool));y is an Array from Bool to Real
+%%}
+%%
+%%Users can only declare or define new \sym s as sort symbols; however a
+%%theory can declare an \ID as a sort symbol.
+%%
+%%SMT-LIB only provides means to express the sort of values, not of functions.
+%%In some systems, the addition function {\tt +} would have a function sort,
+%%indicating that {\tt +} took two integer arguments and that its result was
+%%an integer.  There is no way in SMT-LIB to express this concept.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Sort and Function Declarations}
+
+SMT-LIB requires all identifiers to be declared before being used. Some symbols are declared in the selected logic and its theories.
+New symbols are introduced by the user in four commands:
+\begin{itemize} \nospace
+\item[] {\tt declare-sort} -- which introduces a new sort symbol
+\item[] {\tt define-sort} -- which introduces a new sort symbol as an abbreviation for a given sort expression
+\item[] {\tt declare-fun} -- which introduces a new function symbol
+\item[] {\tt define-fun} -- which introduces a new function symbol as an abbreviation for a given expression
+\end{itemize}
+These commands are described in full in subsections \ref{SortCommands} and \ref{DeclarationCommands}.
+
+New sort symbols can be defined as new simple sort names or as parameterized sorts that take other sorts as parameters.
+Every value within an SMT-LIB logic has a specific sort; functions all have specific sort signatures that designate
+the sorts of the arguments and results.
+ 
+New 
+constants and function symbols are declared in a uniform way; constants are
+simply functions with no arguments.  To declare a new function symbol,
+we need to specify the sorts of the arguments and of the return value.
+For example,
+ to declare a new symbolic constant value (a function with no arguments) named {\tt x} of sort \Bool~we write:\\
+\centerline{\tt (declare-fun x () Bool)}
+This statement declares a function {\tt f} of two \Int s, returning a \Bool:\\
+\centerline{\tt (declare-fun f (Int Int) Bool)}
+And this declares a function {\tt ff} that returns an \Int~and takes one argument
+that is an {\tt Array} of \Int~index type and \Bool~value type:\\
+\centerline{\tt (declare-fun ff ( (Array Int Bool) ) Int)}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Attributes}
+\label{Attributes}
+
+SMT-LIB uses attributes to attach meta-data to other syntactic entities. An attribute consists of a 
+\keyword\ or a \keyword -value pair. As defined in section \ref{Tokens}, a keyword is a {\tt :} followed by
+a non-empty sequence of symbol characters. An attribute value (an \attrvalue) is in general any arbitrary S-expression, except that it may not be a \keyword. But each individual \keyword\ may have only a limited set of allowed
+values (or may not take a value at all).  For example, the keyword {\tt :left-assoc} has no value; the
+keyword {\tt :print-success} may have only the values {\tt true} and {\tt false}. The attributes defined in SMT-LIB only have values that
+are \sym s, \numeral s, or \strng s.
+
+Attributes and attribute values are used in these circumstances:
+\begin{itemize} \nospace
+\item as option keys and values (cf. section \ref{Options})
+\item as information keys and values (cf. section \ref{InfoItems})
+\item as part of a {\tt !} expression (cf. section \ref{Expressions})
+\item to declare the various aspects of a theory or logic (cf. section \ref{LogicsTheories})
+\item to describe associativity characteristics of functions defined in theories (cf. sections \ref{Theories} and \ref{Expressions})
+\item to describe characteristics of a sort symbols defined in a theory (though no such attributes are 
+currently defined)
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Expressions}
+\label{Expressions}
+
+As is common in computer-parsable expression languages, SMT-LIB expressions (\expr) are built recursively from a small set of basic forms. A valid expression is one of the following (the expression must also be well-sorted).
+Here and later in the tutorial, a {\tt +} character indicates 1-or-more instances of the immediately preceding item and a {\tt *} indicates
+zero-or-more instances.
+
+\begin{tabular}{ll}
+ a numeric literal & {\it <numeral>} \\
+ a decimal literal & {\it <decimal>} \\
+ a string literal & {\it <string>} \\
+ a binary literal & {\it <binary>} \\
+ a hex literal & {\it <hex>} \\
+ an {\it <identifier>}, which is one of: &\\
+\hspace{.25in}a symbol: & {\it <symbol>} \\
+\hspace{.25in}an indexed identifier: & {\tt ( \_ }{\it <symbol>} {\it <numeral>}+ {\tt )} \\
+a {\it qualified-identifier}:        &{\it <identifier>} \\
+\hspace{.25in} or                    &{\tt ( as }{\it <identifier>} {\it <sort>}{\tt )} \\
+a function application:              &{\tt ( }{\it <qualified-identifier> <expr>}+{\tt )} \\
+a forall-expression:                 &{\tt ( forall ( ({\it <symbol>\ <sort>})+ ) }{\it <expr>}{\tt )} \\
+an exists-expression:                &{\tt ( exists ( ({\it <symbol>\ <sort>})+ ) }{\it <expr>}{\tt )} \\
+a let-expression:                    &{\tt ( let ( ({\it <symbol>\ <expr>})+ ) }{\it <expr>}{\tt )} \\
+an attributed expression:            &{\tt ( ! }{\it <expr>} {\it <attribute>}+{\tt )} \\
+\end{tabular}
+
+{\bf Literals.}
+The constant literals are \strng, \numeral, \decimal, \binary, and \hex. Remember that the interpretation and sort of these literals
+depends on the theories that have been defined in the current solver environment (by a {\tt set-logic} command). For example,
+the simplest logic, {\tt QF\_UF}, defines just the {\tt Core} theory, in which none of the above literals are defined. \numeral~is used in 
+most of the other theories; \decimal~is used in the {\tt Reals} theory, and \binary~and \hex~are defined in the 
+{\tt Fixed\_Size\_BitVectors} theory. 
+
+{\bf Identifiers.}
+Identifiers are available in all theories and are used as names of variables, parameters, functions, sorts, logics, theories, expressions, and as the values of some attributes.
+Identifiers are either simple symbols or indexed identifiers. The latter have the form {\tt(\_ }{\it <symbol>}~{\tt \numeral+ )} and allow
+the use of a family of identifiers that are indexed by one or more numerals. Indexed identifiers are only allowed in restricted settings:
+\begin{itemize}\nospace
+\item variables (in {\tt forall}, {\tt exists}, and {\tt let} expressions) -- symbols only
+\item sort and function names -- theories may define indexed identifiers as sort and function names, but users may only introduce new symbols as sort and function names. 
+\item parameters in {\tt define-sort} and {\tt define-fun} commands are always symbols
+\item logic and theory names are all pre-defined and are always symbols
+\item expression names (using the {\tt !} expression syntax) are always symbols
+\item attribute values are sometimes symbols; since attribute values can be general S-expressions, they can possibly be indexed identifiers, but no pre-defined attributes do so
+\end{itemize}
+
+The only indexed sort identifier currently defined is {\tt (\_ BitVec }\numeral{\tt )}, the sort of bit-vectors whose length is the given numeral. For example, in the {\tt Fixed\_Size\_BitVectors} theory, the constant {\tt \#b101} has sort {\tt (\_ BitVec 3)} and the hexadecimal constant {\tt \#x1A} has sort
+{\tt (\_ BitVec 8)}.
+
+There is no way within (current) SMT-LIB to declare a whole family of identifiers.  For example, one might like to write
+the following as a way of declaring a whole family of {\tt C} identifiers to have \Int~sort
+\boxedexample{
+> (declare-fun (\_ C n) () Int)       ; INVALID SMT-LIB
+}
+to say that all identifiers of the form {\tt (\_ C }\numeral{\tt )} are {\tt Int}s.  Even more useful would be 
+allowing the index to be used in the sorts, as in
+\boxedexample{
+> (declare-fun flip ((\_ BitVec n)) (\_ BitVec n)) ; INVALID \\
+> (declare-fun (\_ flip n) ((\_ BitVec n)) (\_ BitVec n)) ; INVALID
+}
+At present, however, such constructions must be pre-defined informally within theories and built in to the corresponding solvers.
+
+{\bf Function expressions}.
+The application of a function to a sequence of arguments is expressed simply as\\
+\centerline{{\tt ( }{\it <qualified-identifier>~<expr>}{\tt+ )}}.
+The syntax is uniformly prefix in style. No infix notation is used, even for conventional arithmetic operators.  In SMT-LIB we write 
+{\tt (+ 1 2)}, not {\tt (1 + 2)}.
+
+There are a number of points to note:
+\begin{itemize}
+\item The function identifier must be already declared using a {\tt declare-fun} or {\tt define-fun} command, or have been
+pre-defined in the logic being used.
+\item The logic being used may restrict the kinds of expressions that are allowed.  See section \ref{LogicsTheories} for details about any particular logic.
+\item The number of arguments must correspond to the number of arguments declared for the function identifier.  However, some theory-defined function symbols are defined to take two or more arguments.  This behavior is specified by an attribute given to the function; such attributes may only be specified within theory definitions, not for user-declared functions.  There are four such attributes.  Here are examples of each:
+\begin{itemize}
+\item left associative: {\tt or} is a function defined in the {\tt Core} theory that takes two \Bool~arguments, but can be applied to more using left associativity. {\tt (or a b c d)} is equivalent to {\tt (or (or (or a b) c) d)}. Other functions with the same behavior are boolean 
+{\tt and} and integer and real binary operations. Subtraction and division are also defined to be left-associative, so 
+{\tt (- a b c d)} is equivalent to {\tt (- (- (- a b) c) d)} (in infix notation, {\tt a-b-c-d} is equivalent to {\tt (((a-b)-c)-d)}).
+\item right associativity: The implies ({\tt =>}) function is right associative, so {\tt (=> a b c d)} is equivalent to {\tt (=> a (=> b (=> c d)))}.
+\item chainable: The equality and comparison ({\tt < > <= >=}) functions are what SMT-LIB calls chainable -- the operation is applied to each pair of arguments as one proceeds down the list of arguments.  {\tt (= a b c d)} is equivalent to \\
+\centerline{{\tt (and (= a b) (= b c) (= c d))}.}
+This is a natural definition for equality, but less-common, though convenient for comparisons.
+\item pairwise: all pairs of arguments are compared.  The one pre-defined example is the {\tt distinct} (not-equal) operation.
+{\tt (distinct a b c d)} is \\
+\centerline{\tt (and (distinct a b) (distinct a c) (distinct a d)}
+\centerline{\tt (distinct b c) (distinct b d) (distinct c d))}.
+\end{itemize}
+\item The expression must be well-sorted. That is, the arguments of the function must have the sorts that are specified in the definition of the function. There is no subtyping or inheritance of sorts.  There is, however, a modest amount of overloading allowed within theory definitions.  No overloading outside of a theory definition is permitted. Thus any {\tt declare-fun} or {\tt define-fun} command must introduce a completely new identifier. There are three kinds of pre-defined overloading.
+\begin{itemize}
+\item parametric definitions. As an example, the equality function in the {\tt Core} theory is defined to take two arguments of arbitrary but the same sort, and return a \Bool. So {\tt =} can be used, as would be naturally expected, for any user-defined sorts as well (responses are omitted):
+\boxedexampleB{
+> (set-logic QF\_UF)\\
+> (declare-sort A 0)     ; a new sort named A \\
+> (declare-sort B 0)     ; a new sort named B \\
+> (declare-fun a1 () A)  ; a new constant of sort A\\
+> (declare-fun a2 () A)  ; another constant of sort A \\
+> (declare-fun b1 () B)  ; a new constant of sort B \\
+> (declare-fun b2 () B)  ; another constant of sort B \\
+> (assert (= a1 a2))     ; comparing values of sort A \\
+> (assert (= b1 b2))     ; comparing values of sort B \\
+> (assert (= a1 b1))     ; ILLEGAL - a1 and b1 have different sorts
+}
+\item multiple definitions. The addition operation is not defined for arbitrary sorts, but it is defined both for {\tt Int} and {\tt Real}
+arguments, independently. So one can write (responses are omitted) 
+\boxedexampleB{
+> (set-logic AUFLIRA) \\
+> (assert (= (+ 1 2) 3))  ; adding two Ints \\
+> (assert (= (+ 1.0 2.0) 3.0)  ; adding two Reals \\
+> (assert (= (+ 1 2.0) 3.0)    ; ILLEGAL - mixed sorts
+}
+
+As the last line of the example above demonstrates, there is no implicit conversion between {\tt Int} values and {\tt Real} values, nor between any other combination of sorts. The only connections between {\tt Int} and {\tt Real} values is through explicit conversion 
+functions such as {\tt to\_int} and {\tt to\_real} in the {\tt Reals\_Ints} theory.\footnote{The AUFLIRA and AUFNIRA logics currently state
+that ints are implicitly converted to reals in some circumstances, but the discussion on the mailing lists concluded this should not be allowed.} %% TBD
+
+\item {\bf overloading on result sort.} A theory may also overload a function identifier such that two declarations of the function take
+the same argument sorts but return different result sorts.  Suppose you declare a {\tt List} sort that can take a sort as a parameter.
+You may also want a function named {\tt emptylist} (with no arguments) that returns an empty list. But {\tt emptylist} must return a 
+result of a specific sort. To specify the result sort, we use a qualified identifier, as follows.
+
+To accomplish this example, the theory will declare
+\begin{itemize} \nospace
+\item a {\tt List} sort with one sort argument
+\item a parametric function named {\tt emptylist}, with sort parameter {\tt A}, no arguments, and result sort {\tt (List A)}
+\end{itemize}
+Then that function might be used as follows (responses are omitted):
+\boxedexampleB{
+... \\
+> (declare-fun listb () (List Bool))  ; listb is a List of Bool \\
+> (declare-fun listi () (List Int))  ; listi is a List of Int \\
+> (assert (= listb (as emptylist (List Bool)))) \\
+\hspace*{2in}                            ; use the definition of emptylist \\
+\hspace*{2in}                            ; that has (List Bool) result \\
+> (assert (= listi (as emptylist (List Int)))) \\
+\hspace*{2in}                            ; use the definition of emptylist \\
+\hspace*{2in}                            ; that has (List Int) result \\  
+> (assert (= listb emptylist)); ILLEGAL - have to specify the \\
+\hspace*{2.5in}                            ; sort of the overloaded constant \\
+> (assert (= listb (as emptylist (List Int)))) ; ILLEGAL - \\
+\hspace*{3.9in}                                  ; sort mismatch
+}
+\end{itemize}
+\end{itemize}
+
+{\bf Quantified expressions.} The SMT-LIB language allows the two conventional quantified expressions ---
+universal ({\it for all}) and existential ({\it there exists}). There is no syntax for the occasionally used
+quantifier meaning "there exists uniquely". Note that quantified expressions are not permitted in
+quantifier-free logics (e.g. {\tt QF\_UF}).
+
+Both kinds of quantified expressions provide syntax to specify the names and sorts of parameters over which the
+expression quantifies. For example, the expression \\
+\centerline{\tt ( forall ((x Int)) (> (p x) 0) )}
+is true under the {\tt AUFNIRA} logic and an assignment for {\tt p} in which 
+the sub-expression {\tt (p x)} is positive for any {\tt Int} value of {\tt x}.
+Note the double pair of parentheses around ``{\tt x Int}".  The outer pair encloses the whole list of
+parameters; each name-sort pair is enclosed in its own pair of parentheses.  So if there are two
+quantification variables, we would write\\
+\centerline{\tt ( exists ((x Int)(y Int)) (and (> (+ x y) 0) (< (- x y) 0)))}
+The value of this example expression is {\tt true} since there are specific integer values for {\tt x} and {\tt y} that are solutions
+to the two inequalities.
+
+The scope of the quantification variables is limited to the sub-expression that is the target of the quantification expression.
+The names of the quantification variables must be \sym s, not \ID s; they may shadow previously defined variables or functions, but only do so within
+the target expression.
+
+{\bf Let expressions.} Let expressions provide the ability to make expressions more compact by abbreviating common sub-expressions.  A let-expression has the form\\
+\centerline{{\tt ( let (} {\it <binding>}+ {\tt )} {\it <expr>} {\tt )}}
+Each {\it <binding>} associates a symbol and an expression; it is simply a parenthesized pair:\\
+\centerline{ {\tt ( } {\it <symbol>\ <expr>} \tt{)} .}
+The symbol is an abbreviation for its expression within the target
+expression of the let construct; the sort of the new symbol is the same
+as the sort of the expression to which it is bound. The whole let construct is entirely
+equivalent to replacing each new parameter by its expression in the target expression,
+eliminating the new symbols completely (renaming functions as needed to avoid name capture by variable bindings).
+
+As with quantified expressions, the new symbol is in scope only within the target expression
+and can shadow previously declared variables and functions within that scope. Also, the new symbols are not in scope in any of the bound expressions --- it is a "parallel let".
+For example, presuming {\tt x} and {\tt y} are already defined prior to these {\tt let} expressions
+in the context of the {\tt QF\_LIA} logic,\\
+\centerline{\tt ( let ( (a (+ x y)) (b (- x y)) ) (+ a b))}
+is equivalent to\\
+\centerline{\tt (+ (+ x y) (- x y))}.
+These are both also equivalent to \\
+\centerline{\tt ( let ( (x (+ x y)) (y (- x y)) ) ( + x y))}
+since the {\tt x} and {\tt y} in the first {\tt (+ x y)} and {\tt (- x y)} refer to the already defined
+{\tt x} and {\tt y}, but the {\tt x} and {\tt y} in the last {\tt (+ x y)} refer to the new parameters of the
+let expression.
+
+{\bf Attributed expressions.} Attributed expressions allow additional information to be associated with an expression. The value of the expression is not changed.
+Though additional kinds of attributes (cf. section \ref{Attributes}) may be defined in the future or by solvers with their own extensions, within SMT-LIB, the only defined behavior within an expression is to name the (sub-)expression. 
+The general form of the attributed expression is\\
+\centerline{{\tt (! }{\it <expr>} {\it <attribute>}+ {\tt )}.}
+Specifically, to name an expression one writes\\
+\centerline{{\tt (! }{\it <expr>} {\tt :named} {\it <symbol>} {\tt )}.}
+The \sym is the name of the expression. The expression being named may not contain any variables (as declared in {\tt forall}, {\tt exists}, or {\tt let} expressions), only function symbols.
+
+There are two uses for named expressions. 
+
+The first is to identify which expressions are to be reported as part of the unsatisfiable core when a group of assertions are found to be unsatisfiable or as part of a {\tt get-assignment} command if the assertions are found to be satisfiable. Refer to sections \ref{sat-commands}
+and \ref{unsat-commands} for more information about these commands. 
+
+The second use is syntactic sugar for abbreviating sub-expressions.  For example, writing\\
+\centerline{\tt (assert (> (! (+ x y) :named sum) 0))}
+is equivalent to the pair of commands\\
+\centerline{\tt (define-fun sum () Int (+ x y))}
+\centerline{\tt (assert (> sum 0))}
+
+This implicit use of {\tt define-fun} may only be used to introduce new function symbols that do not have arguments. Also, the sub-expression being abbreviated may not refer to any parameters of a let or quantified expression (that is, the sub-expression must be {\it closed}).  The new 
+symbol may be used within the same larger expression, as long as it occurs "after" its introduction.  So we can write\\
+\centerline{\tt (assert (>= (! (+ x y) :named sum) sum))}
+but we cannot use {\tt sum} before it is introduced:\\
+\centerline{\tt (assert (>= sum (! (+ x y) :named sum)))\ \ \ \ ; ILLEGAL}
+In the latter example, there are two cases: if {\tt sum} is already declared as a symbol before this assert command, then naming a new
+expression with the same name is not permitted; if {\tt sum} is not already declared, then the first use of {\tt sum} is illegal because
+the symbol is not defined.
+
+When used only to abbreviate sub-expressions within the same expression, the let-expression is probably a better alternative.  Since an
+expression name introduces a new function symbol, the expression name may not be the name of an already declared function.
+
+When introducing variables or eliminating variables using substitution, always be careful of name conflicts caused by shadowing. Inadvertent
+use of a common name can cause a change in meaning.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Namespaces and Scopes}
+
+SMT-LIB uses \sym s and \ID s in multiple places within the language:
+\begin{enumerate} \nospace
+\item as sort names -- new sort identifiers are introduced in theories and new sort symbols in {\tt declare-sort} and {\tt define-sort} commands
+\item as function names -- new function identifiers are introduced in theories and new function symbols in {\tt declare-fun} and {\tt define-fun} commands
+\item as names of expressions (in {\tt !} expressions), which are implicitly declarations of new function symbols -- new symbols need no declaration, they are simply introduced as used (symbols only)
+\item as a variable binding within a {\tt forall}, {\tt exists}, or {\tt let} expression (symbols only)
+\item as logic names -- these are predefined (symbols only)
+\item as theory names -- these are predefined (symbols only)
+\item as attribute values (just \sym s) -- new values need no declaration, they are simply introduced as used
+\item as pre-defined responses to commands (e.g. {\tt success}) -- these are defined as part of the specification of the command
+\item as command names (which are technically reserved words and not symbols)
+\end{enumerate}
+
+Only the function and variable symbols (categories 2, 3, and 4) are in the same namespace.  All of the others may be declared or introduced independently of each other.
+
+%% TBD - these are not the first uses of the terms shadowing and overloading
+New sort symbols must be different from any previous sort symbol. No shadowing\footnote{A symbol {\it shadows} one of the same name if, within the scope of the new symbol, only the new symbol is recognized; the shadowed symbol is unavailable in expressions until the scope of the shadowing symbol is exited.} or overloading\footnote{A symbol {\it overloads} a symbol of the same name if both symbols are available within
+the new symbol's scope; the overloaded symbols are distinguished by, for example, the sorts of their arguments} is allowed.
+
+Function symbols may be overloaded when defined within a theory, but user-defined function symbols must be
+new function symbols. User-defined function symbols may not shadow or overload any existing function
+symbols. Variables introduced in quantified or let expressions may, however, shadow previously declared
+function symbols or variables; the scope of variables is only the subterm in which they are declared.
+
+Names of expressions also introduce function names.  These therefore must also be different from any 
+already defined function names.
+
+Logic and theory names are introduced in logic and theory definitions, respectively. Names of logics
+are used only in {\tt set-logic} commands; names of theories are used only in logic definitions. Neither
+of these uses can be confused with other uses of symbols. However, since logics and theories have associated
+definition files (which may well be in the same directory), it is expected that the names of logics and
+theories will be distinct.
+
+Values of attributes only appear after \keyword s and in responses to {\tt get-option} and {\tt get-info}
+commands; other command responses also may contain symbols such as {\tt success}, {\tt unsupported},
+{\tt error}. A tool that parsed command responses may need to distinguish these, disambiguating them
+by the context in which they are produced.
+
+\paragraph{Scopes.}
+The only names affected by the scopes introduced with the {\tt push} and {\tt pop} commands are function 
+and sort names, including the function names introduced by attributed expressions. Variables in {\tt forall},
+{\tt exists}, and {\tt let} expressions have a scope that extends to just the sub-expression in which they are 
+declared.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Commands and command output}
+\label{Commands}
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|p{3.07in}|p{2.5in}|}
+\hline
+Command name and format & when allowed \\
+\hline
+{\tt ( set-logic \sym~)} & only once \\
+{\tt ( declare-fun \sym~ }&  \\ \hspace*{.5in}{\tt (\Sort*) \Sort)} & after {\tt set-logic} \\
+{\tt ( define-fun \sym~ }&  \\ \hspace*{.5in}{\tt ((\sym~\Sort)*)} &  \\ \hspace*{.5in}{\tt \Sort~\expr)} &  after {\tt set-logic} \\
+{\tt ( declare-sort \sym~\numeral)} &  after {\tt set-logic} \\
+{\tt ( define-sort \sym}&  \\ \hspace*{.5in}{\tt (\sym+) \expr~)} &  after {\tt set-logic} \\
+{\tt ( assert \expr\ )} &  after {\tt set-logic} \\
+{\tt ( get-assertions )} &  interactive mode, after {\tt set-logic} \\
+{\tt ( check-sat )} &  after {\tt set-logic} \\
+{\tt ( get-proof )} & with {\tt :produce-proofs} option set true and after {\tt check-sat} that returns {\tt unsat}, without intervening assertion-set commands$^a$ \\
+{\tt ( get-unsat-core )} &  with {\tt :produce-unsat-cores} option set true and after {\tt check-sat} that returns {\tt unsat}, without intervening assertion-set commands \\
+{\tt ( get-value \expr+ )} &  with {\tt :produce-models} option set true and after {\tt check-sat} that returns {\tt sat} or {\tt unknown}, without intervening assertion-set commands \\
+{\tt ( get-assignment )} &  with {\tt :produce-assignments} option set true and after {\tt check-sat} that returns {\tt sat} or {\tt unknown}, without intervening assertion-set commands \\
+
+
+{\tt ( push \numeral\ )} & after {\tt set-logic} \\
+{\tt ( pop \numeral\ )} &  after {\tt set-logic} \\
+{\tt ( get-option \keyword\ )} &  anytime \\
+{\tt ( set-option \keyword\ \attrvalue\ )}   & anytime, with some options restricted to being set before a {\tt set-logic} command\\
+{\tt ( get-info \keyword\ )}   & anytime\\
+{\tt ( set-info \keyword\ \attrvalue\ )}   & anytime\\
+{\tt ( exit )}   & anytime\\
+
+\hline
+\end{tabular}
+\end{center}
+\caption{SMT-LIB commands}
+\begin{tablenotes}
+\vspace{6pt}
+\item[] $^a$an assert, push or pop, or definition or declaration command
+\item[] + indicates one-or-more repetitions, * indicates 0-or-more of the preceding item
+\end{tablenotes}
+\label{Tab:Commands}
+\end{table}
+
+A conforming solver will support the list of commands shown in table~\ref{Tab:Commands}.
+Each command has a set of outputs that it may produce.  Those are described with each command in the following subsections.  
+However, there are a few general points to be made.
+\begin{itemize}
+\item {\bf Form of output.} All outputs are S-expressions. That is, the output is an individual token, such as an identifier (e.g. {\tt success}), or a parenthesized list of tokens, such as an error message, which has the form {\tt ( error \strng\ )}.
+\item {\bf Typical output.} Most commands will produce either {\tt success} or an error message.
+\item {\bf Error messages.} The form of an error message is defined - it is an S-expression consisting of the token {\tt error} and a string literal; however the content of the string literal in an error message
+is entirely solver-specific.  It may even be the empty string, as in {\tt ( error "" )}.
+\item {\bf Unsupported commands.} Some commands may respond with {\tt unsupported}.  This response indicates that the command (or the command combined with the particular arguments) is optional in the SMT-LIB standard and is not supported
+by the given solver. Solvers are required to respond with {\tt unsupported} to defined but optional features they do not recognize, rather than, for example, crashing or emitting an error message.
+\item {\bf Identifiers vs. strings.} Some commands take \ID s as arguments, others take \strng s.  These are different.  For example {\tt ( set-logic QF\_UF )} is a valid command, but {\tt ( set-logic "QF\_UF" )} is not.
+\item {\bf Continuing after errors.} On encountering an error, a solver has two options.  It can terminate immediately or it can continue to process other commands.  Immediate termination is most appropriate for batch execution, but is very user-unfriendly in interactive mode.  If a solver continues after an error, it is required that the erroneous command have no effect on the
+state of the solver. (cf. subsection \ref{OptionalInfo})
+\paragraph{Note:} The hard distinction between always continuing and always immediately exiting in response to an error is not entirely practical. Some solvers may attempt to continue whenever possible (e.g. upon encountering syntax errors or out of place commands), but will not be able to continue (or at least preserve state) in the face of runtime errors such as lack of enough memory. More importantly, the user may
+wish to choose different behaviors in different circumstances, such as in interactive vs. batch execution.
+
+
+\end{itemize}
+
+A command script is a sequence of commands, typically contained in a single file. Though some variations are permitted, a typical order
+of the commands in a script is this sequence:
+\begin{itemize} \nospace
+\item set any options desired using {\tt set-option}
+\item {\tt set-logic} command
+\item declarations and definitions
+\item {\tt assert} commands
+\item repetitions of
+\begin{itemize} \nospace
+\item {\tt push}
+\item perhaps additional declarations and definitions
+\item {\tt assert} commands
+\item {\tt check-sat}
+\item if unsatisfiable: optional calls of {\tt get-proof} and/or {\tt get-unsat-core}
+\item if satisfiable: zero or more calls of {\tt get-assignment} and/or {\tt get-value}
+\item {\tt pop}
+\end{itemize}
+\item {\tt exit}
+\end{itemize}
+
+
+\pagebreak
+\subsection{Initialization: the {\tt set-logic} command}
+
+The {\tt set-logic} command has the form: \\
+\centerline{\tt ( set-logic \sym\ ) } 
+ 
+The command has the effect of initializing the solver with the specified logic.  The given \sym~must correspond to a defined logic; note that the argument is a \sym, not a \strng.  All the logics defined in SMT-LIB are presented and discussed
+in chapter \ref{LogicsTheories}; solvers may optionally support additional non-standard, solver-specific logics.  An example is the {\tt QF\_UF} logic, and the corresponding example command is 
+\boxedexample{
+> ( set-logic QF\_UF ) \\
+success
+}
+
+All solvers should recognize the SMT-LIB defined logics, but a solver need not support all logics.  Thus the {\tt set-logic} command may have these responses:
+\begin{itemize} \nospace
+\item \success~- the solver was successfully initialized with the given logic
+\item \unsupported~- the solver does not support the given logic
+\item error - the argument is not a \sym~or the named logic is not a defined logic
+\end{itemize}
+
+A {\tt set-logic} command may be given only once in a given execution of a solver.  The command must precede any definition, declaration, assert or check-sat commands.  Only exit, option and info commands may precede a set-logic command.
+\footnote{The restriction to a single {\tt set-logic} command in the life of a solver is
+simply for simplicity.  An alternate rule (not conforming SMT-LIB) could be that a second {\tt set-logic} command causes a reset of the solver to the new logic (perhaps retaining current option values).}
+
+\subsection{Termination: the {\tt exit} command}
+
+The {\tt exit} command has a simple form:\\
+\centerline{\tt ( exit ) } 
+
+The command should always return \success~and then the solver should terminate.  There is no
+expectation of any persistent state of the solver.  The standard does not allow simply returning without issuing a response to the command.
+A solver will return an error if the command is malformed or if for some reason the solver fails to cleanly terminate.
+
+\subsection{Defining new sorts: {\tt declare-sort} and {\tt define-sort}}
+\label{SortCommands}
+
+There are two commands that introduce new sort symbols: {\tt declare-sort} declares a new sort
+and {\tt define-sort} introduces a new symbol
+that is the abbreviation for a sort expression.
+
+Sort symbols are in a different namespace than  other symbols (e.g. function symbols), so their
+names do not conflict or shadow each other. 
+A symbol cannot be declared or defined as a new
+sort symbol if there is already a sort symbol
+with that name.
+Declarations of sort symbols are removed when the
+scope in which they are declared is deleted by a 
+{\tt pop} command.
+
+\subsubsection{declare-sort}
+
+The {\tt declare-sort} command has a simple form.  Its arguments are the \sym\ that is the new sort
+symbol and a \numeral\ that is the number of parameters of the new sort symbol:\\
+\centerline{\tt (declare-sort \sym\ \numeral)}
+
+A sort symbol with no parameters can be used as a new sort.  For example, one can write
+\boxedexample{
+...\\
+> (declare-sort MySort 0) ; new sort named MySort\\
+success \\
+> (declare-fun x () MySort) ; using MySort as the sort of a new constant \\
+success
+}
+
+A sort symbol with parameters is not a sort itself, but is used to create a sort
+when combined with the correct number of parameters.  The parameters are always other sorts. Suppose {\tt X} and {\tt Y} are already defined sorts.  Then writing\\
+\centerline{\tt (declare-sort Pair 2)}
+declares a new parameterized sort symbol named {\tt Pair} that takes two parameters.  The following
+are then three different sorts:\\
+\centerline{\tt (Pair X X)}
+\centerline{\tt (Pair X Y)}
+\centerline{\tt (Pair Y Y)}
+
+The response to a {\tt declare-sort} command is either
+\begin{itemize}\nospace
+\item {\tt success}
+\item an error response if
+\begin{itemize}\nospace
+\item the arguments are malformed - wrong number or wrong kinds of tokens
+\item the given symbol is already declared as a sort symbol
+\item the command is used before a {\tt set-logic} command
+\end{itemize}
+\end{itemize}
+
+
+\subsubsection{define-sort}
+
+The {\tt define-sort} command defines a new sort symbol that is an abbreviation for a sort expression. The new sort symbol can be 
+parameterized, in which case the names of the
+parameters are specified in the command and the
+sort expression uses the sort parameters.
+The form of the command is this:\\
+\centerline{\tt (define-sort \sym\ (\sym*) {\it <sort-expr>})}
+
+A {\it <sort-expr>} is either a sort symbol or a sort symbol applied to sort arguments --- one of these:\\
+\centerline{\tt \sym}
+\centerline{\tt (\sym\ {\it <sort-expr>}+ )}
+
+For example, \\
+\centerline{\tt (define-sort I () Int)}
+defines {\tt I} to be an abbreviation for {\tt Int}.  A use of {\tt I} is then fully equivalent to a use of {\tt Int}.  The empty parentheses are required to indicate that {\tt I} has no parameters.
+
+To demonstrate a parameterized definition, assume that {\tt Int} and {\tt Real} are already defined sorts and that {\tt Pair} is a sort symbol taking two parameters.  The we can define sort symbol {\tt P} with one parameter by\\
+\centerline{\tt (define-sort P (X) (Pair X X))}
+Then {\tt (P Int)} is equivalent to {\tt (Pair Int Int)} and {\tt (P Real)} is equivalent to {\tt (Pair Real Real)}.
+
+The \sym s used as parameters may be any \sym s
+(whether or not they have existing declarations
+or definitions), as long as they are different
+from each other within the {\tt define-sort} command.
+They will shadow existing sort symbols of the same name.
+
+The response to this command should be either
+\begin{itemize} \nospace
+\item {\tt success} - in which case the new sort symbol is now part of the current scope
+\item error - 
+\begin{itemize} \nospace
+\item if the command is malformed
+\item if the command is used before a {\tt set-logic} command
+\item if the symbols used in the definition of the new sort are themselves not yet defined
+\item if the symbol being declared is already defined
+\item if there are duplicate symbols used as parameters
+\end{itemize}
+\end{itemize}
+
+
+\subsection{Defining new function symbols and constants: {\tt declare-fun} and {\tt define-fun}}
+\label{DeclarationCommands}
+%% TBD Duplicative text
+
+SMT-LIB requires all identifiers to be declared before being used.
+The {\tt declare-fun} command is used to declare new symbols.
+Constants and functions are declared in a uniform way; constants are
+simply functions with no arguments.  To declare a new function symbol,
+we need to specify the sorts of the arguments and of the return value.
+The form of the command is this:\\
+\centerline{\tt (declare-fun \sym\ ( \Sort* ) \Sort )}
+The list of sorts within parentheses are the sorts of the arguments; the sort that is
+the last argument of {\tt declare-fun} is the sort of the result.  To declare
+a constant, there are no sorts in the parentheses, but the parentheses are 
+still present. Users may only introduce new \sym s; new \ID s appear only in
+theory definitions.
+
+The response to this command should be either
+\begin{itemize} \nospace
+\item {\tt success} - in which case the new function symbol is now part of the current scope
+\item error - 
+\begin{itemize} \nospace
+\item if the command is malformed
+\item if the command is used before a {\tt set-logic} command
+\item if the symbols used in the definition of the new function symbol are themselves not yet defined (so no recursion is allowed)
+\item if the symbol being declared is already defined
+\end{itemize}
+\end{itemize}
+
+
+So to declare a new symbolic constant value (a function with no arguments) named {\tt x} of sort \Bool~we write:\\
+\centerline{\tt (declare-fun x () Bool)}
+This command declares a function {\tt f} of two \Int s, returning a \Bool:\\
+\centerline{\tt (declare-fun f (Int Int) Bool)}
+And this declares a function {\tt size} that returns an \Int~and takes one argument
+that is an {\tt Array} of \Int~index type and \Bool~value type:\\
+\centerline{\tt (declare-fun size ( (Array Int Bool) ) Int)}
+
+It is also possible to declare function symbols whose sort is parametric, but this is allowed only within a theory definition and does not use the {\tt declare-fun} syntax.  More information about writing theory definitions is found in section \ref{Theories}.
+
+The {\tt declare-fun} command declares a new function symbol that is wholly uninterpreted. One can also declare function symbols to be
+equivalent to a given expression, using the {\tt define-fun} command. These simply serve as abbreviations.  For example, the command\\
+\centerline{\tt (define-fun av ((p Int)(q Int)) Bool (or (> p (+ q 2)) (< p (- q 2))))}
+declares a new binary function symbol {\tt av} taking {\tt Int} arguments, returning a {\tt Bool}; the value is {\tt true} when the absolute value of the difference
+between the two arguments is more than 2.
+
+The general form of the {\tt define-fun} command is similar to that of the {\tt declare-fun} command, with the addition of variable names and defining expression:\\
+\centerline{\tt (define-fun \sym\ ( ( \sym\ \Sort )* ) \Sort\ \expr )}
+The response to the command is either
+\begin{itemize} \nospace
+\item {\tt success} - in which case the new function symbol is now part of the current scope
+\item error - 
+\begin{itemize} \nospace
+\item if the command is malformed
+\item if the command is used before a {\tt set-logic} command
+\item if the symbols used in the definition of the new function symbol are themselves not yet defined (so no recursion is allowed)
+\item if the symbol being declared is already defined
+\item if the defining expression is not well-sorted
+\end{itemize}
+\end{itemize}
+The symbol introduced by a {\tt define-fun} command is simply an abbreviation.  One could always substitute uses of the symbol by instances of the defining expression, with the parameters substituted with the actual arguments (renaming variables where necessary to avoid variable capture by forall, exists, or let expressions). The goal of using such abbreviations is to simplify expressions for the human reader and,
+perhaps, for the solver.
+
+\subsection{Asserting logical statements: the {\tt assert} command}
+
+The {\tt assert} command instructs the solver to assume that the stated formula is true.  The form of the command is\\
+\centerline{{\tt ( assert }{\it <expr>}{\tt )}}
+in which {\it <expr>} is a properly constructed, well-sorted SMT-LIB expression, whose sort is \Bool\ (cf. section \ref{Expressions}).
+
+An {\tt assert} command may not appear before a {\tt set-logic} command, since the logic is needed to provide the definitions of the sort and
+function symbols used in the expression. 
+
+An {\tt assert} command responds with either 
+\begin{itemize} \nospace
+\item {\tt success} - in which case the new assertion is now part of the solver context
+\item an error message -
+\begin{itemize} \nospace
+\item if the command is malformed
+\item if the command is not well-sorted, e.g. the sort of the whole expression is not {\tt Bool}
+\item if the command is misplaced (e.g. before a {\tt set-logic} command)
+\item if the expression is not allowed in the current logic
+\end{itemize}
+\end{itemize}
+
+\subsection{Checking satisfiability: the {\tt check-sat} command}
+
+The main purpose of a SMT solver is to check the satisfiability of a set of asserted expressions.  Once a series of {\tt assert}
+commands have been made, the {\tt check-sat} command will instruct the solver to test for satisfiability.  The command has a simple form:\\
+\centerline{\tt ( check-sat )}
+
+The command may respond with one of three responses:
+\begin{itemize}
+\item {\tt sat} : the set of assertions is satisfiable.  That is, there is a consistent set of assignments of values to constants and function
+symbols under which all asserted expressions are true. In this case, the {\tt get-assignment} and {\tt get-value} commands may be used to
+find out more about the satisfying assignment.
+\item {\tt unsat} : the set of assertions is unsatisfiable. That is, there is no set of assignments of values to constants and function
+symbols under which all asserted expressions are true. In  this case, the {\tt get-proof} and {\tt get-unsat-core} commands may be used to
+find out more about the unsatisfiable assertions.
+\item {\tt unknown} : solver cannot determine for sure whether the set of assertions is satisfiable or not.  There may be various reasons for
+this. In some cases, the solver may have run out of memory or time. In others, the solver may have found a set of assignments that appears to
+make all asserted expressions true, but it cannot be sure because of the presence of quantified assertions. The {\tt :reason-unknown} info item
+(section \ref{InfoItems} below) can be used to ask for more information about why the solver responds with {\tt unknown}.
+\end{itemize}
+\noindent
+The command will respond with an error if there are any arguments to the command or the command precedes a {\tt set-logic} command.
+
+\subsection{{\tt sat} operations: {\tt get-value} and {\tt get-assignment}}
+\label{sat-commands}
+When the {\tt (check-sat)} operation produces a {\tt sat} response,
+then we know that the set of all the current assertions is satisfiable.
+With some assignment of values to the free constant and function symbols, all the asserted
+formulae are true.  There are two (optional) commands that enable determining 
+the values that make up the assignment: {\tt get-value} and {\tt get-assignment}.
+These commands may only be used under these conditions:
+\begin{itemize} \nospace
+\item for {\tt get-assignment}, the {\tt :produce-assignments} option must have been set to true (which is not the default) before the
+{\tt set-logic command};
+\item for {\tt get-value}, the {\tt :produce-models} option must have been set to true (which is not the default) before the 
+{\tt set-logic} command;
+\item a {\tt (check-sat)} command must have been given to the solver, and the most
+recent such command must have returned either {\tt sat} or {\tt unknown} (it is optional for
+a solver to support these commands when {\tt unknown} is returned);
+\item since the most recent {\tt (check-sat)} command, no {\tt push}, {\tt pop},
+{\tt assert}, {\tt declare-fun}, {\tt define-fun}, {\tt declare-sort}, or {\tt define-sort}
+command has been issued.
+\end{itemize}
+
+The command will respond with an error if there are any arguments to the command or the command precedes a {\tt set-logic} command.
+
+\subsubsection{get-value}
+The {\tt get-value} command takes one argument that is a parenthesized list of terms and responds with the
+values of those terms under the current assignment.  Note that there may
+be more than one satisfying assignment; with the same set of asserted formulae,
+on two different occasions with the same or different ordering of terms, different values for the arguments might be produced.
+
+The terms in the {\tt get-value} command must be quantifier-free terms without new function (or constant) symbols;
+that is, the terms are ground terms using only the function (and constant) symbols
+already defined. More specifically, each theory defines the set of values that belong to 
+each sort; for example, the values for the \Int~sort are \numeral and {\tt (- \numeral)} 
+(for a non-zero \numeral). The values supplied by the {\tt get-value} command are given in terms of
+these basic values for each sort, or in terms of unspecified abstract values.
+
+The response to the command is a parenthesized list of parenthesized pairs, one pair for each
+term listed in the {\tt get-value} command; each 
+pair contains the given term and its value. The response may also be an error message if
+\begin{itemize}\nospace
+\item the command is syntactically mal-formed
+\item any term contains undefined symbols, is not valid for the given logic, or is otherwise not well-sorted
+\item there is no sufficiently recent {\tt check-sat} command that returned {\tt sat} or {\tt unknown}
+\item the {\tt :produce-models} option is not set to {\tt true}
+\end{itemize}
+
+The {\tt get-value} capability is optional. If it is not supported, then the {\tt set-option} command applied to
+{\tt :produce-models} must return {\tt unsupported}, and the {\tt get-value} command will respond with an error.
+In addition, the solver will respond {\tt unsupported} to a {\tt get-value} command if the most recent {\tt check-sat} result was {\tt unknown} and the solver
+does not support returning model information for {\tt unknown} states.
+
+Here is an example, without {\tt success} responses, presuming the solver supports {\tt get-value}.
+\boxedexample{
+> (set-option :produce-models true)\\
+> (set-logic QF\_LIA) \\
+> (declare-fun x () Int) \\
+> (declare-fun y () Int) \\
+> (assert (= (+ x y) 9)) \\
+> (assert (= (+ (* 2 x) (* 3 y)) 22)) \\
+> (check-sat)\\
+sat\\
+> (get-value (x)) \\
+((x 5))\\
+> (get-value ((- x y) (+ 2 y)))\\
+(((- x y) 1) ((+ 2 y) 8))
+}
+
+
+\subsubsection{get-assignment}
+The {\tt get-assignment} command also responds with a list of assignments:
+the (sub-)terms whose values are returned are those with \Bool~sort that are named at the time they are asserted.
+A term is named using this syntax (cf. section \ref{Expressions}):\\
+\centerline{\tt (! \expr~:named \sym)}
+In general, the named term may be a sub-term or may be the entire asserted formula.
+However, the {\tt get-assignment} command only returns the truth assignment of 
+named terms or subterms of sort \Bool.
+
+The form of the {\tt get-assignment} command is simply\\
+\centerline{\tt ( get-assignment )}
+
+The response to the command is a parenthesized (S-expression) list of zero or more pairs, one pair for each
+named asserted formula or named subterm of \Bool~sort in the current solver context; each 
+pair contains the \sym~naming a formula and its value (either {\tt true} or {\tt false}, as symbols).
+ The response may also be an error message if
+\begin{itemize}\nospace
+\item the command is syntactically malformed
+\item there is no sufficiently recent {\tt check-sat} command that returned {\tt sat}
+\item the {\tt :produce-assignments} option is not set to {\tt true}
+\end{itemize}
+
+The {\tt get-assignment} capability is optional. If it is not supported, then the {\tt set-option} command applied to
+{\tt :produce-assignments} must return {\tt unsupported}, and the {\tt get-assignment} command must respond with an error.
+In addition, the solver will respond {\tt unsupported} to a {\tt get-assignment} command if the most recent {\tt check-sat} result was {\tt unknown} and the solver
+does not support returning model information for {\tt unknown} states.
+
+
+Here is a simple example:\\
+\boxedexample{
+> (set-option :produce-assignments true) \\
+success \\
+> (set-logic QF\_UF)\\
+success\\
+> (declare-fun p () Bool)\\
+success\\
+> (declare-fun q () Bool) \\
+success\\
+> (declare-fun r () Bool) \\
+success\\
+> (assert (not (=> (or (! p :named P) (! q :named Q)) (! r :named R)))) \\
+success\\
+> (check-sat) \\
+sat\\
+> (get-assignment)\\
+((P true)(Q true)(R false))
+}
+In the example, the response to {\tt get-assignment} says that when $p$ and $q$ are {\tt true} and $r$ is {\tt false},
+then the asserted expression is {\tt true}, that is, then $(p \logor q) \imp r$ is {\tt false}.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{{\tt unsat} operations: {\tt get-proof} and {\tt get-unsat-core}}
+\label{unsat-commands}
+
+\subsubsection{Proofs}
+
+When the {\tt (check-sat)} operation produces an {\tt unsat} response,
+then we know that the set of all the current assertions is unsatisfiable.
+Equivalently, all of the assertions but the last together imply the negation of the
+last assertion.  This is, in fact, a common method of determining whether
+a set of assertions, $P_i$, implies a consequence, $Q$: assert each of the $P_i$, 
+then assert $\lnot Q$, and then check for satisfiability.  If not satisfiable,
+then the implication holds.
+
+However, in that case, we may well want more information: we would like a step-by-step
+proof that the implication holds.  Some solvers may be able to supply such a 
+proof; if so, the proof can be obtained using the {\tt (get-proof)} command.
+
+The {\tt (get-proof)} capability is optional.  If it is supported, then
+to obtain proofs, the following conditions must hold:
+\begin{itemize} \nospace
+\item the {\tt :produce-proofs} option must be {\tt true} (which is not the default); the option may only set before the 
+{\tt set-logic} command;
+\item a {\tt (check-sat)} command must have been given to the solver, and the most
+recent such command must have returned {\tt unsat};
+\item since the most recent {\tt (check-sat)} command, no {\tt push}, {\tt pop},
+{\tt assert}, {\tt declare-fun}, {\tt define-fun}, {\tt declare-sort}, or {\tt define-sort}
+command has been issued.
+\end{itemize}
+
+If the {\tt get-proof} capability is not supported, then the {\tt set-option} command applied to
+{\tt :produce-proofs} must return {\tt unsupported} and the {\tt get-proof} command must
+respond with an error.
+
+The form of the command is simple:\\
+\centerline{\tt ( get-proof )}
+
+The response to the command is one of these:
+\begin{itemize} \nospace
+\item a proof - The form of the proof is not specified by the SMT-LIB standard, except that the concrete syntax of the result must be an S-expression.
+\item an error response - 
+\begin{itemize} \nospace
+\item if the command is malformed (e.g. has arguments)
+\item if there is no sufficiently recent {\tt check-sat} command that returned {\tt unsat}
+\item if the {\tt :produce-proofs} option is not set to {\tt true}
+\end{itemize}
+\end{itemize}
+
+Here is an example of using a solver to check the truth of $((p \imp q) \logand q \imp r)) \imp (p \imp r)$
+(presuming the solver supports proof generation):
+\boxedexample{
+> (set-option :produce-proofs true)\\
+success\\
+> (set-logic QF\_UF)\\
+success\\
+> (declare-fun p () Bool) \\
+success \\
+> (declare-fun q () Bool) \\
+success\\
+> (declare-fun r () Bool) \\
+success\\
+> (assert (=> p q))\\
+success\\
+> (assert (=> q r)) \\
+success \\
+> (assert (not (=> p r))) \\
+success \\
+> (check-sat)\\
+unsat    ; (=> p r) is always true, given the previous assertions\\
+> (get-proof)\\
+{\it Solver-dependent output}
+}
+
+\subsubsection{Unsatisfiable cores}
+
+Another interesting question about an unsatisfiable set of assertions is which assertions in
+that set are actually causing the contradiction that makes the set unsatisfiable.
+Such a set, ideally smaller than the full set, but still unsatisfiable, is called an
+{\em unsatisfiable core}.  One might even want a {\em minimal} unsatisfiable core.\footnote{It is a computationally hard problem to find minimal unsatisfiable cores; solvers that do provide unsat cores generally do not guarantee minimality.}
+The {\tt get-unsat-core} command responds with an unsatisfiable core, though the core is not necessarily minimal.  In fact, it might
+provide the unhelpful result of listing all of the named formulae.
+
+The command takes no arguments and so has the simple form\\
+\centerline{\tt (get-unsat-core)}
+It is subject to similar restrictions as
+the {\tt (get-proofs)} command.  If it is supported, then
+to obtain an unsatisfiable core, the following conditions must hold:
+\begin{itemize} \nospace
+\item the {\tt :produce-unsat-cores} option must be {\tt true} (which is not the default); the option may only be set before the 
+{\tt set-logic} command;
+\item a {\tt (check-sat)} command must have been given to the solver, and the most
+recent such command must have returned {\tt unsat};
+\item since the most recent {\tt (check-sat)} command, no {\tt push}, {\tt pop},
+{\tt assert}, {\tt declare-fun}, {\tt define-fun}, {\tt declare-sort}, or {\tt define-sort}
+command has been issued.
+\end{itemize}
+
+If the {\tt get-unsat-core} capability is not supported, then the {\tt set-option} command applied to
+{\tt :produce-unsat-cores} must return {\tt unsupported}, and the {\tt get-unsat-core} command must
+respond with an error.
+
+An error response may occur
+\begin{itemize} \nospace
+\item if the command is malformed (e.g. has arguments)
+\item if there is no sufficiently recent {\tt check-sat} command that returned {\tt unsat}
+\item if the {\tt :produce-unsat-cores} option is not set to {\tt true}
+\end{itemize}
+
+The successful result of the command is a list of formulae, identified by their names (which are \sym s).  Formulae are
+given names when they are asserted (for this command, names of any subterms are ignored).
+ For example, one might issue this command to a solver:\\
+\centerline{\tt (assert (! (or p q) :named FORMULA1))}
+The exclamation point is the annotation operator, indicating that the term that is the first argument
+has the annotations given in the rest of the S-expression (cf. section \ref{Expressions}).  Note that the name of the term is
+a \sym, not a \strng.  Only top-level formulae with names are listed in the output of the {\tt (get-unsat-core)}
+command; unnamed formulae are simply not listed, whether or not they are part of the unsatisfiable core.
+
+
+The rule about naming formulae serves two purposes.  First, it allows the user to be selective about which
+formulae to track, avoiding what might be extraneous information; second, it allows an implementor to 
+know which formulae need to be tracked,
+allowing potential optimizations.  However, if the user forgets about the distinction between named and unnamed
+formulae, it may appear that the solver has produced an unsatisfiable core that is in fact satisfiable; in effect,
+the unsatisfiable core must be considered to include all of the unnamed formulae. 
+
+Here is a simple example (without {\tt success} responses) that presumes the solver supports producing unsatisfiable cores:
+\boxedexample{
+> (set-option :produce-unsat-cores true)\\
+> (set-logic QF\_UF)\\
+> (declare-fun p () Bool)\\
+> (declare-fun q () Bool)\\
+> (declare-fun r () Bool)\\
+> (declare-fun s () Bool)\\
+> (declare-fun t () Bool)\\
+> (assert (! (=> p q) :named PQ))\\
+> (assert (! (=> q r) :named QR))\\
+> (assert (! (=> r s) :named RS))\\
+> (assert (! (=> s t) :named ST))\\
+> (assert (! (not (=> q s)) :named NQS))\\
+> (check-sat)\\
+unsat\\
+> (get-unsat-core)\\
+(QR RS NQS)
+}
+The names of the formulae in the unsatisfiable core may be in any order, and may include other names, but should include at least these three.
+
+
+\subsection{Adding scope: the {\tt push} and {\tt pop} commands}
+
+The {\tt push} and {\tt pop} commands enable some scoping of sort and function declarations and of assertions. In effect, a solver \
+maintains a single, global
+stack of sets of assertions.  The stack is initialized with one empty assertion set; that assertion set is, initially, the top set on the stack.
+Declaration, definition and assert commands add new declarations, definitions and assertions to the top assertion set of the stack.
+
+The forms of the commands are\\
+\centerline{\tt ( push \numeral )}
+\centerline{\tt ( pop \numeral )}
+Recall that a \numeral~ is always non-negative. If \numeral~ is zero, the command is legal but has no effect.
+
+A {\tt push} operation adds the given number of new empty assertion sets to the top of the stack, with the last one added becoming the new top assertion
+set and the new recipient of declarations, definitions, and assertions. A {\tt push} command with argument $n$ is precisely equivalent to 
+$n$ {\tt (push 1)} commands.
+
+A {\tt pop} operation removes the given number of assertion sets from 
+the stack, beginning with the top-most, in reverse order of being pushed. It is as if the commands that placed declarations, definitions, and assertions in those now popped
+sets had never happened.
+
+The {\tt check-sat} and {\tt get-assertions} commands always operate on the union of all of the assertion sets on the stack at the time of
+the command.
+
+It is an error to pop off more assertion sets than have been added; it is not permitted to pop the assertion set with which the stack is initialized; thus there is always an assertion set to receive new declarations, definitions, and assertions. The {\tt push} and {\tt pop} 
+commands are not permitted prior to a {\tt set-logic} command. Note that if the argument to a 
+{\tt pop} command is too large, an error response is given, and no assertion sets are popped; this behavior is consistent with the rule
+that if a command responds with an error then the state of the solver is unchanged.
+
+The {\tt push} and {\tt pop} commands provide a scope for declarations, definitions, assertions, and names of expressions within assertions.
+The commands do not affect the setting of options ({\tt set-option}) or information items ({\tt set-info}).
+
+The responses to {\tt push} and {\tt pop} are either
+\begin{itemize} \nospace
+\item {\tt success}
+\item an error response
+\begin{itemize} \nospace
+\item if the command is malformed, e.g. anything other than just one argument that is a \numeral
+\item if the argument to a {\tt pop} command is more than the current net number of pushed assertion sets
+\item if the command precedes a {\tt set-logic} command
+\end{itemize}
+\end{itemize}
+A very large argument to the {\tt push} command risks exhausting resources, depending on the solver implementation.
+
+The {\tt push} and {\tt pop} commands are typically used to try various experiments on a set of assertions ({\tt success} responses are omitted).
+\boxedexample{
+> (set-logic QF\_LIA) \\
+> (declare-fun x () Int) ; declare some constants \\
+> (declare-fun y () Int) \\
+> (declare-fun z () Int) \\
+> (push 1) \\
+> (assert (= (+ x y) 10)) \\
+> (assert (= (+ x (* 2 y)) 20)) \\
+> (check-sat) \\
+sat ; there is a solution \\
+> (pop 1) ; clear the assertions \\
+> (push 1) ; ready for another problem \\
+> (assert (= (+ (* 3 x) y) 10)) \\
+> (assert (= (+ (* 2 x) (* 2 y)) 21)) \\
+> (check-sat)\\
+unsat  ; no solution \\
+> (declare-fun p () Bool) \\
+> (pop 1) \\
+> (assert p) \\
+( error "p is not declared") ; the declaration of p was popped
+}
+
+
+\subsection{Remembering what you have done: the {\tt get-assertions} command}
+
+The {\tt get-assertions} command simply responds with all of the expressions in the current assertion set stack.  It has this simple form:\\
+\centerline{\tt ( get-assertions )}
+
+The response is a parenthesized list of all of the asserted expressions (but not the declarations or definitions\footnote{This limitation is for simplicity, but it does mean that the {\tt get-assertions} command cannot be used to obtain and replay the entire contents of the assertion set stack.}). Each element of the response is an expression.  The expression must be identical (except for whitespace and comments)\footnote{Including the original whitespace and comments is permitted, but not required.} to 
+the expression in the original assert command: no normalization of the expression, reordering of arguments, flattening of associativity, substitution of definitions, or any other rearrangement is allowed.  The purpose of the command is simply to replay back to the user the current
+list of expressions as the user asserted them. Note that the returned list of expressions may be empty or may have just one expression; it is
+still parenthesized.
+
+The command is optional. If it is not supported, the solver should respond {\tt unsupported}.
+
+The command is only valid if the {\tt :interactive-mode} option is true; that option may only be set before the {\tt set-logic} command. If this is not the case, the response to the command should be an error message. The {\tt get-assertions} command itself may not precede a {\tt set-logic} command.
+
+Here is an example ({\tt success} responses are omitted):
+\boxedexample{
+> (set-option :interactive-mode true) \\
+> (set-logic QF\_UF) \\
+> (declare-fun p () Bool) \\
+> (declare-fun q () Bool) \\
+> (push 1) \\
+> (assert (or p q)) \\
+> (push 1) \\
+> (assert (not q)) \\
+> (get-assertions) \\
+((or p q) \\
+ (not q)\\
+)\ \ \ \ \ \ \ \ \ \hspace*{1in}; solvers will vary in the whitespace used \\
+> (pop 1) \\
+> (get-assertions) \\
+((or p q))\hspace*{1in}; just one assertion \\
+> (pop 1) \\
+> (get-assertions) \\
+()\ \ \ \ \ \ \ \ \hspace*{1in}; no assertions left
+}
+
+
+\subsection{Options}
+\label{Options}
+The option mechanism allows the user to change the behavior of the solver in some ways.  Some options are required to be supported by a conforming solver and some options are pre-defined but optional; if a solver does not recognize an option it is required to respond {\tt unsupported}, rather than issuing an error or faulting.
+
+Setting and retrieving option values is independent of the assertion stack. The setting of an option is not changed by a {\tt pop} command (or anything other than a {\tt set-option} command).
+
+\subsubsection{The {\tt set-option} and {\tt get-option} commands}
+
+The {\tt set-option} command sets the value of a specified option; the {\tt get-option} command retrieves the current setting of a given option.  The values of options are in general S-expressions, but for all the pre-defined options the values are
+ either a \strng, a \numeral, or one of the \sym s {\tt true} or {\tt false}. The two commands have this form:\\
+\centerline{{\tt ( set-option} \keyword\ {\it <attr-value>}\ {\tt )}}
+\centerline{{\tt ( get-option} \keyword\ {\tt )  }}
+
+The {\tt set-option} command will respond with one of these responses:
+\begin{itemize} \nospace
+\item[] {\tt success } - the value of the option was successfully changed
+\item[] {\tt unsupported } - the option is optional and is not supported by the solver
+\item[] {\tt ( error } \strng~{\tt )}
+\begin{itemize} \nospace
+\item if the command is malformed (e.g. incorrect number or kind of arguments)
+\item if the option value is inappropriate for the keyword
+\item if the option is being set at the wrong place in a command script (e.g. after {\tt set-logic} when it should be before {\tt set-logic})
+\end{itemize}
+\end{itemize}
+
+The {\tt get-option} command may also respond with {\tt unsupported} or an error, but normally will
+respond with an S-expression giving the value of the option.
+
+For example:\\
+\boxedexample{
+> (get-option :print-success) \\
+true\\
+> (set-option :print-success false) \\
+> (get-option :print-success) \\
+false\\
+> (set-option :print-success true) \\
+success
+}
+
+\subsubsection{Options defined by standard SMT-LIB}
+
+There are a number of options that conforming solvers are required to support and others that are optional but pre-defined. 
+
+\begin{tabular}{|l|l|l|l|}
+\hline
+Option name & required? & type of value & default value \\
+\hline
+:print-success & required & boolean & true \\
+:regular-output-channel & required & string & "stdout" \\
+:diagnostic-output-channel & required & string & "stderr" \\
+:expand-definitions & optional & boolean & false \\
+:interactive-mode & optional & boolean & false \\
+:produce-proofs & optional & boolean & false \\
+:produce-unsat-cores & optional & boolean & false \\
+:produce-models & optional & boolean & false \\
+:produce-assignments & optional & boolean & false \\
+:random-seed & optional & numeral & 0 \\
+:verbosity & optional & numeral & 0 \\
+\hline
+\end{tabular}
+
+\paragraph{\tt :print-success} -- The {\tt :print-success} option controls whether {\tt success} is printed after successful commands. The default is to print {\tt success} as a response.  In interactive mode, this is the
+more convenient setting, as the user obtains direct feedback that the command completed successfully.  However, in batch mode and even as a less verbose option in interactive mode, it may be desirable to set this option false. Note that any response other than {\tt success} is always output. The value of this option may be changed at any time, with immediate effect.
+
+\paragraph{\tt :regular-output-channel {\rm and} :diagnostic-output-channel} -- These two options control where output from the solver to the user is sent.  
+The {\tt :regular-output-channel} is the destination for all defined messages from the solver:  success responses, error messages, and other defined outputs from the various commands. These
+responses are always formed as S-expressions.
+The {\tt :diagnostic-output-channel} only receives output controlled by the {\tt :verbosity} option.  The format and content of that output is specific to the solver.
+
+The output is sent to 
+\begin{itemize} \nospace
+\item the standard output of the process, if the value of the option is the string "stdout"
+\item the standard error output of the process, if the value of the option is the string "stderr"
+\item to a file if the value of the option is some other string, in which case the string must be the path to a file (relative to the current working directory, if the path is relative). A conforming solver must accept a file path in POSIX form, with forward-slash characters separating components of the path.
+
+\end{itemize}
+In this last case, a {\tt set-option} command setting the value of one of the output channels will return an error if file designated by the path cannot be created (if it does not exist) or 
+cannot be written to. If the file already exists, new output will be appended to the file; if the file does not exist, it will be created.
+
+This option may be changed at any point in a script, with immediate effect.
+
+\paragraph{\tt :expand-definitions} --
+This option affects the presentation of expressions from the solver. When the option is set to {\tt true}, all symbols defined with {\tt define-sort} or {\tt define-fun} are
+substituted with their definitions; these symbols (which are just abbreviations) should not appear in the output. It may be set at any point in a script.\footnote{The standard does not actually specify when it may be set.} The only commands that respond with expressions are {\tt get-assertions}, {\tt get-value}, and {\tt get-proof}. The response to {\tt get-assertions} is unchanged by this option; it always responds with expressions just as
+the user asserted them. The expressions in a proof produced by {\tt (get-proof)} are affected by this option. The {\tt get-value} command
+responds with expression-value pairs; values never contain abbreviation symbols in any case, but the user-specified expressions whose values are generated may well --- the presentation of these expressions in the command response is affected by the {\tt :expand-definitions} option.
+
+Here is an example with {\tt :expand-definitions} true and false:
+\boxedexample{
+> (set-option :produce-models true)\\
+> (set-logic QF\_LIA) \\
+> (declare-fun x () Int) \\
+> (declare-fun y () Int) \\
+> (define-fun diff () Int (- x y)) \\
+> (assert (= (+ x y) 9)) \\
+> (assert (= (+ (* 2 x) (* 3 y)) 22)) \\
+> (check-sat)\\
+sat\\
+> (set-option :expand-definitions false) \\
+> (get-value (diff)) \\
+((diff 1))\\
+> (set-option :expand-definitions true) \\
+> (get-value (diff)) \\
+(((- x y) 1))
+}
+
+\paragraph{\tt :interactive-mode} --
+This option must be set true in order for the {\tt get-assertions} command to be issued.  It must be set before {\tt set-logic}.
+
+\paragraph{{\tt :produce-assignments}, {\tt :produce-models}, {\tt :produce-proofs}, {\tt :produce-unsat-cores}} -- These four options enable the {\tt get-assignment}, {\tt get-value}, {\tt get-proof}, {\tt get-unsat-core} commands, respectively.  For each option-command pair, the following hold:
+\begin{itemize}\nospace
+\item it is optional for a solver to support the capability provided by the command
+\item if the capability is supported, then to use the command during a script, the option must be set to {\tt true} prior to the {\tt set-logic} command
+\item if the capability is not supported, then attempting to set the value of the option (to either {\tt true} or {\tt false}) should result
+in an {\tt unsupported} response
+\item if the capability is not supported or the option has not been set to {\tt true}, then the response to the command should be an error message
+\end{itemize} 
+
+It is an error to attempt to set any of these options after the {\tt set-logic} command.
+
+\paragraph{\tt :verbosity} -- 
+The {\tt :verbosity} option is a numeral that controls the volume of diagnostic output.  When set to 0, no
+diagnostic output should be produced.  Generally, increasingly larger values should produce
+increasing amounts of detail, but the amount, content, and format of the output is entirely
+solver-specific.
+The value of the option may be changed at any point in a command script.  All output controlled by
+this option must be sent to the diagnostic-output-channel.
+
+
+\paragraph{\tt :random-seed}
+
+If a solver has some element of random selection in its processing and it supports 
+the {\tt :random-seed} option, then it should use the value of the option to set the seed used
+for its internal pseudo-random choices.  If the value of {\tt :random-seed} is 0, then the 
+solver should choose a more or less arbitrary seed according to its internal logic and the
+seed may be different for each execution of the solver. However, if
+the value of the option is a positive integer, then the solver should always make the same
+internal choices for the same value of the seed. Thus, repeatedly setting the seed to the same
+positive value should always produce the same output for the same input with the same internal search choices being made.
+
+If {\tt :random-seed} is not supported, the behavior of the solver is as if the value were 0.
+
+\subsection{Solver information}
+\label{InfoItems}
+
+The {\tt get-info} command provides a way to retrieve items of information about the solver being used.  Info items are different than options in that options change the behavior of 
+the solver, while info items merely provide information about the solver or about the 
+solver state.  The information may, however, be dynamic; that is, it may change depending on the current state of the solver.
+
+There are several predefined items of solver information.  In addition a solver may define other, non-standard items and a user may
+use arbitrary keywords to add other information items. User-contributed information items function simply as meta-data; they do not
+affect the solver at all --- they are merely stored and retrieved.  
+
+Solver information items are identified by a \keyword. A solver must respond to any request for an information item 
+that it does not support with the {\tt unsupported} response. The response to a {\tt get-info} command is one of
+\begin{itemize} \nospace
+\item a parenthesized S-expression containing one or more attributes
+\item {\tt unsupported} -- if the solver does not support that information item
+\item an error response
+\begin{itemize} \nospace
+\item if the command is malformed (e.g. has the wrong number or kind of arguments)
+\end{itemize}
+\end{itemize}
+Note that the response to a {\tt get-info} command is always parenthesized and contains the \keyword~that was given in the
+command; also the response may contain more than one attribute. This is a different format than produced by the {\tt get-option} command.
+
+SMT-LIB-defined or solver-defined information items may have a restriction on the kind of S-expression that the information item
+value may have.  For example, the {\tt :version} information item requires a \strng\ as its value. In general, user-defined information items
+may have arbitrary \attrvalue\ items as their value.
+
+
+\subsubsection{Required info keywords defined by SMT-LIB}
+These are the pre-defined information keywords that a conforming solver must support. 
+\begin{itemize}
+\item[]{\tt :name} replies with the name of the solver, as a pair: {\tt ( :name \strng ) }
+\item[]{\tt :authors} replies with the authors of the solver, as a pair: {\tt ( :authors \strng ) }.
+Note that the value is a single \strng~containing all the authors names, not multiple \strng s each containing one name.
+
+\item[] {\tt :version} replies with the version of the solver, as a pair: {\tt ( :version \strng ) }
+\end{itemize}
+
+For example
+\boxedexample{
+> ( get-info :name ) \\
+( :name "TheBestSolverEver" ) \\
+> ( get-info :version ) \\
+( :version "1.0" ) \\
+> ( get-info :authors ) \\
+( :authors "David R. Cok" )
+}
+
+\subsubsection{Optional info keywords defined by SMT-LIB}
+\label{OptionalInfo}
+
+These are the pre-defined information keywords that a conforming solver must either support or respond to with {\tt unsupported}. 
+
+{\tt :error-behavior} replies with the error behavior of the solver. The defined values are these:
+\begin{itemize} \nospace
+\item[] {\tt immediate-exit} - if the solver has this behavior, then if a command responds with an error message for any reason, the solver will output the error message and then exit, ignoring the rest of the script. This behavior is perhaps best for batch execution, but it then reports only one error at a time. A script command and type checker, as
+described in section \ref{validator}, might be useful for finding syntax and usage errors before submitting a script to a batch process.
+\item[] {\tt continued-execution} - if the solver has this behavior, then upon encountering an error, the error message will be output, but
+the command will cause no change to the state of the solver, and the solver will proceed to execute the next command in the script.
+Interactive execution will prefer this second behavior, since then a mistyped command will not cause the immediate exit of the solver; the
+user will have the chance to correct the command, not losing all previous work. However, in many cases, the user will edit a file containing
+a script and submit the file to the solver, rather than typing into the solver directly (just as one does not generally type directly into a compiler).
+
+\end{itemize}
+
+
+{\tt :reason-unknown} replies with more detail about why the solver responded to a {\tt (check-sat)} command with the reply {\tt unknown}.  The defined values of this info item are
+\begin{itemize} \nospace
+\item[] {\tt memout} - meaning the solver ran out of memory and therefore could not complete its analysis
+\item[] {\tt incomplete} - meaning the satisfying assignment found cannot be assured to be complete (cf. section \ref{Quantified})
+\end{itemize}
+This option is defined only after a {\tt (check-sat)} command that has returned {\tt unknown} and before any subsequent define, declare, assert, push or pop commands. Other values (e.g. {\tt timeout}) may be standardized in the future.
+
+{\tt :all-statistics} replies with the values of a number of solver-specified statistics about the current state of the solver. The content
+is not defined by SMT-LIB (yet). This information item in particular may respond with a number of different \keyword-\attrvalue\ pairs, giving
+different statistics. The option need be available only after a {\tt (check-sat)} command without intervening declaration, definition, push, pop or assert commands.
+
+Note: The {\tt :status} information item, defined in some editions of the SMT-LIB standard, has been deprecated as an SMT-LIB-defined argument to {\tt get-option}.
+
+It is currently unspecified what the value of a user-defined information item is before it is set with {\tt set-info}.
+
+\subsection{The set-info command}
+\label{set-info}
+The {\tt set-info} command may only be used with user-defined information keywords; SMT-LIB-defined information items may not be
+reset by the user.\footnote{The rules about the {\tt set-info} command are under discussion. It is currently unspecified what the value of an info-item is before it is set.}
+
+The form of the command is
+\[{\tt (\ set-info\ \keyword\ \sexpr\ ) }.\]
+  The {\tt set-info} command replies 
+with one of
+\begin{itemize}\nospace
+\item {\tt success}
+\item {\tt unsupported}
+\item {\tt ( error \strng~)}
+\end{itemize}
+The only occasion for an error response is if the command is malformed or the option is not writable. For example
+\boxedexample{
+> ( set-info :version  "1.1" ) \\
+( error "The value of :version may not be set by set-info" ) \\
+> ( set-info :zzz 1.1 ) \\
+success \\
+> ( set-info ) \\
+( error "The set-info command requires an argument" ) \\
+> ( get-info :zzz)\\
+(:zzz 1.1)
+}
+
+
+\chapter{Logics and Theories}
+\label{LogicsTheories}
+
+For the most part, an SMT-LIB user need only know about logics in order to choose the appropriate one
+for the problem to be solved and to know the symbols defined in that logic.  Each logic (and accompanying
+theories) have a definition and description given in a corresponding file.  Inspecting that definition
+can be instructive.
+
+A theory defines a vocabulary of sorts and functions, and it associates a sort with relevant literals.
+For example, the {\tt Ints} theory defines the {\tt Int} and \Bool\ sorts and declares that any \numeral~has sort \Int.
+A logic is defined to consist of one or more theories, together with some restrictions on the kinds of expressions
+that may be used within that logic.  For example, the {\tt QF\_LIA} logic includes both the {\tt Core} and {\tt Ints}
+theories.  Those theories define many of the usual operations on \Bool\ and \Int\ values.  However the {\tt QF\_LIA}
+logic does not allow quantified expressions and allows only linear arithmetic (e.g. multiplication must be by a literal ---
+one cannot multiply two non-literals together). Logics have such restrictions because there are known decision procedures that
+can solve satisfiability problems in those logics.
+
+In the following subsections we will simply summarize the salient points about the various theories and logics in SMT-LIB.
+The interested reader can find a wealth of literature on decision procedures relevant to the different logics.
+The reader may also wish to consult the text files that define the logics and theories; these are available from the
+SMT-LIB website\cite{smtlibweb}.
+
+Not all of a logic or theory definition is machine-interpretable.  Consequently. logics are actually built-in
+to solvers rather than the solvers acting only on the contents of the definitions in the logic and theory files.
+Nevertheless the textual description serves as a standard definition of a logic or theory's symbols that all SMT-LIB
+solvers will uniformly implement.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Theories}
+\label{Theories}
+
+\subsection{Definition of a Theory}
+Theories are defined using specialized S-expressions:\\
+\centerline{\tt ( theory \sym~\attribute+ ) }
+where the \sym~is the name of the theory and the attributes (either \keyword s or \keyword-\attrvalue\ pairs) give properties
+of the theory.
+
+Many of the attributes are descriptive.  The following are currently machine-interpretable:
+\begin{itemize} \nospace
+\item {\tt :smt-lib-version} -- whose value must currently be the SMT-LIB string {\tt "2.0"}
+\item {\tt :sorts} -- whose value must be a list of sort definitions provided by the theory.  For example, 
+{\tt Core} has {\tt :sorts ((Bool 0))} and {\tt Reals\_Ints} has {\tt :sorts ((Int 0) (Reals 0))}.
+\item {\tt :funs} -- whose value is a list of function declarations, each one of which is a list
+containing the function name, argument sorts, result sort, and optional attributes.  Here are some examples:
+\begin{itemize} \nospace
+\item[] {\tt (false Bool)}
+\item[] {\tt (or Bool Bool Bool :left-assoc)}
+\item[] {\tt (<= Int Int Bool :chainable)}
+\end{itemize}
+\end{itemize}
+
+Commonly used descriptive attributes are these (the attribute values are all \strng s):
+\begin{itemize}\nospace
+\item {\tt :funs-description} -- informally specified functions (in addition to those in {\tt :funs})
+\item {\tt :sorts-description} -- informally specified sorts (in addition to those in {\tt :sorts})
+\item {\tt :definition} -- an informal specification of the allowed expressions in the theory (there must be exactly one {\tt :definition} attribute)
+\item {\tt :values} -- the expressions that constitute the ground values of the theory's sorts
+\item {\tt :written\_by} -- the author of the theory
+\item {\tt :date} -- the initial date the theory was defined
+\item {\tt :notes} -- other explanatory text
+\item {\tt :last-modified} -- the date of the most recent modification to the theory
+
+\end{itemize}
+
+The SMT-LIB theories are defined in files that are available as part of the SMT-LIB distribution.  Each theory is
+contained in a file whose name is the same as the theory, along with a {\tt .smt2} file extension.
+Every theory implicitly contains the {\tt Core} theory, which defines propositional logic.
+
+\subsection{{\tt Core} theory}
+The {\tt Core} theory contains the basic elements of Boolean logic.  It defines
+\begin{itemize} \nospace
+\item the \Bool~sort
+\item the constants {\tt true} and {\tt false} of sort \Bool
+\item the {\tt not} operation
+\item the familiar left-associative functions {\tt and} and {\tt or} and {\tt xor} (for conjunction and disjunction and inequality) on \Bool~values
+\item the right-associative function {\tt =>}, which is implication
+\item the (chainable) equality function among the elements of any set of values of the same sort
+\item the (pairwise) inequality function (called {\tt distinct}) among the elements of any set of values of the same sort
+\item the if-then-else functions (called {\tt ite}), which take a first \Bool~argument and two additional arguments of the same but arbitrary sort
+\end{itemize}
+
+\subsection{{\tt Ints} theory}
+The {\tt Ints} theory contains the basic elements of integer arithmetic.  The following are defined:
+\begin{itemize} \nospace
+\item the \Int\ sort
+\item all \numeral s as \Int~constants
+\item the usual {\tt + - * mod div abs} functions. The {\tt -} symbol is used both for negation (with one argument)
+and for subtraction (with two or more arguments, left associative).  The {\tt div} operation denotes integer division.
+The {\tt mod} and {\tt div} functions satisfy\\
+\centerline{\tt (= x (+ (* y (div x y)) (mod x y)))}
+ (in infix: {\tt x = y * (x div y) + (x mod y)}),
+for integers {\tt x} and {\tt y}, with {\tt y} non-zero.
+In addition, {\tt (mod x y)} is non-negative and less than the absolute value of {\tt y}.
+\item the usual {\tt < > <= >=} comparison functions, returning a \Bool.
+\item for each non-zero numeral {\tt n}, there is a function {\tt (\_ divisible n)} that takes a single \Int~argument and is true
+precisely when {\tt n} divides the argument.
+\end{itemize}
+
+\subsection{{\tt Reals} theory}
+
+There is both a theory for {\tt Reals} and a combined {\tt Reals\_Ints} theory.  The {\tt Reals} theory contains the following:
+\begin{itemize} \nospace
+\item a sort \Real
+\item both \numeral s and \decimal s are typed as \Real
+\item the expected {\tt + - * / } functions
+\item the expected {\tt < > <= >=} comparison functions, returning \Bool
+\end{itemize}
+
+\subsection{{\tt Reals\_Ints} theory}
+ The combined theory of Reals and Ints is not quite the same as the union of the definitions from the two individual theories. In particular
+ \begin{itemize} \nospace
+ \item both the sorts \Int~and \Real~are defined
+ \item \numeral s are of sort \Int~and \decimal s are \Real
+ \item the functions {\tt + - * div mod abs < > <= >=} and the family of {\tt divisible} functions are defined for \Int~arguments
+ \item the functions {\tt + - * / < > <= >=} are defined for \Real~arguments
+ \item the function {\tt to\_real} that maps \Int~arguments to the corresponding \Real
+ \item the function {\tt to\_int} that maps a \Real~argument to the largest integer less than or equal to the argument (the floor function)
+ \item the function {\tt is\_int} that maps a \Real~to a \Bool~and is true just for those arguments that are equal to {\tt (to\_real {\it n})} or
+ to {\tt (to\_real (- {\it n}))} for some numeral {\it n}
+ \end{itemize}
+ 
+ \subsection{{\tt ArraysEx} theory}
+ 
+ %% TBD Clarify the use of parameters in the text below
+ 
+ The theory of Arrays defines a parameterized sort and functions to read and write elements of arrays.
+ \begin{itemize}
+ \item the new sort symbol {\tt Array} that takes two sort parameters: the first is the sort of the index, the second is the sort of the
+ value of the array elements.
+ \item the function {\tt select} that extracts values from the array. It is a parameterized function. Its arguments are (1) the array, of sort, say, {\tt (Array Index Value)}, with sort parameters {\tt Index} and {\tt Value}, and (2) the index value, of sort {\tt Index}. The result is a value of sort {\tt Value}.
+ \item the function {\tt store} that produces a new array with a modified value at a given index.  It takes three arguments: the array, of sort 
+ {\tt (Array Index Value)}; the index, of sort {\tt Index}; and the new value for that index, of sort {\tt Value}. The result is a new array
+ with that one value changed.
+ \item two values of the same Array sort are equal if the array elements are equal for every value of the index sort.
+ \end{itemize}
+ 
+ \subsection{{\tt Fixed\_Size\_BitVectors} theory}
+ 
+ The final pre-defined theory describes the behavior of bit-vectors. A different bit-vector sort is defined for each length of vector.
+ Operations are defined to manipulate, combine, and extract portions of bit-vectors. Some of the operations interpret the bit-vector
+ as a natural number: the bit-vector is considered to be an unsigned binary representation of a non-negative integer, with the least significant
+ bit on the right.
+ \begin{itemize}
+ \item a sort {\tt (\_ BitVec {\it n})} is defined for each non-zero numeral {\it n}
+ \item the binary and hexadecimal literals are defined to have a bit-vector sort of the corresponding length
+ \item the function {\tt concat} is defined that combines two bit-vectors into a longer one
+ \item a family of functions {\tt (\_ extract {\it i j})} is defined that extracts a contiguous sub-vector from index {\it i} to {\it j} (inclusive) of a bit-vector
+ \item unary functions {\tt bvnot} and {\tt bvneg}
+ \item binary functions {\tt bvand bvor bvadd bvmul bvudiv bvurem bvshl bvlshr}
+ \item the binary comparison function {\tt bvult} 
+ \end{itemize}
+ 
+%%\subsection{Writing a new SMT-LIB theory}
+%%\label{NewTheories}
+%%
+%%{\it This section will be added in a future edition of the tutorial.}  %% TBD
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Logics}
+\label{Logics}
+
+\subsection{Definition of a logic}
+
+An SMT-LIB command involving assertions is always interpreted and executed in the context of a {\em logic}.
+The relevant logic is set by the {\tt (set-logic \sym)} command.  A logic defines, by way of the {\em theories} it
+includes, all the sorts and function and constant symbols that make up the initial set of definitions.
+The logic also may restrict the expressions that are allowed.
+(Later subsections contain a quick overview of the SMT-LIB defined logics.)  For example, the 
+{\tt QF\_UF} (Quantifier-Free with Uninterpreted Functions) logic defines the following:
+\begin{itemize} \nospace
+\item the sort {\tt Bool}
+\item the constants {\tt true} and {\tt false} of sort {\tt Bool}
+\item the unary function {\tt not} from {\tt Bool} to {\tt Bool}
+\item the functions {\tt and}, {\tt or}, {\tt xor}, and {\tt =>} that take two or more \Bool~arguments, producing \Bool
+\item equality ({\tt =}), pair-wise distinct ({\tt distinct}) and if-then-else ({\tt ite}) functions
+\item restricts expressions to be quantifier-free
+\end{itemize}
+
+A logic is defined using, as usual, an S-expression of a particular form:\\
+\centerline{\tt ( logic \sym~\attribute+ ) }
+Here the \sym\ is the name of the logic and \attribute+ indicates one or more attributes, each of which is
+a \keyword\ or \keyword-\attrvalue\ pair.
+Some of the attributes are simply descriptive; they provide information such as the author of the logic.
+Other attributes are an informal part of the definition of the logic; they are not machine-interpretable and their
+prescriptions must be built-in to a conforming tool.
+Two attributes are machine-interpretable and are important to solvers:
+\begin{itemize}
+\item {\tt :smt-lib-version} -- whose value must at present be the SMT-LIB string {\tt "2.0"}
+\item {\tt :theories} -- whose value must be a parenthesized list of theory names. These are the theories that
+make up the logic. There must be exactly one {\tt :theories} attribute in the definition. For example, the value of
+{\tt :theories} for {\tt QF\_UF} is simply {\tt (Core)} and for {\tt AUFLIA} is {\tt (Ints ArraysEx)}.
+Every theory (and thus every logic) implicitly includes the {\tt Core} theory.
+\end{itemize}
+
+Other commonly used, descriptive attributes are these (the attribute values are all \strng s):
+\begin{itemize} \nospace
+\item {\tt :written\_by} -- the author
+\item {\tt :date} -- the date the logic was first written
+\item {\tt :language} -- a description of the restrictions on expressions that constitute the language of the logic
+\item {\tt :notes} -- additional explanatory text
+\item {\tt :values} -- the ground expressions of the logic 
+\item {\tt :extensions} -- syntactic sugar that extends the language of the logic
+\end{itemize}
+
+The SMT-LIB logics are defined in files that are available as part of the SMT-LIB distribution.  Each logic is
+contained in a file whose name is the same as the logic, along with a {\tt .smt2} file extension. Although the 
+currently defined logics are informally described here, the definition files are the official reference on the
+details of the logic.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%\section{Pre-defined SMT Logics}
+%%\label{preDefinedLogic}
+
+\subsection{Boolean logics}
+
+\paragraph{QF\_UF} is the logic of Quantifier-Free Uninterpreted Functions.
+It incorporates just the {\tt Core} theory, providing the \Bool\ sort and
+the various standard operations on Boolean values. The user may define
+additional sorts and uninterpreted functions. 
+The restriction imposed by the logic is that no quantified expressions
+are allowed.
+
+\subsection{Logics with arithmetic}
+
+\paragraph{QF\_LIA} adds linear arithmetic to the {\tt QF\_UF} logic.  So the 
+\Int~sort is defined, along with the operations defined in the {\tt Ints} theory.
+This logic does not permit quantified expressions.  It is also limited to 
+{\it linear arithmetic}. Thus addition, negation, subtraction and comparisons are permitted;
+multiplication is permitted only if one multiplicand is a numeral (a constant).
+ No additional sorts or functions are defined.
+ 
+
+ 
+\paragraph{QF\_NIA} incorporates the {\tt Ints} theory, but without the linearity restriction.
+It does not allow quantified expressions, but any of the functions defined in {\tt Ints}
+are permitted. No additional sorts or functions are defined.
+
+\paragraph{QF\_LRA} adds linear arithmetic over the reals to the {\tt QF\_UF} logic.  So the \Real~
+sort is defined, along with the operations defined in the {\tt Reals} theory.
+This logic does not permit quantified expressions and is limited to 
+{\it linear arithmetic}. Thus addition, negation, subtraction, and comparisons are permitted;
+multiplication is permitted only if one multiplicand is a \Real~literal (either a 
+\numeral~or a \decimal). No additional sorts or functions are defined.
+
+\paragraph{QF\_AUFLIA} extends the {\tt QF\_LIA} linear arithmetic logic, with the addition of arrays and arbitrary
+uninterpreted sorts and functions.
+
+\paragraph{AUFLIA} extends {QF\_AUFLIA} by allowing quantifiers.
+
+\paragraph{AUFLIRA} allows quantifiers and includes \Int\ and \Real\ sorts, but is
+limited to linear arithmetic.
+
+\paragraph{AUFNIRA} allows quantifiers and general \Int\ and \Real\ arithmetic, arrays, and uninterpreted functions.
+
+\paragraph{LRA} simply extends {\tt QF\_LRA} by allowing quantifiers.
+
+\subsection{Logics for difference arithmetic}
+
+Difference arithmetics only allow either comparisons between numeric values or
+comparisons of a difference between two numeric values to a positive or negative
+numeric literal.
+
+\paragraph{QF\_IDL} is a difference logic over \Int s that does not allow quantifiers
+
+\paragraph{QF\_RDL} is a difference logic over \Real s that does not allow quantifiers 
+
+\paragraph{QF\_UFIDL} is difference logic over \Int s that does not allow quantifiers
+but does permit arbitrary additional sorts and uninterpreted function symbols
+
+
+\subsection{Logics with Bit-Vectors and Arrays}
+
+\paragraph{QF\_BV} allows quantifier-free expressions, including the family of bit-vector sorts
+and all of the functions defined in the {\tt Fixed\_Size\_BitVectors} theory (but no other new sorts or functions).
+
+\paragraph{QF\_AX} includes Booleans, Arrays (from the {\tt ArraysEx} theory), and arbitrary additional sorts and constants (but not functions), with quantifier-free expressions
+
+\paragraph{QF\_ABV} includes quantifier-free expressions over Booleans, Arrays and BitVectors, with all array index and value sorts being bit-vector
+ sorts.
+
+\paragraph{QF\_AUFBV} extends the {\tt QF\_BV} logic with arrays, arbitrary sorts and function symbols
+
+
+
+
+%%\subsection{Writing a new SMT-LIB logic}
+%%
+%%{\it This section will be added in a future edition of the tutorial.}  %% TBD
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{SMT solvers}
+\label{Solvers}
+
+This chapter presents a brief mention of a number of SMT solvers. I will be happy to include any SMT solver that is currently maintained, under active development, and
+can be obtained for assessment and use.  In this version of the tutorial, we simply list candidates; assessments of conformity to SMT-LIB will follow in subsequent versions. The SMT-COMP competitions were executed in Linux, so those solvers will run on Linux but may not have Windows equivalents. Some of the solvers listed may require licenses from the authors or their institutions.
+
+\begin{itemize}
+\item Solvers competing in the SMT-COMP 2010.  That competition used SMT-LIB and these solvers were required to handle at least {\tt assert} and {\tt check-sat} commands in batch mode.\\*
+ (\url{http://www.smtexec.org/exec/competitors2010.php})
+\begin{itemize}
+\item AProVE NIA 0.2.1 : \url{http://aprove.informatik.rwth-aachen.de/}
+\item CVC3 2.3  : \url{http://cs.nyu.edu/acsys/cvc3/}
+\item CVC4 1.0a0 : \url{http://cs.nyu.edu/acsys/cvc4/}
+\item MathSAT 5 : \url{http://mathsat4.disi.unitn.it/}
+\item MiniSMT : \url{http://cl-informatik.uibk.ac.at/software/minismt/}
+\item OpenSMT-1.0-alpha : \url{http://www.verify.inf.unisi.ch/opensmt}
+\item simplifyingSTP : \url{http://sites.google.com/site/stpfastprover/}
+\item SONOLAR r252 : \url{http://www.informatik.uni-bremen.de/~florian/sonolar/}
+\item test\_pmathsat 0.0.5 : relative of MathSAT
+\item veriT 201007 : \url{http://www.verit-solver.org/}
+\end{itemize}
+\item Other older solvers that can be executed on Windows OS and for which there are jSMTLIB adapters.  These solvers are not themselves SMT-LIB conforming, but they can be used as SMT-LIB solvers through the adapters.
+\begin{itemize}
+\item Simplify 1.5.4 (for Windows) : \url{https://mobius.ucd.ie/repos/src/mobius.esc/escjava/trunk/ESCTools/Escjava/release/master/bin/}
+\item CVC3 2.2 : \url{http://cs.nyu.edu/acsys/cvc3/}
+\item Yices 1.0.28 : \url{http://yices.csl.sri.com/}
+\item Z3 2.11 : \url{http://research.microsoft.com/en-us/um/redmond/projects/z3/}
+\end{itemize}
+\item Other non-SMTLIB solvers from SMTCOMP-2009 that are not subsumed by later versions\\*
+ (\url{http://www.smtexec.org/exec/competitors2009.php})
+\begin{itemize}
+\item barcelogic-QF\_NIA : \url{http://www.lsi.upc.edu/~oliveras/bclt-main.html}
+\item beaver-smtcomp-2009 : \\* \url{http://uclid.eecs.berkeley.edu/newwiki/beaver/start}
+\item Boolector 1.2 : \url{http://fmv.jku.at/boolector/}
+\item clsat 1.0
+\item SatEEn-3.5 : \url{http://vlsi.colorado.edu/~hhkim/sateen/}
+\item sword-1.0 : \url{http://www.informatik.uni-bremen.de/agra/eng/sword.php}
+\item Yices 2 proto : \url{http://yices.csl.sri.com/}
+\end{itemize}
+\item Other non-SMTLIB solvers from SMTCOMP-2008 that are not subsumed by later versions\\*
+ (\url{http://www.smtexec.org/exec/competitors2008.php})
+\begin{itemize} 
+\item Alt-Ergo : \url{http://alt-ergo.lri.fr/}
+\item Spear : \url{http://www.domagoj-babic.com/index.php/ResearchProjects/Spear}
+\end{itemize}
+\end{itemize}
+
+{\it Details on these solvers will be added in a future edition of the tutorial.} %% TBD
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Tools}
+
+As SMT-LIB becomes more widely used, increasing numbers of supporting tools and software packages will become available. 
+Some current tools
+were generated in conjunction with this tutorial; others are independently available.
+
+\section{Tools associated with this tutorial}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The SMT-LIB validator}
+\label{validator}
+An SMT-LIB validator is available as a tool in conjunction with this tutorial. The tool is an executable jar, running on Java 1.6.  As a validator, the tool reads, parses, and type-checks SMT-LIB scripts; it is intended to fully and precisely conform to SMT-LIB, except that it does not do any solving.
+
+
+It is executed with the command line \\*
+\centerline{\tt java -jar jSMTLIB.jar {\it <file>}}
+where {\it <file>} is the path to the script file to check.
+Information about the command-line options can be obtained using \\*
+\centerline{\tt java -jar jSMTLIB.jar -help}
+
+The tool is available from \url{http://www.grammatech.com/resources/smt/jSMTLIB.tar}. The current version is an alpha release, since some details of the SMT-LIB language are still under discussion and some aspects of theories and logics are not yet implemented. 
+
+\paragraph{Client-server implementation.} The validator tool can receive its input directly from a file or standard input; it can also function as a both client and server, communicating through a network port.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The SMT-LIB adapters}
+The {\tt jSMTLIB.jar} tool discussed in subsection \ref{validator} also contains adapters that convert standard SMT-LIB input into input specific to some non-SMT-LIB solvers. The Windows versions of Simplify, CVC3 2.2, Yices 1.0.28, and Z3 2.11 are currently supported. To use this feature, you must have an 
+executable copy of the solver you wish to use. It is then executed by this command-line:
+\centerline{{\tt java -jar jSMTLIB.jar --solver {\it <solvername>} -exec} {\it <path> <file>}}
+Here {\it <solvername>} is one of {\tt cvc}, {\tt simplify}, {\tt yices}, or {\tt z3} and 
+{\it <path>} is the file system path to the corresponding executable.
+
+The adapters are generally of alpha-release quality; they generally work, but are not necessarily robust and are missing significant features.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The SMT-LIB Java API}
+
+The Java validator application also serves as an API that can be programmatically driven from a Java application (or any language
+with a Java interface). This API is tested along with the validator application.
+
+The {\tt jSMTLIB.jar} file is the library for the API. The public functions have Javadoc documentation.
+A general user guide to the library is being written.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The SMT Eclipse plug-in}
+
+The validator application is a command-line tool. There is also an associated Eclipse plug-in. 
+The internal functionality is the
+same as that of the command-line tool, since the plug-in is simply a GUI that drives the command-line tool through the 
+programmatic API. The plug-in will appeal to those who prefer a GUI text editor for creating and reviewing SMT-LIB scripts. The plug-in
+also makes it easy to try different solvers on the same problem.
+
+The plug-in has this functionality:
+\begin{itemize}
+\item A custom text editor associated with the {\tt .smt2} file name suffix. The editor's syntax coloring is customized to SMT-LIB scripts.
+\item The SMT-LIB validator highlights errors in script files using the standard Eclipse problem mechanism and using a new problem marker
+that identifies SMT-LIB problems.
+\item The ability to view logic and theory files
+\item The ability to execute scripts on a chosen solver from the GUI
+\item A typical Eclipse preference page that permits the user to set the equivalent of command-line options using the GUI
+\item An Eclipse Help page
+\end{itemize}
+
+The plug-in can be installed using the standard Eclipse installation mechanism by using this web-site: 
+\url{http://www.grammatech.com/resources/smt/jSMTLIB-UpdateSite}.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{SMT validation test suite}
+
+The development of the jSMTLIB application, API, and adapters was helped by the complementary
+creation of a validation test suite. That suite can be used to compare the behavior of various
+solvers that (more or less) conform to SMT-LIBv2.
+
+The suite consists of a number of SMT-LIB command scripts and their corresponding expected responses.
+A bash script drives the execution of the scripts, collection of the responses, and comparisons against
+the ``golden'' output.  Since there are no standard error messages for invalid scripts, the only
+comparison that can be made in those cases is whether or not the solver produced an error response.
+
+SMT solvers are under active development. Those that participated in SMT-COMP 2010, when version 2.0 of
+SMT-LIB had only recently been issued, typically implemented only enough of the version 2.0 syntax to be
+able to participate successfully in the competition.  Some of these solvers are actively working to
+become fully conforming; other development groups will eventually do so but have other priorities for
+current development.  Thus it was not thought useful to publish detailed evaluations of individual solvers
+in this document. A future edition of the tutorial will include such comments in chapter \ref{Solvers}.
+
+%%%The validation suite includes tests for the following:
+%%%\begin{itemize} \nospace
+%%%\item expected behavior of each defined option ({\tt get-option} and {\tt set-option} commands)
+%%%\item expected behavior of each defined information item ({\tt get-info} and {\tt set-info} commands
+%%%\item expected behavior of {\tt declare-sort} and the use of newly declared sorts
+%%%\item expected behavior of {\tt define-sort} and the use of new sort abbreviations
+%%%\item expected behavior of {\tt declare-fun} and {\tt define-fun} and the use of the newly defined symbols
+%%%\item expected behavior of {\tt push} and {\tt pop} and their interactions with assertions, scoping, and new sort
+%%%and function symbol declarations
+%%%\item expected behavior of {\tt set-logic}, and interactions with other commands (some of which must
+%%%precede {\tt set-logic} and some of which must follow)
+%%%\item expected behavior of {\tt assert}, including the variety of kinds of expressions
+%%%\item expected behavior of {\tt check-sat} for both satisfiable and unsatisfiable sets of assertions
+%%%\item expected behavior of {\tt exit} 
+%%%\end{itemize}
+%%%
+%%%Some behaviors that are not yet checked are these:
+%%%\begin{itemize} \nospace
+%%%\item whether expressions in {\tt assert} statements are permitted given the logic that was set
+%%%\item type-checking of all the informally declared function symbols in the various theories
+%%%\item the {\tt get-proof}, {\tt get-unsat-core}, {\tt get-value}, and {\tt get-assignment} commands
+%%%\end{itemize}
+
+The validation suite is available from the author and will be made available by web download once some 
+currently discussed details of SMT-LIB are resolved.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Tools from other providers}
+
+The SMT-LIB web site (\url{www.smt-lib.org}) lists other tools that process SMT-LIB text. The site currently lists these SMT-LIBv2 parsers:
+\begin{itemize}
+\item A C99 parser by Alberto Griggio:\\ \url{https://es.fbk.eu/people/griggio/misc/smtlib2parser.html}
+\item An OCaml parser  by Kyle Krchak and Aaron Stump (downloadable from the Utilities page of \url{www.smt-lib.org})
+\item A Haskell parser by Tom Hawkins: \url{http://hackage.haskell.org/package/smt-lib}
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% TBD: Better description of sort expressions
+%% TBD: Use subsubsection numbering for kinds of expressions
+
+%%%\chapter*{Epilogue: Ideas for the future}
+%%%
+%%%Writing a tutorial and implementing tools to match a language will inevitably spark ideas for changes.
+%%%Some of the inconsistencies and ambiguities have been corrected or clarified in revisions of the SMT-LIB standard.  But other ideas were not. Here are some thoughts along those lines.
+%%%
+%%%\begin{itemize}
+%%%\item Allow {\tt set-logic} to be issued more than once. The command would do a complete reset of the 
+%%%assertion set stack.  It might possibly also reset options and information items (but might not).
+%%%\item Remove the restriction that command names are reserved words to avoid problems extending the language in the future.
+%%%
+%%%\item Allow overloading of sort symbols.
+%%%\item Simplify the description of SMT-LIB by making options simply attributes.
+%%%
+%%%\item Avoid the distinction between what can be defined in a theory and what can be defined by the user
+%%%\begin{itemize} \nospace
+%%%\item Allow overloading of functions by the user and shadowing of function names
+%%%\item Allow the declaration of parametric functions by the user
+%%%\end{itemize}
+%%%\item The user should be able to set information items
+%%%\item Allow the declaration of parameterized families of sort identifiers, for example:\\*
+%%%\centerline{\tt (declare-sort (\_ \sym\ +) Int)}
+%%%Here the {\tt +} means a non-zero \numeral.
+%%%\item Allow the declaration of parameterized families of function identifiers, with constraints on the
+%%%parameters, for example:\\*
+%%%\centerline{\tt (declare-fun concat ((\_ BitVec +m) (\_ BivVec +n)) (\_ BitVec (+ m n)))}
+%%%\centerline{\tt (declare-fun invert ((\_ BitVec +m) ) (\_ BitVec m))}
+%%%Here {\tt m} and {\tt n} are symbols representing non-zero (because of the {\tt +}) \numeral s.
+%%%
+%%%\item Some aspects of logic and theory definitions are described only in non-machine-interpretable natural language. It may be better to define machine-interpretable expressions of these aspects. Admittedly this will take careful thought and significant implementation.
+%%%\item The {\tt :error-behavior} information is of uncertain usefulness, since solvers are unlikely to
+%%%fall into either behavior completely.
+%%%\item Allow user control over solver heuristics, particularly of quantifier instantiation.
+%%%\item Allow the declaration of multiple function symbols of the same sort in one {\tt declare-fun} command.
+%%%\item Allow specifying a timeout duration and a {\tt timeout} value for {\tt :reason-unknown}.
+%%%\item Resolve the value of an info item before it is set
+%%%\item When are :random-seed and :expand-definitions allowed to be set
+%%%\item Clarify that :expand-definitions does not apply to get-assertions
+%%%\item Equivalent of get-assertions for declarations
+%%%\item resolve continuing after errors
+%%%\item resolve implicit conversions
+%%%\item scoped options?
+%%%\item resolve the "inorder" traversal for implicit declarations; allow naming expressions without introducing new functions?
+%%%\end{itemize}
+
+%%TBD - check other comments on most recent draft of standard
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\bibliographystyle{plain}
+\bibliography{../bibliography/cok}
+
+\pagebreak
+{\it An index will be added in a future edition of the tutorial.} %% TBD
+
+%%\printindex
+
+\end{document}
+
+%% TBD - each command should have a table of possible errors

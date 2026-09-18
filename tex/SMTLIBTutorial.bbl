@@ -1,0 +1,38 @@
+\begin{thebibliography}{1}
+
+\bibitem{BDO+08}
+Clark Barrett, Morgan Deters, Albert Oliveras, and Aaron Stump.
+\newblock Design and results of the $3^{rd}$ annual satisfiability modulo
+  theories competition ({SMT-COMP} 2007).
+\newblock {\em International Journal on Artificial Intelligence Tools (IJAIT)},
+  17(4):569--606, August 2008.
+
+\bibitem{BarST-SMT-10}
+Clark Barrett, Aaron Stump, and Cesare Tinelli.
+\newblock {The SMT-LIB Standard: Version 2.0}.
+\newblock In A.~Gupta and D.~Kroening, editors, {\em Proceedings of the 8th
+  International Workshop on Satisfiability Modulo Theories (Edinburgh,
+  England)}, 2010.
+
+\bibitem{BarST-RR-10}
+Clark Barrett, Aaron Stump, and Cesare Tinelli.
+\newblock {The SMT-LIB Standard: Version 2.0}.
+\newblock Technical report, Department of Computer Science, The University of
+  Iowa, 2010.
+
+\bibitem{SMTCOMP-2010}
+Morgan Deters. \url{http://www.smtcomp.org/2010}.
+
+\bibitem{RanTin-PDPAR-03}
+Silvio Ranise and Cesare Tinelli.
+\newblock {The SMT-LIB Format: An Initial Proposal}.
+\newblock In {\em Proceedings of the 1st Workshop on Pragmatics of Decision
+  Procedures in Automated Reasoning (Miami Beach, USA)}. 2003.
+
+\bibitem{smtlibweb}
+Cesare Tinelli. \url{http://www.smt-lib.org}.
+
+\bibitem{POSIX}
+http://en.wikipedia.org/wiki/Regular\_expression.
+
+\end{thebibliography}

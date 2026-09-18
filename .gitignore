@@ -1,1 +1,15 @@
 .DS_Store
+tex/*.aux
+tex/*.log
+tex/*.toc
+tex/*.out
+tex/*.idx
+tex/*.ind
+tex/*.ilg
+tex/*.lot
+tex/*.tcp
+tex/*.tps
+tex/*.fls
+tex/*.fdb_latexmk
+tex/*.blg
+tex/*.pdf
