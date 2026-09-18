@@ -125,6 +125,12 @@ public class Lexer {
 	
 	/** Any comment text found before the current token */
 	public String prefixCommentText;
+
+	/** The character range prefixCommentText was captured from (before the one leading
+	 *  newline stripping below, if any, is applied to prefixCommentText itself) -- lets a
+	 *  caller that turns a comment into its own node (see command/C_comment.java) give that
+	 *  node an accurate pos(). */
+	public int prefixCommentStart, prefixCommentEnd;
 	
 	/** The source of input used in this lexer; typically a different
 	 * lexer object will be used for each source (e.g. different file, string,
@@ -392,8 +398,10 @@ public class Lexer {
 			prefixCommentText = null;
 			if (matcher.groupCount() >= 1 && matcher.end(1) != matcher.start(1)) {
 				prefixCommentText = matcher.group(1);
-				if (prefixCommentText.startsWith("\n")) prefixCommentText = prefixCommentText.substring(1);
-				else if (prefixCommentText.startsWith("\r\n")) prefixCommentText = prefixCommentText.substring(2);
+				prefixCommentStart = matcher.start(1);
+				prefixCommentEnd = matcher.end(1);
+				if (prefixCommentText.startsWith("\n")) { prefixCommentText = prefixCommentText.substring(1); prefixCommentStart++; }
+				else if (prefixCommentText.startsWith("\r\n")) { prefixCommentText = prefixCommentText.substring(2); prefixCommentStart += 2; }
 			}
 			int end = matcher.end(2);
 			//			System.out.println("MATCHED RANGE " + matcher.start() + " " + matcher.end() + " !" + matcher.group() + "!");

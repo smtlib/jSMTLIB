@@ -47,7 +47,6 @@ public class C_get_option extends Command implements Iget_option {
 	
 	@Override
 	public IResponse execute(ISolver solver) {
-		if (prefixText != null) solver.comment(prefixText);
 		return solver.get_option(option);
 	}
 

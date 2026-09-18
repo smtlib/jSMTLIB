@@ -151,7 +151,31 @@ public class Parser extends Lexer implements IParser {
 			while (true) { // The while loop is just so that AbortInputException can cause a retry
 				try {
 					ILexToken rp = null;
-					if (isEOD()) return null;
+					boolean atEnd = isEOD();
+					// isEOD() (above) already peeked the upcoming token -- even the synthetic
+					// end-of-data marker itself, if that's what's next -- which as a side
+					// effect populates prefixCommentText for it without consuming it. So a
+					// comment immediately before the next command, OR a trailing comment with
+					// no command left to precede, both surface here the same way. Return it as
+					// its own synthetic command now; if it precedes a real command, that
+					// command is still fully unconsumed and parses normally on the next call to
+					// parseCommand(). Comments elsewhere (between a command's arguments) are
+					// deliberately not captured this way and remain unforwarded, as before.
+					// prefixCommentText's capturing group combines whitespace AND comments
+					// (see Lexer.combined's group 1), so it is non-null whenever any
+					// whitespace at all precedes the next token -- not only when a real
+					// comment does. Only genuinely non-blank content (i.e. an actual comment)
+					// should become a C_comment; plain whitespace must not.
+					if (prefixCommentText != null && !prefixCommentText.trim().isEmpty()) {
+						String text = prefixCommentText;
+						int start = prefixCommentStart, end = prefixCommentEnd;
+						prefixCommentText = null;
+						org.smtlib.command.C_comment c = new org.smtlib.command.C_comment(text);
+						setPos(c, pos(start, end));
+						return c;
+					}
+					prefixCommentText = null;
+					if (atEnd) return null;
 					try {
 						savedlp = parseLP();
 					} catch (ParserException e) {
@@ -163,7 +187,6 @@ public class Parser extends Lexer implements IParser {
 						if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Skipped " + skipped + " stray token(s) while recovering to the next command");
 						return null;
 					}
-					String prefixText = prefixCommentText;
 					smtConfig.topLevel = false;
 					Symbol sym = parseSymbolOrReservedWord("Expected a symbol here, not a #");
 					if (sym == null) {
@@ -231,7 +254,6 @@ public class Parser extends Lexer implements IParser {
 					}
 					if (command != null) {
 						setPos(command,pos(savedlp.pos(),rp.pos()));
-						command.prefixText = prefixText;
 					}
 				} catch (IParser.AbortInputException e) {
 					smtConfig.log.logOut("Input aborted");

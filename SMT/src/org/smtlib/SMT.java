@@ -614,8 +614,13 @@ public class SMT {
 							}
 						}
 					}
-					smtlibVersionAllowed = (command instanceof ICommand.Ireset)
-							|| (isSmtlibVersionInfo && !result.isError());
+					// A leading comment must not count as "using up" the first-command slot --
+					// it's not a real script command, just carried along so it can be
+					// forwarded to the solver (see issue #42).
+					if (!(command instanceof org.smtlib.command.C_comment)) {
+						smtlibVersionAllowed = (command instanceof ICommand.Ireset)
+								|| (isSmtlibVersionInfo && !result.isError());
+					}
 					if (result.isError()) {
 						IResponse.IError eresult = (IResponse.IError)result;
 						if (eresult.pos() == null && command instanceof IPosable) {

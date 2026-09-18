@@ -45,7 +45,6 @@ public class C_get_info extends Command implements Iget_info {
 	
 	@Override
 	public IResponse execute(ISolver solver) {
-		if (prefixText != null) solver.comment(prefixText);
 		return solver.get_info(infoflag);
 	}
 
