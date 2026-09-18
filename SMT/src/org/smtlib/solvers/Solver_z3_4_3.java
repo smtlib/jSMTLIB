@@ -66,7 +66,13 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	@Override
 	public /*@Nullable*/IResponse checkSatStatus() { return checkSatStatus; }
 
-	/** The number of pushes less the number of pops so far */
+	/** The number of pushes less the number of pops so far -- i.e. the real depth of the
+	 *  solver's own assertion stack. 0 immediately after set_logic(), before any push (not
+	 *  1: set_logic() does not itself push anything). Used to know how much to pop for
+	 *  set_logic()'s relax-mode re-entry cleanup; NOT used to validate a pop count client-side
+	 *  -- z3-4.3 already does that itself, with better diagnostics than this adapter could
+	 *  produce (see #53), so only update this after the solver confirms a pop actually
+	 *  succeeded, never unconditionally. */
 	protected int pushesDepth = 0;
 	
 	/** Creates an instance of the Z3 solver */
@@ -267,9 +273,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		if (!logicSet) {
 			return smtConfig.responseFactory.error("The logic must be set before an assert command is issued");
 		}
-		if (pushesDepth <= 0) {
-			return smtConfig.responseFactory.error("All assertion sets have been popped from the stack");
-		}
 		try {
 			String s = solverProcess.sendAndListen("(assert ",translate(sexpr),")\n");
 			response = parseResponse(s);
@@ -341,9 +344,23 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	@Override
 	public IResponse reset() {
 		logicSet = false;
+		pushesDepth = 0;
 	    return sendCommand("(reset)");
 	}
 
+	/** z3-4.3 predates reset-assertions (added in SMT-LIB 2.5), and turns out to already
+	 *  handle that gracefully on its own: sent the literal, unrecognized command text, its
+	 *  SMT2 front-end replies with the literal token "unsupported" -- confirmed directly
+	 *  against a real z3-4.3.1 binary -- rather than erroring or crashing. That's the
+	 *  correct, honest answer for a solver that genuinely can't do this, so there is nothing
+	 *  for the adapter to improve on here: a from-jSMTLIB pop-to-base simulation was tried
+	 *  and reverted -- it silently claimed success while only partially honoring the
+	 *  contract (it can only clear pushed-frame state, not declarations, and per issue #53
+	 *  discussion, non-global declarations are also supposed to be cleared by
+	 *  reset-assertions, which this adapter has no way to do without locally tracking every
+	 *  declaration), and it desynced the linesOffset bookkeeping used to translate Z3's own
+	 *  reported error positions back to the script's real line numbers, corrupting later
+	 *  error messages. See issue #53. */
 	@Override
 	public IResponse reset_assertions() {
 	    return sendCommand("(reset-assertions)");
@@ -355,12 +372,20 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			return smtConfig.responseFactory.error("The logic must be set before a pop command is issued");
 		}
 		if (number < 0) throw new SMT.InternalException("Internal bug: A pop command called with a negative argument: " + number);
-		if (number > pushesDepth) return smtConfig.responseFactory.error("The argument to a pop command is too large: " + number + " vs. a maximum of " + (pushesDepth));
 		if (number == 0) return  successOrEmpty(smtConfig);
 		try {
 			checkSatStatus = null;
-			pushesDepth -= number;
-			return parseResponse(solverProcess.sendAndListen("(pop ",Integer.toString(number),")\n"));
+			// Deliberately no client-side bound check against pushesDepth here: z3-4.3
+			// already validates a pop count against its own real stack depth and reports a
+			// precise, line/column-annotated error itself (confirmed against a real
+			// z3-4.3.1 binary: "invalid pop command, argument is greater than the current
+			// stack depth") -- better diagnostics than anything this adapter could produce,
+			// so defer to it (see issue #53). Only update the local depth bookkeeping once
+			// the solver actually accepted the pop; otherwise nothing was really popped and
+			// pushesDepth must not drift from what the solver's real stack looks like.
+			IResponse response = parseResponse(solverProcess.sendAndListen("(pop ",Integer.toString(number),")\n"));
+			if (!response.isError()) pushesDepth -= number;
+			return response;
 		} catch (IOException e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
 		}
@@ -392,9 +417,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#set-logic " + logicName);
 		if (logicSet) {
 			if (!smtConfig.relax) return smtConfig.responseFactory.error("Logic is already set");
-			pop(pushesDepth);
+			pop(pushesDepth); // pop back to the base frame -- pushesDepth is 0 again afterward
 		}
-		pushesDepth++;
 		logicSet = true;
 		if (logicName.equals("ALL")) {
 			return smtConfig.responseFactory.success();
