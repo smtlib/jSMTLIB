@@ -43,10 +43,17 @@ clean:
 	rm -f $(GENERATED)
 
 # Publishes this branch to GitHub Pages. Refuses to push if the working
-# tree isn't clean, so what's live always matches a real commit.
+# tree isn't clean, so what's live always matches a real commit, and
+# refuses if gh-pages hasn't merged everything from edits (the ongoing
+# working branch -- see README/commit history), so a publish can't
+# accidentally skip work still sitting there.
 push:
 	@if [ -n "$$(git status --porcelain)" ]; then \
 		echo "Working tree is not clean -- commit or stash changes before pushing." >&2; \
+		exit 1; \
+	fi
+	@if ! git merge-base --is-ancestor edits gh-pages; then \
+		echo "gh-pages does not contain all commits from edits -- merge edits into gh-pages before pushing." >&2; \
 		exit 1; \
 	fi
 	git push origin gh-pages
