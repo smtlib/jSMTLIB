@@ -16,9 +16,8 @@ import org.smtlib.SMT.Configuration;
  */
 public class Solver_z3_4_3_2 extends Solver_z3_4_3 {
 	
-    protected String NAME_VALUE = "z3-4.3.2";
-    protected String AUTHORS_VALUE = "Leonardo de Moura and Nikolaj Bjorner";
-    protected String VERSION_VALUE = "4.3.2";
+    @Override
+    protected String name() { return "z3-4.3.2"; }
 
 	public Solver_z3_4_3_2(Configuration smtConfig, String executable) {
 		super(smtConfig, executable);

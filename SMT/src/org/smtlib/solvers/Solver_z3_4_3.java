@@ -43,7 +43,12 @@ import org.smtlib.Utils;
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into Z3 commands */
 public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	
-	protected String NAME_VALUE = "z3-4.3";
+	/** The solver's display name for diagnostic logging. A real, overridable method rather
+	 *  than a field -- a field here would be hidden, not overridden, by a subclass's own
+	 *  same-named field (Java fields aren't polymorphic), silently binding start()'s
+	 *  reference to this class's value regardless of which subclass is actually running.
+	 *  See issue #51. */
+	protected String name() { return "z3-4.3"; }
 
 
 	protected int linesOffset = 0;
@@ -158,7 +163,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			solverProcess.sendAndListen("(set-option :print-success true)\n"); // Z3 4.3.0 needs this because it mistakenly has the default for :print-success as false
 			linesOffset ++; 
 			//if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started "+NAME_VALUE+" ");
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started "+name()+" ");
 			return smtConfig.responseFactory.success();
 		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
