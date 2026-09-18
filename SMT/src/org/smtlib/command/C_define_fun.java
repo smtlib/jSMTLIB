@@ -5,7 +5,6 @@
  */
 package org.smtlib.command;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.smtlib.ICommand.Idefine_fun;
@@ -15,7 +14,6 @@ import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
-import org.smtlib.sexpr.Printer;
 
 /** Implements the define-fun command */
 public class C_define_fun extends Command implements Idefine_fun {

@@ -4,12 +4,10 @@ import java.util.Collection;
 import java.util.List;
 
 import org.smtlib.IExpr;
-import org.smtlib.ILanguage;
 import org.smtlib.ISort;
 import org.smtlib.IVisitor;
 import org.smtlib.Utils;
 import org.smtlib.IExpr.*;
-import org.smtlib.impl.SMTExpr;
 
 /** This logic does not allow uninterpreted functions or nonlinear arithmetic terms */
 public class LRA extends Logic {

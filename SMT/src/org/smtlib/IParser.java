@@ -7,7 +7,6 @@ package org.smtlib;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.smtlib.IExpr.IBinding;
@@ -15,8 +14,6 @@ import org.smtlib.IExpr.IDeclaration;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.IQualifiedIdentifier;
 import org.smtlib.IExpr.ISymbol;
-import org.smtlib.impl.Sort;
-import org.smtlib.sexpr.ILexToken;
 import org.smtlib.sexpr.Parser;
 import org.smtlib.IPrinter;
 

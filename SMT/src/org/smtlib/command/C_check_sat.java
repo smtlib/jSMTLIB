@@ -5,7 +5,6 @@
  */
 package org.smtlib.command;
 
-import java.io.IOException;
 
 import org.smtlib.ICommand.Icheck_sat;
 import org.smtlib.IResponse;
@@ -13,7 +12,6 @@ import org.smtlib.ISolver;
 import org.smtlib.IVisitor;
 import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
-import org.smtlib.sexpr.Printer;
 
 /** Implements the check-sat command */
 public class C_check_sat extends Command implements Icheck_sat {

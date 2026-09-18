@@ -30,8 +30,6 @@ import org.smtlib.impl.Factory;
 import org.smtlib.impl.Pos;
 import org.smtlib.impl.SMTExpr;
 import org.smtlib.sexpr.ISexpr;
-import org.smtlib.sexpr.ILexToken;
-import org.smtlib.sexpr.Parser;
 
 /** A class of static utility methods and constants for the SMT-LIB package. */
 public class Utils {

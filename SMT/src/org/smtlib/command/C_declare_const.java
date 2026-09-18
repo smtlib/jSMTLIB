@@ -5,7 +5,6 @@
  */
 package org.smtlib.command;
 
-import java.io.IOException;
 import java.util.Collections;
 
 import org.smtlib.ICommand.Ideclare_const;
@@ -16,7 +15,6 @@ import org.smtlib.ISolver;
 import org.smtlib.ISort;
 import org.smtlib.IVisitor;
 import org.smtlib.sexpr.Parser;
-import org.smtlib.sexpr.Printer;
 
 /** Implements the declare-const command (syntactic sugar for declare-fun with no argument sorts) */
 public class C_declare_const extends C_declare_fun implements Ideclare_const {

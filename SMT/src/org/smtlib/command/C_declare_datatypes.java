@@ -5,7 +5,6 @@
  */
 package org.smtlib.command;
 
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -18,7 +17,6 @@ import org.smtlib.ISolver;
 import org.smtlib.*;
 import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
-import org.smtlib.sexpr.Printer;
 
 /** Implements the declare-datatypes command */
 public class C_declare_datatypes extends Command implements Ideclare_datatypes {

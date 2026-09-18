@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.List;
 
 import org.smtlib.*;
-import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.ISymbol;

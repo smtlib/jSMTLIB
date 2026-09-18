@@ -5,7 +5,6 @@
  */
 package org.smtlib.command;
 
-import java.io.IOException;
 
 import org.smtlib.ICommand.Ireset_assertions;
 import org.smtlib.IParser.ParserException;
@@ -14,7 +13,6 @@ import org.smtlib.ISolver;
 import org.smtlib.IVisitor;
 import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
-import org.smtlib.sexpr.Printer;
 
 /** Implements the reset-assertions command */
 public class C_reset_assertions extends Command implements Ireset_assertions {

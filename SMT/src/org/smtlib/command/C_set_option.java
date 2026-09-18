@@ -5,7 +5,6 @@
  */
 package org.smtlib.command;
 
-import java.io.IOException;
 
 import org.smtlib.ICommand.Iset_option;
 import org.smtlib.*;
@@ -15,7 +14,6 @@ import org.smtlib.SMT.Configuration;
 import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
-import org.smtlib.sexpr.Printer;
 
 /** Implements the set-option command */
 public class C_set_option extends Command implements Iset_option {

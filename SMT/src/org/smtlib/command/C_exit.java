@@ -5,7 +5,6 @@
  */
 package org.smtlib.command;
 
-import java.io.IOException;
 
 import org.smtlib.ICommand.Iexit;
 import org.smtlib.IParser.ParserException;
@@ -14,7 +13,6 @@ import org.smtlib.ISolver;
 import org.smtlib.IVisitor;
 import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
-import org.smtlib.sexpr.Printer;
 
 /** Implements the exit command */
 public class C_exit extends Command implements Iexit {

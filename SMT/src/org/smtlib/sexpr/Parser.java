@@ -5,12 +5,10 @@
  */
 package org.smtlib.sexpr;
 
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.regex.Matcher;
 
 import org.smtlib.*;
 import org.smtlib.ICommand.IScript;
@@ -31,7 +29,6 @@ import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.impl.*;
 import org.smtlib.impl.SMTExpr.Keyword;
-import org.smtlib.impl.SMTExpr.Numeral;
 import org.smtlib.impl.SMTExpr.StringLiteral;
 import org.smtlib.impl.SMTExpr.Symbol;
 

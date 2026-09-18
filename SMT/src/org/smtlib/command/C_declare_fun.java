@@ -5,7 +5,6 @@
  */
 package org.smtlib.command;
 
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -22,7 +21,6 @@ import org.smtlib.IVisitor;
 import org.smtlib.Utils;
 import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
-import org.smtlib.sexpr.Printer;
 
 /** Implements the declare-fun command */
 public class C_declare_fun extends Command implements Ideclare_fun {
