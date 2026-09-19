@@ -248,10 +248,15 @@ public class Solver_simplify extends Solver_test implements ISolver {
 			String msg = "(NOT (AND TRUE " + conjunction + "\n))\n";
 			String s = solverProcess.sendAndListen(msg);
 			// FIXME - what about errors in SImplify
-			//smtConfig.log.logOut("HEARD: " + s);
 			if (s.contains("Valid.")) res = smtConfig.responseFactory.unsat();
 			else if (s.contains("Invalid.")) res = smtConfig.responseFactory.sat();
-			else res = smtConfig.responseFactory.unknown();
+			else {
+				// Temporary diagnostic for issues #56/#58: unconditionally logged so a real
+				// CI run can show what Simplify actually says in exactly the case this
+				// substring match can't classify -- remove once the real fix lands.
+				smtConfig.log.logDiag("#issue56_58: simplify check-sat response matched neither Valid. nor Invalid., defaulting to unknown: " + s);
+				res = smtConfig.responseFactory.unknown();
+			}
 			checkSatStatus = res;
 //			s = solverProcess.sendAndListen("(BG_POP)\r\n");
 			

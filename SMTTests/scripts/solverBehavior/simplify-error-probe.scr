@@ -1,0 +1,77 @@
+##EXITCODE 0
+# Research probe for issues #56/#58: Solver_simplify.check_sat() detects sat/unsat by
+# raw substring matching ("Valid."/"Invalid.") on Simplify's own response text, with NO
+# real error detection -- anything else (including a genuine Simplify-side error) is
+# silently reported as "unknown". Fixing that needs to know what Simplify's own error
+# text actually looks like, which nothing in this project's history records (the class's
+# own doc comment already flags several other methods with the same "no live binary,
+# no documented protocol, can't guess" problem). This talks directly to the real
+# Simplify binary (bypassing jSMTLIB entirely, like every other script in this
+# directory) with a battery of native-syntax probes: one known-good baseline, then
+# several deliberately bad/exotic inputs, to see the actual response shapes.
+#
+# Simplify is only available on Linux-x64 and Windows in smtlib/Solvers (not macOS, not
+# Linux-arm64 -- confirmed 2026-09-18), so this SKIPs cleanly everywhere else.
+# Not ##EXITCODE 1: this is a research/data-gathering probe, not a pass/fail check --
+# it always exits 0 once it has printed what it found (or SKIPs where there's no binary).
+
+_resolve_exec() {
+    case "$PLATFORM" in
+        linux)   echo "$SMT_SOLVER_DIR/Simplify-1.5.4" ;;
+        windows) echo "$SMT_SOLVER_DIR/Simplify-1.5.4.exe" ;;
+        *)       return ;;
+    esac
+}
+
+_exe=$(_resolve_exec)
+if [ -z "$_exe" ] || [ ! -e "$_exe" ]; then
+    echo "SKIP: no Simplify binary on this platform ($PLATFORM)"
+    exit 0
+fi
+
+_probe() {
+    local _label="$1" _input="$2"
+    echo "=== $_label ==="
+    printf '%s\n' "$_input" | timeout 10 "$_exe" 2>&1
+    echo "--- (exit $?) ---"
+}
+
+# Baseline: a trivially valid query, to confirm the normal Valid./Invalid. shape and
+# make sure the binary itself launches and responds at all before trusting anything
+# reported as "different" below.
+_probe "baseline valid (NOT (AND TRUE (EQ 1 2)))" \
+'(BG_PUSH (EQ 1 1))
+(NOT (AND TRUE (EQ 1 2)))'
+
+# Baseline: a trivially invalid (satisfiable) query.
+_probe "baseline invalid (NOT (AND TRUE (NEQ 1 1)))" \
+'(NOT (AND TRUE (NEQ 1 1)))'
+
+# Malformed syntax: unbalanced parentheses.
+_probe "unbalanced parens" \
+'(NOT (AND TRUE (EQ 1 2)'
+
+# Unrecognized top-level command.
+_probe "unknown command" \
+'(FROBNICATE 1 2)'
+
+# Wrong arity for a fixed-arity primitive (EQ normally takes exactly 2 term arguments).
+_probe "EQ with too many arguments" \
+'(NOT (AND TRUE (EQ 1 2 3)))'
+
+# Calling an undeclared predicate as if it took arguments (no DEFPRED was ever sent).
+_probe "undeclared predicate application" \
+'(NOT (AND TRUE (foo 1 2)))'
+
+# Nonlinear real/int arithmetic -- Simplify (Nelson-Oppen era, ~2003) is very unlikely
+# to decide this correctly; the question is whether it errors, hangs, or just answers.
+_probe "nonlinear arithmetic (EQ (* x x) 4)" \
+'(NOT (AND TRUE (EQ (* |x| |x|) 4)))'
+
+# A malformed/incomplete DEFPRED (no body, matching what declare_fun()/define_fun()
+# actually send -- see the class doc's "raw response not inspected" note).
+_probe "DEFPRED then call with wrong arity" \
+'(DEFPRED (p X0))
+(NOT (AND TRUE (p 1 2)))'
+
+exit 0
