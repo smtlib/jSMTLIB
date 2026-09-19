@@ -5,9 +5,7 @@
  */
 package org.smtlib.command;
 
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Collections;
 
 import org.smtlib.ICommand.Ideclare_const;
 import org.smtlib.IExpr.ISymbol;
@@ -17,7 +15,6 @@ import org.smtlib.ISolver;
 import org.smtlib.ISort;
 import org.smtlib.IVisitor;
 import org.smtlib.sexpr.Parser;
-import org.smtlib.sexpr.Printer;
 
 /** Implements the declare-const command (syntactic sugar for declare-fun with no argument sorts) */
 public class C_declare_const extends C_declare_fun implements Ideclare_const {
@@ -29,11 +26,9 @@ public class C_declare_const extends C_declare_fun implements Ideclare_const {
 	@Override
 	public String commandName() { return commandName; }
 	
-	static final private List<ISort> emptyList = new LinkedList<ISort>();
-	
 	/** Constructs a command instance from its components */
 	public C_declare_const(ISymbol symbol, ISort resultSort) {
-		super(symbol, emptyList, resultSort);
+		super(symbol, Collections.emptyList(), resultSort);
 	}
 
 	/** Parses the arguments of the command, producing a new command instance */

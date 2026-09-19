@@ -10,7 +10,7 @@ import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.ISymbol;
 
-public class QF_UFLIA extends Logic {
+public class QF_UFLIA extends LIA {
 
 	public QF_UFLIA(ISymbol name, Collection<IAttribute<?>> attributes) {
 		super(name,attributes);
@@ -22,9 +22,9 @@ public class QF_UFLIA extends Logic {
 
 	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
 		noQuantifiers(expression);
-		if (!isLinearInteger(expression)) throw new IVisitor.VisitorException("Integer expressions must be linear in this logic",expression.pos());
+		super.validExpression(expression);
 	}
-	
+
 	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
 		// new sorts permitted
 	}

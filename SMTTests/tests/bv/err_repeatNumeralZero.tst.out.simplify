@@ -1,3 +1,3 @@
 (error "The simplify solver does not yet support the bit-vector theory")
-success
-(error "The numeral may not be 0 in a repeat")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before an assert command is issued")

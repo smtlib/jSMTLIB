@@ -1,0 +1,7 @@
+Simplify (Simplify-1.5.4) has no floating-point theory support at all: its
+translate()/protocol either rejects specific FP predicates outright
+("Bad input: Unknown predicate symbol: fp.eq.", etc. -- see issue #56) or,
+for FP functions used only as terms (fp.abs, fp.add, ...), silently treats
+them as arbitrary uninterpreted symbols with no floating-point semantics,
+producing a technically well-formed but semantically meaningless verdict.
+Neither behavior is worth capturing as a golden -- skip instead.

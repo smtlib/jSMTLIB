@@ -15,8 +15,6 @@ import org.smtlib.sexpr.Printer;
 /** This abstract class is the base class for all commands within this implementation. */
 public abstract class Command extends Pos.Printable implements ICommand {
 
-	public /*@Nullable*//*@ReadOnly*/ String prefixText;
-
 	/** The command name */
 	abstract public String commandName();
 

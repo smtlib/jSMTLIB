@@ -5,8 +5,6 @@
  */
 package org.smtlib.solvers;
 
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.util.*;
 
 import org.smtlib.*;
@@ -89,8 +87,7 @@ public class Solver_test implements ISolver {
 		options.putAll(smt().utils.defaults);
 		((Response.Factory)smtConfig.responseFactory).printSuccess = true;
 		smtConfig.verbose = 0;
-		smtConfig.log.out = smtConfig.stdout;
-		smtConfig.log.diag = smtConfig.stderr;
+		smtConfig.log.setChannels(smtConfig.stdout, smtConfig.stderr);
 		checkSatStatus = null;
 
 		return smtConfig.responseFactory.success();
@@ -170,10 +167,7 @@ public class Solver_test implements ISolver {
 		}
 		// FIXME - do we really want to call get-option here? it involves going to the solver?
 		if (!smtConfig.relax && !Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSERTIONS)))) {
-			String key;
-			if (smtConfig.atLeastVersion(SMTLIB.V25)) key = ":produce-assertions";
-			else key = ":interactive-mode";
-			return smtConfig.responseFactory.error("The get-assertions command is only valid if " + key + " has been enabled");
+			return smtConfig.responseFactory.error("The get-assertions command is only valid if " + Utils.produceAssertionsKey(smtConfig) + " has been enabled");
 		}
 		List<IExpr> combined = new LinkedList<IExpr>();
 		Iterator<List<IExpr>> iter = assertionSetStack.listIterator();
@@ -371,8 +365,12 @@ public class Solver_test implements ISolver {
 		String option = key.value();
 		if (Utils.PRINT_SUCCESS.equals(option)) {
 			if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
-				// This message is duplicated in the C_set_option constructor
-//				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
+				// C_set_option.parse() already rejects this eagerly for any text-driven
+				// script (see its checkOptionType()) -- but this method is also reachable
+				// directly via smtConfig.commandFactory.set_option(key,value), which
+				// bypasses that parse-time check entirely, so this can't just assume the
+				// value was already validated (see issue #41).
+				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'", value.pos());
 			} else {
 				// FIXME - make this more abstract
 				((Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
@@ -395,33 +393,19 @@ public class Solver_test implements ISolver {
 			// Actually, v should never be anything but IStringLiteral - that should
 			// be checked during parsing
 			String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : Utils.STDERR;
-			if (name.equals(Utils.STDOUT)) {
-				smtConfig.log.diag = smtConfig.stdout;
-			} else if (name.equals(Utils.STDERR)) {
-				smtConfig.log.diag = smtConfig.stderr;
-			} else {
-				try {
-					FileOutputStream f = new FileOutputStream(name,true); // append
-					smtConfig.log.diag = new PrintStream(f);
-				} catch (java.io.IOException e) {
-					return smtConfig.responseFactory.error("Failed to open or write to the diagnostic output " + e.getMessage(),value.pos());
-				}
+			try {
+				smtConfig.log.setDiagnosticOutputChannel(name);
+			} catch (java.io.IOException e) {
+				return smtConfig.responseFactory.error("Failed to open or write to the diagnostic output " + e.getMessage(),value.pos());
 			}
 		} else if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
 			// Actually, v should never be anything but IStringLiteral - that should
 			// be checked during parsing
 			String name = (value instanceof IStringLiteral)?((IStringLiteral)value).value() : Utils.STDOUT;
-			if (name.equals(Utils.STDOUT)) {
-				smtConfig.log.out = smtConfig.stdout;
-			} else if (name.equals(Utils.STDERR)) {
-				smtConfig.log.out = smtConfig.stderr;
-			} else {
-				try {
-					FileOutputStream f = new FileOutputStream(name,true); // append
-					smtConfig.log.out = new PrintStream(f);
-				} catch (java.io.IOException e) {
-					return smtConfig.responseFactory.error("Failed to open or write to the regular output " + e.getMessage(),value.pos());
-				}
+			try {
+				smtConfig.log.setRegularOutputChannel(name);
+			} catch (java.io.IOException e) {
+				return smtConfig.responseFactory.error("Failed to open or write to the regular output " + e.getMessage(),value.pos());
 			}
 		}
 		if (Utils.INTERACTIVE_MODE.equals(option) && !smtConfig.isVersion(SMTLIB.V20)) option = Utils.PRODUCE_ASSERTIONS;
@@ -523,17 +507,17 @@ public class Solver_test implements ISolver {
 		if (cmd.parameters() != null && !smtConfig.relax) {
 			return smtConfig.responseFactory.error("A par-polymorphic function declaration requires --relax", cmd.symbol().pos());
 		}
-		if (cmd.attributes() != null && !cmd.attributes().isEmpty() && !smtConfig.relax) {
+		if (!cmd.attributes().isEmpty() && !smtConfig.relax) {
 			return smtConfig.responseFactory.error("Function attributes on declare-fun require --relax", cmd.symbol().pos());
 		}
 		String encodedName = encode(cmd.symbol());
 		List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.argSorts(),cmd.resultSort(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
 		if (list.isEmpty()) {
 			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(cmd.argSorts().toArray(new ISort[cmd.argSorts().size()]),cmd.resultSort());
-			// cmd.attributes()/cmd.parameters() are only ever non-null if --relax was checked
-			// above; passing them straight through lets a user-declared function opt into the
-			// same :left-assoc/etc. n-ary sugar and par-polymorphism SymbolTable.lookup()
-			// already applies to theory-declared ones.
+			// cmd.attributes() is never null (empty if none); cmd.parameters() is only ever
+			// non-null if --relax was checked above. Passing them straight through lets a
+			// user-declared function opt into the same :left-assoc/etc. n-ary sugar and
+			// par-polymorphism SymbolTable.lookup() already applies to theory-declared ones.
 			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,cmd.attributes(),cmd.parameters());
 			// --relax experimentally allows overloading a user-declared symbol (standard
 			// SMT-LIB permits this only for background-scope, theory-declared symbols) --

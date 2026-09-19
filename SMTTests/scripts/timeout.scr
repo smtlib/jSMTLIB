@@ -1,0 +1,198 @@
+##EXITCODE 1
+# Validates jSMTLIB's own -t/--timeout (per-query) option (issue #60: jSMTLIB's -t/-T
+# CLI interface, translated per-solver in SMT/src/org/smtlib/solvers/*) actually causes
+# a real solver to give up, rather than silently being ignored or hanging forever --
+# AND that it does so the standard way: check-sat answers "unknown", and a follow-up
+# (get-info :reason-unknown) attributes that to the timeout, not just any old "unknown".
+#
+# Marked .skip (see scripts/timeout.scr.skip): a real cross-platform CI run showed the
+# exact PASS/FAIL content -- and even the overall exit code -- genuinely differs by
+# platform in ways this script cannot paper over, the same trap
+# scripts/solverBehavior/all-statistics.scr hit for its own reasons. Specifically:
+# z3-4.3's own :reason-unknown wording differs by OS (confirmed empirically): "smt"
+# (truncated, non-conforming -- see below) on macOS, but a clean "timeout" on Linux
+# x64 -- apparently different z3-4.3.1 builds per platform, not just this jSMTLIB
+# adapter's parsing. Linux-arm64's z3-4.3.1 build is separately known-broken (see the
+# jsmtlib_ci_cross_platform_verification session history) and doesn't even reach
+# "unknown" reliably. yices2 has no binary at all in Solvers-linux-arm64. Run manually
+# for an up-to-date, single-platform assessment: `bash runscript scripts/timeout.scr`.
+#
+# Workload: the pigeonhole principle with 12 pigeons into 11 holes (PHP(12,11)), a
+# textbook worst case for CDCL/resolution-style search (known exponential lower bound
+# on resolution proof size), encoded as plain QF_UF Boolean commands (no arithmetic/
+# cardinality theory a solver could shortcut through) -- see the assert-batching note
+# below for why it's ~740 clauses in one command, not ~740 commands. Empirically
+# confirmed this session, unbounded (no -t at all, wrapped in an external `timeout 30`):
+# z3, cvc5, yices2, and SMTInterpol are ALL still running at 30s -- so a run that
+# finishes well before that with `-t 1` set is good evidence the timeout actually
+# fired, not that the solver got lucky and finished the real problem. Each solver
+# invocation is wrapped in an outer 60s watchdog (see _with_timeout below) purely so a
+# still-broken adapter fails this script instead of hanging CI.
+#
+# :reason-unknown wording, confirmed empirically this session (all case-insensitive,
+# quotes optional per each solver's own convention -- accepted here as equivalent):
+#   - z3-4.8.12 through 5.1.0, cvc5-1.3.2, yices2:      timeout
+#   - z3-4.5.0/4.6.0/4.7.1 (older z3, one L):            canceled
+#   - SMTInterpol-2.5 (two Ls):                          cancelled
+#   - z3-4.3:                                            smt  <- see below, NOT accepted
+#
+# z3-4.3's raw response is not valid SMT-LIB syntax to begin with: an unquoted,
+# multi-word value, e.g. (:reason-unknown smt tactic failed to show goal to be
+# sat/unsat) -- a :reason-unknown value must be a single token. jSMTLIB's parser
+# silently keeps only the first word ("smt") and drops the rest, rather than erroring
+# or preserving the full text some other way, so what actually reaches the user
+# doesn't say "timeout" or anything recognizable as one. This is a real, separate,
+# pre-existing defect (not introduced by the -t/-T work here, and not fixed by it) --
+# note SMT/src/org/smtlib/SolverProcess.java's own `badFormat` field, whose doc comment
+# describes exactly this z3 :reason-unknown scenario, is declared but never actually
+# set true anywhere, so the handling it implies never engages. Left FAILing here (exit
+# code 1 above, matching scripts/solverBehavior/all-statistics.scr's and
+# print-success.scr's convention for a confirmed, known, pre-existing non-conformance)
+# rather than quietly excluded or accepted, so this doesn't regress further unnoticed;
+# worth its own follow-up issue rather than a fix bundled into #60.
+#
+# Solver list is a small, deliberately FIXED set -- not ${SMT_TEST_SOLVERS} -- chosen to
+# be present on every one of the 5 CI platforms (confirmed directly against the
+# smtlib/Solvers repo's Solvers-macos/-macos-arm64/-linux/-linux-arm64/-windows trees):
+# z3-4.3 (the legacy adapter), z3-4.8.12 and z3-4.16.0 (two Solver_z3_recent versions,
+# spanning its whole supported range), cvc5-1.3.2, yices2 (the whole-run-only fallback
+# case), smtinterpol-2.5 (the per-query-only fallback case). This exercises every
+# distinct code path in the -t/-T translation. Deliberately excludes: bitwuzla and
+# alt-ergo (availability varies per platform -- e.g. bitwuzla is on macos-arm64/linux/
+# linux-arm64/windows but NOT macos-x64 -- which would make this script's own output
+# vary by platform, the same portability trap scripts/solverBehavior/all-statistics.scr
+# hit); "test" (the mock solver ignores timeout, nothing to bound); "simplify" (its
+# adapter implements no timeout support at all -- a pre-existing, separate gap, not in
+# scope for issue #60). A solver from this fixed list that still somehow isn't
+# installed reports INFO and is not counted as a failure.
+_SOLVERS="z3-4.3 z3-4.8.12 z3-4.16.0 cvc5-1.3.2 yices2 smtinterpol-2.5"
+
+_tmpdir=$(mktemp -d /tmp/jsmtlib_timeout_test.XXXXXX)
+trap 'rm -rf "$_tmpdir"' EXIT
+
+# PHP(12,11): p_i_j means "pigeon i is in hole j". Each pigeon must be in some hole;
+# no hole may hold two pigeons. Unsatisfiable (12 pigeons, 11 holes), but that's
+# incidental -- the point is how long it takes to find out, not the verdict itself.
+#
+# All ~740 pigeonhole clauses are combined into a single (assert (and ...)) rather than
+# one (assert ...) command per clause: jSMTLIB waits for a response to each command it
+# sends, so ~740 separate round trips (on top of the 132 unavoidable declare-funs, one
+# per p_i_j -- SMT-LIB has no batch declare) added several seconds of pure relay
+# overhead per solver even on a fast local machine, enough to risk ScriptTests' 2-minute
+# per-test JUnit timeout across 6 solvers under real, slower/shared CI hardware --
+# confirmed the hard way: this script failed on every CI platform the first time,
+# despite passing reliably in every local run (which used `bash runscript` directly,
+# bypassing the JUnit timeout entirely). One combined assert removes ~99% of the round
+# trips without weakening the workload at all -- same formula, same solve difficulty.
+_php="$_tmpdir/php.smt2"
+{
+    # C-style loops throughout, not `seq`: BSD seq (macOS) counts DOWN when given a
+    # start greater than its end (e.g. `seq 13 12` prints "13 12", not nothing, unlike
+    # GNU seq) -- that silently manufactured an out-of-range p_13_* reference the first
+    # time this was written with `seq $((i1+1)) 12`, corrupting the generated formula.
+    echo "(set-logic QF_UF)"
+    for ((i = 1; i <= 12; i++)); do
+        for ((j = 1; j <= 11; j++)); do
+            echo "(declare-fun p_${i}_${j} () Bool)"
+        done
+    done
+    clauses=""
+    for ((i = 1; i <= 12; i++)); do
+        clause="(or"
+        for ((j = 1; j <= 11; j++)); do clause="$clause p_${i}_${j}"; done
+        clause="$clause)"
+        clauses="$clauses $clause"
+    done
+    for ((j = 1; j <= 11; j++)); do
+        for ((i1 = 1; i1 <= 12; i1++)); do
+            for ((i2 = i1 + 1; i2 <= 12; i2++)); do
+                clauses="$clauses (or (not p_${i1}_${j}) (not p_${i2}_${j}))"
+            done
+        done
+    done
+    echo "(assert (and$clauses))"
+    echo "(check-sat)"
+    echo "(get-info :reason-unknown)"
+    echo "(exit)"
+} > "$_php"
+
+_fail=0
+
+# Portable substitute for GNU `timeout`, which macOS does not ship (BSD userland has no
+# such command) -- confirmed the hard way: every solver invocation reported "not
+# available" on every macOS CI leg, because `timeout 60 ...` itself was "command not
+# found" (exit 127), never even reaching java. Runs the command in the background,
+# races it against a watchdog `sleep`, and kills whichever loses; mirrors GNU timeout's
+# convention of exit code 124 for "killed for timing out" closely enough for the
+# classification logic below.
+_with_timeout() {
+    local _secs="$1"; shift
+    "$@" &
+    local _cmdpid=$!
+    ( sleep "$_secs" 2>/dev/null; kill -9 "$_cmdpid" 2>/dev/null ) &
+    local _watchdog=$!
+    wait "$_cmdpid"
+    local _rc=$?
+    if kill -0 "$_watchdog" 2>/dev/null; then
+        # Command finished on its own before the watchdog fired -- clean up the
+        # watchdog and report the command's real exit code.
+        kill "$_watchdog" 2>/dev/null
+        wait "$_watchdog" 2>/dev/null
+    else
+        # Watchdog already fired (killed the command) -- report a timeout, GNU-style.
+        _rc=124
+    fi
+    return "$_rc"
+}
+
+# Reduces a raw (:reason-unknown VALUE) response line to just VALUE, lowercased and
+# with any surrounding double quotes stripped, so "timeout", "\"timeout\"", and
+# "TIMEOUT" all compare equal.
+_normalize_reason() {
+    local _r="$1"
+    _r="${_r#\(:reason-unknown }"
+    _r="${_r%)}"
+    _r="$(echo "$_r" | tr -d '"' | tr '[:upper:]' '[:lower:]' | sed 's/[[:space:]]*$//')"
+    echo "$_r"
+}
+
+_run_check() {
+    local _name="$1"
+    local _outfile="$_tmpdir/${_name}.out"
+    _with_timeout 60 $SMT_CMD --solver "$_name" -t 1 "$_php" > "$_outfile" 2>/dev/null
+    local _rc=$?
+    if [ "$_rc" -eq 124 ]; then
+        (( _fail++ ))
+        echo "FAIL: $_name: still running after 60s with -t 1 set (per-query timeout did not stop check-sat)"
+        return
+    fi
+    if ! grep -q '^unknown$' "$_outfile"; then
+        if [ "$_rc" -ne 0 ]; then
+            echo "INFO: $_name: solver not available here, skipped"
+        else
+            (( _fail++ ))
+            echo "FAIL: $_name: check-sat did not return 'unknown' under -t 1"
+        fi
+        return
+    fi
+    echo "PASS: $_name: -t 1 causes check-sat to return unknown well before the workload would finish unbounded"
+
+    local _reasonline _reason
+    _reasonline=$(grep '^(:reason-unknown' "$_outfile")
+    _reason=$(_normalize_reason "$_reasonline")
+    case "$_reason" in
+        timeout|canceled|cancelled)
+            echo "PASS: $_name: get-info :reason-unknown attributes it to the timeout ($_reason)"
+            ;;
+        *)
+            (( _fail++ ))
+            echo "FAIL: $_name: get-info :reason-unknown does not attribute it to the timeout (got: $_reason)"
+            ;;
+    esac
+}
+
+for _n in $_SOLVERS; do
+    _run_check "$_n"
+done
+
+[ "$_fail" -eq 0 ]

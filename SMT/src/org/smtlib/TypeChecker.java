@@ -869,11 +869,20 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		StringBuilder reason = new StringBuilder();
 		ISort matchedResultSort = symTable.lookup(head,argSorts,resultSort,reason);
 		if (matchedResultSort == null && symTable.realsIntsTheorySet) {
+			// Per the Int-to-Real widening extension (e.g. AUFLIRA.smt2/AUFNIRA.smt2's
+			// :extensions), every Int-sorted argument is implicitly coerced to Real -- not
+			// just the ones alongside an already-Real-sorted argument. Without an existing
+			// Real argument to borrow a concrete sort from (e.g. (/ x x) with x:Int, where
+			// Reals_Ints declares only (/ Real Real Real), no (/ Int Int Real) overload),
+			// fall back to a freshly constructed Real sort.
 			ISort realSort = null;
+			boolean hasInt = false;
 			for (ISort sort: argSorts) {
 				if (isRealSort(sort)) realSort = sort;
+				else if (isIntSort(sort)) hasInt = true;
 			}
-			if (realSort != null) {
+			if (hasInt) {
+				if (realSort == null) realSort = makeReal();
 				List<ISort> newargs = new LinkedList<ISort>();
 				for (ISort sort: argSorts) {
 					if (isIntSort(sort)) {
@@ -882,8 +891,15 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 						newargs.add(sort);
 					}
 				}
-				reason.setLength(0);
-				matchedResultSort = symTable.lookup(head,newargs,resultSort,reason);
+				// Retry with a throwaway StringBuilder, not `reason`: if this retry also
+				// fails (e.g. a genuinely wrong-sorted argument that widening can't fix),
+				// `reason` must keep explaining the failure against the actual argument
+				// sorts the caller wrote, not this speculative coercion attempt's -- e.g.
+				// "expected Int" must not be overwritten by an unrelated retry's "expected
+				// Real" for a call that was never about Int/Real widening at all.
+				StringBuilder retryReason = new StringBuilder();
+				ISort retryResultSort = symTable.lookup(head,newargs,resultSort,retryReason);
+				if (retryResultSort != null) matchedResultSort = retryResultSort;
 			}
 		}
 		if (matchedResultSort == null) {
@@ -1514,13 +1530,16 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V27, "define-const", errors);
 			ICommand.Idefine_const c = (ICommand.Idefine_const)cmd;
 			validateUserId(smtConfig, c.symbol(), errors);
-		} else if (cmd instanceof ICommand.Idefine_fun) {
-			ICommand.Idefine_fun c = (ICommand.Idefine_fun)cmd;
-			validateUserId(smtConfig, c.symbol(), errors);
-			if (errors.isEmpty()) validateUniqueDeclarations(smtConfig, c.parameters(), errors);
 		} else if (cmd instanceof ICommand.Idefine_fun_rec) {
+			// Checked before Idefine_fun below: C_define_fun_rec extends C_define_fun (see
+			// issue #43), so its instances are also instanceof Idefine_fun -- the more specific
+			// interface must be checked first, mirroring Ideclare_const vs. Ideclare_fun above.
 			requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "define-fun-rec", errors);
 			ICommand.Idefine_fun_rec c = (ICommand.Idefine_fun_rec)cmd;
+			validateUserId(smtConfig, c.symbol(), errors);
+			if (errors.isEmpty()) validateUniqueDeclarations(smtConfig, c.parameters(), errors);
+		} else if (cmd instanceof ICommand.Idefine_fun) {
+			ICommand.Idefine_fun c = (ICommand.Idefine_fun)cmd;
 			validateUserId(smtConfig, c.symbol(), errors);
 			if (errors.isEmpty()) validateUniqueDeclarations(smtConfig, c.parameters(), errors);
 		} else if (cmd instanceof ICommand.Idefine_funs_rec) {

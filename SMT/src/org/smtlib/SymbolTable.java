@@ -18,10 +18,12 @@ import org.smtlib.IExpr.ISymbol;
 import org.smtlib.ISort.IFcnSort;
 import org.smtlib.ISort.IParameter;
 
-// FIXME - define an interface for symbol table?
-
 /** This class manages a symbol table used for storing definitions and looking up ids in expressions.
- *  The table maps names to Entry objects that hold information about the defined symbol. */
+ *  The table maps names to Entry objects that hold information about the defined symbol.
+ *  <p>
+ *  Deliberately a concrete class rather than an interface: there is exactly one implementation,
+ *  constructed directly by every caller, with no substitutability need to abstract over. See
+ *  issue #36. */
 public class SymbolTable {
 
 	/** true if the bit-vector theory has been set */
@@ -152,19 +154,19 @@ public class SymbolTable {
 		clear(false);
 	}
 	
-	/** Makes a copy of the symbol table */
-	public SymbolTable(SymbolTable s) {
-		clear(false);
-		this.smtConfig = s.smtConfig;
-		sortStack = new LinkedList<Map<IIdentifier,ISort.IDefinition>>();
-		symStack = new LinkedList<Map<IIdentifier,List<Entry>>>();
-		sortStack.addAll(s.sortStack);
-		symStack.addAll(s.symStack);
-		names = symStack.get(0);
-		sorts = sortStack.get(0);
-		datatypeConstructors = new HashMap<>(s.datatypeConstructors);
+	/** Disabled -- currently unused (the only constructor called anywhere is the single-arg
+	 *  {@link #SymbolTable(SMT.Configuration)}) and its original implementation was a
+	 *  mutation-aliasing trap: it copied the list of stack frames but not the frames
+	 *  themselves, so mutating an already-present scope (not a newly pushed one) through the
+	 *  "copy" silently mutated the original too, and vice versa. Left private and throwing
+	 *  rather than deleted, so the trap can't resurface silently -- if a real caller ever needs
+	 *  this, implement it as a genuine deep copy (a fresh {@code HashMap<>(frame)} for each
+	 *  frame in {@code sortStack}/{@code symStack}, not just {@code addAll} on the stacks).
+	 *  See issue #29. */
+	private SymbolTable(SymbolTable s) {
+		throw new UnsupportedOperationException("SymbolTable's copy constructor is not implemented -- see issue #29");
 	}
-	
+
 	/** Returns a fresh iterator over the symbol table's contents */
 	public Iterator iterator() {
 		return new Iterator(this);
@@ -761,7 +763,12 @@ public class SymbolTable {
 		return bindings;
 	}
 
-	/** Returns true if the entry contains a value for the given attribute name */ // FIXME - lookup by keyword?
+	/** Returns true if the entry contains a value for the given attribute name (e.g.
+	 *  ":left-assoc"). Deliberately takes the name as a String and compares against each
+	 *  attribute's keyword by value rather than requiring callers to build/compare IKeyword
+	 *  objects: every call site here passes a literal attribute name, and the list scanned is
+	 *  always tiny, so there is no correctness or performance benefit to keyword-object lookup
+	 *  -- just more ceremony at each call site. See issue #36. */
 	private boolean hasAttribute(Entry entry, String attr) {
 	    if (entry.attributes != null) {
 	        for (IExpr.IAttribute<?> a: entry.attributes) {

@@ -1,0 +1,6 @@
+Research probe for issues #56/#58, already served its purpose (informed the real
+check_sat() fix in commit 02e500d) -- not kept as an ongoing regression gate since no
+committed golden exists to compare against (it would trivially "pass" forever
+regardless of what Simplify actually says). Run manually for an up-to-date assessment
+if Simplify's error vocabulary is ever in question again:
+bash runscript scripts/solverBehavior/simplify-error-probe.scr

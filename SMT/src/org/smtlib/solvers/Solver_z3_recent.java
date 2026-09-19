@@ -79,10 +79,16 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
 			cmds = cmds_unix;
 		}
 		double timeout = smtConfig.timeout;
-		if (timeout > 0) {
-			List<String> args = new java.util.ArrayList<String>(cmds.length+1);
-			args.addAll(Arrays.asList(cmds));
-			args.add("-T:" + Integer.toString((int)Math.ceil(timeout)));
+		double timeoutTotal = smtConfig.timeoutTotal;
+		if (timeout > 0 || timeoutTotal > 0) {
+			List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
+			// Recent z3's own -t: is per-query but in MILLISECONDS (unlike z3-4.3's -t:,
+			// which is seconds -- the unit silently changed between versions); -T: is the
+			// whole-run limit and stayed in seconds. Earlier code here wired
+			// smtConfig.timeout (per-query) to -T: (whole-run) -- wrong flag for the
+			// intended semantics -- fixed to use -t: for the per-query value.
+			if (timeout > 0) args.add("-t:" + Long.toString(Math.round(timeout*1000)));
+			if (timeoutTotal > 0) args.add("-T:" + Integer.toString((int)Math.ceil(timeoutTotal)));
 			cmds = args.toArray(new String[args.size()]);
 		}
 		cmds[0] = executable;
@@ -107,7 +113,12 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
 
 	@Override
 	protected IResponse parseResponse(String response) {
-		if (linesOffset != 0) {
+		// Scoped to responses that actually carry an error message: z3 only ever reports a
+		// line number inside an (error "...") response, never in a success/sat/unsat/model
+		// response -- rewriting unconditionally risked mangling an unrelated "line N"
+		// substring that happened to appear elsewhere, e.g. inside a get-value/get-model
+		// response's returned string literal or model value.
+		if (linesOffset != 0 && response.contains("(error")) {
 			Matcher m = LINE_NUMBER.matcher(response);
 			StringBuilder sb = new StringBuilder();
 			while (m.find()) {

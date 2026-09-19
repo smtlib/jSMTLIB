@@ -5,12 +5,10 @@
  */
 package org.smtlib.sexpr;
 
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.regex.Matcher;
 
 import org.smtlib.*;
 import org.smtlib.ICommand.IScript;
@@ -31,7 +29,6 @@ import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.impl.*;
 import org.smtlib.impl.SMTExpr.Keyword;
-import org.smtlib.impl.SMTExpr.Numeral;
 import org.smtlib.impl.SMTExpr.StringLiteral;
 import org.smtlib.impl.SMTExpr.Symbol;
 
@@ -151,7 +148,31 @@ public class Parser extends Lexer implements IParser {
 			while (true) { // The while loop is just so that AbortInputException can cause a retry
 				try {
 					ILexToken rp = null;
-					if (isEOD()) return null;
+					boolean atEnd = isEOD();
+					// isEOD() (above) already peeked the upcoming token -- even the synthetic
+					// end-of-data marker itself, if that's what's next -- which as a side
+					// effect populates prefixCommentText for it without consuming it. So a
+					// comment immediately before the next command, OR a trailing comment with
+					// no command left to precede, both surface here the same way. Return it as
+					// its own synthetic command now; if it precedes a real command, that
+					// command is still fully unconsumed and parses normally on the next call to
+					// parseCommand(). Comments elsewhere (between a command's arguments) are
+					// deliberately not captured this way and remain unforwarded, as before.
+					// prefixCommentText's capturing group combines whitespace AND comments
+					// (see Lexer.combined's group 1), so it is non-null whenever any
+					// whitespace at all precedes the next token -- not only when a real
+					// comment does. Only genuinely non-blank content (i.e. an actual comment)
+					// should become a C_comment; plain whitespace must not.
+					if (prefixCommentText != null && !prefixCommentText.trim().isEmpty()) {
+						String text = prefixCommentText;
+						int start = prefixCommentStart, end = prefixCommentEnd;
+						prefixCommentText = null;
+						org.smtlib.command.C_comment c = new org.smtlib.command.C_comment(text);
+						setPos(c, pos(start, end));
+						return c;
+					}
+					prefixCommentText = null;
+					if (atEnd) return null;
 					try {
 						savedlp = parseLP();
 					} catch (ParserException e) {
@@ -163,7 +184,6 @@ public class Parser extends Lexer implements IParser {
 						if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Skipped " + skipped + " stray token(s) while recovering to the next command");
 						return null;
 					}
-					String prefixText = prefixCommentText;
 					smtConfig.topLevel = false;
 					Symbol sym = parseSymbolOrReservedWord("Expected a symbol here, not a #");
 					if (sym == null) {
@@ -211,7 +231,7 @@ public class Parser extends Lexer implements IParser {
 						if (target instanceof ParserException) {
 							throw (ParserException) target;
 						}
-                        ex.printStackTrace(smtConfig.log.diag);
+                        ex.printStackTrace(smtConfig.log.getDiag());
 						if (target instanceof StackOverflowError) {
 							lastError = smtConfig.log.logError(smtConfig.responseFactory.error("Stack overflow occurred while parsing input", sym.pos()));
 							throw new ParserException(null,null);
@@ -220,7 +240,7 @@ public class Parser extends Lexer implements IParser {
 							throw new ParserException(null,null);
 						} else {
 							lastError = smtConfig.log.logError(smtConfig.responseFactory.error(target.toString(), sym.pos()));
-	                        target.printStackTrace(smtConfig.log.diag);
+	                        target.printStackTrace(smtConfig.log.getDiag());
 						}
 					}
 					if (command == null) {
@@ -231,10 +251,9 @@ public class Parser extends Lexer implements IParser {
 					}
 					if (command != null) {
 						setPos(command,pos(savedlp.pos(),rp.pos()));
-						command.prefixText = prefixText;
 					}
 				} catch (IParser.AbortInputException e) {
-					smtConfig.log.logOut("Input aborted\n");
+					smtConfig.log.logOut("Input aborted");
 					smtConfig.topLevel = true;
 					continue;
 				} catch (ParserException e) {
@@ -247,7 +266,7 @@ public class Parser extends Lexer implements IParser {
 		} catch (Exception e) {
 			IPos pos = new Pos(0,0,null);
 			lastError = smtConfig.responseFactory.error("Error while parsing command: " + e,pos);
-			e.printStackTrace(smtConfig.log.diag);
+			e.printStackTrace(smtConfig.log.getDiag());
 			smtConfig.log.logError(lastError);
 		} finally {
 			smtConfig.topLevel = savedTopLevel;
@@ -314,7 +333,7 @@ public class Parser extends Lexer implements IParser {
 	 * @throws ParserException FIXME - no more of these?
 	 */
 	public Sexpr.Seq parseSeq(ILexToken lp) throws ParserException {
-		Sexpr.Seq seq = new Sexpr.Seq(); // FIXME - use factory
+		Sexpr.Seq seq = new Sexpr.Seq(); // deliberate direct construction -- see ISexpr's class comment
 		
 		while (true) {
 			ILexToken token = getToken();
@@ -852,7 +871,13 @@ public class Parser extends Lexer implements IParser {
 			Constructor<? extends ILogic> con = clazz.getConstructor(ISymbol.class,Collection.class);
 			return con.newInstance(name,attributes);
 		} catch (ClassNotFoundException e) {
-			// OK - no extension class - no language restrictions
+			// No dedicated restriction class for this logic name - falls back to an
+			// unrestricted logic (no noQuantifiers/sort/function-declaration checks).
+			// Legitimate for logics that genuinely have no extra restriction class yet,
+			// but also what a missing or mistyped class name (e.g. QF_UFNIA) silently
+			// produces, so make the fallback visible rather than silent.
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#No restriction class " + clazzName
+					+ " found for logic " + name + " - using an unrestricted logic");
 		} catch (NoSuchMethodException e) {
 			// error - the class must have the right constructor
 			throw error("The constructor for the class " + clazzName + " does not have a constructor with the correct argument types",
@@ -927,6 +952,9 @@ public class Parser extends Lexer implements IParser {
 		ISymbol sym = parseSymbol();
 		ISymbol val = parseSymbol();
 		parseRP();
+		if (!val.value().equalsIgnoreCase("true") && !val.value().equalsIgnoreCase("false")) {
+			throw new ParserException("Expected 'true' or 'false' here, not '" + val.value() + "'", val.pos());
+		}
 		return smtConfig.responseFactory.pair(sym, Boolean.valueOf(val.value()));
 	}
 

@@ -5,58 +5,42 @@
  */
 package org.smtlib.command;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.smtlib.ICommand.Idefine_fun_rec;
-import org.smtlib.*;
+import org.smtlib.IExpr;
 import org.smtlib.IExpr.IDeclaration;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IParser.ParserException;
-import org.smtlib.impl.Command;
+import org.smtlib.IResponse;
+import org.smtlib.ISolver;
+import org.smtlib.ISort;
+import org.smtlib.IVisitor;
 import org.smtlib.sexpr.Parser;
-import org.smtlib.sexpr.Printer;
 
-/** Implements the define-fun-rec command (recursive function definition) */
-public class C_define_fun_rec extends Command implements Idefine_fun_rec {
+/** Implements the define-fun-rec command (recursive function definition); syntactically
+ *  identical to define-fun (see {@link C_define_fun}), differing only in the dispatch
+ *  target -- shares that class's fields, accessors, and constructor. */
+public class C_define_fun_rec extends C_define_fun implements Idefine_fun_rec {
 	/** The command name */
 	public static final String commandName = "define-fun-rec";
 	/** The command name */
 	@Override
 	public String commandName() { return commandName; }
-	
-	/** The name of the function being defined */
-	protected ISymbol fcnName;
-	/** The sorts of the arguments of the function being defined */
-	protected List<IDeclaration> args;
-	/** The sort of the result */
-	protected ISort resultSort;
-	/** The defining expression for the function */
-	protected IExpr expression;
-	
-	/** The name of the function being defined */
-	@Override
-	public ISymbol symbol() { return fcnName; }
-	/** The sorts of the arguments of the function being defined */
-	@Override
-	public List<IDeclaration> parameters() { return args; };
-	/** The result sort */
-	@Override
-	public ISort resultSort() { return resultSort; }
-	/** The defining expression for the function */
-	@Override
-	public IExpr expression() { return expression; }
-	
-	// FIXME - typechecking needs to check that the resultSort matches the expression's sort
-	
+
+	// TypeChecker.checkFcnRec() already checks the body's sort against resultSort -- called
+	// from Solver_test.define_fun_rec()/Solver_simplify's override, not centralized in
+	// TypeChecker.validate() (the universal pre-dispatch pass every solver adapter goes
+	// through). That's deliberate: real solver adapters intentionally don't duplicate a
+	// semantic check the real solver already performs and reports itself (see #46/#53),
+	// so this check staying test/simplify-only, rather than moving into validate(), matches
+	// that pattern instead of being a gap. See issue #40.
+
 	/** Constructs a command instance */
 	public C_define_fun_rec(ISymbol id, List<IDeclaration> declarations, ISort resultSort, IExpr expr) {
-		this.fcnName = id;
-		this.args = declarations;
-		this.resultSort = resultSort;
-		this.expression = expr;
+		super(id, declarations, resultSort, expr);
 	}
-	
+
 	/** Parses the command arguments and creates a command instance */
 	static public C_define_fun_rec parse(Parser p) throws ParserException {
 		ISymbol name = p.parseSymbol();
@@ -73,6 +57,6 @@ public class C_define_fun_rec extends Command implements Idefine_fun_rec {
 
 	@Override
 	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
+		return v.visit((Idefine_fun_rec)this);
 	}
 }

@@ -5,7 +5,6 @@
  */
 package org.smtlib.command;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.smtlib.ICommand.Icheck_sat_assuming;
@@ -16,7 +15,6 @@ import org.smtlib.ISolver;
 import org.smtlib.IVisitor;
 import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
-import org.smtlib.sexpr.Printer;
 
 /** Implements the check-sat-assuming command */
 public class C_check_sat_assuming extends Command implements Icheck_sat_assuming {
@@ -27,7 +25,11 @@ public class C_check_sat_assuming extends Command implements Icheck_sat_assuming
 	
 	/** Parses the arguments of the command, producing a new command instance */
 	static public C_check_sat_assuming parse(Parser p) throws ParserException {
-        List<IExpr> list = p.parseListTerms(p);
+        // Not p.parseListTerms(p): that shared default hard-codes allowEmpty=false, which
+        // is right for get-value's ( <term>+ ) grammar but wrong here -- check-sat-assuming's
+        // own grammar is ( <prop_literal>* ), zero or more, equivalent to a plain check-sat
+        // when empty.
+        List<IExpr> list = p.parseList(p::parseExpr, "term", true);
 		return new C_check_sat_assuming(list);
 	}
 

@@ -215,8 +215,8 @@ public class LogicTests {
 			SMT smt = new SMT();
 			smt.props = readPropertiesAndAddDefaults(smt);
 			smt.smtConfig.text = input;
-			smt.smtConfig.log.out = new PrintStream(ba);
-			smt.smtConfig.log.diag = smt.smtConfig.log.out;
+			PrintStream both = new PrintStream(ba);
+			smt.smtConfig.log.setChannels(both, both);
 			smt.smtConfig.solvername = solvername;
 			smt.exec();
 			return ba.toString();

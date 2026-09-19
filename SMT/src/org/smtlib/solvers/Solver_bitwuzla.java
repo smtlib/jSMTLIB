@@ -65,6 +65,11 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
 			args.add("--time-limit-per");
 			args.add(Integer.toString((int)Math.ceil(smtConfig.timeout * 1000)));
 		}
+		if (smtConfig.timeoutTotal > 0) {
+			// --time-limit is the whole-run counterpart, also in milliseconds.
+			args.add("--time-limit");
+			args.add(Integer.toString((int)Math.ceil(smtConfig.timeoutTotal * 1000)));
+		}
 		cmds = args.toArray(new String[args.size()]);
 		// Bitwuzla prints no interactive prompt, so "\n" is the right end marker.
 		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
@@ -100,19 +105,17 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
 		// visibly duplicated/garbled output. Discarding log.out/log.diag for the
 		// duration of the parse attempt suppresses that side effect without touching the
 		// shared Lexer/Parser code (which other, fully-compliant solvers also rely on).
-		java.io.PrintStream savedOut = smtConfig.log.out;
-		java.io.PrintStream savedDiag = smtConfig.log.diag;
+		java.io.PrintStream savedOut = smtConfig.log.getOut();
+		java.io.PrintStream savedDiag = smtConfig.log.getDiag();
 		java.io.PrintStream sink = new java.io.PrintStream(java.io.OutputStream.nullOutputStream());
-		smtConfig.log.out = sink;
-		smtConfig.log.diag = sink;
+		smtConfig.log.setChannels(sink, sink);
 		IResponse result;
 		try {
 			result = super.parseResponse(response);
 		} catch (RuntimeException e) {
 			return smtConfig.responseFactory.error("Unexpected (non-SMT-LIB) response from bitwuzla: " + response);
 		} finally {
-			smtConfig.log.out = savedOut;
-			smtConfig.log.diag = savedDiag;
+			smtConfig.log.setChannels(savedOut, savedDiag);
 		}
 		// Parser.parseResponse's fallback for response text that doesn't match any
 		// recognized shape (success/sat/error/.../get-info attribute list) just returns

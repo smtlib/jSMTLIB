@@ -5,7 +5,6 @@
  */
 package org.smtlib.command;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.smtlib.ICommand.Idefine_sort;
@@ -15,7 +14,6 @@ import org.smtlib.*;
 import org.smtlib.ISort.IParameter;
 import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
-import org.smtlib.sexpr.Printer;
 
 /** Implements the define-sort command */
 public class C_define_sort extends Command implements Idefine_sort {

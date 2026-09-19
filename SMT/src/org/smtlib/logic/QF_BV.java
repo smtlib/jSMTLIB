@@ -30,9 +30,12 @@ public class QF_BV extends Logic {
 		noSorts(id,params,expr);
 	}
 
-	// All sorts are bitvector sorts; no new functions
-	// FIXME : what does this mean : Formulas in ite terms must satisfy the same
-	//  restriction as well, with the exception that they need not be closed 
-	//  (because they may be in the scope of a let binder
+	// All sorts are bitvector sorts; no new functions.
+	// The spec's "Formulas in ite terms must satisfy the same restriction as well [i.e. be
+	// quantifier-free], with the exception that they need not be closed" doesn't need any
+	// extra handling here: noQuantifiers() recurses into every subexpression via the
+	// ordinary IVisitor.TreeVisitor traversal, including an ite's condition argument, since
+	// this class never overrides visit(IFcnExpr) to special-case ite. A quantifier nested
+	// inside an ite condition is already rejected.
 
 }

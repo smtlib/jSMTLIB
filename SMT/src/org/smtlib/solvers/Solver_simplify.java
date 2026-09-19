@@ -55,7 +55,14 @@ import org.smtlib.SMT.Configuration.SMTLIB;
  * when check-sat is called.  The usual push and pop will not be sent to Simplify - rather
  * we save the state of 'conjunction' ourselves.  This implements the letter if not the
  * spirit of push and pop, and it may have performance implications.  If it does, we'll
- * optimize the implementation then. */
+ * optimize the implementation then.
+ * <p>
+ * Several methods (declare_fun, define_fun, pop, push) send an auxiliary command
+ * (DEFPRED/BG_PUSH/BG_POP) to the Simplify process and don't inspect its raw response:
+ * unlike the main protocol commands (assert, check-sat, ...), nothing in this project's
+ * test suite or documentation records what Simplify's failure response for one of these
+ * auxiliary commands actually looks like, so there's no format to parse against without
+ * guessing (see issue #68). */
 public class Solver_simplify extends Solver_test implements ISolver {
 	
 	/** Just to hold the command line to launch Simplify */
@@ -120,11 +127,6 @@ public class Solver_simplify extends Solver_test implements ISolver {
 			return smtConfig.responseFactory.error(e.getMessage(),e.pos);
 		}
 		return smtConfig.responseFactory.success();
-	}
-
-	@Override
-	public IResponse get_assertions() {
-		return super.get_assertions();
 	}
 
 	/** True if :global-declarations has been set -- mirrors {@link Solver_test}'s own
@@ -245,10 +247,19 @@ public class Solver_simplify extends Solver_test implements ISolver {
 			
 			String msg = "(NOT (AND TRUE " + conjunction + "\n))\n";
 			String s = solverProcess.sendAndListen(msg);
-			// FIXME - what about errors in SImplify
-			//smtConfig.log.logOut("HEARD: " + s);
+			// Simplify's two real error shapes, confirmed empirically against a live
+			// binary (issues #56/#58): "Bad input: <reason>." for a semantic/protocol
+			// error (e.g. "Bad input: Unknown predicate symbol: fp.eq." -- this actually
+			// happens today, for every current floating-point test, since Simplify has no
+			// FP support at all) and "Sx.ReadError in file." for a syntax error Simplify's
+			// own reader can't parse (e.g. unbalanced parentheses). Neither ever contains
+			// "Valid."/"Invalid.", so checking for them first is unambiguous. Anything
+			// else -- genuinely no recognized shape at all -- still falls through to
+			// unknown(), rather than guessing at further error shapes with no binary to
+			// confirm them against.
 			if (s.contains("Valid.")) res = smtConfig.responseFactory.unsat();
 			else if (s.contains("Invalid.")) res = smtConfig.responseFactory.sat();
+			else if (s.contains("Bad input:") || s.contains("Sx.ReadError")) res = smtConfig.responseFactory.error(s.trim());
 			else res = smtConfig.responseFactory.unknown();
 			checkSatStatus = res;
 //			s = solverProcess.sendAndListen("(BG_POP)\r\n");
@@ -275,7 +286,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 				}
 				sb.append("))\n");
 				String s = solverProcess.sendAndListen(sb.toString());
-				// FIXME - check for error in s -- System.out.println("HEARD " + s);
+				// s (the raw response) intentionally not inspected -- see class doc.
 				res = smtConfig.responseFactory.success();
 			} else {
 				res = smtConfig.responseFactory.success();
@@ -304,18 +315,19 @@ public class Solver_simplify extends Solver_test implements ISolver {
 				}
 				sb.append("))\n");
 				String s = solverProcess.sendAndListen(sb.toString());
-				// FIXME - check for error in s -- System.out.println("HEARD " + s);
+				// s (the raw response) intentionally not inspected -- see class doc.
 				res = smtConfig.responseFactory.success();
 			} else {
 				res = smtConfig.responseFactory.success();
 			}
 			IExpr.IFactory f = smtConfig.exprFactory;
-			assertExpr(f.fcn(f.symbol("="),cmd.symbol(),cmd.expression()));
-					
+			IResponse assertRes = assertExpr(f.fcn(f.symbol("="),cmd.symbol(),cmd.expression()));
+			if (!assertRes.isOK()) res = assertRes;
+
 		} catch (IOException e) {
-			res = smtConfig.responseFactory.error("Failed to declare-fun: " + e.getMessage(),null); // FIXME - position?
+			res = smtConfig.responseFactory.error("Failed to define-fun: " + e.getMessage(),null); // FIXME - position?
 		} catch (IVisitor.VisitorException e) {
-			res = smtConfig.responseFactory.error("Failed to declare-fun: " + e.getMessage(),null);
+			res = smtConfig.responseFactory.error("Failed to define-fun: " + e.getMessage(),null);
 		}
 		return res;
 	}
@@ -329,7 +341,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 			while (--number >= 0) { 
 				conjunction = pushesStack.remove(0);
 				String s = solverProcess.sendAndListen("(BG_POP)");
-				// FIXME - check for error in s -- System.out.println("HEARD " + s);
+				// s (the raw response) intentionally not inspected -- see class doc.
 			}
 			return smtConfig.responseFactory.success();
 		} catch (IOException e) {
@@ -346,7 +358,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 			while (--number >= 0) { 
 				pushesStack.add(0,conjunction);
 				String s = solverProcess.sendAndListen("(BG_PUSH (EQ 0 0))");
-				// FIXME - check for error in s -- System.out.println("HEARD " + s);
+				// s (the raw response) intentionally not inspected -- see class doc.
 			}
 			return smtConfig.responseFactory.success();
 		} catch (IOException e) {
@@ -357,12 +369,12 @@ public class Solver_simplify extends Solver_test implements ISolver {
 	@Override
 	public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
 		// FIXME - discrimninate among logics
-		boolean lSet = logicSet != null;
-		IResponse status = super.set_logic(logicName,pos);
-		if (!status.isOK()) return status;
 		if (logicName.contains("BV")) {
 			return smtConfig.responseFactory.error("The simplify solver does not yet support the bit-vector theory",pos);
 		}
+		boolean lSet = logicSet != null;
+		IResponse status = super.set_logic(logicName,pos);
+		if (!status.isOK()) return status;
 		if (lSet) {
 			pushesStack.clear();
 			push(1);
@@ -380,11 +392,6 @@ public class Solver_simplify extends Solver_test implements ISolver {
 //		if (option.value().equals(":expand-definitions") && smtConfig.atLeastVersion(SMTLIB.V25)) return smtConfig.responseFactory.unsupported();
 
 		return super.set_option(option,value);
-	}
-
-	@Override
-	public IResponse set_info(IKeyword option, IAttributeValue value) {
-		return super.set_info(option,value);
 	}
 
 	@Override
@@ -419,66 +426,6 @@ public class Solver_simplify extends Solver_test implements ISolver {
 		IAttribute<?> attr = smtConfig.exprFactory.attribute(key,lit);
 		return smtConfig.responseFactory.get_info_response(attr);
 	}
-
-// Pure overrides are redundant
-//	@Override
-//	public IResponse declare_sort(Ideclare_sort cmd) {
-//		return super.declare_sort(cmd);
-//	}
-//
-//	@Override
-//	public IResponse define_fun(Idefine_fun cmd){
-//		return super.define_fun(cmd);
-//	}
-//
-//	@Override
-//	public IResponse define_sort(Idefine_sort cmd){
-//		return super.define_sort(cmd);
-//	}
-	
-	// These are all currently unsupported
-//	@Override
-//	public IResponse get_proof() {
-//		return smtConfig.responseFactory.error("The get-proof command is not implemented for simplify"); // FIXME - get-proof for simplify
-//	}
-//	
-//	@Override
-//	public IResponse get_value(IExpr ... terms) {
-//		return smtConfig.responseFactory.error("The get-value command is not implemented for simplify"); // FIXME - get-value for simplify
-//	}
-//	
-//	@Override
-//	public IResponse get_assignment() {
-//		return smtConfig.responseFactory.error("The get-assignment command is not implemented for simplify"); // FIXME - get-assignment for simplify
-//	}
-//	
-//	@Override
-//	public IResponse get_unsat_core() {
-//		return smtConfig.responseFactory.error("The get-proof command is not implemented for simplify"); // FIXME - get-proof for simplify
-//	}
-
-	@Override
-	public IResponse get_value(IExpr... terms) {
-		TypeChecker tc = new TypeChecker(symTable);
-		try {
-			for (IExpr term: terms) {
-				term.accept(tc);
-			}
-		} catch (IVisitor.VisitorException e) {
-			tc.result.add(smtConfig.responseFactory.error(e.getMessage()));
-		} finally {
-			if (!tc.result.isEmpty()) return tc.result.get(0); // FIXME - report all errors?
-		}
-		// FIXME - do we really want to call get-option here? it involves going to the solver?
-		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
-			return smtConfig.responseFactory.error("The get-value command is only valid if :produce-models has been enabled");
-		}
-		if (!smtConfig.responseFactory.sat().equals(checkSatStatus) && !smtConfig.responseFactory.unknown().equals(checkSatStatus)) {
-			return smtConfig.responseFactory.error("A get-value command is valid only after check-sat has returned sat or unknown");
-		}
-		return smtConfig.responseFactory.unsupported();
-	}
-
 
 
 	

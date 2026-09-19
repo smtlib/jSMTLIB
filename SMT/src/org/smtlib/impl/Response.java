@@ -17,10 +17,14 @@ import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IPos.IPosable;
 import org.smtlib.IResponse.*;
-import org.smtlib.IVisitor.VisitorException;
 
-/** This class holds subclasses that are implementations of the various IResponse interfaces. */
-public class Response implements IResponse {
+/** This class holds subclasses that are implementations of the various IResponse interfaces.
+ *  It is never itself instantiated -- only its nested classes and the constants below are used. */
+public abstract class Response {
+	/** Never instantiated -- this class exists only to hold the nested response
+	 *  implementation classes and the constants below. */
+	private Response() {}
+
 	static public SMT.Configuration smtConfig;
 	
 	final static String ERROR = "error";
@@ -336,23 +340,5 @@ public class Response implements IResponse {
 		}
 	}
 
-    @Override
-    public <T> T accept(IVisitor<T> v) throws VisitorException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public boolean isOK() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public boolean isError() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-	
 
 }

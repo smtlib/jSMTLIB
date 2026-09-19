@@ -9,7 +9,6 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 
 import org.smtlib.*;
-import org.smtlib.impl.Pos;
 
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into SMT
  *  commands over a solver process speaking plain SMT-LIB, for a solver assumed to be
@@ -37,23 +36,20 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 	/** The command-line arguments for launching the solver */
 	String cmds[];
 
-	/** The parser that parses responses from the solver; also used by subclasses that
-	 *  override {@link #parseResponse(String)}. */
-	protected org.smtlib.sexpr.Parser responseParser;
-
 	/** Creates an instance of the adapter */
 	public Solver_smt(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
 		this.smtConfig = smtConfig;
 		cmds = cmd(executable);
-		solverProcess = new SolverProcess(cmds,prompt(),smtConfig.logfile,StandardCharsets.UTF_8); // FIXME - what prompt?
-		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
+		// prompt() returns "\n": Solver_z3_recent's own class doc independently confirms
+		// this is the right end marker for a solver that (like every adapter this class
+		// still supports) doesn't print an interactive prompt.
+		solverProcess = new SolverProcess(cmds,prompt(),smtConfig.logfile,StandardCharsets.UTF_8);
 	}
 
 	public Solver_smt(SMT.Configuration smtConfig, /*@NonNull*/ String[] args) {
 		this.smtConfig = smtConfig;
 		cmds = args;
-		solverProcess = new SolverProcess(cmds,prompt(),smtConfig.logfile,StandardCharsets.UTF_8); // FIXME - what prompt?
-		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
+		solverProcess = new SolverProcess(cmds,prompt(),smtConfig.logfile,StandardCharsets.UTF_8);
 	}
 
 	public String[] cmd(String exec) {

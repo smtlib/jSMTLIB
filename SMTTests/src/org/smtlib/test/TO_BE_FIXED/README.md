@@ -27,9 +27,6 @@ rejoins the normal run, and close the corresponding issue.
 |---|---|
 | `ConfigurationStaticLeakBugTest` | [#22](https://github.com/smtlib/jSMTLIB/issues/22) -- `SMT.Configuration`'s constructor leaks static `Printer`/`Response`/`SMTExpr.smtConfig` fields across every instance |
 | `StaticSmtConfigStringLiteralBugTest` | [#22](https://github.com/smtlib/jSMTLIB/issues/22) -- same bug, a sharper manifestation via `SMTExpr.StringLiteral` construction |
-| `SortEqualsHashCodeBugTest` | [#70](https://github.com/smtlib/jSMTLIB/issues/70) -- `impl/Sort.Application.equals()` expands sort abbreviations but `hashCode()` doesn't (equals/hashCode contract violation) |
-| `ParseAssignmentPairBugTest` | [#73](https://github.com/smtlib/jSMTLIB/issues/73) -- `sexpr/Parser.parseAssignmentPair()` silently accepts any non-"true" token as `false` instead of rejecting it |
-| `PrinterSymbolQuotingBugTest` | [#75](https://github.com/smtlib/jSMTLIB/issues/75) -- `sexpr/Printer.visit(ISymbol)` doesn't bar-quote a programmatically-built symbol that needs it |
 
 Keep this table in sync: add a row (with its issue link) whenever a new test lands here, and
 remove the row when the test is fixed and moved back into `bugs/`.

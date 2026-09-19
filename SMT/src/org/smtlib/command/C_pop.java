@@ -5,7 +5,6 @@
  */
 package org.smtlib.command;
 
-import java.io.IOException;
 
 import org.smtlib.ICommand.Ipop;
 import org.smtlib.IExpr.INumeral;
@@ -15,7 +14,6 @@ import org.smtlib.ISolver;
 import org.smtlib.IVisitor;
 import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
-import org.smtlib.sexpr.Printer;
 
 /** Implements the pop command */
 public class C_pop extends Command implements Ipop {
@@ -53,6 +51,13 @@ public class C_pop extends Command implements Ipop {
 
 	@Override
 	public IResponse execute(ISolver solver) {
+		// numeral.intValue() (see the constructor) silently truncates a BigInteger beyond
+		// int range to the low-order 32 bits -- reject that here rather than handing
+		// solver.pop() a wrapped-around, possibly negative or huge, garbage value.
+		if (numeral.value().bitLength() > 31) {
+			return solver.smt().responseFactory.error(
+					"The argument to a pop command is too large: " + numeral.value(), numeral.pos());
+		}
 		return solver.pop(number);
 	}
 

@@ -8,7 +8,6 @@ package org.smtlib;
 import java.util.List;
 
 import org.smtlib.IExpr.IDeclaration;
-import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.IStringLiteral;
@@ -201,13 +200,20 @@ public interface ICommand extends INode {
 		/** Returns any trailing attributes given after the result sort -- an experimental,
 		 * non-standard extension (SMT-LIB's declare-fun has no attribute* production);
 		 * accepting one at all is unconditional at parse time, but the command is rejected at
-		 * type-checking time unless --relax is set. Null or empty if none were given. */
-		default List<IExpr.IAttribute<?>> attributes() { return null; }
+		 * type-checking time unless --relax is set. Never null; empty if none were given --
+		 * unlike {@link #parameters()}, null-vs-empty has no real distinction to encode here
+		 * (the concrete syntax has no way to write an explicit-but-empty attribute clause). */
+		default List<IExpr.IAttribute<?>> attributes() { return java.util.Collections.emptyList(); }
 		/** Returns the par-polymorphic type parameters, for the experimental, non-standard
 		 * "(declare-fun par (param+) (name sort+ attribute*))" form -- mirrors exactly the
 		 * par_fun_symbol_decl shape a theory's own :funs entry uses. Accepting this form at
 		 * all is unconditional at parse time, but the command is rejected at type-checking
-		 * time unless --relax is set. Null for an ordinary (non-par) declare-fun. */
+		 * time unless --relax is set. Null for an ordinary (non-par) declare-fun -- this is
+		 * load-bearing, not just an empty-list stand-in: {@link
+		 * org.smtlib.solvers.Solver_test#declare_fun} branches on null-vs-non-null directly to
+		 * decide whether --relax is required, and a par-form's parameter list is never actually
+		 * empty in practice (the grammar requires {@code param+}), so there is no "empty
+		 * par-form" state this could be confused with. */
 		default List<ISort.IParameter> parameters() { return null; }
 	}
 

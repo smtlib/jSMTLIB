@@ -40,11 +40,20 @@ public class Solver_smtinterpol extends AbstractSolver implements ISolver {
 	 *  can't be expressed in that static property, is still added here. */
 	public Solver_smtinterpol(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
 		this.smtConfig = smtConfig;
-		if (smtConfig.timeout > 0) {
-			// -t sets a per-check-sat timeout in milliseconds.
+		// SMTInterpol has exactly one timeout flag, -t <milliseconds>, applying per
+		// check-sat call -- there is no separate whole-run option at all. If only the
+		// whole-run smtConfig.timeoutTotal was requested, it is applied here via -t as the
+		// closest available approximation, since that's the only lever SMTInterpol offers.
+		double effective = smtConfig.timeout > 0 ? smtConfig.timeout : smtConfig.timeoutTotal;
+		if (effective > 0) {
+			if (smtConfig.timeout <= 0) {
+				smtConfig.log.logDiag("#smtinterpol has no whole-run timeout option; approximating with a per-query -t of " + smtConfig.timeoutTotal + "s (the requested whole-run value)");
+			} else if (smtConfig.timeoutTotal > 0) {
+				smtConfig.log.logDiag("#smtinterpol has no whole-run timeout option; only the per-query -t (" + smtConfig.timeout + "s) is applied, the whole-run --timeout-total (" + smtConfig.timeoutTotal + "s) is ignored");
+			}
 			java.util.List<String> args = new java.util.ArrayList<String>(java.util.Arrays.asList(command));
 			args.add("-t");
-			args.add(Integer.toString((int)Math.ceil(smtConfig.timeout * 1000)));
+			args.add(Integer.toString((int)Math.ceil(effective * 1000)));
 			cmds = args.toArray(new String[args.size()]);
 		} else {
 			cmds = command;

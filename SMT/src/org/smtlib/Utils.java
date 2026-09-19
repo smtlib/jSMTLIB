@@ -30,8 +30,6 @@ import org.smtlib.impl.Factory;
 import org.smtlib.impl.Pos;
 import org.smtlib.impl.SMTExpr;
 import org.smtlib.sexpr.ISexpr;
-import org.smtlib.sexpr.ILexToken;
-import org.smtlib.sexpr.Parser;
 
 /** A class of static utility methods and constants for the SMT-LIB package. */
 public class Utils {
@@ -82,6 +80,12 @@ public class Utils {
 
 	/** The string designating an option item */
 	public static final String PRODUCE_ASSERTIONS = ":produce-assertions";
+
+	/** Returns the name of the option that gates get-assertions -- renamed from
+	 *  :interactive-mode to :produce-assertions in SMT-LIB 2.5. */
+	public static String produceAssertionsKey(SMT.Configuration smtConfig) {
+		return smtConfig.atLeastVersion(SMTLIB.V25) ? PRODUCE_ASSERTIONS : INTERACTIVE_MODE;
+	}
 
 	/** The string designating an option item */
 	public static final String GLOBAL_DECLARATIONS = ":global-declarations";

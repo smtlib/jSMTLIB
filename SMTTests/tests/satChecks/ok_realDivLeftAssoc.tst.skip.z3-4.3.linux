@@ -1,0 +1,7 @@
+z3-4.3.1 crashes (process exits / closes its pipe) on this input on Linux (both
+x64 and arm64) -- a known, real solver bug (see the
+jsmtlib_ci_cross_platform_verification session history), not a jSMTLIB bug. The
+exact NoResponseException wording jSMTLIB reports for the crash is timing-
+dependent and not reproducible byte-for-byte between runs or between x64/arm64
+(confirmed: three different phrasings appeared across the two archs in a single
+CI run), so it can't be captured as a stable .bad golden either -- skip instead.

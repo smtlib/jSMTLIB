@@ -5,9 +5,7 @@
  */
 package org.smtlib;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.List;
@@ -119,7 +117,16 @@ public class AbstractSolver implements ISolver {
 	
 	public IResponse checkPrintSuccess(SMT.Configuration smtConfig,IKeyword key, IAttributeValue value) {
 		if (key.equals(printSuccess)) {
-			smtConfig.nosuccess = !value.toString().equals("true");
+			// C_set_option.parse() already rejects this eagerly for any text-driven
+			// script -- but this method is also reachable directly via
+			// smtConfig.commandFactory.set_option(key,value), which bypasses that
+			// parse-time check entirely (see issue #41), so a value that isn't literally
+			// true/false can't just be assumed to be "false" the way the previous
+			// !value.toString().equals("true") check silently did.
+			if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
+				return smtConfig.responseFactory.error("The value of the " + key.value() + " option must be 'true' or 'false'", value.pos());
+			}
+			smtConfig.nosuccess = Utils.FALSE.equals(value);
 			return successOrEmpty(smtConfig);
 		}
 		return null;
@@ -359,32 +366,20 @@ public class AbstractSolver implements ISolver {
 		String option = key.value();
 		if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
 			String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : Utils.STDOUT;
-			if (name.equals(Utils.STDOUT)) {
-				smtConfig.log.out = smtConfig.stdout;
-			} else if (name.equals(Utils.STDERR)) {
-				smtConfig.log.out = smtConfig.stderr;
-			} else {
-				try {
-					smtConfig.log.out = new PrintStream(new FileOutputStream(name, true));
-				} catch (IOException e) {
-					return smtConfig.responseFactory.error("Failed to open regular output: " + e.getMessage(), value.pos());
-				}
+			try {
+				smtConfig.log.setRegularOutputChannel(name);
+			} catch (IOException e) {
+				return smtConfig.responseFactory.error("Failed to open regular output: " + e.getMessage(), value.pos());
 			}
 			options.put(option, value);
 			return successOrEmpty(smtConfig);
 		}
 		if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
 			String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : Utils.STDERR;
-			if (name.equals(Utils.STDOUT)) {
-				smtConfig.log.diag = smtConfig.stdout;
-			} else if (name.equals(Utils.STDERR)) {
-				smtConfig.log.diag = smtConfig.stderr;
-			} else {
-				try {
-					smtConfig.log.diag = new PrintStream(new FileOutputStream(name, true));
-				} catch (IOException e) {
-					return smtConfig.responseFactory.error("Failed to open diagnostic output: " + e.getMessage(), value.pos());
-				}
+			try {
+				smtConfig.log.setDiagnosticOutputChannel(name);
+			} catch (IOException e) {
+				return smtConfig.responseFactory.error("Failed to open diagnostic output: " + e.getMessage(), value.pos());
 			}
 			options.put(option, value);
 			return successOrEmpty(smtConfig);
@@ -452,7 +447,7 @@ public class AbstractSolver implements ISolver {
 	/** @see org.smtlib.ISolver#get_assertions() */
 	@Override
 	public IResponse get_assertions(){
-		String key = smtConfig.atLeastVersion(SMT.Configuration.SMTLIB.V25) ? Utils.PRODUCE_ASSERTIONS : Utils.INTERACTIVE_MODE;
+		String key = Utils.produceAssertionsKey(smtConfig);
 		IResponse err = requireOptionEnabled("get-assertions", key);
 		if (err != null) return err;
 		String response = null;

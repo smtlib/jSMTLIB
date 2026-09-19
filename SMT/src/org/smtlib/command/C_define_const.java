@@ -5,7 +5,6 @@
  */
 package org.smtlib.command;
 
-import java.io.IOException;
 import java.util.Collections;
 
 import org.smtlib.ICommand.Idefine_const;
@@ -17,7 +16,6 @@ import org.smtlib.ISolver;
 import org.smtlib.ISort;
 import org.smtlib.IVisitor;
 import org.smtlib.sexpr.Parser;
-import org.smtlib.sexpr.Printer;
 
 /** Implements the define-const command: syntactic sugar for define-fun with no parameters */
 public class C_define_const extends C_define_fun implements Idefine_const {

@@ -5,7 +5,6 @@
  */
 package org.smtlib.command;
 
-import java.io.IOException;
 
 import org.smtlib.ICommand.Iset_option;
 import org.smtlib.*;
@@ -15,7 +14,6 @@ import org.smtlib.SMT.Configuration;
 import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.impl.Command;
 import org.smtlib.sexpr.Parser;
-import org.smtlib.sexpr.Printer;
 
 /** Implements the set-option command */
 public class C_set_option extends Command implements Iset_option {
@@ -61,13 +59,23 @@ public class C_set_option extends Command implements Iset_option {
 
 	@Override
 	public IResponse execute(ISolver solver) {
-		if (prefixText != null) solver.comment(prefixText);
 		return solver.set_option(option,value);
 	}
 
-	// FIXME-NOW review this method - checkOptionType - is it used?
 	/** This method checks that the value for the given keyword has the correct type, when the keyword
-	 * is used as the key for an SMT-LIB option.
+	 * is used as the key for an SMT-LIB option. Called eagerly from parse() above, unlike most other
+	 * commands (e.g. C_declare_fun's non-standard extensions, C_define_fun's result-sort check --
+	 * see issue #40), which defer semantic validation to type-checking/execute time. That's
+	 * deliberate here, not an inconsistency to remove: unlike commands whose semantics are
+	 * checked uniformly regardless of solver (TypeChecker.validate()'s job), no real solver
+	 * adapter validates option-value types at all -- they forward set-option straight to the
+	 * real process (see AbstractSolver#set_option) -- so parse time is the only point that
+	 * would otherwise ever be reached for every solver alike. It is not, however, the *only*
+	 * layer: Solver_test.set_option() and AbstractSolver#checkPrintSuccess() both separately
+	 * validate :print-success's value too, since smtConfig.commandFactory.set_option(key,value)
+	 * can construct and execute a C_set_option directly, bypassing this parse-time check
+	 * entirely (see issue #41) -- AbstractSolver#set_option_impl() itself calls exactly that
+	 * factory method.
 	 * @param keyword the keyword controlling the type
 	 * @param t the value being tested
 	 * @return null or an error response
