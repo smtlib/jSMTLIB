@@ -1,2 +1,4 @@
+(define-fun bb () (_ BitVec 8) (bvneg (bvand (bvneg b) #xf0))) ; rounds up to multiple of 16
+                                                       ^^^^
 (assert (bvult b #xf0))
                  ^^^^
