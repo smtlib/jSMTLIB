@@ -1,7 +1,7 @@
 unsupported
 success
 success
-success
+(error "Did not expect a Hex literal in an expression to be translated")
 success
 success
 success

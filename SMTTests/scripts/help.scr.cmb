@@ -24,6 +24,15 @@ The recognized options are these:
         --diag <filename or 'stdout' or 'stderr'>: where to send verbose (diagnostic) output
         --port <number>: which port to use for client-server communication
         --text: text to process (ignoring file and port input)
+    -t, --timeout <seconds>: soft per-query timeout, always given here in seconds
+              (fractional values allowed); each solver adapter converts this value
+              to whatever unit and flag that solver actually uses (e.g. milliseconds
+              instead of seconds), and, for a solver with no per-query option at all,
+              applies it as a best-effort whole-run limit instead
+    -T, --timeout-total <seconds>: timeout for the solver's whole run (its process
+              lifetime), also always given here in seconds; likewise converted to
+              each solver's own unit/flag, or, if that solver has no whole-run option,
+              applied as a best-effort per-query limit instead
         --echo: if enabled, commands are echoed to diagnostic output when successfully parsed
         --abort: if enabled, an error causes immediate exit
         --noshow: if enabled, error location information is not shown

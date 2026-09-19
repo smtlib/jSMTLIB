@@ -1,0 +1,4 @@
+Solver_simplify.define_fun() mishandles a parameterized define-fun (asserts
+"(= name body)" as if name were a 0-ary constant, so a call site referencing it
+fails jSMTLIB's own type-checker with "Unknown constant symbol <name>") --
+see https://github.com/smtlib/jSMTLIB/issues/95

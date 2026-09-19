@@ -1,2 +1,2 @@
 (error "The simplify solver does not yet support the bit-vector theory")
-(error "A bit-vector sort must have exactly one numeral")
+(error "The logic must be set before a declare-fun command is issued")

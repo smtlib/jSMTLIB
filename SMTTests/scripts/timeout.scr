@@ -7,17 +7,15 @@
 #
 # Workload: the pigeonhole principle with 12 pigeons into 11 holes (PHP(12,11)), a
 # textbook worst case for CDCL/resolution-style search (known exponential lower bound
-# on resolution proof size), encoded directly as ~870 plain QF_UF Boolean commands (no
-# arithmetic/cardinality theory a solver could shortcut through). Empirically confirmed
-# this session, unbounded (no -t at all, wrapped in an external `timeout 30`): z3,
-# cvc5, yices2, and SMTInterpol are ALL still running at 30s -- so a run that finishes
-# well before that with `-t 1` set is good evidence the timeout actually fired, not
-# that the solver got lucky and finished the real problem. (Sending ~870 individual
-# commands each waits for its own response, so even a successful abort takes several
-# seconds of pure relay overhead on top of the ~1s the solver itself spends before
-# giving up -- runs complete in ~4-12s locally.) Each solver invocation is wrapped in
-# an outer `timeout 60` purely so a still-broken adapter fails this script instead of
-# hanging CI.
+# on resolution proof size), encoded as plain QF_UF Boolean commands (no arithmetic/
+# cardinality theory a solver could shortcut through) -- see the assert-batching note
+# below for why it's ~740 clauses in one command, not ~740 commands. Empirically
+# confirmed this session, unbounded (no -t at all, wrapped in an external `timeout 30`):
+# z3, cvc5, yices2, and SMTInterpol are ALL still running at 30s -- so a run that
+# finishes well before that with `-t 1` set is good evidence the timeout actually
+# fired, not that the solver got lucky and finished the real problem. Each solver
+# invocation is wrapped in an outer `timeout 60` purely so a still-broken adapter fails
+# this script instead of hanging CI.
 #
 # :reason-unknown wording, confirmed empirically this session (all case-insensitive,
 # quotes optional per each solver's own convention -- accepted here as equivalent):
@@ -41,12 +39,21 @@
 # rather than quietly excluded or accepted, so this doesn't regress further unnoticed;
 # worth its own follow-up issue rather than a fix bundled into #60.
 #
-# Solvers not exercised here: "test" (the mock solver ignores timeout entirely -- there
-# is no real computation to bound) and "simplify" (its adapter implements no timeout
-# support at all -- a pre-existing, separate gap, not in scope for issue #60). Any
-# other name in SMT_TEST_SOLVERS is attempted; one simply not installed on this machine
-# reports INFO and is not counted as a failure (matches scripts/solverBehavior/
-# all-statistics.scr's convention for the same situation).
+# Solver list is a small, deliberately FIXED set -- not ${SMT_TEST_SOLVERS} -- chosen to
+# be present on every one of the 5 CI platforms (confirmed directly against the
+# smtlib/Solvers repo's Solvers-macos/-macos-arm64/-linux/-linux-arm64/-windows trees):
+# z3-4.3 (the legacy adapter), z3-4.8.12 and z3-4.16.0 (two Solver_z3_recent versions,
+# spanning its whole supported range), cvc5-1.3.2, yices2 (the whole-run-only fallback
+# case), smtinterpol-2.5 (the per-query-only fallback case). This exercises every
+# distinct code path in the -t/-T translation. Deliberately excludes: bitwuzla and
+# alt-ergo (availability varies per platform -- e.g. bitwuzla is on macos-arm64/linux/
+# linux-arm64/windows but NOT macos-x64 -- which would make this script's own output
+# vary by platform, the same portability trap scripts/solverBehavior/all-statistics.scr
+# hit); "test" (the mock solver ignores timeout, nothing to bound); "simplify" (its
+# adapter implements no timeout support at all -- a pre-existing, separate gap, not in
+# scope for issue #60). A solver from this fixed list that still somehow isn't
+# installed reports INFO and is not counted as a failure.
+_SOLVERS="z3-4.3 z3-4.8.12 z3-4.16.0 cvc5-1.3.2 yices2 smtinterpol-2.5"
 
 _tmpdir=$(mktemp -d /tmp/jsmtlib_timeout_test.XXXXXX)
 trap 'rm -rf "$_tmpdir"' EXIT
@@ -54,6 +61,17 @@ trap 'rm -rf "$_tmpdir"' EXIT
 # PHP(12,11): p_i_j means "pigeon i is in hole j". Each pigeon must be in some hole;
 # no hole may hold two pigeons. Unsatisfiable (12 pigeons, 11 holes), but that's
 # incidental -- the point is how long it takes to find out, not the verdict itself.
+#
+# All ~740 pigeonhole clauses are combined into a single (assert (and ...)) rather than
+# one (assert ...) command per clause: jSMTLIB waits for a response to each command it
+# sends, so ~740 separate round trips (on top of the 132 unavoidable declare-funs, one
+# per p_i_j -- SMT-LIB has no batch declare) added several seconds of pure relay
+# overhead per solver even on a fast local machine, enough to risk ScriptTests' 2-minute
+# per-test JUnit timeout across 6 solvers under real, slower/shared CI hardware --
+# confirmed the hard way: this script failed on every CI platform the first time,
+# despite passing reliably in every local run (which used `bash runscript` directly,
+# bypassing the JUnit timeout entirely). One combined assert removes ~99% of the round
+# trips without weakening the workload at all -- same formula, same solve difficulty.
 _php="$_tmpdir/php.smt2"
 {
     # C-style loops throughout, not `seq`: BSD seq (macOS) counts DOWN when given a
@@ -66,19 +84,21 @@ _php="$_tmpdir/php.smt2"
             echo "(declare-fun p_${i}_${j} () Bool)"
         done
     done
+    clauses=""
     for ((i = 1; i <= 12; i++)); do
-        line="(assert (or"
-        for ((j = 1; j <= 11; j++)); do line="$line p_${i}_${j}"; done
-        line="$line))"
-        echo "$line"
+        clause="(or"
+        for ((j = 1; j <= 11; j++)); do clause="$clause p_${i}_${j}"; done
+        clause="$clause)"
+        clauses="$clauses $clause"
     done
     for ((j = 1; j <= 11; j++)); do
         for ((i1 = 1; i1 <= 12; i1++)); do
             for ((i2 = i1 + 1; i2 <= 12; i2++)); do
-                echo "(assert (or (not p_${i1}_${j}) (not p_${i2}_${j})))"
+                clauses="$clauses (or (not p_${i1}_${j}) (not p_${i2}_${j}))"
             done
         done
     done
+    echo "(assert (and$clauses))"
     echo "(check-sat)"
     echo "(get-info :reason-unknown)"
     echo "(exit)"
@@ -132,12 +152,8 @@ _run_check() {
     esac
 }
 
-for _n in ${SMT_TEST_SOLVERS:-test}; do
-    case "$_n" in
-        test)     echo "INFO: test: mock solver ignores timeout, skipped" ;;
-        simplify) echo "INFO: simplify: adapter implements no timeout support (pre-existing, separate gap), skipped" ;;
-        *)        _run_check "$_n" ;;
-    esac
+for _n in $_SOLVERS; do
+    _run_check "$_n"
 done
 
 [ "$_fail" -eq 0 ]

@@ -1,5 +1,5 @@
 (error "The simplify solver does not yet support the bit-vector theory")
-success
-success
-success
-(error "Argument 2 of = has sort (_ BitVec 4), expected (_ BitVec 8) (to match an earlier argument)")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before an assert command is issued")

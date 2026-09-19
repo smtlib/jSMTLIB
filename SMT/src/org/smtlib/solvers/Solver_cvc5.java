@@ -47,7 +47,14 @@ public class Solver_cvc5 extends AbstractSolver implements ISolver {
 	 *  reply at all), so no priming (set-option :print-success true) is needed in
 	 *  start(). */
 	protected String cmds[];
-	protected String cmds_win[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet","--print-success","--strict-parsing","--no-full-saturate-quant"};
+	// --no-full-saturate-quant temporarily removed here (issue #69): no rationale for
+	// this Windows-only flag survives anywhere in the project's history (git archaeology
+	// found only the unexplained WIP commit that first added it), so this is a live
+	// experiment -- if the next full CI run shows a real Windows-only cvc5 regression
+	// (a quantifier test hanging or timing out that doesn't on macOS/Linux), that failure
+	// itself is the missing rationale and the flag goes back with a real comment
+	// explaining what it works around; if nothing regresses, it can stay removed.
+	protected String cmds_win[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet","--print-success","--strict-parsing"};
 	protected String cmds_mac[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet","--print-success","--strict-parsing"};
 	protected String cmds_unix[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet","--print-success","--strict-parsing"};
 

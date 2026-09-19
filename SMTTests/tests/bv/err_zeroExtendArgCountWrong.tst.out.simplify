@@ -1,4 +1,4 @@
 (error "The simplify solver does not yet support the bit-vector theory")
-success
-success
-(error " The (_ zero_extend 2) function should have one argument")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before an assert command is issued")

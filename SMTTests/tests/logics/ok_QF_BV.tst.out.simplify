@@ -1,7 +1,7 @@
 (error "The simplify solver does not yet support the bit-vector theory")
-success
-success
-(error "Did not expect a Hex literal in an expression to be translated")
-(error "Did not expect a Hex literal in an expression to be translated")
-(error "Did not expect a Hex literal in an expression to be translated")
-success
+(error "The logic must be set before a declare-const command is issued")
+(error "The logic must be set before a declare-const command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before a define-sort command is issued")

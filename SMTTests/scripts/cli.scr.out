@@ -10,6 +10,8 @@ Usage: java org.smtlib.SMT [args] [file]
        --diag        <filename or 'stdout' or 'stderr'>
        --port        <int>
        --text        <string>
+       --timeout       [-t] <seconds>  (per-query timeout, converted per-solver)
+       --timeout-total [-T] <seconds>  (whole-run timeout, converted per-solver)
        --echo
        --abort
        --noshow
