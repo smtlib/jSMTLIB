@@ -1,10 +1,12 @@
 ##EXITCODE 0
 # Tests that jsmtlib.properties is loaded correctly from each search location.
 #
-# Three locations are exercised:
-#   1. Embedded in the jar (classpath resource) -- the primary case for deployed users
-#   2. Current working directory -- user override
-#   3. java -jar invocation style -- verifies the jar is self-contained
+# Locations exercised:
+#   1. Embedded in the jar the code is actually running from (own jar, whatever it's
+#      named -- see issue #35) -- the primary case for deployed users
+#   2. A jsmtlib.properties file that is a sibling of that same jar
+#   3. Current working directory -- user override
+#   4. java -jar invocation style -- verifies the jar is self-contained
 
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
@@ -24,12 +26,13 @@ EOF
 # ---------------------------------------------------------------------------
 # Test 1: jar-embedded properties found when running with "java -jar"
 # Run from a temp directory that has NO local jsmtlib.properties.
-# The verbose message "reading properties (class path)" confirms the embedded
-# copy was loaded.
+# The verbose message "reading properties (own jar)" confirms the embedded
+# copy was loaded, identified via the jar's own code source rather than a
+# hardcoded jar filename (see issue #35).
 # ---------------------------------------------------------------------------
 echo "Test 1: jar-embedded properties (java -jar, no local properties file)"
 err=$(cd "$TMPDIR" && java -jar "$SMT_JAR" --verbose 1 --solver test "$TMPDIR/minimal.tst" 2>&1 >/dev/null)
-if echo "$err" | grep -q "reading properties (class path)"; then
+if echo "$err" | grep -q "reading properties (own jar)"; then
     pass "jar-embedded properties loaded via 'java -jar'"
 else
     fail "jar-embedded properties NOT loaded via 'java -jar'" "stderr: $err"
@@ -41,21 +44,50 @@ fi
 # ---------------------------------------------------------------------------
 echo "Test 2: jar-embedded properties (java -cp jar, no local properties file)"
 err=$(cd "$TMPDIR" && java -cp "$SMT_JAR" org.smtlib.SMT --verbose 1 --solver test "$TMPDIR/minimal.tst" 2>&1 >/dev/null)
-if echo "$err" | grep -q "reading properties (class path)"; then
+if echo "$err" | grep -q "reading properties (own jar)"; then
     pass "jar-embedded properties loaded via 'java -cp jar'"
 else
     fail "jar-embedded properties NOT loaded via 'java -cp jar'" "stderr: $err"
 fi
 
 # ---------------------------------------------------------------------------
-# Test 3: jsmtlib.properties in the current working directory is loaded
-# and applied on top of the jar-embedded copy.
-# Both "class path" and "current dir" messages must appear.
+# Test 3: a jsmtlib.properties file that is a sibling of the actual jar being
+# used (whatever that jar is named) is found and loaded, on top of the
+# jar-embedded copy -- isolated in a fresh directory (copying the jar there)
+# so this doesn't just observe $SMT_DIR's own build-time jsmtlib.properties.
 # ---------------------------------------------------------------------------
-echo "Test 3: CWD jsmtlib.properties overrides jar-embedded copy"
+echo "Test 3: jar-sibling jsmtlib.properties is loaded"
+ISODIR=$(mktemp -d)
+cp "$SMT_JAR" "$ISODIR/isolated.jar"
+err=$(cd "$TMPDIR" && java -jar "$ISODIR/isolated.jar" --verbose 1 --solver test "$TMPDIR/minimal.tst" 2>&1 >/dev/null)
+if echo "$err" | grep -q "reading properties (own jar)" && ! echo "$err" | grep -q "reading properties (jar sibling)"; then
+    pass "no jar-sibling properties loaded when none is present"
+else
+    fail "unexpected jar-sibling behavior with no sibling file present" "stderr: $err"
+fi
+cp "$SMT_DIR/jsmtlib.properties" "$ISODIR/"
+err=$(cd "$TMPDIR" && java -jar "$ISODIR/isolated.jar" --verbose 1 --solver test "$TMPDIR/minimal.tst" 2>&1 >/dev/null)
+if echo "$err" | grep -q "reading properties (own jar)"; then
+    pass "jar-embedded properties still loaded when a sibling copy also present"
+else
+    fail "jar-embedded properties NOT loaded when a sibling copy also present" "stderr: $err"
+fi
+if echo "$err" | grep -q "reading properties (jar sibling)"; then
+    pass "jar-sibling jsmtlib.properties loaded (renamed jar: isolated.jar)"
+else
+    fail "jar-sibling jsmtlib.properties NOT loaded" "stderr: $err"
+fi
+rm -rf "$ISODIR"
+
+# ---------------------------------------------------------------------------
+# Test 4: jsmtlib.properties in the current working directory is loaded
+# and applied on top of the jar-embedded copy.
+# Both "own jar" and "current dir" messages must appear.
+# ---------------------------------------------------------------------------
+echo "Test 4: CWD jsmtlib.properties overrides jar-embedded copy"
 cp "$SMT_DIR/jsmtlib.properties" "$TMPDIR/"
 err=$(cd "$TMPDIR" && java -jar "$SMT_JAR" --verbose 1 --solver test "$TMPDIR/minimal.tst" 2>&1 >/dev/null)
-if echo "$err" | grep -q "reading properties (class path)"; then
+if echo "$err" | grep -q "reading properties (own jar)"; then
     pass "jar-embedded properties still loaded when CWD copy also present"
 else
     fail "jar-embedded properties NOT loaded when CWD copy also present" "stderr: $err"
@@ -68,11 +100,11 @@ fi
 rm "$TMPDIR/jsmtlib.properties"
 
 # ---------------------------------------------------------------------------
-# Test 4: Tool exits cleanly with correct output in all invocation styles.
+# Test 5: Tool exits cleanly with correct output in all invocation styles.
 # (Regression: verifies that removing SMT_DIR from the classpath doesn't
 # break normal operation.)
 # ---------------------------------------------------------------------------
-echo "Test 4: correct SMT-LIB output with jar-only classpath"
+echo "Test 5: correct SMT-LIB output with jar-only classpath"
 out=$(cd "$TMPDIR" && java -cp "$SMT_JAR" org.smtlib.SMT --solver test "$TMPDIR/minimal.tst" 2>/dev/null | tr -d '\r')
 # set-logic and exit with default print-success=true produce two "success" lines
 expected="$(printf 'success\nsuccess')"

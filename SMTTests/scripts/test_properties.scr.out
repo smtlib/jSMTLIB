@@ -2,10 +2,14 @@ Test 1: jar-embedded properties (java -jar, no local properties file)
 PASS: jar-embedded properties loaded via 'java -jar'
 Test 2: jar-embedded properties (java -cp jar, no local properties file)
 PASS: jar-embedded properties loaded via 'java -cp jar'
-Test 3: CWD jsmtlib.properties overrides jar-embedded copy
+Test 3: jar-sibling jsmtlib.properties is loaded
+PASS: no jar-sibling properties loaded when none is present
+PASS: jar-embedded properties still loaded when a sibling copy also present
+PASS: jar-sibling jsmtlib.properties loaded (renamed jar: isolated.jar)
+Test 4: CWD jsmtlib.properties overrides jar-embedded copy
 PASS: jar-embedded properties still loaded when CWD copy also present
 PASS: CWD jsmtlib.properties loaded
-Test 4: correct SMT-LIB output with jar-only classpath
+Test 5: correct SMT-LIB output with jar-only classpath
 PASS: correct output with jar-only classpath
 
-All 5 properties tests PASSED
+All 8 properties tests PASSED

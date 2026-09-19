@@ -13,6 +13,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.ServerSocket;
 import java.net.URL;
+import java.security.CodeSource;
 import java.util.*;
 
 import org.smtlib.IExpr.IKeyword;
@@ -350,44 +351,78 @@ public class SMT {
 		System.exit(exitValue);
 	}
 	
-	/** Reads and returns the properties file for the application:
-	 * from file Utils.PROPS_FILE in the working directory 
-	 * or user's home directory
-	 * or on the class path
-	 * or in the directory in which jSMTLIB.jar resides (if it is being run with -jar).
+	/** Reads and returns the properties file for the application, merging in this order
+	 *  (each later source overriding matching keys from earlier ones):
+	 *  1. The Utils.PROPS_FILE resource embedded inside the jar this code is actually
+	 *     running from, identified via this class's own code source rather than a hardcoded
+	 *     jar filename -- so it works no matter what that jar is actually named (a renamed
+	 *     release artifact, a fat/shaded jar, a fork's build). If not running from a jar at
+	 *     all (e.g. exploded .class files on the classpath, as in a debugger or test run),
+	 *     falls back to a plain classpath resource lookup instead. See issue #35.
+	 *  2. A Utils.PROPS_FILE file that is a sibling of that same jar -- again identified via
+	 *     the code source, not a hardcoded filename -- letting a deployment override the
+	 *     jar's own bundled defaults without repackaging it.
+	 *  3. Utils.PROPS_FILE in the user's home directory.
+	 *  4. Utils.PROPS_FILE in the current working directory.
 	 */
 	public Properties readProperties() {
 		Properties p = new Properties();
 		File f;
-		// Find and read file on class path (including resources embedded in the jar).
-		// Must use url.openStream(), not new File(url.getFile()), because jar: URLs
-		// are not valid filesystem paths and FileReader would throw FileNotFoundException.
-		URL url =  ClassLoader.getSystemResource(Utils.PROPS_FILE);
-		if (url != null) {
-            try (Reader rdr = new InputStreamReader(url.openStream())) {
-				if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (class path) from " + url);
-				p.load(rdr);
+
+		// Identify the jar (or classes directory) this code is actually running from.
+		// getCodeSource().getLocation() is the standard JDK idiom for this; wrapped
+		// defensively since a SecurityManager or an unusual classloader could leave it null
+		// or throw, in which case both jar-relative lookups below are simply skipped.
+		File codeSourceFile = null;
+		try {
+			CodeSource cs = SMT.class.getProtectionDomain().getCodeSource();
+			if (cs != null && cs.getLocation() != null) {
+				codeSourceFile = new File(cs.getLocation().toURI());
+			}
+		} catch (Exception e) {
+			// codeSourceFile stays null; both steps below degrade to their fallbacks.
+		}
+		boolean runningFromJar = codeSourceFile != null && codeSourceFile.isFile();
+
+		// (1) The properties resource embedded inside this specific jar.
+		boolean loadedFromOwnJar = false;
+		if (runningFromJar) {
+			try {
+				URL jarEntryUrl = java.net.URI.create("jar:" + codeSourceFile.toURI().toURL() + "!/" + Utils.PROPS_FILE).toURL();
+				// Must use url.openStream(), not new File(url.getFile()), because jar: URLs
+				// are not valid filesystem paths and FileReader would throw FileNotFoundException.
+				try (Reader rdr = new InputStreamReader(jarEntryUrl.openStream())) {
+					if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (own jar) from " + jarEntryUrl);
+					p.load(rdr);
+					loadedFromOwnJar = true;
+				}
 			} catch (IOException|IllegalArgumentException e) {
-				smtConfig.log.logDiag("IOException reading properties from classpath: " + e);
+				// No such entry in this jar -- nothing to load from this source.
 			}
 		}
-		// Find and read file in the directory that contains
-		// the jSMTLIB.jar file
-		url =  ClassLoader.getSystemResource(".");
-		if (url != null) {
-			String s = url.toString();
-			String prefix = "jar:file:/";
-			String suffix = "jSMTLIB.jar!/";
-			if (s.startsWith(prefix) && s.endsWith(suffix)) {
-				s = s.substring(prefix.length(),s.length()-suffix.length());
-				s = s + Utils.PROPS_FILE;
-				f = new File(s);
-				if (f.isFile()) {
-					try (FileReader rdr = new FileReader(f);) {
-						if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (class path dir) from " + f);
-						p.load(rdr);
-					} catch (IOException|IllegalArgumentException e) {
-					}
+		if (!loadedFromOwnJar) {
+			// Not running from a jar (or it has no embedded properties resource): fall back
+			// to a generic classpath resource lookup, which still finds it if it's present
+			// as a loose classpath resource (e.g. exploded .class files during development).
+			URL url = ClassLoader.getSystemResource(Utils.PROPS_FILE);
+			if (url != null) {
+				try (Reader rdr = new InputStreamReader(url.openStream())) {
+					if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (class path) from " + url);
+					p.load(rdr);
+				} catch (IOException|IllegalArgumentException e) {
+					smtConfig.log.logDiag("IOException reading properties from classpath: " + e);
+				}
+			}
+		}
+
+		// (2) A properties file that is a sibling of that same jar, whatever it is named.
+		if (runningFromJar) {
+			f = new File(codeSourceFile.getParentFile(), Utils.PROPS_FILE);
+			if (f.isFile()) {
+				try (FileReader rdr = new FileReader(f);) {
+					if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (jar sibling) from " + f);
+					p.load(rdr);
+				} catch (IOException|IllegalArgumentException e) {
 				}
 			}
 		}
