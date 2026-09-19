@@ -5,9 +5,7 @@
  */
 package org.smtlib;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.List;
@@ -368,32 +366,20 @@ public class AbstractSolver implements ISolver {
 		String option = key.value();
 		if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
 			String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : Utils.STDOUT;
-			if (name.equals(Utils.STDOUT)) {
-				smtConfig.log.out = smtConfig.stdout;
-			} else if (name.equals(Utils.STDERR)) {
-				smtConfig.log.out = smtConfig.stderr;
-			} else {
-				try {
-					smtConfig.log.out = new PrintStream(new FileOutputStream(name, true));
-				} catch (IOException e) {
-					return smtConfig.responseFactory.error("Failed to open regular output: " + e.getMessage(), value.pos());
-				}
+			try {
+				smtConfig.log.setRegularOutputChannel(name);
+			} catch (IOException e) {
+				return smtConfig.responseFactory.error("Failed to open regular output: " + e.getMessage(), value.pos());
 			}
 			options.put(option, value);
 			return successOrEmpty(smtConfig);
 		}
 		if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
 			String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : Utils.STDERR;
-			if (name.equals(Utils.STDOUT)) {
-				smtConfig.log.diag = smtConfig.stdout;
-			} else if (name.equals(Utils.STDERR)) {
-				smtConfig.log.diag = smtConfig.stderr;
-			} else {
-				try {
-					smtConfig.log.diag = new PrintStream(new FileOutputStream(name, true));
-				} catch (IOException e) {
-					return smtConfig.responseFactory.error("Failed to open diagnostic output: " + e.getMessage(), value.pos());
-				}
+			try {
+				smtConfig.log.setDiagnosticOutputChannel(name);
+			} catch (IOException e) {
+				return smtConfig.responseFactory.error("Failed to open diagnostic output: " + e.getMessage(), value.pos());
 			}
 			options.put(option, value);
 			return successOrEmpty(smtConfig);

@@ -121,8 +121,7 @@ public class FileTests extends LogicTests {
         ByteArrayOutputStream errBuf = new ByteArrayOutputStream();
         PrintStream outPs = new PrintStream(outBuf);
         PrintStream errPs = new PrintStream(errBuf);
-        smt.smtConfig.log.out = outPs;
-        smt.smtConfig.log.diag = errPs;
+        smt.smtConfig.log.setChannels(outPs, errPs);
         smt.smtConfig.stdout = outPs;
         smt.smtConfig.stderr = errPs;
 

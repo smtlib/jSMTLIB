@@ -74,7 +74,7 @@ public class CommentAsCommandBugTest {
     public void commentExecuteForwardsToTheSolverAndProducesNoVisibleOutput() throws Exception {
         SMT.Configuration config = new SMT.Configuration();
         ByteArrayOutputStream diagBuf = new ByteArrayOutputStream();
-        config.log.diag = new PrintStream(diagBuf);
+        config.log.setChannels(config.log.getOut(), new PrintStream(diagBuf));
         org.smtlib.solvers.Solver_test solver = new org.smtlib.solvers.Solver_test(config, "test");
 
         C_comment comment = new C_comment("a comment");

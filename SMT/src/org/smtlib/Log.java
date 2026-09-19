@@ -122,12 +122,100 @@ public class Log {
 	
 	/** The list of listeners to send log messages to */
 	protected List<IListener> listeners = new LinkedList<IListener>();
-	
-	/** The stream used for regular output and error information (may be modified directly)*/
-	public /*@NonNull*/ java.io.PrintStream out = System.out;
-	
-	/** The stream used for diagnostic log information (may be modified directly) */
-	public /*@NonNull*/ java.io.PrintStream diag = System.err;
+
+	/** The stream used for regular output and error information. Private -- see
+	 *  {@link #getOut()}/{@link #setChannels(java.io.PrintStream, java.io.PrintStream)}.
+	 *  Issue #32: this field and {@link #diag} used to be public and were reassigned
+	 *  directly from half a dozen places (this class's own set-option handling, its
+	 *  duplicate in Solver_test, CharSequenceSocket, SMT's startup --out/--diag
+	 *  handling, Solver_bitwuzla's save/restore, and test code that deliberately
+	 *  aliases the two), which made it impossible for any one of those call sites to
+	 *  know whether a stream it was about to overwrite was still needed by another --
+	 *  a file stream opened for :regular-output-channel leaked if the channel was
+	 *  switched to a different file later in the same session, since nothing knew it
+	 *  was safe (or unsafe) to close first. Routing every change through
+	 *  {@link #setChannels} makes this Log the one place that always sees the full
+	 *  old-and-new state of both channels at once, so it can tell -- with certainty,
+	 *  not a guess -- whether an outgoing file stream is still referenced by the
+	 *  other channel before closing it. */
+	private /*@NonNull*/ java.io.PrintStream out = System.out;
+
+	/** The stream used for diagnostic log information. Private -- see {@link #diag}'s
+	 *  sibling doc on {@link #out} for why. */
+	private /*@NonNull*/ java.io.PrintStream diag = System.err;
+
+	/** True iff {@link #out} is a file stream this Log opened itself (via {@link
+	 *  #setRegularOutputChannel(String)}) and therefore is this Log's to close when
+	 *  it's replaced -- false for smtConfig.stdout/stderr and for any stream a caller
+	 *  supplied directly via {@link #setChannels}, which this Log never closes. */
+	private boolean outOwned = false;
+
+	/** The {@link #diag} sibling of {@link #outOwned}. */
+	private boolean diagOwned = false;
+
+	/** Returns the current regular-output stream. */
+	public /*@NonNull*/ java.io.PrintStream getOut() { return out; }
+
+	/** Returns the current diagnostic stream. */
+	public /*@NonNull*/ java.io.PrintStream getDiag() { return diag; }
+
+	/** Points both output channels at the given streams -- the one point through which
+	 *  every change to these two channels happens. Never opens a new stream: callers
+	 *  construct whatever they want a channel to point at (including
+	 *  smtConfig.stdout/stderr for the standard streams) and hand it in here, and this
+	 *  Log never closes a stream supplied this way -- ownership of it stays with the
+	 *  caller. (To point a channel at a named file, with this Log itself managing that
+	 *  file's lifecycle, use {@link #setRegularOutputChannel(String)}/{@link
+	 *  #setDiagnosticOutputChannel(String)} instead -- SMT-LIB's
+	 *  :regular-output-channel/:diagnostic-output-channel commands should go through
+	 *  those, not this method, directly.)
+	 *  <p>
+	 *  Does close a stream this Log previously opened for a file, if it's being
+	 *  replaced here and isn't also the other channel's current value (guards the case
+	 *  where both channels were pointed at the same file). */
+	public void setChannels(/*@NonNull*/ java.io.PrintStream out, /*@NonNull*/ java.io.PrintStream diag) {
+		setChannels(out, false, diag, false);
+	}
+
+	/** The shared implementation behind {@link #setChannels(java.io.PrintStream,
+	 *  java.io.PrintStream)} and the two named-file convenience methods: also records,
+	 *  for each channel, whether the stream now installed is one this Log opened
+	 *  itself (and so is this Log's to close on the next switch). */
+	private void setChannels(/*@NonNull*/ java.io.PrintStream newOut, boolean newOutOwned,
+			/*@NonNull*/ java.io.PrintStream newDiag, boolean newDiagOwned) {
+		java.io.PrintStream oldOut = this.out, oldDiag = this.diag;
+		boolean oldOutStillReferenced = (newOut == oldOut) || (newDiag == oldOut);
+		boolean oldDiagStillReferenced = (newOut == oldDiag) || (newDiag == oldDiag);
+		if (outOwned && !oldOutStillReferenced) oldOut.close();
+		if (diagOwned && !oldDiagStillReferenced && oldDiag != oldOut) oldDiag.close();
+		this.out = newOut; this.outOwned = newOutOwned;
+		this.diag = newDiag; this.diagOwned = newDiagOwned;
+	}
+
+	/** Points the regular-output channel at "stdout", "stderr", or -- for any other
+	 *  value -- opens (in append mode) the file so named, per :regular-output-channel's
+	 *  SMT-LIB semantics. If the channel was previously pointed at a file this Log
+	 *  opened itself (and that file isn't also the current diagnostic channel), closes
+	 *  it first. Throws IOException if a named file can't be opened; the channel is
+	 *  left unchanged in that case -- the caller (AbstractSolver/Solver_test's
+	 *  set_option) is responsible for turning that into the appropriate SMT-LIB error
+	 *  response. */
+	public void setRegularOutputChannel(String spec) throws java.io.IOException {
+		java.io.PrintStream newOut; boolean owned;
+		if (Utils.STDOUT.equals(spec)) { newOut = smtConfig.stdout; owned = false; }
+		else if (Utils.STDERR.equals(spec)) { newOut = smtConfig.stderr; owned = false; }
+		else { newOut = new java.io.PrintStream(new java.io.FileOutputStream(spec, true)); owned = true; }
+		setChannels(newOut, owned, this.diag, this.diagOwned);
+	}
+
+	/** The {@link #diag} sibling of {@link #setRegularOutputChannel(String)}. */
+	public void setDiagnosticOutputChannel(String spec) throws java.io.IOException {
+		java.io.PrintStream newDiag; boolean owned;
+		if (Utils.STDOUT.equals(spec)) { newDiag = smtConfig.stdout; owned = false; }
+		else if (Utils.STDERR.equals(spec)) { newDiag = smtConfig.stderr; owned = false; }
+		else { newDiag = new java.io.PrintStream(new java.io.FileOutputStream(spec, true)); owned = true; }
+		setChannels(this.out, this.outOwned, newDiag, owned);
+	}
 
 	/** Prints the argument on the regular output stream and to any listeners */
 	public void logOut(/*@NonNull*/ IResponse r) {

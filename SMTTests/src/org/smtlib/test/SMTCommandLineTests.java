@@ -38,8 +38,7 @@ public class SMTCommandLineTests {
         smt = new SMT();
         outBuf = new ByteArrayOutputStream();
         outPs = new PrintStream(outBuf);
-        smt.smtConfig.log.out = outPs;
-        smt.smtConfig.log.diag = outPs;
+        smt.smtConfig.log.setChannels(outPs, outPs);
     }
 
     @After
@@ -104,7 +103,7 @@ public class SMTCommandLineTests {
         SMT smtNoLogicPath = new SMT() {
             @Override public Properties readProperties() { return new Properties(); }
         };
-        smtNoLogicPath.smtConfig.log.out = outPs;
+        smtNoLogicPath.smtConfig.log.setChannels(outPs, smtNoLogicPath.smtConfig.log.getDiag());
         int ret = smtNoLogicPath.exec(new String[]{
             "--solver", "test", "--text", "(set-logic QF_UF)(exit)"});
         outPs.flush();

@@ -37,7 +37,7 @@ public class ParserStrayTokenAndTypoBugTest {
         SMT.Configuration config = new SMT.Configuration();
         config.verbose = 1;
         ByteArrayOutputStream diagBuf = new ByteArrayOutputStream();
-        config.log.diag = new PrintStream(diagBuf);
+        config.log.setChannels(config.log.getOut(), new PrintStream(diagBuf));
 
         // "foo" is a stray token at command level (not a '('), so parseLP() fails and the
         // recovery path skips forward to the next '(' -- here, the start of "(exit)".

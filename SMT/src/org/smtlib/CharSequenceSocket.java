@@ -72,7 +72,7 @@ public class CharSequenceSocket extends CharSequenceInfinite {
 				// Create the input and output streams
 				// FIXME - use a listener?
 				// FIXME - are there any other exceptions?  what if the connection is unexpectedly broken
-				smtConfig.log.out = new PrintStream(clientSocket.getOutputStream(),true);
+				smtConfig.log.setChannels(new PrintStream(clientSocket.getOutputStream(),true), smtConfig.log.getDiag());
 				rdr = new BufferedReader(
 						new InputStreamReader(
 								clientSocket.getInputStream()));

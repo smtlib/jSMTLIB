@@ -5,8 +5,6 @@
  */
 package org.smtlib.solvers;
 
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.util.*;
 
 import org.smtlib.*;
@@ -89,8 +87,7 @@ public class Solver_test implements ISolver {
 		options.putAll(smt().utils.defaults);
 		((Response.Factory)smtConfig.responseFactory).printSuccess = true;
 		smtConfig.verbose = 0;
-		smtConfig.log.out = smtConfig.stdout;
-		smtConfig.log.diag = smtConfig.stderr;
+		smtConfig.log.setChannels(smtConfig.stdout, smtConfig.stderr);
 		checkSatStatus = null;
 
 		return smtConfig.responseFactory.success();
@@ -396,33 +393,19 @@ public class Solver_test implements ISolver {
 			// Actually, v should never be anything but IStringLiteral - that should
 			// be checked during parsing
 			String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : Utils.STDERR;
-			if (name.equals(Utils.STDOUT)) {
-				smtConfig.log.diag = smtConfig.stdout;
-			} else if (name.equals(Utils.STDERR)) {
-				smtConfig.log.diag = smtConfig.stderr;
-			} else {
-				try {
-					FileOutputStream f = new FileOutputStream(name,true); // append
-					smtConfig.log.diag = new PrintStream(f);
-				} catch (java.io.IOException e) {
-					return smtConfig.responseFactory.error("Failed to open or write to the diagnostic output " + e.getMessage(),value.pos());
-				}
+			try {
+				smtConfig.log.setDiagnosticOutputChannel(name);
+			} catch (java.io.IOException e) {
+				return smtConfig.responseFactory.error("Failed to open or write to the diagnostic output " + e.getMessage(),value.pos());
 			}
 		} else if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
 			// Actually, v should never be anything but IStringLiteral - that should
 			// be checked during parsing
 			String name = (value instanceof IStringLiteral)?((IStringLiteral)value).value() : Utils.STDOUT;
-			if (name.equals(Utils.STDOUT)) {
-				smtConfig.log.out = smtConfig.stdout;
-			} else if (name.equals(Utils.STDERR)) {
-				smtConfig.log.out = smtConfig.stderr;
-			} else {
-				try {
-					FileOutputStream f = new FileOutputStream(name,true); // append
-					smtConfig.log.out = new PrintStream(f);
-				} catch (java.io.IOException e) {
-					return smtConfig.responseFactory.error("Failed to open or write to the regular output " + e.getMessage(),value.pos());
-				}
+			try {
+				smtConfig.log.setRegularOutputChannel(name);
+			} catch (java.io.IOException e) {
+				return smtConfig.responseFactory.error("Failed to open or write to the regular output " + e.getMessage(),value.pos());
 			}
 		}
 		if (Utils.INTERACTIVE_MODE.equals(option) && !smtConfig.isVersion(SMTLIB.V20)) option = Utils.PRODUCE_ASSERTIONS;

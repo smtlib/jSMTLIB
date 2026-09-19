@@ -38,7 +38,7 @@ public class LogOutNewlineBugTest {
     public void logOutAddsALineTermination() {
         SMT.Configuration config = new SMT.Configuration();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        config.log.out = new PrintStream(baos);
+        config.log.setChannels(new PrintStream(baos), config.log.getDiag());
 
         config.log.logOut("hello");
 
@@ -49,7 +49,7 @@ public class LogOutNewlineBugTest {
     public void logOutNolnAddsNoLineTermination() {
         SMT.Configuration config = new SMT.Configuration();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        config.log.out = new PrintStream(baos);
+        config.log.setChannels(new PrintStream(baos), config.log.getDiag());
 
         config.log.logOutNoln("hello");
 

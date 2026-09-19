@@ -64,7 +64,7 @@ public class SolverZ4332NameValueFieldHidingBugTest {
         SMT.Configuration config = new SMT.Configuration();
         config.verbose = 1;
         ByteArrayOutputStream diagBuf = new ByteArrayOutputStream();
-        config.log.diag = new PrintStream(diagBuf);
+        config.log.setChannels(config.log.getOut(), new PrintStream(diagBuf));
 
         TestableSolver solver = new TestableSolver(config);
 

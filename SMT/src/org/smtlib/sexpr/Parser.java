@@ -231,7 +231,7 @@ public class Parser extends Lexer implements IParser {
 						if (target instanceof ParserException) {
 							throw (ParserException) target;
 						}
-                        ex.printStackTrace(smtConfig.log.diag);
+                        ex.printStackTrace(smtConfig.log.getDiag());
 						if (target instanceof StackOverflowError) {
 							lastError = smtConfig.log.logError(smtConfig.responseFactory.error("Stack overflow occurred while parsing input", sym.pos()));
 							throw new ParserException(null,null);
@@ -240,7 +240,7 @@ public class Parser extends Lexer implements IParser {
 							throw new ParserException(null,null);
 						} else {
 							lastError = smtConfig.log.logError(smtConfig.responseFactory.error(target.toString(), sym.pos()));
-	                        target.printStackTrace(smtConfig.log.diag);
+	                        target.printStackTrace(smtConfig.log.getDiag());
 						}
 					}
 					if (command == null) {
@@ -266,7 +266,7 @@ public class Parser extends Lexer implements IParser {
 		} catch (Exception e) {
 			IPos pos = new Pos(0,0,null);
 			lastError = smtConfig.responseFactory.error("Error while parsing command: " + e,pos);
-			e.printStackTrace(smtConfig.log.diag);
+			e.printStackTrace(smtConfig.log.getDiag());
 			smtConfig.log.logError(lastError);
 		} finally {
 			smtConfig.topLevel = savedTopLevel;

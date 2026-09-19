@@ -461,7 +461,7 @@ public class SMT {
 				try {
 					serverSocket = new ServerSocket(smtConfig.port);
 				} catch (IOException e) {
-					smtConfig.log.out.println("Could not listen on port: " + smtConfig.port + " " + e.getMessage());
+					smtConfig.log.getOut().println("Could not listen on port: " + smtConfig.port + " " + e.getMessage());
 					return 1;
 				}
 
@@ -774,7 +774,7 @@ public class SMT {
 				help();
 				return -1;
 			} else if ("--version".equals(s)) {
-				smtConfig.log.out.println(Version.version());
+				smtConfig.log.getOut().println(Version.version());
 				return -1;
 			} else if ("--echo".equals(s)) {
 				options.echo = true;
@@ -852,14 +852,14 @@ public class SMT {
 
 		if (options.out != null) {
 			try {
-				options.log.out = new PrintStream(options.out);
+				options.log.setRegularOutputChannel(options.out);
 			} catch (java.io.IOException e) {
 				options.log.logOut("Failed to open output stream on " + options.out);
 			}
 		}
 		if (options.diag != null) {
 			try {
-				options.log.diag = new PrintStream(options.diag);
+				options.log.setDiagnosticOutputChannel(options.diag);
 			} catch (java.io.IOException e) {
 				options.log.logOut("Failed to open output stream on " + options.diag);
 			}
@@ -1135,7 +1135,7 @@ public class SMT {
 	// FIXME - combine, update, document usage() and help()
 	/** Prints a summary of the command-line arguments */
 	public void usage() {
-		java.io.PrintStream out = smtConfig.log.out;
+		java.io.PrintStream out = smtConfig.log.getOut();
 		out.println("Usage: java org.smtlib.SMT [args] [file]");
 		out.println("       --help [-h]");
 		out.println("       --version");
@@ -1159,7 +1159,7 @@ public class SMT {
 	
 	/** Prints a verbose message about command line arguments */
 	public void help() {
-		java.io.PrintStream out = smtConfig.log.out;
+		java.io.PrintStream out = smtConfig.log.getOut();
 		out.println("The main routine of this Java executable is org.smtlib.SMT,");
 		out.println("    but the jar file is an executable jar file, and can be run");
 		out.println("    using the command: java -jar jSMTLIB.jar ");
