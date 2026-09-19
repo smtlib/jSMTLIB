@@ -247,16 +247,20 @@ public class Solver_simplify extends Solver_test implements ISolver {
 			
 			String msg = "(NOT (AND TRUE " + conjunction + "\n))\n";
 			String s = solverProcess.sendAndListen(msg);
-			// FIXME - what about errors in SImplify
+			// Simplify's two real error shapes, confirmed empirically against a live
+			// binary (issues #56/#58): "Bad input: <reason>." for a semantic/protocol
+			// error (e.g. "Bad input: Unknown predicate symbol: fp.eq." -- this actually
+			// happens today, for every current floating-point test, since Simplify has no
+			// FP support at all) and "Sx.ReadError in file." for a syntax error Simplify's
+			// own reader can't parse (e.g. unbalanced parentheses). Neither ever contains
+			// "Valid."/"Invalid.", so checking for them first is unambiguous. Anything
+			// else -- genuinely no recognized shape at all -- still falls through to
+			// unknown(), rather than guessing at further error shapes with no binary to
+			// confirm them against.
 			if (s.contains("Valid.")) res = smtConfig.responseFactory.unsat();
 			else if (s.contains("Invalid.")) res = smtConfig.responseFactory.sat();
-			else {
-				// Temporary diagnostic for issues #56/#58: unconditionally logged so a real
-				// CI run can show what Simplify actually says in exactly the case this
-				// substring match can't classify -- remove once the real fix lands.
-				smtConfig.log.logDiag("#issue56_58: simplify check-sat response matched neither Valid. nor Invalid., defaulting to unknown: " + s);
-				res = smtConfig.responseFactory.unknown();
-			}
+			else if (s.contains("Bad input:") || s.contains("Sx.ReadError")) res = smtConfig.responseFactory.error(s.trim());
+			else res = smtConfig.responseFactory.unknown();
 			checkSatStatus = res;
 //			s = solverProcess.sendAndListen("(BG_POP)\r\n");
 			

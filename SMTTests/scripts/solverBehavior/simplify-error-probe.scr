@@ -12,8 +12,9 @@
 #
 # Simplify is only available on Linux-x64 and Windows in smtlib/Solvers (not macOS, not
 # Linux-arm64 -- confirmed 2026-09-18), so this SKIPs cleanly everywhere else.
-# Not ##EXITCODE 1: this is a research/data-gathering probe, not a pass/fail check --
-# it always exits 0 once it has printed what it found (or SKIPs where there's no binary).
+# The exit code above is always 0: this is a research/data-gathering probe, not a
+# pass/fail check -- it always succeeds once it has printed what it found (or SKIPs
+# where there's no binary).
 
 _resolve_exec() {
     case "$PLATFORM" in
@@ -44,8 +45,8 @@ _probe "baseline valid (NOT (AND TRUE (EQ 1 2)))" \
 (NOT (AND TRUE (EQ 1 2)))'
 
 # Baseline: a trivially invalid (satisfiable) query.
-_probe "baseline invalid (NOT (AND TRUE (NEQ 1 1)))" \
-'(NOT (AND TRUE (NEQ 1 1)))'
+_probe "baseline invalid (NOT (AND TRUE (EQ 1 1)))" \
+'(NOT (AND TRUE (EQ 1 1)))'
 
 # Malformed syntax: unbalanced parentheses.
 _probe "unbalanced parens" \
