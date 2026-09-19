@@ -4,6 +4,6 @@ success
 (error "Have not yet implemented parameterized bit-vector functions")
 (error "Have not yet implemented parameterized bit-vector functions")
 success
-unknown
+(error "Bad input: Unknown predicate symbol: fp.eq.")
 success
-unknown
+(error "Bad input: Unknown predicate symbol: fp.eq.")

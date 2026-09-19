@@ -7,4 +7,4 @@ success
 (error "Have not yet implemented parameterized bit-vector functions")
 success
 success
-unknown
+(error "Bad input: Unknown predicate symbol: fp.leq.")

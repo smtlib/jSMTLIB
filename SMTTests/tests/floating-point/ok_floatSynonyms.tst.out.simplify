@@ -16,4 +16,4 @@ success
 (error "Have not yet implemented parameterized bit-vector functions")
 success
 (error "The simplify solver cannot handle decimal literals")
-unknown
+(error "Bad input: Unknown predicate symbol: fp.leq.")

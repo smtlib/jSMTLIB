@@ -1,0 +1,9 @@
+success
+success
+success
+success
+success
+success
+(error "Bad input: Unknown predicate symbol: @.")
+success
+(error "Bad input: Unknown predicate symbol: @.")
