@@ -1,5 +1,7 @@
 package org.smtlib.logic;
 
+import org.smtlib.SMT;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -13,8 +15,8 @@ import org.smtlib.IExpr.ISymbol;
 /** This logic does not allow quantifiers or uninterpreted functions */
 public class QF_ABV extends QF_UF {
 
-	public QF_ABV(ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(name,attributes);
+	public QF_ABV(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+		super(smtConfig,name,attributes);
 	}
 	
 	public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {

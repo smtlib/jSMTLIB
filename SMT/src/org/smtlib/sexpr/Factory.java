@@ -43,7 +43,7 @@ public class Factory implements IParser.IFactory {
 	
 	@Override
 	public IPrinter createPrinter(SMT.Configuration smtConfig, Writer w) {
-		return new Printer(w);
+		return new Printer(smtConfig, w);
 	}
 	
 	/** This method will initialize the factories and default printer in the configuration
@@ -51,7 +51,7 @@ public class Factory implements IParser.IFactory {
 	 * initial set up of the configuration.
 	 */
 	static public void initFactories(SMT.Configuration config) {
-		config.defaultPrinter = new Printer(new StringWriter());
+		config.defaultPrinter = new Printer(config, new StringWriter());
 		config.smtFactory = new Factory();
 	}
 

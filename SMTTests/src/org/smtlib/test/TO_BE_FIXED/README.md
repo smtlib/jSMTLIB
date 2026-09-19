@@ -25,8 +25,6 @@ rejoins the normal run, and close the corresponding issue.
 
 | Test | Issue |
 |---|---|
-| `ConfigurationStaticLeakBugTest` | [#22](https://github.com/smtlib/jSMTLIB/issues/22) -- `SMT.Configuration`'s constructor leaks static `Printer`/`Response`/`SMTExpr.smtConfig` fields across every instance |
-| `StaticSmtConfigStringLiteralBugTest` | [#22](https://github.com/smtlib/jSMTLIB/issues/22) -- same bug, a sharper manifestation via `SMTExpr.StringLiteral` construction |
 
 Keep this table in sync: add a row (with its issue link) whenever a new test lands here, and
 remove the row when the test is fixed and moved back into `bugs/`.

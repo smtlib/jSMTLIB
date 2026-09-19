@@ -260,7 +260,7 @@ public class Lexer {
 	}
 
 	private static class LexStringLiteral extends StringLiteral implements ILexToken, ISexpr.IToken<String> {
-		public LexStringLiteral(String n, boolean quoted) { super(n,quoted); }
+		public LexStringLiteral(SMT.Configuration smtConfig, String n, boolean quoted) { super(smtConfig,n,quoted); }
 		@Override public String kind() { return "string-literal"; }
 	}
 
@@ -372,7 +372,7 @@ public class Lexer {
 	/** Returns the first token found in the given text */
 	public ILexToken getToken(String text)  throws ParserException {
 		if (!text.isEmpty() && text.charAt(0) == '"') {
-			return new LexStringLiteral(text,true);
+			return new LexStringLiteral(smtConfig,text,true);
 		}
 		Matcher matcher = combined.matcher(text);
 		return getToken(matcher);
@@ -446,7 +446,7 @@ public class Lexer {
 									end = p+1;
 									matched = csr.subSequence(begin,end).toString();
 									pos = pos(begin,end);
-									token = setPos(new LexStringLiteral(matched,true),pos);
+									token = setPos(new LexStringLiteral(smtConfig,matched,true),pos);
 									break;
 								}
 							} else {
@@ -483,7 +483,7 @@ public class Lexer {
 								end = p+1;
 								matched = csr.subSequence(begin,end).toString();
 								pos = pos(begin,end);
-								token = setPos(new LexStringLiteral(matched,true),pos);
+								token = setPos(new LexStringLiteral(smtConfig,matched,true),pos);
 								break;
 							} else {
 								if (c >= ' ' && c <= '~') continue;

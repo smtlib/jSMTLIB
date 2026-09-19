@@ -85,9 +85,6 @@ public class SMT {
 			// method called by reflection
 			org.smtlib.impl.Factory.initFactories(this);
 			org.smtlib.sexpr.Factory.initFactories(this);
-			Printer.smtConfig = this;
-			org.smtlib.impl.Response.smtConfig = this;
-			org.smtlib.impl.SMTExpr.smtConfig = this;
 		}
 		
 		/** Makes a copy (using reference copy on objects) of the configuration */ 

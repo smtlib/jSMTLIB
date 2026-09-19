@@ -44,7 +44,7 @@ public class PrinterTokenStringQuotingBugTest {
         Sexpr.Token<String> token = new Sexpr.Token<>(raw);
 
         StringWriter sw = new StringWriter();
-        Printer.write(sw, token);
+        Printer.write(config, sw, token);
 
         Assert.assertEquals(config.utils.quote(raw), sw.toString());
     }
@@ -54,10 +54,11 @@ public class PrinterTokenStringQuotingBugTest {
         // A String value with nothing that would break tokenization must still print
         // as-is, unquoted -- matching PrinterCoverageTest.sexprToken()'s existing
         // expectation, which this must not regress.
+        SMT.Configuration config = new SMT.Configuration();
         Sexpr.Token<String> token = new Sexpr.Token<>("hello");
 
         StringWriter sw = new StringWriter();
-        Printer.write(sw, token);
+        Printer.write(config, sw, token);
 
         Assert.assertEquals("hello", sw.toString());
     }
@@ -68,7 +69,7 @@ public class PrinterTokenStringQuotingBugTest {
         Sexpr.Token<Integer> token = new Sexpr.Token<>(42);
 
         StringWriter sw = new StringWriter();
-        Printer.write(sw, token);
+        Printer.write(config, sw, token);
 
         Assert.assertEquals("42", sw.toString());
     }

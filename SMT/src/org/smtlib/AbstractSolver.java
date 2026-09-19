@@ -138,7 +138,7 @@ public class AbstractSolver implements ISolver {
 	 *  strict SMT-LIB concrete syntax. */
 	protected String translate(INode sexpr) throws IVisitor.VisitorException {
 		StringWriter sw = new StringWriter();
-		org.smtlib.sexpr.Printer.write(sw, sexpr);
+		org.smtlib.sexpr.Printer.write(smtConfig, sw, sexpr);
 		return sw.toString();
 	}
 

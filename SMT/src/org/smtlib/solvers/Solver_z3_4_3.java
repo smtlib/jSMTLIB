@@ -679,7 +679,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
 	public class Translator extends Printer {
 
-		public Translator(Writer w) { super(w); }
+		public Translator(Writer w) { super(Solver_z3_4_3.this.smtConfig, w); }
 
 		@Override
 		public Void visit(IFcnExpr e) throws IVisitor.VisitorException {

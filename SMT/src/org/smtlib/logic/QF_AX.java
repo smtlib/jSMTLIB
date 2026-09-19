@@ -1,5 +1,7 @@
 package org.smtlib.logic;
 
+import org.smtlib.SMT;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -11,8 +13,8 @@ import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.ISymbol;
 
 public class QF_AX extends Logic {
-	public QF_AX(ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(name,attributes);
+	public QF_AX(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+		super(smtConfig,name,attributes);
 	}
 
 	public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {

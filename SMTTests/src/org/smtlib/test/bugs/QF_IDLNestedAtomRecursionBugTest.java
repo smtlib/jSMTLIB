@@ -46,7 +46,7 @@ public class QF_IDLNestedAtomRecursionBugTest {
     @Test
     public void invalidAtomNestedInsideAndIsRejected() throws Exception {
         SMT.Configuration config = new SMT.Configuration();
-        QF_IDL logic = new QF_IDL(config.exprFactory.symbol("QF_IDL"), Collections.emptyList());
+        QF_IDL logic = new QF_IDL(config, config.exprFactory.symbol("QF_IDL"), Collections.emptyList());
 
         // Outer "and"'s first argument is a valid IDL atom; the second, (>= (- x 1) y), is
         // invalid (a difference's arguments must both be symbols) -- but only reachable by

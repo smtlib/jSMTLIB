@@ -26,7 +26,6 @@ import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.SMT.Configuration.SMTLIB;
-import org.smtlib.impl.Factory;
 import org.smtlib.impl.Pos;
 import org.smtlib.impl.SMTExpr;
 import org.smtlib.sexpr.ISexpr;
@@ -124,28 +123,28 @@ public class Utils {
 	public static final String PRODUCE_MODELS = ":produce-models";
 
 	/** The string designating an info item */
-	public static final IKeyword ERROR_BEHAVIOR = new Factory().keyword(":error-behavior");
+	public static final IKeyword ERROR_BEHAVIOR = new org.smtlib.impl.SMTExpr.Keyword(":error-behavior");
 
 	/** The string designating an info item */
-	public static final IKeyword NAME = new Factory().keyword(":name");
+	public static final IKeyword NAME = new org.smtlib.impl.SMTExpr.Keyword(":name");
 
 	/** The string designating an info item */
-	public static final IKeyword AUTHORS = new Factory().keyword(":authors");
+	public static final IKeyword AUTHORS = new org.smtlib.impl.SMTExpr.Keyword(":authors");
 
 	/** The string designating an info item */
-	public static final IKeyword VERSION = new Factory().keyword(":version");
+	public static final IKeyword VERSION = new org.smtlib.impl.SMTExpr.Keyword(":version");
 
 	/** The string designating an info item */
-	public static final IKeyword STATUS = new Factory().keyword(":status");
+	public static final IKeyword STATUS = new org.smtlib.impl.SMTExpr.Keyword(":status");
 
 	/** The string designating an info item */
-	public static final IKeyword REASON_UNKNOWN = new Factory().keyword(":reason-unknown");
+	public static final IKeyword REASON_UNKNOWN = new org.smtlib.impl.SMTExpr.Keyword(":reason-unknown");
 
 	/** The string designating an info item */
-	public static final IKeyword ALL_STATISTICS = new Factory().keyword(":all-statistics");
+	public static final IKeyword ALL_STATISTICS = new org.smtlib.impl.SMTExpr.Keyword(":all-statistics");
 
 	/** The string designating an info item */
-	public static final IKeyword ASSERTION_STACK_LEVELS = new Factory().keyword(":assertion-stack-levels");
+	public static final IKeyword ASSERTION_STACK_LEVELS = new org.smtlib.impl.SMTExpr.Keyword(":assertion-stack-levels");
 
 	/** The response to the :authors info item */
 	public static final String AUTHORS_VALUE = "David R. Cok";
@@ -158,16 +157,16 @@ public class Utils {
 	public static final String VERSION_VALUE = "0.0";
 
 	/** The string designating the smtlib attribute within a logic or theory */
-	public static final IKeyword SMTLIB_VERSION = new Factory().keyword(":smt-lib-version");
+	public static final IKeyword SMTLIB_VERSION = new org.smtlib.impl.SMTExpr.Keyword(":smt-lib-version");
 
 	/** The attribute tag for defining sorts in a theory */
-	public static final IKeyword SORTS = new Factory().keyword(":sorts");
+	public static final IKeyword SORTS = new org.smtlib.impl.SMTExpr.Keyword(":sorts");
 
 	/** The attribute tag for defining functions in a theory */
-	public static final IKeyword FUNS = new Factory().keyword(":funs");
+	public static final IKeyword FUNS = new org.smtlib.impl.SMTExpr.Keyword(":funs");
 
 	/** The attribute tag for defining theories in a logic */
-	public static final IKeyword THEORIES = new Factory().keyword(":theories");
+	public static final IKeyword THEORIES = new org.smtlib.impl.SMTExpr.Keyword(":theories");
 
 	/** An ERROR_BEHAVIOR return value */
 	public static final String CONTINUED_EXECUTION = "continued-execution";
@@ -553,10 +552,10 @@ public class Utils {
 			defaults.put(RANDOM_SEED, new SMTExpr.Numeral(0));
 			defaults.put(REPRODUCIBLE_RESOURCE_LIMIT, new SMTExpr.Numeral(0));
 			defaults.put(VERBOSITY, new SMTExpr.Numeral(0));
-			defaults.put(REGULAR_OUTPUT_CHANNEL, new SMTExpr.StringLiteral(STDOUT,
+			defaults.put(REGULAR_OUTPUT_CHANNEL, new SMTExpr.StringLiteral(smtConfig, STDOUT,
 					false));
 			defaults.put(DIAGNOSTIC_OUTPUT_CHANNEL, new SMTExpr.StringLiteral(
-					STDERR, false));
+					smtConfig, STDERR, false));
 		}
 	}
 

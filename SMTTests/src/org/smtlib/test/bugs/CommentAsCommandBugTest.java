@@ -112,7 +112,7 @@ public class CommentAsCommandBugTest {
         // guarantee one, since whatever might print right after this comment must never risk
         // landing on the same line and being silently swallowed by it.
         StringWriter sw = new StringWriter();
-        org.smtlib.sexpr.Printer.write(sw, second);
+        org.smtlib.sexpr.Printer.write(new SMT.Configuration(), sw, second);
         Assert.assertTrue("a printed comment must always end with a newline, got: " + sw,
                 sw.toString().endsWith("\n"));
     }
@@ -128,7 +128,7 @@ public class CommentAsCommandBugTest {
         C_comment comment = (C_comment) p.parseCommand();
 
         StringWriter sw = new StringWriter();
-        org.smtlib.sexpr.Printer.write(sw, comment);
+        org.smtlib.sexpr.Printer.write(new SMT.Configuration(), sw, comment);
         Assert.assertEquals("; line one\n; line two\n", sw.toString());
     }
 
@@ -142,7 +142,7 @@ public class CommentAsCommandBugTest {
         C_comment comment = new C_comment("line one\nline two");
 
         StringWriter sw = new StringWriter();
-        org.smtlib.sexpr.Printer.write(sw, comment);
+        org.smtlib.sexpr.Printer.write(new SMT.Configuration(), sw, comment);
         Assert.assertEquals(";line one\n;line two\n", sw.toString());
     }
 

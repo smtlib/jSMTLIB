@@ -1,5 +1,7 @@
 package org.smtlib.logic;
 
+import org.smtlib.SMT;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -15,8 +17,8 @@ import org.smtlib.IExpr.ISymbol;
 
 public class QF_RDL extends Logic {
 
-	public QF_RDL(ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(name,attributes);
+	public QF_RDL(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+		super(smtConfig,name,attributes);
 	}
 
 	public void validExpression(IExpr expression) throws IVisitor.VisitorException {

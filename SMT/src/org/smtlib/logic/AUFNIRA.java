@@ -1,5 +1,7 @@
 package org.smtlib.logic;
 
+import org.smtlib.SMT;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -12,8 +14,8 @@ import org.smtlib.IExpr.ISymbol;
 
 public class AUFNIRA extends Logic {
 
-	public AUFNIRA(ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(name,attributes);
+	public AUFNIRA(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+		super(smtConfig,name,attributes);
 	}
 
 	@Override

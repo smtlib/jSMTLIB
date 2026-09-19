@@ -72,7 +72,7 @@ public class ParseExpressionErrors {
 			if (ex.getMessage() != null) config.log.logError(config.responseFactory.error(ex.getMessage(),ex.pos()));
 		}
 		StringWriter sw = new StringWriter();
-		if (e != null) org.smtlib.sexpr.Printer.write(sw,e);
+		if (e != null) org.smtlib.sexpr.Printer.write(config,sw,e);
 		for (IResponse r : listener.msgs) sw.append(config.defaultPrinter.toString(r));
 		Assert.assertEquals(output,sw.toString()); // expected,actual
 	}

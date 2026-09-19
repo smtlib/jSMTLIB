@@ -17,7 +17,6 @@ import org.smtlib.IVisitor.VisitorException;
 /** This class defines a number of subclasses that implement the SMT-LIB abstract AST;
  * they are used by commands and expressions. */
 public abstract class SMTExpr implements IExpr {
-	public static SMT.Configuration smtConfig;
 
 	/** Abstract base class for all literal value AST nodes; holds the typed value and provides a shared implementation. */
 	static abstract public class Literal<T> extends Pos.AbstractExpr {
@@ -72,9 +71,15 @@ public abstract class SMTExpr implements IExpr {
 		// The 'value' field holds an unquoted string
 
 		/** Creates a string literal.  If {@code quoted} is true the argument is the raw SMT-LIB text
-		 * (with enclosing quotes and escape sequences); if false it is already the unescaped Java string.
+		 * (with enclosing quotes and escape sequences), unescaped per the given Configuration's
+		 * rules (escaping is version-dependent -- see {@code Utils.unescape}); if false it is
+		 * already the unescaped Java string and {@code smtConfig} is unused. Issue #22: this used
+		 * to read a single static {@code SMTExpr.smtConfig} field shared process-wide, so which
+		 * Configuration's rules applied depended on whichever Configuration was most recently
+		 * constructed anywhere in the process, not the one actually driving this literal's
+		 * construction.
 		 */
-		public StringLiteral(String value, boolean quoted) {
+		public StringLiteral(SMT.Configuration smtConfig, String value, boolean quoted) {
 			super(quoted ? smtConfig.utils.unescape(value) : value);
 		}
 
@@ -632,6 +637,9 @@ public abstract class SMTExpr implements IExpr {
 	}
 
 	static public class Logic extends Pos.Printable implements ILogic {
+		/** The configuration this logic instance is scoped to; see issue #22. */
+		protected final SMT.Configuration smtConfig;
+
 		/** The name of the logic */
 		protected ISymbol logicName;
 
@@ -639,7 +647,8 @@ public abstract class SMTExpr implements IExpr {
 		protected Map<IKeyword,IAttribute<?>> attributes = new HashMap<IKeyword,IAttribute<?>>();
 
 		/** Creates a logic */
-		public Logic(ISymbol name, Collection<IAttribute<?>> attributes) {
+		public Logic(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+			this.smtConfig = smtConfig;
 			this.logicName = name;
 			for (IAttribute<?> attr: attributes) {
 				this.attributes.put(attr.keyword(),attr);
