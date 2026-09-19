@@ -79,10 +79,16 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
 			cmds = cmds_unix;
 		}
 		double timeout = smtConfig.timeout;
-		if (timeout > 0) {
-			List<String> args = new java.util.ArrayList<String>(cmds.length+1);
-			args.addAll(Arrays.asList(cmds));
-			args.add("-T:" + Integer.toString((int)Math.ceil(timeout)));
+		double timeoutTotal = smtConfig.timeoutTotal;
+		if (timeout > 0 || timeoutTotal > 0) {
+			List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
+			// Recent z3's own -t: is per-query but in MILLISECONDS (unlike z3-4.3's -t:,
+			// which is seconds -- the unit silently changed between versions); -T: is the
+			// whole-run limit and stayed in seconds. Earlier code here wired
+			// smtConfig.timeout (per-query) to -T: (whole-run) -- wrong flag for the
+			// intended semantics -- fixed to use -t: for the per-query value.
+			if (timeout > 0) args.add("-t:" + Long.toString(Math.round(timeout*1000)));
+			if (timeoutTotal > 0) args.add("-T:" + Integer.toString((int)Math.ceil(timeoutTotal)));
 			cmds = args.toArray(new String[args.size()]);
 		}
 		cmds[0] = executable;

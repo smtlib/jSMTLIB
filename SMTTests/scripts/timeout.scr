@@ -1,0 +1,143 @@
+##EXITCODE 1
+# Validates jSMTLIB's own -t/--timeout (per-query) option (issue #60: jSMTLIB's -t/-T
+# CLI interface, translated per-solver in SMT/src/org/smtlib/solvers/*) actually causes
+# a real solver to give up, rather than silently being ignored or hanging forever --
+# AND that it does so the standard way: check-sat answers "unknown", and a follow-up
+# (get-info :reason-unknown) attributes that to the timeout, not just any old "unknown".
+#
+# Workload: the pigeonhole principle with 12 pigeons into 11 holes (PHP(12,11)), a
+# textbook worst case for CDCL/resolution-style search (known exponential lower bound
+# on resolution proof size), encoded directly as ~870 plain QF_UF Boolean commands (no
+# arithmetic/cardinality theory a solver could shortcut through). Empirically confirmed
+# this session, unbounded (no -t at all, wrapped in an external `timeout 30`): z3,
+# cvc5, yices2, and SMTInterpol are ALL still running at 30s -- so a run that finishes
+# well before that with `-t 1` set is good evidence the timeout actually fired, not
+# that the solver got lucky and finished the real problem. (Sending ~870 individual
+# commands each waits for its own response, so even a successful abort takes several
+# seconds of pure relay overhead on top of the ~1s the solver itself spends before
+# giving up -- runs complete in ~4-12s locally.) Each solver invocation is wrapped in
+# an outer `timeout 60` purely so a still-broken adapter fails this script instead of
+# hanging CI.
+#
+# :reason-unknown wording, confirmed empirically this session (all case-insensitive,
+# quotes optional per each solver's own convention -- accepted here as equivalent):
+#   - z3-4.8.12 through 5.1.0, cvc5-1.3.2, yices2:      timeout
+#   - z3-4.5.0/4.6.0/4.7.1 (older z3, one L):            canceled
+#   - SMTInterpol-2.5 (two Ls):                          cancelled
+#   - z3-4.3:                                            smt  <- see below, NOT accepted
+#
+# z3-4.3's raw response is not valid SMT-LIB syntax to begin with: an unquoted,
+# multi-word value, e.g. (:reason-unknown smt tactic failed to show goal to be
+# sat/unsat) -- a :reason-unknown value must be a single token. jSMTLIB's parser
+# silently keeps only the first word ("smt") and drops the rest, rather than erroring
+# or preserving the full text some other way, so what actually reaches the user
+# doesn't say "timeout" or anything recognizable as one. This is a real, separate,
+# pre-existing defect (not introduced by the -t/-T work here, and not fixed by it) --
+# note SMT/src/org/smtlib/SolverProcess.java's own `badFormat` field, whose doc comment
+# describes exactly this z3 :reason-unknown scenario, is declared but never actually
+# set true anywhere, so the handling it implies never engages. Left FAILing here (exit
+# code 1 above, matching scripts/solverBehavior/all-statistics.scr's and
+# print-success.scr's convention for a confirmed, known, pre-existing non-conformance)
+# rather than quietly excluded or accepted, so this doesn't regress further unnoticed;
+# worth its own follow-up issue rather than a fix bundled into #60.
+#
+# Solvers not exercised here: "test" (the mock solver ignores timeout entirely -- there
+# is no real computation to bound) and "simplify" (its adapter implements no timeout
+# support at all -- a pre-existing, separate gap, not in scope for issue #60). Any
+# other name in SMT_TEST_SOLVERS is attempted; one simply not installed on this machine
+# reports INFO and is not counted as a failure (matches scripts/solverBehavior/
+# all-statistics.scr's convention for the same situation).
+
+_tmpdir=$(mktemp -d /tmp/jsmtlib_timeout_test.XXXXXX)
+trap 'rm -rf "$_tmpdir"' EXIT
+
+# PHP(12,11): p_i_j means "pigeon i is in hole j". Each pigeon must be in some hole;
+# no hole may hold two pigeons. Unsatisfiable (12 pigeons, 11 holes), but that's
+# incidental -- the point is how long it takes to find out, not the verdict itself.
+_php="$_tmpdir/php.smt2"
+{
+    # C-style loops throughout, not `seq`: BSD seq (macOS) counts DOWN when given a
+    # start greater than its end (e.g. `seq 13 12` prints "13 12", not nothing, unlike
+    # GNU seq) -- that silently manufactured an out-of-range p_13_* reference the first
+    # time this was written with `seq $((i1+1)) 12`, corrupting the generated formula.
+    echo "(set-logic QF_UF)"
+    for ((i = 1; i <= 12; i++)); do
+        for ((j = 1; j <= 11; j++)); do
+            echo "(declare-fun p_${i}_${j} () Bool)"
+        done
+    done
+    for ((i = 1; i <= 12; i++)); do
+        line="(assert (or"
+        for ((j = 1; j <= 11; j++)); do line="$line p_${i}_${j}"; done
+        line="$line))"
+        echo "$line"
+    done
+    for ((j = 1; j <= 11; j++)); do
+        for ((i1 = 1; i1 <= 12; i1++)); do
+            for ((i2 = i1 + 1; i2 <= 12; i2++)); do
+                echo "(assert (or (not p_${i1}_${j}) (not p_${i2}_${j})))"
+            done
+        done
+    done
+    echo "(check-sat)"
+    echo "(get-info :reason-unknown)"
+    echo "(exit)"
+} > "$_php"
+
+_fail=0
+
+# Reduces a raw (:reason-unknown VALUE) response line to just VALUE, lowercased and
+# with any surrounding double quotes stripped, so "timeout", "\"timeout\"", and
+# "TIMEOUT" all compare equal.
+_normalize_reason() {
+    local _r="$1"
+    _r="${_r#\(:reason-unknown }"
+    _r="${_r%)}"
+    _r="$(echo "$_r" | tr -d '"' | tr '[:upper:]' '[:lower:]' | sed 's/[[:space:]]*$//')"
+    echo "$_r"
+}
+
+_run_check() {
+    local _name="$1"
+    local _outfile="$_tmpdir/${_name}.out"
+    timeout 60 $SMT_CMD --solver "$_name" -t 1 "$_php" > "$_outfile" 2>/dev/null
+    local _rc=$?
+    if [ "$_rc" -eq 124 ]; then
+        (( _fail++ ))
+        echo "FAIL: $_name: still running after 60s with -t 1 set (per-query timeout did not stop check-sat)"
+        return
+    fi
+    if ! grep -q '^unknown$' "$_outfile"; then
+        if [ "$_rc" -ne 0 ]; then
+            echo "INFO: $_name: solver not available here, skipped"
+        else
+            (( _fail++ ))
+            echo "FAIL: $_name: check-sat did not return 'unknown' under -t 1"
+        fi
+        return
+    fi
+    echo "PASS: $_name: -t 1 causes check-sat to return unknown well before the workload would finish unbounded"
+
+    local _reasonline _reason
+    _reasonline=$(grep '^(:reason-unknown' "$_outfile")
+    _reason=$(_normalize_reason "$_reasonline")
+    case "$_reason" in
+        timeout|canceled|cancelled)
+            echo "PASS: $_name: get-info :reason-unknown attributes it to the timeout ($_reason)"
+            ;;
+        *)
+            (( _fail++ ))
+            echo "FAIL: $_name: get-info :reason-unknown does not attribute it to the timeout (got: $_reason)"
+            ;;
+    esac
+}
+
+for _n in ${SMT_TEST_SOLVERS:-test}; do
+    case "$_n" in
+        test)     echo "INFO: test: mock solver ignores timeout, skipped" ;;
+        simplify) echo "INFO: simplify: adapter implements no timeout support (pre-existing, separate gap), skipped" ;;
+        *)        _run_check "$_n" ;;
+    esac
+done
+
+[ "$_fail" -eq 0 ]

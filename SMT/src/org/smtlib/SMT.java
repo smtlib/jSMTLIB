@@ -157,8 +157,18 @@ public class SMT {
 		/** The verbosity level of the SMT solver */
 		public int solverVerbosity = 0;
 
-		/** The timeout for a given query, if supported by the solver */
+		/** The soft, per-query timeout, in seconds (fractional allowed), set via -t/--timeout;
+		 *  &lt;=0 means no timeout. See {@link #timeoutTotal} for the whole-run counterpart.
+		 *  jSMTLIB expresses both values in seconds regardless of solver; each solver adapter
+		 *  translates them into whatever unit, flag, and scope (per-query vs. whole-run) that
+		 *  solver's own binary actually supports -- see the per-adapter comments where
+		 *  timeout/timeoutTotal are read. */
 		public double timeout = -1; // seconds, <=0 means infinity
+
+		/** The whole-run (solver-process-lifetime) timeout, in seconds (fractional allowed),
+		 *  set via -T/--timeout-total; &lt;=0 means no timeout. See {@link #timeout} for the
+		 *  per-query counterpart and the general unit/translation note there. */
+		public double timeoutTotal = -1; // seconds, <=0 means infinity
 		
 		/** This field is set from the command-line and sets the initial state of the :print-success option
 		 * within a solver. */
@@ -776,6 +786,36 @@ public class SMT {
 				options.relax = true;
             } else if ("--noshow".equals(s)) {
                 options.noshow = true;
+			} else if ("--timeout".equals(s) || "-t".equals(s)) {
+				if (i >= args.length) {
+					error("The --timeout option expects a numeric argument, in seconds");
+					usage();
+					return 1;
+				}
+				String a = args[i];
+				try {
+					options.timeout = Double.parseDouble(a);
+					i++;
+				} catch (NumberFormatException e) {
+					error("The --timeout option expects a numeric value, in seconds: " + a);
+					usage();
+					return 1;
+				}
+			} else if ("--timeout-total".equals(s) || "-T".equals(s)) {
+				if (i >= args.length) {
+					error("The --timeout-total option expects a numeric argument, in seconds");
+					usage();
+					return 1;
+				}
+				String a = args[i];
+				try {
+					options.timeoutTotal = Double.parseDouble(a);
+					i++;
+				} catch (NumberFormatException e) {
+					error("The --timeout-total option expects a numeric value, in seconds: " + a);
+					usage();
+					return 1;
+				}
             } else if ("--seed".equals(s)) {
                 options.seed = 0;
                 if (i >= args.length) {
@@ -1107,6 +1147,8 @@ public class SMT {
 		out.println("       --diag        <filename or 'stdout' or 'stderr'>");
 		out.println("       --port        <int>");
 		out.println("       --text        <string>");
+		out.println("       --timeout       [-t] <seconds>  (per-query timeout, converted per-solver)");
+		out.println("       --timeout-total [-T] <seconds>  (whole-run timeout, converted per-solver)");
 		out.println("       --echo");
 		out.println("       --abort");
 		out.println("       --noshow");
@@ -1146,6 +1188,15 @@ public class SMT {
 		out.println("        --diag <filename or 'stdout' or 'stderr'>: where to send verbose (diagnostic) output");
 		out.println("        --port <number>: which port to use for client-server communication");
 		out.println("        --text: text to process (ignoring file and port input)");
+		out.println("    -t, --timeout <seconds>: soft per-query timeout, always given here in seconds");
+		out.println("              (fractional values allowed); each solver adapter converts this value");
+		out.println("              to whatever unit and flag that solver actually uses (e.g. milliseconds");
+		out.println("              instead of seconds), and, for a solver with no per-query option at all,");
+		out.println("              applies it as a best-effort whole-run limit instead");
+		out.println("    -T, --timeout-total <seconds>: timeout for the solver's whole run (its process");
+		out.println("              lifetime), also always given here in seconds; likewise converted to");
+		out.println("              each solver's own unit/flag, or, if that solver has no whole-run option,");
+		out.println("              applied as a best-effort per-query limit instead");
 		out.println("        --echo: if enabled, commands are echoed to diagnostic output when successfully parsed");
 		out.println("        --abort: if enabled, an error causes immediate exit");
 		out.println("        --noshow: if enabled, error location information is not shown");

@@ -65,10 +65,13 @@ public class Solver_cvc5 extends AbstractSolver implements ISolver {
 			cmds = Utils.cat(cmds,"--seed",""+smtConfig.seed);
 		}
 		double timeout = smtConfig.timeout;
-		if (timeout > 0) {
-			List<String> args = new java.util.ArrayList<String>(cmds.length+1);
-			args.addAll(Arrays.asList(cmds));
-			args.add("--tlimit-per=" + Long.toString(Math.round(1000*timeout+0.5)));
+		double timeoutTotal = smtConfig.timeoutTotal;
+		if (timeout > 0 || timeoutTotal > 0) {
+			// cvc5 has separate per-query and whole-run flags, both in milliseconds
+			// (jSMTLIB's timeout/timeoutTotal are always in seconds -- see SMT.Configuration).
+			List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
+			if (timeout > 0) args.add("--tlimit-per=" + Long.toString(Math.round(1000*timeout+0.5)));
+			if (timeoutTotal > 0) args.add("--tlimit=" + Long.toString(Math.round(1000*timeoutTotal+0.5)));
 			cmds = args.toArray(new String[args.size()]);
 		}
 		cmds[0] = executable;

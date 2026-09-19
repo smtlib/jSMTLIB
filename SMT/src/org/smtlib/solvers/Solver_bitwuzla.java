@@ -65,6 +65,11 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
 			args.add("--time-limit-per");
 			args.add(Integer.toString((int)Math.ceil(smtConfig.timeout * 1000)));
 		}
+		if (smtConfig.timeoutTotal > 0) {
+			// --time-limit is the whole-run counterpart, also in milliseconds.
+			args.add("--time-limit");
+			args.add(Integer.toString((int)Math.ceil(smtConfig.timeoutTotal * 1000)));
+		}
 		cmds = args.toArray(new String[args.size()]);
 		// Bitwuzla prints no interactive prompt, so "\n" is the right end marker.
 		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);

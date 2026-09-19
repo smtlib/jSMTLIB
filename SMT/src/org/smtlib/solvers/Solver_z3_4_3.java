@@ -97,14 +97,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		}
 		cmds[0] = executable;
 		options.putAll(smtConfig.utils.defaults);
-		double timeout = smtConfig.timeout;
-		if (timeout > 0) {
-			List<String> args = new java.util.ArrayList<String>(cmds.length+1);
-			args.addAll(Arrays.asList(cmds));
-			if (isWindows) args.add("/t:" + Integer.toString((int)timeout));
-			else           args.add("-t:" + Integer.toString((int)timeout));
-			cmds = args.toArray(new String[args.size()]);
-		}
+		cmds = withTimeoutArgs(cmds, smtConfig, isWindows);
 		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
 		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
 	}
@@ -118,16 +111,24 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             if (isWindows) {}//cmds = Utils.cat(cmds,"/rs:"+smtConfig.seed);
             else           cmds = Utils.cat(cmds,"-rs:"+smtConfig.seed);
         }
-		double timeout = smtConfig.timeout;
-		if (timeout > 0) {
-			List<String> args = new java.util.ArrayList<String>(cmds.length+1);
-			args.addAll(Arrays.asList(cmds));
-			if (isWindows) args.add("/t:" + Integer.toString((int)timeout));
-			else           args.add("-t:" + Integer.toString((int)timeout));
-			cmds = args.toArray(new String[args.size()]);
-		}
+		cmds = withTimeoutArgs(cmds, smtConfig, isWindows);
 		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
 		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
+	}
+
+	/** Appends z3-4.3's own timeout flags for smtConfig's two jSMTLIB-level, seconds-based
+	 *  timeout values, if set: {@code -t:N} (or {@code /t:N} on Windows) for the per-query
+	 *  soft timeout ({@code smtConfig.timeout}), {@code -T:N}/{@code /T:N} for the whole-run
+	 *  timeout ({@code smtConfig.timeoutTotal}). z3-4.3 uses seconds for both, so no unit
+	 *  conversion is needed here (unlike most other adapters). */
+	private static String[] withTimeoutArgs(String[] cmds, SMT.Configuration smtConfig, boolean isWindows) {
+		double timeout = smtConfig.timeout;
+		double timeoutTotal = smtConfig.timeoutTotal;
+		if (timeout <= 0 && timeoutTotal <= 0) return cmds;
+		List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
+		if (timeout > 0) args.add(isWindows ? "/t:" + (int)timeout : "-t:" + (int)timeout);
+		if (timeoutTotal > 0) args.add(isWindows ? "/T:" + (int)timeoutTotal : "-T:" + (int)timeoutTotal);
+		return args.toArray(new String[args.size()]);
 	}
 
 	public IResponse sendCommand(ICommand cmd) {

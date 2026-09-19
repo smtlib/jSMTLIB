@@ -38,7 +38,20 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
 	public String[] cmd(String exec) {
 		java.util.List<String> args = new java.util.ArrayList<String>(
 				java.util.Arrays.asList(exec, "--incremental", "--interactive"));
-		if (smtConfig.timeout > 0) args.add("--timeout=" + (int)Math.ceil(smtConfig.timeout));
+		// yices2 has exactly one timeout flag, --timeout=<seconds>, applying to the whole
+		// session -- there is no separate per-query option at all. smtConfig.timeoutTotal
+		// maps onto it directly; if only the per-query smtConfig.timeout was requested, it
+		// is applied here as the closest available approximation, since that's the only
+		// lever yices2 offers.
+		if (smtConfig.timeoutTotal > 0) {
+			args.add("--timeout=" + (int)Math.ceil(smtConfig.timeoutTotal));
+			if (smtConfig.timeout > 0) {
+				smtConfig.log.logDiag("#yices2 has no per-query timeout option; only the whole-run --timeout-total (" + smtConfig.timeoutTotal + "s) is applied, the per-query --timeout (" + smtConfig.timeout + "s) is ignored");
+			}
+		} else if (smtConfig.timeout > 0) {
+			smtConfig.log.logDiag("#yices2 has no per-query timeout option; approximating with a whole-run --timeout of " + smtConfig.timeout + "s (the requested per-query value)");
+			args.add("--timeout=" + (int)Math.ceil(smtConfig.timeout));
+		}
 		return args.toArray(new String[args.size()]);
 	}
 

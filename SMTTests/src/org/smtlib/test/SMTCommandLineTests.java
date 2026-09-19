@@ -367,6 +367,14 @@ public class SMTCommandLineTests {
         assertError(run("--seed"), "The --seed option expects an argument");
     }
 
+    @Test public void timeoutMissingArg() {
+        assertError(run("--timeout"), "The --timeout option expects a numeric argument, in seconds");
+    }
+
+    @Test public void timeoutTotalMissingArg() {
+        assertError(run("--timeout-total"), "The --timeout-total option expects a numeric argument, in seconds");
+    }
+
     // -----------------------------------------------------------------------
     // Bad argument values
     // -----------------------------------------------------------------------
@@ -381,6 +389,14 @@ public class SMTCommandLineTests {
 
     @Test public void seedNonInteger() {
         assertError(run("--seed", "fast"), "The --seed option expects an integer value: fast");
+    }
+
+    @Test public void timeoutNonNumeric() {
+        assertError(run("--timeout", "fast"), "The --timeout option expects a numeric value, in seconds: fast");
+    }
+
+    @Test public void timeoutTotalNonNumeric() {
+        assertError(run("--timeout-total", "fast"), "The --timeout-total option expects a numeric value, in seconds: fast");
     }
 
     // -----------------------------------------------------------------------
@@ -437,6 +453,14 @@ public class SMTCommandLineTests {
 
     @Test public void logicsShortFormMissingArg() {
         assertError(run("-L"), "The --logics option expects an argument");
+    }
+
+    @Test public void timeoutShortFormMissingArg() {
+        assertError(run("-t"), "The --timeout option expects a numeric argument, in seconds");
+    }
+
+    @Test public void timeoutTotalShortFormMissingArg() {
+        assertError(run("-T"), "The --timeout-total option expects a numeric argument, in seconds");
     }
 
     // -----------------------------------------------------------------------
@@ -524,6 +548,29 @@ public class SMTCommandLineTests {
         outPs.flush();
         Assert.assertEquals("Expected success with valid seed", 0, ret);
         Assert.assertFalse("Expected no error in output", output().contains("(error"));
+    }
+
+    // -----------------------------------------------------------------------
+    // --timeout/-t and --timeout-total/-T with a valid value: accepted without error,
+    // and stored in smtConfig in seconds (fractional allowed) exactly as given on the
+    // command line -- per-solver unit/flag translation happens later, in each adapter's
+    // own constructor, not here.
+    // -----------------------------------------------------------------------
+
+    @Test public void timeoutValid() {
+        int ret = run("--timeout", "2.5", "--solver", "test", "--text", "(exit)");
+        outPs.flush();
+        Assert.assertEquals("Expected success with valid --timeout", 0, ret);
+        Assert.assertFalse("Expected no error in output", output().contains("(error"));
+        Assert.assertEquals(2.5, smt.smtConfig.timeout, 0.0);
+    }
+
+    @Test public void timeoutTotalValid() {
+        int ret = run("-T", "10", "--solver", "test", "--text", "(exit)");
+        outPs.flush();
+        Assert.assertEquals("Expected success with valid --timeout-total", 0, ret);
+        Assert.assertFalse("Expected no error in output", output().contains("(error"));
+        Assert.assertEquals(10.0, smt.smtConfig.timeoutTotal, 0.0);
     }
 
     // -----------------------------------------------------------------------

@@ -36,7 +36,12 @@ import org.smtlib.*;
  *  on confirmed empirical gaps) since guessing wrong would likely introduce incorrect
  *  behavior rather than fix a real one. Left to AbstractSolver's default (forward to
  *  the solver) until CI shows what's actually needed.
- *  <li>No timeout flag is passed -- the correct flag name is unconfirmed.
+ *  <li>Timeout support (--timelimit=SECONDS, per Alt-Ergo's documented options, unverified
+ *  against a real binary like the rest of this adapter): Alt-Ergo has only one underlying
+ *  numeric limit, applied whole-run by default or per-goal with the --timelimit-per-goal
+ *  modifier -- it cannot honor a distinct per-query and whole-run value at the same time,
+ *  unlike solvers with two independent flags. See the constructor for how the two
+ *  jSMTLIB-level timeout values are reconciled onto this single flag.
  *  </ul> */
 public class Solver_altergo extends AbstractSolver implements ISolver {
 
@@ -47,6 +52,20 @@ public class Solver_altergo extends AbstractSolver implements ISolver {
 	public Solver_altergo(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
 		this.smtConfig = smtConfig;
 		List<String> args = new java.util.ArrayList<String>(Arrays.asList(executable,"--input","smtlib2","--output","smtlib2"));
+		// Alt-Ergo's --timelimit=SECONDS is one shared value; --timelimit-per-goal makes it
+		// apply per-goal (jSMTLIB's per-query smtConfig.timeout) instead of whole-run
+		// (smtConfig.timeoutTotal). If a per-query value was requested, it wins (with the
+		// modifier), since it's the more commonly useful of the two; a distinct whole-run
+		// value given at the same time can't also be honored on this solver.
+		if (smtConfig.timeout > 0) {
+			args.add("--timelimit=" + (int)Math.ceil(smtConfig.timeout));
+			args.add("--timelimit-per-goal");
+			if (smtConfig.timeoutTotal > 0 && smtConfig.timeoutTotal != smtConfig.timeout) {
+				smtConfig.log.logDiag("#alt-ergo has only one timeout value, shared between per-query and whole-run; only the per-query --timeout (" + smtConfig.timeout + "s) is applied, the whole-run --timeout-total (" + smtConfig.timeoutTotal + "s) is ignored");
+			}
+		} else if (smtConfig.timeoutTotal > 0) {
+			args.add("--timelimit=" + (int)Math.ceil(smtConfig.timeoutTotal));
+		}
 		cmds = args.toArray(new String[args.size()]);
 		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
 	}
