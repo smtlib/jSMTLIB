@@ -406,17 +406,15 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		if (number == 0) return smtConfig.responseFactory.success();
 		try {
 			pushesDepth += number;
-			IResponse r = parseResponse(solverProcess.sendAndListen("(push ",Integer.toString(number),")\n"));
-			// FIXME - actually only see this problem on Linux
-			if (r.isError()) {
-				// Temporary diagnostic for issue #53: unconditionally logged (not gated on
-				// !isWindows, unlike the workaround below it) so a real CI run on every
-				// platform shows what error text this actually is and whether "Linux-only"
-				// holds up -- remove once #53 is resolved one way or the other.
-				smtConfig.log.logDiag("#issue53: push(" + number + ") got an error response (isWindows=" + isWindows + "): " + r);
-			}
-			if (r.isError() && !isWindows) return successOrEmpty(smtConfig);
-			return r;
+			// Used to convert any push() error into success whenever !isWindows (issue #53),
+			// on the strength of a comment claiming the problem was Linux-only -- but the
+			// condition covered macOS too, and a diagnostic logged unconditionally across a
+			// full 5-platform CI run (thousands of tests, including plenty of push/pop
+			// coverage) never once found push() returning an error on ANY platform. With no
+			// reproducible case anywhere to justify masking it, and no evidence for the
+			// Linux-only claim either, the honest, platform-independent behavior is to
+			// return exactly what the solver said, uniformly.
+			return parseResponse(solverProcess.sendAndListen("(push ",Integer.toString(number),")\n"));
 		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
 		}
