@@ -4,10 +4,7 @@
  * Created August 2010
  */
 package org.smtlib;
-//FIXME-NOW - SMT needs more review and documentation
-// FIXME - check that this uses interfaces as much as possible
 
-// FIXME - REVIEW
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -39,9 +36,11 @@ import org.smtlib.solvers.Printer;
  * <LI> SMT' can override parseCommandLine, help, usage
  * <LI> Create a new main method; the new main should also instantiate the derived SMT and call exec on it 
  * <LI> SMT.Configuration' can have new options added; it can also instantiate different object factories
- * <LI> SMT.COnfiguration' can also instantiate a derived Utils or Log object
- * <LI> FIXME - more; parseCommandLine, help, usage are not easy to extend; what about replacing the SymbolTable or SolverProcess; should have interfaces for Log, Utils?
- * </UL> 
+ * <LI> SMT.Configuration' can also instantiate a derived Utils or Log object
+ * </UL>
+ * Known rough edges in the above: parseCommandLine, help, and usage are not easy to
+ * extend as-is, and replacing the SymbolTable or SolverProcess, or introducing
+ * interfaces for Log/Utils, isn't supported by any of the extension points above.
  */
 public class SMT {
 	
@@ -88,13 +87,28 @@ public class SMT {
 			org.smtlib.sexpr.Factory.initFactories(this);
 		}
 		
-		/** Makes a copy (using reference copy on objects) of the configuration */ 
+		/** Makes an independent copy of the configuration: a shallow, reference-copying
+		 *  field-for-field clone (via {@code super.clone()}) is not enough on its own, since
+		 *  several fields are mutable containers or hold a back-reference to this
+		 *  Configuration -- left reference-copied, mutating one of those through the clone
+		 *  would silently mutate the original too, contradicting this class's own "Separate
+		 *  instances of SMT objects can be run independently and in parallel" design goal
+		 *  (see the class Javadoc). commands/reservedWords/reservedWordsNotCommands/utils/log
+		 *  are each given their own fresh copy below for exactly this reason. */
 		public Configuration clone() throws CloneNotSupportedException {
 			Configuration c = (Configuration)super.clone();
 			//c.commandExtensionPrefixes = Array.copy(commandExtensionPrefixes);
 			c.commands = new HashMap<String,Class<? extends ICommand>>();
 			c.commands.putAll(commands);
-			// FIXME - ok to have a reference copy of Log ?
+			// A fresh Log, not just repointing the field: c.log is still the same object as
+			// this.log (a shallow field copy from super.clone()) until replaced here, so
+			// redirecting one's output channel (e.g. via :regular-output-channel) would
+			// otherwise silently redirect the other's too. Points the new Log's channels at
+			// whatever this Configuration's are currently pointed at (so cloning doesn't
+			// itself change where output goes), but as unowned streams -- the clone doesn't
+			// take over responsibility for closing a file the original's Log opened.
+			c.log = new Log(c);
+			c.log.setChannels(log.getOut(), log.getDiag());
 			c.reservedWords = new HashSet<String>();
 			c.reservedWords.addAll(reservedWords);
 			c.reservedWordsNotCommands = new HashSet<String>();
