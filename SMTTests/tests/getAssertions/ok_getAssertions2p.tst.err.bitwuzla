@@ -1,4 +1,4 @@
-[error] <stdin>:10:2: unsupported command 'get-assertions' 
+[error] <stdin>:11:2: unsupported command 'get-assertions'
 ^^^^^^^
 (get-assertions)
 ^^^^^^^^^^^^^^^^
