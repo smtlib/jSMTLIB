@@ -1,5 +1,7 @@
 package org.smtlib.logic;
 
+import org.smtlib.SMT;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -12,8 +14,8 @@ import org.smtlib.IExpr.*;
 /** This logic does not allow uninterpreted functions or nonlinear arithmetic terms */
 public class LRA extends Logic {
 
-	public LRA(ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(name,attributes);
+	public LRA(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+		super(smtConfig,name,attributes);
 	}
 	
 	public boolean isConst(IExpr expr) {

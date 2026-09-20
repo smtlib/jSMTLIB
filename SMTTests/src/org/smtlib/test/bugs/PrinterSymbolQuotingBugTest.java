@@ -47,7 +47,7 @@ public class PrinterSymbolQuotingBugTest {
         ISymbol sym = config.exprFactory.symbol("has space");
 
         StringWriter sw = new StringWriter();
-        Printer.write(sw, sym);
+        Printer.write(config, sw, sym);
         String printed = sw.toString();
 
         Assert.assertEquals("|has space|", printed);

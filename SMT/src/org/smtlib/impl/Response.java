@@ -25,8 +25,6 @@ public abstract class Response {
 	 *  implementation classes and the constants below. */
 	private Response() {}
 
-	static public SMT.Configuration smtConfig;
-	
 	final static String ERROR = "error";
 	final static String OK = "success";
 	final static public SMTExpr.Symbol EMPTY = new SMTExpr.Symbol("");
@@ -99,7 +97,7 @@ public abstract class Response {
 		public ISymbol constant(String sym) { return new SMTExpr.Symbol(sym); }
 
 		@Override
-		public IStringLiteral stringLiteral(String value) { return new SMTExpr.StringLiteral(value,false); }
+		public IStringLiteral stringLiteral(String value) { return new SMTExpr.StringLiteral(smtConfig,value,false); }
 
 		@Override
 		public INumeral numericLiteral(int value) { return new SMTExpr.Numeral(value); }

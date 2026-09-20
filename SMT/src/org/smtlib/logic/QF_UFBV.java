@@ -1,5 +1,7 @@
 package org.smtlib.logic;
 
+import org.smtlib.SMT;
+
 import java.util.Collection;
 
 import org.smtlib.IExpr.IAttribute;
@@ -11,8 +13,8 @@ import org.smtlib.IExpr.ISymbol;
  *  here). */
 public class QF_UFBV extends QF_UF {
 
-	public QF_UFBV(ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(name,attributes);
+	public QF_UFBV(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+		super(smtConfig,name,attributes);
 	}
 
 }

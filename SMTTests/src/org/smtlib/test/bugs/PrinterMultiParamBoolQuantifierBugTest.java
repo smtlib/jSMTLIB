@@ -57,7 +57,7 @@ public class PrinterMultiParamBoolQuantifierBugTest {
         IForall forall = config.exprFactory.forall(params, body);
 
         StringWriter sw = new StringWriter();
-        org.smtlib.solvers.Printer.write(sw, forall);
+        org.smtlib.solvers.Printer.write(config, sw, forall);
         String printed = sw.toString();
 
         // The Bool-sorted parameter must never appear as a quantified sort in the output --
@@ -87,7 +87,7 @@ public class PrinterMultiParamBoolQuantifierBugTest {
         IExpr.IExists exists = config.exprFactory.exists(params, body);
 
         StringWriter sw = new StringWriter();
-        org.smtlib.solvers.Printer.write(sw, exists);
+        org.smtlib.solvers.Printer.write(config, sw, exists);
         String printed = sw.toString();
 
         Assert.assertFalse("printed output must not quantify over a Bool sort: " + printed,
@@ -116,7 +116,7 @@ public class PrinterMultiParamBoolQuantifierBugTest {
         IForall forall = config.exprFactory.forall(params, body);
 
         StringWriter sw = new StringWriter();
-        org.smtlib.solvers.Printer.write(sw, forall);
+        org.smtlib.solvers.Printer.write(config, sw, forall);
         String printed = sw.toString();
 
         Assert.assertFalse("printed output must not quantify over a Bool sort: " + printed,

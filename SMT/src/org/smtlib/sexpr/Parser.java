@@ -906,8 +906,8 @@ public class Parser extends Lexer implements IParser {
 		try {
 			@SuppressWarnings("unchecked")
 			Class<? extends ILogic> clazz = (Class<? extends ILogic>)Class.forName(clazzName);
-			Constructor<? extends ILogic> con = clazz.getConstructor(ISymbol.class,Collection.class);
-			return con.newInstance(name,attributes);
+			Constructor<? extends ILogic> con = clazz.getConstructor(SMT.Configuration.class,ISymbol.class,Collection.class);
+			return con.newInstance(smtConfig,name,attributes);
 		} catch (ClassNotFoundException e) {
 			// No dedicated restriction class for this logic name - falls back to an
 			// unrestricted logic (no noQuantifiers/sort/function-declaration checks).
@@ -933,7 +933,7 @@ public class Parser extends Lexer implements IParser {
 			throw error("An exception occured when instantiating class " + clazzName + ": " + e,
 					pos(lp.pos().charStart(),currentPos()));
 		}
-		return new SMTExpr.Logic(name,attributes);
+		return new SMTExpr.Logic(smtConfig,name,attributes);
 	}
 	
 	/** Parses a theory definition (including beginning and ending parentheses, returning null

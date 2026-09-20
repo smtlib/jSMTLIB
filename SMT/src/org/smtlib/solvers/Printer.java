@@ -20,52 +20,55 @@ import org.smtlib.Utils;
 
 public class Printer extends org.smtlib.sexpr.Printer {
 
-	/** Creates a printer object */
-	public Printer(Writer w) {
-		super(w);
+	/** Creates a printer object that follows the given Configuration's rules. */
+	public Printer(org.smtlib.SMT.Configuration smtConfig, Writer w) {
+		super(smtConfig, w);
 	}
-	
+
 	@Override
 	public Printer newPrinter(Writer w) {
-		return new Printer(w);
+		return new Printer(smtConfig, w);
 	}
-	
+
 	@Override
 	public <T extends INode> String toString(T expr) {
 		try {
 			StringWriter sw = new StringWriter();
-			expr.accept(new Printer(sw));
+			expr.accept(new Printer(smtConfig, sw));
 			return sw.toString();
 		} catch (IVisitor.VisitorException e) {
 			return "<<ERROR: " + e.getMessage() + ">>";
 		}
 	}
 
-	/** Writes the given expression and outputs as a String */
-	static public <T extends INode> String write(T e) {
+	/** Writes the given expression and outputs as a String, following the given
+	 *  Configuration's rules. */
+	static public <T extends INode> String write(org.smtlib.SMT.Configuration smtConfig, T e) {
 		try {
 			StringWriter w = new StringWriter();
-			e.accept(new Printer(w));
+			e.accept(new Printer(smtConfig, w));
 			return w.toString();
 		} catch (IVisitor.VisitorException ex) {
 			return "<<ERROR: " + ex.getMessage() + ">>";
 		}
 	}
 
-	/** Writes the given expression to the given writer */
-	static public <T extends INode> void write(Writer w, T e) throws IVisitor.VisitorException {
-		e.accept(new Printer(w));
+	/** Writes the given expression to the given writer, following the given
+	 *  Configuration's rules. */
+	static public <T extends INode> void write(org.smtlib.SMT.Configuration smtConfig, Writer w, T e) throws IVisitor.VisitorException {
+		e.accept(new Printer(smtConfig, w));
 		try { w.flush(); } catch (IOException ex) { throw new IVisitor.VisitorException(ex); }
 	}
 
-	/** Writes the given expression to the given stream */
-	static public <T extends INode> void write(PrintStream w, T e)  throws IVisitor.VisitorException {
+	/** Writes the given expression to the given stream, following the given
+	 *  Configuration's rules. */
+	static public <T extends INode> void write(org.smtlib.SMT.Configuration smtConfig, PrintStream w, T e)  throws IVisitor.VisitorException {
 		Writer wr = new OutputStreamWriter(w);
-		e.accept(new Printer(wr));
-		try { 
-			wr.flush(); w.flush(); 
-		} catch (IOException ex) { 
-			throw new IVisitor.VisitorException(ex); 
+		e.accept(new Printer(smtConfig, wr));
+		try {
+			wr.flush(); w.flush();
+		} catch (IOException ex) {
+			throw new IVisitor.VisitorException(ex);
 		}
 	}
 	

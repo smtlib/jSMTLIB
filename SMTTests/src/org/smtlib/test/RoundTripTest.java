@@ -76,7 +76,7 @@ public class RoundTripTest {
             String sourceSpan = content.substring(pos.charStart(), pos.charEnd());
 
             StringWriter sw = new StringWriter();
-            org.smtlib.sexpr.Printer.write(sw, cmd);
+            org.smtlib.sexpr.Printer.write(config, sw, cmd);
 
             Assert.assertEquals(
                 "Round-trip mismatch for command " + count,

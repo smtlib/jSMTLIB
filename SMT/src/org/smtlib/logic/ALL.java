@@ -1,5 +1,7 @@
 package org.smtlib.logic;
 
+import org.smtlib.SMT;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -15,8 +17,8 @@ public class ALL extends Logic {
 	// ALL is the most general logic supported by a solver. Hence it is not well-defined and there are no build-in restrictions.
 	// The effect of its use may vary from solver to solver; it may not even be supported by a given solver.
 
-	public ALL(ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(name,attributes);
+	public ALL(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+		super(smtConfig,name,attributes);
 	}
 
 	@Override

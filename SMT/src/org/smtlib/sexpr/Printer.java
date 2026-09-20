@@ -48,7 +48,14 @@ import org.smtlib.ISort.IParameter;
  * between tokens it should simply reverse what the Parser class does.  */
 public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void> {
 
-	static public SMT.Configuration smtConfig;
+	/** The Configuration whose rules (e.g. string-literal quoting -- see {@link
+	 *  #visit(IStringLiteral)} -- which is version-dependent) this Printer instance
+	 *  follows. Issue #22: used to be a single static field shared by every Printer
+	 *  instance process-wide, so constructing a second Configuration anywhere in the
+	 *  process silently repointed every other Printer's quoting rules at the new
+	 *  instance's settings. Now set once per instance, at construction, like the
+	 *  writer itself. */
+	protected final SMT.Configuration smtConfig;
 
 	/** The writer to write text to */
 	/*@Nullable*/ protected Writer w;
@@ -59,8 +66,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	/** The system-dependent line termination */
 	static public final String eol = System.getProperty("line.separator");
 
-	/** Creates a printer object */
-	public Printer(Writer w) {
+	/** Creates a printer object that follows the given Configuration's rules. */
+	public Printer(SMT.Configuration smtConfig, Writer w) {
+		this.smtConfig = smtConfig;
 		this.w = w;
 	}
 
@@ -76,7 +84,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Printer newPrinter(Writer w) {
-		return new Printer(w);
+		return new Printer(smtConfig, w);
 	}
 
 	/** Prints the argument to the receiver */
@@ -92,35 +100,38 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	public <T extends INode> String toString(T expr) {
 		try {
 			StringWriter sw = new StringWriter();
-			expr.accept(new Printer(sw)); // FIXME = should be same type as receiver
+			expr.accept(new Printer(smtConfig, sw)); // FIXME = should be same type as receiver
 			return sw.toString();
 		} catch (IVisitor.VisitorException e) {
 			return "<<ERROR: " + e.getMessage() + ">>";
 		}
 	}
 
-	/** Writes the given expression and outputs as a String */
-	static public <T extends INode> String write(T e) {
+	/** Writes the given expression and outputs as a String, following the given
+	 *  Configuration's rules (e.g. string-literal quoting). */
+	static public <T extends INode> String write(SMT.Configuration smtConfig, T e) {
 		try {
 			StringWriter w = new StringWriter();
-			e.accept(new Printer(w));
+			e.accept(new Printer(smtConfig, w));
 			return w.toString();
 		} catch (IVisitor.VisitorException ex) {
 			return "<<ERROR: " + ex.getMessage() + ">>";
 		}
 	}
 
-	/** Writes the given expression to the given writer */
-	static public <T extends INode> void write(Writer w, T e) throws IVisitor.VisitorException {
-		Printer p = new Printer(w);
+	/** Writes the given expression to the given writer, following the given
+	 *  Configuration's rules. */
+	static public <T extends INode> void write(SMT.Configuration smtConfig, Writer w, T e) throws IVisitor.VisitorException {
+		Printer p = new Printer(smtConfig, w);
 		e.accept(p);
 		p.flush();
 	}
 
-	/** Writes the given expression to the given stream */
-	static public <T extends INode> void write(PrintStream w, T e) throws IVisitor.VisitorException {
+	/** Writes the given expression to the given stream, following the given
+	 *  Configuration's rules. */
+	static public <T extends INode> void write(SMT.Configuration smtConfig, PrintStream w, T e) throws IVisitor.VisitorException {
 		Writer wr = new OutputStreamWriter(w);
-		Printer p = new Printer(wr);
+		Printer p = new Printer(smtConfig, wr);
 		e.accept(p);
 		p.flush();
 	}
@@ -435,26 +446,28 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	public static class WithLines extends Printer {
 
-		/** Creates a printer object */
-		public WithLines(Writer w) {
-			super(w);
+		/** Creates a printer object that follows the given Configuration's rules. */
+		public WithLines(SMT.Configuration smtConfig, Writer w) {
+			super(smtConfig, w);
 		}
 
 		@Override
 		public WithLines newPrinter(Writer w) {
-			return new WithLines(w);
+			return new WithLines(smtConfig, w);
 		}
 
-		/** Writes the given expression to the given writer */
-		static public <T extends INode> void write(Writer w, T e) throws IVisitor.VisitorException {
-			WithLines p = new WithLines(w);
+		/** Writes the given expression to the given writer, following the given
+		 *  Configuration's rules. */
+		static public <T extends INode> void write(SMT.Configuration smtConfig, Writer w, T e) throws IVisitor.VisitorException {
+			WithLines p = new WithLines(smtConfig, w);
 			e.accept(p);
 			p.flush();
 		}
 
-		/** Writes the given expression to the given stream */
-		static public <T extends INode> void write(PrintStream w, T e) throws IVisitor.VisitorException {
-			write(new OutputStreamWriter(w), e);
+		/** Writes the given expression to the given stream, following the given
+		 *  Configuration's rules. */
+		static public <T extends INode> void write(SMT.Configuration smtConfig, PrintStream w, T e) throws IVisitor.VisitorException {
+			write(smtConfig, new OutputStreamWriter(w), e);
 		}
 
 		@Override

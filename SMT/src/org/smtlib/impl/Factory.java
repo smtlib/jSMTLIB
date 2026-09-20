@@ -29,14 +29,22 @@ import org.smtlib.sexpr.Utils;
  * The various factories are all implemented together in this one class because they
  * use each other mutually; combining them lets them be overridden in a consistent fashion. */
 public class Factory implements IExpr.IFactory, ISort.IFactory, ICommand.IFactory {
-	
-	/** Initializes the SMT configuration object for the implementation 
+
+	/** The configuration this factory's instances (e.g. StringLiteral) are scoped to;
+	 *  see issue #22. */
+	protected final SMT.Configuration smtConfig;
+
+	public Factory(SMT.Configuration smtConfig) {
+		this.smtConfig = smtConfig;
+	}
+
+	/** Initializes the SMT configuration object for the implementation
 	 * in org.smtlib.impl - all the appropriate factories, etc.
 	 * @param config the configuration object to initialize
 	 */
 	public static void initFactories(SMT.Configuration config) {
 		config.responseFactory = new Response.Factory(config);
-		Factory f = new Factory();
+		Factory f = new Factory(config);
 		config.sortFactory = f;
 		config.exprFactory = f;
 		config.commandFactory = f;
@@ -154,12 +162,12 @@ public class Factory implements IExpr.IFactory, ISort.IFactory, ICommand.IFactor
 
 	@Override
 	public IStringLiteral unquotedString(String v) {
-		return new StringLiteral(v,false);
+		return new StringLiteral(smtConfig,v,false);
 	}
 
 	@Override
 	public IStringLiteral quotedString(String v) {
-		return new StringLiteral(v,true);
+		return new StringLiteral(smtConfig,v,true);
 	}
 
 	@Override

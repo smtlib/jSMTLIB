@@ -46,7 +46,7 @@ public class LinearConstUnaryMinusOfDivisionBugTest {
     @Test
     public void lraIsConstRecognizesUnaryMinusOfDivision() throws Exception {
         SMT.Configuration config = new SMT.Configuration();
-        LRA logic = new LRA(config.exprFactory.symbol("QF_LRA"), Collections.emptyList());
+        LRA logic = new LRA(config, config.exprFactory.symbol("QF_LRA"), Collections.emptyList());
 
         IExpr expr = parse(config, "(- (/ 1 2))");
         Assert.assertTrue("(- (/ 1 2)) is a linear-arithmetic constant", logic.isConst(expr));
@@ -56,7 +56,7 @@ public class LinearConstUnaryMinusOfDivisionBugTest {
     public void logicIsRealConstRecognizesUnaryMinusOfDivision() throws Exception {
         SMT.Configuration config = new SMT.Configuration();
         // AUFLIRA is a concrete Logic subclass that inherits isRealConst() unmodified.
-        Logic logic = new org.smtlib.logic.AUFLIRA(config.exprFactory.symbol("AUFLIRA"), Collections.emptyList());
+        Logic logic = new org.smtlib.logic.AUFLIRA(config, config.exprFactory.symbol("AUFLIRA"), Collections.emptyList());
 
         IExpr expr = parse(config, "(- (/ 1 2))");
         Assert.assertTrue("(- (/ 1 2)) is a linear-arithmetic constant", logic.isRealConst(expr));
@@ -65,7 +65,7 @@ public class LinearConstUnaryMinusOfDivisionBugTest {
     @Test
     public void linearTermWithNegatedDivisionCoefficientIsAccepted() throws Exception {
         SMT.Configuration config = new SMT.Configuration();
-        LRA logic = new LRA(config.exprFactory.symbol("QF_LRA"), Collections.emptyList());
+        LRA logic = new LRA(config, config.exprFactory.symbol("QF_LRA"), Collections.emptyList());
 
         // (* (- (/ 1 2)) x) -- a constant coefficient of -1/2 times a free variable x --
         // is a linear term and must not be rejected as nonlinear.

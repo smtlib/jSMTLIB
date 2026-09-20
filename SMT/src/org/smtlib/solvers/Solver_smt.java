@@ -82,7 +82,7 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 	@Override
 	protected String translate(INode sexpr) throws IVisitor.VisitorException {
 		StringWriter sw = new StringWriter();
-		org.smtlib.solvers.Printer.write(sw,sexpr);
+		org.smtlib.solvers.Printer.write(smtConfig,sw,sexpr);
 		return sw.toString();
 	}
 

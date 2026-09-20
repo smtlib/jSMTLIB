@@ -23,8 +23,8 @@ import org.smtlib.impl.SMTExpr;
  *  having to restate "permit everything" explicitly. */
 public abstract class Logic extends SMTExpr.Logic implements ILanguage {
 
-	public Logic(ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(name,attributes);
+	public Logic(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+		super(smtConfig,name,attributes);
 	}
 	
 	public void noQuantifiers(IExpr expression) throws IVisitor.VisitorException {
@@ -67,8 +67,8 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
 	/** Creates the sort expression {@code name(params...)}, e.g. {@code sortApp("Array", intSort, intSort)}
 	 *  for {@code (Array Int Int)}. Used to build canonical sorts for structural comparison
 	 *  (via {@link ISort#equalsNoExpand}), rather than comparing printed text. */
-	protected static ISort sortApp(String name, ISort... params) {
-		return SMTExpr.smtConfig.sortFactory.createSortExpression(SMTExpr.smtConfig.exprFactory.symbol(name), params);
+	protected ISort sortApp(String name, ISort... params) {
+		return smtConfig.sortFactory.createSortExpression(smtConfig.exprFactory.symbol(name), params);
 	}
 
 	/** Checks that the sort expression contains no Array sort outside the allowed set.
