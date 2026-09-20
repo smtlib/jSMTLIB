@@ -1,3 +1,3 @@
 success
-(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:2: expected command at 'define-fun-rec'
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:2: expected command at 'define-fun-rec'
 ")

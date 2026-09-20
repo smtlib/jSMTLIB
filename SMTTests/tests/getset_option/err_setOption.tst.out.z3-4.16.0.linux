@@ -9,7 +9,7 @@
 (error "Expected true or false as the value of :produce-unsat-cores")
 (error "Expected true or false as the value of :interactive-mode")
 (error "Expected a numeral as the value of :random-seed")
-(error "line 1 column 17: unknown parameter 'zzz'
+(error "line 2 column 18: unknown parameter 'zzz'
 Legal parameters are:
   auto_config (bool) (default: true)
   ctrl_c (bool) (default: true)

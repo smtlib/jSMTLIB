@@ -1,4 +1,4 @@
 success
 success
-(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:20: expected '_'
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:6:20: expected '_'
 ")

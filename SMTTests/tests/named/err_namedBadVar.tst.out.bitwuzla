@@ -2,5 +2,5 @@ success
 success
 success
 success
-(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:6:37: undefined symbol 't'
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:7:37: undefined symbol 't'
 ")
