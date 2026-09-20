@@ -5,4 +5,4 @@ success
 success
 success
 sat
-(error "line 9 column 25: invalid function application for and, sort mismatch on argument at position 1, expected Bool but given A")
+(error "line 10 column 25: invalid function application for and, sort mismatch on argument at position 1, expected Bool but given A")
