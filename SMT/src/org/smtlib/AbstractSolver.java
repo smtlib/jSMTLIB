@@ -35,10 +35,13 @@ import org.smtlib.sexpr.Parser;
  *  solver deviates in some other way overrides the individual ISolver method itself,
  *  same as before.
  *  <p>
- *  Two operations still throw UnsupportedOperationException, because AbstractSolver has
- *  no generic way to provide them: {@link #start()} and {@link #exit()} manage the
- *  solver process's lifecycle (constructing it, choosing a command line, deciding
- *  whether/how to wait for a reply before killing it).
+ *  {@link #start()} still throws UnsupportedOperationException, because AbstractSolver has
+ *  no generic way to provide it: constructing the solver process and choosing its command
+ *  line is inherently solver-specific, so every concrete adapter must override it.
+ *  {@link #exit()}, by contrast, has a working default (send the exit command tolerating a
+ *  silent process exit, then tear down the process) that's generic enough to cover every
+ *  solver seen so far; a subclass only overrides it when exiting needs solver-specific
+ *  handling beyond that.
  *  <p>
  *  Thus this class can still be used as a base class for a solver adapter class that
  *  wants the convenience of not having to implement every operation at once (remove
@@ -489,12 +492,23 @@ public class AbstractSolver implements ISolver {
 			StringBuilder sb = new StringBuilder();
 			solverProcess.sendNoListen(cmdText, "\n");
 			int parens = 0;
+			// Tracks whether the scan is currently inside a double-quoted string literal,
+			// carried across reads (a string can in principle straddle a chunk boundary),
+			// so that a '(' or ')' inside a string-sort term value doesn't desync the
+			// balance count -- same in-string tracking SolverProcess.endsWith() already
+			// does for exactly the same reason, just applied incrementally per chunk here
+			// instead of rescanning the whole buffer from the start each time.
+			boolean inString = false;
 			do {
 			    String s = solverProcess.listen();
-				int p = -1;
-				while ((p = s.indexOf('(',p+1)) != -1) parens++;
-				p = -1;
-				while ((p = s.indexOf(')',p+1)) != -1) parens--;
+				for (int p = 0; p < s.length(); p++) {
+					char c = s.charAt(p);
+					if (c == '"') inString = !inString;
+					else if (!inString) {
+						if (c == '(') parens++;
+						else if (c == ')') parens--;
+					}
+				}
 				sb.append(s.replace('\n',' ').replace("\r",""));
 			} while (parens > 0);
 			response = sb.toString();
