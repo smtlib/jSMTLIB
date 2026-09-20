@@ -132,19 +132,19 @@ public abstract class Sort extends Pos.Printable implements ISort {
 			return sortExpression.substitute(map);
 		}
 		
-		// FIXME - equals and hasCode should consider parameters and sort expression
-
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
 			if (!(o instanceof IAbbreviation)) return false;
-			return identifier().equals(((IAbbreviation)o).identifier());
+			IAbbreviation a = (IAbbreviation)o;
+			return identifier().equals(a.identifier())
+					&& parameters().equals(a.parameters())
+					&& sortExpression().equals(a.sortExpression());
 		}
-		
+
 		@Override
 		public int hashCode() {
-			// The identifier is supposed to be unique across all in-scope definitions
-			return identifier().hashCode(); 
+			return java.util.Objects.hash(identifier(), parameters(), sortExpression());
 		}
 		
 		@Override
