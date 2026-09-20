@@ -18,13 +18,19 @@ import java.util.Map;
 import java.util.Set;
 
 import org.smtlib.ICommand.IScript;
+import org.smtlib.ICommand.Ideclare_const;
 import org.smtlib.ICommand.Ideclare_fun;
 import org.smtlib.ICommand.Ideclare_datatype;
 import org.smtlib.ICommand.Ideclare_datatypes;
+import org.smtlib.ICommand.Ideclare_sort;
+import org.smtlib.ICommand.Ideclare_sort_parameter;
+import org.smtlib.ICommand.Idefine_const;
 import org.smtlib.ICommand.Idefine_fun_rec;
 import org.smtlib.ICommand.Idefine_funs_rec;
+import org.smtlib.ICommand.Idefine_sort;
 import org.smtlib.*;
 import org.smtlib.ICommand.Idefine_fun;
+import org.smtlib.IPos.IPosable;
 import org.smtlib.IResponse.IAssertionsResponse;
 import org.smtlib.IResponse.IAssignmentResponse;
 import org.smtlib.IResponse.IAttributeList;
@@ -62,15 +68,43 @@ import org.smtlib.SMT.Configuration.SMTLIB;
  * unlike the main protocol commands (assert, check-sat, ...), nothing in this project's
  * test suite or documentation records what Simplify's failure response for one of these
  * auxiliary commands actually looks like, so there's no format to parse against without
- * guessing (see issue #68). */
-public class Solver_simplify extends Solver_test implements ISolver {
-	
+ * guessing (see issue #68).
+ * <p>
+ * Extends {@link AbstractSolver} (for its real-process plumbing: the shared {@code
+ * solverProcess} field, {@code options}/{@code checkSatStatus}), not {@link Solver_test}
+ * (issue #97): Simplify's real process speaks its own bespoke, non-SMT-LIB Lisp-like
+ * protocol (BG_PUSH/DEFPRED/an accumulated conjunction sent with check-sat -- see above),
+ * so {@code AbstractSolver}'s generic defaults (which translate a command to standard
+ * SMT-LIB concrete syntax and send that directly) are not usable for Simplify at all --
+ * every operation below is either genuinely Simplify-specific (talks to the real process
+ * in its own protocol) or a client-side simulation transplanted directly from {@link
+ * Solver_test} (the operations Simplify's real process cannot itself be asked about at
+ * all: get-model/get-proof/get-unsat-core/etc., reset/reset-assertions, and the
+ * declare/define-sort family, none of which the real BG_PUSH-based protocol below has any
+ * way to express). {@code symTable}/{@code assertionSetStack}/{@code logicSet} are this
+ * class's own copies of exactly what {@code Solver_test} tracks, for exactly the same
+ * reason: this class has no real process to ask instead. */
+public class Solver_simplify extends AbstractSolver implements ISolver {
+
+	/** The symbol table used for this class's own local type-checking simulation (see the
+	 *  class Javadoc) -- a straight copy of {@link Solver_test}'s own field of the same
+	 *  name and visibility (public for {@link org.smtlib.ext.C_what}'s sake, though that
+	 *  extension command no longer recognizes this class as a symbol-table-bearing solver
+	 *  now that it isn't a {@code Solver_test} -- see this session's own restructuring
+	 *  notes; no test exercises "what" against Simplify). */
+	public SymbolTable symTable;
+
+	/** The data structure that maintains this class's own local simulation of the
+	 *  solver's assertion set stack -- see {@link Solver_test#assertionSetStack}. */
+	protected List<List<IExpr>> assertionSetStack = new LinkedList<List<IExpr>>();
+
+	/** Internal state variable - set non-null once the logic is set -- see
+	 *  {@link Solver_test#logicSet}. */
+	protected String logicSet = null;
+
 	/** Just to hold the command line to launch Simplify */
-	String cmds[] = new String[1]; 
-	
-	/** The external process driver, initialized in start() */
-	protected SolverProcess solverProcess;
-	
+	String cmds[] = new String[1];
+
 	/** Accumulates the translated expressions from various asserts, in order
 	 * to send them all at once with a check-sat command.
 	 */
@@ -81,17 +115,20 @@ public class Solver_simplify extends Solver_test implements ISolver {
 	{
 		pushesStack.add("");
 	}
-	
+
 	/** Constructor with standard signature for invocation through reflection */
 	public Solver_simplify(SMT.Configuration smtConfig, String executable) {
-		super(smtConfig,"");
+		this.smtConfig = smtConfig;
+		options.putAll(smt().utils.defaults);
+		this.symTable = new SymbolTable(smtConfig);
 		cmds[0] = executable;
 		solverProcess = new SolverProcess(cmds,">\t",smtConfig.logfile,StandardCharsets.UTF_8);
 	}
-	
+
 	@Override
 	public IResponse start() {
-		super.start();
+		assertionSetStack.add(0,new LinkedList<IExpr>());
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#start " + solverName());
 		solverProcess.start(true);
 		try {
 			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started simplify");
@@ -102,23 +139,35 @@ public class Solver_simplify extends Solver_test implements ISolver {
 		}
 		return smtConfig.responseFactory.success();
 	}
-	
+
 	@Override
 	public IResponse exit() {
 		solverProcess.exit();
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended simplify ");
 		//process = null;
-		return super.exit();
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#exit " + solverName());
+		return smtConfig.responseFactory.success(); // FIXME - should forbid any actions after exited
 	}
 
 	@Override
-	public IResponse assertExpr(IExpr sexpr) {
-		IResponse res = super.assertExpr(sexpr);
-		if (!res.isOK()) return res;
+	public IResponse assertExpr(IExpr expr) {
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#assert " + expr);
+		if (logicSet == null) {
+			return smtConfig.responseFactory.error("The logic must be set before an assert command is issued");
+		}
+		List<IResponse> errs = TypeChecker.checkAssertion(this.symTable,expr);
+		if (errs != null && !errs.isEmpty()) {
+			return errs.get(0);
+		}
+		if (assertionSetStack.isEmpty()) {
+			return smtConfig.responseFactory.error("All assertion sets have been popped from the stack");
+		}
+		assertionSetStack.get(0).add(expr);
+		checkSatStatus = null;
 		try {
-			String translatedSexpr = translate(sexpr);
+			String translatedSexpr = translate(expr);
 			if (translatedSexpr == null) {
-				return smtConfig.responseFactory.error("Failure in translating expression: " + smtConfig.defaultPrinter.toString(sexpr), sexpr.pos());
+				return smtConfig.responseFactory.error("Failure in translating expression: " + smtConfig.defaultPrinter.toString(expr), expr.pos());
 			}
 			conjunction = conjunction + " \n" + translatedSexpr;
 			//String s = solverProcess.sendAndListen("(BG_PUSH ",translatedSexpr," )\r\n");
@@ -129,10 +178,51 @@ public class Solver_simplify extends Solver_test implements ISolver {
 		return smtConfig.responseFactory.success();
 	}
 
-	/** True if :global-declarations has been set -- mirrors {@link Solver_test}'s own
-	 *  private isGlobal(), which the overrides below need but cannot call directly. */
+	/** True if :global-declarations has been set. */
 	private boolean isGlobal() {
 		return Utils.TRUE.equals(options.get(Utils.GLOBAL_DECLARATIONS));
+	}
+
+	/** See {@link Solver_test#encode}. */
+	protected String encode(IIdentifier id) {
+		return id.toString();
+	}
+
+	/** Transplanted from {@link Solver_test#reset()}: this class has no real process
+	 *  operation to ask for a reset (Simplify's protocol has no such concept), so this
+	 *  remains an entirely local, client-side reset exactly as it was as an inherited
+	 *  Solver_test method -- it does not, and did not before this restructuring, reset any
+	 *  BG_PUSH state already accumulated in the real Simplify process itself. */
+	@Override
+	public IResponse reset() {
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#reset " + solverName());
+		assertionSetStack.clear();
+		assertionSetStack.add(0,new LinkedList<IExpr>());
+		symTable.clear(false);
+		logicSet = null;
+		options.putAll(smt().utils.defaults);
+		((org.smtlib.impl.Response.Factory)smtConfig.responseFactory).printSuccess = true;
+		smtConfig.verbose = 0;
+		smtConfig.log.setChannels(smtConfig.stdout, smtConfig.stderr);
+		checkSatStatus = null;
+		return smtConfig.responseFactory.success();
+	}
+
+	/** Transplanted from {@link Solver_test#reset_assertions()}. */
+	@Override
+	public IResponse reset_assertions() {
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#reset-assertions");
+		IResponse r = pop(assertionSetStack.size()-1);
+		try {
+			for (IExpr e: assertionSetStack.get(0)) TypeChecker.clearSorts(e);
+		} catch (IVisitor.VisitorException e) {
+			// ignore - clearing sorts is best-effort hygiene, not correctness-critical
+		}
+		assertionSetStack.get(0).clear();
+		if (!isGlobal()) {
+			symTable.clear(true);
+		}
+		return r;
 	}
 
 	/** check-sat-assuming postdates Simplify by well over a decade (added in SMT-LIB
@@ -236,8 +326,11 @@ public class Solver_simplify extends Solver_test implements ISolver {
 
 	@Override
 	public IResponse check_sat() {
-		IResponse res = super.check_sat();
-		if (res.isError()) return res;
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#check-sat");
+		if (logicSet == null) {
+			return smtConfig.responseFactory.error("The logic must be set before a check-sat command is issued");
+		}
+		IResponse res;
 		try {
 //			String s = solverProcess.sendAndListen("(BG_PUSH (EQ 0 0))\r\n");
 //			s = solverProcess.sendAndListen("(EQ 0 1)\r\n");
@@ -272,7 +365,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 
 	@Override
 	public IResponse declare_fun(Ideclare_fun cmd) {
-		IResponse res = super.declare_fun(cmd);
+		IResponse res = declareFunLocal(cmd);
 		if (res.isError()) return res;
 		try {
 			if (cmd.resultSort().isBool() && cmd.argSorts().size() > 0) {
@@ -301,7 +394,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 
 	@Override
 	public IResponse define_fun(Idefine_fun cmd) {
-		IResponse res = super.define_fun(cmd);
+		IResponse res = defineFunLocal(cmd);
 		if (res.isError()) return res;
 		try {
 			if (cmd.resultSort().isBool() && cmd.parameters().size() > 0) {
@@ -335,7 +428,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 	//@ requires number >= 0;
 	@Override
 	public IResponse pop(int number) {
-		IResponse status = super.pop(number);
+		IResponse status = popLocal(number);
 		if (!status.isOK()) return status;
 		try {
 			while (--number >= 0) { 
@@ -352,7 +445,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 	//@ requires number >= 0;
 	@Override
 	public IResponse push(int number) {
-		IResponse status = super.push(number);
+		IResponse status = pushLocal(number);
 		if (!status.isOK()) return status;
 		try {
 			while (--number >= 0) { 
@@ -373,7 +466,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 			return smtConfig.responseFactory.error("The simplify solver does not yet support the bit-vector theory",pos);
 		}
 		boolean lSet = logicSet != null;
-		IResponse status = super.set_logic(logicName,pos);
+		IResponse status = setLogicLocal(logicName,pos);
 		if (!status.isOK()) return status;
 		if (lSet) {
 			pushesStack.clear();
@@ -391,7 +484,7 @@ public class Solver_simplify extends Solver_test implements ISolver {
 		if (option.value().equals(Utils.PRODUCE_UNSAT_CORES)) return smtConfig.responseFactory.unsupported();
 //		if (option.value().equals(":expand-definitions") && smtConfig.atLeastVersion(SMTLIB.V25)) return smtConfig.responseFactory.unsupported();
 
-		return super.set_option(option,value);
+		return setOptionLocal(option,value);
 	}
 
 	@Override
@@ -405,7 +498,6 @@ public class Solver_simplify extends Solver_test implements ISolver {
 
 	@Override
 	public IResponse get_info(IKeyword key) {
-		super.get_info(key);
 		IKeyword option = key;
 		IAttributeValue lit;
 		if (Utils.ERROR_BEHAVIOR.equals(option)) {
@@ -427,8 +519,372 @@ public class Solver_simplify extends Solver_test implements ISolver {
 		return smtConfig.responseFactory.get_info_response(attr);
 	}
 
+	// ---------------------------------------------------------------------------------
+	// Everything below this point is transplanted, unmodified logic from Solver_test's
+	// local, client-side type-checking simulation -- see the class Javadoc. Simplify's
+	// real process has no way to be usefully asked about any of it (get-model and friends
+	// postdate Simplify's own protocol entirely; the declare/define-sort family has no
+	// counterpart in Simplify's untyped translation), so this class answers all of it
+	// exactly as Solver_test always did, without ever touching solverProcess.
+	// ---------------------------------------------------------------------------------
 
-	
+	/** See {@link Solver_test#get_assertions()}. */
+	@Override
+	public IResponse get_assertions(){
+		if (logicSet == null) {
+			return smtConfig.responseFactory.error("The logic must be set before a get-assertions command is issued");
+		}
+		if (!smtConfig.relax && !Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSERTIONS)))) {
+			return smtConfig.responseFactory.error("The get-assertions command is only valid if " + Utils.produceAssertionsKey(smtConfig) + " has been enabled");
+		}
+		List<IExpr> combined = new LinkedList<IExpr>();
+		Iterator<List<IExpr>> iter = assertionSetStack.listIterator();
+		addAssertions(combined,iter);
+		return smtConfig.responseFactory.get_assertions_response(combined);
+	}
+
+	/** See {@link Solver_test#addAssertions}. */
+	private void addAssertions(List<IExpr> combined, Iterator<List<IExpr>> iter) {
+		if (iter.hasNext()) {
+			List<IExpr> list = iter.next();
+			addAssertions(combined,iter);
+			combined.addAll(list);
+		}
+	}
+
+	/** See {@link Solver_test#get_value(IExpr...)}. */
+	@Override
+	public IResponse get_value(IExpr... terms) {
+		TypeChecker tc = new TypeChecker(symTable);
+		try {
+			for (IExpr term: terms) {
+				term.accept(tc);
+			}
+		} catch (IVisitor.VisitorException e) {
+			tc.result.add(smtConfig.responseFactory.error(e.getMessage()));
+		} finally {
+			if (!tc.result.isEmpty()) return tc.result.get(0);
+		}
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
+			return smtConfig.responseFactory.error("The get-value command is only valid if :produce-models has been enabled");
+		}
+		if (!smtConfig.responseFactory.sat().equals(checkSatStatus) && !smtConfig.responseFactory.unknown().equals(checkSatStatus)) {
+			return smtConfig.responseFactory.error("A get-value command is valid only after check-sat has returned sat or unknown");
+		}
+		return smtConfig.responseFactory.unsupported();
+	}
+
+	/** See {@link Solver_test#get_assignment()}. */
+	@Override
+	public IResponse get_assignment() {
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSIGNMENTS)))) {
+			return smtConfig.responseFactory.error("The get-assignment command is only valid if :produce-assignments has been enabled");
+		}
+		if (!smtConfig.responseFactory.sat().equals(checkSatStatus) && !smtConfig.responseFactory.unknown().equals(checkSatStatus)) {
+			return smtConfig.responseFactory.error("The get-assignment command is only valid immediately after check-sat returned sat or unknown");
+		}
+		return smtConfig.responseFactory.unsupported();
+	}
+
+	/** See {@link Solver_test#get_proof()}. */
+	@Override
+	public IResponse get_proof() {
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_PROOFS)))) {
+			return smtConfig.responseFactory.error("The get-proof command is only valid if :produce-proofs has been enabled");
+		}
+		if (!smtConfig.responseFactory.unsat().equals(checkSatStatus)) {
+			return smtConfig.responseFactory.error("The get-proof command is only valid immediately after check-sat returned unsat");
+		}
+		return smtConfig.responseFactory.unsupported();
+	}
+
+	/** See {@link Solver_test#get_model()}. */
+	@Override
+	public IResponse get_model() {
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
+			return smtConfig.responseFactory.error("The get-model command is only valid if :produce-models has been enabled");
+		}
+		if (!smtConfig.responseFactory.sat().equals(checkSatStatus) && !smtConfig.responseFactory.unknown().equals(checkSatStatus)) {
+			return smtConfig.responseFactory.error("The get-model command is only valid immediately after check-sat returned sat or unknown");
+		}
+		return smtConfig.responseFactory.unsupported();
+	}
+
+	/** See {@link Solver_test#get_unsat_assumptions()}. */
+	@Override
+	public IResponse get_unsat_assumptions() {
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_UNSAT_ASSUMPTIONS)))) {
+			return smtConfig.responseFactory.error("The get-unsat-assumptions command is only valid if :produce-unsat-assumptions has been enabled");
+		}
+		if (!smtConfig.responseFactory.unsat().equals(checkSatStatus)) {
+			return smtConfig.responseFactory.error("The get-unsat-assumptions command is only valid immediately after check-sat-assumptions returned unsat");
+		}
+		return smtConfig.responseFactory.unsupported();
+	}
+
+	/** See {@link Solver_test#get_unsat_core()}. */
+	@Override
+	public IResponse get_unsat_core() {
+		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_UNSAT_CORES)))) {
+			return smtConfig.responseFactory.error("The get-unsat-core command is only valid if :produce-unsat-cores has been enabled");
+		}
+		if (!smtConfig.responseFactory.unsat().equals(checkSatStatus)) {
+			return smtConfig.responseFactory.error("The get-unsat-core command is only valid immediately after check-sat returned unsat");
+		}
+		return smtConfig.responseFactory.unsupported();
+	}
+
+	/** See {@link Solver_test#declare_const(ICommand.Ideclare_const)}. */
+	@Override
+	public IResponse declare_const(Ideclare_const cmd) {
+		if (logicSet == null) {
+			return smtConfig.responseFactory.error("The logic must be set before a declare-const command is issued");
+		}
+		String encodedName = encode(cmd.symbol());
+		List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), new LinkedList<ISort>(), cmd.resultSort(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
+		if (list.isEmpty()) {
+			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(new ISort[0],cmd.resultSort());
+			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null,null);
+			if (symTable.add(entry, isGlobal(), smtConfig.relax)) {
+				checkSatStatus = null;
+				return smtConfig.responseFactory.success();
+			} else {
+				return smtConfig.responseFactory.error("Symbol " + encodedName + " is already defined",cmd.symbol().pos());
+			}
+		} else {
+			return list.get(0);
+		}
+	}
+
+	/** See {@link Solver_test#declare_fun(ICommand.Ideclare_fun)}: this class's own
+	 *  local type-check/registration step, extracted to a helper so {@link #declare_fun}
+	 *  can still layer its real-process DEFPRED handling on top, the same way it always
+	 *  called {@code super.declare_fun(cmd)} for this half of the work before this
+	 *  restructuring. */
+	private IResponse declareFunLocal(Ideclare_fun cmd) {
+		if (logicSet == null) {
+			return smtConfig.responseFactory.error("The logic must be set before a declare-fun command is issued");
+		}
+		if (cmd.parameters() != null && !smtConfig.relax) {
+			return smtConfig.responseFactory.error("A par-polymorphic function declaration requires --relax", cmd.symbol().pos());
+		}
+		if (!cmd.attributes().isEmpty() && !smtConfig.relax) {
+			return smtConfig.responseFactory.error("Function attributes on declare-fun require --relax", cmd.symbol().pos());
+		}
+		String encodedName = encode(cmd.symbol());
+		List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.argSorts(),cmd.resultSort(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
+		if (list.isEmpty()) {
+			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(cmd.argSorts().toArray(new ISort[cmd.argSorts().size()]),cmd.resultSort());
+			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,cmd.attributes(),cmd.parameters());
+			if (symTable.add(entry, isGlobal(), cmd.parameters() != null || smtConfig.relax)) {
+				checkSatStatus = null;
+				return smtConfig.responseFactory.success();
+			} else {
+				return smtConfig.responseFactory.error("Symbol " + encodedName + " is already defined",cmd.symbol().pos());
+			}
+		} else {
+			return list.get(0);
+		}
+	}
+
+	/** See {@link Solver_test#define_const(ICommand.Idefine_const)}. */
+	@Override
+	public IResponse define_const(Idefine_const cmd) {
+		return define_fun(cmd);
+	}
+
+	/** See {@link Solver_test#define_fun(ICommand.Idefine_fun)}: extracted the same way
+	 *  as {@link #declareFunLocal}, for the same reason. */
+	private IResponse defineFunLocal(Idefine_fun cmd) {
+		if (logicSet == null) {
+			return smtConfig.responseFactory.error("The logic must be set before a define-fun command is issued");
+		}
+		String encodedName = encode(cmd.symbol());
+		List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.parameters(),cmd.resultSort(),cmd.expression());
+		if (list.isEmpty()) {
+			ISort args[] = new ISort[cmd.parameters().size()];
+			int i = 0;
+			for (IExpr.IDeclaration d: cmd.parameters()) {
+				args[i++] = d.sort();
+			}
+			ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(args,cmd.resultSort());
+			SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null,null);
+			entry.definition = cmd.expression();
+			if (symTable.add(entry, isGlobal(), false)) {
+				checkSatStatus = null;
+				return smtConfig.responseFactory.success();
+			} else {
+				return smtConfig.responseFactory.error("Symbol " + encodedName + " is already defined",cmd.symbol().pos());
+			}
+		} else {
+			return list.get(0);
+		}
+	}
+
+	/** See {@link Solver_test#declare_sort(ICommand.Ideclare_sort)}. */
+	@Override
+	public IResponse declare_sort(Ideclare_sort cmd) {
+		if (logicSet == null) {
+			return smtConfig.responseFactory.error("The logic must be set before a declare-sort command is issued");
+		}
+		List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable,cmd.sortSymbol(),null,null);
+		boolean b = list.isEmpty();
+		if (b) {
+			INumeral sortArity = cmd.arity();
+			b = symTable.addSortDefinition(cmd.sortSymbol(), sortArity, null, isGlobal());
+			if (!b) return smtConfig.responseFactory.error("The identifier is already declared to be a sort: " +
+					smtConfig.defaultPrinter.toString(cmd.sortSymbol()), cmd.sortSymbol().pos());
+			checkSatStatus = null;
+			return smtConfig.responseFactory.success();
+		} else {
+			return list.get(0);
+		}
+	}
+
+	/** See {@link Solver_test#declare_sort_parameter(ICommand.Ideclare_sort_parameter)}. */
+	@Override
+	public IResponse declare_sort_parameter(Ideclare_sort_parameter cmd) {
+		if (logicSet == null) {
+			return smtConfig.responseFactory.error("The logic must be set before a declare-sort-parameter command is issued");
+		}
+		List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable, cmd.sortSymbol(), null, null);
+		if (!list.isEmpty()) return list.get(0);
+		boolean b = symTable.lookupSort(cmd.sortSymbol()) != null;
+		if (b) return smtConfig.responseFactory.error("The identifier is already declared to be a sort: " +
+								smtConfig.defaultPrinter.toString(cmd.sortSymbol()), cmd.sortSymbol().pos());
+		symTable.addSortParameter(cmd.sortSymbol(), isGlobal());
+		checkSatStatus = null;
+		return smtConfig.responseFactory.success();
+	}
+
+	/** See {@link Solver_test#define_sort(ICommand.Idefine_sort)}. */
+	@Override
+	public IResponse define_sort(Idefine_sort cmd) {
+		if (logicSet == null) {
+			return smtConfig.responseFactory.error("The logic must be set before a define-sort command is issued");
+		}
+		List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable,cmd.sortSymbol(),cmd.parameters(),cmd.expression());
+		boolean b = list.isEmpty();
+		if (b) {
+			b = symTable.addSortDefinition(cmd.sortSymbol(), cmd.parameters(), cmd.expression(), isGlobal());
+			if (!b) return smtConfig.responseFactory.error("The identifier is already declared to be a sort: " +
+				smtConfig.defaultPrinter.toString(cmd.sortSymbol()), cmd.sortSymbol().pos());
+			else {
+				checkSatStatus = null;
+				return smtConfig.responseFactory.success();
+			}
+		} else {
+			return list.get(0);
+		}
+	}
+
+	/** See {@link Solver_test#pop(int)}: extracted the same way as {@link
+	 *  #declareFunLocal}, so {@link #pop} can still layer BG_POP handling on top. */
+	private IResponse popLocal(int number) {
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#pop " + number);
+		if (logicSet == null) {
+			return smtConfig.responseFactory.error("The logic must be set before a pop command is issued");
+		}
+		if (number < 0) throw new SMT.InternalException("Internal bug: A pop command called with a negative argument: " + number);
+		if (assertionSetStack.size() <= number) {
+			return smtConfig.responseFactory.error("The argument to a pop command is too large: " + number + " vs. a maximum of " + (assertionSetStack.size()-1));
+		} else {
+			int n = number;
+			while (--n >= 0) {
+				List<IExpr> popped = assertionSetStack.remove(0);
+				try {
+					for (IExpr e: popped) TypeChecker.clearSorts(e);
+				} catch (IVisitor.VisitorException e) {
+					// ignore - clearing sorts is best-effort hygiene, not correctness-critical
+				}
+				symTable.pop();
+			}
+		}
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("###stack size " + assertionSetStack.size());
+		checkSatStatus = null;
+		return smtConfig.responseFactory.success();
+	}
+
+	/** See {@link Solver_test#push(int)}. */
+	private IResponse pushLocal(int number) {
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#push " + number);
+		if (logicSet == null) {
+			return smtConfig.responseFactory.error("The logic must be set before a push command is issued");
+		}
+		if (number < 0) throw new SMT.InternalException("Internal bug: A push command called with a negative argument: " + number);
+		int n = number;
+		while (--n >= 0) {
+			assertionSetStack.add(0,new LinkedList<IExpr>());
+			symTable.push();
+		}
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("###stack size " + assertionSetStack.size());
+		checkSatStatus = null;
+		return smtConfig.responseFactory.success();
+	}
+
+	/** See {@link Solver_test#set_logic(String,IPos)}. */
+	private IResponse setLogicLocal(String logicName, /*@Nullable*/ IPos pos) {
+		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#set-logic " + logicName);
+		if (logicSet != null) {
+			if (!smtConfig.relax) return smtConfig.responseFactory.error("Logic is already set");
+			symTable.clear(false);
+			assertionSetStack.clear();
+			assertionSetStack.add(0,new LinkedList<IExpr>());
+			checkSatStatus = null;
+		}
+		IResponse res = smtConfig.utils.loadLogic(logicName,symTable,pos);
+		if (res != null) return res;
+		logicSet = logicName;
+		return smtConfig.responseFactory.success();
+	}
+
+	/** See {@link Solver_test#set_option(IKeyword,IAttributeValue)}. */
+	private IResponse setOptionLocal(IKeyword key, IAttributeValue value) {
+		String option = key.value();
+		if (Utils.PRINT_SUCCESS.equals(option)) {
+			if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
+				return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'", value.pos());
+			} else {
+				((org.smtlib.impl.Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
+			}
+		}
+		if (logicSet != null && (Utils.GLOBAL_DECLARATIONS.equals(option)||Utils.INTERACTIVE_MODE.equals(option)||Utils.PRODUCE_ASSERTIONS.equals(option))) {
+			return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
+		}
+		if (Utils.VERBOSITY.equals(option)) {
+			IAttributeValue v = options.get(option);
+			smtConfig.verbose = (v instanceof INumeral) ? ((INumeral)v).intValue() : 0;
+		} else if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
+			String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : Utils.STDERR;
+			try {
+				smtConfig.log.setDiagnosticOutputChannel(name);
+			} catch (java.io.IOException e) {
+				return smtConfig.responseFactory.error("Failed to open or write to the diagnostic output " + e.getMessage(),value.pos());
+			}
+		} else if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
+			String name = (value instanceof IStringLiteral)?((IStringLiteral)value).value() : Utils.STDOUT;
+			try {
+				smtConfig.log.setRegularOutputChannel(name);
+			} catch (java.io.IOException e) {
+				return smtConfig.responseFactory.error("Failed to open or write to the regular output " + e.getMessage(),value.pos());
+			}
+		}
+		if (Utils.INTERACTIVE_MODE.equals(option) && !smtConfig.isVersion(SMTLIB.V20)) option = Utils.PRODUCE_ASSERTIONS;
+		options.put(option,value);
+		return smtConfig.responseFactory.success();
+	}
+
+	/** See {@link Solver_test#set_info(IKeyword,IAttributeValue)}. */
+	@Override
+	public IResponse set_info(IKeyword key, IAttributeValue value) {
+		if (Utils.infoKeywords.contains(key)) {
+			return smtConfig.responseFactory.error("Setting the value of a pre-defined keyword is not permitted: "+
+					smtConfig.defaultPrinter.toString(key),key.pos());
+		}
+		options.put(key.value(),value);
+		return smtConfig.responseFactory.success();
+	}
+
 	public /*@Nullable*/String translate(IExpr expr) throws IVisitor.VisitorException {
 		Translator t = new Translator(smtConfig);
 		String r = expr.accept(t);
