@@ -1,2 +1,2 @@
 success
-(error "at line 2, column 25: syntax error: <symbol> expected")
+(error "at line 3, column 25: syntax error: <symbol> expected")

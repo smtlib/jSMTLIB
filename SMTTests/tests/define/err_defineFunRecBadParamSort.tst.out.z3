@@ -1,2 +1,2 @@
 success
-(error "line 2 column 22: invalid sorted variables: unknown sort 'BadSort'")
+(error "line 5 column 22: invalid sorted variables: unknown sort 'BadSort'")

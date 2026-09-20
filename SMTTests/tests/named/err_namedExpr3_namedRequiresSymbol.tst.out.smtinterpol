@@ -1,2 +1,2 @@
 success
-(error "<stdin>:2:23: Syntax Error")
+(error "<stdin>:3:23: Syntax Error")

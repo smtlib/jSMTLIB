@@ -1,4 +1,4 @@
 success
 success
 success
-(error "<stdin>:4:26: Unsupported internal sort: (_ FloatingPoint 8 24)")
+(error "<stdin>:5:26: Unsupported internal sort: (_ FloatingPoint 8 24)")

@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "<stdin>:5:13: Free functions are not allowed in this logic!")
+(error "<stdin>:6:13: Free functions are not allowed in this logic!")

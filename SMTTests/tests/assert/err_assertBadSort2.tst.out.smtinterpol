@@ -1,2 +1,2 @@
 success
-(error "<stdin>:2:9: Asserted terms must have sort Bool")
+(error "<stdin>:3:9: Asserted terms must have sort Bool")

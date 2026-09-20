@@ -3,4 +3,4 @@ success
 success
 success
 success
-(error "<stdin>:6:8: Unknown function symbol y.")
+(error "<stdin>:7:8: Unknown function symbol y.")

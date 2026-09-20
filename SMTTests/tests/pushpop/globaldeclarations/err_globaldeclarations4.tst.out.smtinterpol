@@ -2,5 +2,5 @@ success
 success
 success
 success
-(error "<stdin>:5:13: Function a is already defined.")
+(error "<stdin>:6:13: Function a is already defined.")
 sat

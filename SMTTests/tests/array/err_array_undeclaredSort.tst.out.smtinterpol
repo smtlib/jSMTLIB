@@ -1,4 +1,4 @@
 success
 success
 success
-(error "<stdin>:4:19: Undeclared sort (Array 2)")
+(error "<stdin>:5:19: Undeclared sort (Array 2)")

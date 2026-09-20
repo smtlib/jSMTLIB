@@ -1,4 +1,4 @@
 success
 success
 success
-(error "line 4 column 39: logic does not support quantifiers")
+(error "line 6 column 40: logic does not support quantifiers")

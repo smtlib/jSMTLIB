@@ -1,3 +1,3 @@
 success
 success
-(error "line 3 column 40: invalid zero_extend application")
+(error "line 4 column 40: invalid zero_extend application")

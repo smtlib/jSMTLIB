@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "<stdin>:5:9: Builtin function bvult does not support argument sorts ()")
+(error "<stdin>:6:9: Builtin function bvult does not support argument sorts ()")

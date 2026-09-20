@@ -3,8 +3,8 @@ success
 success
 success
 success
-(error "<stdin>:6:12: Unknown function symbol @.")
-(error "<stdin>:7:9: Unknown function symbol @.")
+(error "<stdin>:10:12: Unknown function symbol @.")
+(error "<stdin>:11:9: Unknown function symbol @.")
 sat
-(error "<stdin>:9:17: Unknown function symbol @.")
+(error "<stdin>:13:17: Unknown function symbol @.")
 sat

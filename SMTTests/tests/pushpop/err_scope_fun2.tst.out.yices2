@@ -3,4 +3,4 @@ success
 success
 success
 success
-(error "at line 6, column 9: undefined term: y")
+(error "at line 7, column 9: undefined term: y")

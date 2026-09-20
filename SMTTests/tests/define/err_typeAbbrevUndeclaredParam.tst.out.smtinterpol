@@ -3,4 +3,4 @@ success
 success
 success
 success
-(error "<stdin>:6:22: Undeclared sort (A 0)")
+(error "<stdin>:8:22: Undeclared sort (A 0)")

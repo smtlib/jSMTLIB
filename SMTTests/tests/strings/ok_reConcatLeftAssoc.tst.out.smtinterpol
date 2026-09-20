@@ -1,5 +1,5 @@
 success
-(error "<stdin>:2:81: Unsupported internal sort: String")
+(error "<stdin>:5:81: Unsupported internal sort: String")
 sat
-(error "<stdin>:4:81: Unsupported internal sort: String")
+(error "<stdin>:7:81: Unsupported internal sort: String")
 sat
