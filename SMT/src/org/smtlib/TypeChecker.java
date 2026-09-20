@@ -38,6 +38,15 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	
 	private ISymbol isClosed = null;
 
+	/** Lazily-built, reused across every IDecimal/IStringLiteral this instance visits --
+	 *  see {@link #visit(IDecimal)}/{@link #visit(IStringLiteral)}. A fresh TypeChecker
+	 *  instance is created per type-check call, so this only helps within a single
+	 *  expression tree (e.g. multiple numeric literals in one arithmetic expression), not
+	 *  across separate calls -- still a real, common case, and cheaper than reconstructing
+	 *  the same symbol from scratch for every literal node visited. */
+	private ISymbol decimalSortSymbol;
+	private ISymbol stringSortSymbol;
+
 	/** Constructs a formula typechecker from the current symbol table; sorts computed while
 	 * checking are recorded directly on each IExpr node via IExpr.setSort(). */
 	public TypeChecker(SymbolTable symTable) {
@@ -1047,7 +1056,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 
 	@Override
 	public /*@Nullable*/ISort visit(IDecimal e) {
-		IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("DECIMAL")); // FIXME - don't recreate this every time it is used
+		if (decimalSortSymbol == null) decimalSortSymbol = smtConfig.exprFactory.symbol("DECIMAL");
+		IFcnSort sort = symTable.lookup(0,decimalSortSymbol);
 		if (sort == null) result.add(smtConfig.responseFactory.error("No sort specified for decimal literal",e.pos()));
 		return save(e,sort == null ? null : sort.resultSort());
 	}
@@ -1073,7 +1083,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 
 	@Override
 	public /*@Nullable*/ ISort visit(IStringLiteral e) {
-		IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("STRING")); // FIXME - don't recreate this everytime it is used
+		if (stringSortSymbol == null) stringSortSymbol = smtConfig.exprFactory.symbol("STRING");
+		IFcnSort sort = symTable.lookup(0,stringSortSymbol);
 		if (sort == null) result.add(smtConfig.responseFactory.error("No sort specified for string-literal",e.pos()));
 		return save(e,sort == null ? null : sort.resultSort());
 	}
