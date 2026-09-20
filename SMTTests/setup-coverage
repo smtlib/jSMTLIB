@@ -19,5 +19,26 @@ export COV_AGENT=
 
 if [ -n "${COV++}" ]; then
     mkdir -p "$TEST/cov"
-    export COV_AGENT="-javaagent:$TEST/jacoco/lib/jacocoagent.jar=destfile=$TEST/cov/$1.exec"
+    AGENT_JAR="$TEST/jacoco/lib/jacocoagent.jar"
+    DEST_FILE="$TEST/cov/$1.exec"
+    ## -javaagent: is parsed by the native JVM launcher itself, not by bash, so it needs a
+    ## Windows-form path there -- same reason ./setup cygpath-converts SMT_JAR/COV_CLASSES.
+    ## Can't reuse ./setup's own $PLATFORM for this, though: runjunits deliberately sources
+    ## setup-coverage BEFORE setup (so COV_AGENT already has a value when setup builds
+    ## SMT_CMD/SMT_DRIVER), which means $PLATFORM isn't set yet at this point -- hence the
+    ## separate uname check here, duplicating setup's own platform-detection idiom instead
+    ## of depending on its output order. Confirmed via CI (run 35530298789) that skipping
+    ## this conversion doesn't error, doesn't hang, and doesn't fail any test -- the agent
+    ## just silently never attaches, so cov/junits.exec never gets written at all, only
+    ## caught in a rerun by cov-report's zero-length-file failure afterward, not by
+    ## anything at the point coverage was actually being collected. destfile= needs the
+    ## same conversion as the leading jar path -- it's a raw path string parsed by the
+    ## agent itself at runtime, not something the JVM launcher resolves either way.
+    case "$(uname -s | tr '[:upper:]' '[:lower:]')" in
+        mingw*|msys*|cygwin*)
+            AGENT_JAR=$(cygpath -w "$AGENT_JAR")
+            DEST_FILE=$(cygpath -w "$DEST_FILE")
+            ;;
+    esac
+    export COV_AGENT="-javaagent:${AGENT_JAR}=destfile=${DEST_FILE}"
 fi
