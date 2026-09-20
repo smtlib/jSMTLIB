@@ -196,14 +196,10 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended Z3 forcibly");
 	}
 
-	@Override 
-	public void comment(String comment) {
-		try {
-			solverProcess.sendNoListen(comment);
-		} catch (IOException e) {
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Failed to send comment to Z3: " + e);
-		}
-	}
+	// comment() is inherited unchanged from AbstractSolver, which now forwards a standalone
+	// comment to any solver -- see AbstractSolver.comment() (issue #96/#97's line-counting
+	// investigation established comments must reach every adapter uniformly, not just this
+	// one, for line-number rewriting to correctly track the user's real script).
 
 	/** Translates an S-expression into Z3 syntax */
 	protected String translate(INode sexpr) throws IVisitor.VisitorException {
@@ -431,6 +427,13 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		}
 		logicSet = true;
 		if (logicName.equals("ALL")) {
+			// z3-4.3 has no "ALL" logic to declare, so this line is never actually sent --
+			// unlike every other logic name, which the else-branch below sends as a real,
+			// counted line. That's one fewer real script line reflected in what z3 counts, so
+			// linesOffset must be decremented to compensate (see issue #97): otherwise every
+			// line-numbered error later in the script under-reports by one relative to the
+			// user's actual source.
+			linesOffset--;
 			return smtConfig.responseFactory.success();
 		} else try {
 			return parseResponse(solverProcess.sendAndListen("(set-logic ",logicName,")\n"));
