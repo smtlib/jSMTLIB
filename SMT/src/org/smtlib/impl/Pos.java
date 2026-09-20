@@ -208,7 +208,7 @@ public class Pos implements IPos {
 				if (c == '\n') line++;
 				else if (c == '\r') {
 					line++;
-					if (charAt(i+1) == '\n') i++;
+					if (i+1 < pos && charAt(i+1) == '\n') i++;
 				}
 			}
 			return line;
