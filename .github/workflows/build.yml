@@ -19,6 +19,10 @@ on:
         description: 'Override SMT_TEST_SOLVERS (space-separated, e.g. "test cvc5-1.3.2 z3-4.16.0"). Blank = full default list.'
         required: false
         default: ''
+      coverage:
+        description: 'Run with JaCoCo coverage instrumentation and upload a per-leg coverage artifact. Off by default -- see jsmtlib-test/action.yml for why.'
+        required: false
+        default: 'false'
   push:
     branches: [ master, dev ]
 
@@ -178,6 +182,11 @@ jobs:
         # e.g. for a targeted single-solver debug run.
         solvers: ${{ inputs.solvers }}
         label: ${{ matrix.label }}
+        # Same blank-for-push-triggered-runs reasoning as 'solvers' above: blank compares
+        # unequal to the literal 'true' jsmtlib-test's own coverage steps check for, so a
+        # push-triggered run (or an unfilled workflow_dispatch 'coverage' input) correctly
+        # defaults to coverage off without needing its own separate override-guard step.
+        coverage: ${{ inputs.coverage }}
 
     - name: Fail job if tests failed
       if: steps.test.outcome == 'failure'

@@ -17,6 +17,20 @@ inputs:
     description: 'Human-readable identifier for this platform leg (e.g. "macos-arm64"), used to keep failure-artifact names unique across the test matrix. Falls back to runner.os-runner.arch if blank.'
     required: false
     default: ''
+  coverage:
+    description: >-
+      Set to 'true' to run the suite with JaCoCo instrumentation and upload a
+      per-leg coverage artifact. Default 'false': all local coverage testing so
+      far has only ever run on macOS, and turning this on for every matrix leg
+      (CI run 35531790532) showed macos-15-x86_64 specifically taking over 35
+      minutes under instrumentation (every other leg: 9-21 minutes) -- root
+      cause not yet pinned down (see issue #98). Off by default until
+      that's understood, but every other piece (cov-clean/cov-test/cov-report,
+      the per-leg artifact upload, the Windows -javaagent path fix) is already
+      in place and working on every leg except that one, so flipping this back
+      to 'true' is a one-line change whenever it's worth revisiting.
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -130,6 +144,12 @@ runs:
     ## jSMTLIB waited forever, indistinguishable from "just slow" (see Solver_z3_recent.java
     ## and the jsmtlib_ci_cross_platform_verification history for the full writeup). The
     ## job-level timeout-minutes in build.yml remains as a safety net regardless.
+    - name: Run jSMTLIB tests
+      if: inputs.coverage != 'true'
+      shell: bash
+      run: |
+        make -C jSMTLIB/SMTTests tests
+
     ## Runs the exact same suite as `make tests` (cov-test's recipe is the identical
     ## `bash ./runjunits` call, just with COV set so the JaCoCo agent instruments both the
     ## main JVM and every spawned solver process -- see SMTTests/Makefile) and then builds
@@ -140,6 +160,7 @@ runs:
     ## can be captured before continuing, matching the "Smoke test solver binaries" step's
     ## own reasoning above for why a bare $(...) assignment can't be left under `set -e`.
     - name: Run jSMTLIB tests (with coverage)
+      if: inputs.coverage == 'true'
       shell: bash
       run: |
         make -C jSMTLIB/SMTTests cov-clean
@@ -189,8 +210,11 @@ runs:
     ## availability, etc.) -- a single merged report would hide that platform-specific
     ## signal. if-no-files-found is 'warn', not 'error', for the same reason as above: a
     ## failure before any test ran (e.g. a compile error) can leave cov/ empty or missing.
+    ## Gated on inputs.coverage (not just always()): with coverage off, cov/ never gets
+    ## created at all, so this would otherwise just be a guaranteed "no files found"
+    ## warning on every single run.
     - name: Upload coverage artifact
-      if: always()
+      if: always() && inputs.coverage == 'true'
       uses: actions/upload-artifact@v7
       with:
         name: coverage-${{ inputs.label != '' && inputs.label || format('{0}-{1}', runner.os, runner.arch) }}
