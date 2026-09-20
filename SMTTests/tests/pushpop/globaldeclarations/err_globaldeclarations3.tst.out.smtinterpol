@@ -3,4 +3,4 @@ success
 success
 success
 false
-(error "<stdin>:6:8: No logic set!")
+(error "<stdin>:7:8: No logic set!")

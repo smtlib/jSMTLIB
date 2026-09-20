@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "<stdin>:5:14: Free sorts are not allowed in this logic")
+(error "<stdin>:6:14: Free sorts are not allowed in this logic")

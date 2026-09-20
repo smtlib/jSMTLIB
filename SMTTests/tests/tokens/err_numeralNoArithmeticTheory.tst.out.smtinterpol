@@ -1,2 +1,2 @@
 success
-(error "<stdin>:2:11: Logic does not allow numerals")
+(error "<stdin>:7:11: Logic does not allow numerals")

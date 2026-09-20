@@ -1,4 +1,4 @@
 success
 success
 success
-(error "<stdin>:4:33: Quantifier in quantifier-free logic")
+(error "<stdin>:5:33: Quantifier in quantifier-free logic")

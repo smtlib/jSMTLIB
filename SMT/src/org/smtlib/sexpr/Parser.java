@@ -127,6 +127,19 @@ public class Parser extends Lexer implements IParser {
 	
 	/** This field is used to communicate the beginning LP while parsing commands */
 	public /*@Nullable*/ ILexToken savedlp;
+
+	/** The command most recently returned by parseCommand(), or null once its own
+	 *  same-line trailing text (if any) has already been attached (see the top of
+	 *  parseCommand()'s main loop) or it was itself a C_comment/null (neither of which can
+	 *  have same-line trailing text of their own attached to them). Deliberately attached
+	 *  retroactively, on the NEXT call's own pre-existing isEOD() lookahead, rather than by
+	 *  forcing an extra lookahead right when this command finishes parsing -- forcing it
+	 *  early was tried first and reverted, because it makes the underlying reader look for
+	 *  more input earlier than before, which shifted interactive-mode prompt timing. This
+	 *  field is safe to set after the fact because trailingText is purely descriptive
+	 *  metadata (used only if something later prints this command back out), never
+	 *  consulted during execution. */
+	private Command lastReturnedCommand;
 	
 	/** This field is used only to communicate the position of the name of a command to the command creator
 	 * (instead of using method arguments).
@@ -163,6 +176,21 @@ public class Parser extends Lexer implements IParser {
 					// whitespace at all precedes the next token -- not only when a real
 					// comment does. Only genuinely non-blank content (i.e. an actual comment)
 					// should become a C_comment; plain whitespace must not.
+					//
+					// The same isEOD() call also populates sameLineTrailingText, if the
+					// whitespace/comment run it just scanned started on the same physical line
+					// as whatever token preceded it (see Lexer.getToken(Matcher)) -- i.e. it
+					// shares a line with the command this Parser most recently returned, not
+					// with whatever is parsed next. Attach it there now, at exactly the point
+					// this lookahead already happened before this feature existed, so that
+					// nothing about read/prompt timing changes (see lastReturnedCommand's own
+					// doc comment for why this isn't done eagerly right after that command
+					// finishes parsing instead).
+					if (sameLineTrailingText != null) {
+						if (lastReturnedCommand != null) lastReturnedCommand.setTrailingText(sameLineTrailingText);
+						sameLineTrailingText = null;
+					}
+					lastReturnedCommand = null;
 					if (prefixCommentText != null && !prefixCommentText.trim().isEmpty()) {
 						String text = prefixCommentText;
 						int start = prefixCommentStart, end = prefixCommentEnd;
@@ -251,6 +279,16 @@ public class Parser extends Lexer implements IParser {
 					}
 					if (command != null) {
 						setPos(command,pos(savedlp.pos(),rp.pos()));
+						// Remember this command so that the NEXT parseCommand() call's own
+						// (already-existing, unmoved) isEOD() lookahead -- see the top of this
+						// loop -- can retroactively attach any sameLineTrailingText it finds to
+						// it. Forcing that lookahead early, right here, was tried first and
+						// reverted: it forces the underlying reader to look for more input
+						// before it otherwise would (e.g. before this command's own response is
+						// even processed), which shifted interactive-mode prompt timing.
+						// Attaching it later, at the same point the lookahead already
+						// naturally happens, changes nothing about when anything is read.
+						lastReturnedCommand = command;
 					}
 				} catch (IParser.AbortInputException e) {
 					smtConfig.log.logOut("Input aborted");

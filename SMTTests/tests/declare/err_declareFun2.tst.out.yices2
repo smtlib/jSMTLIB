@@ -1,4 +1,4 @@
 success
 success
 success
-(error "at line 4, column 14: can't redefine term: x")
+(error "at line 5, column 14: can't redefine term: x")

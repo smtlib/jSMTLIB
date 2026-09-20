@@ -1,4 +1,4 @@
 success
 success
 success
-(error "<stdin>:4:14: Builtin function bvshl does not support argument sorts ()")
+(error "<stdin>:5:14: Builtin function bvshl does not support argument sorts ()")

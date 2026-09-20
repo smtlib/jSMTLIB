@@ -1,5 +1,5 @@
 (error "logic AUFNIRA is not supported")
 (error "no logic set")
 (error "no logic set")
-(error "at line 4, column 19: undefined sort: X")
-(error "Error writing to solver: (assert (forall ((r Bool) (s X) ) (and s t))) java.io.IOException: Solver process has already exited")
+(error "at line 5, column 19: undefined sort: X")
+(error "Error writing to solver: (assert (and (let ((r true)) (forall ((s X) ) (and s t))) (let ((r false)) (forall ((s X) ) (and s t))))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

@@ -4,4 +4,4 @@ success
 success
 success
 success
-(error "line 7 column 24: select requires as many arguments as the size of the domain")
+(error "line 8 column 24: select requires as many arguments as the size of the domain")

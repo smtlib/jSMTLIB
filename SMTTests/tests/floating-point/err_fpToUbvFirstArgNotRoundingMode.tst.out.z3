@@ -1,4 +1,4 @@
 success
 success
 success
-(error "line 4 column 38: sort mismatch, expected first argument of RoundingMode sort")
+(error "line 5 column 38: sort mismatch, expected first argument of RoundingMode sort")

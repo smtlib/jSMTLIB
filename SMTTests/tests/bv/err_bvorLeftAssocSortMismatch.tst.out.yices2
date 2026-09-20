@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "at line 5, column 24: bitvectors have incompatible sizes")
+(error "at line 7, column 24: bitvectors have incompatible sizes")

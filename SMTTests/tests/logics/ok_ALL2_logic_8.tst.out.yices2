@@ -3,9 +3,9 @@ success
 success
 success
 success
-(error "at line 6, column 15: undefined term: ubv_to_int")
-(error "Error writing to solver: (declare-fun nn () Int) java.io.IOException: Stream closed")
-(error "Error writing to solver: (assert (= nn (ubv_to_int bb))) java.io.IOException: Stream closed")
-(error "Error writing to solver: (assert (bvult b #xf0)) java.io.IOException: Stream closed")
-(error "Error writing to solver: (assert (not (and (>= nn n) (>= (+ n 15) nn) (= (mod nn 16) 0)))) java.io.IOException: Stream closed")
-(error "Error writing to solver: (check-sat) java.io.IOException: Stream closed")
+(error "at line 8, column 15: undefined term: ubv_to_int")
+(error "Error writing to solver: (declare-fun nn () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= nn (ubv_to_int bb))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (bvult b #xf0)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (not (and (>= nn n) (>= (+ n 15) nn) (= (mod nn 16) 0)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

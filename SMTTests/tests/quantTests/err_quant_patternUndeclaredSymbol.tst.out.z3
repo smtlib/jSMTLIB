@@ -1,3 +1,3 @@
 success
 success
-(error "line 3 column 100: unknown constant yy")
+(error "line 4 column 100: unknown constant yy")

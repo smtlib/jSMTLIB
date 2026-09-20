@@ -1,2 +1,2 @@
 success
-(error "line 2 column 15: logic does not support integers")
+(error "line 7 column 15: logic does not support integers")

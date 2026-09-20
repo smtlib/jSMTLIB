@@ -1,3 +1,3 @@
 success
 success
-(error "line 3 column 31: unknown constant int_to_bv ((_ BitVec 8)) ")
+(error "line 4 column 31: unknown constant int_to_bv ((_ BitVec 8)) ")

@@ -1,2 +1,2 @@
 success
-(error "<stdin>:2:15: Logic does not allow strings")
+(error "<stdin>:3:15: Logic does not allow strings")

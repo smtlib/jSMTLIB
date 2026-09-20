@@ -1,4 +1,4 @@
 success
 success
 success
-(error "<stdin>:4:37: Unknown function symbol undeclaredSymbol.")
+(error "<stdin>:6:37: Unknown function symbol undeclaredSymbol.")

@@ -237,8 +237,21 @@ public class AbstractSolver implements ISolver {
 		return sendCommand(smtConfig.commandFactory.echo(arg));
 	}
 
+	/** Forwards a standalone comment (its own C_comment pseudo-command -- see issue #42) to
+	 *  the real solver process, uniformly for every solver adapter: a comment is legal
+	 *  SMT-LIB input (any conforming solver must silently ignore it), and forwarding it keeps
+	 *  the physical line count of what's actually sent matching the user's own script one
+	 *  real line for one sent line -- which line-number rewriting (see e.g.
+	 *  Solver_z3_4_3/Solver_z3_recent's linesOffset) depends on. sendNoListen is used, not
+	 *  sendAndListen: a comment has no response to wait for. A trailing, same-line comment
+	 *  never reaches here at all -- it's captured as Command.trailingText instead (see
+	 *  Parser.parseCommand()) and is never sent to a solver. */
 	@Override public void comment(String comment) {
-		// No action
+		try {
+			solverProcess.sendNoListen(comment);
+		} catch (IOException e) {
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Failed to send comment to " + smtConfig.solvername + ": " + e);
+		}
 	}
 
 	/** @see org.smtlib.ISolver#set_logic(String,IPos) */

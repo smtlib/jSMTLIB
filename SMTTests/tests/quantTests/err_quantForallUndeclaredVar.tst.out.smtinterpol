@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "<stdin>:5:41: Unknown function symbol t.")
+(error "<stdin>:6:41: Unknown function symbol t.")

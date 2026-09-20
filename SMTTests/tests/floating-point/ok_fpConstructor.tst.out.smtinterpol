@@ -1,5 +1,5 @@
 success
 success
-(error "<stdin>:3:59: Unsupported internal sort: (_ FloatingPoint 8 24)")
-(error "<stdin>:4:28: Unsupported internal sort: (_ FloatingPoint 8 24)")
+(error "<stdin>:5:59: Unsupported internal sort: (_ FloatingPoint 8 24)")
+(error "<stdin>:6:28: Unsupported internal sort: (_ FloatingPoint 8 24)")
 sat

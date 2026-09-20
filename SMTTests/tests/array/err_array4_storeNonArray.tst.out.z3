@@ -5,4 +5,4 @@ success
 success
 success
 success
-(error "line 8 column 25: unknown constant store (AA I V) ")
+(error "line 9 column 25: unknown constant store (AA I V) ")

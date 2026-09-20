@@ -1,2 +1,2 @@
 (error "logic AUFLIA is not supported")
-(error "at line 2, column 17: syntax error: define-funs-rec is not a command")
+(error "at line 3, column 17: syntax error: define-funs-rec is not a command")
