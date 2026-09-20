@@ -1032,7 +1032,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		} else {
 			Variable v = currentScope.get(e);
 			if (v != null) {
-				if (isClosed == null && v.expression == null) isClosed = e; // FIXME - need to check if v.expression is closed or not
+				if (isClosed == null && !v.closed) isClosed = e;
 				return save(e,v.sort);
 			}
 			if ((sort=symTable.lookup(0,e))==null) {
@@ -1239,7 +1239,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			}
 			ISort res = decl.sort().accept(this);
 			if (res == null) errors = true;
-			else currentScope.put(decl.parameter(),new Variable(decl.parameter(),decl.sort(),null));
+			else currentScope.put(decl.parameter(),new Variable(decl.parameter(),decl.sort(),null,false));
 		}
 		try {
 			if (errors) return null;
@@ -1264,7 +1264,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			}
 			ISort res = decl.sort().accept(this);
 			if (res == null) errors = true;
-			else currentScope.put(decl.parameter(),new Variable(decl.parameter(),decl.sort(),null));
+			else currentScope.put(decl.parameter(),new Variable(decl.parameter(),decl.sort(),null,false));
 		}
 		try {
 			if (errors) return null;
@@ -1290,10 +1290,23 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 					anyErrors = true;
 				}
 				IExpr expr = decl.expr();
+				// Whether referencing this let-bound variable is itself closed depends on
+				// whether ITS OWN defining expression is closed -- not just on the mere
+				// existence of that expression (a stale check this used to make: a
+				// non-null expression was treated as automatically closed regardless of
+				// its content, missing e.g. (forall ((q Bool)) (let ((r q)) ...)), where
+				// r's value q is itself an outer free variable). Save/restore isClosed
+				// around checking expr the same way visit(IAttributedExpr) does, so this
+				// nested check doesn't consume or duplicate an outer :named check's own
+				// tracking.
+				ISymbol savedIsClosed = isClosed;
+				isClosed = null;
 				ISort s = expr.accept(this);
+				boolean exprIsClosed = isClosed == null;
+				isClosed = isClosed == null ? savedIsClosed : isClosed;
 				if (s == null) anyErrors = true;
 				else {
-					newdecls.put(decl.parameter(),new Variable(decl.parameter(),s,expr));
+					newdecls.put(decl.parameter(),new Variable(decl.parameter(),s,expr,exprIsClosed));
 				}
 			}
 			if (anyErrors) return null;
@@ -1356,7 +1369,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 						IFcnSort ctorSort = symTable.lookup(0, pat.constructor());
 						if (ctorSort == null || !scrutineeSort.equals(ctorSort.resultSort())) {
 							// Not a nullary constructor of this sort — treat as variable binding
-							currentScope.put(pat.constructor(), new Variable(pat.constructor(), scrutineeSort, null));
+							currentScope.put(pat.constructor(), new Variable(pat.constructor(), scrutineeSort, null, false));
 							hasVariableOrWildcard = true;
 						} else {
 							coveredCtors.add(pat.constructor().value());
@@ -1389,7 +1402,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 									error("Duplicate variable in match pattern: " + params.get(i).value(), params.get(i).pos());
 									anyErrors = true;
 								} else {
-									currentScope.put(params.get(i), new Variable(params.get(i), argSorts[i], null));
+									currentScope.put(params.get(i), new Variable(params.get(i), argSorts[i], null, false));
 								}
 							}
 						}
@@ -1819,10 +1832,19 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		public ISymbol symbol;
 		public ISort sort;
 		public /*@Nullable*/IExpr expression;
-		public Variable(ISymbol sym, ISort sort, IExpr expr) {
+		/** Whether a reference to this variable is itself closed (no free/bound variable
+		 *  reachable through it) -- false for a quantifier- or match-pattern-bound
+		 *  variable (which IS the free variable), true for a let-bound variable whose own
+		 *  defining expression was itself closed when the let was checked, false for one
+		 *  that wasn't (e.g. {@code (forall ((q Bool)) (let ((r q)) ...))}: referencing
+		 *  {@code r} is not closed, because {@code r}'s value is the outer free {@code
+		 *  q}). See visit(ISymbol)/visit(ILet). */
+		public boolean closed;
+		public Variable(ISymbol sym, ISort sort, IExpr expr, boolean closed) {
 			this.symbol = sym;
 			this.sort = sort;
 			this.expression = expr;
+			this.closed = closed;
 		}
 	}
 
