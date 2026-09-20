@@ -48,11 +48,11 @@ public class LRA extends Logic {
 					IQualifiedIdentifier fcn = e.head();
 					if (Utils.MULT.equals(fcn)) {
 						if (!(isConst(e.args().get(0)) || isConst(e.args().get(1)))) {
-								throw new IVisitor.VisitorException("The expression must be linear: ", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
+								throw restrictionError("The expression must be linear", e);
 						}
 					} else if (Utils.SLASH.equals(fcn)) {
 						if (!(isConst(e.args().get(0)) && isConst(e.args().get(1)))) {
-							throw new IVisitor.VisitorException("The expression must be linear: ", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
+							throw restrictionError("The expression must be linear", e);
 						}
 					} else {
 						super.visit(e); // checks all the arguments

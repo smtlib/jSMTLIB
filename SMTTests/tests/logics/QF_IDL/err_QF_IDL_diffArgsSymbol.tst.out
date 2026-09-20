@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "differences must be difference of symbols")
+(error "differences must be difference of symbols: (>= (- x 1) y)")

@@ -64,6 +64,15 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
 		if (expr == null) throw new IVisitor.VisitorException("New sorts are not allowed in this logic",id.pos());
 	}
 
+	/** Builds a VisitorException for a restriction violation (e.g. QF_IDL/QF_RDL's
+	 *  difference-logic shape, LRA's linearity check) whose message includes the offending
+	 *  expression's own printed text, not just an abstract description of the rule it
+	 *  broke -- several subclasses' checks used to throw the bare message alone, each with
+	 *  its own "// FIXME" noting the expression text was meant to be included but wasn't. */
+	protected IVisitor.VisitorException restrictionError(String message, IExpr e) {
+		return new IVisitor.VisitorException(message + ": " + smtConfig.defaultPrinter.toString(e), e.pos());
+	}
+
 	/** Creates the sort expression {@code name(params...)}, e.g. {@code sortApp("Array", intSort, intSort)}
 	 *  for {@code (Array Int Int)}. Used to build canonical sorts for structural comparison
 	 *  (via {@link ISort#equalsNoExpand}), rather than comparing printed text. */
