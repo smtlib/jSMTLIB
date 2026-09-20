@@ -130,10 +130,25 @@ runs:
     ## jSMTLIB waited forever, indistinguishable from "just slow" (see Solver_z3_recent.java
     ## and the jsmtlib_ci_cross_platform_verification history for the full writeup). The
     ## job-level timeout-minutes in build.yml remains as a safety net regardless.
-    - name: Run jSMTLIB tests
+    ## Runs the exact same suite as `make tests` (cov-test's recipe is the identical
+    ## `bash ./runjunits` call, just with COV set so the JaCoCo agent instruments both the
+    ## main JVM and every spawned solver process -- see SMTTests/Makefile) and then builds
+    ## the HTML+XML report from the collected .exec file. The test outcome (not the report
+    ## step's) is what this step ultimately exits with, so "Fail job if tests failed" below
+    ## keeps working exactly as before regardless of whether coverage reporting itself
+    ## succeeds -- errexit is turned off only around the fallible test run so its exit code
+    ## can be captured before continuing, matching the "Smoke test solver binaries" step's
+    ## own reasoning above for why a bare $(...) assignment can't be left under `set -e`.
+    - name: Run jSMTLIB tests (with coverage)
       shell: bash
       run: |
-        make -C jSMTLIB/SMTTests tests
+        make -C jSMTLIB/SMTTests cov-clean
+        set +e
+        make -C jSMTLIB/SMTTests cov-test
+        TEST_EXIT=$?
+        set -e
+        make -C jSMTLIB/SMTTests cov-report || echo "::warning::Coverage report generation failed (test exit code $TEST_EXIT is unaffected)"
+        exit $TEST_EXIT
 
     ## Captures exactly what's needed to debug a failure after the fact, without needing
     ## to reproduce it locally: the .actual files FileTests.java writes next to a golden
@@ -160,5 +175,25 @@ runs:
         path: |
           jSMTLIB/SMTTests/tests/**/*.actual
           jSMTLIB/SMTTests/junit-logs/
+        if-no-files-found: warn
+        retention-days: 14
+
+    ## Uploaded every run, not just failures (unlike the artifact above) -- coverage data
+    ## is useful whether or not the tests it came from all passed. The whole cov/ directory
+    ## goes up, not just a percentage: cov/html/ is the full per-package/per-class/per-line
+    ## drill-down report (open cov/html/index.html), cov/coverage.xml is the same data in a
+    ## machine-readable form, and cov/junits.exec is the raw JaCoCo execution data, kept in
+    ## case it's ever useful to merge coverage across runs offline. One artifact per matrix
+    ## leg (matching test-failure-* above) since each platform's run exercises a different
+    ## subset of solver-adapter code (isWindows/isMac branches, per-platform solver
+    ## availability, etc.) -- a single merged report would hide that platform-specific
+    ## signal. if-no-files-found is 'warn', not 'error', for the same reason as above: a
+    ## failure before any test ran (e.g. a compile error) can leave cov/ empty or missing.
+    - name: Upload coverage artifact
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: coverage-${{ inputs.label != '' && inputs.label || format('{0}-{1}', runner.os, runner.arch) }}
+        path: jSMTLIB/SMTTests/cov
         if-no-files-found: warn
         retention-days: 14
