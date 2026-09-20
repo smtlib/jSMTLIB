@@ -746,8 +746,7 @@ public class SMT {
 					usage();
 					return 1;
 				}
-				options.logicPath = args[i++];
-				if (options.logicPath != null && options.logicPath.trim().length()==0) options.logicPath = null;
+				options.logicPath = trimToNull(args[i++]);
 
 			} else if ("--diag".equals(s)) {
 				if (i >= args.length) {
@@ -876,11 +875,7 @@ public class SMT {
 		
 		props = readProperties();
 
-		if (options.logicPath == null) options.logicPath = props.getProperty(Utils.PROPS_LOGIC_PATH);
-		if (options.logicPath != null) {
-			options.logicPath = options.logicPath.trim();
-			if (options.logicPath.length() == 0) options.logicPath = null;
-		}
+		if (options.logicPath == null) options.logicPath = trimToNull(props.getProperty(Utils.PROPS_LOGIC_PATH));
 
 		if (options.out != null) {
 			try {
@@ -1148,7 +1143,7 @@ public class SMT {
 			usage();
 			return null;
 		} catch (InvocationTargetException e) {
-			e.printStackTrace();
+			e.printStackTrace(smtConfig.log.getDiag());
 			error("Could not invoke the constructor of " + adapterClassName + ": " + e);
 			usage();
 			return null;
@@ -1162,6 +1157,17 @@ public class SMT {
 	/** Helper function to log a command-line error */
 	protected void error(String msg) {
 		smtConfig.log.logError(smtConfig.responseFactory.error(msg));
+	}
+
+	/** Trims the given string and returns null if the result is empty, or if the argument
+	 *  itself was null -- used to normalize an optional, externally-supplied value (a
+	 *  command-line argument or a properties-file entry) to a single "absent" representation,
+	 *  rather than leaving a blank/whitespace-only string that would otherwise pass an
+	 *  {@code != null} check as if it were a real value. */
+	private static /*@Nullable*/ String trimToNull(/*@Nullable*/ String s) {
+		if (s == null) return null;
+		s = s.trim();
+		return s.isEmpty() ? null : s;
 	}
 	
 	// FIXME - combine, update, document usage() and help()
