@@ -8,6 +8,8 @@ package org.smtlib.solvers;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.smtlib.*;
 import org.smtlib.IExpr.IAttribute;
@@ -84,6 +86,11 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
 			// level, ordinary accepted commands (set-logic, declare-const, assert, ...)
 			// produce no response at all, and sendAndListen just hangs waiting for one.
 			solverProcess.sendAndListen("(set-option :print-success true)\n");
+			// This priming line has no counterpart in the user's own script, so Bitwuzla's
+			// own line count (embedded verbatim in its "<stdin>:L:C:" diagnostics -- see
+			// parseResponse()) is one ahead of the user's real line numbers from here on;
+			// linesOffset (inherited from AbstractSolver) tracks that.
+			linesOffset++;
 			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
 			return smtConfig.responseFactory.success();
 		} catch (Exception e) {
@@ -113,7 +120,7 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
 		try {
 			result = super.parseResponse(response);
 		} catch (RuntimeException e) {
-			return smtConfig.responseFactory.error("Unexpected (non-SMT-LIB) response from bitwuzla: " + response);
+			return smtConfig.responseFactory.error("Unexpected (non-SMT-LIB) response from bitwuzla: " + rewriteStdinLine(response));
 		} finally {
 			smtConfig.log.setChannels(savedOut, savedDiag);
 		}
@@ -127,9 +134,37 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
 		// loop) get a ClassCastException instead of a clean error message. Catch that
 		// shape here and manufacture a real one.
 		if (result != null && result.isError() && !(result instanceof IResponse.IError)) {
-			return smtConfig.responseFactory.error("Unexpected (non-SMT-LIB) response from bitwuzla: " + response);
+			return smtConfig.responseFactory.error("Unexpected (non-SMT-LIB) response from bitwuzla: " + rewriteStdinLine(response));
 		}
 		return result;
+	}
+
+	/** Bitwuzla's own diagnostics report line numbers relative to everything it has actually
+	 *  received on stdin, including the (set-option :print-success true) priming line from
+	 *  start() -- which has no counterpart in the user's own script. Rewrites every such line
+	 *  number (only; columns are untouched, since nothing shifts within a line) by
+	 *  linesOffset, so what's reported matches the user's own script lines, the same
+	 *  correction Solver_z3_4_3/Solver_z3_recent apply to their own differently-formatted
+	 *  diagnostics. Two distinct shapes carry a line number: the leading "{@code <stdin>:L:C:}"
+	 *  prefix on every diagnostic, and (for a redefinition error) a second, embedded "at
+	 *  line L column C" referring back to the symbol's original declaration. */
+	private static final Pattern STDIN_LINE = Pattern.compile("(<stdin>:)(\\d+)(:)");
+	private static final Pattern AT_LINE = Pattern.compile("(at line )(\\d+)( column)");
+	private String rewriteStdinLine(String response) {
+		if (linesOffset == 0) return response;
+		String result = rewriteMatches(response, STDIN_LINE);
+		result = rewriteMatches(result, AT_LINE);
+		return result;
+	}
+	private String rewriteMatches(String text, Pattern p) {
+		Matcher m = p.matcher(text);
+		StringBuilder sb = new StringBuilder();
+		while (m.find()) {
+			int n = Integer.parseInt(m.group(2));
+			m.appendReplacement(sb, Matcher.quoteReplacement(m.group(1) + (n - linesOffset) + m.group(3)));
+		}
+		m.appendTail(sb);
+		return sb.toString();
 	}
 
 	@Override

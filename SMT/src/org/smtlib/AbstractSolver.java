@@ -61,6 +61,24 @@ public class AbstractSolver implements ISolver {
 	/** The object that interacts with external processes */
 	protected SolverProcess solverProcess;
 
+	/** Running correction applied when rewriting a line number a solver reports back in its
+	 *  own error text, so what the user sees matches their own script's real line numbers
+	 *  rather than whatever the solver itself counted in what was actually sent to it (see
+	 *  issues #96/#97). Every real command line and every real standalone comment line sent
+	 *  to a solver corresponds to exactly one line of the user's own script -- no adjustment
+	 *  needed there -- but two kinds of event break that correspondence and must adjust this
+	 *  field at the point they happen: a line an adapter inserts that has no counterpart in
+	 *  the user's script (e.g. a `:print-success` priming send at start()) increments it by
+	 *  the number of lines inserted; a real script line an adapter deliberately never sends
+	 *  (e.g. Solver_z3_4_3 skipping literal `(set-logic ALL)`, which that solver has no
+	 *  equivalent for) decrements it by the number of lines skipped. A subclass that embeds
+	 *  a solver-reported line number in its own response text should rewrite it as
+	 *  {@code reportedLine - linesOffset} before returning that text -- see
+	 *  Solver_z3_4_3/Solver_z3_recent/Solver_bitwuzla's parseResponse() overrides. Solvers
+	 *  that don't insert or skip any line relative to the user's script (most adapters) never
+	 *  need to touch this at all, and it stays 0. */
+	protected int linesOffset = 0;
+
 	/** SMT configuration — set by each concrete subclass constructor. */
 	protected SMT.Configuration smtConfig;
 

@@ -49,9 +49,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	 *  See issue #51. */
 	protected String name() { return "z3-4.3"; }
 
+	// linesOffset is inherited from AbstractSolver -- see its own doc comment there.
 
-	protected int linesOffset = 0;
-	
 	/** The command-line arguments for launching the Z3 solver */
 	protected String cmds[];
 	protected String cmds_win[] = new String[]{ "", "/smt2","/in","SMTLIB2_COMPLIANT=true"};//,"/rs:42"}; 

@@ -58,13 +58,13 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
 	 *  parseResponse(), since the two must always travel together. */
 	protected final boolean needsPrintSuccessPriming = !isWindows && !isMac;
 
-	/** Incremented by the priming command in start() (never more than once -- start() is
-	 *  only ever called once per instance): every "line N" a Linux z3 process reports needs
-	 *  N-linesOffset to stay consistent with the user's own script, since z3 counts input
-	 *  lines from the very start of the stream it receives, including the priming line
-	 *  jSMTLIB adds before the user's script begins. Stays 0 (a no-op in parseResponse()) on
-	 *  every platform that doesn't need the priming command at all. */
-	protected int linesOffset = 0;
+	// linesOffset is inherited from AbstractSolver -- see its own doc comment there.
+	// Incremented by the priming command in start() (never more than once -- start() is
+	// only ever called once per instance): every "line N" a Linux z3 process reports needs
+	// N-linesOffset to stay consistent with the user's own script, since z3 counts input
+	// lines from the very start of the stream it receives, including the priming line
+	// jSMTLIB adds before the user's script begins. Stays 0 (a no-op in parseResponse()) on
+	// every platform that doesn't need the priming command at all.
 
 	private static final Pattern LINE_NUMBER = Pattern.compile("line (\\d+)");
 
