@@ -21,6 +21,11 @@ import org.smtlib.SMT;
  * Asserts the correct behavior: two {@code IAbbreviation}s with the same identifier but a
  * different defining sort expression are NOT equal, and (as a byproduct of the fix) don't
  * share a hash code either.
+ * <p>
+ * Stays a JUnit test: it asserts directly on {@code equals()}/{@code hashCode()} of an
+ * internal data structure, not on anything a script test's stdout/stderr comparison observes.
+ * <p>
+ * See <a href="https://github.com/smtlib/jSMTLIB/issues/107">issue #107</a>.
  */
 public class SortAbbreviationEqualityBugTest {
 

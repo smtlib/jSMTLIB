@@ -23,6 +23,11 @@ import org.smtlib.SMT;
  * <p>
  * Same underlying kind of bug as the already-fixed issue #23 (Configuration.clone()'s Utils
  * field), just for Log instead.
+ * <p>
+ * Stays a JUnit test: the bug only manifests when two {@code Configuration} instances exist
+ * side by side in one process and one's channel redirection is checked against the other's --
+ * every CLI invocation is its own separate process with exactly one {@code Configuration}, so
+ * there is no script-observable way to construct this scenario.
  */
 public class ConfigurationCloneSharedLogBugTest {
 

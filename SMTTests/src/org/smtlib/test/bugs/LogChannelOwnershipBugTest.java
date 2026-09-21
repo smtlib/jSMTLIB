@@ -33,6 +33,10 @@ import org.smtlib.SMT;
  * since ownership is no longer ambiguous once there is exactly one opener).
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/32">issue #32</a>.
+ * <p>
+ * Stays a JUnit test: whether a previously-opened file stream got closed is a resource-
+ * lifecycle property (probed here via {@code PrintStream.checkError()} after a redirect), not
+ * anything printed to stdout/stderr that a script test could compare against a golden file.
  */
 public class LogChannelOwnershipBugTest {
 

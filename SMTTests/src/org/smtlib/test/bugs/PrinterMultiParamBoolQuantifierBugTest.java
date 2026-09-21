@@ -38,6 +38,11 @@ import org.smtlib.SMT;
  * own no-quantifier base case).
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/63">issue #63</a>.
+ * <p>
+ * Stays a JUnit test: {@code solvers.Printer}'s output is the text sent to a real solver
+ * process -- it is never itself echoed to stdout/stderr by any CLI option, so its exact
+ * translated shape (which "and"/"or" combiners appear, how many nested quantifiers remain)
+ * isn't something a script test's golden comparison can observe directly.
  */
 public class PrinterMultiParamBoolQuantifierBugTest {
 

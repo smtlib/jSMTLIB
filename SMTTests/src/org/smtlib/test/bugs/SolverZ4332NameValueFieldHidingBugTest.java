@@ -29,6 +29,10 @@ import org.smtlib.solvers.Solver_z3_4_3_2;
  * the diagnostic output stream directly.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/51">issue #51</a>.
+ * <p>
+ * Stays a JUnit test: it needs a fake {@code SolverProcess} to isolate {@code start()}'s
+ * diagnostic naming from a real z3 process (no z3-4.3.2 binary is guaranteed to be installed,
+ * and this is purely about which class's field the JVM statically bound at compile time).
  */
 public class SolverZ4332NameValueFieldHidingBugTest {
 

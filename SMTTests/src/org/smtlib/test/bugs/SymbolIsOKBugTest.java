@@ -29,6 +29,10 @@ import org.smtlib.impl.Response;
  * against today's code, documenting the bug.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/57">issue #57</a>.
+ * <p>
+ * Stays a JUnit test: {@code isOK()}'s only real-world consumer is {@code Solver_simplify}
+ * (see {@code SolverSimplifyHygieneCleanupBugTest}'s exception note -- no Simplify binary is
+ * available here), so there is no other CLI-observable manifestation to script.
  */
 public class SymbolIsOKBugTest {
 

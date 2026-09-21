@@ -33,6 +33,10 @@ import org.smtlib.solvers.Solver_z3_4_3;
  * spawning a real z3 process.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/56">issue #56</a>.
+ * <p>
+ * Stays a JUnit test: it needs a fake {@code SolverProcess} handing back a canned error
+ * response that happens not to contain "sat" -- not reliably reproducible against a real
+ * solver process, whose actual error wording can't be scripted this precisely.
  */
 public class SolverZ343CheckSatSubstringMatchingBugTest {
 

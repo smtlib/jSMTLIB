@@ -1,0 +1,14 @@
+success
+success
+(error "The exponentiation operator ** is not allowed in the QF_NIA logic")
+success
+success
+success
+(error "The exponentiation operator ** is not allowed in the UFNIA logic")
+success
+success
+success
+success
+success
+success
+success

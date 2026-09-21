@@ -29,6 +29,11 @@ import org.smtlib.SolverProcess;
  * documenting the bug.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/24">issue #24</a>.
+ * <p>
+ * Stays a JUnit test: reproducing this requires a private method invoked via reflection with
+ * a hand-crafted, shorter-than-the-marker buffer -- the real trigger (a multi-character end
+ * marker arriving split across two small OS-level reads) is a timing-dependent chunk split not
+ * controllable from any script test.
  */
 public class SolverProcessEndsWithBugTest {
 

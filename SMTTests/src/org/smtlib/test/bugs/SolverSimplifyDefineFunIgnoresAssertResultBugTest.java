@@ -31,6 +31,11 @@ import org.smtlib.solvers.Solver_simplify;
  * Fixed by capturing {@code assertExpr()}'s result and propagating it when it isn't OK.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/55">issue #55</a>.
+ * <p>
+ * Stays a JUnit test: no Simplify binary is available in any local or CI-configured solver
+ * directory (it is excluded from the test-solver list entirely when missing, per
+ * {@code LogicTests.solversFromEnv()}), so a {@code --solver simplify} script test can't be
+ * authored and verified against the real command-line tool here.
  */
 public class SolverSimplifyDefineFunIgnoresAssertResultBugTest {
 

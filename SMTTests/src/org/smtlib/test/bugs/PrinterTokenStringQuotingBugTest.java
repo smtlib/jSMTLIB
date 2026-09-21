@@ -32,6 +32,10 @@ import org.smtlib.sexpr.Sexpr;
  * does; non-String token values are printed exactly as before ({@code String.valueOf}).
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/87">issue #87</a>.
+ * <p>
+ * Stays a JUnit test: as the class doc already notes, {@code ISexpr.IToken<T>} is not
+ * constructed anywhere in this codebase's own parsing/command paths -- it is public API
+ * surface reachable only via direct use of {@code Sexpr.Token}, never through a parsed script.
  */
 public class PrinterTokenStringQuotingBugTest {
 

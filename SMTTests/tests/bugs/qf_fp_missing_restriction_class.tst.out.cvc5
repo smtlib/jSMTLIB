@@ -1,0 +1,13 @@
+success
+(error "Parse Error: <shell>:1.21: Symbol 'Real' not declared as a type")
+(error "Error writing to solver: (reset) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (set-logic QF_FP) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun f (Real ) Real) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (reset) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (set-logic QF_FP) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-sort S 0) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (reset) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (set-logic QF_FP) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun r () Real) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun bv () (_ BitVec 8)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun f () (_ FloatingPoint 8 24)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

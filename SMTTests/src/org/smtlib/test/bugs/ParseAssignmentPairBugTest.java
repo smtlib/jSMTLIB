@@ -37,6 +37,11 @@ import org.smtlib.sexpr.Parser;
  * instead of delegating straight to {@code Boolean.valueOf}'s permissive parsing.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/73">issue #73</a>.
+ * <p>
+ * Stays a JUnit test: {@code parseAssignmentPair()} only ever parses a real solver's own
+ * get-assignment response text, and none of the solvers available for testing here misbehave
+ * this way -- reproducing a malformed token would require a fake solver process, the same
+ * kind of exception as {@link AbstractSolverGetAssertionsBugTest}.
  */
 public class ParseAssignmentPairBugTest {
 

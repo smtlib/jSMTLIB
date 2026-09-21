@@ -1,0 +1,10 @@
+success
+success
+success
+success
+success
+success
+(error "No matching declaration for function symbol <. Available signatures: (< Int Int) -> Bool :chainable; (< Real Real) -> Bool :chainable")
+success
+success
+success

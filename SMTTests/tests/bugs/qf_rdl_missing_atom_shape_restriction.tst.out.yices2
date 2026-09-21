@@ -1,0 +1,14 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "non-linear arithmetic is not allowed in logic QF_RDL")
+(error "Error writing to solver: (assert (forall ((a Real) ) (>= a 0.0))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun f (Real ) Real) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-sort S 0) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

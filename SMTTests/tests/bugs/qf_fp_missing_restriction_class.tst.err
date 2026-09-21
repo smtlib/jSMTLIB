@@ -1,0 +1,6 @@
+(assert (forall ((x Real)) (= x x)))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun f (Real) Real)
+             ^
+(declare-sort S 0)
+              ^

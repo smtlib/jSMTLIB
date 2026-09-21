@@ -26,6 +26,10 @@ import org.smtlib.Utils;
  * documenting the bug.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/27">issue #27</a>.
+ * <p>
+ * Stays a JUnit test: as the class doc already notes, this overload is dead code -- nothing
+ * in the actual command/parsing pipeline ever calls it, so no SMT-LIB script can reach it at
+ * all; it is invoked here only via reflection.
  */
 public class UtilsCatArraysBugTest {
 

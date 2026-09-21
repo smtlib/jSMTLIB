@@ -1,0 +1,11 @@
+success
+success
+(error "line 12 column 24: unknown constant undeclaredfun (Int) ")
+sat
+success
+success
+success
+success
+success
+sat
+((s "line 5 of the report"))

@@ -37,6 +37,12 @@ import org.smtlib.Utils;
  * Asserts the correct behavior: both chunks get consumed (the loop keeps reading until the
  * string literal -- and so the real parens -- actually close), and the assembled response
  * parses cleanly as a one-element assertion list.
+ * <p>
+ * Stays a JUnit test: it needs a fake {@code SolverProcess} handing back hand-split response
+ * chunks to force the exact multi-read boundary being pinned down -- not reproducible by
+ * feeding text to a real or mock solver, whose responses aren't split this way.
+ * <p>
+ * See <a href="https://github.com/smtlib/jSMTLIB/issues/105">issue #105</a>.
  */
 public class AbstractSolverGetAssertionsStringLiteralBugTest {
 

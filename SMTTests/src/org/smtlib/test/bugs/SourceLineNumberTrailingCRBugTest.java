@@ -14,6 +14,13 @@ import org.smtlib.impl.Pos;
  * <p>
  * Asserts the correct behavior: {@code lineNumber} at the end of a source ending in a bare
  * trailing {@code \r} returns the right line count without throwing.
+ * <p>
+ * Stays a JUnit test: {@code lineNumber()}'s own return value is never itself printed; the
+ * only observable effect would be an error message's line number at the exact final byte of
+ * input, and a checked-in script file can't reliably preserve a lone trailing {@code \r} with
+ * no following newline across git/platform line-ending normalization.
+ * <p>
+ * See <a href="https://github.com/smtlib/jSMTLIB/issues/108">issue #108</a>.
  */
 public class SourceLineNumberTrailingCRBugTest {
 

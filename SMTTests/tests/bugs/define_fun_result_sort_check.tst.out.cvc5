@@ -1,0 +1,8 @@
+success
+(error "invalid sort of function body '5', expected 'Bool', found 'Int'")
+success
+success
+(error "recursive function definitions require a logic with quantifiers")
+success
+success
+success

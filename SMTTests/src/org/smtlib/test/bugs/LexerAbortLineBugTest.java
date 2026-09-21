@@ -1,13 +1,10 @@
 package org.smtlib.test.bugs;
 
-import java.io.StringReader;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
-import org.smtlib.CharSequenceReader;
-import org.smtlib.IParser;
 import org.smtlib.ISource;
 import org.smtlib.SMT;
 import org.smtlib.sexpr.Lexer;
@@ -41,15 +38,26 @@ import org.smtlib.sexpr.Lexer;
  * {@code endChar} forever -- a stale/snapshotted bound never catches that case, and it would
  * otherwise loop forever rather than throw.
  * <p>
- * Three tests, one per failure mode fixed: a direct, minimal call to
+ * Originally three tests, one per failure mode fixed: a direct, minimal call to
  * {@code Lexer.abortLine()} on a fixed CharSequence; the same but on a growing
  * {@code CharSequenceReader} at real end-of-input (previously hung rather than threw); and a
  * third, stronger reproduction driven through the real reachable path --
  * {@code SMT.doParser()} with {@code --abort} and interactive mode, given a command that
- * fails to parse on the last line of input with no trailing newline -- confirming this was
- * not just a unit-level construction but an actual crash of the whole run.
+ * fails to parse on the last line of input with no trailing newline.
+ * <p>
+ * The latter two are now covered by {@code scripts/lexer_abort_line_no_trailing_newline.scr},
+ * driven through the real CLI (stdin piped with no trailing newline, {@code --abort}) -- a
+ * more faithful reproduction than the original in-process versions, since real interactive
+ * input is always backed by a growing {@code CharSequenceReader} (confirmed against
+ * {@code SMT.exec()}), never a bare, fixed {@code CharSequence}.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/72">issue #72</a>.
+ * <p>
+ * Stays a JUnit test: the one remaining failure mode (a plain, fixed {@code CharSequence},
+ * e.g. a literal Java String) is only reachable via direct {@code Lexer}/{@code ISource} API
+ * use -- every real CLI input path (files, stdin, --text) wraps its input in a growing
+ * {@code CharSequenceReader} instead (see {@code SMT.exec()}), so this specific case is never
+ * what a script test would exercise.
  */
 public class LexerAbortLineBugTest {
 
@@ -60,59 +68,6 @@ public class LexerAbortLineBugTest {
         SMT.Configuration config = new SMT.Configuration();
         // No trailing '\r'/'\n' anywhere in this input.
         ISource source = config.smtFactory.createSource("(foo", null);
-        Lexer lexer = new Lexer(config, source);
-
-        lexer.abortLine();
-    }
-
-    /** {@code doParser} is protected, so this subclass exists purely to call it from the
-     *  test package -- it adds no behavior of its own. */
-    static class TestSMT extends SMT {
-        int run(IParser p) { return doParser(p); }
-    }
-
-    /** Same bug, driven through the real, reachable end-to-end path described above (rather
-     *  than calling Lexer.abortLine() directly): --abort mode, interactive mode, a command
-     *  that fails to parse, on the last (and only) line of input with no trailing newline.
-     *  Confirmed to crash through this exact path before a fix: SMT.doParser() ->
-     *  IParser.abortLine() -> Lexer.abortLine() -> StringIndexOutOfBoundsException. */
-    @Test
-    public void unparseableFinalLineWithNoTrailingNewlineDoesNotCrashTheWholeRun() throws Exception {
-        TestSMT smt = new TestSMT();
-        smt.props = smt.readProperties();
-        smt.smtConfig.solvername = "test";
-        smt.smtConfig.abort = true;
-        smt.smtConfig.interactive = true;
-        // Captured rather than left on the default System.out/System.err: this test's own
-        // point is that "foo" being unparseable doesn't crash the run, not what its (real,
-        // expected) error diagnostic looks like -- left uncaptured, that diagnostic prints
-        // straight to the real console on every test run, indistinguishable from an actual
-        // problem to anyone watching test output.
-        java.io.PrintStream sink = new java.io.PrintStream(java.io.OutputStream.nullOutputStream());
-        smt.smtConfig.log.setChannels(sink, sink);
-        // "foo" is not a recognized command, so parseCommand() fails -- and there is no
-        // trailing newline for abortLine() to find.
-        ISource source = smt.smtConfig.smtFactory.createSource("(foo", null);
-        IParser p = smt.smtConfig.smtFactory.createParser(smt.smtConfig, source);
-
-        smt.run(p);
-    }
-
-    /** A third, distinct failure mode: for a growing/interactive source
-     *  (CharSequenceReader, as real interactive stdin input uses), csr.length() reports
-     *  Integer.MAX_VALUE until charAt() itself lazily discovers true end-of-input -- so a
-     *  fix that only adds a bound snapshotted once at the top (e.g. {@code int len =
-     *  csr.length();} checked against a stale value) does not actually stop the scan here.
-     *  Unfixed, this hangs (an unbounded loop re-reading true EOF and appending one
-     *  CharSequenceInfinite.endChar sentinel after another) rather than throwing --
-     *  the class's 1-minute Timeout rule would eventually fail this test, but a correct fix
-     *  completes essentially instantly. */
-    @Test
-    public void abortLineOnAGrowingSourceAtRealEndOfInputDoesNotHang() throws Exception {
-        SMT.Configuration config = new SMT.Configuration();
-        StringReader rdr = new StringReader("(foo"); // no trailing newline; reader hits real EOF
-        CharSequenceReader csr = new CharSequenceReader(rdr, 100, 0, 2);
-        ISource source = config.smtFactory.createSource(csr, null);
         Lexer lexer = new Lexer(config, source);
 
         lexer.abortLine();

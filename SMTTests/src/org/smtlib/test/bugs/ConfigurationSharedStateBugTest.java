@@ -15,6 +15,11 @@ import org.smtlib.SMT;
  * but still-open SMT.Configuration static-state bug (SMT.java:88-90), whose tests live in
  * {@code org.smtlib.test.TO_BE_FIXED} since it's not yet fixed.
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/23">issue #23</a> (this one).
+ * <p>
+ * Stays a JUnit test: the bug only manifests when two {@code Configuration} instances exist
+ * side by side in one process and one's settings are checked against the other's -- every CLI
+ * invocation is its own separate process with exactly one {@code Configuration}, so there is
+ * no script-observable way to construct this scenario.
  */
 public class ConfigurationSharedStateBugTest {
 

@@ -26,6 +26,11 @@ import org.smtlib.impl.SMTExpr;
  * so each token consistently reflects the Configuration that built it.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/22">issue #22</a>.
+ * <p>
+ * Stays a JUnit test: the bug only manifests when two {@code Configuration} instances exist
+ * side by side in one process and one's escaping rules are checked against the other's --
+ * every CLI invocation is its own separate process with exactly one {@code Configuration}, so
+ * there is no script-observable way to construct this scenario.
  */
 public class StaticSmtConfigStringLiteralBugTest {
 

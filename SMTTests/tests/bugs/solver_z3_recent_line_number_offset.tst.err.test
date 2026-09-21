@@ -1,0 +1,2 @@
+(assert (undeclaredfun x))
+        ^^^^^^^^^^^^^^^^^
