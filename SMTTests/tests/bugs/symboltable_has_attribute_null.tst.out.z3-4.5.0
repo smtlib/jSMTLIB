@@ -1,0 +1,6 @@
+success
+success
+success
+success
+success
+(error "line 11 column 16: Wrong number of arguments (3) passed to function (declare-fun f (Bool Bool) Bool)")

@@ -1,0 +1,10 @@
+success
+success
+(error "line 15 column 17: invalid function application for /, sort mismatch on argument at position 1, expected Real but given Int")
+success
+(error "line 17 column 14: invalid function application for <, sort mismatch on argument at position 2, expected Int but given Real")
+success
+(error "line 19 column 14: invalid function application for <, sort mismatch on argument at position 2, expected Int but given Bool")
+success
+success
+(error "line 22 column 17: invalid function application for /, sort mismatch on argument at position 1, expected Real but given Int")

@@ -1,0 +1,4 @@
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:7:24: expected symbol as attribute value to :named
+")
+(error "Error writing to solver: (assert (! true :named :named)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

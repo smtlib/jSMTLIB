@@ -1,0 +1,48 @@
+success
+(error "A quantified expression is not allowed in the QF_LIA logic")
+success
+success
+success
+success
+(error "Integer expressions must be linear in this logic")
+success
+success
+success
+success
+success
+success
+(error "Declarations of uninterpreted functions are not allowed in this logic")
+success
+success
+(error "Error while checking sort abbreviation: New sorts are not allowed in this logic")
+success
+success
+(error "A quantified expression is not allowed in the QF_UFLIA logic")
+success
+success
+success
+success
+(error "Integer expressions must be linear in this logic")
+success
+success
+success
+success
+success
+(error "The simplify solver does not yet support the bit-vector theory")
+(error "The logic must be set before an assert command is issued")
+success
+(error "The simplify solver does not yet support the bit-vector theory")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-sort command is issued")
+success
+success
+(error "A quantified expression is not allowed in the QF_UFIDL logic")
+success
+success
+success
+success
+success
+success
+success
+success
+success

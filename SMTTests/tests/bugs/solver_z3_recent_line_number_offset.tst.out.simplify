@@ -1,0 +1,11 @@
+success
+success
+(error "Unknown predicate symbol undeclaredfun with argument types Int")
+sat
+success
+success
+unsupported
+success
+(error "The simplify solver cannot handle string literals")
+sat
+(error "The get-value command is only valid if :produce-models has been enabled")

@@ -1,0 +1,7 @@
+success
+success
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:11:10: expected 2 arguments to '<function application token>', got 3
+")
