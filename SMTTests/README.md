@@ -89,6 +89,28 @@ Each `.tst` file is a literal SMT-LIB command script. `FileTests` runs it via
 `smt.exec()` and diffs the captured stdout/stderr against a golden `.out`/`.err`
 file. See "Golden file conventions" below for the naming rules.
 
+A `.tst` file can optionally start with a `; OPTIONS: <flags>` line (an ordinary
+SMT-LIB comment, so it's harmless even if something reads the file some other
+way) to request a command-line-only setting a plain `.tst` has no way to ask
+for, e.g. `; OPTIONS: --relax` or `; OPTIONS: --echo`. When present, `FileTests`
+routes the file through the real `SMT.exec(String[])`/`processCommandLine()`
+argument parser (passing the file's own path, unmodified) instead of the
+default `smtConfig.text` path, so the test exercises the same parsing a real
+invocation would. Two things to know before using it:
+- **Flags are split on whitespace only — no quoted-argument support.** `;
+  OPTIONS: --out "some file"` will NOT work as a single quoted argument; each
+  flag's own argument (if it takes one) must itself contain no spaces. See
+  issue #109.
+- **Avoid `--verbose`/`-v`.** It works mechanically, but `processCommandLine()`
+  always calls `readProperties()` itself, and `FileTests`' own per-test setup
+  already called it once before the file was even read — so a `; OPTIONS:
+  --verbose ...` test's second `readProperties()` call emits its own
+  "#reading properties ..." diagnostic, which embeds this checkout's absolute
+  jar path and makes an exact-match golden non-portable across machines. A
+  test needing `--verbose` belongs as a `.scr` script instead, where
+  `runscript`'s `$INSTALL` substitution already handles this. See issue #110
+  for the full analysis of why this double `readProperties()` call happens.
+
 | Subdirectory | Covers |
 |---|---|
 | `tests/` (top level, ~34 files) | Miscellaneous: echo, ite, quantifier/pattern parsing, misc error cases |
@@ -254,7 +276,7 @@ Examples: `logic-validation.scr` (4-part `-L` path scenario), `driver-*.scr`,
 |---|---|
 | **FileTests** | Every `.tst` file under `tests/`, parameterized by `(solver, file)` from `LogicTests.solvers` (i.e. `SMT_TEST_SOLVERS`). Runs in-process (no JVM fork per test). |
 | **ScriptTests** | Every `.scr` file under `scripts/`, via `bash runscript <path>`. No solver parameterization — each script hardcodes its own. Exit 77 → JUnit skip. |
-| **SMTCommandLineTests** | Spawns real `SMT_CMD` subprocesses with specific CLI flags (`-L`, `--logics`, malformed custom logic/theory files in a temp dir, etc.) — tests command-line argument handling and logic/theory file validation directly, which `.tst` has no mechanism to vary per-file. |
+| **SMTCommandLineTests** | Calls `SMT.exec(String[])` directly, in-process (no `SMT_CMD` subprocess) — tests command-line argument handling itself (short aliases, missing/malformed arguments, `-L`/`--logics` and malformed custom logic/theory files in a temp dir, etc.), which neither `.tst` nor a `.scr` script can express as precisely, since it's the argv parser's own behavior being tested, not a resulting command's output. |
 
 ### Solver-response tests (parameterized over solver × SMT-LIB version)
 

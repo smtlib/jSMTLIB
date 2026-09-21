@@ -125,8 +125,6 @@ public class FileTests extends LogicTests {
         smt.smtConfig.stdout = outPs;
         smt.smtConfig.stderr = errPs;
 
-        // Use text mode so error position messages carry no file path,
-        // matching the format of existing golden files.
         String text;
         try {
             text = new String(Files.readAllBytes(tstFile.toPath()));
@@ -134,9 +132,23 @@ public class FileTests extends LogicTests {
             Assert.fail("Cannot read test file: " + tstFile + ": " + e);
             return;
         }
-        smt.smtConfig.text = applyOptionsDirective(text);
 
-        smt.exec();
+        List<String> options = optionsDirectiveArgs(text);
+        if (options == null) {
+            // Use text mode so error position messages carry no file path, matching the
+            // format of existing golden files.
+            smt.smtConfig.text = text;
+            smt.exec();
+        } else {
+            // A "; OPTIONS: <flags>" directive is present: run through the real
+            // SMT.exec(String[]) / processCommandLine() argument parser instead of setting
+            // fields by hand here, so a .tst test exercises the same parsing path a real
+            // invocation would, and gets any future flag for free. The directive is an
+            // ordinary ';' comment, so the parser already ignores it on its own -- the
+            // original .tst file is passed straight through, unmodified.
+            options.add(tstFile.getAbsolutePath());
+            smt.exec(options.toArray(new String[0]));
+        }
         outPs.flush();
         errPs.flush();
 
@@ -149,28 +161,36 @@ public class FileTests extends LogicTests {
         compareOutput(".err", findGoldenFile(".err"), actualErr, false);
     }
 
-    /** checkFile() feeds a .tst file's raw content to SMT.exec() directly (via
-     *  smtConfig.text), bypassing parseCommandLine() entirely -- so a .tst file has no
-     *  way to ask for a command-line-only setting like --relax. A leading
-     *  "// OPTIONS: <flags>" line (not valid SMT-LIB syntax, so it must never reach the
-     *  parser) lets a .tst file request the few settings that matter for a golden test:
-     *  currently just --relax/-r (SMT.Configuration.relax). Add more recognized flags
-     *  here only as an actual .tst test needs them -- this is deliberately not a general
-     *  command-line parser, just enough to cover what a .tst can't otherwise express. */
-    private String applyOptionsDirective(String text) {
-        if (!text.startsWith("// OPTIONS:")) return text;
+    /** Without a directive, checkFile() feeds a .tst file's raw content to SMT.exec()
+     *  directly (via smtConfig.text), bypassing parseCommandLine()/processCommandLine()
+     *  entirely -- so a plain .tst file has no way to ask for a command-line-only setting
+     *  like --relax. A leading "; OPTIONS: &lt;flags&gt;" line (an ordinary SMT-LIB comment,
+     *  so the parser ignores it on its own either way) lets a .tst file request that
+     *  checkFile() instead route it through the real SMT.exec(String[])/
+     *  processCommandLine() argument parser -- so that .tst test exercises the same
+     *  parsing path a real invocation would, with no per-flag logic duplicated here, and
+     *  the original file is passed straight through unmodified. Returns null (meaning:
+     *  use the normal text-mode path, still bypassing processCommandLine()) if there's no
+     *  directive; otherwise the flag tokens, not yet including the file argument
+     *  checkFile() appends. This is a plain splitter with no per-flag knowledge -- every
+     *  flag is just handed to the real parser unexamined.
+     *  <p>
+     *  Note for anyone writing a "; OPTIONS:" line: avoid --verbose/-v. It works
+     *  mechanically, but processCommandLine() always calls readProperties() itself after
+     *  parsing --verbose, so that second readProperties() call emits its own
+     *  "#reading properties ..." diagnostic -- which embeds this checkout's absolute jar
+     *  path, making an exact-match golden non-portable across machines. A .tst test
+     *  needing --verbose belongs as a .scr script instead, where runscript's $INSTALL
+     *  substitution already handles this. */
+    private List<String> optionsDirectiveArgs(String text) {
+        if (!text.startsWith("; OPTIONS:")) return null;
         int eol = text.indexOf('\n');
         String directiveLine = eol < 0 ? text : text.substring(0, eol);
-        String rest = eol < 0 ? "" : text.substring(eol + 1);
-        for (String flag : directiveLine.substring("// OPTIONS:".length()).trim().split("\\s+")) {
-            if (flag.isEmpty()) continue;
-            if (flag.equals("--relax") || flag.equals("-r")) {
-                smt.smtConfig.relax = true;
-            } else {
-                Assert.fail("Unrecognized flag in '// OPTIONS:' directive: " + flag);
-            }
+        List<String> args = new ArrayList<String>();
+        for (String flag : directiveLine.substring("; OPTIONS:".length()).trim().split("\\s+")) {
+            if (!flag.isEmpty()) args.add(flag);
         }
-        return rest;
+        return args;
     }
 
     // -----------------------------------------------------------------------
