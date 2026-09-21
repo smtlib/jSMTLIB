@@ -5,3 +5,5 @@ instead of the expected error/success sequence. Not a content mismatch, so
 no golden can fix it. Seen on both macos-arm64 (this file) and linux-arm64,
 never on the x64 counterpart of either OS -- see the
 jsmtlib_ci_cross_platform_verification memory for the full CI history.
+
+See https://github.com/smtlib/jSMTLIB/issues/102.
