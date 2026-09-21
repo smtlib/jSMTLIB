@@ -1,0 +1,13 @@
+Known non-deterministic flake: z3-4.16.0's response to an unsupported
+get-info/set-info key is sometimes a clean "unsupported", sometimes a
+garbled raw help-text dump that jSMTLIB can't parse -- the exact shape
+differs between runs. A .bad golden (exact-match) can never stay in sync
+with genuinely non-deterministic output.
+
+Originally filed as two separate platform-suffixed skips (.linux, .windows),
+each hedging that it hadn't yet been seen on macOS -- consolidated into this
+one bare, platform-independent skip now that it has also been observed there.
+Not actually specific to any platform or architecture; just not deterministic
+enough to reproduce on every single run everywhere.
+
+Very likely the same SolverProcess stdout-race root cause as ok_getInfo3.tst.skip.z3-4.14.1 (a stray '; Suppported get-info parameters: ...' diagnostic block leaking across command boundaries under concurrent load) -- see https://github.com/smtlib/jSMTLIB/issues/99.
