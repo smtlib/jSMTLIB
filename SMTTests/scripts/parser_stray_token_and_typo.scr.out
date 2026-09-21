@@ -1,0 +1,5 @@
+PASS: stray token recovery logs a diagnostic
+PASS: parseQualifiedIdentifier error message spelled correctly
+PASS: parseIdentifier error message spelled correctly
+
+All 3 parser stray-token/typo tests PASSED

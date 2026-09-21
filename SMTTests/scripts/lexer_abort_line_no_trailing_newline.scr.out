@@ -1,0 +1,4 @@
+PASS: an unparseable final line with no trailing newline does not crash or hang the run
+PASS: a plain (non-command) final line with no trailing newline does not hang the run
+
+All 2 Lexer.abortLine() end-of-input tests PASSED

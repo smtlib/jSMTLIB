@@ -1,0 +1,3 @@
+PASS: a malformed :funs entry (no sort at all) reports a clean error
+
+All 1 Utils.loadFuns() malformed-theory tests PASSED

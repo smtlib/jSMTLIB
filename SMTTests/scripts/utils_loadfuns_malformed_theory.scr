@@ -1,0 +1,49 @@
+##EXITCODE 0
+# Issue #31: Utils.loadFuns()/loadParFun() assumed every theory-file :funs entry is
+# well-formed. A malformed entry with a name but no sort at all (e.g. "(foo)") made
+# loadFuns()'s sort-collecting loop leave its list empty, so splitting off the trailing
+# result sort via sorts.remove(sorts.size() - 1) threw an uncaught IndexOutOfBoundsException
+# instead of a clean error. This matters beyond the theory files bundled with jSMTLIB itself:
+# findTheory() (and so loadFuns()) is reachable from a user-supplied --logics directory, so a
+# hand-edited or generated theory file with one malformed :funs entry could crash the whole
+# run. Fixed to report a clean IResponse.IError instead.
+_tmpdir=$(mktemp -d)
+trap 'rm -rf "$_tmpdir"' EXIT
+
+cat > "$_tmpdir/QF_BADTHEORY.smt2" <<'EOF'
+(logic QF_BADTHEORY
+ :smt-lib-version 2.6
+ :theories (BadTheory)
+ :language "A logic referencing a deliberately malformed theory file, for testing loadFuns()."
+)
+EOF
+cat > "$_tmpdir/BadTheory.smt2" <<'EOF'
+(theory BadTheory
+ :smt-lib-version 2.6
+ :sorts ((Bool 0))
+ :funs ((true Bool) (false Bool) (foo))
+)
+EOF
+
+PASS=0
+FAIL=0
+pass() { echo "PASS: $1"; PASS=$((PASS + 1)); }
+fail() { echo "FAIL: $1"; FAIL=$((FAIL + 1)); if [ -n "$2" ]; then echo "  $2"; fi; }
+
+out=$($SMT_CMD -L "$_tmpdir" --solver test --text "(set-logic QF_BADTHEORY)" 2>&1)
+if echo "$out" | grep -qi "exception"; then
+    fail "a malformed :funs entry crashed the run with an uncaught exception" "got: $out"
+elif echo "$out" | grep -qF "(error"; then
+    pass "a malformed :funs entry (no sort at all) reports a clean error"
+else
+    fail "expected a clean error response" "got: $out"
+fi
+
+echo ""
+if [ $FAIL -eq 0 ]; then
+    echo "All $PASS Utils.loadFuns() malformed-theory tests PASSED"
+    exit 0
+else
+    echo "$FAIL FAILURES, $PASS passed"
+    exit 1
+fi

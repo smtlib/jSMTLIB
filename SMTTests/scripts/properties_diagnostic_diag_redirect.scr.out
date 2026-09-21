@@ -1,0 +1,4 @@
+PASS: the properties diagnostic did not leak to the console
+PASS: the properties diagnostic ended up in the requested --diag file
+
+All 2 properties-diagnostic-redirect tests PASSED

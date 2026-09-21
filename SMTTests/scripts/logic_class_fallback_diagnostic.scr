@@ -1,0 +1,48 @@
+##EXITCODE 0
+# Issue #46: sexpr/Parser.parseLogic()'s logic-class loader used to silently fall back to a
+# bare, unrestricted SMTExpr.Logic whenever there was no Java class matching
+# org.smtlib.logic.<name> -- disabling ALL syntactic checking for that logic with no visible
+# indication anything was wrong. Fixed by logging a verbose-gated diagnostic when the fallback
+# happens.
+#
+# A custom logic file with a name that can never have a dedicated org.smtlib.logic class is
+# placed in a temp directory and -L is used to make jSMTLIB find it (see logic-validation.scr
+# for the same pattern).
+_tmpdir=$(mktemp -d)
+trap 'rm -rf "$_tmpdir"' EXIT
+
+cat > "$_tmpdir/QF_MADE_UP_LOGIC.smt2" <<'EOF'
+(logic QF_MADE_UP_LOGIC
+ :smt-lib-version 2.6
+ :theories (Core)
+ :language "A made-up logic with no restriction class, for testing the fallback diagnostic."
+)
+EOF
+
+PASS=0
+FAIL=0
+pass() { echo "PASS: $1"; PASS=$((PASS + 1)); }
+fail() { echo "FAIL: $1"; FAIL=$((FAIL + 1)); if [ -n "$2" ]; then echo "  $2"; fi; }
+
+diag=$($SMT_CMD -L "$_tmpdir" --solver test --verbose 1 --text "(set-logic QF_MADE_UP_LOGIC)" 2>&1 >/dev/null)
+if echo "$diag" | grep -qF "No restriction class org.smtlib.logic.QF_MADE_UP_LOGIC found for logic QF_MADE_UP_LOGIC"; then
+    pass "the class-less fallback is logged as a diagnostic"
+else
+    fail "expected the fallback diagnostic" "got: $diag"
+fi
+
+out=$($SMT_CMD -L "$_tmpdir" --solver test --text "(set-logic QF_MADE_UP_LOGIC)" 2>/dev/null)
+if [ "$out" = "success" ]; then
+    pass "the fallback to an unrestricted logic still succeeds"
+else
+    fail "expected set-logic to still succeed" "got: $out"
+fi
+
+echo ""
+if [ $FAIL -eq 0 ]; then
+    echo "All $PASS logic-class-fallback tests PASSED"
+    exit 0
+else
+    echo "$FAIL FAILURES, $PASS passed"
+    exit 1
+fi
