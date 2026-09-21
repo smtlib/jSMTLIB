@@ -593,6 +593,52 @@ public class SMTCommandLineTests {
     }
 
     // -----------------------------------------------------------------------
+    // Issue #26: documented command-line short aliases.
+    // -r now aliases --relax (fixed in code -- the parsing loop never checked for it
+    // before). -v and -e were never actually broken in the way usage() implied; the
+    // usage() text was misleading instead, and has been corrected: -v is shorthand for
+    // --verbose 1 (a bare flag, consuming no argument), and -e remains --exec's alias (a
+    // following path argument), not --echo's (which has no short form of its own).
+    // -----------------------------------------------------------------------
+
+    @Test public void relaxShortFormEnablesRelax() {
+        // (what) is a non-standard, relax-only command.
+        int ret = run("-r", "--solver", "test", "--text", "(set-logic QF_UF)\n(what)");
+        Assert.assertEquals(0, ret);
+        Assert.assertFalse("expected -r to enable relax, like --relax: " + output(),
+            output().contains("Unknown command"));
+    }
+
+    @Test public void withoutRelaxNonStandardCommandIsRejected() {
+        // Sanity check for relaxShortFormEnablesRelax(): without -r/--relax, (what) is rejected.
+        run("--solver", "test", "--text", "(set-logic QF_UF)\n(what)");
+        Assert.assertTrue("expected 'what' to be rejected without relax: " + output(),
+            output().contains("Unknown command"));
+    }
+
+    @Test public void verboseShortFormDoesNotConsumeAFollowingToken() {
+        // -v is a bare flag (shorthand for --verbose 1); a following token is a file
+        // argument, not consumed as a verbosity level.
+        run("-v", "3");
+        Assert.assertTrue("expected -v to not consume the following token as an integer "
+                + "argument: " + output(), output().contains("Could not find file: 3"));
+    }
+
+    @Test public void execShortFormDoesNotEnableEcho() {
+        // -e remains --exec's alias (a following path argument), not --echo's.
+        run("-e", "/nonexistent/solverbinary", "--solver", "test", "--text", "(check-sat)");
+        int count = output().split("\\(check-sat\\)", -1).length - 1;
+        Assert.assertEquals("expected -e to not behave like --echo: " + output(), 1, count);
+    }
+
+    @Test public void echoLongFormDoesEnableEcho() {
+        // Sanity check for execShortFormDoesNotEnableEcho(): --echo (long form) does echo.
+        run("--echo", "--solver", "test", "--text", "(check-sat)");
+        int count = output().split("\\(check-sat\\)", -1).length - 1;
+        Assert.assertTrue("expected --echo to echo the command: " + output(), count >= 2);
+    }
+
+    // -----------------------------------------------------------------------
     // cleanup() with an active solver.
     //
     // doParser() always calls solver.forceExit() + solver = null before returning,
