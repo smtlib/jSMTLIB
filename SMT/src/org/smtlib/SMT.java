@@ -887,10 +887,12 @@ public class SMT {
 			}
 		}
 		
-		props = readProperties();
-
-		if (options.logicPath == null) options.logicPath = trimToNull(props.getProperty(Utils.PROPS_LOGIC_PATH));
-
+		// --out/--diag must be applied before readProperties() below: that call's own
+		// verbose "#reading properties ..." diagnostics go out through smtConfig.log
+		// immediately as they happen, so if it ran first, they'd always land on whatever
+		// channel was in effect before this command line was even parsed (e.g. the real
+		// System.out/System.err in a genuine CLI run) rather than a channel this same
+		// command line just asked to redirect to.
 		if (options.out != null) {
 			try {
 				options.log.setRegularOutputChannel(options.out);
@@ -905,6 +907,11 @@ public class SMT {
 				options.log.logOut("Failed to open output stream on " + options.diag);
 			}
 		}
+
+		props = readProperties();
+
+		if (options.logicPath == null) options.logicPath = trimToNull(props.getProperty(Utils.PROPS_LOGIC_PATH));
+
 		if (options.files != null && !options.files.isEmpty() && options.port >= 0) {
 			error("You may not specify both a port and file input");
 			usage();

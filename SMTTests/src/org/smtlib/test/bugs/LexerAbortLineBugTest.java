@@ -83,6 +83,13 @@ public class LexerAbortLineBugTest {
         smt.smtConfig.solvername = "test";
         smt.smtConfig.abort = true;
         smt.smtConfig.interactive = true;
+        // Captured rather than left on the default System.out/System.err: this test's own
+        // point is that "foo" being unparseable doesn't crash the run, not what its (real,
+        // expected) error diagnostic looks like -- left uncaptured, that diagnostic prints
+        // straight to the real console on every test run, indistinguishable from an actual
+        // problem to anyone watching test output.
+        java.io.PrintStream sink = new java.io.PrintStream(java.io.OutputStream.nullOutputStream());
+        smt.smtConfig.log.setChannels(sink, sink);
         // "foo" is not a recognized command, so parseCommand() fails -- and there is no
         // trailing newline for abortLine() to find.
         ISource source = smt.smtConfig.smtFactory.createSource("(foo", null);
