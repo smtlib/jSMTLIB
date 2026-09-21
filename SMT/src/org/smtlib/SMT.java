@@ -431,7 +431,11 @@ public class SMT {
 			f = new File(codeSourceFile.getParentFile(), Utils.PROPS_FILE);
 			if (f.isFile()) {
 				try (FileReader rdr = new FileReader(f);) {
-					if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (jar sibling) from " + f);
+					// f.toString() renders with the platform's native separator (backslash on
+					// Windows), but this diagnostic is compared verbatim against a golden file
+					// that always uses forward slashes (see ScriptTests/runscript's $INSTALL
+					// substitution) -- normalize so the message matches on every platform.
+					if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (jar sibling) from " + f.getPath().replace('\\', '/'));
 					p.load(rdr);
 				} catch (IOException|IllegalArgumentException e) {
 				}
@@ -442,7 +446,7 @@ public class SMT {
 		f = new File(home,Utils.PROPS_FILE);
 		if (f.isFile()) {
             try (FileReader rdr = new FileReader(f);) {
-				if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (user home) from " + f);
+				if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (user home) from " + f.getPath().replace('\\', '/'));
 				p.load(rdr);
 			} catch (IOException|IllegalArgumentException e) {
 			}
@@ -451,7 +455,7 @@ public class SMT {
 		f = new File(Utils.PROPS_FILE);
 		if (f.isFile()) {
             try (FileReader rdr = new FileReader(f);) {
-				if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (current dir) from " + f);
+				if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (current dir) from " + f.getPath().replace('\\', '/'));
 				p.load(rdr);
 			} catch (IOException|IllegalArgumentException e) {
 			}
