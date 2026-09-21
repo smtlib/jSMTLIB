@@ -6,8 +6,8 @@ false
 false
 false
 false
-stdout
-stderr
+"stdout"
+"stderr"
 -1
 true
 false

@@ -22,7 +22,15 @@ import org.smtlib.*;
  *  translate() workaround needed), get-value/
  *  get-option return clean standard-shaped responses (no Response.Seq workaround
  *  needed), and get-info/get-option round-trip through AbstractSolver's generic
- *  parseResponse without issue.
+ *  parseResponse without issue -- with one exception, {@link #get_option}, described
+ *  below.
+ *  <p>
+ *  One confirmed, patchable compliance gap: cvc5 answers {@code (get-option
+ *  :regular-output-channel)}/{@code (get-option :diagnostic-output-channel)} with a
+ *  bare, unquoted symbol ({@code stdout}/{@code stderr}) rather than the SMT-LIB string
+ *  literal ({@code "stdout"}/{@code "stderr"}) these two options are specified to hold --
+ *  confirmed against a real cvc5 1.3.2 process. {@link #get_option} wraps a bare-symbol
+ *  answer for either option into a proper string literal with the same text.
  *  <p>
  *  One confirmed, non-workaroundable compliance gap: cvc5 self-reports {@code
  *  (get-info :error-behavior)} as {@code immediate-exit} (not {@code
@@ -96,6 +104,19 @@ public class Solver_cvc5 extends AbstractSolver implements ISolver {
 		} catch (Exception e) {
 			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
 		}
+	}
+
+	/** See the class Javadoc: wraps a bare-symbol answer for a string-typed option
+	 *  (Utils.stringOptions -- currently just :regular-output-channel and
+	 *  :diagnostic-output-channel) into a proper SMT-LIB string literal with the same
+	 *  text, working around cvc5 answering those two with an unquoted symbol instead. */
+	@Override
+	public IResponse get_option(IExpr.IKeyword option) {
+		IResponse response = super.get_option(option);
+		if (response instanceof IExpr.ISymbol && smtConfig.utils.stringOptions.contains(option.value())) {
+			return smtConfig.exprFactory.unquotedString(((IExpr.ISymbol)response).value());
+		}
+		return response;
 	}
 
 }
