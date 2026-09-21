@@ -25,7 +25,15 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(ParameterizedWithNames.class)
 public class ScriptTests {
 
-    @Rule public Timeout timeout = new Timeout(2, TimeUnit.MINUTES);
+    // Some scripts (e.g. reservedWordsRelax.scr) spawn several dozen separate JVMs
+    // sequentially, one per $SMT_CMD line -- each pays full JVM startup cost, since
+    // --text mode is a fresh one-shot process, not a persistent session. Under any real
+    // system contention that adds up fast; 2 minutes leaves too little headroom for a
+    // script that heavy (confirmed: a clean-conditions run of that specific script is
+    // well under a minute, but it has been observed to exceed 2 minutes -- and so trip
+    // this Rule -- under concurrent system load). 5 minutes keeps this a real safety net
+    // against a genuine hang without being so tight that ordinary load variance trips it.
+    @Rule public Timeout timeout = new Timeout(5, TimeUnit.MINUTES);
 
     private static final String PLATFORM;
     private static final String PLATFORM_ARCH;
@@ -122,7 +130,7 @@ public class ScriptTests {
         pb.redirectErrorStream(true);
         Process proc = pb.start();
         String output = new String(proc.getInputStream().readAllBytes());
-        boolean finished = proc.waitFor(2, TimeUnit.MINUTES);
+        boolean finished = proc.waitFor(5, TimeUnit.MINUTES);
 
         if (!finished) {
             proc.destroyForcibly();
