@@ -97,7 +97,7 @@ public class Lexer {
 	/** Creates a lexical token for a end-of-data at the given position */
 	public LexToken EOD(int cpos) { return new EOD(cpos); }
 
-	private static String EOD_KIND = "eod".intern();
+	private static final String EOD_KIND = "eod".intern();
 
 	/** A class that represents a lexical token corresponding to the end of input */
 	private class EOD extends LexToken implements IPLexToken {
@@ -228,7 +228,7 @@ public class Lexer {
 	 * would help, but instead, I just changed the regex to match the opening quote - then we
 	 * scan the string by hand and adjust the matcher position afterwards.
 	 */
-	public static Pattern combined = Pattern.compile(
+	public static final Pattern combined = Pattern.compile(
 			"((?:" + rgxWhiteSpace + "|" + rgxComment + ")*)((" // first skip all whitespace and comments
 				+ "\\(" + ")|("        	// group 3: left parenthesis
 				+ "\\)" + ")|("			// group 4: right parenthesis

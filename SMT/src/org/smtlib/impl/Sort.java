@@ -310,7 +310,7 @@ public abstract class Sort extends Pos.Printable implements ISort {
 	 * commands and in theory definitions.
 	 */
 	static public class FcnSort extends Sort implements IFcnSort {
-		static protected ISort[] noargs = new ISort[0];
+		static protected final ISort[] noargs = new ISort[0];
 		protected ISort resultSort;
 		protected ISort[] argSorts;
 		

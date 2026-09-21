@@ -957,7 +957,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 	
 
 	/** Name of an if-then-else construct on term arguments */ 
-	static private String ite_term = "_ITE";
+	static private final String ite_term = "_ITE";
 	
 	static final Map<String,String> fcnNames;
 	static final Set<String> logicNames;
