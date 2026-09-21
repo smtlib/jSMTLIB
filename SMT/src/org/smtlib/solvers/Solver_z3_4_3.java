@@ -495,7 +495,14 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
 	@Override
 	public IResponse get_info(IKeyword key) {
-		return sendCommand("(get-info " + key + ")");
+		String cmd = "(get-info " + key + ")";
+		try {
+			String response = solverProcess.sendAndListen(cmd, "\n");
+			if (smtConfig.testing) response = normalizeForTesting(response);
+			return parseResponse(response);
+		} catch (IOException e) {
+			return smtConfig.responseFactory.error("Error writing to solver: " + cmd + " " + e);
+		}
 	}
 	
 	@Override

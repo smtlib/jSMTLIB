@@ -38,5 +38,8 @@ The recognized options are these:
         --noshow: if enabled, error location information is not shown
     -q, --nosuccess: if enabled, 'success' responses are suppressed
         --relax: if enabled, extensions to strict SMT-LIB are permitted
+        --testing: if enabled, non-deterministic content in a solver's get-info
+              response (elapsed-time, memory usage) is replaced by a fixed
+              placeholder, for reproducible test output
 This software is Copyright 2010-2027 by David R. Cok. The accompanying LICENSE 
     file describes the conditions under which it may be used.

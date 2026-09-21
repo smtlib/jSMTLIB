@@ -252,6 +252,16 @@ public class SMT {
 		 *  false, the standard is strictly enforced.
 		 */
 		public boolean relax = false;
+
+		/** When true, a solver's raw response text is scrubbed of known non-deterministic
+		 *  content (elapsed-time figures, memory usage) before being parsed, replacing each
+		 *  with a fixed placeholder (e.g. TIME, VALUE) so that otherwise-identical output is
+		 *  byte-for-byte reproducible across runs and machines. Off by default -- this is a
+		 *  testing aid, not a normal end-user option. Currently applied only within
+		 *  {@link AbstractSolver#get_info(IExpr.IKeyword)}, the one place this instability
+		 *  has actually been observed (cvc5's :all-statistics response, and :memory/
+		 *  :max-memory figures on several solvers). */
+		public boolean testing = false;
 		
 		/** An array of fully-qualified class name prefixes; a command name (with hyphen
 		 * replaced by underscore) is appended to the prefix to obtain a fully-qualified class name that
@@ -833,6 +843,8 @@ public class SMT {
 				options.abort = true;
 			} else if ("--relax".equals(s) || "-r".equals(s)) {
 				options.relax = true;
+			} else if ("--testing".equals(s)) {
+				options.testing = true;
             } else if ("--noshow".equals(s)) {
                 options.noshow = true;
 			} else if ("--timeout".equals(s) || "-t".equals(s)) {
@@ -1217,6 +1229,7 @@ public class SMT {
 		out.println("       --noshow");
 		out.println("       --nosuccess   [-q]");
 		out.println("       --relax  [-r]");
+		out.println("       --testing");
 
 	}
 	
@@ -1265,6 +1278,9 @@ public class SMT {
 		out.println("        --noshow: if enabled, error location information is not shown");
 		out.println("    -q, --nosuccess: if enabled, 'success' responses are suppressed");
 		out.println("        --relax: if enabled, extensions to strict SMT-LIB are permitted");
+		out.println("        --testing: if enabled, non-deterministic content in a solver's get-info");
+		out.println("              response (elapsed-time, memory usage) is replaced by a fixed");
+		out.println("              placeholder, for reproducible test output");
 		out.println("This software is Copyright 2010-2027 by David R. Cok. The accompanying LICENSE ");
 		out.println("    file describes the conditions under which it may be used.");
 	}

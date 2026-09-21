@@ -17,3 +17,4 @@ Usage: java org.smtlib.SMT [args] [file]
        --noshow
        --nosuccess   [-q]
        --relax  [-r]
+       --testing

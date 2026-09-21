@@ -199,6 +199,26 @@ public class AbstractSolver implements ISolver {
 	}
 
 	private IResponse sendCommand(ICommand cmd, boolean tolerateSilentExit) {
+		return sendCommand(cmd, tolerateSilentExit, false);
+	}
+
+	/** Replaces known sources of non-deterministic content in a raw solver response with a
+	 *  fixed placeholder, so that --testing runs produce byte-for-byte reproducible output
+	 *  across machines and repeated runs. Deliberately a short, explicit list rather than a
+	 *  broad catch-all, so it can't silently mask an actual difference in solver output:
+	 *  elapsed-time figures (e.g. cvc5's :all-statistics response embeds these as bare,
+	 *  unquoted "NNNms" tokens, which aren't valid SMT-LIB syntax at all and would
+	 *  otherwise cascade into a wall of "Invalid token" parse errors that also differ
+	 *  every run) and :memory/:max-memory usage figures. */
+	protected static String normalizeForTesting(String raw) {
+		String s = raw;
+		s = s.replaceAll("\\d+(\\.\\d+)?ms", "TIME");
+		s = s.replaceAll("(\\(:memory\\s+)[\\d.]+", "$1VALUE");
+		s = s.replaceAll("(\\(:max-memory\\s+)[\\d.]+", "$1VALUE");
+		return s;
+	}
+
+	private IResponse sendCommand(ICommand cmd, boolean tolerateSilentExit, boolean scrubNonDeterminism) {
 		String translatedCmd = null;
 		try {
 			translatedCmd = translate(cmd);
@@ -210,6 +230,7 @@ public class AbstractSolver implements ISolver {
 			if (response == null) {
 				return smtConfig.responseFactory.error("No response received from the solver for: " + translatedCmd);
 			}
+			if (scrubNonDeterminism && smtConfig.testing) response = normalizeForTesting(response);
 			IResponse result = parseResponse(response);
 			// parseResponse() (or a subclass override) can itself return null for some
 			// malformed/edge-case response text without throwing -- same defensive
@@ -657,7 +678,7 @@ public class AbstractSolver implements ISolver {
 	/** @see org.smtlib.ISolver#get_info(IExpr.IKeyword)*/
 	@Override
 	public IResponse get_info(IKeyword option){
-		return sendCommand(smtConfig.commandFactory.get_info(option));
+		return sendCommand(smtConfig.commandFactory.get_info(option), false, true);
 	}
 
 	/** @see org.smtlib.ISolver#smt()*/
