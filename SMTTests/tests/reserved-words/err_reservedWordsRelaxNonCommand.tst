@@ -1,4 +1,4 @@
-// OPTIONS: --relax
+; OPTIONS: --relax
 ; Non-command reserved words remain illegal as declared symbol names even under --relax
 ; (see org.smtlib.sexpr.Parser.parseSymbol()); companion to err_reservedWord_*.tst (this
 ; directory), which check the same illegality WITHOUT --relax against real solvers, and to

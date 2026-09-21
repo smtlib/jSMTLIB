@@ -1,4 +1,4 @@
-// OPTIONS: --relax
+; OPTIONS: --relax
 ; Command names ARE legal as declared symbol names under --relax (see
 ; org.smtlib.sexpr.Parser.parseSymbol()); companion to err_reservedWord_*.tst (this
 ; directory), which check the same words WITHOUT --relax (always illegal there) against
