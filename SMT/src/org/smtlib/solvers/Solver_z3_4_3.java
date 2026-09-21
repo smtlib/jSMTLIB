@@ -53,9 +53,15 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
 	/** The command-line arguments for launching the Z3 solver */
 	protected String cmds[];
-	protected String cmds_win[] = new String[]{ "", "/smt2","/in","SMTLIB2_COMPLIANT=true"};//,"/rs:42"}; 
-	protected String cmds_mac[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true"}; 
-	protected String cmds_unix[] = new String[]{ "", "-smt2","-in"}; 
+	// WARNING=false suppresses z3's own diagnostic WARNING messages (e.g. "unknown logic,
+	// ignoring set-logic command"): confirmed directly against the real z3-4.3.1 binary
+	// that these print as a bare "WARNING: ..." line with no parens at all, which fools
+	// SolverProcess's paren-balance response-completion heuristic the same way
+	// Solver_z3_recent's own identical WARNING=false comment already documents for that
+	// adapter -- z3-4.3 never got the same fix.
+	protected String cmds_win[] = new String[]{ "", "/smt2","/in","SMTLIB2_COMPLIANT=true","WARNING=false"};//,"/rs:42"};
+	protected String cmds_mac[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
+	protected String cmds_unix[] = new String[]{ "", "-smt2","-in","WARNING=false"};
 	
 	/** The parser that parses responses from the solver */
 	protected org.smtlib.sexpr.Parser responseParser;
