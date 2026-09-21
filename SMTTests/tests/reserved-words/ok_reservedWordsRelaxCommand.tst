@@ -1,4 +1,4 @@
-; OPTIONS: --relax
+; OPTIONS: --relax --solver test
 ; Command names ARE legal as declared symbol names under --relax (see
 ; org.smtlib.sexpr.Parser.parseSymbol()); companion to err_reservedWord_*.tst (this
 ; directory), which check the same words WITHOUT --relax (always illegal there) against
@@ -6,6 +6,12 @@
 ; reserved words that --relax does NOT permit. Replaces the old reservedWordsRelax.scr,
 ; which spawned 43 separate JVMs (one per word) to check exactly this -- a single
 ; in-process session covers it just as well.
+;
+; "--solver test" forces the mock solver regardless of which solver FileTests' own
+; (solver, file) parameterization picked: --relax only relaxes jSMTLIB's own client-side
+; symbol check, not what gets forwarded to a real solver, whose own parser may still
+; reject (or, worse, hang on) a reserved word used as a symbol on its own terms -- this is
+; a jSMTLIB parser-level characterization, not something a real solver needs to validate.
 (set-logic QF_UF)
 (declare-const assert Bool)
 (declare-const check-sat Bool)
