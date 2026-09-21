@@ -1,7 +1,0 @@
-unsupported
-success
-unsupported
-(set-info :zzz (+ a s))
-^^^^^^^^^^^^^^^^^^^^^^^
-(error "line 5 column 15: invalid option value")
-unsupported
