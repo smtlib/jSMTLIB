@@ -127,12 +127,14 @@ public class FileTests extends LogicTests {
 
         // Use text mode so error position messages carry no file path,
         // matching the format of existing golden files.
+        String text;
         try {
-            smt.smtConfig.text = new String(Files.readAllBytes(tstFile.toPath()));
+            text = new String(Files.readAllBytes(tstFile.toPath()));
         } catch (IOException e) {
             Assert.fail("Cannot read test file: " + tstFile + ": " + e);
             return;
         }
+        smt.smtConfig.text = applyOptionsDirective(text);
 
         smt.exec();
         outPs.flush();
@@ -145,6 +147,30 @@ public class FileTests extends LogicTests {
         compareOutput(".out", findGoldenFile(".out"), actualOut, true);
         // stderr: exact match
         compareOutput(".err", findGoldenFile(".err"), actualErr, false);
+    }
+
+    /** checkFile() feeds a .tst file's raw content to SMT.exec() directly (via
+     *  smtConfig.text), bypassing parseCommandLine() entirely -- so a .tst file has no
+     *  way to ask for a command-line-only setting like --relax. A leading
+     *  "// OPTIONS: <flags>" line (not valid SMT-LIB syntax, so it must never reach the
+     *  parser) lets a .tst file request the few settings that matter for a golden test:
+     *  currently just --relax/-r (SMT.Configuration.relax). Add more recognized flags
+     *  here only as an actual .tst test needs them -- this is deliberately not a general
+     *  command-line parser, just enough to cover what a .tst can't otherwise express. */
+    private String applyOptionsDirective(String text) {
+        if (!text.startsWith("// OPTIONS:")) return text;
+        int eol = text.indexOf('\n');
+        String directiveLine = eol < 0 ? text : text.substring(0, eol);
+        String rest = eol < 0 ? "" : text.substring(eol + 1);
+        for (String flag : directiveLine.substring("// OPTIONS:".length()).trim().split("\\s+")) {
+            if (flag.isEmpty()) continue;
+            if (flag.equals("--relax") || flag.equals("-r")) {
+                smt.smtConfig.relax = true;
+            } else {
+                Assert.fail("Unrecognized flag in '// OPTIONS:' directive: " + flag);
+            }
+        }
+        return rest;
     }
 
     // -----------------------------------------------------------------------

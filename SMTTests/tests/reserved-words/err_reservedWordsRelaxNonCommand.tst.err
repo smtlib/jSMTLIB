@@ -1,0 +1,22 @@
+(declare-const ! Bool)
+               ^
+(declare-const _ Bool)
+               ^
+(declare-const as Bool)
+               ^^
+(declare-const DECIMAL Bool)
+               ^^^^^^^
+(declare-const exists Bool)
+               ^^^^^^
+(declare-const forall Bool)
+               ^^^^^^
+(declare-const let Bool)
+               ^^^
+(declare-const match Bool)
+               ^^^^^
+(declare-const NUMERAL Bool)
+               ^^^^^^^
+(declare-const par Bool)
+               ^^^
+(declare-const STRING Bool)
+               ^^^^^^
