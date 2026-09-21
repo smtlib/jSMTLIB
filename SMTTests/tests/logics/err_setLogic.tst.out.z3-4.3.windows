@@ -1,0 +1,7 @@
+(error "Expected a symbol here, not a numeral")
+(error "Expected a symbol here, not a decimal")
+(error "Expected a symbol here, not a binary")
+(error "Expected a symbol here, not a hex-literal")
+(error "Expected a symbol here, not a string-literal")
+(error "Too many arguments or extraneous material after the command or missing right parenthesis")
+unsupported
