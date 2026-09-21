@@ -1,3 +1,0 @@
-(get-info :zzz)
-^^^^^^^^^^^^^^^
-(error "no info for :zzz")
