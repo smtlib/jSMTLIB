@@ -174,11 +174,15 @@ runs:
     ## Captures exactly what's needed to debug a failure after the fact, without needing
     ## to reproduce it locally: the .actual files FileTests.java writes next to a golden
     ## on mismatch (the same expected-vs-actual diff seen in the console log, but as a
-    ## standalone file you can pull down and inspect/diff directly) and the timestamped
-    ## junit-logs/*.log that records every test's PASS/FAIL/RUNNING as it happened, for
-    ## correlating ordering and timing across a run. if-no-files-found is set to 'warn'
-    ## (not 'error') since a failure can also come from something before any test ran
-    ## (e.g. a compile error), in which case there may be nothing to collect here.
+    ## standalone file you can pull down and inspect/diff directly) -- both FileTests'
+    ## own tests/**/*.actual and ScriptTests'/runscript's equivalent .out.actual/
+    ## .err.actual/.cmb.actual under scripts/** (the latter was missing for a long time;
+    ## a ScriptTests failure had to be reconstructed from junit-logs text alone until
+    ## this was widened) -- and the timestamped junit-logs/*.log that records every
+    ## test's PASS/FAIL/RUNNING as it happened, for correlating ordering and timing
+    ## across a run. if-no-files-found is set to 'warn' (not 'error') since a failure
+    ## can also come from something before any test ran (e.g. a compile error), in
+    ## which case there may be nothing to collect here.
     ##
     ## `|| cancelled()`: a job-level timeout-minutes cancellation (build.yml's safety net
     ## for the Linux hang, now fixed but the safety net stays) reports as cancelled, not
@@ -195,6 +199,7 @@ runs:
         name: test-failure-${{ inputs.label != '' && inputs.label || format('{0}-{1}', runner.os, runner.arch) }}
         path: |
           jSMTLIB/SMTTests/tests/**/*.actual
+          jSMTLIB/SMTTests/scripts/**/*.actual
           jSMTLIB/SMTTests/junit-logs/
         if-no-files-found: warn
         retention-days: 14
