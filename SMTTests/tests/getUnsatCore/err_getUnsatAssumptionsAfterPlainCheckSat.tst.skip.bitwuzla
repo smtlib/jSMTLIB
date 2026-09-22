@@ -1,0 +1,7 @@
+Real bitwuzla produces two separate, jumbled error responses for the single
+(get-unsat-assumptions) command here (an "unsupported command 'get-option'"
+native rejection immediately followed by a second, distinct jSMTLIB-generated
+error) -- a real protocol anomaly discovered while writing this test, appears
+unrelated to Simplify's own gap this test targets. Needs its own investigation;
+not written up as a golden since one command producing two responses is not
+itself SMT-LIB-conformant.

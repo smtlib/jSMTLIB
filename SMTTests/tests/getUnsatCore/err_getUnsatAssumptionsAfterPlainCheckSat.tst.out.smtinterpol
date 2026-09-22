@@ -1,0 +1,6 @@
+success
+success
+(error "<stdin>:18:12: Option :produce-unsat-assumptions can only be changed before setting the logic")
+success
+unsat
+(error "The get-unsat-assumptions command is only valid if :produce-unsat-assumptions has been enabled")
