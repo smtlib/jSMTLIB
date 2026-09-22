@@ -1,0 +1,5 @@
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:2: expected command at 'declare-datatypes'
+")
+(error "Error writing to solver: (push 1) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-datatypes ( (Color 0)) ( ((red) (green) (blue) ))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
