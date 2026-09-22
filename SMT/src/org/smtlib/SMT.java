@@ -1207,39 +1207,76 @@ public class SMT {
 		return s.isEmpty() ? null : s;
 	}
 	
-	// FIXME - combine, update, document usage() and help()
+	/** Describes one command-line option, as a single source of truth rendered by both
+	 *  {@link #usage()} (a short reminder, shown alongside a command-line error) and
+	 *  {@link #help()} (the full explanation, shown on {@code --help}) -- previously
+	 *  each was a separate hand-written block of {@code println}s repeating nearly the
+	 *  same option list, with no way to keep them in sync as options changed. */
+	private static class Opt {
+		final String longFlag;
+		final /*@Nullable*/ String shortFlag;
+		final /*@Nullable*/ String argSpec;
+		/** One or more description lines for help(); the first is shown alongside the
+		 *  flag itself, any further lines as indented continuation lines. */
+		final String[] description;
+		Opt(String longFlag, /*@Nullable*/ String shortFlag, /*@Nullable*/ String argSpec, String... description) {
+			this.longFlag = longFlag;
+			this.shortFlag = shortFlag;
+			this.argSpec = argSpec;
+			this.description = description;
+		}
+	}
+
+	private static final Opt[] OPTIONS = {
+		new Opt("--help", "-h", null, "prints this help message and exits"),
+		new Opt("--version", null, null, "prints the version of this application and exits"),
+		new Opt("--verbose", null, "<int>", "enables verbose mode, so more stuff is printed",
+				"-v (with no argument) is shorthand for --verbose 1"),
+		new Opt("--solver", "-s", "<solvername>", "indicates the SMT solver to use (or 'test')",
+				"The name of the adaptor class is \"org.smtlib.solvers.Solver_\" + <name>"),
+		new Opt("--exec", "-e", "<path>", "indicates the SMT solver executable to use",
+				"The argument is the pathname of the executable for the named solver"),
+		new Opt("--logics", "-L", "<path>", "the directory containing SMT-LIB logic and theory definitions",
+				"(default is to use the internal, built-in definitions)"),
+		new Opt("--out", null, "<filename or 'stdout' or 'stderr'>", "where to send normal and error output"),
+		new Opt("--diag", null, "<filename or 'stdout' or 'stderr'>", "where to send verbose (diagnostic) output"),
+		new Opt("--port", null, "<int>", "which port to use for client-server communication"),
+		new Opt("--text", null, "<string>", "text to process (ignoring file and port input)"),
+		new Opt("--timeout", "-t", "<seconds>", "soft per-query timeout, always given here in seconds (fractional values allowed)",
+				"each solver adapter converts this value to whatever unit and flag that solver actually uses",
+				"(e.g. milliseconds instead of seconds), and, for a solver with no per-query option at all,",
+				"applies it as a best-effort whole-run limit instead"),
+		new Opt("--timeout-total", "-T", "<seconds>", "timeout for the solver's whole run (its process lifetime), also always given here in seconds",
+				"likewise converted to each solver's own unit/flag, or, if that solver has no whole-run option,",
+				"applied as a best-effort per-query limit instead"),
+		new Opt("--echo", null, null, "if enabled, commands are echoed to diagnostic output when successfully parsed"),
+		new Opt("--abort", null, null, "if enabled, an error causes immediate exit"),
+		new Opt("--noshow", null, null, "if enabled, error location information is not shown"),
+		new Opt("--nosuccess", "-q", null, "if enabled, 'success' responses are suppressed"),
+		new Opt("--relax", "-r", null, "if enabled, extensions to strict SMT-LIB are permitted"),
+		new Opt("--testing", null, null, "if enabled, non-deterministic content in a solver's get-info response",
+				"(elapsed-time, memory usage) is replaced by a fixed placeholder, for reproducible test output"),
+	};
+
 	/** Prints a summary of the command-line arguments */
 	public void usage() {
 		java.io.PrintStream out = smtConfig.log.getOut();
 		out.println("Usage: java org.smtlib.SMT [args] [file]");
-		out.println("       --help [-h]");
-		out.println("       --version");
-		out.println("       --verbose <int>  (-v is shorthand for --verbose 1)");
-		out.println("       --solver [-s] <solvername>");
-		out.println("       --exec   [-e] <path>");
-		out.println("       --logics [-L] <path>");
-		out.println("       --out         <filename or 'stdout' or 'stderr'>");
-		out.println("       --diag        <filename or 'stdout' or 'stderr'>");
-		out.println("       --port        <int>");
-		out.println("       --text        <string>");
-		out.println("       --timeout       [-t] <seconds>  (per-query timeout, converted per-solver)");
-		out.println("       --timeout-total [-T] <seconds>  (whole-run timeout, converted per-solver)");
-		out.println("       --echo");
-		out.println("       --abort");
-		out.println("       --noshow");
-		out.println("       --nosuccess   [-q]");
-		out.println("       --relax  [-r]");
-		out.println("       --testing");
-
+		for (Opt o : OPTIONS) {
+			StringBuilder sb = new StringBuilder("       ").append(o.longFlag);
+			if (o.shortFlag != null) sb.append(" [").append(o.shortFlag).append("]");
+			if (o.argSpec != null) sb.append(" ").append(o.argSpec);
+			out.println(sb);
+		}
+		out.println("       -v is shorthand for --verbose 1");
 	}
-	
+
 	/** Prints a verbose message about command line arguments */
 	public void help() {
 		java.io.PrintStream out = smtConfig.log.getOut();
 		out.println("The main routine of this Java executable is org.smtlib.SMT,");
 		out.println("    but the jar file is an executable jar file, and can be run");
 		out.println("    using the command: java -jar jSMTLIB.jar ");
-		out.println("THIS IS AN ALPHA VERSION AND STILL BEING CORRECTED AND POLISHED");
 		out.println("The command-line arguments are typical options and files.");
 		out.println("If no files are present, commands are read from standard input");
 		out.println("    until a control-D is read, indicating end of input.");
@@ -1248,39 +1285,17 @@ public class SMT {
 		out.println("Option names have a long version, beginning with --");
 		out.println("    and an abbreviated version, beginning with a single -.");
 		out.println("The recognized options are these:");
-		out.println("    -h, --help : prints this help message and exits");
-		out.println("        --version : prints the version of this application and exits");
-		out.println("        --verbose <int>: enables verbose mode, so more stuff is printed");
-		out.println("    -v: shorthand for --verbose 1");
-// FIXME-NOW - distinguish verbose for app and verbose for solver?
-		out.println("    -s, --solver <name> : indicates the SMT solver to use (or 'test')");
-		out.println("        The name of the adaptor class is \"org.smtlib.solvers.Solver_\" + <name>");
-		out.println("    -e, --exec <path> : indicates the SMT solver executable to use");
-		out.println("        The argument is the pathname of the executable for the named solver");
-// FIXME - if not specified, uses the value of...
-		out.println("    -L, --logics <path>: the directory containing SMT-LIB logic and theory ");
-		out.println("              definitions (default is to use the internal, built-in definitions)");
-		out.println("        --out <filename or 'stdout' or 'stderr'>: where to send normal and error output");
-		out.println("        --diag <filename or 'stdout' or 'stderr'>: where to send verbose (diagnostic) output");
-		out.println("        --port <number>: which port to use for client-server communication");
-		out.println("        --text: text to process (ignoring file and port input)");
-		out.println("    -t, --timeout <seconds>: soft per-query timeout, always given here in seconds");
-		out.println("              (fractional values allowed); each solver adapter converts this value");
-		out.println("              to whatever unit and flag that solver actually uses (e.g. milliseconds");
-		out.println("              instead of seconds), and, for a solver with no per-query option at all,");
-		out.println("              applies it as a best-effort whole-run limit instead");
-		out.println("    -T, --timeout-total <seconds>: timeout for the solver's whole run (its process");
-		out.println("              lifetime), also always given here in seconds; likewise converted to");
-		out.println("              each solver's own unit/flag, or, if that solver has no whole-run option,");
-		out.println("              applied as a best-effort per-query limit instead");
-		out.println("        --echo: if enabled, commands are echoed to diagnostic output when successfully parsed");
-		out.println("        --abort: if enabled, an error causes immediate exit");
-		out.println("        --noshow: if enabled, error location information is not shown");
-		out.println("    -q, --nosuccess: if enabled, 'success' responses are suppressed");
-		out.println("        --relax: if enabled, extensions to strict SMT-LIB are permitted");
-		out.println("        --testing: if enabled, non-deterministic content in a solver's get-info");
-		out.println("              response (elapsed-time, memory usage) is replaced by a fixed");
-		out.println("              placeholder, for reproducible test output");
+		for (Opt o : OPTIONS) {
+			StringBuilder sb = new StringBuilder("    ");
+			if (o.shortFlag != null) sb.append(o.shortFlag).append(", ");
+			sb.append(o.longFlag);
+			if (o.argSpec != null) sb.append(" ").append(o.argSpec);
+			sb.append(" : ").append(o.description[0]);
+			out.println(sb);
+			for (int i = 1; i < o.description.length; i++) {
+				out.println("        " + o.description[i]);
+			}
+		}
 		out.println("This software is Copyright 2010-2027 by David R. Cok. The accompanying LICENSE ");
 		out.println("    file describes the conditions under which it may be used.");
 	}
