@@ -106,6 +106,11 @@ public class Factory implements IExpr.IFactory, ISort.IFactory, ICommand.IFactor
 	// The following methods implement ICommand.IFactory
 
 	@Override
+	public IScript script() {
+		return new Script();
+	}
+
+	@Override
 	public IScript script(/*@Nullable*/IStringLiteral filename, /*@Nullable*/List<ICommand> commands) {
 		return new Script(filename,commands);
 	}

@@ -57,6 +57,7 @@ public class Script extends Pos.Printable implements IScript {
 	
 	/** Adds a command to the end of the script */
 	//@ requires commands() != null;
+	@Override
 	public void add(ICommand command) {
 		commands.add(command);
 	}

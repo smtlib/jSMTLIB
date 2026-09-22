@@ -44,7 +44,7 @@ public class APIExample {
 			IExpr.ISymbol p = efactory.symbol("p");
 			IExpr notp = efactory.fcn(efactory.symbol("not"),p);
 			IExpr and = efactory.fcn(efactory.symbol("and"),p,notp);
-			ICommand command3 = new org.smtlib.command.C_assert(and);
+			ICommand command3 = smt.smtConfig.commandFactory.assertCommand(and);
 			ICommand command4 = new org.smtlib.command.C_exit();
 			
 			// Printing an AST
@@ -54,11 +54,11 @@ public class APIExample {
 			System.out.println(printer.toString(command3));
 			
 			// Assemble a script
-			ICommand.IScript script = new org.smtlib.impl.Script();
-			script.commands().add(command1);
-			script.commands().add(command2);
-			script.commands().add(command3);
-			script.commands().add(command4);
+			ICommand.IScript script = smt.smtConfig.commandFactory.script();
+			script.add(command1);
+			script.add(command2);
+			script.add(command3);
+			script.add(command4);
 			
 			// Execute the script
 			ISolver solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,z3exec);
@@ -68,11 +68,11 @@ public class APIExample {
 
 			// Type-checking a script
 			IExpr.ISymbol q = efactory.symbol("q");
-			script = new org.smtlib.impl.Script();
-			script.commands().add(command1);
-			script.commands().add(command2);
-			script.commands().add(new org.smtlib.command.C_assert(q));
-			script.commands().add(command4);			
+			script = smt.smtConfig.commandFactory.script();
+			script.add(command1);
+			script.add(command2);
+			script.add(smt.smtConfig.commandFactory.assertCommand(q));
+			script.add(command4);
 			solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,z3exec);
 			solver.start();
 			response = script.execute(solver);

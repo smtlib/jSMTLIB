@@ -41,6 +41,10 @@ public interface ICommand extends INode {
 	
 	/** This is the interface to be used by a concrete ICommand factory. */
 	static public interface IFactory {
+		/** Creates an empty script, with no filename and no commands, ready to have
+		 *  commands added via {@link IScript#add(ICommand)}. */
+		IScript script();
+
 		/** Creates a script object containing the given filename or the given set of commands. */
 		IScript script(/*@Nullable*/IStringLiteral filename, /*@Nullable*/List<ICommand> commands);
 
@@ -150,6 +154,8 @@ public interface ICommand extends INode {
 	static public interface IScript extends INode {
 		/*@Nullable*/ IStringLiteral filename();
 		/*@Nullable*/ List<ICommand> commands();
+		/** Adds a command to the end of the script's command list. */
+		void add(ICommand command);
 		IResponse execute(ISolver solver);
 	}
 	
