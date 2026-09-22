@@ -1,0 +1,2 @@
+(declare-fun par (A) (f A A))
+                      ^

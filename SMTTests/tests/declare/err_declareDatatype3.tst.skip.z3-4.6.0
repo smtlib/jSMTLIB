@@ -1,0 +1,7 @@
+z3-4.6.0 hangs (times out, no response at all) on any (declare-datatype ...)
+command (the singular form) -- confirmed reproducible both here (set-logic ALL,
+then two declare-datatype commands) and standalone as the very first command
+with no preceding set-logic at all (see err_declareDatatype3.tst.skip.z3-4.6.0),
+so this is not about duplicate detection or command ordering, just the bare
+command itself. Does not reproduce with declare-datatypes (plural form). No
+golden captures a hang meaningfully; skip instead.

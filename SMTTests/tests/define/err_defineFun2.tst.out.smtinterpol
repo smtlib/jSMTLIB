@@ -1,0 +1,4 @@
+success
+success
+success
+(error "<stdin>:5:12: Function f is already defined.")

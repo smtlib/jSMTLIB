@@ -1,0 +1,4 @@
+(declare-datatype Color ((red) (green) (blue)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-datatype Color ((red) (green) (blue)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

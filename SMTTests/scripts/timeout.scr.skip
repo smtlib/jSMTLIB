@@ -1,6 +1,0 @@
-Environment-dependent, like scripts/solverBehavior/all-statistics.scr: a real
-cross-platform CI run showed z3-4.3's :reason-unknown wording (and therefore
-this script's exact output and overall exit code) genuinely differs by OS
-("smt" on macOS vs. a clean "timeout" on Linux x64), and Linux-arm64's
-z3-4.3.1 build is separately known-broken. Run manually for an up-to-date,
-single-platform assessment: bash runscript scripts/timeout.scr
