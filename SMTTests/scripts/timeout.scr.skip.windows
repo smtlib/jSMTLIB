@@ -1,0 +1,9 @@
+Windows' yices2 build does not properly attribute a timeout via :reason-unknown
+(returns an empty value instead of "timeout"), unlike every other platform's
+yices2 build here -- confirmed via CI run 35677246677. The core timeout
+mechanism itself (-t 1 causing check-sat to return early) still passes for
+yices2 on Windows; only the :reason-unknown wording is incomplete. Consistent
+with previously-documented Windows yices2 feature gaps (e.g. missing MCSAT
+support) rather than a flaw in this script or in jSMTLIB's -t/-T handling.
+Skip rather than weaken the wording assertion for every other platform to
+accommodate this one incomplete build.

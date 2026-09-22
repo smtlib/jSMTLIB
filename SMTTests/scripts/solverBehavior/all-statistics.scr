@@ -100,14 +100,69 @@ _fail=0
 _tmpdir=$(mktemp -d /tmp/all_statistics_test.XXXXXX)
 trap 'rm -rf "$_tmpdir"' EXIT
 
+# Portable per-solver subprocess timeout. GNU coreutils' `timeout` is standard on
+# Linux, but bare macOS ships neither `timeout` nor `gtimeout` -- those only exist
+# if something (e.g. `brew install coreutils`) put them there, which a bare CI
+# runner image does not. Silently missing this entirely (rather than falling
+# back) is exactly what actually happened before this fix: bash reports "timeout:
+# command not found" to stderr, which the 2>/dev/null on every call site below
+# swallows, so $_exe itself is never even invoked and every solver's every
+# response comes back as a plain empty file -- indistinguishable, at the level of
+# this script's own PASS/FAIL output, from a real, generalized solver failure.
+# That is what every check failed with on macOS CI (both arm64 and x86_64) the
+# first time this script actually ran there (previously .skip'd, so never
+# exercised for real before). A manual background-job-and-kill fallback keeps
+# this script's own timeout guarantee even where neither real implementation is
+# installed, rather than silently degrading to "no timeout at all".
+# Every branch redirects "$@" from $_infile explicitly and directly on the
+# command that's actually invoked -- see _run()'s own comment below for why
+# this must be attached to that exact command, not inherited from an
+# enclosing redirect, for the fallback branch's backgrounded case to work.
+if command -v timeout >/dev/null 2>&1; then
+    _timeout() { local _secs="$1"; shift; timeout "$_secs" "$@" < "$_infile"; }
+elif command -v gtimeout >/dev/null 2>&1; then
+    _timeout() { local _secs="$1"; shift; gtimeout "$_secs" "$@" < "$_infile"; }
+else
+    _timeout() {
+        local _secs="$1"; shift
+        "$@" < "$_infile" &
+        local _pid=$!
+        ( sleep "$_secs" 2>/dev/null && kill -TERM "$_pid" 2>/dev/null ) &
+        local _watcher=$!
+        wait "$_pid" 2>/dev/null
+        local _rc=$?
+        kill "$_watcher" 2>/dev/null
+        wait "$_watcher" 2>/dev/null
+        return $_rc
+    }
+fi
+
 # Pipes stdin (the SMT-LIB script) to the solver named by $_exe, dispatching on
 # $_mode for the invocation style each family needs. Writes stdout to $1.
+#
+# Captures its own stdin to a temp file first ($_infile, deliberately not
+# `local` here -- _timeout() above reads it directly via bash's dynamic
+# function scoping, since every _timeout branch needs it attached literally
+# to the "$@" command line, not just inherited): the fallback _timeout()'s
+# backgrounds the solver with `&`, and in a non-interactive shell (no job
+# control -- exactly what running this script via a ProcessBuilder-launched,
+# non-tty bash does, as ScriptTests.java's checkScript() does) bash redirects
+# an asynchronous command's stdin from /dev/null *unless that exact command
+# has its own explicit redirection in its own command line* -- an inherited
+# redirect from an enclosing function call does not count, which is why an
+# earlier version of this fix (putting `< "$_infile"` only on the outer
+# `_timeout ...` call) did not actually work. That produced exactly this
+# script's failure symptom on real CI (every check-sat-involving run showing
+# completely empty output, "0 open, 0 close") despite passing every local
+# interactive-terminal test.
 _run() {
     local _outfile="$1"
+    _infile=$(mktemp "$_tmpdir/in.XXXXXX")
+    cat > "$_infile"
     case "$_mode" in
-        z3)          timeout 10 "$_exe" -smt2 -in > "$_outfile" 2>/dev/null ;;
-        cvc5|yices2) timeout 10 "$_exe" > "$_outfile" 2>/dev/null ;;
-        smtinterpol) timeout 10 java -jar "$_exe" -q > "$_outfile" 2>/dev/null ;;
+        z3)          _timeout 30 "$_exe" -smt2 -in > "$_outfile" 2>/dev/null ;;
+        cvc5|yices2) _timeout 30 "$_exe" > "$_outfile" 2>/dev/null ;;
+        smtinterpol) _timeout 30 java -jar "$_exe" -q > "$_outfile" 2>/dev/null ;;
     esac
 }
 

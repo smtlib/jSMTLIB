@@ -41,6 +41,10 @@ public interface ICommand extends INode {
 	
 	/** This is the interface to be used by a concrete ICommand factory. */
 	static public interface IFactory {
+		/** Creates an empty script, with no filename and no commands, ready to have
+		 *  commands added via {@link IScript#add(ICommand)}. */
+		IScript script();
+
 		/** Creates a script object containing the given filename or the given set of commands. */
 		IScript script(/*@Nullable*/IStringLiteral filename, /*@Nullable*/List<ICommand> commands);
 
@@ -88,6 +92,10 @@ public interface ICommand extends INode {
 
         /** Creates an echo command object. */
         Iecho echo(IStringLiteral arg);
+
+        /** Creates a comment pseudo-command object, carrying the given raw comment text
+         *  (see {@link Icomment}). */
+        Icomment comment(String text);
 
         /** Creates an exit command object. */
         Iexit exit();
@@ -146,6 +154,8 @@ public interface ICommand extends INode {
 	static public interface IScript extends INode {
 		/*@Nullable*/ IStringLiteral filename();
 		/*@Nullable*/ List<ICommand> commands();
+		/** Adds a command to the end of the script's command list. */
+		void add(ICommand command);
 		IResponse execute(ISolver solver);
 	}
 	
@@ -286,6 +296,19 @@ public interface ICommand extends INode {
 
 	/** Interface for the SMT-LIB {@code exit} command. */
     static public interface Iexit extends ICommand {
+    }
+
+	/** Interface for a comment pseudo-command: not part of the SMT-LIB command grammar
+	 *  itself, but modeled as a real, typed {@link ICommand} (see issue #115) so that
+	 *  every dispatch path -- execution, typed-visitor traversal, and printing -- treats
+	 *  it uniformly with every other command, rather than falling back on {@code
+	 *  IVisitor}'s generic {@code visit(ICommand)} handling (a reflection-based lookup in
+	 *  {@link org.smtlib.sexpr.Printer}'s case). See {@link org.smtlib.command.C_comment}. */
+    static public interface Icomment extends ICommand {
+    	/** Returns the raw comment text (as captured from source, or as supplied directly
+    	 *  via the public API), not yet split into per-line {@code ;}-prefixed form -- see
+    	 *  {@link org.smtlib.command.C_comment#write}. */
+        String text();
     }
 
 	/** Interface for the SMT-LIB {@code get-assertions} command. */

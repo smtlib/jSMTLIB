@@ -38,6 +38,11 @@ import org.smtlib.SMT;
  * own no-quantifier base case).
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/63">issue #63</a>.
+ * <p>
+ * Stays a JUnit test: {@code solvers.Printer}'s output is the text sent to a real solver
+ * process -- it is never itself echoed to stdout/stderr by any CLI option, so its exact
+ * translated shape (which "and"/"or" combiners appear, how many nested quantifiers remain)
+ * isn't something a script test's golden comparison can observe directly.
  */
 public class PrinterMultiParamBoolQuantifierBugTest {
 
@@ -57,7 +62,7 @@ public class PrinterMultiParamBoolQuantifierBugTest {
         IForall forall = config.exprFactory.forall(params, body);
 
         StringWriter sw = new StringWriter();
-        org.smtlib.solvers.Printer.write(sw, forall);
+        org.smtlib.solvers.Printer.write(config, sw, forall);
         String printed = sw.toString();
 
         // The Bool-sorted parameter must never appear as a quantified sort in the output --
@@ -87,7 +92,7 @@ public class PrinterMultiParamBoolQuantifierBugTest {
         IExpr.IExists exists = config.exprFactory.exists(params, body);
 
         StringWriter sw = new StringWriter();
-        org.smtlib.solvers.Printer.write(sw, exists);
+        org.smtlib.solvers.Printer.write(config, sw, exists);
         String printed = sw.toString();
 
         Assert.assertFalse("printed output must not quantify over a Bool sort: " + printed,
@@ -116,7 +121,7 @@ public class PrinterMultiParamBoolQuantifierBugTest {
         IForall forall = config.exprFactory.forall(params, body);
 
         StringWriter sw = new StringWriter();
-        org.smtlib.solvers.Printer.write(sw, forall);
+        org.smtlib.solvers.Printer.write(config, sw, forall);
         String printed = sw.toString();
 
         Assert.assertFalse("printed output must not quantify over a Bool sort: " + printed,

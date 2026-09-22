@@ -64,11 +64,19 @@ public class Pos implements IPos {
 	 *  This toString() exists purely for debugger/IDE display convenience - it must
 	 *  never be relied on for program logic or real output. Production code that needs
 	 *  to render a node must go through IPrinter/Printer explicitly (e.g.
-	 *  smtConfig.defaultPrinter.toString(...)), not this method. */
+	 *  smtConfig.defaultPrinter.toString(...)), not this method.
+	 *  <p>
+	 *  A bare AST node has no reachable Configuration of its own (see issue #22 --
+	 *  Printer's formatting rules, e.g. string-literal quoting, are per-Configuration,
+	 *  not global), so this constructs a fresh, throwaway default Configuration purely
+	 *  to drive formatting here. It's never shared or stored, so this can't reintroduce
+	 *  the static-state leak #22 fixed elsewhere -- it's simply "format using default
+	 *  rules," which is all a debugger/IDE display can reasonably do without knowing
+	 *  which real Configuration actually owns this node. */
 	public static abstract class Printable extends Posable implements INode {
 		@Override
 		public String toString() {
-			return org.smtlib.sexpr.Printer.write(this);
+			return org.smtlib.sexpr.Printer.write(new SMT.Configuration(), this);
 		}
 	}
 
@@ -200,7 +208,7 @@ public class Pos implements IPos {
 				if (c == '\n') line++;
 				else if (c == '\r') {
 					line++;
-					if (charAt(i+1) == '\n') i++;
+					if (i+1 < pos && charAt(i+1) == '\n') i++;
 				}
 			}
 			return line;

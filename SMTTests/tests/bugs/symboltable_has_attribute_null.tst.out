@@ -1,0 +1,6 @@
+success
+success
+success
+success
+success
+(error "f does not accept more than two arguments")

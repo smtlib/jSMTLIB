@@ -1,0 +1,10 @@
+(assert (undeclaredfun x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(set-option :produce-models true)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-const s String)
+^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (= s "line 5 of the report"))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(get-value (s))
+^^^^^^^^^^^^^^^

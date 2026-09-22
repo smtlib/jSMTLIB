@@ -28,6 +28,9 @@ import org.junit.rules.Timeout;
  * Skips (rather than failing) if the jar hasn't been built yet at the expected path --
  * this test verifies packaging, not compilation, and shouldn't block a normal source-only
  * test run.
+ * <p>
+ * Stays a JUnit test: it inspects the built jar's manifest as a file, not the tool's
+ * stdout/stderr behavior, so it has no meaningful .tst/.scr equivalent.
  */
 public class JarMainClassManifestTest {
 

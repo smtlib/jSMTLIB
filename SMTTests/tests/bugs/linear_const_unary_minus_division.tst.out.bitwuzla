@@ -1,0 +1,8 @@
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:12: unsupported logic 'QF_LRA'
+")
+(error "Error writing to solver: (declare-fun x () Real) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (* (- (/ 1 2)) x) 0.0)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (reset) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (set-logic AUFLIRA) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun y () Real) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (< (- (/ 1 2)) y)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

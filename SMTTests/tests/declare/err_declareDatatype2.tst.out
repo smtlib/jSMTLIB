@@ -1,0 +1,4 @@
+success
+success
+success
+(error "Constructor red is already defined")

@@ -52,6 +52,10 @@ import org.smtlib.solvers.Solver_z3_4_3;
  * canned responses, without ever spawning a real z3 process.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/53">issue #53</a>.
+ * <p>
+ * Stays a JUnit test: it needs a fake, recording {@code SolverProcess} to both hand back exact
+ * canned responses (including a simulated pop rejection) and inspect exactly which commands
+ * were sent -- not reproducible against a real solver process.
  */
 public class SolverZ343PushPopStackDepthBugTest {
 

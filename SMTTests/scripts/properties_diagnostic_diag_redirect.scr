@@ -1,0 +1,37 @@
+##EXITCODE 0
+# Issue #104: readProperties() (and the verbose "#reading properties ..." diagnostics it emits)
+# used to run before --diag/--out redirects requested on the same command line were actually
+# applied to smtConfig.log -- a user asking for diagnostics to go to a file via
+# --diag <file> --verbose 1 still got the properties-loading diagnostic on the console instead.
+# Fixed so the redirect is wired up before readProperties() runs.
+PASS=0
+FAIL=0
+pass() { echo "PASS: $1"; PASS=$((PASS + 1)); }
+fail() { echo "FAIL: $1"; FAIL=$((FAIL + 1)); if [ -n "$2" ]; then echo "  $2"; fi; }
+
+_diagfile=$(mktemp)
+trap 'rm -f "$_diagfile"' EXIT
+
+console_err=$($SMT_CMD --diag "$_diagfile" --verbose 1 --solver test --text "(exit)" 2>&1 >/dev/null)
+diagfile_content=$(cat "$_diagfile")
+
+if echo "$console_err" | grep -qF "reading properties"; then
+    fail "the properties diagnostic leaked to the console instead of the --diag file" "got: $console_err"
+else
+    pass "the properties diagnostic did not leak to the console"
+fi
+
+if echo "$diagfile_content" | grep -qF "reading properties"; then
+    pass "the properties diagnostic ended up in the requested --diag file"
+else
+    fail "expected the properties diagnostic in the --diag file" "got: $diagfile_content"
+fi
+
+echo ""
+if [ $FAIL -eq 0 ]; then
+    echo "All $PASS properties-diagnostic-redirect tests PASSED"
+    exit 0
+else
+    echo "$FAIL FAILURES, $PASS passed"
+    exit 1
+fi

@@ -1,0 +1,10 @@
+success
+(error "The argument to a push command is too large: 99999999999999999999")
+success
+success
+success
+(error "The argument to a pop command is too large: 99999999999999999999")
+success
+success
+success
+success

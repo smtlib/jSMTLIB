@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "The rhs must be an integer")
+(error "The rhs must be an integer: (>= (- x y) z)")

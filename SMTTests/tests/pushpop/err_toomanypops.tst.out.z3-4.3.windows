@@ -1,0 +1,4 @@
+success
+success
+(error "line 4 column 6: invalid pop command, argument is greater than the current stack depth")
+success

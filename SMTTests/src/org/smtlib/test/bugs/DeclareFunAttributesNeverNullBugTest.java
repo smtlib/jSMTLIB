@@ -25,6 +25,11 @@ import org.smtlib.command.C_declare_fun;
  * argSorts()}'s existing guarantee.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/42">issue #42</a>.
+ * <p>
+ * Stays a JUnit test: null vs. an empty list is not observable through any command's printed
+ * output or response (its one consumer already treated them identically), and the 5-arg
+ * constructor exercised by the second test is only reachable via direct API use, never via
+ * the parser.
  */
 public class DeclareFunAttributesNeverNullBugTest {
 

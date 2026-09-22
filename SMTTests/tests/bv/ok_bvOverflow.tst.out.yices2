@@ -1,9 +1,9 @@
 success
 success
 success
-(error "at line 4, column 10: undefined term: bvnego")
-(error "Error writing to solver: (assert (bvuaddo b c)) java.io.IOException: Stream closed")
-(error "Error writing to solver: (assert (bvsaddo b c)) java.io.IOException: Stream closed")
-(error "Error writing to solver: (assert (bvumulo b c)) java.io.IOException: Stream closed")
-(error "Error writing to solver: (assert (bvsmulo b c)) java.io.IOException: Stream closed")
-(error "Error writing to solver: (check-sat) java.io.IOException: Stream closed")
+(error "at line 5, column 10: undefined term: bvnego")
+(error "Error writing to solver: (assert (bvuaddo b c)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (bvsaddo b c)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (bvumulo b c)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (bvsmulo b c)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

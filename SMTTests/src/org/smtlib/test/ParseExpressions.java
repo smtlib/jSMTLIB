@@ -47,7 +47,7 @@ public class ParseExpressions {
 		IParser p = new org.smtlib.sexpr.Parser(config,source);
 		IExpr e = p.parseExpr();
 		StringWriter sw = new StringWriter();
-		if (e != null) org.smtlib.sexpr.Printer.write(sw,e);
+		if (e != null) org.smtlib.sexpr.Printer.write(config,sw,e);
 		Assert.assertEquals(output,sw.toString()); // expected,actual
 		Assert.assertTrue("Did not expect an error",listener.msgs.isEmpty());
 	}
@@ -64,7 +64,7 @@ public class ParseExpressions {
 			IParser p = new org.smtlib.sexpr.Parser(config,source);
 			IAttributeValue e = p.parseAttributeValue();
 			StringWriter sw = new StringWriter();
-			if (e != null) org.smtlib.sexpr.Printer.write(sw,e);
+			if (e != null) org.smtlib.sexpr.Printer.write(config,sw,e);
 			Assert.assertEquals(output,sw.toString()); // expected,actual
 		} catch (ParserException e) {
 			Assert.assertEquals(output,"ParserException: " + e.getMessage()); // expected,actual

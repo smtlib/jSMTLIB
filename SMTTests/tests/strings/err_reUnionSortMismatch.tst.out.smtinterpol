@@ -1,3 +1,3 @@
 success
 success
-(error "<stdin>:3:24: Application of function null does not type check.")
+(error "<stdin>:4:24: Application of function null does not type check.")

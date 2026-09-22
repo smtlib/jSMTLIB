@@ -1,0 +1,5 @@
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:11:12: unsupported logic 'QF_IDL'
+")
+(error "Error writing to solver: (declare-fun x () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun y () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (and (>= x y) (>= (- x 1) y))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

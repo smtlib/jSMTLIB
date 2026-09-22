@@ -1,0 +1,24 @@
+(assert (forall ((y Int)) (>= y 0)))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (= (* x y) 0))
+        ^^^^^^^^^^^^^
+(declare-fun f (Int) Int)
+             ^
+(declare-sort S 0)
+              ^
+(assert (forall ((y Int)) (>= y 0)))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (= (* x y) 0))
+        ^^^^^^^^^^^^^
+(set-logic QF_UFBV)
+           ^^^^^^^
+(assert (forall ((y Bool)) y))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(set-logic QF_UFBV)
+           ^^^^^^^
+(declare-fun f (Bool) Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort S 0)
+^^^^^^^^^^^^^^^^^^
+(assert (forall ((y Int)) (>= y 0)))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^

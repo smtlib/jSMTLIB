@@ -12,7 +12,6 @@ package org.smtlib.solvers;
 
 import org.smtlib.*;
 import org.smtlib.IExpr.IKeyword;
-import org.smtlib.impl.Response;
 
 /** This class is an adapter that takes the SMT-LIB ASTs and translates them into yices2 commands */
 public class Solver_yices2 extends Solver_smt implements ISolver {
@@ -82,15 +81,14 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
 	// substring, e.g. "(:error-behavior immediate-exit)" from get-info, which it wrapped
 	// in a bogus error response. AbstractSolver's default (a real S-expression parse) is
 	// correct for current yices2.
-	@Override
-	public IResponse get_option(IKeyword key) {
-		IResponse r = super.get_option(key);
-		if (r instanceof Response.Seq) {
-			// yices2 implements get-option incorrectly, hence this computation
-			return ((Response.Seq)r).attributes().get(0).attrValue();
-		}
-		return r;
-	}
+	//
+	// get_option() used to be overridden here too, unwrapping a Response.Seq that current
+	// yices2 apparently no longer produces: tried 13 different option keys (booleans,
+	// strings, numerals, unsupported cases) against a real yices2 binary and never
+	// triggered the wrapped shape the override was unwrapping. Removed rather than kept as
+	// untested defensive code; AbstractSolver's default get_option() is correct for
+	// current yices2. If a wrapped response resurfaces on some other yices2 build, fix it
+	// then with a real repro rather than carrying an unverifiable workaround indefinitely.
 
 	// check_sat() used to re-send a legacy native "(check)" command after the standard
 	// "(check-sat)" and trust *that* response instead -- current yices2 rejects "(check)"

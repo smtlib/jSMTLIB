@@ -18,7 +18,11 @@ public class APIExample {
 			System.err.println("ERROR: SMT_SOLVER_DIR directory does not exist: " + solvers);
 			System.exit(1);
 		}
-		String z3exec = solvers + "/z3-4.3.1";
+		// A bare name relative to SMT_SOLVER_DIR, not solvers + "/z3-4.3.1": createSolver()
+		// itself resolves a relative executable against SMT_SOLVER_DIR (see
+		// SMT.Configuration#createSolver / SMT#resolveExecutablePath), so pre-resolving it
+		// here would get it resolved a second time, doubling the SMT_SOLVER_DIR prefix.
+		String z3exec = "z3-4.3.1";
 		
 		
 		try {
@@ -44,7 +48,7 @@ public class APIExample {
 			IExpr.ISymbol p = efactory.symbol("p");
 			IExpr notp = efactory.fcn(efactory.symbol("not"),p);
 			IExpr and = efactory.fcn(efactory.symbol("and"),p,notp);
-			ICommand command3 = new org.smtlib.command.C_assert(and);
+			ICommand command3 = smt.smtConfig.commandFactory.assertCommand(and);
 			ICommand command4 = new org.smtlib.command.C_exit();
 			
 			// Printing an AST
@@ -54,26 +58,26 @@ public class APIExample {
 			System.out.println(printer.toString(command3));
 			
 			// Assemble a script
-			ICommand.IScript script = new org.smtlib.impl.Script();
-			script.commands().add(command1);
-			script.commands().add(command2);
-			script.commands().add(command3);
-			script.commands().add(command4);
+			ICommand.IScript script = smt.smtConfig.commandFactory.script();
+			script.add(command1);
+			script.add(command2);
+			script.add(command3);
+			script.add(command4);
 			
 			// Execute the script
-			ISolver solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,z3exec);
+			ISolver solver = smt.smtConfig.createSolver("z3-4.3", z3exec);
 			solver.start();
 			IResponse response = script.execute(solver);
 			System.out.println(printer.toString(response));
 
 			// Type-checking a script
 			IExpr.ISymbol q = efactory.symbol("q");
-			script = new org.smtlib.impl.Script();
-			script.commands().add(command1);
-			script.commands().add(command2);
-			script.commands().add(new org.smtlib.command.C_assert(q));
-			script.commands().add(command4);			
-			solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,z3exec);
+			script = smt.smtConfig.commandFactory.script();
+			script.add(command1);
+			script.add(command2);
+			script.add(smt.smtConfig.commandFactory.assertCommand(q));
+			script.add(command4);
+			solver = smt.smtConfig.createSolver("z3-4.3", z3exec);
 			solver.start();
 			response = script.execute(solver);
 			System.out.println(printer.toString(response));
@@ -83,7 +87,7 @@ public class APIExample {
 			// THIS API WILL BE CHANGING
 			ISort.IFactory sortfactory = smt.smtConfig.sortFactory;
 			ISort boolsort = sortfactory.createSortExpression(efactory.symbol("Bool"));
-			solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,z3exec);
+			solver = smt.smtConfig.createSolver("z3-4.3", z3exec);
 			solver.start();
 			IResponse r = solver.set_logic("QF_UF",null);
 			r = solver.declare_fun(new C_declare_fun(p,new java.util.LinkedList<ISort>(),boolsort));
@@ -100,7 +104,7 @@ public class APIExample {
 			List<IExpr.IIndex> nums = new LinkedList<IExpr.IIndex>();
 			nums.add(efactory.numeral(32)); // TODO - room for improvement in ease of use here...
 			ISort bv32 = sortfactory.createSortExpression(efactory.id(efactory.symbol("BitVec"),nums));
-			solver = new org.smtlib.solvers.Solver_z3_4_3(smt.smtConfig,z3exec);
+			solver = smt.smtConfig.createSolver("z3-4.3", z3exec);
 			solver.start();
 			solver.set_option(efactory.keyword(":produce-models"),efactory.symbol("true"));
 			r = solver.set_logic("QF_BV",null);
@@ -129,6 +133,8 @@ public class APIExample {
 		} catch (java.io.IOException e) {
 			// Can happen if the ISource is reading from a file
 		} catch (IParser.ParserException e) {
+			System.out.println(e.getMessage());
+		} catch (ISolver.CreationException e) {
 			System.out.println(e.getMessage());
 		}
 	}

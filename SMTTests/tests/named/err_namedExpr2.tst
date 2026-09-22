@@ -8,4 +8,4 @@
 (assert (let ((r true)) (! r :named R))) ; error - R already defined
 (assert (let ((r true)) (! r :named R2))) ; OK
 (assert (forall ((r Bool)) (let ((r true)) (! r :named RR)))) ; OK
-(assert (forall ((q Bool)) (let ((r q)) (! r :named RRR)))) ; error - FIXME
+(assert (forall ((q Bool)) (let ((r q)) (! r :named RRR)))) ; error - r's value q is itself a free variable

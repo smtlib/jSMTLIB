@@ -2,5 +2,5 @@ success
 success
 success
 success
-(error "line 5 column 18: Invalid function declaration: unknown sort 'Bool'")
+(error "line 6 column 18: Invalid function declaration: unknown sort 'Bool'")
 sat

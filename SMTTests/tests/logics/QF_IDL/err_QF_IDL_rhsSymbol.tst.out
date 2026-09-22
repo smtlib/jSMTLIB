@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "rhs must be a symbol if the lhs is a symbol")
+(error "rhs must be a symbol if the lhs is a symbol: (>= x 3)")

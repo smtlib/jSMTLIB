@@ -1,0 +1,47 @@
+##EXITCODE 0
+# Issue #72: Lexer.abortLine() (called from SMT.java's interactive-mode error recovery, after
+# a parse error, to skip to the next line) scanned forward for \r/\n with no end-of-input
+# check, walking past the end of the buffer when the last line has no trailing newline.
+# Unfixed, a growing/interactive source (CharSequenceReader, as real stdin uses) made this
+# hang forever rather than throw, since csr.length() reports Integer.MAX_VALUE until charAt()
+# itself lazily discovers true end-of-input. Reproduced through the real, reachable path:
+# --abort, interactive mode (no files given, so stdin is read), a command that fails to parse
+# ("foo"/"(foo", not a recognized command), on the last line of input with no trailing
+# newline. `timeout` guards against a regression hanging this script forever instead of just
+# failing it.
+#
+# A JUnit test (LexerAbortLineBugTest) still separately covers a plain, non-growing
+# CharSequence source (e.g. a literal Java String) hitting the same bug -- not reachable here,
+# since every real CLI input path (files, stdin, --text) wraps its input in a growing
+# CharSequenceReader instead.
+PASS=0
+FAIL=0
+pass() { echo "PASS: $1"; PASS=$((PASS + 1)); }
+fail() { echo "FAIL: $1"; FAIL=$((FAIL + 1)); if [ -n "$2" ]; then echo "  $2"; fi; }
+
+out=$(printf '(foo' | timeout 10 $SMT_CMD --solver test --abort 2>&1)
+rc=$?
+if [ $rc -eq 124 ]; then
+    fail "the run hung instead of completing (StringIndexOutOfBoundsException-turned-hang regression)"
+elif echo "$out" | grep -qi "StringIndexOutOfBoundsException"; then
+    fail "abortLine() threw instead of handling end-of-input cleanly" "got: $out"
+else
+    pass "an unparseable final line with no trailing newline does not crash or hang the run"
+fi
+
+out2=$(printf 'ab' | timeout 10 $SMT_CMD --solver test --abort 2>&1)
+rc2=$?
+if [ $rc2 -eq 124 ]; then
+    fail "a bare non-command final line with no trailing newline hung the run"
+else
+    pass "a plain (non-command) final line with no trailing newline does not hang the run"
+fi
+
+echo ""
+if [ $FAIL -eq 0 ]; then
+    echo "All $PASS Lexer.abortLine() end-of-input tests PASSED"
+    exit 0
+else
+    echo "$FAIL FAILURES, $PASS passed"
+    exit 1
+fi

@@ -1,0 +1,7 @@
+success
+success
+success
+success
+(error "logic AUFLIRA is not supported")
+(error "at line 9, column 19: undefined sort: Real")
+(error "Error writing to solver: (assert (< (- (/ 1 2)) y)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

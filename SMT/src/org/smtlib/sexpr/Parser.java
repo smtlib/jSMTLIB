@@ -127,7 +127,32 @@ public class Parser extends Lexer implements IParser {
 	
 	/** This field is used to communicate the beginning LP while parsing commands */
 	public /*@Nullable*/ ILexToken savedlp;
-	
+
+	/** The command most recently returned by parseCommand(), or null once its own
+	 *  same-line trailing text (if any) has already been attached (see the top of
+	 *  parseCommand()'s main loop) or it was itself a C_comment/null (neither of which can
+	 *  have same-line trailing text of their own attached to them). Deliberately attached
+	 *  retroactively, on the NEXT call's own pre-existing isEOD() lookahead, rather than by
+	 *  forcing an extra lookahead right when this command finishes parsing -- forcing it
+	 *  early was tried first and reverted, because it makes the underlying reader look for
+	 *  more input earlier than before, which shifted interactive-mode prompt timing. This
+	 *  field is safe to set after the fact because trailingText is purely descriptive
+	 *  metadata (used only if something later prints this command back out), never
+	 *  consulted during execution. */
+	private Command lastReturnedCommand;
+
+	/** Set at each of parseCommand()'s own skipThruRP() call sites, right after an error
+	 *  elsewhere in the command was already reported and skipThruRP() was used to resync,
+	 *  when that resync may have left a stray, already-accounted-for token behind --
+	 *  skipThruRP() closes exactly one level of nesting, so an error from a sub-expression
+	 *  nested two or more parens deep inside the command (e.g. the "(as)" in
+	 *  "(assert (as))") leaves the command's own outer ")" unconsumed even though the real
+	 *  problem was already reported once. Checked and reset at the top of the next
+	 *  parseCommand() attempt (see there): when set, a failed parseLP() is this same
+	 *  leftover, not a fresh problem, so it is skipped silently as before rather than
+	 *  reported a confusing second time. */
+	private boolean recoveringFromNestedError = false;
+
 	/** This field is used only to communicate the position of the name of a command to the command creator
 	 * (instead of using method arguments).
 	 */
@@ -163,6 +188,21 @@ public class Parser extends Lexer implements IParser {
 					// whitespace at all precedes the next token -- not only when a real
 					// comment does. Only genuinely non-blank content (i.e. an actual comment)
 					// should become a C_comment; plain whitespace must not.
+					//
+					// The same isEOD() call also populates sameLineTrailingText, if the
+					// whitespace/comment run it just scanned started on the same physical line
+					// as whatever token preceded it (see Lexer.getToken(Matcher)) -- i.e. it
+					// shares a line with the command this Parser most recently returned, not
+					// with whatever is parsed next. Attach it there now, at exactly the point
+					// this lookahead already happened before this feature existed, so that
+					// nothing about read/prompt timing changes (see lastReturnedCommand's own
+					// doc comment for why this isn't done eagerly right after that command
+					// finishes parsing instead).
+					if (sameLineTrailingText != null) {
+						if (lastReturnedCommand != null) lastReturnedCommand.setTrailingText(sameLineTrailingText);
+						sameLineTrailingText = null;
+					}
+					lastReturnedCommand = null;
 					if (prefixCommentText != null && !prefixCommentText.trim().isEmpty()) {
 						String text = prefixCommentText;
 						int start = prefixCommentStart, end = prefixCommentEnd;
@@ -173,11 +213,35 @@ public class Parser extends Lexer implements IParser {
 					}
 					prefixCommentText = null;
 					if (atEnd) return null;
+					// Captured and reset here, before the attempt below, so it reflects only
+					// whether the OUTER catch's skipThruRP() (further down) just ran, on the
+					// immediately preceding parseCommand() call -- see the field's own javadoc.
+					boolean wasRecoveringFromNestedError = recoveringFromNestedError;
+					recoveringFromNestedError = false;
 					try {
 						savedlp = parseLP();
 					} catch (ParserException e) {
-						// Stray token at command level (e.g. left over from error recovery):
-						// skip to the next LP, matching old null-return behavior -- but log
+						// Stray token at command level: either a genuinely fresh problem (e.g.
+						// a bare identifier, or a comment missing its leading ';' so its words
+						// are lexed as bare tokens instead), or a single already-accounted-for
+						// leftover token from the outer catch's imperfect skipThruRP() resync
+						// (see recoveringFromNestedError's javadoc) -- only the former should be
+						// reported: reporting the latter too would be a confusing second message
+						// for one problem already described. A fresh problem previously wasn't
+						// reported at all unless --verbose was on, which in interactive mode
+						// looked like the parser was just hanging (it was actually blocking on
+						// getToken(), below, waiting for a '(' that was never coming), and in a
+						// file could silently discard everything after the stray token if no
+						// further '(' ever appeared.
+						if (!wasRecoveringFromNestedError) {
+							// peekToken() re-examines the same token parseLP() just failed on
+							// (parseLP() never consumes on failure), so this is safe to call here.
+							ParserException reported = error(
+									"Expected a command (beginning with '(') or a comment (beginning with ';') here, not a #",
+									peekToken());
+							if (reported.getMessage() != null) smtConfig.log.logError(smtConfig.responseFactory.error(reported.getMessage(), reported.pos()));
+						}
+						// Skip to the next LP, matching old null-return behavior -- but log
 						// how many tokens were skipped, for debuggability.
 						int skipped = 0;
 						do { if (isEOD()) return null; getToken(); ++skipped; } while (!isLP());
@@ -188,6 +252,7 @@ public class Parser extends Lexer implements IParser {
 					Symbol sym = parseSymbolOrReservedWord("Expected a symbol here, not a #");
 					if (sym == null) {
 						skipThruRP();
+						recoveringFromNestedError = true;
 						return null;
 					}
 					commandName = sym;
@@ -245,12 +310,24 @@ public class Parser extends Lexer implements IParser {
 					}
 					if (command == null) {
 						skipThruRP();
+						recoveringFromNestedError = true;
 					} else if (rp == null) {
 						skipThruRP();
+						recoveringFromNestedError = true;
 						command = null;
 					}
 					if (command != null) {
 						setPos(command,pos(savedlp.pos(),rp.pos()));
+						// Remember this command so that the NEXT parseCommand() call's own
+						// (already-existing, unmoved) isEOD() lookahead -- see the top of this
+						// loop -- can retroactively attach any sameLineTrailingText it finds to
+						// it. Forcing that lookahead early, right here, was tried first and
+						// reverted: it forces the underlying reader to look for more input
+						// before it otherwise would (e.g. before this command's own response is
+						// even processed), which shifted interactive-mode prompt timing.
+						// Attaching it later, at the same point the lookahead already
+						// naturally happens, changes nothing about when anything is read.
+						lastReturnedCommand = command;
 					}
 				} catch (IParser.AbortInputException e) {
 					smtConfig.log.logOut("Input aborted");
@@ -260,6 +337,7 @@ public class Parser extends Lexer implements IParser {
 				    // FIXME - is an RP a good recovery token? -- used to be end of line
 					if (e.getMessage() != null) lastError = smtConfig.log.logError(smtConfig.responseFactory.error(e.getMessage(),e.pos()));
 					try { skipThruRP(); } catch (ParserException ex) { /* already recovering */ }
+					recoveringFromNestedError = true;
 				}
 				break;
 			}
@@ -868,8 +946,8 @@ public class Parser extends Lexer implements IParser {
 		try {
 			@SuppressWarnings("unchecked")
 			Class<? extends ILogic> clazz = (Class<? extends ILogic>)Class.forName(clazzName);
-			Constructor<? extends ILogic> con = clazz.getConstructor(ISymbol.class,Collection.class);
-			return con.newInstance(name,attributes);
+			Constructor<? extends ILogic> con = clazz.getConstructor(SMT.Configuration.class,ISymbol.class,Collection.class);
+			return con.newInstance(smtConfig,name,attributes);
 		} catch (ClassNotFoundException e) {
 			// No dedicated restriction class for this logic name - falls back to an
 			// unrestricted logic (no noQuantifiers/sort/function-declaration checks).
@@ -895,7 +973,7 @@ public class Parser extends Lexer implements IParser {
 			throw error("An exception occured when instantiating class " + clazzName + ": " + e,
 					pos(lp.pos().charStart(),currentPos()));
 		}
-		return new SMTExpr.Logic(name,attributes);
+		return new SMTExpr.Logic(smtConfig,name,attributes);
 	}
 	
 	/** Parses a theory definition (including beginning and ending parentheses, returning null

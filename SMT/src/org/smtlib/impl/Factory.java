@@ -29,14 +29,22 @@ import org.smtlib.sexpr.Utils;
  * The various factories are all implemented together in this one class because they
  * use each other mutually; combining them lets them be overridden in a consistent fashion. */
 public class Factory implements IExpr.IFactory, ISort.IFactory, ICommand.IFactory {
-	
-	/** Initializes the SMT configuration object for the implementation 
+
+	/** The configuration this factory's instances (e.g. StringLiteral) are scoped to;
+	 *  see issue #22. */
+	protected final SMT.Configuration smtConfig;
+
+	public Factory(SMT.Configuration smtConfig) {
+		this.smtConfig = smtConfig;
+	}
+
+	/** Initializes the SMT configuration object for the implementation
 	 * in org.smtlib.impl - all the appropriate factories, etc.
 	 * @param config the configuration object to initialize
 	 */
 	public static void initFactories(SMT.Configuration config) {
 		config.responseFactory = new Response.Factory(config);
-		Factory f = new Factory();
+		Factory f = new Factory(config);
 		config.sortFactory = f;
 		config.exprFactory = f;
 		config.commandFactory = f;
@@ -98,6 +106,11 @@ public class Factory implements IExpr.IFactory, ISort.IFactory, ICommand.IFactor
 	// The following methods implement ICommand.IFactory
 
 	@Override
+	public IScript script() {
+		return new Script();
+	}
+
+	@Override
 	public IScript script(/*@Nullable*/IStringLiteral filename, /*@Nullable*/List<ICommand> commands) {
 		return new Script(filename,commands);
 	}
@@ -117,6 +130,7 @@ public class Factory implements IExpr.IFactory, ISort.IFactory, ICommand.IFactor
 	@Override public ICommand.Idefine_funs_rec   define_funs_rec(List<IExpr.IFunctionDeclaration> ds, List<IExpr> bs)                  { return new C_define_funs_rec(ds, bs); }
 	@Override public ICommand.Idefine_sort       define_sort(ISymbol id, List<IParameter> ps, ISort e)                                 { return new C_define_sort(id, ps, e); }
 	@Override public ICommand.Iecho              echo(IStringLiteral arg)                                                               { return new C_echo(arg); }
+	@Override public ICommand.Icomment           comment(String text)                                                                   { return new C_comment(text); }
 	@Override public ICommand.Iexit              exit()                                                                                 { return new C_exit(); }
 	@Override public ICommand.Iget_assertions    get_assertions()                                                                       { return new C_get_assertions(); }
 	@Override public ICommand.Iget_assignment    get_assignment()                                                                       { return new C_get_assignment(); }
@@ -154,12 +168,12 @@ public class Factory implements IExpr.IFactory, ISort.IFactory, ICommand.IFactor
 
 	@Override
 	public IStringLiteral unquotedString(String v) {
-		return new StringLiteral(v,false);
+		return new StringLiteral(smtConfig,v,false);
 	}
 
 	@Override
 	public IStringLiteral quotedString(String v) {
-		return new StringLiteral(v,true);
+		return new StringLiteral(smtConfig,v,true);
 	}
 
 	@Override

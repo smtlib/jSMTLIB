@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "<stdin>:5:12: Builtin function bvudiv does not support argument sorts ()")
+(error "<stdin>:8:12: Builtin function bvudiv does not support argument sorts ()")

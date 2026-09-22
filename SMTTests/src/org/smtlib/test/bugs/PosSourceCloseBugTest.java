@@ -35,6 +35,10 @@ import org.smtlib.impl.Pos;
  * currently FAILS against today's code (NullPointerException instead), documenting the bug.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/74">issue #74</a>.
+ * <p>
+ * Stays a JUnit test: as the class doc already notes, no call site in this codebase ever
+ * closes a {@code CharSequence}-backed {@code Source} -- it's reachable only via direct API
+ * use (as {@code APIExample.java} demonstrates), never through any CLI-driven script.
  */
 public class PosSourceCloseBugTest {
 

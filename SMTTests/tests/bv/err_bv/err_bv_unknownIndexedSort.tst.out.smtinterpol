@@ -1,2 +1,2 @@
 success
-(error "<stdin>:2:18: Undeclared sort ((_ BitVecx [0]) 0)")
+(error "<stdin>:3:18: Undeclared sort ((_ BitVecx [0]) 0)")

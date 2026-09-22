@@ -66,7 +66,9 @@ public class Log {
 	 * are reflected here as well.
 	 */
 	public class StandardListener implements IListener {
-		protected String prompt = ""; // TODO _ I don't think prompt is being used anywhere - remove it
+		/** The current indent prefix (see {@link IListener#indent}), used by {@link #logError(IResponse.IError)}
+		 *  below to align an error-location caret diagram with the prompt the user actually saw it after. */
+		protected String prompt = "";
 		
 		@Override
 		public void indent(String chars) {

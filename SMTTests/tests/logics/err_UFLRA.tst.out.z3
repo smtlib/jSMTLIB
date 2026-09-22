@@ -1,4 +1,4 @@
 success
 success
 success
-(error "line 4 column 21: logic does not support nonlinear arithmetic")
+(error "line 6 column 22: logic does not support nonlinear arithmetic")

@@ -40,6 +40,10 @@ import org.smtlib.solvers.Solver_z3_4_3_2;
  * spawning a real z3 process.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/52">issue #52</a>.
+ * <p>
+ * Stays a JUnit test: it needs a fake {@code SolverProcess} handing back exact canned
+ * responses (including a real z3-4.3.2 duplicate-success quirk) -- not reproducible against a
+ * real solver process, whose exact response text/timing can't be scripted this precisely.
  */
 public class SolverZ3432PushDiscardsErrorBugTest {
 

@@ -32,6 +32,10 @@ import org.smtlib.sexpr.Sexpr;
  * does; non-String token values are printed exactly as before ({@code String.valueOf}).
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/87">issue #87</a>.
+ * <p>
+ * Stays a JUnit test: as the class doc already notes, {@code ISexpr.IToken<T>} is not
+ * constructed anywhere in this codebase's own parsing/command paths -- it is public API
+ * surface reachable only via direct use of {@code Sexpr.Token}, never through a parsed script.
  */
 public class PrinterTokenStringQuotingBugTest {
 
@@ -44,7 +48,7 @@ public class PrinterTokenStringQuotingBugTest {
         Sexpr.Token<String> token = new Sexpr.Token<>(raw);
 
         StringWriter sw = new StringWriter();
-        Printer.write(sw, token);
+        Printer.write(config, sw, token);
 
         Assert.assertEquals(config.utils.quote(raw), sw.toString());
     }
@@ -54,10 +58,11 @@ public class PrinterTokenStringQuotingBugTest {
         // A String value with nothing that would break tokenization must still print
         // as-is, unquoted -- matching PrinterCoverageTest.sexprToken()'s existing
         // expectation, which this must not regress.
+        SMT.Configuration config = new SMT.Configuration();
         Sexpr.Token<String> token = new Sexpr.Token<>("hello");
 
         StringWriter sw = new StringWriter();
-        Printer.write(sw, token);
+        Printer.write(config, sw, token);
 
         Assert.assertEquals("hello", sw.toString());
     }
@@ -68,7 +73,7 @@ public class PrinterTokenStringQuotingBugTest {
         Sexpr.Token<Integer> token = new Sexpr.Token<>(42);
 
         StringWriter sw = new StringWriter();
-        Printer.write(sw, token);
+        Printer.write(config, sw, token);
 
         Assert.assertEquals("42", sw.toString());
     }

@@ -97,7 +97,7 @@ public class Lexer {
 	/** Creates a lexical token for a end-of-data at the given position */
 	public LexToken EOD(int cpos) { return new EOD(cpos); }
 
-	private static String EOD_KIND = "eod".intern();
+	private static final String EOD_KIND = "eod".intern();
 
 	/** A class that represents a lexical token corresponding to the end of input */
 	private class EOD extends LexToken implements IPLexToken {
@@ -123,7 +123,11 @@ public class Lexer {
 	/** The Matcher used to do lexical scanning */
 	final protected Matcher matcher;
 	
-	/** Any comment text found before the current token */
+	/** Any comment text found before the current token, starting from the first line
+	 *  terminator onward -- i.e. excluding whatever is captured separately in {@link
+	 *  #sameLineTrailingText} below. This is what becomes a standalone C_comment node (see
+	 *  command/C_comment.java): text that occupies its own line(s), not sharing a line with
+	 *  whatever token preceded it. */
 	public String prefixCommentText;
 
 	/** The character range prefixCommentText was captured from (before the one leading
@@ -131,6 +135,19 @@ public class Lexer {
 	 *  caller that turns a comment into its own node (see command/C_comment.java) give that
 	 *  node an accurate pos(). */
 	public int prefixCommentStart, prefixCommentEnd;
+
+	/** Whitespace/comment text, if any, found between the previous token and the first line
+	 *  terminator after it -- i.e. sharing a physical line with whatever token preceded it
+	 *  (typically a trailing "; comment" right after a command's closing parenthesis). Null
+	 *  unless that same-line span actually contains a comment (plain trailing whitespace
+	 *  doesn't count). Kept separate from {@link #prefixCommentText} so a caller can attach
+	 *  it to the command that precedes it (see Parser.parseCommand()) rather than folding it
+	 *  into the next command's leading comment -- the two are semantically different: this
+	 *  is "trailing decoration of a real source line," not "a comment line of its own." A
+	 *  same-line span can contain at most one comment, since a comment consumes to end of
+	 *  line by construction, so nothing else can follow it before the line terminator. */
+	public String sameLineTrailingText;
+	public int sameLineTrailingStart, sameLineTrailingEnd;
 	
 	/** The source of input used in this lexer; typically a different
 	 * lexer object will be used for each source (e.g. different file, string,
@@ -211,7 +228,7 @@ public class Lexer {
 	 * would help, but instead, I just changed the regex to match the opening quote - then we
 	 * scan the string by hand and adjust the matcher position afterwards.
 	 */
-	public static Pattern combined = Pattern.compile(
+	public static final Pattern combined = Pattern.compile(
 			"((?:" + rgxWhiteSpace + "|" + rgxComment + ")*)((" // first skip all whitespace and comments
 				+ "\\(" + ")|("        	// group 3: left parenthesis
 				+ "\\)" + ")|("			// group 4: right parenthesis
@@ -260,7 +277,7 @@ public class Lexer {
 	}
 
 	private static class LexStringLiteral extends StringLiteral implements ILexToken, ISexpr.IToken<String> {
-		public LexStringLiteral(String n, boolean quoted) { super(n,quoted); }
+		public LexStringLiteral(SMT.Configuration smtConfig, String n, boolean quoted) { super(smtConfig,n,quoted); }
 		@Override public String kind() { return "string-literal"; }
 	}
 
@@ -372,7 +389,7 @@ public class Lexer {
 	/** Returns the first token found in the given text */
 	public ILexToken getToken(String text)  throws ParserException {
 		if (!text.isEmpty() && text.charAt(0) == '"') {
-			return new LexStringLiteral(text,true);
+			return new LexStringLiteral(smtConfig,text,true);
 		}
 		Matcher matcher = combined.matcher(text);
 		return getToken(matcher);
@@ -396,12 +413,45 @@ public class Lexer {
 		ILexToken token = null;
 		if (matcher.lookingAt()) {
 			prefixCommentText = null;
+			sameLineTrailingText = null;
 			if (matcher.groupCount() >= 1 && matcher.end(1) != matcher.start(1)) {
-				prefixCommentText = matcher.group(1);
-				prefixCommentStart = matcher.start(1);
-				prefixCommentEnd = matcher.end(1);
-				if (prefixCommentText.startsWith("\n")) { prefixCommentText = prefixCommentText.substring(1); prefixCommentStart++; }
-				else if (prefixCommentText.startsWith("\r\n")) { prefixCommentText = prefixCommentText.substring(2); prefixCommentStart += 2; }
+				String full = matcher.group(1);
+				int fullStart = matcher.start(1);
+				int fullEnd = matcher.end(1);
+				// Split at the first line terminator: group 1 is guaranteed (by construction
+				// of the combined regex) to consist purely of whitespace/comment runs, never
+				// a real token, so there is no risk of this splitting into the middle of
+				// something else. Anything before the first line terminator shares a physical
+				// line with whatever token preceded this span (a trailing same-line comment,
+				// if it's not just whitespace); anything from the line terminator onward is
+				// genuinely leading material for whatever token follows. fullStart == 0 means
+				// this span starts at the very beginning of the source -- nothing precedes it
+				// at all, so there is no "previous token's line" for anything here to trail; a
+				// comment that happens to be the first thing in the file must always be
+				// treated as leading (for whatever real command eventually follows), never as
+				// trailing (of nothing).
+				int nl = -1;
+				for (int i = 0; i < full.length(); i++) {
+					char c = full.charAt(i);
+					if (c == '\n' || c == '\r') { nl = i; break; }
+				}
+				if (nl > 0 && fullStart > 0) {
+					String sameLine = full.substring(0, nl);
+					if (!sameLine.trim().isEmpty()) {
+						sameLineTrailingText = sameLine;
+						sameLineTrailingStart = fullStart;
+						sameLineTrailingEnd = fullStart + nl;
+					}
+					full = full.substring(nl);
+					fullStart = fullStart + nl;
+				}
+				if (!full.isEmpty()) {
+					prefixCommentText = full;
+					prefixCommentStart = fullStart;
+					prefixCommentEnd = fullEnd;
+					if (prefixCommentText.startsWith("\n")) { prefixCommentText = prefixCommentText.substring(1); prefixCommentStart++; }
+					else if (prefixCommentText.startsWith("\r\n")) { prefixCommentText = prefixCommentText.substring(2); prefixCommentStart += 2; }
+				}
 			}
 			int end = matcher.end(2);
 			//			System.out.println("MATCHED RANGE " + matcher.start() + " " + matcher.end() + " !" + matcher.group() + "!");
@@ -446,7 +496,7 @@ public class Lexer {
 									end = p+1;
 									matched = csr.subSequence(begin,end).toString();
 									pos = pos(begin,end);
-									token = setPos(new LexStringLiteral(matched,true),pos);
+									token = setPos(new LexStringLiteral(smtConfig,matched,true),pos);
 									break;
 								}
 							} else {
@@ -483,7 +533,7 @@ public class Lexer {
 								end = p+1;
 								matched = csr.subSequence(begin,end).toString();
 								pos = pos(begin,end);
-								token = setPos(new LexStringLiteral(matched,true),pos);
+								token = setPos(new LexStringLiteral(smtConfig,matched,true),pos);
 								break;
 							} else {
 								if (c >= ' ' && c <= '~') continue;

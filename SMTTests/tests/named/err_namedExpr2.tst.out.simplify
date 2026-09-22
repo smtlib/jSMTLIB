@@ -7,4 +7,4 @@ success
 (error "Symbol R is already defined")
 success
 (error "Boolean quantifiers are not implemented in the Simplify adapter")
-(error "Boolean quantifiers are not implemented in the Simplify adapter")
+(error "The expression being named is not closed - this symbol is a variable: r")

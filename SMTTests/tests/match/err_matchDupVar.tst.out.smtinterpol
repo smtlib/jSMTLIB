@@ -1,4 +1,4 @@
 success
 success
 success
-(error "<stdin>:4:34: Variables must all be distinct.")
+(error "<stdin>:5:34: Variables must all be distinct.")

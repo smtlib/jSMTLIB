@@ -1,0 +1,10 @@
+success
+success
+success
+success
+success
+success
+(error "line 19 column 14: invalid function application, sort mismatch on argument at position 2")
+success
+success
+(error "line 22 column 23: logic does not support nonlinear arithmetic")

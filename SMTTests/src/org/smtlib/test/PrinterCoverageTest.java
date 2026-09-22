@@ -114,7 +114,7 @@ public class PrinterCoverageTest {
         ILogic logic = parser.parseLogic();
         Assert.assertNotNull(logic);
         StringWriter sw = new StringWriter();
-        org.smtlib.sexpr.Printer.write(sw, logic);
+        org.smtlib.sexpr.Printer.write(config, sw, logic);
         Assert.assertEquals(text, sw.toString());
     }
 
@@ -128,7 +128,7 @@ public class PrinterCoverageTest {
         ITheory theory = parser.parseTheory();
         Assert.assertNotNull(theory);
         StringWriter sw = new StringWriter();
-        org.smtlib.sexpr.Printer.write(sw, theory);
+        org.smtlib.sexpr.Printer.write(config, sw, theory);
         Assert.assertEquals(text, sw.toString());
     }
 
@@ -282,16 +282,16 @@ public class PrinterCoverageTest {
         expected.append(")");
 
         StringWriter sw = new StringWriter();
-        Printer.WithLines.write(sw, script);
+        Printer.WithLines.write(config, sw, script);
         Assert.assertEquals(expected.toString(), sw.toString());
 
         java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
-        Printer.WithLines.write(new java.io.PrintStream(baos), script);
+        Printer.WithLines.write(config, new java.io.PrintStream(baos), script);
         Assert.assertEquals(expected.toString(), baos.toString());
 
         // newPrinter() creates a fresh printer of the same (WithLines) type, as IPrinter
         // promises; print() drives it through the same visitor path as write() above.
-        Printer.WithLines seed = new Printer.WithLines(new StringWriter());
+        Printer.WithLines seed = new Printer.WithLines(config, new StringWriter());
         StringWriter sw2 = new StringWriter();
         Printer.WithLines fresh = seed.newPrinter(sw2);
         fresh.print(script);

@@ -48,7 +48,7 @@ public class ParseCommand {
 			if (!errs.isEmpty()) e = null;
 		}
 		StringWriter sw = new StringWriter();
-		if (e != null) org.smtlib.sexpr.Printer.write(sw,e);
+		if (e != null) org.smtlib.sexpr.Printer.write(config,sw,e);
 		if (errormsgs.length == 0) {
 			// Expecting success
 			Assert.assertTrue(listener.msgs.isEmpty() ? "": listener.msgs.get(0).toString(),listener.msgs.isEmpty());

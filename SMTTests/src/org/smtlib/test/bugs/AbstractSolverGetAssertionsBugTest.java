@@ -38,6 +38,10 @@ import org.smtlib.Utils;
  * listen".
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/25">issue #25</a>.
+ * <p>
+ * Stays a JUnit test: it needs a fake {@code SolverProcess} to observe exactly which of
+ * {@code sendNoListen}/{@code sendAndListen}/{@code listen} the loop calls on each
+ * iteration -- not something a script test's stdout/stderr comparison can distinguish.
  */
 public class AbstractSolverGetAssertionsBugTest {
 

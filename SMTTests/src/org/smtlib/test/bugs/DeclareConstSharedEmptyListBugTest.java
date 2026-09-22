@@ -26,6 +26,10 @@ import org.smtlib.command.C_declare_const;
  * Fixed by using {@code Collections.emptyList()} in {@code C_declare_const} too.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/39">issue #39</a>.
+ * <p>
+ * Stays a JUnit test: no parsed script command ever mutates a command object's own
+ * {@code argSorts()} list after construction, so the only way to observe whether two
+ * instances share a backing list is to construct them directly and mutate one by hand.
  */
 public class DeclareConstSharedEmptyListBugTest {
 

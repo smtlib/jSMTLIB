@@ -11,7 +11,25 @@ import org.smtlib.IExpr.IStringLiteral;
 
 
 /** This is the interface to be implemented by any solver adapter;
- * there is a method for each SMT-LIB command. */
+ * there is a method for each SMT-LIB command.
+ * <p>
+ * {@link SMT#startSolver}, which is how every adapter actually gets instantiated,
+ * constructs one via reflection rather than a fixed factory method or hardcoded switch --
+ * a contract not stated anywhere near this interface or {@link AbstractSolver} until now.
+ * Concretely, it looks up (on whatever concrete class {@code jsmtlib.properties} names for
+ * the requested solver, via its {@code .adapter} entry) a public constructor with exactly
+ * one of these two signatures:
+ * <ul>
+ * <li>{@code (SMT.Configuration, String)} -- used when the properties entry gives a single
+ * {@code .exec} value (a bare executable path/name); that resolved executable is passed as
+ * the {@code String}.</li>
+ * <li>{@code (SMT.Configuration, String[])} -- used when the properties entry gives a
+ * {@code .command} array instead (a full argv, e.g. for a launcher like
+ * {@code "java,-jar,%exec%,-q"}); the resolved command array is passed as-is.</li>
+ * </ul>
+ * A new adapter class must expose whichever of the two matches how it's configured (or
+ * both, if it should support either) -- reflection fails with a bare
+ * {@code NoSuchMethodException} at solver-startup time otherwise, not at compile time. */
 public interface ISolver {
 
 	/** Returns the configuration object with which the solver is initialized */
@@ -200,4 +218,24 @@ public interface ISolver {
 	 * @return the info value, or unsupported, or an SMT error response
 	 */
 	IResponse get_info(IKeyword option);
+
+	/** Thrown by {@link SMT.Configuration#createSolver} when a solver adapter cannot be
+	 *  resolved, constructed, or fails to launch. Checked (unlike, say, an unchecked
+	 *  reflection failure) so that a library caller of {@code createSolver} must
+	 *  explicitly confront and handle a solver-creation failure rather than have it
+	 *  silently propagate, matching the existing precedent of {@link IParser.ParserException}
+	 *  for "the caller must handle this" conditions in this codebase. */
+	public static class CreationException extends Exception {
+		private static final long serialVersionUID = 1L;
+
+		/** Creates a creation exception with the given message. */
+		public CreationException(String msg) {
+			super(msg);
+		}
+
+		/** Creates a creation exception with the given message and underlying cause. */
+		public CreationException(String msg, Throwable cause) {
+			super(msg, cause);
+		}
+	}
 }

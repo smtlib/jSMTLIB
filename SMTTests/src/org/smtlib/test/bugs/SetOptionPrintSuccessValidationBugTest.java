@@ -39,6 +39,11 @@ import org.smtlib.solvers.Solver_test;
  * entirely -- exactly the path {@code smtConfig.commandFactory.set_option(...)} takes.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/41">issue #41</a>.
+ * <p>
+ * Stays a JUnit test: as the class doc already notes, {@code C_set_option.parse()} already
+ * rejects a bad {@code :print-success} value eagerly for any text-driven script -- the bypass
+ * path this pins down ({@code smtConfig.commandFactory.set_option(key,value)} called directly)
+ * is only reachable via direct API use, never through parsed script text.
  */
 public class SetOptionPrintSuccessValidationBugTest {
 

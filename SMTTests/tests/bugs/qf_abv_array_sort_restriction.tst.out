@@ -1,0 +1,15 @@
+success
+success
+success
+success
+(error "Array sorts must be (Array (_ BitVec i) (_ BitVec j)) in this logic")
+success
+success
+success
+success
+success
+(error "Error while checking sort abbreviation: Array sorts must be (Array (_ BitVec i) (_ BitVec j)) in this logic")
+success
+success
+success
+(error "A quantified expression is not allowed in the QF_ABV logic")

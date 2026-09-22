@@ -25,7 +25,45 @@ import org.smtlib.sexpr.ISexpr;
 import org.smtlib.sexpr.ISexpr.ISeq;
 
 /** This class is a visitor that type-checks a formula */
-public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
+public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
+
+	// TypeChecker used to extend the now-deleted IVisitor.NullVisitor to get these 25
+	// node-type overrides for free, each silently returning null; NullVisitor was removed
+	// since TypeChecker was its only real user (see git history). Deliberately made
+	// fail-fast here instead of reproducing that silent no-op: verified empirically that
+	// none of these 25 node types are ever actually visited anywhere in the full
+	// ~11,000-test corpus across the full solver matrix, so throwing costs nothing today
+	// -- but TypeChecker is only exercised via the mock "test" solver in the first place,
+	// so a future test, theory addition, or new caller could still reach one of these for
+	// real. A silent `return null` would let that pass through as an unchecked-but-wrong
+	// sort with no signal at all; this throws loudly instead, so the first thing that
+	// actually reaches one of these node types fails immediately and points straight back
+	// here, rather than surfacing later as a confusing downstream symptom.
+	@Override public ISort visit(IAttribute<?> e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IAttribute) reached: " + e); }
+	@Override public ISort visit(IBinding e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IBinding) reached: " + e); }
+	@Override public ISort visit(ISort.IDatatype e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(ISort.IDatatype) reached: " + e); }
+	@Override public ISort visit(IExpr.ISortDeclaration e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IExpr.ISortDeclaration) reached: " + e); }
+	@Override public ISort visit(ISelector e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(ISelector) reached: " + e); }
+	@Override public ISort visit(IConstructor e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IConstructor) reached: " + e); }
+	@Override public ISort visit(IDeclaration e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IDeclaration) reached: " + e); }
+	@Override public ISort visit(IFunctionDeclaration e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IFunctionDeclaration) reached: " + e); }
+	@Override public ISort visit(ICommand.IScript e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(ICommand.IScript) reached: " + e); }
+	@Override public ISort visit(ICommand e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(ICommand) reached: " + e); }
+	@Override public ISort visit(IExpr.IMatchCase e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IExpr.IMatchCase) reached: " + e); }
+	@Override public ISort visit(IExpr.IPattern e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IExpr.IPattern) reached: " + e); }
+	@Override public ISort visit(ILogic s) throws VisitorException { throw new RuntimeException("TypeChecker.visit(ILogic) reached: " + s); }
+	@Override public ISort visit(ITheory s) throws VisitorException { throw new RuntimeException("TypeChecker.visit(ITheory) reached: " + s); }
+	@Override public ISort visit(IResponse e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IResponse) reached: " + e); }
+	@Override public ISort visit(IResponse.IError e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IResponse.IError) reached: " + e); }
+	@Override public ISort visit(IResponse.IAssertionsResponse e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IResponse.IAssertionsResponse) reached: " + e); }
+	@Override public ISort visit(IResponse.IAssignmentResponse e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IResponse.IAssignmentResponse) reached: " + e); }
+	@Override public ISort visit(IResponse.IProofResponse e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IResponse.IProofResponse) reached: " + e); }
+	@Override public ISort visit(IResponse.IValueResponse e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IResponse.IValueResponse) reached: " + e); }
+	@Override public ISort visit(IResponse.IUnsatCoreResponse e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IResponse.IUnsatCoreResponse) reached: " + e); }
+	@Override public ISort visit(IResponse.IUnsatAssumptionsResponse e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IResponse.IUnsatAssumptionsResponse) reached: " + e); }
+	@Override public ISort visit(IResponse.IAttributeList e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IResponse.IAttributeList) reached: " + e); }
+	@Override public ISort visit(org.smtlib.sexpr.ISexpr.ISeq e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(ISexpr.ISeq) reached: " + e); }
+	@Override public ISort visit(org.smtlib.sexpr.ISexpr.IToken<?> e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(ISexpr.IToken) reached: " + e); }
 
 	/** Compilation of errors */
 	public List<IResponse> result = new LinkedList<IResponse>();
@@ -37,6 +75,15 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 	private SMT.Configuration smtConfig;
 	
 	private ISymbol isClosed = null;
+
+	/** Lazily-built, reused across every IDecimal/IStringLiteral this instance visits --
+	 *  see {@link #visit(IDecimal)}/{@link #visit(IStringLiteral)}. A fresh TypeChecker
+	 *  instance is created per type-check call, so this only helps within a single
+	 *  expression tree (e.g. multiple numeric literals in one arithmetic expression), not
+	 *  across separate calls -- still a real, common case, and cheaper than reconstructing
+	 *  the same symbol from scratch for every literal node visited. */
+	private ISymbol decimalSortSymbol;
+	private ISymbol stringSortSymbol;
 
 	/** Constructs a formula typechecker from the current symbol table; sorts computed while
 	 * checking are recorded directly on each IExpr node via IExpr.setSort(). */
@@ -1032,7 +1079,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		} else {
 			Variable v = currentScope.get(e);
 			if (v != null) {
-				if (isClosed == null && v.expression == null) isClosed = e; // FIXME - need to check if v.expression is closed or not
+				if (isClosed == null && !v.closed) isClosed = e;
 				return save(e,v.sort);
 			}
 			if ((sort=symTable.lookup(0,e))==null) {
@@ -1047,7 +1094,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 
 	@Override
 	public /*@Nullable*/ISort visit(IDecimal e) {
-		IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("DECIMAL")); // FIXME - don't recreate this every time it is used
+		if (decimalSortSymbol == null) decimalSortSymbol = smtConfig.exprFactory.symbol("DECIMAL");
+		IFcnSort sort = symTable.lookup(0,decimalSortSymbol);
 		if (sort == null) result.add(smtConfig.responseFactory.error("No sort specified for decimal literal",e.pos()));
 		return save(e,sort == null ? null : sort.resultSort());
 	}
@@ -1073,7 +1121,8 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 
 	@Override
 	public /*@Nullable*/ ISort visit(IStringLiteral e) {
-		IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("STRING")); // FIXME - don't recreate this everytime it is used
+		if (stringSortSymbol == null) stringSortSymbol = smtConfig.exprFactory.symbol("STRING");
+		IFcnSort sort = symTable.lookup(0,stringSortSymbol);
 		if (sort == null) result.add(smtConfig.responseFactory.error("No sort specified for string-literal",e.pos()));
 		return save(e,sort == null ? null : sort.resultSort());
 	}
@@ -1239,7 +1288,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			}
 			ISort res = decl.sort().accept(this);
 			if (res == null) errors = true;
-			else currentScope.put(decl.parameter(),new Variable(decl.parameter(),decl.sort(),null));
+			else currentScope.put(decl.parameter(),new Variable(decl.parameter(),decl.sort(),null,false));
 		}
 		try {
 			if (errors) return null;
@@ -1264,7 +1313,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 			}
 			ISort res = decl.sort().accept(this);
 			if (res == null) errors = true;
-			else currentScope.put(decl.parameter(),new Variable(decl.parameter(),decl.sort(),null));
+			else currentScope.put(decl.parameter(),new Variable(decl.parameter(),decl.sort(),null,false));
 		}
 		try {
 			if (errors) return null;
@@ -1290,10 +1339,23 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 					anyErrors = true;
 				}
 				IExpr expr = decl.expr();
+				// Whether referencing this let-bound variable is itself closed depends on
+				// whether ITS OWN defining expression is closed -- not just on the mere
+				// existence of that expression (a stale check this used to make: a
+				// non-null expression was treated as automatically closed regardless of
+				// its content, missing e.g. (forall ((q Bool)) (let ((r q)) ...)), where
+				// r's value q is itself an outer free variable). Save/restore isClosed
+				// around checking expr the same way visit(IAttributedExpr) does, so this
+				// nested check doesn't consume or duplicate an outer :named check's own
+				// tracking.
+				ISymbol savedIsClosed = isClosed;
+				isClosed = null;
 				ISort s = expr.accept(this);
+				boolean exprIsClosed = isClosed == null;
+				isClosed = isClosed == null ? savedIsClosed : isClosed;
 				if (s == null) anyErrors = true;
 				else {
-					newdecls.put(decl.parameter(),new Variable(decl.parameter(),s,expr));
+					newdecls.put(decl.parameter(),new Variable(decl.parameter(),s,expr,exprIsClosed));
 				}
 			}
 			if (anyErrors) return null;
@@ -1356,7 +1418,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 						IFcnSort ctorSort = symTable.lookup(0, pat.constructor());
 						if (ctorSort == null || !scrutineeSort.equals(ctorSort.resultSort())) {
 							// Not a nullary constructor of this sort — treat as variable binding
-							currentScope.put(pat.constructor(), new Variable(pat.constructor(), scrutineeSort, null));
+							currentScope.put(pat.constructor(), new Variable(pat.constructor(), scrutineeSort, null, false));
 							hasVariableOrWildcard = true;
 						} else {
 							coveredCtors.add(pat.constructor().value());
@@ -1389,7 +1451,7 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 									error("Duplicate variable in match pattern: " + params.get(i).value(), params.get(i).pos());
 									anyErrors = true;
 								} else {
-									currentScope.put(params.get(i), new Variable(params.get(i), argSorts[i], null));
+									currentScope.put(params.get(i), new Variable(params.get(i), argSorts[i], null, false));
 								}
 							}
 						}
@@ -1819,10 +1881,19 @@ public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
 		public ISymbol symbol;
 		public ISort sort;
 		public /*@Nullable*/IExpr expression;
-		public Variable(ISymbol sym, ISort sort, IExpr expr) {
+		/** Whether a reference to this variable is itself closed (no free/bound variable
+		 *  reachable through it) -- false for a quantifier- or match-pattern-bound
+		 *  variable (which IS the free variable), true for a let-bound variable whose own
+		 *  defining expression was itself closed when the let was checked, false for one
+		 *  that wasn't (e.g. {@code (forall ((q Bool)) (let ((r q)) ...))}: referencing
+		 *  {@code r} is not closed, because {@code r}'s value is the outer free {@code
+		 *  q}). See visit(ISymbol)/visit(ILet). */
+		public boolean closed;
+		public Variable(ISymbol sym, ISort sort, IExpr expr, boolean closed) {
 			this.symbol = sym;
 			this.sort = sort;
 			this.expression = expr;
+			this.closed = closed;
 		}
 	}
 

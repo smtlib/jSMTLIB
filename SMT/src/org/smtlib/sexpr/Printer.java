@@ -48,7 +48,14 @@ import org.smtlib.ISort.IParameter;
  * between tokens it should simply reverse what the Parser class does.  */
 public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void> {
 
-	static public SMT.Configuration smtConfig;
+	/** The Configuration whose rules (e.g. string-literal quoting -- see {@link
+	 *  #visit(IStringLiteral)} -- which is version-dependent) this Printer instance
+	 *  follows. Issue #22: used to be a single static field shared by every Printer
+	 *  instance process-wide, so constructing a second Configuration anywhere in the
+	 *  process silently repointed every other Printer's quoting rules at the new
+	 *  instance's settings. Now set once per instance, at construction, like the
+	 *  writer itself. */
+	protected final SMT.Configuration smtConfig;
 
 	/** The writer to write text to */
 	/*@Nullable*/ protected Writer w;
@@ -59,8 +66,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	/** The system-dependent line termination */
 	static public final String eol = System.getProperty("line.separator");
 
-	/** Creates a printer object */
-	public Printer(Writer w) {
+	/** Creates a printer object that follows the given Configuration's rules. */
+	public Printer(SMT.Configuration smtConfig, Writer w) {
+		this.smtConfig = smtConfig;
 		this.w = w;
 	}
 
@@ -76,7 +84,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	@Override
 	public Printer newPrinter(Writer w) {
-		return new Printer(w);
+		return new Printer(smtConfig, w);
 	}
 
 	/** Prints the argument to the receiver */
@@ -92,35 +100,38 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	public <T extends INode> String toString(T expr) {
 		try {
 			StringWriter sw = new StringWriter();
-			expr.accept(new Printer(sw)); // FIXME = should be same type as receiver
+			expr.accept(new Printer(smtConfig, sw)); // FIXME = should be same type as receiver
 			return sw.toString();
 		} catch (IVisitor.VisitorException e) {
 			return "<<ERROR: " + e.getMessage() + ">>";
 		}
 	}
 
-	/** Writes the given expression and outputs as a String */
-	static public <T extends INode> String write(T e) {
+	/** Writes the given expression and outputs as a String, following the given
+	 *  Configuration's rules (e.g. string-literal quoting). */
+	static public <T extends INode> String write(SMT.Configuration smtConfig, T e) {
 		try {
 			StringWriter w = new StringWriter();
-			e.accept(new Printer(w));
+			e.accept(new Printer(smtConfig, w));
 			return w.toString();
 		} catch (IVisitor.VisitorException ex) {
 			return "<<ERROR: " + ex.getMessage() + ">>";
 		}
 	}
 
-	/** Writes the given expression to the given writer */
-	static public <T extends INode> void write(Writer w, T e) throws IVisitor.VisitorException {
-		Printer p = new Printer(w);
+	/** Writes the given expression to the given writer, following the given
+	 *  Configuration's rules. */
+	static public <T extends INode> void write(SMT.Configuration smtConfig, Writer w, T e) throws IVisitor.VisitorException {
+		Printer p = new Printer(smtConfig, w);
 		e.accept(p);
 		p.flush();
 	}
 
-	/** Writes the given expression to the given stream */
-	static public <T extends INode> void write(PrintStream w, T e) throws IVisitor.VisitorException {
+	/** Writes the given expression to the given stream, following the given
+	 *  Configuration's rules. */
+	static public <T extends INode> void write(SMT.Configuration smtConfig, PrintStream w, T e) throws IVisitor.VisitorException {
 		Writer wr = new OutputStreamWriter(w);
-		Printer p = new Printer(wr);
+		Printer p = new Printer(smtConfig, wr);
 		e.accept(p);
 		p.flush();
 	}
@@ -435,26 +446,28 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
 	public static class WithLines extends Printer {
 
-		/** Creates a printer object */
-		public WithLines(Writer w) {
-			super(w);
+		/** Creates a printer object that follows the given Configuration's rules. */
+		public WithLines(SMT.Configuration smtConfig, Writer w) {
+			super(smtConfig, w);
 		}
 
 		@Override
 		public WithLines newPrinter(Writer w) {
-			return new WithLines(w);
+			return new WithLines(smtConfig, w);
 		}
 
-		/** Writes the given expression to the given writer */
-		static public <T extends INode> void write(Writer w, T e) throws IVisitor.VisitorException {
-			WithLines p = new WithLines(w);
+		/** Writes the given expression to the given writer, following the given
+		 *  Configuration's rules. */
+		static public <T extends INode> void write(SMT.Configuration smtConfig, Writer w, T e) throws IVisitor.VisitorException {
+			WithLines p = new WithLines(smtConfig, w);
 			e.accept(p);
 			p.flush();
 		}
 
-		/** Writes the given expression to the given stream */
-		static public <T extends INode> void write(PrintStream w, T e) throws IVisitor.VisitorException {
-			write(new OutputStreamWriter(w), e);
+		/** Writes the given expression to the given stream, following the given
+		 *  Configuration's rules. */
+		static public <T extends INode> void write(SMT.Configuration smtConfig, PrintStream w, T e) throws IVisitor.VisitorException {
+			write(smtConfig, new OutputStreamWriter(w), e);
 		}
 
 		@Override
@@ -661,6 +674,48 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	@Override
 	public Void visit(ICommand.Iecho e) throws IVisitor.VisitorException {
 		return printCommand(e, () -> e.arg().accept(this));
+	}
+
+	/** A comment is never "(commandName args)" S-expression syntax to begin with, so this
+	 *  doesn't go through {@code printCommand()} like every other command here -- instead
+	 *  it's printed directly, now that Comment is a real, typed command rather than going
+	 *  through the generic {@code visit(ICommand)} fallback's reflection-based {@code
+	 *  write()} lookup (see issue #115; this logic used to live in a {@code write()}
+	 *  override on {@code C_comment} itself, invoked only via that reflection call --
+	 *  moved here instead, so printing for every command, including this one, lives in
+	 *  exactly one place: Printer's own typed {@code visit()} methods).
+	 *  <p>
+	 *  Text parsed from a real script is always already well-formed this way (every line,
+	 *  including a multi-line block's continuation lines, already carries its own leading
+	 *  {@code ;} in the source, so it prints back out verbatim, byte for byte) -- but text
+	 *  supplied directly via the public API might have an embedded newline with no {@code
+	 *  ;} on the continuation line, which would silently end the comment there and let the
+	 *  continuation be re-parsed as code. So each line is checked, and given its own {@code
+	 *  ;} if it doesn't already have one and isn't just blank. A comment parsed immediately
+	 *  before a real command always already ends with a newline in the captured source
+	 *  text (a {@code ;} comment can't share a line with whatever follows it, so there's
+	 *  necessarily at least one newline swept into the capture) -- but a trailing comment
+	 *  at true end-of-file, or text supplied directly via the public API, might not.
+	 *  Printing without a final newline would risk whatever gets printed right after
+	 *  landing on the same line and being silently swallowed by this comment (since {@code
+	 *  ;} consumes to end of line), so one is always guaranteed here regardless. */
+	@Override
+	public Void visit(ICommand.Icomment e) throws IVisitor.VisitorException {
+		String text = e.text();
+		try {
+			String[] lines = text.split("\r\n|\n", -1);
+			for (int i = 0; i < lines.length; i++) {
+				if (i > 0) writer().append("\n");
+				String line = lines[i];
+				String trimmed = line.trim();
+				if (!trimmed.isEmpty() && !trimmed.startsWith(";")) writer().append(";");
+				writer().append(line);
+			}
+			if (!text.endsWith("\n")) writer().append("\n");
+		} catch (java.io.IOException ex) {
+			throw new IVisitor.VisitorException(ex, e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null);
+		}
+		return null;
 	}
 
 	@Override

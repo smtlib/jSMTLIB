@@ -1,5 +1,5 @@
 PASS: z3-4.3: -t 1 causes check-sat to return unknown well before the workload would finish unbounded
-FAIL: z3-4.3: get-info :reason-unknown does not attribute it to the timeout (got: smt)
+INFO: z3-4.3: get-info :reason-unknown gives its own known-non-conformant wording (got: smt) -- not asserted
 PASS: z3-4.8.12: -t 1 causes check-sat to return unknown well before the workload would finish unbounded
 PASS: z3-4.8.12: get-info :reason-unknown attributes it to the timeout (timeout)
 PASS: z3-4.16.0: -t 1 causes check-sat to return unknown well before the workload would finish unbounded

@@ -6,5 +6,5 @@ success
 success
 sat
 (error "Invalid token: [error]")
-(error "Unexpected output from the solver: [error] <stdin>:9:23: expected Boolean term at index 0 as argument to 'and'
+(error "Unexpected output from the solver: [error] <stdin>:10:23: expected Boolean term at index 0 as argument to 'and'
 ")

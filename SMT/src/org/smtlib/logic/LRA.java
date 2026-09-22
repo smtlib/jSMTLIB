@@ -1,5 +1,7 @@
 package org.smtlib.logic;
 
+import org.smtlib.SMT;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -12,8 +14,8 @@ import org.smtlib.IExpr.*;
 /** This logic does not allow uninterpreted functions or nonlinear arithmetic terms */
 public class LRA extends Logic {
 
-	public LRA(ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(name,attributes);
+	public LRA(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+		super(smtConfig,name,attributes);
 	}
 	
 	public boolean isConst(IExpr expr) {
@@ -46,11 +48,11 @@ public class LRA extends Logic {
 					IQualifiedIdentifier fcn = e.head();
 					if (Utils.MULT.equals(fcn)) {
 						if (!(isConst(e.args().get(0)) || isConst(e.args().get(1)))) {
-								throw new IVisitor.VisitorException("The expression must be linear: ", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
+								throw restrictionError("The expression must be linear", e);
 						}
 					} else if (Utils.SLASH.equals(fcn)) {
 						if (!(isConst(e.args().get(0)) && isConst(e.args().get(1)))) {
-							throw new IVisitor.VisitorException("The expression must be linear: ", e.pos()); // FIXME + smt.defaultPrinter.toString(e),e.pos());
+							throw restrictionError("The expression must be linear", e);
 						}
 					} else {
 						super.visit(e); // checks all the arguments

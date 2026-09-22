@@ -1,5 +1,7 @@
 package org.smtlib.logic;
 
+import org.smtlib.SMT;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -15,8 +17,8 @@ import org.smtlib.IExpr.ISymbol;
 
 public class QF_RDL extends Logic {
 
-	public QF_RDL(ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(name,attributes);
+	public QF_RDL(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+		super(smtConfig,name,attributes);
 	}
 
 	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
@@ -42,26 +44,26 @@ public class QF_RDL extends Logic {
 						if (rhs instanceof ISymbol || isRealConstant(rhs)) {
 							return (Void)null;
 						} else {
-							throw new IVisitor.VisitorException("rhs must be a symbol or a real constant if the lhs is a symbol", e.pos());
+							throw restrictionError("rhs must be a symbol or a real constant if the lhs is a symbol", e);
 						}
 					}
 					if (!(lhs instanceof IExpr.IFcnExpr)) {
-						throw new IVisitor.VisitorException("lhs must be a symbol or a difference", e.pos());
+						throw restrictionError("lhs must be a symbol or a difference", e);
 					}
 					IExpr.IFcnExpr f = (IExpr.IFcnExpr)lhs;
 					if (!Utils.MINUS.equals(f.head())) {
-						throw new IVisitor.VisitorException("lhs must be a symbol or a difference", e.pos());
+						throw restrictionError("lhs must be a symbol or a difference", e);
 					}
 					if (f.args().size() == 2 && f.args().get(0) instanceof ISymbol && f.args().get(1) instanceof ISymbol) {
 						// OK
 					} else {
-						throw new IVisitor.VisitorException("differences must be difference of symbols", e.pos());
+						throw restrictionError("differences must be difference of symbols", e);
 					}
 					if (!isRealConstant(rhs)) {
-						throw new IVisitor.VisitorException("The rhs must be a decimal or negation of a decimal", e.pos());
+						throw restrictionError("The rhs must be a decimal or negation of a decimal", e);
 					}
 				} else {
-					throw new IVisitor.VisitorException("Invalid operation in RDL logic", e.pos());
+					throw restrictionError("Invalid operation in RDL logic", e);
 				}
 				return (Void)null;
 			}

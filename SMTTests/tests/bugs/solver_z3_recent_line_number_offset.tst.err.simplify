@@ -1,0 +1,6 @@
+(assert (undeclaredfun x))
+        ^^^^^^^^^^^^^^^^^
+(assert (= s "line 5 of the report"))
+             ^^^^^^^^^^^^^^^^^^^^^^
+(get-value (s))
+^^^^^^^^^^^^^^^

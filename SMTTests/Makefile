@@ -10,7 +10,7 @@ SHELL = /bin/bash
 ##   make cov-test cov-report COV_CLASSES=../SMT/bin
 COV_CLASSES ?= ../SMT/jSMTLIB.jar
 
-.PHONY: test tests test-only clean script-tests smt-tests junit-tests build cov-test cov-clean cov-report cov-show cov-all reports time-solvers
+.PHONY: test tests test-only clean script-tests smt-tests junit-tests build cov-test cov-clean cov-report cov-show cov-all reports time-solvers ci-cov ci-cov-dev
 
 ## Resolve the platform-appropriate solver directory, honouring any value already in the
 ## environment (CI sets it via GITHUB_ENV before invoking make; developers can export it
@@ -146,3 +146,92 @@ cov-show:
 cov-all:
 	-$(MAKE) cov-clean cov-test
 	-$(MAKE) cov-report cov-show
+
+## Branch that ci-cov dispatches against; defaults to the repo's main branch. ci-cov-dev
+## overrides this to 'dev' (for its own recipe and, per GNU Make's target-specific
+## variable propagation, for ci-cov's recipe too when run as ci-cov-dev's prerequisite).
+CI_BRANCH ?= master
+
+## Override for the workflow_dispatch 'solvers' input (see .github/workflows/build.yml).
+## Defaults to the same full solver list as SMT_TEST_SOLVERS above (spelled out here,
+## rather than left blank, so the dispatched run and the "Dispatching..." echo both show
+## explicitly what's being tested instead of relying on blank-means-default indirection).
+CI_SOLVERS ?= $(SMT_TEST_SOLVERS)
+
+## Launch a workflow_dispatch run of build.yml with coverage=true (see
+## .github/actions/jsmtlib-test/action.yml), wait for it to finish, then download every
+## per-leg coverage-<label> artifact it produces into cov/ci/. CI itself uploads one
+## artifact per matrix leg (macos-arm64, macos-15-x86_64, ubuntu, ubuntu-arm64, windows),
+## not a single merged one -- but each leg's raw cov/ci/coverage-<label>/junits.exec is
+## then merged HERE, client-side, via jacococli's own merge command, into one
+## cov/ci/merged.exec and a single consolidated cov/ci/html/coverage.xml report covering
+## every platform's combined coverage -- since each platform exercises different
+## solver-adapter code paths (isWindows/isMac branches, per-platform solver availability,
+## etc.), a merged view is more useful than 5 separate reports to cross-reference by hand.
+## The report step needs --classfiles that exactly match what produced the .exec data
+## (JaCoCo compares a class-structure ID and otherwise reports it as uncovered, or not at
+## all) -- so this downloads the same jsmtlib-release-<run_id> jar CI built and
+## instrumented for this run and reports against that, rather than $(COV_CLASSES)'s local
+## build, which has no guaranteed relationship to what actually ran on CI (issue #122: a
+## stale/incrementally-built local jar showed long-deleted classes in the report).
+## Requires the gh CLI, authenticated against this repo (gh auth status).
+## Override the dispatched branch or solver list on the command line, e.g.:
+##   make ci-cov CI_BRANCH=dev CI_SOLVERS="test cvc5-1.3.2"
+## (or just `make ci-cov-dev` -- see below).
+## `gh workflow run` doesn't hand back a run id, and GitHub takes a few seconds to list a
+## just-dispatched run -- the loop below polls `gh run list` every 5s, up to 12 times
+## (~60s total), giving up if the run never shows up. NOTE: inline '#'-comments INSIDE
+## this recipe's backslash-continued shell block are unsafe -- macOS's bundled GNU Make
+## 3.81 strips them (backslash and all) before honouring line-continuation during real
+## execution, silently truncating the whole chain (make -n does NOT reproduce this, so it
+## looks fine under a dry run) -- keep recipe-body explanations up here instead.
+ci-cov:
+	@echo "Dispatching build.yml (coverage=true, solvers=\"$(CI_SOLVERS)\") on branch $(CI_BRANCH)..."
+	@gh workflow run build.yml --ref $(CI_BRANCH) -f coverage=true -f solvers="$(CI_SOLVERS)"
+	@sleep 5; \
+	run_id=""; \
+	for i in $$(seq 1 12); do \
+		run_id=$$(gh run list --workflow build.yml --branch $(CI_BRANCH) --limit 10 --json databaseId,event --jq '[.[] | select(.event=="workflow_dispatch")][0].databaseId'); \
+		[ -n "$$run_id" ] && break; \
+		sleep 5; \
+	done; \
+	if [ -z "$$run_id" ]; then echo "ERROR: could not find the dispatched run"; exit 1; fi; \
+	echo "Watching run $$run_id..."; \
+	prev=""; \
+	while :; do \
+		info=$$(gh run view "$$run_id" --json status,conclusion,jobs); \
+		rstatus=$$(echo "$$info" | jq -r '.status'); \
+		line=$$(echo "$$info" | jq -r '.jobs[] | select(.name | startswith("test ")) | "  \(.name): \(if .status == "completed" then .conclusion else .status end)"'); \
+		if [ "$$line" != "$$prev" ]; then echo "$$line"; prev="$$line"; fi; \
+		[ "$$rstatus" = "completed" ] && break; \
+		sleep 10; \
+	done; \
+	conclusion=$$(echo "$$info" | jq -r '.conclusion'); \
+	echo "Run finished: $$conclusion"; \
+	[ "$$conclusion" = "success" ] && status=0 || status=1; \
+	echo "Downloading coverage artifacts to cov/ci/..."; \
+	rm -rf cov/ci; mkdir -p cov/ci; \
+	gh run download "$$run_id" -p 'coverage-*' -D cov/ci; \
+	echo "Downloading the jSMTLIB.jar CI built and instrumented for this run..."; \
+	gh run download "$$run_id" -n "jsmtlib-release-$$run_id" -D cov/ci/jar; \
+	execs=$$(find cov/ci -name junits.exec); \
+	classjar=$$(find cov/ci/jar -name jSMTLIB.jar | head -1); \
+	if [ -z "$$execs" ]; then \
+		echo "WARNING: no junits.exec files found in the downloaded artifacts -- skipping merge"; \
+	elif [ -z "$$classjar" ]; then \
+		echo "WARNING: could not download this run's jSMTLIB.jar (jsmtlib-release-$$run_id) -- skipping merge"; \
+	else \
+		echo "Merging $$(echo "$$execs" | wc -l | tr -d ' ') per-platform .exec files into one report..."; \
+		java -jar jacoco/lib/jacococli.jar merge $$execs --destfile cov/ci/merged.exec; \
+		java -jar jacoco/lib/jacococli.jar report cov/ci/merged.exec \
+			--classfiles "$$classjar" \
+			--sourcefiles ../SMT/src \
+			--html cov/ci/html \
+			--xml cov/ci/coverage.xml; \
+		echo "Consolidated report: cov/ci/html/index.html"; \
+	fi; \
+	exit $$status
+
+## Same as ci-cov, but against the dev branch instead of the main branch.
+ci-cov-dev: CI_BRANCH := dev
+ci-cov-dev: ci-cov

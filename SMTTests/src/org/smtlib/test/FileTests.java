@@ -99,7 +99,7 @@ public class FileTests extends LogicTests {
     @Override
     public void init() {
         smt = new SMT();
-        smt.props = readPropertiesAndAddDefaults(smt);
+        smt.smtConfig.props = readPropertiesAndAddDefaults(smt);
         smt.smtConfig.solvername = solvername;
         // solver is started lazily by exec()
     }
@@ -124,27 +124,79 @@ public class FileTests extends LogicTests {
         smt.smtConfig.log.setChannels(outPs, errPs);
         smt.smtConfig.stdout = outPs;
         smt.smtConfig.stderr = errPs;
+        // Scrubs known non-deterministic content (elapsed-time, memory usage) out of
+        // get-info responses -- see AbstractSolver#normalizeForTesting() -- so goldens are
+        // reproducible across machines and runs. Set directly rather than via a "--testing"
+        // command-line argument: exec(String[]) is a plain instance method operating on this
+        // SMT instance's own smtConfig, so a field set here is exactly as safe/scoped as
+        // parsing a flag would be, without the plain-text default path (below) needing to
+        // route through the argument parser just for this one setting.
+        smt.smtConfig.testing = true;
 
-        // Use text mode so error position messages carry no file path,
-        // matching the format of existing golden files.
+        String text;
         try {
-            smt.smtConfig.text = new String(Files.readAllBytes(tstFile.toPath()));
+            text = new String(Files.readAllBytes(tstFile.toPath()));
         } catch (IOException e) {
             Assert.fail("Cannot read test file: " + tstFile + ": " + e);
             return;
         }
 
-        smt.exec();
+        List<String> options = optionsDirectiveArgs(text);
+        if (options == null) {
+            // Use text mode so error position messages carry no file path, matching the
+            // format of existing golden files.
+            smt.smtConfig.text = text;
+            smt.exec();
+        } else {
+            // A "; OPTIONS: <flags>" directive is present: run through the real
+            // SMT.exec(String[]) / processCommandLine() argument parser instead of setting
+            // fields by hand here, so a .tst test exercises the same parsing path a real
+            // invocation would, and gets any future flag for free. The directive is an
+            // ordinary ';' comment, so the parser already ignores it on its own -- the
+            // original .tst file is passed straight through, unmodified.
+            options.add(tstFile.getAbsolutePath());
+            smt.exec(options.toArray(new String[0]));
+        }
         outPs.flush();
         errPs.flush();
 
         String actualOut = outBuf.toString().replace("\r\n", "\n");
         String actualErr = errBuf.toString().replace("\r\n", "\n");
 
-        // stdout: filter (:memory lines (memory usage varies between runs)
-        compareOutput(".out", findGoldenFile(".out"), actualOut, true);
-        // stderr: exact match
-        compareOutput(".err", findGoldenFile(".err"), actualErr, false);
+        compareOutput(".out", findGoldenFile(".out"), actualOut);
+        compareOutput(".err", findGoldenFile(".err"), actualErr);
+    }
+
+    /** Without a directive, checkFile() feeds a .tst file's raw content to SMT.exec()
+     *  directly (via smtConfig.text), bypassing parseCommandLine()/processCommandLine()
+     *  entirely -- so a plain .tst file has no way to ask for a command-line-only setting
+     *  like --relax. A leading "; OPTIONS: &lt;flags&gt;" line (an ordinary SMT-LIB comment,
+     *  so the parser ignores it on its own either way) lets a .tst file request that
+     *  checkFile() instead route it through the real SMT.exec(String[])/
+     *  processCommandLine() argument parser -- so that .tst test exercises the same
+     *  parsing path a real invocation would, with no per-flag logic duplicated here, and
+     *  the original file is passed straight through unmodified. Returns null (meaning:
+     *  use the normal text-mode path, still bypassing processCommandLine()) if there's no
+     *  directive; otherwise the flag tokens, not yet including the file argument
+     *  checkFile() appends. This is a plain splitter with no per-flag knowledge -- every
+     *  flag is just handed to the real parser unexamined.
+     *  <p>
+     *  Note for anyone writing a "; OPTIONS:" line: avoid --verbose/-v. It works
+     *  mechanically, but processCommandLine() always calls readProperties() itself after
+     *  parsing --verbose, so that second readProperties() call emits its own
+     *  "#reading properties ..." diagnostic -- which embeds this checkout's absolute jar
+     *  path, making an exact-match golden non-portable across machines. A .tst test
+     *  needing --verbose belongs as a .scr script instead, where runscript's $INSTALL
+     *  substitution already handles this. */
+    private List<String> optionsDirectiveArgs(String text) {
+        if (!text.startsWith("; OPTIONS:")) return null;
+        int eol = text.indexOf('\n');
+        String directiveLine = eol < 0 ? text : text.substring(0, eol);
+        List<String> args = new ArrayList<String>();
+        for (String flag : directiveLine.substring("; OPTIONS:".length()).trim().split("\\s+")) {
+            if (!flag.isEmpty()) args.add(flag);
+        }
+        return args;
     }
 
     // -----------------------------------------------------------------------
@@ -234,7 +286,7 @@ public class FileTests extends LogicTests {
     // Comparison
     // -----------------------------------------------------------------------
 
-    private void compareOutput(String ext, File golden, String actual, boolean normalize) {
+    private void compareOutput(String ext, File golden, String actual) {
         // No golden file: OK only if actual output is empty (matches runtest .err behaviour;
         // for .out an absent golden file is always a failure).
         if (golden == null || !golden.exists()) {
@@ -254,10 +306,8 @@ public class FileTests extends LogicTests {
             return;
         }
 
-        String cmpExpected = normalize ? filterMemoryLines(expected) : expected;
-        String cmpActual   = normalize ? filterMemoryLines(actual)   : actual;
-        cmpExpected = filterIOExceptionLines(cmpExpected);
-        cmpActual   = filterIOExceptionLines(cmpActual);
+        String cmpExpected = filterIOExceptionLines(expected);
+        String cmpActual   = filterIOExceptionLines(actual);
 
         if (!cmpExpected.equals(cmpActual)) {
             writeActual(ext, actual);
@@ -276,21 +326,15 @@ public class FileTests extends LogicTests {
      *  Which of a script's remaining commands land inside that race window (and so surface
      *  one of these) depends on OS-level timing of the underlying pipe failure and is not
      *  reproducible run to run, even for the identical script against the identical solver
-     *  binary -- same non-determinism, same "drop the line" treatment as
-     *  {@link #filterMemoryLines}. */
+     *  binary -- unlike the get-info non-determinism handled by
+     *  AbstractSolver#normalizeForTesting(), this can't be scrubbed at the source, since
+     *  it's not response content at all -- it's the *absence* of a response, racing against
+     *  however many of a script's remaining commands land after the solver has already
+     *  exited. */
     private static String filterIOExceptionLines(String s) {
         StringBuilder sb = new StringBuilder();
         for (String line : s.split("\n", -1)) {
             if (!line.contains("java.io.IOException:") && !line.contains("SolverProcess$NoResponseException:")) sb.append(line).append('\n');
-        }
-        return sb.toString();
-    }
-
-    /** Drops lines containing {@code (:memory} or {@code (:max-memory} — memory usage varies between runs. */
-    private static String filterMemoryLines(String s) {
-        StringBuilder sb = new StringBuilder();
-        for (String line : s.split("\n", -1)) {
-            if (!line.contains("(:memory") && !line.contains("(:max-memory")) sb.append(line).append('\n');
         }
         return sb.toString();
     }

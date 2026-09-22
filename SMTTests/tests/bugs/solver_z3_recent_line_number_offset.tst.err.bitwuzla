@@ -1,0 +1,22 @@
+(set-logic QF_LIA)
+^^^^^^^^^^^^^^^^^^
+(declare-const x Int)
+^^^^^^^^^^^^^^^^^^^^^
+(assert (undeclaredfun x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(check-sat)
+^^^^^^^^^^^
+(reset)
+^^^^^^^
+(set-logic ALL)
+^^^^^^^^^^^^^^^
+(set-option :produce-models true)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-const s String)
+^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (= s "line 5 of the report"))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(check-sat)
+^^^^^^^^^^^
+(get-value (s))
+^^^^^^^^^^^^^^^

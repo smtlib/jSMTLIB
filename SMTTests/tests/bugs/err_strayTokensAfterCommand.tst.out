@@ -1,0 +1,4 @@
+success
+success
+(error "Expected a command (beginning with '(') or a comment (beginning with ';') here, not a symbol")
+success

@@ -1,0 +1,1 @@
+(error "Failed to open or write to the regular output \nonexistent_dir_xyz\foo.txt (The system cannot find the path specified)")

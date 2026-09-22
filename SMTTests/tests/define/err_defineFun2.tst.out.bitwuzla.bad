@@ -1,0 +1,5 @@
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:5:13: symbol 'f' already defined at line 3 column 13
+")

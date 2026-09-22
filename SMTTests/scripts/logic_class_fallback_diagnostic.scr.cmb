@@ -1,0 +1,4 @@
+PASS: the class-less fallback is logged as a diagnostic
+PASS: the fallback to an unrestricted logic still succeeds
+
+All 2 logic-class-fallback tests PASSED

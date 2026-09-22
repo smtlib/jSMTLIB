@@ -35,10 +35,13 @@ import org.smtlib.sexpr.Parser;
  *  solver deviates in some other way overrides the individual ISolver method itself,
  *  same as before.
  *  <p>
- *  Two operations still throw UnsupportedOperationException, because AbstractSolver has
- *  no generic way to provide them: {@link #start()} and {@link #exit()} manage the
- *  solver process's lifecycle (constructing it, choosing a command line, deciding
- *  whether/how to wait for a reply before killing it).
+ *  {@link #start()} still throws UnsupportedOperationException, because AbstractSolver has
+ *  no generic way to provide it: constructing the solver process and choosing its command
+ *  line is inherently solver-specific, so every concrete adapter must override it.
+ *  {@link #exit()}, by contrast, has a working default (send the exit command tolerating a
+ *  silent process exit, then tear down the process) that's generic enough to cover every
+ *  solver seen so far; a subclass only overrides it when exiting needs solver-specific
+ *  handling beyond that.
  *  <p>
  *  Thus this class can still be used as a base class for a solver adapter class that
  *  wants the convenience of not having to implement every operation at once (remove
@@ -60,6 +63,24 @@ public class AbstractSolver implements ISolver {
 
 	/** The object that interacts with external processes */
 	protected SolverProcess solverProcess;
+
+	/** Running correction applied when rewriting a line number a solver reports back in its
+	 *  own error text, so what the user sees matches their own script's real line numbers
+	 *  rather than whatever the solver itself counted in what was actually sent to it (see
+	 *  issues #96/#97). Every real command line and every real standalone comment line sent
+	 *  to a solver corresponds to exactly one line of the user's own script -- no adjustment
+	 *  needed there -- but two kinds of event break that correspondence and must adjust this
+	 *  field at the point they happen: a line an adapter inserts that has no counterpart in
+	 *  the user's script (e.g. a `:print-success` priming send at start()) increments it by
+	 *  the number of lines inserted; a real script line an adapter deliberately never sends
+	 *  (e.g. Solver_z3_4_3 skipping literal `(set-logic ALL)`, which that solver has no
+	 *  equivalent for) decrements it by the number of lines skipped. A subclass that embeds
+	 *  a solver-reported line number in its own response text should rewrite it as
+	 *  {@code reportedLine - linesOffset} before returning that text -- see
+	 *  Solver_z3_4_3/Solver_z3_recent/Solver_bitwuzla's parseResponse() overrides. Solvers
+	 *  that don't insert or skip any line relative to the user's script (most adapters) never
+	 *  need to touch this at all, and it stays 0. */
+	protected int linesOffset = 0;
 
 	/** SMT configuration — set by each concrete subclass constructor. */
 	protected SMT.Configuration smtConfig;
@@ -138,7 +159,7 @@ public class AbstractSolver implements ISolver {
 	 *  strict SMT-LIB concrete syntax. */
 	protected String translate(INode sexpr) throws IVisitor.VisitorException {
 		StringWriter sw = new StringWriter();
-		org.smtlib.sexpr.Printer.write(sw, sexpr);
+		org.smtlib.sexpr.Printer.write(smtConfig, sw, sexpr);
 		return sw.toString();
 	}
 
@@ -178,6 +199,26 @@ public class AbstractSolver implements ISolver {
 	}
 
 	private IResponse sendCommand(ICommand cmd, boolean tolerateSilentExit) {
+		return sendCommand(cmd, tolerateSilentExit, false);
+	}
+
+	/** Replaces known sources of non-deterministic content in a raw solver response with a
+	 *  fixed placeholder, so that --testing runs produce byte-for-byte reproducible output
+	 *  across machines and repeated runs. Deliberately a short, explicit list rather than a
+	 *  broad catch-all, so it can't silently mask an actual difference in solver output:
+	 *  elapsed-time figures (e.g. cvc5's :all-statistics response embeds these as bare,
+	 *  unquoted "NNNms" tokens, which aren't valid SMT-LIB syntax at all and would
+	 *  otherwise cascade into a wall of "Invalid token" parse errors that also differ
+	 *  every run) and :memory/:max-memory usage figures. */
+	protected static String normalizeForTesting(String raw) {
+		String s = raw;
+		s = s.replaceAll("\\d+(\\.\\d+)?ms", "TIME");
+		s = s.replaceAll("(\\(:memory\\s+)[\\d.]+", "$1VALUE");
+		s = s.replaceAll("(\\(:max-memory\\s+)[\\d.]+", "$1VALUE");
+		return s;
+	}
+
+	private IResponse sendCommand(ICommand cmd, boolean tolerateSilentExit, boolean scrubNonDeterminism) {
 		String translatedCmd = null;
 		try {
 			translatedCmd = translate(cmd);
@@ -189,6 +230,7 @@ public class AbstractSolver implements ISolver {
 			if (response == null) {
 				return smtConfig.responseFactory.error("No response received from the solver for: " + translatedCmd);
 			}
+			if (scrubNonDeterminism && smtConfig.testing) response = normalizeForTesting(response);
 			IResponse result = parseResponse(response);
 			// parseResponse() (or a subclass override) can itself return null for some
 			// malformed/edge-case response text without throwing -- same defensive
@@ -237,8 +279,21 @@ public class AbstractSolver implements ISolver {
 		return sendCommand(smtConfig.commandFactory.echo(arg));
 	}
 
+	/** Forwards a standalone comment (its own C_comment pseudo-command -- see issue #42) to
+	 *  the real solver process, uniformly for every solver adapter: a comment is legal
+	 *  SMT-LIB input (any conforming solver must silently ignore it), and forwarding it keeps
+	 *  the physical line count of what's actually sent matching the user's own script one
+	 *  real line for one sent line -- which line-number rewriting (see e.g.
+	 *  Solver_z3_4_3/Solver_z3_recent's linesOffset) depends on. sendNoListen is used, not
+	 *  sendAndListen: a comment has no response to wait for. A trailing, same-line comment
+	 *  never reaches here at all -- it's captured as Command.trailingText instead (see
+	 *  Parser.parseCommand()) and is never sent to a solver. */
 	@Override public void comment(String comment) {
-		// No action
+		try {
+			solverProcess.sendNoListen(comment);
+		} catch (IOException e) {
+			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Failed to send comment to " + smtConfig.solvername + ": " + e);
+		}
 	}
 
 	/** @see org.smtlib.ISolver#set_logic(String,IPos) */
@@ -458,12 +513,23 @@ public class AbstractSolver implements ISolver {
 			StringBuilder sb = new StringBuilder();
 			solverProcess.sendNoListen(cmdText, "\n");
 			int parens = 0;
+			// Tracks whether the scan is currently inside a double-quoted string literal,
+			// carried across reads (a string can in principle straddle a chunk boundary),
+			// so that a '(' or ')' inside a string-sort term value doesn't desync the
+			// balance count -- same in-string tracking SolverProcess.endsWith() already
+			// does for exactly the same reason, just applied incrementally per chunk here
+			// instead of rescanning the whole buffer from the start each time.
+			boolean inString = false;
 			do {
 			    String s = solverProcess.listen();
-				int p = -1;
-				while ((p = s.indexOf('(',p+1)) != -1) parens++;
-				p = -1;
-				while ((p = s.indexOf(')',p+1)) != -1) parens--;
+				for (int p = 0; p < s.length(); p++) {
+					char c = s.charAt(p);
+					if (c == '"') inString = !inString;
+					else if (!inString) {
+						if (c == '(') parens++;
+						else if (c == ')') parens--;
+					}
+				}
 				sb.append(s.replace('\n',' ').replace("\r",""));
 			} while (parens > 0);
 			response = sb.toString();
@@ -612,7 +678,7 @@ public class AbstractSolver implements ISolver {
 	/** @see org.smtlib.ISolver#get_info(IExpr.IKeyword)*/
 	@Override
 	public IResponse get_info(IKeyword option){
-		return sendCommand(smtConfig.commandFactory.get_info(option));
+		return sendCommand(smtConfig.commandFactory.get_info(option), false, true);
 	}
 
 	/** @see org.smtlib.ISolver#smt()*/

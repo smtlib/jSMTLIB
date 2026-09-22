@@ -1,2 +1,2 @@
 success
-(error "<stdin>:2:26: Undeclared sort (BadSort 0)")
+(error "<stdin>:3:26: Undeclared sort (BadSort 0)")

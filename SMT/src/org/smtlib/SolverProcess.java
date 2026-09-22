@@ -548,22 +548,4 @@ public class SolverProcess {
 	        return out.toString();
 	    }
 	}
-
-	public static void main(String ... args) {
-        java.util.Scanner in = new java.util.Scanner(System.in);
-	    SolverProcess sp = new SolverProcess(args, "\n", null);
-	    sp.start(false);
-	    while (true) {
-            String s = in.nextLine();
-            System.out.println("READ " + s);
-            try {
-                System.out.println("WRITING " + s);
-                String out = sp.sendAndListen(s + "\n");
-                System.out.println("HEARD: " + out);
-            } catch (java.io.IOException e) {
-                System.out.println("FAILED TO WRITE INPUT " + e);
-            }
-            try { Thread.sleep(100); } catch (Exception e) {}
-	    }
-	}
 }

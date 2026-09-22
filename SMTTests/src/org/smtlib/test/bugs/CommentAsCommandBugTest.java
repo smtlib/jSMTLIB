@@ -1,7 +1,5 @@
 package org.smtlib.test.bugs;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.io.StringWriter;
 import java.util.concurrent.TimeUnit;
 
@@ -10,7 +8,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.smtlib.ICommand;
-import org.smtlib.IResponse;
 import org.smtlib.ISource;
 import org.smtlib.SMT;
 import org.smtlib.command.C_comment;
@@ -44,6 +41,21 @@ import org.smtlib.sexpr.Parser;
  * it.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/42">issue #42</a>.
+ * <p>
+ * Most of this bug's observable behavior (a comment before a command being forwarded/echoed,
+ * a mid-argument comment being ignored, a real multi-line comment echoing back verbatim, and
+ * plain whitespace not becoming a spurious comment) is now covered by
+ * {@code tests/bugs/comment_as_command.tst} (using {@code --echo} via its
+ * {@code "; OPTIONS:"} directive).
+ * <p>
+ * The two tests remaining here stay JUnit tests because they are not reachable through the
+ * real driver loop at all: a trailing comment at true end-of-script is never actually fetched
+ * by {@code SMT.java}'s own command loop (its {@code while (!isEOD())} check short-circuits
+ * before ever calling {@code parseCommand()} once more for it, even though the parser itself
+ * would hand it back if asked directly -- confirmed by testing this exact scenario against the
+ * real CLI, where the trailing comment's text never appears in --echo output), and a
+ * {@code C_comment} built directly via its public constructor (as opposed to parsed from real
+ * script text) is only reachable via direct API use.
  */
 public class CommentAsCommandBugTest {
 
@@ -53,45 +65,6 @@ public class CommentAsCommandBugTest {
         SMT.Configuration config = new SMT.Configuration();
         ISource source = config.smtFactory.createSource(text, null);
         return new Parser(config, source);
-    }
-
-    @Test
-    public void commentBeforeAnOrdinaryCommandBecomesItsOwnCommentCommand() throws Exception {
-        // check-sat is one of the 27 commands that never had prefixText forwarding before --
-        // the exact gap #42 point 1 describes.
-        Parser p = parserFor("; hello\n(check-sat)");
-
-        ICommand first = p.parseCommand();
-        Assert.assertTrue("expected a C_comment command first, got: " + first,
-                first instanceof C_comment);
-
-        ICommand second = p.parseCommand();
-        Assert.assertTrue("expected the real check-sat command second, got: " + second,
-                second instanceof ICommand.Icheck_sat);
-    }
-
-    @Test
-    public void commentExecuteForwardsToTheSolverAndProducesNoVisibleOutput() throws Exception {
-        SMT.Configuration config = new SMT.Configuration();
-        ByteArrayOutputStream diagBuf = new ByteArrayOutputStream();
-        config.log.setChannels(config.log.getOut(), new PrintStream(diagBuf));
-        org.smtlib.solvers.Solver_test solver = new org.smtlib.solvers.Solver_test(config, "test");
-
-        C_comment comment = new C_comment("a comment");
-        IResponse r = comment.execute(solver);
-
-        Assert.assertTrue("a comment command must produce no visible response text",
-                r.toString().isEmpty());
-    }
-
-    @Test
-    public void commentBetweenACommandsArgumentsIsStillIgnored() throws Exception {
-        Parser p = parserFor("(assert ; mid-comment\n true)");
-
-        ICommand only = p.parseCommand();
-        Assert.assertTrue("a comment inside a command's arguments must not become its own "
-                + "command -- expected the real assert command directly, got: " + only,
-                only instanceof ICommand.Iassert);
     }
 
     @Test
@@ -112,24 +85,9 @@ public class CommentAsCommandBugTest {
         // guarantee one, since whatever might print right after this comment must never risk
         // landing on the same line and being silently swallowed by it.
         StringWriter sw = new StringWriter();
-        org.smtlib.sexpr.Printer.write(sw, second);
+        org.smtlib.sexpr.Printer.write(new SMT.Configuration(), sw, second);
         Assert.assertTrue("a printed comment must always end with a newline, got: " + sw,
                 sw.toString().endsWith("\n"));
-    }
-
-    @Test
-    public void multiLineCommentParsedFromRealSourcePrintsBackVerbatim() throws Exception {
-        // Every continuation line of a real multi-line comment block already carries its own
-        // leading ';' in the source -- write() must reproduce that unchanged, not inject
-        // extra ';' characters or otherwise alter it.
-        String source = "; line one\n; line two\n(exit)";
-        Parser p = parserFor(source);
-
-        C_comment comment = (C_comment) p.parseCommand();
-
-        StringWriter sw = new StringWriter();
-        org.smtlib.sexpr.Printer.write(sw, comment);
-        Assert.assertEquals("; line one\n; line two\n", sw.toString());
     }
 
     @Test
@@ -142,22 +100,7 @@ public class CommentAsCommandBugTest {
         C_comment comment = new C_comment("line one\nline two");
 
         StringWriter sw = new StringWriter();
-        org.smtlib.sexpr.Printer.write(sw, comment);
+        org.smtlib.sexpr.Printer.write(new SMT.Configuration(), sw, comment);
         Assert.assertEquals(";line one\n;line two\n", sw.toString());
-    }
-
-    @Test
-    public void plainWhitespaceWithNoActualCommentDoesNotBecomeAComment() throws Exception {
-        // The lexer's leading-content group combines whitespace and comments together, so
-        // this must be checked explicitly -- otherwise ordinary blank lines/newlines between
-        // commands would each spuriously produce an empty C_comment.
-        Parser p = parserFor("(exit)\n\n\n(exit)");
-
-        ICommand first = p.parseCommand();
-        Assert.assertTrue(first instanceof ICommand.Iexit);
-
-        ICommand second = p.parseCommand();
-        Assert.assertTrue("plain whitespace with no comment must not become a C_comment, got: "
-                + second, second instanceof ICommand.Iexit);
     }
 }

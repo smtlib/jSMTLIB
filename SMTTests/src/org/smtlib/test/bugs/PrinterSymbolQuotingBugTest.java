@@ -36,6 +36,10 @@ import org.smtlib.sexpr.Printer;
  * needed, rather than trusting {@code toString()}/{@code originalString}.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/75">issue #75</a>.
+ * <p>
+ * Stays a JUnit test: a symbol containing a space can only be constructed programmatically
+ * (via {@code exprFactory.symbol(String)} directly) -- the lexer requires bar-quoting for such
+ * characters up front, so no parseable SMT-LIB script text ever produces one this way.
  */
 public class PrinterSymbolQuotingBugTest {
 
@@ -47,7 +51,7 @@ public class PrinterSymbolQuotingBugTest {
         ISymbol sym = config.exprFactory.symbol("has space");
 
         StringWriter sw = new StringWriter();
-        Printer.write(sw, sym);
+        Printer.write(config, sw, sym);
         String printed = sw.toString();
 
         Assert.assertEquals("|has space|", printed);

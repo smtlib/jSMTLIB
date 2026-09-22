@@ -37,6 +37,9 @@ import org.smtlib.SMT;
  * mirroring {@code equals()}'s own expansion exactly.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/70">issue #70</a>.
+ * <p>
+ * Stays a JUnit test: it asserts directly on {@code hashCode()} of an internal data
+ * structure, not on anything a script test's stdout/stderr comparison observes.
  */
 public class SortEqualsHashCodeBugTest {
 

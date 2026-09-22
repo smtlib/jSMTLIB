@@ -49,14 +49,19 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	 *  See issue #51. */
 	protected String name() { return "z3-4.3"; }
 
+	// linesOffset is inherited from AbstractSolver -- see its own doc comment there.
 
-	protected int linesOffset = 0;
-	
 	/** The command-line arguments for launching the Z3 solver */
 	protected String cmds[];
-	protected String cmds_win[] = new String[]{ "", "/smt2","/in","SMTLIB2_COMPLIANT=true"};//,"/rs:42"}; 
-	protected String cmds_mac[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true"}; 
-	protected String cmds_unix[] = new String[]{ "", "-smt2","-in"}; 
+	// WARNING=false suppresses z3's own diagnostic WARNING messages (e.g. "unknown logic,
+	// ignoring set-logic command"): confirmed directly against the real z3-4.3.1 binary
+	// that these print as a bare "WARNING: ..." line with no parens at all, which fools
+	// SolverProcess's paren-balance response-completion heuristic the same way
+	// Solver_z3_recent's own identical WARNING=false comment already documents for that
+	// adapter -- z3-4.3 never got the same fix.
+	protected String cmds_win[] = new String[]{ "", "/smt2","/in","SMTLIB2_COMPLIANT=true","WARNING=false"};//,"/rs:42"};
+	protected String cmds_mac[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
+	protected String cmds_unix[] = new String[]{ "", "-smt2","-in","WARNING=false"};
 	
 	/** The parser that parses responses from the solver */
 	protected org.smtlib.sexpr.Parser responseParser;
@@ -196,14 +201,10 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended Z3 forcibly");
 	}
 
-	@Override 
-	public void comment(String comment) {
-		try {
-			solverProcess.sendNoListen(comment);
-		} catch (IOException e) {
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Failed to send comment to Z3: " + e);
-		}
-	}
+	// comment() is inherited unchanged from AbstractSolver, which now forwards a standalone
+	// comment to any solver -- see AbstractSolver.comment() (issue #96/#97's line-counting
+	// investigation established comments must reach every adapter uniformly, not just this
+	// one, for line-number rewriting to correctly track the user's real script).
 
 	/** Translates an S-expression into Z3 syntax */
 	protected String translate(INode sexpr) throws IVisitor.VisitorException {
@@ -431,6 +432,13 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		}
 		logicSet = true;
 		if (logicName.equals("ALL")) {
+			// z3-4.3 has no "ALL" logic to declare, so this line is never actually sent --
+			// unlike every other logic name, which the else-branch below sends as a real,
+			// counted line. That's one fewer real script line reflected in what z3 counts, so
+			// linesOffset must be decremented to compensate (see issue #97): otherwise every
+			// line-numbered error later in the script under-reports by one relative to the
+			// user's actual source.
+			linesOffset--;
 			return smtConfig.responseFactory.success();
 		} else try {
 			return parseResponse(solverProcess.sendAndListen("(set-logic ",logicName,")\n"));
@@ -487,7 +495,14 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
 	@Override
 	public IResponse get_info(IKeyword key) {
-		return sendCommand("(get-info " + key + ")");
+		String cmd = "(get-info " + key + ")";
+		try {
+			String response = solverProcess.sendAndListen(cmd, "\n");
+			if (smtConfig.testing) response = normalizeForTesting(response);
+			return parseResponse(response);
+		} catch (IOException e) {
+			return smtConfig.responseFactory.error("Error writing to solver: " + cmd + " " + e);
+		}
 	}
 	
 	@Override
@@ -679,7 +694,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
 	public class Translator extends Printer {
 
-		public Translator(Writer w) { super(w); }
+		public Translator(Writer w) { super(Solver_z3_4_3.this.smtConfig, w); }
 
 		@Override
 		public Void visit(IFcnExpr e) throws IVisitor.VisitorException {

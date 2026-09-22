@@ -1,0 +1,22 @@
+(set-logic QF_ABV)
+           ^^^^^^
+(declare-const arr (Array (_ BitVec 4) (_ BitVec 8)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(set-logic QF_ABV)
+           ^^^^^^
+(declare-const arr (Array (_ BitVec 4) Bool))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(set-logic QF_ABV)
+           ^^^^^^
+(define-sort MyArr () (Array (_ BitVec 4) (_ BitVec 8)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(set-logic QF_ABV)
+           ^^^^^^
+(define-sort BadArr () (Array (_ BitVec 4) Bool))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(set-logic QF_ABV)
+           ^^^^^^
+(declare-const b (_ BitVec 4))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (= (ite (forall ((y Bool)) y) b b) b))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

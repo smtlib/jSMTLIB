@@ -3,5 +3,5 @@ success
 success
 success
 success
-(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:7:23: expected terms of same sort at indices 0 and 1 as argument to 'bvand'
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:8:23: expected terms of same sort at indices 0 and 1 as argument to 'bvand'
 ")

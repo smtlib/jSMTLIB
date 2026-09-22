@@ -1,0 +1,16 @@
+success
+success
+success
+a : () -> Bool
+b : () -> Bool
+=> : (Bool Bool) -> Bool
+not : (Bool) -> Bool
+or : (Bool Bool) -> Bool
+and : (Bool Bool) -> Bool
+true : () -> Bool
+false : () -> Bool
+distinct : (A A) -> Bool
+xor : (Bool Bool) -> Bool
+ite : (Bool A A) -> A
+= : (A A) -> Bool
+success

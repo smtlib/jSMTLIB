@@ -1,0 +1,50 @@
+##EXITCODE 0
+# Issue #83:
+# 1. A stray-token recovery path at command-parse level used to skip silently to the next '('
+#    with zero logging. Fixed to log a diagnostic (count of skipped tokens) when verbose.
+# 2. Two user-facing error messages misspelled "identifier" as "identifer"
+#    (parseQualifiedIdentifier()'s and parseIdentifier()'s "Invalid beginning of an
+#    identif[i]er..." messages). Fixed to spell it correctly.
+PASS=0
+FAIL=0
+pass() { echo "PASS: $1"; PASS=$((PASS + 1)); }
+fail() { echo "FAIL: $1"; FAIL=$((FAIL + 1)); if [ -n "$2" ]; then echo "  $2"; fi; }
+
+# 1. A stray token ("foo") at command level logs a diagnostic when recovering to the next '('.
+diag=$($SMT_CMD --solver test --verbose 1 --text "foo (exit)" 2>&1 >/dev/null)
+if echo "$diag" | grep -qF "Skipped 1 stray token(s) while recovering to the next command"; then
+    pass "stray token recovery logs a diagnostic"
+else
+    fail "stray token recovery diagnostic missing" "got: $diag"
+fi
+
+# 2. parseQualifiedIdentifier()'s error message: "((bar X) y)" is a parenthesized head that is
+# neither "_" nor "as", exercising its own else-branch error.
+out=$($SMT_CMD --solver test --text "(assert ((bar X) y))" 2>/dev/null)
+if echo "$out" | grep -qF "identifer"; then
+    fail "parseQualifiedIdentifier error message misspells identifier" "got: $out"
+elif echo "$out" | grep -qF "Invalid beginning of an identifier"; then
+    pass "parseQualifiedIdentifier error message spelled correctly"
+else
+    fail "expected an 'identifier' error message" "got: $out"
+fi
+
+# 3. parseIdentifier()'s error message: a doubly-parenthesized sort head "((bar X) Int)" whose
+# inner head is neither "_" (the only form parseIdentifier() accepts in this context).
+out=$($SMT_CMD --solver test --text "(declare-const z ((bar X) Int))" 2>/dev/null)
+if echo "$out" | grep -qF "identifer"; then
+    fail "parseIdentifier error message misspells identifier" "got: $out"
+elif echo "$out" | grep -qF "Invalid beginning of an identifier"; then
+    pass "parseIdentifier error message spelled correctly"
+else
+    fail "expected an 'identifier' error message" "got: $out"
+fi
+
+echo ""
+if [ $FAIL -eq 0 ]; then
+    echo "All $PASS parser stray-token/typo tests PASSED"
+    exit 0
+else
+    echo "$FAIL FAILURES, $PASS passed"
+    exit 1
+fi

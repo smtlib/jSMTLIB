@@ -1,4 +1,4 @@
 success
 success
 success
-(error "<stdin>:4:23: Builtin function int_to_bv does not support argument sorts ()")
+(error "<stdin>:5:23: Builtin function int_to_bv does not support argument sorts ()")

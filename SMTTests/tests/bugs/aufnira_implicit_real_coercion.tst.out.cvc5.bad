@@ -1,0 +1,10 @@
+success
+success
+(error "Parse Error: <shell>:1.18: Due to strict parsing, we require the arguments of DIVISION to have type Real")
+(error "Error writing to solver: (declare-fun y () Real) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (< x y)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun b () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (< x b)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (reset) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (set-logic AUFLIRA) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (/ 4 2) 2.0)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

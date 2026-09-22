@@ -2,18 +2,20 @@
 Usage: java org.smtlib.SMT [args] [file]
        --help [-h]
        --version
-       --verbose <int>  (-v is shorthand for --verbose 1)
+       --verbose <int>
        --solver [-s] <solvername>
-       --exec   [-e] <path>
+       --exec [-e] <path>
        --logics [-L] <path>
-       --out         <filename or 'stdout' or 'stderr'>
-       --diag        <filename or 'stdout' or 'stderr'>
-       --port        <int>
-       --text        <string>
-       --timeout       [-t] <seconds>  (per-query timeout, converted per-solver)
-       --timeout-total [-T] <seconds>  (whole-run timeout, converted per-solver)
+       --out <filename or 'stdout' or 'stderr'>
+       --diag <filename or 'stdout' or 'stderr'>
+       --port <int>
+       --text <string>
+       --timeout [-t] <seconds>
+       --timeout-total [-T] <seconds>
        --echo
        --abort
        --noshow
-       --nosuccess   [-q]
-       --relax  [-r]
+       --nosuccess [-q]
+       --relax [-r]
+       --testing
+       -v is shorthand for --verbose 1

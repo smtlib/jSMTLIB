@@ -31,6 +31,13 @@ import org.smtlib.CharSequenceReader;
  * <p>
  * Uses {@code CharSequenceReader} (a concrete subclass) since {@code CharSequenceInfinite}
  * itself is abstract.
+ * <p>
+ * Stays a JUnit test: {@code subSequence(0, 0)} at absolute position 0 before anything has
+ * been read is only reachable via direct API use -- the lexer's own {@code subSequence} call
+ * sites always pass a real matched token's begin/end (begin &lt; end), never a zero-length
+ * request at the very start of input, so no parseable SMT-LIB script reaches this path.
+ * <p>
+ * See <a href="https://github.com/smtlib/jSMTLIB/issues/106">issue #106</a>.
  */
 public class CharSequenceInfiniteSubSequenceBugTest {
 

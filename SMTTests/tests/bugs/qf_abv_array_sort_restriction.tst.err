@@ -1,0 +1,6 @@
+(declare-const arr (Array (_ BitVec 4) Bool))
+               ^^^
+(define-sort BadArr () (Array (_ BitVec 4) Bool))
+             ^^^^^^
+(assert (= (ite (forall ((y Bool)) y) b b) b))
+                ^^^^^^^^^^^^^^^^^^^^^

@@ -2,5 +2,5 @@ success
 success
 success
 success
-(error "at line 5, column 33: invalid :named attribute (name is already used)")
-(error "Error writing to solver: (assert PP) java.io.IOException: Stream closed")
+(error "at line 6, column 33: invalid :named attribute (name is already used)")
+(error "Error writing to solver: (assert PP) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

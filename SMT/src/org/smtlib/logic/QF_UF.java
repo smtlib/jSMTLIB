@@ -1,5 +1,7 @@
 package org.smtlib.logic;
 
+import org.smtlib.SMT;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -11,8 +13,8 @@ import org.smtlib.IVisitor;
 
 public class QF_UF extends Logic implements ILanguage {
 
-	public QF_UF(ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(name,attributes);
+	public QF_UF(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+		super(smtConfig,name,attributes);
 	}
 	
 	@Override

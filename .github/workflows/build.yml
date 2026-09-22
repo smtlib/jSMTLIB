@@ -19,6 +19,10 @@ on:
         description: 'Override SMT_TEST_SOLVERS (space-separated, e.g. "test cvc5-1.3.2 z3-4.16.0"). Blank = full default list.'
         required: false
         default: ''
+      coverage:
+        description: 'Run with JaCoCo coverage instrumentation and upload a per-leg coverage artifact. Off by default -- see jsmtlib-test/action.yml for why.'
+        required: false
+        default: 'false'
   push:
     branches: [ master, dev ]
 
@@ -107,13 +111,16 @@ jobs:
   test:
     needs: build
     runs-on: ${{ matrix.os }}
-    # Safety net, not a fix: a real run (even a fully failing one) finishes in single-digit
-    # minutes on every platform observed so far. Without this, a genuine hang burns the
-    # full 6-hour GitHub Actions default job timeout before failing -- happened twice
-    # (runs 32097690084, 32208754026), both times on the two Linux legs specifically, cause
-    # still under investigation. 20 minutes leaves generous headroom over normal runtime
-    # while capping the cost of a repeat.
-    timeout-minutes: 20
+    # Safety net, not a fix: without this, a genuine hang burns the full 6-hour GitHub
+    # Actions default job timeout before failing -- happened twice (runs 32097690084,
+    # 32208754026), both times on the two Linux legs specifically, cause still under
+    # investigation. 20 minutes used to leave generous headroom, but the slowest legs
+    # (windows, macos-x64) were already running 18-19 minutes on plain (uninstrumented)
+    # runs; adding JaCoCo coverage instrumentation (see jsmtlib-test/action.yml) pushed
+    # macos-15-x86_64 over 20 minutes and into this exact timeout (run 35530298789).
+    # Raised to keep real headroom over the new, coverage-instrumented normal runtime
+    # rather than shrinking that headroom to nothing.
+    timeout-minutes: 35
     strategy:
       matrix:
         include:
@@ -175,6 +182,11 @@ jobs:
         # e.g. for a targeted single-solver debug run.
         solvers: ${{ inputs.solvers }}
         label: ${{ matrix.label }}
+        # Same blank-for-push-triggered-runs reasoning as 'solvers' above: blank compares
+        # unequal to the literal 'true' jsmtlib-test's own coverage steps check for, so a
+        # push-triggered run (or an unfilled workflow_dispatch 'coverage' input) correctly
+        # defaults to coverage off without needing its own separate override-guard step.
+        coverage: ${{ inputs.coverage }}
 
     - name: Fail job if tests failed
       if: steps.test.outcome == 'failure'

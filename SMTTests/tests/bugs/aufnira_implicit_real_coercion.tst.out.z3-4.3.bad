@@ -1,0 +1,10 @@
+success
+success
+(error "line 15 column 17: invalid function application, sort mismatch on argument at position 1")
+success
+(error "line 17 column 14: invalid function application, sort mismatch on argument at position 2")
+success
+(error "line 19 column 14: invalid function application, sort mismatch on argument at position 2")
+success
+success
+(error "line 22 column 17: invalid function application, sort mismatch on argument at position 1")

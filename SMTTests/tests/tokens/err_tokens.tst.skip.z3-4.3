@@ -1,1 +1,26 @@
-z3 4.3.1 bug: when a string literal contains an invalid escape sequence (e.g. "\d"), z3 reports the error but then treats the following close-quote as an escaped quote, consuming all subsequent input as part of the unterminated string. This causes a deadlock because jSMTLIB sends the next command but z3 never responds. Needs investigation: either validate string escapes before sending to z3, or detect the deadlock.
+z3 4.3.1 bug, confirmed directly against the real binary: SMT-LIB defines no
+backslash escapes at all inside a string literal (a backslash is just a
+literal character), so (set-info :x "as\d") is valid input -- but z3-4.3.1's
+lexer treats "\d" as an (invalid) escape anyway, reports "invalid escape
+sequence", and its own quote-tracking state never recovers: the real closing
+quote right after is silently absorbed rather than ending the string, and
+every subsequent well-formed command is likewise consumed as more
+(unterminated) string content until true EOF, confirmed by piping a small
+script directly to the binary (four inputs after the "as\d" set-info all end
+up swallowed into that one unterminated string, only surfacing as a final
+"unexpected end of string" once stdin actually closes). In the real
+interactive protocol this means the command immediately after the bad string
+gets no response at all -- jSMTLIB's listen() blocks forever.
+
+Deliberately left unfixed rather than worked around, since both directions
+considered have real costs, not just implementation effort: client-side
+pre-validation would mean jSMTLIB refusing genuinely valid SMT-LIB syntax
+just to accommodate one buggy legacy solver version, and a general
+deadlock/silence timeout in SolverProcess.listen() has no safe one-size value
+-- too short risks false-positives killing a legitimately slow but correct
+check-sat, too long barely improves on CI's existing coarse job-level
+timeout. z3-4.3.1 (c. 2013) is a low-priority legacy compatibility target;
+revisit only if this class of hang starts affecting a version that matters
+more.
+
+See https://github.com/smtlib/jSMTLIB/issues/100.

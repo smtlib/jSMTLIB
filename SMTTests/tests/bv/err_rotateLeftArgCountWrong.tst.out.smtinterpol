@@ -1,4 +1,4 @@
 success
 success
 success
-(error "<stdin>:4:19: Builtin function rotate_left does not support argument sorts ()")
+(error "<stdin>:5:19: Builtin function rotate_left does not support argument sorts ()")

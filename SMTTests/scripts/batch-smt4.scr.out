@@ -1,1 +1,2 @@
-(error "Problem in starting or running simplify: Cannot run program ""$SOLVERS/simplify"": error=2, No such file or directory")
+(error "Failed to start process $SOLVERS/jSMTLIB-nonexistent-test-executable : Cannot run program ""$SOLVERS/jSMTLIB-nonexistent-test-executable"": error=2, No such file or directory")
+(error "missingexec failed to start: Failed to start process $SOLVERS/jSMTLIB-nonexistent-test-executable : Cannot run program ""$SOLVERS/jSMTLIB-nonexistent-test-executable"": error=2, No such file or directory")
