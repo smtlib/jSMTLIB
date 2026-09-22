@@ -17,9 +17,9 @@ import org.smtlib.IExpr.IFunctionDeclaration;
 import org.smtlib.IExpr.ISortDeclaration;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IResponse;
+import org.smtlib.ISolver;
 import org.smtlib.ISort;
 import org.smtlib.SMT;
-import org.smtlib.solvers.Solver_test;
 
 /**
  * Covers {@code impl.Factory}'s {@code ICommand.IFactory} methods that a parsed script never
@@ -43,12 +43,12 @@ public class CommandFactoryCoverageTest {
     @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
 
     SMT.Configuration config;
-    Solver_test solver;
+    ISolver solver;
 
     @Before
     public void init() throws Exception {
         config = new SMT.Configuration();
-        solver = new Solver_test(config, "test");
+        solver = config.createSolver("test", null);
         solver.start();
         solver.set_logic("QF_UF", null); // define-fun/declare-datatype etc. require a logic first
     }

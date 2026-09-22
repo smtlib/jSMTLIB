@@ -99,7 +99,7 @@ public class FileTests extends LogicTests {
     @Override
     public void init() {
         smt = new SMT();
-        smt.props = readPropertiesAndAddDefaults(smt);
+        smt.smtConfig.props = readPropertiesAndAddDefaults(smt);
         smt.smtConfig.solvername = solvername;
         // solver is started lazily by exec()
     }
