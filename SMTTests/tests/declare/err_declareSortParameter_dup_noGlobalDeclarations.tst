@@ -1,0 +1,5 @@
+; declare-sort-parameter: duplicate sort parameter name, without :global-declarations (paired with err_declareSortParameter_dup_globalDeclarations.tst)
+(set-info :smt-lib-version 2.7)
+(set-logic QF_UF)
+(declare-sort-parameter T)
+(declare-sort-parameter T)

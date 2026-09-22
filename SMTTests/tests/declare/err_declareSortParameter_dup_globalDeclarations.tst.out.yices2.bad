@@ -1,0 +1,5 @@
+(error "unsupported :smt-lib-version")
+success
+success
+(error "at line 5, column 24: syntax error: declare-sort-parameter is not a command")
+(error "at line 6, column 24: syntax error: declare-sort-parameter is not a command")
