@@ -228,20 +228,8 @@ public class SymbolTable {
 		sorts = sortStack.get(0);
 		names = symStack.get(0);
 	}
-	
-	// FIXME _ why is this needed?
-	/** Removes the previous background frame, then removes the top frame and 
-	 * inserts it as the bottom (background) frame. */
-	public void moveToBackground() {
-		sortStack.remove(sortStack.size()-1);
-		symStack.remove(symStack.size()-1);
-		sortStack.add(sortStack.remove(0));
-		symStack.add(symStack.remove(0));
-		names = symStack.get(0);
-		sorts = sortStack.get(0);
-	}
-	
-	/** Adds the given symbol as a sort to the top scope of the sort table; 
+
+	/** Adds the given symbol as a sort to the top scope of the sort table;
 	 * returns false if the given symbol is already in the top scope (and the sort table is unchanged);
 	 * returns true if the symbol is not already in the top scope.
 	 * @param symbol the symbol to add
