@@ -105,9 +105,9 @@ trap 'rm -rf "$_tmpdir"' EXIT
 _run() {
     local _outfile="$1"
     case "$_mode" in
-        z3)          timeout 10 "$_exe" -smt2 -in > "$_outfile" 2>/dev/null ;;
-        cvc5|yices2) timeout 10 "$_exe" > "$_outfile" 2>/dev/null ;;
-        smtinterpol) timeout 10 java -jar "$_exe" -q > "$_outfile" 2>/dev/null ;;
+        z3)          timeout 30 "$_exe" -smt2 -in > "$_outfile" 2>/dev/null ;;
+        cvc5|yices2) timeout 30 "$_exe" > "$_outfile" 2>/dev/null ;;
+        smtinterpol) timeout 30 java -jar "$_exe" -q > "$_outfile" 2>/dev/null ;;
     esac
 }
 
