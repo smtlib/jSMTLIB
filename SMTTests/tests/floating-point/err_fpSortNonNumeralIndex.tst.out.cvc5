@@ -1,0 +1,2 @@
+success
+(error "Parse Error: <shell>:1.36: Expected a RPAREN_TOK, got `eb` (SYMBOL).")

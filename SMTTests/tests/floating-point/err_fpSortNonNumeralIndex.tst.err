@@ -1,0 +1,2 @@
+(declare-fun x () (_ FloatingPoint eb 24))
+                                      ^^

@@ -1,0 +1,2 @@
+success
+(error "A FloatingPoint sort must have exponent and significand sizes greater than 1")
