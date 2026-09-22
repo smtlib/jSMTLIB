@@ -25,6 +25,7 @@
 \usepackage{rotating}
 \usepackage{threeparttable}
 \usepackage{verbatim}
+\usepackage{filemod}
 
 %%\usepackage{lmodern} %Type1-font for non-english texts and characters
 
@@ -62,6 +63,8 @@
 %\renewcommand{\yourmailmsg}{Your signs, Your mail from}
 %\renewcommand{\psname}{PS}
 %\renewcommand{\enclname}{\tt Anlage(n)}
+
+\newcommand{\version}{2.7}
 
 \newcommand{\bs}{{\tt \char'134}}
 
@@ -116,12 +119,14 @@
 
 \title{The SMT-LIBv2 Language and Tools: A Tutorial}
 
-\author{David R. Cok \\ GrammaTech, Inc. }
+\author{David R. Cok \\ Safer Software, LLC }
 
-\date{Version 1.2.1 \\ \today \\ \vspace*{.5in}
-The most recent version is available at \url{http://www.grammatech.com/resource/smt/SMTLIBTutorial.pdf}.\\
- \vspace*{2.5in}
-\parbox{6.30in}{Copyright (c) 2010-2011 by David R. Cok. Permission is granted to make and distribute copies of this document for educational or research purposes, provided that the copyright notice and permission notice are preserved and acknowledgment is given in publications. 
+\date{Version 2.0 \\ \filemodprintdate{\jobname} \\ \vspace*{.5in}
+The most recent version is available at \url{https://smtlib.github.io/jSMTLIB/SMTLIBTutorial.pdf}.\\
+ \vspace*{.25in}
+\parbox{6.30in}{\textbf{Note:} This tutorial describes SMT-LIB v\version\ standard. It replaces a previous version of the document that described SMT-LIB v2.0/2.5.}\\
+ \vspace*{1.25in}
+\parbox{6.30in}{Copyright (c) 2010-2026 by David R. Cok. Permission is granted to make and distribute copies of this document for educational or research purposes, provided that the copyright notice and permission notice are preserved and acknowledgment is given in publications. 
 Modified versions of the document may not be made.
 Incorporating this document within a larger collection, or distributing it for commercial purposes, or including it as part or all of a product for sale is allowed only by separate written permission from the author.}}
 
@@ -152,6 +157,7 @@ In addition, Tinelli and Silvio Ranise pioneered the SMT-LIB language, and Barre
 \addcontentsline{toc}{chapter}{Version History}
 
 \begin{tabular}{llp{4in}}
+2026-09-30 & Verison 2.0 & Rewritten for SMTLIB v2.7 \\
 2011-02-13 & Version 1.1 & Reported typos corrected \\
 2011-01-24 & Version 1.0 & First round comments incorporated \\
 2010-12-25 & Version 0.2.draft & Updated to 12/21/2010 version of the standard \\
@@ -166,8 +172,6 @@ and it may have misinterpreted the standard. If you notice errors, please bring 
 in a future edition.
 
 
-%%\part{Part the first}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Introduction}
 
@@ -177,11 +181,11 @@ This tutorial builds on two significant developments in automated reasoning over
 The first development is the considerable advance in SMT solvers.  These solvers (and their siblings, SAT solvers\index{SAT solvers}) are essential to model checking and software verification.  Some such solver is embedded as a background validity checker in most verification systems. 
 
 At the 2010 SMT workshop, 10 different provers competed to demonstrate capability and performance, with an additional 8 other groups competing in 2008 and 2009.
-That competition, SMT-COMP, is a direct contributor to the recent improvements in SMT solver performance. A uniformly available set of benchmark problems provided a measure of solver capability and an objective means of comparing solvers.  As a result, solver performance has increased considerably\cite{BDO+08}\cite{SMTCOMP-2010} over the last several years.
+That competition, SMT-COMP, is a direct contributor to the recent improvements in SMT solver performance. A uniformly available set of benchmark problems provided a measure of solver capability and an objective means of comparing solvers.  As a result, solver performance has increased considerably\cite{BDO+08}\cite{SMTCOMP-2010} ever since.
 
 The second key development is the SMT-LIB language itself.
 Integral to the SMT competition is having a language common across solvers in which to express benchmark problems. That is the task of the SMT-LIB language.
-The language was first proposed in 2003\cite{RanTin-PDPAR-03} as the input language for the SMT benchmark problems. However, the language was subsequently revised to meet additional needs.  In particular, an important application of SMT solvers is as a backend constraint solver for software verification.  In this application, a solver receives input from another tool and the driver tool needs capabilities such as asserting and retracting logical expressions or exploring the satisfying assignments produced by the solver. Those requirements led to SMT-LIB version 2, which was announced in 2010\cite{BarST-SMT-10}.  This tutorial describes the December 21, 2010, edition of that standard.
+The language was first proposed in 2003\cite{RanTin-PDPAR-03} as the input language for the SMT benchmark problems. However, the language was subsequently revised to meet additional needs.  In particular, an important application of SMT solvers is as a backend constraint solver for software verification.  In this application, a solver receives input from another tool and the driver tool needs capabilities such as asserting and retracting logical expressions or exploring the satisfying assignments produced by the solver. Those requirements led to SMT-LIB version 2, which was announced in 2010\cite{BarST-SMT-10}.  This tutorial describes the v2.7 (2026) edition of that standard.
 
 The SMT-LIB standard has the goal of advancing the theory and practice of SMT solvers by providing a common language and set of benchmarks against which to test and compare solvers.  This tutorial is created in support of that goal, but with the additional intent of encouraging 
 wider use of SMT solvers, in application areas in which SMT solvers may currently be unfamiliar.
@@ -194,7 +198,7 @@ This tutorial is intended for two audiences.  The primary audience is individual
 This tutorial will provide these readers
 \begin{itemize}
 \item a very brief introduction to some of the key concepts of logic and automated theorem proving that are needed to use SMT solvers,
-\item information about the context of SMT solvers, SMT-LIB and the recent significant release (v.2),
+\item information about the context of SMT solvers, SMT-LIB and the recent significant release,
 \item examples and description of how SMT-LIB is used to interact with SMT solvers,
 \item pointers to currently available SMT solvers,
 \item and descriptions of some tools and test suites that may be useful to the reader.
@@ -208,11 +212,21 @@ A second audience consists of those individuals who are implementing an SMT solv
 The tutorial consists of these parts:
 \begin{itemize}
 \item this introductory section;
+\item a tutorial on the SMT-LIB language
+\begin{itemize}
 \item a set of examples providing readers a quick picture of SMT-LIB scripts;
 \item the details of the SMT-LIB language, including syntax, sorts, declarations, expressions, and commands;
 \item a brief description of the built-in logics and theories;
 \item an introduction to some of the SMT solvers currently available;
-\item a list of tools available to interested SMT users and implementors.
+\end{itemize}
+\item A tutorial on the jSMTLIB library for SMT support
+\begin{itemize}
+\item using the library as a command-line tool
+\item using the library as a command-line equivalent programmatic interface
+\item using the library to create in-memory representations of SMT-LIB commands and expressions
+\item using the library as a Language-Server Protocol (LSP) server
+\end{itemize}
+\item a list of other tools available to interested SMT users and implementors.
 \end{itemize}
 
 Anyone who would like to hear about updates to this tutorial or its associated tools is encouraged to 
@@ -224,9 +238,9 @@ subscribe to the smt-lib@cs.nyu.edu mailing list; you can register for the maili
 
 The document employs a few definitions and typographical conventions; these are described here.
 
-A {\em conforming} SMT solver is one whose behavior obeys the SMT-LIB v.2 standard.  Such a solver may do more than the standard requires, but not less.  For example, it may define more options or more commands, or it may be less restrictive in interpreting commands.  However, any legal SMT-LIB v2 input must be accepted without complaint and yield the defined response.
+A {\em conforming} SMT solver is one whose behavior obeys the most recent version of the SMT-LIB v.2 standard.  Such a solver may do more than the standard requires, but not less.  For example, it may define more options or more commands, or it may be less restrictive in interpreting commands.  However, any legal SMT-LIB v2 input must be accepted without complaint and yield the defined response.
 
-This document only describes SMT-LIB version 2; references to SMT-LIB are simply an abbreviated reference to version 2 of the language.
+This document only describes SMT-LIB version \version; references to SMT-LIB are simply an abbreviated reference to this version of the language.
 
 {\bf Verbatim characters.} Text written using a monospaced font, e.g. {\tt font}, represents character sequences that are to be interpreted verbatim. Typically, they are SMT-LIB input or output or fragments of SMT-LIB commands.
 
@@ -258,6 +272,7 @@ descriptive text to explain aspects of the example.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\part{The SMT-LIB Language}
 
 \chapter{Quick Start}
 
@@ -428,7 +443,7 @@ success
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{The SMT-LIB Language (v2)}
+\chapter{The SMT-LIB Language (v\version)}
 \section{Some logical concepts}
 
 This tutorial does not provide an introduction to logic or the details of SMT solvers.  However, a reader that understands the following  concepts will be able to use an SMT solver and the SMT-LIB command language more effectively. A reader interested in the formal 
@@ -2368,6 +2383,48 @@ and all of the functions defined in the {\tt Fixed\_Size\_BitVectors} theory (bu
 %%{\it This section will be added in a future edition of the tutorial.}  %% TBD
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\part{The jSMTLIB library}
+
+FIXME
+
+\chapter{Installing jSMTLIB}
+
+\begin{itemize}
+\item Current versions of the jSMTLIB library/command-line tool are available at \url{https://github.com/SMTLIB/jSMTLIB/releases.html}.
+\item The source code for the (open-source) project is also in github: \url{https://github.com/SMTLIB/jSMTLIB/}.
+\item Cached copies of the various SMT solvers are available at \url{https://github.com/SMTLIB/Solvers/}
+\end{itemize}
+
+The release is a .zip file, which is to be unzipped in an empty folder of the user's choice; here we will call that folder \texttt{INSTALL}.
+
+The command-line tool can then be run as \texttt{java -jar INSTALL/jSMTLIB.jar} .
+
+\chapter{Command-line options}
+
+The jSMTLIB command-line tool is a classic command-line tool: it takes space-separated options, option values, and file paths.
+\begin{itemize}
+\item options and file paths can be listed in any order
+\item options begin with two hyphens, with some abbreviations beginning with just one hyphen
+\item if an option takes a value, the value follows the option on the command-line, separated by white space (e.g. \texttt{--verbose 1})
+\item if an option is repeated, typically the later instance simply overrides the earlier one
+\item options typically have a default value; if a boolean option is turned on by, say \texttt{--zzz}, it may be able to be turned off by \texttt{--no-zzz}
+\item file paths are either absolute or relative to the current working directory of the shell in which the command is executed
+\end{itemize}
+
+The tool recognizes these command-line options:
+\begin{itemize}
+\item zzz
+\end{itemize}
+
+\chapter{jSMTLIB as a command-line tool: SMT validation}
+
+jSMTLIB is a pure Java library, released as a \texttt{.jar} file. It can be run using 
+\texttt{java -jar INSTALL/jSMTLIB.jar } .
+
+\chapter{jSMTLIB as a command-line tool: interface to solvers}
+
+FIXME
+
 \chapter{SMT solvers}
 \label{Solvers}
 
