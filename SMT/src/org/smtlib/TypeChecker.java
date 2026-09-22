@@ -25,7 +25,45 @@ import org.smtlib.sexpr.ISexpr;
 import org.smtlib.sexpr.ISexpr.ISeq;
 
 /** This class is a visitor that type-checks a formula */
-public class TypeChecker extends IVisitor.NullVisitor</*@Nullable*/ ISort> {
+public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
+
+	// TypeChecker used to extend the now-deleted IVisitor.NullVisitor to get these 25
+	// node-type overrides for free, each silently returning null; NullVisitor was removed
+	// since TypeChecker was its only real user (see git history). Deliberately made
+	// fail-fast here instead of reproducing that silent no-op: verified empirically that
+	// none of these 25 node types are ever actually visited anywhere in the full
+	// ~11,000-test corpus across the full solver matrix, so throwing costs nothing today
+	// -- but TypeChecker is only exercised via the mock "test" solver in the first place,
+	// so a future test, theory addition, or new caller could still reach one of these for
+	// real. A silent `return null` would let that pass through as an unchecked-but-wrong
+	// sort with no signal at all; this throws loudly instead, so the first thing that
+	// actually reaches one of these node types fails immediately and points straight back
+	// here, rather than surfacing later as a confusing downstream symptom.
+	@Override public ISort visit(IAttribute<?> e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IAttribute) reached: " + e); }
+	@Override public ISort visit(IBinding e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IBinding) reached: " + e); }
+	@Override public ISort visit(ISort.IDatatype e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(ISort.IDatatype) reached: " + e); }
+	@Override public ISort visit(IExpr.ISortDeclaration e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IExpr.ISortDeclaration) reached: " + e); }
+	@Override public ISort visit(ISelector e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(ISelector) reached: " + e); }
+	@Override public ISort visit(IConstructor e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IConstructor) reached: " + e); }
+	@Override public ISort visit(IDeclaration e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IDeclaration) reached: " + e); }
+	@Override public ISort visit(IFunctionDeclaration e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IFunctionDeclaration) reached: " + e); }
+	@Override public ISort visit(ICommand.IScript e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(ICommand.IScript) reached: " + e); }
+	@Override public ISort visit(ICommand e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(ICommand) reached: " + e); }
+	@Override public ISort visit(IExpr.IMatchCase e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IExpr.IMatchCase) reached: " + e); }
+	@Override public ISort visit(IExpr.IPattern e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IExpr.IPattern) reached: " + e); }
+	@Override public ISort visit(ILogic s) throws VisitorException { throw new RuntimeException("TypeChecker.visit(ILogic) reached: " + s); }
+	@Override public ISort visit(ITheory s) throws VisitorException { throw new RuntimeException("TypeChecker.visit(ITheory) reached: " + s); }
+	@Override public ISort visit(IResponse e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IResponse) reached: " + e); }
+	@Override public ISort visit(IResponse.IError e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IResponse.IError) reached: " + e); }
+	@Override public ISort visit(IResponse.IAssertionsResponse e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IResponse.IAssertionsResponse) reached: " + e); }
+	@Override public ISort visit(IResponse.IAssignmentResponse e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IResponse.IAssignmentResponse) reached: " + e); }
+	@Override public ISort visit(IResponse.IProofResponse e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IResponse.IProofResponse) reached: " + e); }
+	@Override public ISort visit(IResponse.IValueResponse e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IResponse.IValueResponse) reached: " + e); }
+	@Override public ISort visit(IResponse.IUnsatCoreResponse e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IResponse.IUnsatCoreResponse) reached: " + e); }
+	@Override public ISort visit(IResponse.IUnsatAssumptionsResponse e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IResponse.IUnsatAssumptionsResponse) reached: " + e); }
+	@Override public ISort visit(IResponse.IAttributeList e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(IResponse.IAttributeList) reached: " + e); }
+	@Override public ISort visit(org.smtlib.sexpr.ISexpr.ISeq e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(ISexpr.ISeq) reached: " + e); }
+	@Override public ISort visit(org.smtlib.sexpr.ISexpr.IToken<?> e) throws VisitorException { throw new RuntimeException("TypeChecker.visit(ISexpr.IToken) reached: " + e); }
 
 	/** Compilation of errors */
 	public List<IResponse> result = new LinkedList<IResponse>();
