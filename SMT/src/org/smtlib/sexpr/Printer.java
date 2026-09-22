@@ -676,6 +676,48 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 		return printCommand(e, () -> e.arg().accept(this));
 	}
 
+	/** A comment is never "(commandName args)" S-expression syntax to begin with, so this
+	 *  doesn't go through {@code printCommand()} like every other command here -- instead
+	 *  it's printed directly, now that Comment is a real, typed command rather than going
+	 *  through the generic {@code visit(ICommand)} fallback's reflection-based {@code
+	 *  write()} lookup (see issue #115; this logic used to live in a {@code write()}
+	 *  override on {@code C_comment} itself, invoked only via that reflection call --
+	 *  moved here instead, so printing for every command, including this one, lives in
+	 *  exactly one place: Printer's own typed {@code visit()} methods).
+	 *  <p>
+	 *  Text parsed from a real script is always already well-formed this way (every line,
+	 *  including a multi-line block's continuation lines, already carries its own leading
+	 *  {@code ;} in the source, so it prints back out verbatim, byte for byte) -- but text
+	 *  supplied directly via the public API might have an embedded newline with no {@code
+	 *  ;} on the continuation line, which would silently end the comment there and let the
+	 *  continuation be re-parsed as code. So each line is checked, and given its own {@code
+	 *  ;} if it doesn't already have one and isn't just blank. A comment parsed immediately
+	 *  before a real command always already ends with a newline in the captured source
+	 *  text (a {@code ;} comment can't share a line with whatever follows it, so there's
+	 *  necessarily at least one newline swept into the capture) -- but a trailing comment
+	 *  at true end-of-file, or text supplied directly via the public API, might not.
+	 *  Printing without a final newline would risk whatever gets printed right after
+	 *  landing on the same line and being silently swallowed by this comment (since {@code
+	 *  ;} consumes to end of line), so one is always guaranteed here regardless. */
+	@Override
+	public Void visit(ICommand.Icomment e) throws IVisitor.VisitorException {
+		String text = e.text();
+		try {
+			String[] lines = text.split("\r\n|\n", -1);
+			for (int i = 0; i < lines.length; i++) {
+				if (i > 0) writer().append("\n");
+				String line = lines[i];
+				String trimmed = line.trim();
+				if (!trimmed.isEmpty() && !trimmed.startsWith(";")) writer().append(";");
+				writer().append(line);
+			}
+			if (!text.endsWith("\n")) writer().append("\n");
+		} catch (java.io.IOException ex) {
+			throw new IVisitor.VisitorException(ex, e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null);
+		}
+		return null;
+	}
+
 	@Override
 	public Void visit(ICommand.Iexit e) throws IVisitor.VisitorException {
 		return printCommand(e);

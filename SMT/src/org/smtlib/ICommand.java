@@ -89,6 +89,10 @@ public interface ICommand extends INode {
         /** Creates an echo command object. */
         Iecho echo(IStringLiteral arg);
 
+        /** Creates a comment pseudo-command object, carrying the given raw comment text
+         *  (see {@link Icomment}). */
+        Icomment comment(String text);
+
         /** Creates an exit command object. */
         Iexit exit();
         
@@ -286,6 +290,19 @@ public interface ICommand extends INode {
 
 	/** Interface for the SMT-LIB {@code exit} command. */
     static public interface Iexit extends ICommand {
+    }
+
+	/** Interface for a comment pseudo-command: not part of the SMT-LIB command grammar
+	 *  itself, but modeled as a real, typed {@link ICommand} (see issue #115) so that
+	 *  every dispatch path -- execution, typed-visitor traversal, and printing -- treats
+	 *  it uniformly with every other command, rather than falling back on {@code
+	 *  IVisitor}'s generic {@code visit(ICommand)} handling (a reflection-based lookup in
+	 *  {@link org.smtlib.sexpr.Printer}'s case). See {@link org.smtlib.command.C_comment}. */
+    static public interface Icomment extends ICommand {
+    	/** Returns the raw comment text (as captured from source, or as supplied directly
+    	 *  via the public API), not yet split into per-line {@code ;}-prefixed form -- see
+    	 *  {@link org.smtlib.command.C_comment#write}. */
+        String text();
     }
 
 	/** Interface for the SMT-LIB {@code get-assertions} command. */

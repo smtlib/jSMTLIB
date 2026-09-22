@@ -687,7 +687,7 @@ public class SMT {
 					// A leading comment must not count as "using up" the first-command slot --
 					// it's not a real script command, just carried along so it can be
 					// forwarded to the solver (see issue #42).
-					if (!(command instanceof org.smtlib.command.C_comment)) {
+					if (!(command instanceof ICommand.Icomment)) {
 						smtlibVersionAllowed = (command instanceof ICommand.Ireset)
 								|| (isSmtlibVersionInfo && !result.isError());
 					}

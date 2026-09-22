@@ -125,6 +125,7 @@ public class Factory implements IExpr.IFactory, ISort.IFactory, ICommand.IFactor
 	@Override public ICommand.Idefine_funs_rec   define_funs_rec(List<IExpr.IFunctionDeclaration> ds, List<IExpr> bs)                  { return new C_define_funs_rec(ds, bs); }
 	@Override public ICommand.Idefine_sort       define_sort(ISymbol id, List<IParameter> ps, ISort e)                                 { return new C_define_sort(id, ps, e); }
 	@Override public ICommand.Iecho              echo(IStringLiteral arg)                                                               { return new C_echo(arg); }
+	@Override public ICommand.Icomment           comment(String text)                                                                   { return new C_comment(text); }
 	@Override public ICommand.Iexit              exit()                                                                                 { return new C_exit(); }
 	@Override public ICommand.Iget_assertions    get_assertions()                                                                       { return new C_get_assertions(); }
 	@Override public ICommand.Iget_assignment    get_assignment()                                                                       { return new C_get_assignment(); }

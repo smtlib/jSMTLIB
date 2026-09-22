@@ -67,6 +67,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 	default public /*@Nullable*/T visit(ICommand.Idefine_funs_rec e) throws VisitorException { return visit((ICommand)e); }
 	default public /*@Nullable*/T visit(ICommand.Idefine_sort e) throws VisitorException { return visit((ICommand)e); }
 	default public /*@Nullable*/T visit(ICommand.Iecho e) throws VisitorException { return visit((ICommand)e); }
+	default public /*@Nullable*/T visit(ICommand.Icomment e) throws VisitorException { return visit((ICommand)e); }
 	default public /*@Nullable*/T visit(ICommand.Iexit e) throws VisitorException { return visit((ICommand)e); }
 	default public /*@Nullable*/T visit(ICommand.Iget_assertions e) throws VisitorException { return visit((ICommand)e); }
 	default public /*@Nullable*/T visit(ICommand.Iget_assignment e) throws VisitorException { return visit((ICommand)e); }
@@ -345,6 +346,8 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 		public /*@Nullable*/T visit(ICommand.Iecho e) throws VisitorException {
 			e.arg().accept(this); return null;
 		}
+		@Override
+		public /*@Nullable*/T visit(ICommand.Icomment e) throws VisitorException { return null; }
 		@Override
 		public /*@Nullable*/T visit(ICommand.Iexit e) throws VisitorException { return null; }
 		@Override
