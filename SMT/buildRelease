@@ -36,7 +36,18 @@ sed -e "s/DEV/${version}/" src/org/smtlib/resources/version.template > src/org/s
 ## e.g. CLASSDIR=bin ./buildRelease, if that risk is specifically wanted anyway.
 stage=temp
 mkdir -p "$stage"
-CLASSDIR="${CLASSDIR:-$stage/classes}"
+if [ -z "${CLASSDIR:-}" ]; then
+  CLASSDIR="$stage/classes"
+  ## javac only ever adds/overwrites .class outputs for the sources it's given --
+  ## it never removes a stale .class file left over from a source element (a whole
+  ## file, or a nested/inner class) that has since been deleted. Without wiping this
+  ## directory first, a deleted class can silently keep riding along in every jar
+  ## built from it (issue #122: a long-deleted IVisitor$NullVisitor.class kept
+  ## showing up in coverage reports built from a jar assembled this way). Only safe
+  ## to do this unconditionally for the directory this script owns by default --
+  ## an explicit CLASSDIR override (e.g. Eclipse's bin/, see below) is left alone.
+  rm -rf "$CLASSDIR"
+fi
 
 echo Compiling sources
 find src -name "*.java" > "$stage/sources.txt"

@@ -168,6 +168,12 @@ CI_SOLVERS ?= $(SMT_TEST_SOLVERS)
 ## every platform's combined coverage -- since each platform exercises different
 ## solver-adapter code paths (isWindows/isMac branches, per-platform solver availability,
 ## etc.), a merged view is more useful than 5 separate reports to cross-reference by hand.
+## The report step needs --classfiles that exactly match what produced the .exec data
+## (JaCoCo compares a class-structure ID and otherwise reports it as uncovered, or not at
+## all) -- so this downloads the same jsmtlib-release-<run_id> jar CI built and
+## instrumented for this run and reports against that, rather than $(COV_CLASSES)'s local
+## build, which has no guaranteed relationship to what actually ran on CI (issue #122: a
+## stale/incrementally-built local jar showed long-deleted classes in the report).
 ## Requires the gh CLI, authenticated against this repo (gh auth status).
 ## Override the dispatched branch or solver list on the command line, e.g.:
 ##   make ci-cov CI_BRANCH=dev CI_SOLVERS="test cvc5-1.3.2"
@@ -206,14 +212,19 @@ ci-cov:
 	echo "Downloading coverage artifacts to cov/ci/..."; \
 	rm -rf cov/ci; mkdir -p cov/ci; \
 	gh run download "$$run_id" -p 'coverage-*' -D cov/ci; \
+	echo "Downloading the jSMTLIB.jar CI built and instrumented for this run..."; \
+	gh run download "$$run_id" -n "jsmtlib-release-$$run_id" -D cov/ci/jar; \
 	execs=$$(find cov/ci -name junits.exec); \
+	classjar=$$(find cov/ci/jar -name jSMTLIB.jar | head -1); \
 	if [ -z "$$execs" ]; then \
 		echo "WARNING: no junits.exec files found in the downloaded artifacts -- skipping merge"; \
+	elif [ -z "$$classjar" ]; then \
+		echo "WARNING: could not download this run's jSMTLIB.jar (jsmtlib-release-$$run_id) -- skipping merge"; \
 	else \
 		echo "Merging $$(echo "$$execs" | wc -l | tr -d ' ') per-platform .exec files into one report..."; \
 		java -jar jacoco/lib/jacococli.jar merge $$execs --destfile cov/ci/merged.exec; \
 		java -jar jacoco/lib/jacococli.jar report cov/ci/merged.exec \
-			--classfiles $(COV_CLASSES) \
+			--classfiles "$$classjar" \
 			--sourcefiles ../SMT/src \
 			--html cov/ci/html \
 			--xml cov/ci/coverage.xml; \
