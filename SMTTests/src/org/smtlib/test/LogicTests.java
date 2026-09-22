@@ -51,7 +51,7 @@ public class LogicTests {
 		String[] candidates = (env == null || env.trim().isEmpty())
 				? new String[] { "test" } : env.trim().split("\\s+");
 		SMT smt = new SMT();
-		smt.props = smt.readProperties();
+		smt.smtConfig.props = smt.smtConfig.readProperties();
 		List<String> present = new ArrayList<String>();
 		for (String name : candidates) {
 			String exec = smt.resolveExecutableForSolver(name);
@@ -125,7 +125,7 @@ public class LogicTests {
 	}
 
 	protected Properties readPropertiesAndAddDefaults(SMT smt) {
-		Properties props = smt.readProperties();
+		Properties props = smt.smtConfig.readProperties();
 		if (props.isEmpty()) {
 			loadSimplifyBinary(props);
 			loadZ3Binary(props);
@@ -137,7 +137,7 @@ public class LogicTests {
 		smt = new SMT();
 		// We're not reading the command-line so we have to set items ourselves
 		// Executable paths are taken from the properties
-		smt.props = readPropertiesAndAddDefaults(smt);
+		smt.smtConfig.props = readPropertiesAndAddDefaults(smt);
 		listener = new JUnitListener();
 		smt.smtConfig.log.clearListeners();
 		smt.smtConfig.log.addListener(listener);
@@ -213,7 +213,7 @@ public class LogicTests {
 		System.setOut(new PrintStream(ba));
 		try {
 			SMT smt = new SMT();
-			smt.props = readPropertiesAndAddDefaults(smt);
+			smt.smtConfig.props = readPropertiesAndAddDefaults(smt);
 			smt.smtConfig.text = input;
 			PrintStream both = new PrintStream(ba);
 			smt.smtConfig.log.setChannels(both, both);

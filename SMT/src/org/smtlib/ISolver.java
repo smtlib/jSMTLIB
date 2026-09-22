@@ -218,4 +218,24 @@ public interface ISolver {
 	 * @return the info value, or unsupported, or an SMT error response
 	 */
 	IResponse get_info(IKeyword option);
+
+	/** Thrown by {@link SMT.Configuration#createSolver} when a solver adapter cannot be
+	 *  resolved, constructed, or fails to launch. Checked (unlike, say, an unchecked
+	 *  reflection failure) so that a library caller of {@code createSolver} must
+	 *  explicitly confront and handle a solver-creation failure rather than have it
+	 *  silently propagate, matching the existing precedent of {@link IParser.ParserException}
+	 *  for "the caller must handle this" conditions in this codebase. */
+	public static class CreationException extends Exception {
+		private static final long serialVersionUID = 1L;
+
+		/** Creates a creation exception with the given message. */
+		public CreationException(String msg) {
+			super(msg);
+		}
+
+		/** Creates a creation exception with the given message and underlying cause. */
+		public CreationException(String msg, Throwable cause) {
+			super(msg, cause);
+		}
+	}
 }

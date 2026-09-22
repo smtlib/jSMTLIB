@@ -100,7 +100,8 @@ public class SMTCommandLineTests {
         // When org.smtlib.logic_path is absent from properties, getProperty returns null,
         // options.logicPath stays null, and the logicFinder falls back to ClassLoader resource
         // lookup — the .smt2 files are packaged at the root of jSMTLIB.jar.
-        SMT smtNoLogicPath = new SMT() {
+        SMT smtNoLogicPath = new SMT();
+        smtNoLogicPath.smtConfig = new SMT.Configuration() {
             @Override public Properties readProperties() { return new Properties(); }
         };
         smtNoLogicPath.smtConfig.log.setChannels(outPs, smtNoLogicPath.smtConfig.log.getDiag());
@@ -648,7 +649,7 @@ public class SMTCommandLineTests {
 
     @Test public void cleanupWithActiveSolver() throws Exception {
         SMT s = new SMT();
-        s.props = s.readProperties();
+        s.smtConfig.props = s.smtConfig.readProperties();
         ISolver solver = s.startSolver(s.smtConfig, "test", null);
         Assert.assertNotNull("startSolver should succeed for 'test'", solver);
 

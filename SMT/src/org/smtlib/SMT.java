@@ -52,9 +52,6 @@ public class SMT {
 //		Configuration.smtlib = version;
 //	}
 	
-	/** Properties loaded from the jsmtlib.properties file(s). */
-	public Properties props;
-
 	/** Marker interface for configuration objects; reserved for future extension. */
 	static public interface IConfiguration {}
 	
@@ -233,6 +230,9 @@ public class SMT {
 		/** The log to use for regular, error, and diagnostic output */
 		public /*@NonNull*/ Log log = new Log(this);
 
+		/** Properties loaded from the jsmtlib.properties file(s); see {@link #readProperties()}. */
+		public Properties props;
+
 		/** The PrintStream that "stdout" resolves to for this instance.
 		 *  Defaults to System.out; in-process callers (e.g. JUnit tests) set this
 		 *  to a per-test stream so that set_option(:regular-output-channel "stdout")
@@ -350,8 +350,263 @@ public class SMT {
 		
 		/** Encodes an aspect of current parser state so that we know what kind of prompt to use. */
 		public boolean topLevel = true;
-		
-			
+
+		/** Reads and returns the properties file for the application, merging in this order
+		 *  (each later source overriding matching keys from earlier ones):
+		 *  1. The Utils.PROPS_FILE resource embedded inside the jar this code is actually
+		 *     running from, identified via this class's own code source rather than a hardcoded
+		 *     jar filename -- so it works no matter what that jar is actually named (a renamed
+		 *     release artifact, a fat/shaded jar, a fork's build). If not running from a jar at
+		 *     all (e.g. exploded .class files on the classpath, as in a debugger or test run),
+		 *     falls back to a plain classpath resource lookup instead. See issue #35.
+		 *  2. A Utils.PROPS_FILE file that is a sibling of that same jar -- again identified via
+		 *     the code source, not a hardcoded filename -- letting a deployment override the
+		 *     jar's own bundled defaults without repackaging it.
+		 *  3. Utils.PROPS_FILE in the user's home directory.
+		 *  4. Utils.PROPS_FILE in the current working directory.
+		 */
+		public Properties readProperties() {
+			Properties p = new Properties();
+			File f;
+
+			// Identify the jar (or classes directory) this code is actually running from.
+			// getCodeSource().getLocation() is the standard JDK idiom for this; wrapped
+			// defensively since a SecurityManager or an unusual classloader could leave it null
+			// or throw, in which case both jar-relative lookups below are simply skipped.
+			File codeSourceFile = null;
+			try {
+				CodeSource cs = Configuration.class.getProtectionDomain().getCodeSource();
+				if (cs != null && cs.getLocation() != null) {
+					codeSourceFile = new File(cs.getLocation().toURI());
+				}
+			} catch (Exception e) {
+				// codeSourceFile stays null; both steps below degrade to their fallbacks.
+			}
+			boolean runningFromJar = codeSourceFile != null && codeSourceFile.isFile();
+
+			// (1) The properties resource embedded inside this specific jar.
+			boolean loadedFromOwnJar = false;
+			if (runningFromJar) {
+				try {
+					URL jarEntryUrl = java.net.URI.create("jar:" + codeSourceFile.toURI().toURL() + "!/" + Utils.PROPS_FILE).toURL();
+					// Must use url.openStream(), not new File(url.getFile()), because jar: URLs
+					// are not valid filesystem paths and FileReader would throw FileNotFoundException.
+					try (Reader rdr = new InputStreamReader(jarEntryUrl.openStream())) {
+						if (verbose > 0) log.logDiag("#reading properties (own jar) from " + jarEntryUrl);
+						p.load(rdr);
+						loadedFromOwnJar = true;
+					}
+				} catch (IOException|IllegalArgumentException e) {
+					// No such entry in this jar -- nothing to load from this source.
+				}
+			}
+			if (!loadedFromOwnJar) {
+				// Not running from a jar (or it has no embedded properties resource): fall back
+				// to a generic classpath resource lookup, which still finds it if it's present
+				// as a loose classpath resource (e.g. exploded .class files during development).
+				URL url = ClassLoader.getSystemResource(Utils.PROPS_FILE);
+				if (url != null) {
+					try (Reader rdr = new InputStreamReader(url.openStream())) {
+						if (verbose > 0) log.logDiag("#reading properties (class path) from " + url);
+						p.load(rdr);
+					} catch (IOException|IllegalArgumentException e) {
+						log.logDiag("IOException reading properties from classpath: " + e);
+					}
+				}
+			}
+
+			// (2) A properties file that is a sibling of that same jar, whatever it is named.
+			if (runningFromJar) {
+				f = new File(codeSourceFile.getParentFile(), Utils.PROPS_FILE);
+				if (f.isFile()) {
+					try (FileReader rdr = new FileReader(f);) {
+						// f.toString() renders with the platform's native separator (backslash on
+						// Windows), but this diagnostic is compared verbatim against a golden file
+						// that always uses forward slashes (see ScriptTests/runscript's $INSTALL
+						// substitution) -- normalize so the message matches on every platform.
+						if (verbose > 0) log.logDiag("#reading properties (jar sibling) from " + f.getPath().replace('\\', '/'));
+						p.load(rdr);
+					} catch (IOException|IllegalArgumentException e) {
+					}
+				}
+			}
+			// Find and read file from user's home directory
+			String home = System.getProperty("user.home");
+			f = new File(home,Utils.PROPS_FILE);
+			if (f.isFile()) {
+	            try (FileReader rdr = new FileReader(f);) {
+					if (verbose > 0) log.logDiag("#reading properties (user home) from " + f.getPath().replace('\\', '/'));
+					p.load(rdr);
+				} catch (IOException|IllegalArgumentException e) {
+				}
+			}
+			// Find and read file in current working directory
+			f = new File(Utils.PROPS_FILE);
+			if (f.isFile()) {
+	            try (FileReader rdr = new FileReader(f);) {
+					if (verbose > 0) log.logDiag("#reading properties (current dir) from " + f.getPath().replace('\\', '/'));
+					p.load(rdr);
+				} catch (IOException|IllegalArgumentException e) {
+				}
+			}
+			return p;
+		}
+
+		/** Resolves the given solver name and executable to a concrete {@link ISolver} adapter
+		 *  instance, applying the same name/executable/adapter resolution jsmtlib.properties
+		 *  supports as {@link SMT#startSolver} -- platform-specific {@code .adapter}/{@code .exec}
+		 *  overrides checked before their bare counterparts, the {@code Solver_<name>} naming
+		 *  convention, the z3-specific {@code Solver_z3_recent} fallback for an unrecognized
+		 *  z3 variant, the generic {@code Solver_smt} fallback, the {@code "test"} pseudo-solver
+		 *  special case, and {@code %exec%} command-array placeholder substitution -- but, unlike
+		 *  {@code startSolver}, this method does not start the solver and does not do any
+		 *  CLI-flavored {@code error()}/{@code usage()} reporting: any resolution or construction
+		 *  failure is reported as a thrown {@link ISolver.CreationException} instead, leaving it
+		 *  to the caller to start the returned solver (via {@link ISolver#start()}) and decide how
+		 *  to report a creation failure.
+		 * @param solvername the name of the solver to use
+		 * @param executable the executable path, or null to resolve one from jsmtlib.properties
+		 *        or (absent any properties entry) from the solver name itself
+		 * @return a constructed, not-yet-started ISolver adapter instance
+		 * @throws ISolver.CreationException if the adapter class or its constructor cannot be
+		 *         resolved, or construction otherwise fails
+		 */
+		public ISolver createSolver(/*@NonNull*/ String solvername, /*@Nullable*/ String executable) throws ISolver.CreationException {
+			Class<? extends Object> adapterClass = null;
+			String[] command = null;
+			String adapterClassName = null;
+
+			// Find the adapter, executable, command
+			if (!solvername.equals(Utils.TEST_SOLVER)) {
+				String solvernameNormalized = solvername.replace('-','_').replace('.', '_');
+				// A platform-specific override (.adapter.<platform>) is checked before the bare
+				// .adapter, for solvers whose behavior genuinely differs by platform (not just
+				// their executable's filename) -- e.g. the Windows z3-4.3.2 binary has its own
+				// push-command bug that the Unix/macOS z3-4.3.1 binary doesn't, needing its own
+				// adapter subclass. Mirrors the same convention used for .exec.<platform>.
+				if (props != null) {
+					adapterClassName = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_ADAPTER_SUFFIX + "." + SMT.platformName());
+					if (adapterClassName == null) {
+						adapterClassName = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_ADAPTER_SUFFIX);
+					}
+					if (adapterClassName != null) try {
+						adapterClass = Class.forName(adapterClassName);
+					} catch (ClassNotFoundException e) {
+						adapterClass = null;
+					}
+				}
+
+				if (adapterClass == null) {
+					adapterClassName = "org.smtlib.solvers.Solver_" + solvernameNormalized;
+					try {
+						adapterClass = Class.forName(adapterClassName);
+					} catch (ClassNotFoundException e) {
+						adapterClass = null;
+					}
+				}
+
+				// No Solver_z3 class exists (see the matching comment in jsmtlib.properties),
+				// so a z3 solver name with neither a configured .adapter property nor a
+				// version-specific adapter class of its own (e.g. an untested/future z3
+				// version) would otherwise fall through to the fully generic Solver_smt below,
+				// losing z3-specific handling that any current z3 build still needs. Default
+				// such names to Solver_z3_recent instead.
+				if (adapterClass == null && solvername.startsWith("z3")) {
+					adapterClassName = "org.smtlib.solvers.Solver_z3_recent";
+					try {
+						adapterClass = Class.forName(adapterClassName);
+					} catch (ClassNotFoundException e) {
+						adapterClass = null;
+					}
+				}
+
+				// But otherwise presume the solver is a standard smt solver
+	            if (adapterClass == null) {
+	            	adapterClass = org.smtlib.solvers.Solver_smt.class;
+	            	adapterClassName = "org.smtlib.solvers.Solver_smt";
+	            }
+
+				String propName = Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_COMMAND_SUFFIX;
+				String commandString = null;
+				if (props != null) {
+					commandString = props.getProperty(propName);
+					if (commandString != null && !commandString.isEmpty()) {
+						command = commandString.split(",");
+						if (command.length == 0) {
+							throw new ISolver.CreationException("The command specified for " + propName + " appears to have no content");
+						}
+					}
+				}
+
+				if (executable == null && props != null) {
+					// A platform-specific override (.exec.<platform>) is checked before the bare
+					// .exec, for solvers whose executable filename itself differs by platform
+					// (not just its directory) -- e.g. z3-4.3 ships as z3-4.3.1 on Unix/macOS but
+					// z3-4.3.2 on Windows. Mirrors the platform-suffix convention already used
+					// throughout the test suite's golden files.
+					executable = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX + "." + SMT.platformName());
+					if (executable == null) {
+						executable = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX);
+					}
+					if (executable != null && executable.trim().isEmpty()) executable = null;
+				}
+
+				if (executable != null) {
+					executable = SMT.resolveExecutablePath(executable, System.getenv("SMT_SOLVER_DIR"));
+				}
+
+				if (command != null && executable != null) {
+					// %exec% lets a .command entry place the resolved executable at any
+					// position, not just the front -- needed for launchers like
+					// "java,-jar,%exec%,-q" where the resolvable path isn't argv[0].
+					// If no placeholder appears, fall back to substituting argv[0], so a
+					// plain "EXE,arg1,arg2"-style command (executable genuinely first)
+					// still works without needing the placeholder spelled out.
+					boolean substituted = false;
+					for (int i = 0; i < command.length; i++) {
+						if (command[i].equals("%exec%")) {
+							command[i] = executable;
+							substituted = true;
+						}
+					}
+					if (!substituted) command[0] = executable;
+				}
+
+				if (executable == null && command == null) {
+					// No jsmtlib.properties entry for this solver name at all: default to
+					// treating the solver name itself as the executable, resolved against
+					// SMT_SOLVER_DIR like any configured .exec value would be. This lets a
+					// solver be used just by name (e.g. --solver cvc5-1.3.2) without requiring
+					// a properties entry.
+				    executable = SMT.resolveExecutablePath(solvername, System.getenv("SMT_SOLVER_DIR"));
+				}
+			} else {
+				adapterClass = org.smtlib.solvers.Solver_test.class;
+			}
+
+			try {
+				Constructor<?> constructor;
+				ISolver solver;
+				if (command == null) {
+		            constructor = adapterClass.getConstructor(SMT.Configuration.class,String.class);
+					solver = (ISolver)(constructor.newInstance(this,executable));
+				} else {
+		            constructor = adapterClass.getConstructor(SMT.Configuration.class,command.getClass());
+					solver = (ISolver)(constructor.newInstance(this,command));
+				}
+				return solver;
+			} catch (NoSuchMethodException e) {
+				throw new ISolver.CreationException("Could not find an appropriate constructor in " + adapterClassName + ": " + e, e);
+			} catch (IllegalAccessException e) {
+				throw new ISolver.CreationException("Could not find an adapter class named " + adapterClassName + ": " + e, e);
+			} catch (InstantiationException e) {
+				throw new ISolver.CreationException("Could not create an instance of a " + adapterClassName + ": " + e, e);
+			} catch (InvocationTargetException e) {
+				e.printStackTrace(log.getDiag());
+				throw new ISolver.CreationException("Could not invoke the constructor of " + adapterClassName + ": " + e, e);
+			}
+		}
+
 	}
 	
 	/** The set of configuration settings for this instance of the SMT object */
@@ -370,107 +625,6 @@ public class SMT {
 			smt.cleanup();
 		}
 		System.exit(exitValue);
-	}
-	
-	/** Reads and returns the properties file for the application, merging in this order
-	 *  (each later source overriding matching keys from earlier ones):
-	 *  1. The Utils.PROPS_FILE resource embedded inside the jar this code is actually
-	 *     running from, identified via this class's own code source rather than a hardcoded
-	 *     jar filename -- so it works no matter what that jar is actually named (a renamed
-	 *     release artifact, a fat/shaded jar, a fork's build). If not running from a jar at
-	 *     all (e.g. exploded .class files on the classpath, as in a debugger or test run),
-	 *     falls back to a plain classpath resource lookup instead. See issue #35.
-	 *  2. A Utils.PROPS_FILE file that is a sibling of that same jar -- again identified via
-	 *     the code source, not a hardcoded filename -- letting a deployment override the
-	 *     jar's own bundled defaults without repackaging it.
-	 *  3. Utils.PROPS_FILE in the user's home directory.
-	 *  4. Utils.PROPS_FILE in the current working directory.
-	 */
-	public Properties readProperties() {
-		Properties p = new Properties();
-		File f;
-
-		// Identify the jar (or classes directory) this code is actually running from.
-		// getCodeSource().getLocation() is the standard JDK idiom for this; wrapped
-		// defensively since a SecurityManager or an unusual classloader could leave it null
-		// or throw, in which case both jar-relative lookups below are simply skipped.
-		File codeSourceFile = null;
-		try {
-			CodeSource cs = SMT.class.getProtectionDomain().getCodeSource();
-			if (cs != null && cs.getLocation() != null) {
-				codeSourceFile = new File(cs.getLocation().toURI());
-			}
-		} catch (Exception e) {
-			// codeSourceFile stays null; both steps below degrade to their fallbacks.
-		}
-		boolean runningFromJar = codeSourceFile != null && codeSourceFile.isFile();
-
-		// (1) The properties resource embedded inside this specific jar.
-		boolean loadedFromOwnJar = false;
-		if (runningFromJar) {
-			try {
-				URL jarEntryUrl = java.net.URI.create("jar:" + codeSourceFile.toURI().toURL() + "!/" + Utils.PROPS_FILE).toURL();
-				// Must use url.openStream(), not new File(url.getFile()), because jar: URLs
-				// are not valid filesystem paths and FileReader would throw FileNotFoundException.
-				try (Reader rdr = new InputStreamReader(jarEntryUrl.openStream())) {
-					if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (own jar) from " + jarEntryUrl);
-					p.load(rdr);
-					loadedFromOwnJar = true;
-				}
-			} catch (IOException|IllegalArgumentException e) {
-				// No such entry in this jar -- nothing to load from this source.
-			}
-		}
-		if (!loadedFromOwnJar) {
-			// Not running from a jar (or it has no embedded properties resource): fall back
-			// to a generic classpath resource lookup, which still finds it if it's present
-			// as a loose classpath resource (e.g. exploded .class files during development).
-			URL url = ClassLoader.getSystemResource(Utils.PROPS_FILE);
-			if (url != null) {
-				try (Reader rdr = new InputStreamReader(url.openStream())) {
-					if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (class path) from " + url);
-					p.load(rdr);
-				} catch (IOException|IllegalArgumentException e) {
-					smtConfig.log.logDiag("IOException reading properties from classpath: " + e);
-				}
-			}
-		}
-
-		// (2) A properties file that is a sibling of that same jar, whatever it is named.
-		if (runningFromJar) {
-			f = new File(codeSourceFile.getParentFile(), Utils.PROPS_FILE);
-			if (f.isFile()) {
-				try (FileReader rdr = new FileReader(f);) {
-					// f.toString() renders with the platform's native separator (backslash on
-					// Windows), but this diagnostic is compared verbatim against a golden file
-					// that always uses forward slashes (see ScriptTests/runscript's $INSTALL
-					// substitution) -- normalize so the message matches on every platform.
-					if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (jar sibling) from " + f.getPath().replace('\\', '/'));
-					p.load(rdr);
-				} catch (IOException|IllegalArgumentException e) {
-				}
-			}
-		}
-		// Find and read file from user's home directory
-		String home = System.getProperty("user.home");
-		f = new File(home,Utils.PROPS_FILE);
-		if (f.isFile()) {
-            try (FileReader rdr = new FileReader(f);) {
-				if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (user home) from " + f.getPath().replace('\\', '/'));
-				p.load(rdr);
-			} catch (IOException|IllegalArgumentException e) {
-			}
-		}
-		// Find and read file in current working directory
-		f = new File(Utils.PROPS_FILE);
-		if (f.isFile()) {
-            try (FileReader rdr = new FileReader(f);) {
-				if (smtConfig.verbose > 0) smtConfig.log.logDiag("#reading properties (current dir) from " + f.getPath().replace('\\', '/'));
-				p.load(rdr);
-			} catch (IOException|IllegalArgumentException e) {
-			}
-		}
-		return p;
 	}
 	
 	/** The method that does all the execution for the main method, here made a non-static method, so that
@@ -924,9 +1078,9 @@ public class SMT {
 			}
 		}
 
-		props = readProperties();
+		options.props = options.readProperties();
 
-		if (options.logicPath == null) options.logicPath = trimToNull(props.getProperty(Utils.PROPS_LOGIC_PATH));
+		if (options.logicPath == null) options.logicPath = trimToNull(options.props.getProperty(Utils.PROPS_LOGIC_PATH));
 
 		if (options.files != null && !options.files.isEmpty() && options.port >= 0) {
 			error("You may not specify both a port and file input");
@@ -935,7 +1089,7 @@ public class SMT {
 		}
 
 		if (options.solvername == null) {
-			String p = props.getProperty(Utils.PROPS_DEFAULT_SOLVER);
+			String p = options.props.getProperty(Utils.PROPS_DEFAULT_SOLVER);
 			if (p == null || p.isEmpty()) p = Utils.TEST_SOLVER;
 			options.solvername = p;
 			if (options.executable != null) {
@@ -981,15 +1135,15 @@ public class SMT {
 	/*@Nullable*/
 	public String resolveExecutableForSolver(/*@NonNull*/ String solvername) {
 		if (solvername.equals(Utils.TEST_SOLVER)) return null;
-		if (props != null) {
-			String commandString = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_COMMAND_SUFFIX);
+		if (smtConfig.props != null) {
+			String commandString = smtConfig.props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_COMMAND_SUFFIX);
 			if (commandString != null && !commandString.isEmpty()) return null;
 		}
 		String executable = null;
-		if (props != null) {
-			executable = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX + "." + platformName());
+		if (smtConfig.props != null) {
+			executable = smtConfig.props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX + "." + platformName());
 			if (executable == null) {
-				executable = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX);
+				executable = smtConfig.props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX);
 			}
 			if (executable != null && executable.trim().isEmpty()) executable = null;
 		}
@@ -1028,6 +1182,13 @@ public class SMT {
 	/** Starts the solver with the given name and executable, preset according to the given configuration.
 	 * If executable is null, then an executable path is looked for in the org.smtlib.SMT_EXE_solvername
 	 * property or the SMT_EXE_solvername environment variable.
+	 * <p>
+	 * This is a thin, CLI-flavored wrapper around {@link SMT.Configuration#createSolver}: it resolves
+	 * and constructs the adapter by delegating there, translating a thrown {@link ISolver.CreationException}
+	 * into this method's own {@code error()}/{@code usage()}/{@code null}-return contract (preserved here
+	 * unchanged for backward compatibility with the CLI's own {@code --solver} flag handling and its
+	 * tests), then itself starts the constructed solver and applies the same response-checking this
+	 * method has always done.
 	 * @param smtConfig the configuration object to use for solver settings
 	 * @param solvername the name of the solver to use
 	 * @param executable the executable path
@@ -1036,130 +1197,16 @@ public class SMT {
 	/*@Nullable*/
 	public ISolver startSolver(SMT.Configuration smtConfig, /*@NonNull*/String solvername, /*@Nullable*/String executable) {
 		/*@NonNull*/ ISolver solver;
-		Class<? extends Object> adapterClass = null;
-		String[] command = null;
-		String adapterClassName = null;
-		
-		// Find the adapter, executable, command
-		if (!solvername.equals(Utils.TEST_SOLVER)) {
-			String solvernameNormalized = solvername.replace('-','_').replace('.', '_');
-			// A platform-specific override (.adapter.<platform>) is checked before the bare
-			// .adapter, for solvers whose behavior genuinely differs by platform (not just
-			// their executable's filename) -- e.g. the Windows z3-4.3.2 binary has its own
-			// push-command bug that the Unix/macOS z3-4.3.1 binary doesn't, needing its own
-			// adapter subclass. Mirrors the same convention used for .exec.<platform>.
-			if (props != null) {
-				adapterClassName = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_ADAPTER_SUFFIX + "." + platformName());
-				if (adapterClassName == null) {
-					adapterClassName = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_ADAPTER_SUFFIX);
-				}
-				if (adapterClassName != null) try {
-					adapterClass = Class.forName(adapterClassName);
-				} catch (ClassNotFoundException e) {
-					adapterClass = null;
-				}
-			}
-
-			if (adapterClass == null) {
-				adapterClassName = "org.smtlib.solvers.Solver_" + solvernameNormalized;
-				try {
-					adapterClass = Class.forName(adapterClassName);
-				} catch (ClassNotFoundException e) {
-					adapterClass = null;
-				}
-			}
-
-			// No Solver_z3 class exists (see the matching comment in jsmtlib.properties),
-			// so a z3 solver name with neither a configured .adapter property nor a
-			// version-specific adapter class of its own (e.g. an untested/future z3
-			// version) would otherwise fall through to the fully generic Solver_smt below,
-			// losing z3-specific handling that any current z3 build still needs. Default
-			// such names to Solver_z3_recent instead.
-			if (adapterClass == null && solvername.startsWith("z3")) {
-				adapterClassName = "org.smtlib.solvers.Solver_z3_recent";
-				try {
-					adapterClass = Class.forName(adapterClassName);
-				} catch (ClassNotFoundException e) {
-					adapterClass = null;
-				}
-			}
-
-			// But otherwise presume the solver is a standard smt solver
-            if (adapterClass == null) {
-            	adapterClass = org.smtlib.solvers.Solver_smt.class;
-            	adapterClassName = "org.smtlib.solvers.Solver_smt";
-            }
-		
-			String propName = Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_COMMAND_SUFFIX;
-			String commandString = null;
-			if (props != null) {
-				commandString = props.getProperty(propName);
-				if (commandString != null && !commandString.isEmpty()) {
-					command = commandString.split(",");
-					if (command.length == 0) {
-						error("The command specified for " + propName + " appears to have no content");
-						usage();
-						return null;
-					}
-				}
-			}
-
-			if (executable == null && props != null) {
-				// A platform-specific override (.exec.<platform>) is checked before the bare
-				// .exec, for solvers whose executable filename itself differs by platform
-				// (not just its directory) -- e.g. z3-4.3 ships as z3-4.3.1 on Unix/macOS but
-				// z3-4.3.2 on Windows. Mirrors the platform-suffix convention already used
-				// throughout the test suite's golden files.
-				executable = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX + "." + platformName());
-				if (executable == null) {
-					executable = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX);
-				}
-				if (executable != null && executable.trim().isEmpty()) executable = null;
-			}
-
-			if (executable != null) {
-				executable = resolveExecutablePath(executable, System.getenv("SMT_SOLVER_DIR"));
-			}
-
-			if (command != null && executable != null) {
-				// %exec% lets a .command entry place the resolved executable at any
-				// position, not just the front -- needed for launchers like
-				// "java,-jar,%exec%,-q" where the resolvable path isn't argv[0].
-				// If no placeholder appears, fall back to substituting argv[0], so a
-				// plain "EXE,arg1,arg2"-style command (executable genuinely first)
-				// still works without needing the placeholder spelled out.
-				boolean substituted = false;
-				for (int i = 0; i < command.length; i++) {
-					if (command[i].equals("%exec%")) {
-						command[i] = executable;
-						substituted = true;
-					}
-				}
-				if (!substituted) command[0] = executable;
-			}
-
-			if (executable == null && command == null) {
-				// No jsmtlib.properties entry for this solver name at all: default to
-				// treating the solver name itself as the executable, resolved against
-				// SMT_SOLVER_DIR like any configured .exec value would be. This lets a
-				// solver be used just by name (e.g. --solver cvc5-1.3.2) without requiring
-				// a properties entry.
-			    executable = resolveExecutablePath(solvername, System.getenv("SMT_SOLVER_DIR"));
-			}
-		} else {
-			adapterClass = org.smtlib.solvers.Solver_test.class;
-		}
-		
 		try {
-			Constructor<?> constructor;
-			if (command == null) {
-	            constructor = adapterClass.getConstructor(SMT.Configuration.class,String.class);
-				solver = (ISolver)(constructor.newInstance(smtConfig,executable));
-			} else {
-	            constructor = adapterClass.getConstructor(SMT.Configuration.class,command.getClass());
-				solver = (ISolver)(constructor.newInstance(smtConfig,command));
-			}
-			//if (smtConfig.verbose != 0) smtConfig.log.logDiag("#SMT START " + solver + " " + command);
+			solver = smtConfig.createSolver(solvername, executable);
+		} catch (ISolver.CreationException e) {
+			error(e.getMessage());
+			usage();
+			return null;
+		}
+
+		try {
+			//if (smtConfig.verbose != 0) smtConfig.log.logDiag("#SMT START " + solver);
 			IResponse res = solver.start();
 			//if (smtConfig.verbose != 0) smtConfig.log.logDiag("#SMT RES " + res);
 			if (res.isError()) {
@@ -1167,23 +1214,6 @@ public class SMT {
 				error(solvername + " failed to start: " + ((IResponse.IError)res).errorMsg());
 				return null;
 			}
-		} catch (NoSuchMethodException e) {
-			error("Could not find an appropriate constructor in " + adapterClassName + ": " + e);
-			usage();
-			return null;
-		} catch (IllegalAccessException e) {
-			error("Could not find an adapter class named " + adapterClassName + ": " + e);
-			usage();
-			return null;
-		} catch (InstantiationException e) {
-			error("Could not create an instance of a " + adapterClassName + ": " + e);
-			usage();
-			return null;
-		} catch (InvocationTargetException e) {
-			e.printStackTrace(smtConfig.log.getDiag());
-			error("Could not invoke the constructor of " + adapterClassName + ": " + e);
-			usage();
-			return null;
 		} catch (SolverProcess.ProverException e) {
 			error("Problem in starting or running " + solvername + ": " + e.getMessage());
 			return null;

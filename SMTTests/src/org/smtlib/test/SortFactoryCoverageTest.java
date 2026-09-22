@@ -15,10 +15,10 @@ import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IResponse;
+import org.smtlib.ISolver;
 import org.smtlib.ISort;
 import org.smtlib.SMT;
 import org.smtlib.impl.Sort;
-import org.smtlib.solvers.Solver_test;
 
 /**
  * Covers a few in-memory AST-building entry points that, like {@link
@@ -37,12 +37,12 @@ public class SortFactoryCoverageTest {
     @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
 
     SMT.Configuration config;
-    Solver_test solver;
+    ISolver solver;
 
     @Before
     public void init() throws Exception {
         config = new SMT.Configuration();
-        solver = new Solver_test(config, "test");
+        solver = config.createSolver("test", null);
         solver.start();
         solver.set_logic("QF_UF", null);
     }
