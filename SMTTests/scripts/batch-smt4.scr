@@ -1,2 +1,7 @@
 ##EXITCODE 1
-$SMT_CMD --solver simplify $SCRIPTS/ok_sat.smt2
+# --solver missingexec (not simplify -- see the matching comment in
+# jsmtlib.properties): this must resolve, via the properties .exec entry and no
+# --exec CLI override, to an executable that cannot possibly exist, on every
+# platform, so this script's result stays deterministic regardless of which real
+# solvers happen to be available where it runs.
+$SMT_CMD --solver missingexec $SCRIPTS/ok_sat.smt2

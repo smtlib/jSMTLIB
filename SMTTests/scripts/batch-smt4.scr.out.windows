@@ -1,1 +1,2 @@
-(error "Problem in starting or running simplify: Cannot run program ""$SOLVERS/Simplify-1.5.4"": CreateProcess error=2, The system cannot find the file specified")
+(error "Failed to start process $SOLVERS/jSMTLIB-nonexistent-test-executable : Cannot run program ""$SOLVERS/jSMTLIB-nonexistent-test-executable"": CreateProcess error=2, The system cannot find the file specified")
+(error "missingexec failed to start: Failed to start process $SOLVERS/jSMTLIB-nonexistent-test-executable : Cannot run program ""$SOLVERS/jSMTLIB-nonexistent-test-executable"": CreateProcess error=2, The system cannot find the file specified")
