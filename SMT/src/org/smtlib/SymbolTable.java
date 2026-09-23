@@ -154,18 +154,17 @@ public class SymbolTable {
 		clear(false);
 	}
 	
-	/** Disabled -- currently unused (the only constructor called anywhere is the single-arg
-	 *  {@link #SymbolTable(SMT.Configuration)}) and its original implementation was a
-	 *  mutation-aliasing trap: it copied the list of stack frames but not the frames
-	 *  themselves, so mutating an already-present scope (not a newly pushed one) through the
-	 *  "copy" silently mutated the original too, and vice versa. Left private and throwing
-	 *  rather than deleted, so the trap can't resurface silently -- if a real caller ever needs
-	 *  this, implement it as a genuine deep copy (a fresh {@code HashMap<>(frame)} for each
-	 *  frame in {@code sortStack}/{@code symStack}, not just {@code addAll} on the stacks).
-	 *  See issue #29. */
-	private SymbolTable(SymbolTable s) {
-		throw new UnsupportedOperationException("SymbolTable's copy constructor is not implemented -- see issue #29");
-	}
+	/* A copy constructor, SymbolTable(SymbolTable s), deliberately does not exist here.
+	 * A previous implementation was a mutation-aliasing trap: it copied the list of stack
+	 * frames but not the frames themselves, so mutating an already-present scope (not a
+	 * newly pushed one) through the "copy" silently mutated the original too, and vice
+	 * versa. Kept for a while as a private, throwing stub (rather than deleted outright) so
+	 * the trap couldn't resurface silently -- but a stub constructor's field initializers
+	 * are compiled into it just like any real constructor's, so it permanently showed as
+	 * partially covered in JaCoCo reports (the stub itself is deliberately never called).
+	 * Removed for real once that tradeoff stopped being worth it. If a real caller ever
+	 * needs this, implement it as a genuine deep copy (a fresh HashMap<>(frame) for each
+	 * frame in sortStack/symStack, not just addAll on the stacks). See issue #29. */
 
 	/** Returns a fresh iterator over the symbol table's contents */
 	public Iterator iterator() {
