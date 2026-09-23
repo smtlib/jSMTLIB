@@ -86,6 +86,7 @@ public class TreeVisitorCoverageTest {
         "(check-sat-assuming (yyy))\n" +
         "(get-value (yyy rr))\n" +
         "(get-assertions)\n" +
+        "(get-assignment)\n" +
         "(get-model)\n" +
         "(get-proof)\n" +
         "(get-unsat-core)\n" +
