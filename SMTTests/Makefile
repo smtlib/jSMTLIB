@@ -131,11 +131,20 @@ cov-test:
 cov-clean:
 	rm -rf cov
 
-## Generate HTML + XML coverage report from the single exec file produced by cov-test
+## Generate HTML + XML coverage report from the single exec file produced by cov-test.
+## Two --classfiles/--sourcefiles pairs, not one: $(COV_CLASSES) covers org.smtlib itself,
+## and bin/src cover org.smtlib.test/org.smtlib.test.bugs (the JUnit test harness --
+## FileTests, LogicTests, etc. -- compiled by cov-test's own runjunits into bin/) --
+## jacococli accepts each option repeated, unioning every location given. Test-harness
+## code is exercised by the very tests being measured and is worth the same coverage
+## visibility as anything under SMT/src (e.g. a change to FileTests/LogicTests should
+## show up here too, not just in whether the suite as a whole still passes).
 cov-report:
 	java -jar jacoco/lib/jacococli.jar report cov/junits.exec \
 		--classfiles $(COV_CLASSES) \
+		--classfiles bin \
 		--sourcefiles ../SMT/src \
+		--sourcefiles src \
 		--html cov/html \
 		--xml cov/coverage.xml
 
@@ -173,7 +182,12 @@ CI_SOLVERS ?= $(SMT_TEST_SOLVERS)
 ## all) -- so this downloads the same jsmtlib-release-<run_id> jar CI built and
 ## instrumented for this run and reports against that, rather than $(COV_CLASSES)'s local
 ## build, which has no guaranteed relationship to what actually ran on CI (issue #122: a
-## stale/incrementally-built local jar showed long-deleted classes in the report).
+## stale/incrementally-built local jar showed long-deleted classes in the report). The
+## compiled org.smtlib.test/org.smtlib.test.bugs classes (the JUnit test harness itself --
+## FileTests, LogicTests, etc. -- also worth coverage visibility, same as cov-report's
+## local --classfiles bin) get the same treatment: each coverage-<label> artifact now also
+## carries its own bin/, and any one of them is added alongside the jar (they're expected
+## to be identical across platforms, being plain Java bytecode from the same commit).
 ## Requires the gh CLI, authenticated against this repo (gh auth status).
 ## Override the dispatched branch or solver list on the command line, e.g.:
 ##   make ci-cov CI_BRANCH=dev CI_SOLVERS="test cvc5-1.3.2"
@@ -216,6 +230,7 @@ ci-cov:
 	gh run download "$$run_id" -n "jsmtlib-release-$$run_id" -D cov/ci/jar; \
 	execs=$$(find cov/ci -name junits.exec); \
 	classjar=$$(find cov/ci/jar -name jSMTLIB.jar | head -1); \
+	testbin=$$(find cov/ci -type d -name bin | head -1); \
 	if [ -z "$$execs" ]; then \
 		echo "WARNING: no junits.exec files found in the downloaded artifacts -- skipping merge"; \
 	elif [ -z "$$classjar" ]; then \
@@ -223,9 +238,17 @@ ci-cov:
 	else \
 		echo "Merging $$(echo "$$execs" | wc -l | tr -d ' ') per-platform .exec files into one report..."; \
 		java -jar jacoco/lib/jacococli.jar merge $$execs --destfile cov/ci/merged.exec; \
+		classfiles_args="--classfiles $$classjar"; \
+		sourcefiles_args="--sourcefiles ../SMT/src"; \
+		if [ -n "$$testbin" ]; then \
+			classfiles_args="$$classfiles_args --classfiles $$testbin"; \
+			sourcefiles_args="$$sourcefiles_args --sourcefiles src"; \
+		else \
+			echo "WARNING: no compiled org.smtlib.test bin/ found in the downloaded artifacts -- report will omit test-harness coverage"; \
+		fi; \
 		java -jar jacoco/lib/jacococli.jar report cov/ci/merged.exec \
-			--classfiles "$$classjar" \
-			--sourcefiles ../SMT/src \
+			$$classfiles_args \
+			$$sourcefiles_args \
 			--html cov/ci/html \
 			--xml cov/ci/coverage.xml; \
 		echo "Consolidated report: cov/ci/html/index.html"; \
