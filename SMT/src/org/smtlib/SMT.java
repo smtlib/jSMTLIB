@@ -1078,7 +1078,12 @@ public class SMT {
 			}
 		}
 
-		options.props = options.readProperties();
+		// Only read properties if the caller hasn't already supplied some (e.g. FileTests'
+		// init() pre-populates this via readPropertiesAndAddDefaults(), including test-only
+		// fallback entries that a second, unconditional read here would otherwise silently
+		// discard). A real CLI invocation always starts with props == null, so this is a
+		// no-op there -- same read, same position relative to --out/--diag/--verbose above.
+		if (options.props == null) options.props = options.readProperties();
 
 		if (options.logicPath == null) options.logicPath = trimToNull(options.props.getProperty(Utils.PROPS_LOGIC_PATH));
 

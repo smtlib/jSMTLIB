@@ -99,9 +99,12 @@ public class FileTests extends LogicTests {
     @Override
     public void init() {
         smt = new SMT();
+        // Pre-populates props (including test-only fallback entries -- see
+        // readPropertiesAndAddDefaults()) so processCommandLine()'s own read in exec() below
+        // is a no-op (guarded by props == null) rather than silently discarding this.
         smt.smtConfig.props = readPropertiesAndAddDefaults(smt);
-        smt.smtConfig.solvername = solvername;
-        // solver is started lazily by exec()
+        // solvername itself is passed to exec() as a real --solver argument in checkFile(),
+        // not set here -- see checkFile()'s own comment for why.
     }
 
     @Override
@@ -121,17 +124,12 @@ public class FileTests extends LogicTests {
         ByteArrayOutputStream errBuf = new ByteArrayOutputStream();
         PrintStream outPs = new PrintStream(outBuf);
         PrintStream errPs = new PrintStream(errBuf);
+        // Can't be expressed as CLI flags (there is no "--out <in-memory buffer>"; --out/--diag
+        // only take a file path to open, per processCommandLine()) -- inherent test plumbing,
+        // not a fidelity gap, so this stays a direct field-poke unlike everything below it.
         smt.smtConfig.log.setChannels(outPs, errPs);
         smt.smtConfig.stdout = outPs;
         smt.smtConfig.stderr = errPs;
-        // Scrubs known non-deterministic content (elapsed-time, memory usage) out of
-        // get-info responses -- see AbstractSolver#normalizeForTesting() -- so goldens are
-        // reproducible across machines and runs. Set directly rather than via a "--testing"
-        // command-line argument: exec(String[]) is a plain instance method operating on this
-        // SMT instance's own smtConfig, so a field set here is exactly as safe/scoped as
-        // parsing a flag would be, without the plain-text default path (below) needing to
-        // route through the argument parser just for this one setting.
-        smt.smtConfig.testing = true;
 
         String text;
         try {
@@ -141,22 +139,32 @@ public class FileTests extends LogicTests {
             return;
         }
 
-        List<String> options = optionsDirectiveArgs(text);
-        if (options == null) {
-            // Use text mode so error position messages carry no file path, matching the
-            // format of existing golden files.
-            smt.smtConfig.text = text;
-            smt.exec();
-        } else {
-            // A "; OPTIONS: <flags>" directive is present: run through the real
-            // SMT.exec(String[]) / processCommandLine() argument parser instead of setting
-            // fields by hand here, so a .tst test exercises the same parsing path a real
-            // invocation would, and gets any future flag for free. The directive is an
-            // ordinary ';' comment, so the parser already ignores it on its own -- the
-            // original .tst file is passed straight through, unmodified.
-            options.add(tstFile.getAbsolutePath());
-            smt.exec(options.toArray(new String[0]));
-        }
+        // Scrubs known non-deterministic content (elapsed-time, memory usage) out of
+        // get-info responses -- see AbstractSolver#normalizeForTesting() -- so goldens are
+        // reproducible across machines and runs. Set directly rather than via a --testing
+        // argument: unlike --solver/--text/an OPTIONS directive's flags, a real user's
+        // command line is never going to contain --testing, so routing it through exec()'s
+        // argument parser wouldn't be matching any genuine invocation shape -- it would just
+        // be test plumbing wearing a flag's clothing.
+        smt.smtConfig.testing = true;
+
+        // Built as a real command-line argument vector and run through the actual
+        // SMT.exec(String[]) / processCommandLine() parser -- every .tst test now exercises
+        // the same entry point and flag-parsing a genuine CLI invocation would, not a
+        // test-only shortcut that could silently drift from it. An "; OPTIONS: <flags>"
+        // directive (an ordinary ';' comment, so the parser ignores it on its own either way)
+        // lets a .tst file request additional real flags, inserted here so a directive's own
+        // --solver (if any) naturally overrides the default preceding it, the same
+        // left-to-right last-one-wins rule processCommandLine() itself uses.
+        // --text, not the file path: smtConfig.text exists for exactly this case -- a caller
+        // that already has the command text in hand (generated, or an editor's live unsaved
+        // buffer, per its own javadoc) rather than something that should be read from a file
+        // on disk; see SMT.java's text field and its one other setter, LogicTests#doScript().
+        List<String> args = new ArrayList<String>();
+        args.add("--solver"); args.add(solvername);
+        args.addAll(optionsDirectiveArgs(text));
+        args.add("--text"); args.add(text);
+        smt.exec(args.toArray(new String[0]));
         outPs.flush();
         errPs.flush();
 
@@ -167,32 +175,28 @@ public class FileTests extends LogicTests {
         compareOutput(".err", findGoldenFile(".err"), actualErr);
     }
 
-    /** Without a directive, checkFile() feeds a .tst file's raw content to SMT.exec()
-     *  directly (via smtConfig.text), bypassing parseCommandLine()/processCommandLine()
-     *  entirely -- so a plain .tst file has no way to ask for a command-line-only setting
-     *  like --relax. A leading "; OPTIONS: &lt;flags&gt;" line (an ordinary SMT-LIB comment,
-     *  so the parser ignores it on its own either way) lets a .tst file request that
-     *  checkFile() instead route it through the real SMT.exec(String[])/
-     *  processCommandLine() argument parser -- so that .tst test exercises the same
-     *  parsing path a real invocation would, with no per-flag logic duplicated here, and
-     *  the original file is passed straight through unmodified. Returns null (meaning:
-     *  use the normal text-mode path, still bypassing processCommandLine()) if there's no
-     *  directive; otherwise the flag tokens, not yet including the file argument
-     *  checkFile() appends. This is a plain splitter with no per-flag knowledge -- every
-     *  flag is just handed to the real parser unexamined.
+    /** A leading "; OPTIONS: &lt;flags&gt;" line (an ordinary SMT-LIB comment, so the parser
+     *  ignores it on its own either way) lets a .tst file request additional real
+     *  command-line flags -- e.g. --relax -- beyond the --solver/--testing/--text checkFile()
+     *  always passes. Returns an empty list (never null) if there's no directive. This is a
+     *  plain splitter with no per-flag knowledge -- every flag is just handed to the real
+     *  parser unexamined.
      *  <p>
-     *  Note for anyone writing a "; OPTIONS:" line: avoid --verbose/-v. It works
-     *  mechanically, but processCommandLine() always calls readProperties() itself after
-     *  parsing --verbose, so that second readProperties() call emits its own
-     *  "#reading properties ..." diagnostic -- which embeds this checkout's absolute jar
-     *  path, making an exact-match golden non-portable across machines. A .tst test
-     *  needing --verbose belongs as a .scr script instead, where runscript's $INSTALL
-     *  substitution already handles this. */
+     *  A directive's own --solver, if given, overrides checkFile()'s default of the
+     *  parameterized solvername, since it's inserted later in the argument vector and
+     *  processCommandLine() takes the last occurrence of a flag (see e.g.
+     *  ok_reservedWordsRelaxCommand.tst's "--relax --solver test").
+     *  <p>
+     *  --verbose/-v now works safely here (unlike before checkFile() always routed through
+     *  processCommandLine()): its "#reading properties..." diagnostic, which embeds this
+     *  checkout's absolute jar path, only ever fires on an actual property read, and
+     *  init()'s pre-populated smtConfig.props (guarded against in processCommandLine(), see
+     *  SMT.java) means that read never happens here. */
     private List<String> optionsDirectiveArgs(String text) {
-        if (!text.startsWith("; OPTIONS:")) return null;
+        List<String> args = new ArrayList<String>();
+        if (!text.startsWith("; OPTIONS:")) return args;
         int eol = text.indexOf('\n');
         String directiveLine = eol < 0 ? text : text.substring(0, eol);
-        List<String> args = new ArrayList<String>();
         for (String flag : directiveLine.substring("; OPTIONS:".length()).trim().split("\\s+")) {
             if (!flag.isEmpty()) args.add(flag);
         }
