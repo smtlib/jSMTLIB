@@ -62,7 +62,8 @@ visible which solvers a given run actually covers. `./runtests` (the legacy
 | `make cov-report` | Merge `.exec` files and generate HTML + XML coverage report |
 | `make cov-show` | Open the HTML coverage report in the default browser |
 | `make cov-all` | `cov-clean` + `cov-test` + `cov-report` + `cov-show` in one step |
-| `make cov-test-by-test` | Like `cov-test`, but writes each test's coverage to its own `cov/by-test/<TestClass>.<method>.exec`, indexed by `cov/by-test/index.tsv` |
+| `make cov-test-by-test` | Like `cov-test`, but writes each test's coverage to its own `cov/by-test/<TestClass>.<method>.exec`, indexed by `cov/by-test/index.tsv`, then runs `cov-analyze-by-test` |
+| `make cov-analyze-by-test` | Report tests that add nothing to coverage (empty, duplicate, subsumed; minimum covering set) from the last `cov-test-by-test` data: `cov/by-test-report.txt` plus CSV files in `cov/by-test-report/` (tool: `coverage-analyzer`, vendored in `jacoco/lib`) |
 | `make cov-report-by-test` | Merge all per-test files and report them (totals should match `cov-report`'s) |
 
 `SMT_SOLVER_DIR` (also exported by the Makefile) is a separate variable: it

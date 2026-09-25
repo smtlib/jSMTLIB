@@ -10,7 +10,7 @@ SHELL = /bin/bash
 ##   make cov-test cov-report COV_CLASSES=../SMT/bin
 COV_CLASSES ?= ../SMT/jSMTLIB.jar
 
-.PHONY: test tests test-only clean script-tests smt-tests junit-tests build cov-test cov-test-by-test cov-report-by-test cov-clean cov-report cov-show cov-all reports time-solvers ci-cov ci-cov-dev
+.PHONY: test tests test-only clean script-tests smt-tests junit-tests build cov-test cov-test-by-test cov-analyze-by-test cov-report-by-test cov-clean cov-report cov-show cov-all reports time-solvers ci-cov ci-cov-dev
 
 ## Resolve the platform-appropriate solver directory, honouring any value already in the
 ## environment (CI sets it via GITHUB_ENV before invoking make; developers can export it
@@ -135,9 +135,42 @@ cov-test:
 ## PerTestCoverageListener.java and setup-coverage for the mechanism. cov-test and
 ## cov/junits.exec are untouched. The directory is cleared first: per-test files are
 ## appended to during a run, so stale ones from an earlier run would silently mix in.
+## The analysis (cov-analyze-by-test) then runs on the result, even if some tests failed;
+## the target still fails if the tests did.
 cov-test-by-test:
 	rm -rf cov/by-test
-	COV_CLASSES=$(COV_CLASSES) COV= COV_BY_TEST= bash ./runjunits
+	COV_CLASSES=$(COV_CLASSES) COV= COV_BY_TEST= bash ./runjunits; status=$$?; \
+	$(MAKE) cov-analyze-by-test COV_CLASSES=$(COV_CLASSES); exit $$status
+
+## coverage-analyzer (~/projects/jacoco/coverage-analyzer): finds tests that add nothing to
+## coverage -- empty, duplicate and subsumed tests, and a minimum-run-time set of tests that
+## covers everything the suite covers. Its classpath is its own jar plus the org.jacoco.core
+## and ASM jars that ../jacoco's `make copy` vendors into jacoco/lib alongside
+## jacocoagent.jar: the very JaCoCo build that recorded the data. That matters here -- the
+## customized agent places probes differently from stock JaCoCo, and the analyzer maps
+## probes back to source lines by re-deriving that layout from the class files.
+COV_ANALYZER_JARS := coverage-analyzer org.jacoco.core asm asm-commons asm-tree
+ifeq ($(OS),Windows_NT)
+  COV_CP_SEP := ;
+else
+  COV_CP_SEP := :
+endif
+COV_EMPTY :=
+COV_SPACE := $(COV_EMPTY) $(COV_EMPTY)
+COV_ANALYZER_CP := $(subst $(COV_SPACE),$(COV_CP_SEP),$(patsubst %,jacoco/lib/%.jar,$(COV_ANALYZER_JARS)))
+## jSMTLIB's own classes only: not the test harness, and not JUnit/Hamcrest, which the agent
+## instruments too. Skipped tests are left out. Override to analyze differently, e.g.
+##   make cov-analyze-by-test COV_ANALYZER_ARGS="--include 'org.smtlib.**' --granularity line"
+COV_ANALYZER_ARGS ?= --include 'org.smtlib.**' --exclude 'org.smtlib.test.**' --exclude-status SKIP
+
+## Analyze the data from the last cov-test-by-test run (without re-running the tests):
+## summary to the terminal and cov/by-test-report.txt, full results as CSV files in
+## cov/by-test-report/. --strip removes this directory's absolute path, which ScriptTests'
+## and FileTests' display names carry, from the test names in the report.
+cov-analyze-by-test:
+	set -o pipefail; java -cp "$(COV_ANALYZER_CP)" com.sigillogic.coverage.analyzer.Main \
+		--index cov/by-test/index.tsv --classfiles $(COV_CLASSES) --strip "$(CURDIR)/" \
+		$(COV_ANALYZER_ARGS) --out cov/by-test-report | tee cov/by-test-report.txt
 
 ## Merge every per-test file back into one data set and report it, exactly like
 ## cov-report does for cov-test -- a check that splitting lost nothing: its totals should
