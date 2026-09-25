@@ -713,18 +713,6 @@ public class SMT {
 		}
 	}
 	
-	/** Parses and executes a single SMT-LIB command string, reusing the existing solver if one is active.
-	 * @param cmd the command text (without outer parentheses) to execute
-	 * @return the exit code: 0 for success, non-zero for errors
-	 */
-	public int execCommand(String cmd) {
-		ISource src = smtConfig.smtFactory.createSource(cmd,null);
-		IParser p = smtConfig.smtFactory.createParser(smtConfig,src);
-		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Command " + cmd);
-		int e = doParser(p,false);
-		return e;
-	}
-	
 	protected int doParser(IParser p) { 
 		return doParser(p,true);
 	}
@@ -745,7 +733,12 @@ public class SMT {
 	/** The response from the most recently executed command; used to export results in interactive mode. */
 	public IResponse lastResponse = null;
 	
+	// FIXME - 'restart' is now always true: execCommand(), the only caller that passed
+	// false, was deleted as dead code (its "reuse the active solver" contract could not
+	// work anyway, since this method unconditionally force-exits the solver before
+	// returning). Either drop the parameter or restore a real incremental-use caller.
 	protected int doParser(IParser p, boolean restart) { 
+		// FIXME - checkMode is assigned but never read; javac does not warn about this.
 		boolean checkMode = Utils.TEST_SOLVER.equals(smtConfig.solvername);
 		boolean abortMode = smtConfig.abort;
 
@@ -833,6 +826,8 @@ public class SMT {
 					// A leading comment must not count as "using up" the first-command slot --
 					// it's not a real script command, just carried along so it can be
 					// forwarded to the solver (see issue #42).
+					// FIXME - result is dereferenced here and below without a null check; this
+					// assumes no ICommand.execute() implementation ever returns null.
 					if (!(command instanceof ICommand.Icomment)) {
 						smtlibVersionAllowed = (command instanceof ICommand.Ireset)
 								|| (isSmtlibVersionInfo && !result.isError());
@@ -1088,6 +1083,8 @@ public class SMT {
 		if (options.solvername == null) {
 			String p = options.props.getProperty(Utils.PROPS_DEFAULT_SOLVER);
 			if (p == null || p.isEmpty()) p = Utils.TEST_SOLVER;
+			// FIXME - this assignment is discarded whenever the --exec check just below
+			// fails; the check probably belongs before it (or outside this block entirely).
 			options.solvername = p;
 			if (options.executable != null) {
 				error("If you specify an executable, you must also specify a solver");
@@ -1177,8 +1174,10 @@ public class SMT {
 	}
 
 	/** Starts the solver with the given name and executable, preset according to the given configuration.
-	 * If executable is null, then an executable path is looked for in the org.smtlib.SMT_EXE_solvername
-	 * property or the SMT_EXE_solvername environment variable.
+	 * If executable is null, the path is resolved from jsmtlib.properties -- the
+	 * org.smtlib.solver_&lt;name&gt;.exec.&lt;platform&gt; entry, then org.smtlib.solver_&lt;name&gt;.exec,
+	 * then the solver name itself -- with any relative result taken against $SMT_SOLVER_DIR
+	 * (see {@link SMT.Configuration#createSolver} and {@link #resolveExecutablePath}).
 	 * <p>
 	 * This is a thin, CLI-flavored wrapper around {@link SMT.Configuration#createSolver}: it resolves
 	 * and constructs the adapter by delegating there, translating a thrown {@link ISolver.CreationException}

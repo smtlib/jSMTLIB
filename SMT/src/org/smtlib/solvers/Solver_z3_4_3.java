@@ -91,14 +91,15 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 			cmds = cmds_win;
 		} else if (isMac) {
 			cmds = cmds_mac;
-			if (smtConfig.seed != 0) {
-			    cmds = Utils.cat(cmds,"-rs:"+smtConfig.seed);
-			}
 		} else {
 			cmds = cmds_unix;
-            if (smtConfig.seed != 0) {
-                cmds = Utils.cat(cmds,"-rs:"+smtConfig.seed);
-            }
+		}
+		// -rs:N is appended for mac/unix only; the Windows build is deliberately not given a
+		// seed flag (see the String[]-command constructor below for the same exclusion).
+		if (smtConfig.seed != 0 && !isWindows) {
+			List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
+			args.add("-rs:" + smtConfig.seed);
+			cmds = args.toArray(new String[args.size()]);
 		}
 		cmds[0] = executable;
 		options.putAll(smtConfig.utils.defaults);
@@ -112,9 +113,12 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 		this.smtConfig = smtConfig;
 		cmds = command;
 		options.putAll(smtConfig.utils.defaults);
-        if (smtConfig.seed != 0) {
-            if (isWindows) {}//cmds = Utils.cat(cmds,"/rs:"+smtConfig.seed);
-            else           cmds = Utils.cat(cmds,"-rs:"+smtConfig.seed);
+        // Windows is deliberately excluded -- the equivalent there would be
+        // args.add("/rs:" + smtConfig.seed), which was commented out rather than used.
+        if (smtConfig.seed != 0 && !isWindows) {
+            List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
+            args.add("-rs:" + smtConfig.seed);
+            cmds = args.toArray(new String[args.size()]);
         }
 		cmds = withTimeoutArgs(cmds, smtConfig, isWindows);
 		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);

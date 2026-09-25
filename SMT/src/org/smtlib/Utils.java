@@ -9,7 +9,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Array;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,7 +36,7 @@ public class Utils {
 	/** The name of the properties file read by jSMTLIB */
 	static final public String PROPS_FILE = "jsmtlib.properties";
 	
-	/** The property name that specified the default solver */
+	/** The property name that specifies the default solver */
 	static final public String PROPS_DEFAULT_SOLVER = "org.smtlib.default-solver";
 	
 	/** The default prefix for the property names that identify solver executables,
@@ -47,10 +46,10 @@ public class Utils {
 	/** The suffix for adapter properties, as in org.smtlib.solver_ZZZ.adapter */
 	static final public String PROPS_ADAPTER_SUFFIX = ".adapter";
 	
-	/** The suffix for adapter properties, as in org.smtlib.solver_ZZZ.adapter */
+	/** The suffix for executable properties, as in org.smtlib.solver_ZZZ.exec */
 	static final public String PROPS_EXEC_SUFFIX = ".exec";
 	
-	/** The suffix for adapter properties, as in org.smtlib.solver_ZZZ.adapter */
+	/** The suffix for command-line properties, as in org.smtlib.solver_ZZZ.command */
 	static final public String PROPS_COMMAND_SUFFIX = ".command";
 	
 	/** The property giving the default logic path */
@@ -192,13 +191,13 @@ public class Utils {
 	/** The String for the as reserved word */
 	public static final String AS = "as";
 
-	/** The String for the as reserved word */
+	/** The String for the let reserved word */
 	public static final String LET = "let";
 
-	/** The String for the as reserved word */
+	/** The String for the forall reserved word */
 	public static final String FORALL = "forall";
 
-	/** The String for the as reserved word */
+	/** The String for the exists reserved word */
 	public static final String EXISTS = "exists";
 
 	/** The String for the _ wildcard in match patterns */
@@ -210,10 +209,10 @@ public class Utils {
 	/** The String for the stderr predefined string */
 	public static final String STDERR = "stderr";
 
-	/** String constant for boolean true. */
+	/** Symbol constant for boolean true. */
 	static public final ISymbol TRUE = new SMTExpr.Symbol("true".intern());
 
-	/** String constant for boolean false. */
+	/** Symbol constant for boolean false. */
 	static public final ISymbol FALSE = new SMTExpr.Symbol("false".intern());
 
 	// The following are canonical ISymbol constants for operator/family names that are
@@ -404,12 +403,13 @@ public class Utils {
 			for (char c : msg.toCharArray()) {
 				// In SMT-LIB v2.0, the only escapes within strings are for " and \
 				// which are represented as \" and \\
-				if (c == '"')
+				if (c == '"') {
 					sb.append("\\\"");
-				else if (c == '\\')
+				} else if (c == '\\') {
 					sb.append("\\\\");
-				else
+				} else {
 					sb.append(c);
+				}
 
 				// Use something like the following if we ever implement C-like
 				// escapes
@@ -432,12 +432,14 @@ public class Utils {
 			}
 			sb.append('"');
 			return sb.toString();
-		} else { // Version 2.5ff\
+		} else { // Version 2.5ff
 			for (char c : msg.toCharArray()) {
 				// In SMT-LIB v2.5ff, the only escapes within strings are for "
 				// which is represented as ""
-				if (c == '"') sb.append('"');
-			    sb.append(c);
+				if (c == '"') {
+					sb.append('"');
+				}
+				sb.append(c);
 			}
 			sb.append('"');
 			return sb.toString();			
@@ -463,6 +465,14 @@ public class Utils {
 			while (k < endPos) {
 				int kk = msg.indexOf('\\', k);
 				if (kk == -1) {
+					// No further escapes: the rest is literal, so the closing quote is all
+					// that should be at endPos. Checked here so an unterminated literal is
+					// reported in this arm too -- the V2.5ff arm below detects it naturally,
+					// since it scans for the quote rather than for backslashes. One charAt,
+					// on a branch that runs at most once per call.
+					if (msg.charAt(endPos) != '"') {
+						smtConfig.log.logError("Malformed string literal (missing closing quote): " + msg);
+					}
 					sb.append(msg.substring(k, endPos));
 					break;
 				} else {
@@ -566,8 +576,8 @@ public class Utils {
 	/**
 	 * Opens an InputStream for a named logic or theory file.
 	 * Searches the configured logicPath directories first, then falls back to the
-	 * system classpath (with a versioned subfolder prefix when no path is set and
-	 * an older SMT-LIB version is configured).
+	 * system classpath -- trying a versioned subfolder first whenever the configured
+	 * SMT-LIB version is older than the latest, whether or not logicPath is set.
 	 *
 	 * @param name the logic or theory name (filename without .smt2 suffix)
 	 * @param pos  source position for error messages, or null
@@ -691,7 +701,7 @@ public class Utils {
 	 *            the name of the theory
 	 * @param path
 	 *            the directory path in which theory files are stored
-	 * @return an ISexpr that holds a theory definition
+	 * @return the parsed ITheory
 	 * @throws SMTLIBException if an error occurs
 	 */
 	// FIXME Fix the use of path here - it actually is used only for error messages and should not be null
@@ -1068,33 +1078,6 @@ public class Utils {
 		}
 	}
 	
-    /** Concatenates two or more arrays of the same component type into a single new array. */
-    @SafeVarargs // requires an argument that is not empty
-    public static <T> T[] cat(T[] ... arrays) {
-        int n = 0;
-        for (T[] a: arrays) n += a.length;
-        @SuppressWarnings("unchecked")
-        T[] r = (T[])Array.newInstance(arrays[0].getClass().getComponentType(), n);
-        int k = 0;
-        for (T[] a: arrays) {
-            System.arraycopy(a,  0,  r,  k, a.length);
-            k += a.length;
-        }
-        return r;
-    }
-
-    /** Concatenates an array and additional individual elements into a single new array. */
-    @SafeVarargs
-    @SuppressWarnings("varargs")
-    public static <T> T[] cat(T[] aa, T ... rest) {
-        int n = aa.length + rest.length;
-        @SuppressWarnings("unchecked")
-        T[] r = (T[])Array.newInstance(aa[0].getClass(), n);
-        System.arraycopy(aa,  0,  r,  0, aa.length);
-        System.arraycopy(rest,  0,  r,  aa.length, rest.length);
-        return r;
-    }
-    
     /** Called at branches that should never be executed in a correct program;
      *  prints a stack trace so that JaCoCo coverage failures are immediately visible at runtime. */
     public static void jacocoNeverExecuted() {
