@@ -9,7 +9,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Array;
 import java.net.URL;
 import java.util.*;
 
@@ -30,7 +29,7 @@ public class Utils {
 	/** The name of the properties file read by jSMTLIB */
 	static final public String PROPS_FILE = "jsmtlib.properties";
 	
-	/** The property name that specified the default solver */
+	/** The property name that specifies the default solver */
 	static final public String PROPS_DEFAULT_SOLVER = "org.smtlib.default-solver";
 	
 	/** The default prefix for the property names that identify solver executables,
@@ -40,10 +39,10 @@ public class Utils {
 	/** The suffix for adapter properties, as in org.smtlib.solver_ZZZ.adapter */
 	static final public String PROPS_ADAPTER_SUFFIX = ".adapter";
 	
-	/** The suffix for adapter properties, as in org.smtlib.solver_ZZZ.adapter */
+	/** The suffix for executable properties, as in org.smtlib.solver_ZZZ.exec */
 	static final public String PROPS_EXEC_SUFFIX = ".exec";
 	
-	/** The suffix for adapter properties, as in org.smtlib.solver_ZZZ.adapter */
+	/** The suffix for command-line properties, as in org.smtlib.solver_ZZZ.command */
 	static final public String PROPS_COMMAND_SUFFIX = ".command";
 	
 	/** The property giving the default logic path */
@@ -185,13 +184,13 @@ public class Utils {
 	/** The String for the as reserved word */
 	public static final String AS = "as";
 
-	/** The String for the as reserved word */
+	/** The String for the let reserved word */
 	public static final String LET = "let";
 
-	/** The String for the as reserved word */
+	/** The String for the forall reserved word */
 	public static final String FORALL = "forall";
 
-	/** The String for the as reserved word */
+	/** The String for the exists reserved word */
 	public static final String EXISTS = "exists";
 
 	/** The String for the _ wildcard in match patterns */
@@ -203,10 +202,10 @@ public class Utils {
 	/** The String for the stderr predefined string */
 	public static final String STDERR = "stderr";
 
-	/** String constant for boolean true. */
+	/** Symbol constant for boolean true. */
 	static public final ISymbol TRUE = new SMTExpr.Symbol("true".intern());
 
-	/** String constant for boolean false. */
+	/** Symbol constant for boolean false. */
 	static public final ISymbol FALSE = new SMTExpr.Symbol("false".intern());
 
 	// The following are canonical ISymbol constants for operator/family names that are
@@ -382,130 +381,145 @@ public class Utils {
 	// stringInfo.put(NAME, NAME_VALUE);
 	// }
 
-	/**
-	 * Quotes a string, adding enclosing quotes and putting in SMT-LIBv2 escapes
-	 * as needed
-	 * 
-	 * @param msg
-	 *            String to quote
-	 * @return the quoted string
-	 */
-	public String quote(String msg) {
-		StringBuilder sb = new StringBuilder();
-		sb.append('"');
-		if (smtConfig.isVersion(SMTLIB.V20)) { // Version 2.0
-			for (char c : msg.toCharArray()) {
-				// In SMT-LIB v2.0, the only escapes within strings are for " and \
-				// which are represented as \" and \\
-				if (c == '"')
-					sb.append("\\\"");
-				else if (c == '\\')
-					sb.append("\\\\");
-				else
-					sb.append(c);
+    /**
+     * Quotes a string, adding enclosing quotes and putting in SMT-LIBv2 escapes
+     * as needed
+     *
+     * @param msg
+     *            String to quote
+     * @return the quoted string
+     */
+    public String quote(String msg) {
+        StringBuilder sb = new StringBuilder();
+        sb.append('"');
+        if (smtConfig.isVersion(SMTLIB.V20)) { // Version 2.0
+            for (char c : msg.toCharArray()) {
+                // In SMT-LIB v2.0, the only escapes within strings are for " and \
+                // which are represented as \" and \\
+                if (c == '"') {
+                    sb.append("\\\"");
+                } else if (c == '\\') {
+                    sb.append("\\\\");
+                } else {
+                    sb.append(c);
+                }
 
-				// Use something like the following if we ever implement C-like
-				// escapes
-				// Will need to add UNICODE escapes
-				// if (c >= '!' && c <= '~') sb.append(c);
-				// else if (c == ' ') sb.append(c);
-				// else if (c == '\"') sb.append("\\\"");
-				// else if (c == '\\') sb.append("\\\\");
-				// else if (c == '\n') sb.append("\\n");
-				// else if (c == '\t') sb.append("\\t");
-				// else if (c == '\r') sb.append("\\r");
-				// else if (c == '\b') sb.append("\\b");
-				// else if (c == '\f') sb.append("\\f");
-				// else {
-				// sb.append('\\');
-				// sb.append((char)('0' + ((int)c)/64));
-				// sb.append((char)('0' + ((int)c)%64)/8);
-				// sb.append((char)('0' + ((int)c)%8));
-				// }
-			}
-			sb.append('"');
-			return sb.toString();
-		} else { // Version 2.5ff\
-			for (char c : msg.toCharArray()) {
-				// In SMT-LIB v2.5ff, the only escapes within strings are for "
-				// which is represented as ""
-				if (c == '"') sb.append('"');
-			    sb.append(c);
-			}
-			sb.append('"');
-			return sb.toString();			
-		}
-	}
+                // Use something like the following if we ever implement C-like
+                // escapes
+                // Will need to add UNICODE escapes
+                // if (c >= '!' && c <= '~') sb.append(c);
+                // else if (c == ' ') sb.append(c);
+                // else if (c == '\"') sb.append("\\\"");
+                // else if (c == '\\') sb.append("\\\\");
+                // else if (c == '\n') sb.append("\\n");
+                // else if (c == '\t') sb.append("\\t");
+                // else if (c == '\r') sb.append("\\r");
+                // else if (c == '\b') sb.append("\\b");
+                // else if (c == '\f') sb.append("\\f");
+                // else {
+                // sb.append('\\');
+                // sb.append((char)('0' + ((int)c)/64));
+                // sb.append((char)('0' + ((int)c)%64)/8);
+                // sb.append((char)('0' + ((int)c)%8));
+                // }
+            }
+            sb.append('"');
+            return sb.toString();
+        } else { // Version 2.5ff
+            for (char c : msg.toCharArray()) {
+                // In SMT-LIB v2.5ff, the only escapes within strings are for "
+                // which is represented as ""
+                if (c == '"') {
+                    sb.append('"');
+                }
+                sb.append(c);
+            }
+            sb.append('"');
+            return sb.toString();
+        }
+    }
 
-	/**
-	 * Converts a quoted string (which has enclosing double quotes) to a raw
-	 * sequence of ASCII characters, undoing any SMT-LIBv2 escape sequences, and without
-	 * the enclosing quotes
-	 */
-	public String unescape(String msg) {
-		StringBuilder sb = new StringBuilder();
-		int k = 1;
-		int endPos = msg.length() - 1;
-		if (msg.isEmpty() || msg.charAt(0) != '"') {
-			smtConfig.log.logError("Malformed string literal (missing opening quote): " + msg);
-			return msg;
-		}
-		while (k < endPos) {
-			if (smtConfig.isVersion(SMTLIB.V20)) { // Version 2.0
-				int kk = msg.indexOf('\\', k);
-				if (kk == -1) {
-					sb.append(msg.substring(k, endPos));
-					break;
-				} else {
-					if (k < kk) sb.append(msg.substring(k, kk));
-					if (kk >= endPos) {
-						// backslash is the last character — no closing quote follows
-						smtConfig.log.logError("Malformed string literal (backslash at end, missing closing quote): " + msg);
-						break;
-					}
-					char c = msg.charAt(kk + 1);
-					if (kk + 1 == endPos && c == '"') {
-						// the escape sequence \\" consumes the closing quote — string is unterminated
-						smtConfig.log.logError("Malformed string literal (closing quote consumed by escape sequence): " + msg);
-						sb.append(c);
-						k = kk + 2;
-						break;
-					}
-					// In SMT-LIB v2.0, \\ is \ , \" is "
-					// and \x for any other x keeps both chars (\ is not an error per spec)
-					if (c == '\\' || c == '"') {
-						sb.append(c);
-					} else {
-						sb.append('\\');
-						sb.append(c);
-					}
-					k = kk + 2;
-				}
-			} else { // Version 2.5ff
-				int kk = msg.indexOf('"', k);
-				if (kk == -1) {
-					smtConfig.log.logError("Malformed string literal (missing closing quote): " + msg);
-					sb.append(msg.substring(k, endPos));
-					break;
-				} else if (kk == endPos) {
-					sb.append(msg.substring(k, kk));
-					k = endPos;
-					break;
-				} else {
-					if (k < kk) sb.append(msg.substring(k, kk));
-					char c = msg.charAt(kk + 1);
-					// In SMT-LIB v2.5ff, the only escape sequence is "" (for ")
-					if (c == '"') {
-						sb.append(c);
-					} else {
-						smtConfig.log.logError("Malformed string literal (lone quote not followed by quote): " + msg);
-					}
-					k = kk + 2;
-				}
-			}
-		}
-		return sb.toString();
-	}
+    /**
+     * Converts a quoted string (which has enclosing double quotes) to a raw
+     * sequence of ASCII characters, undoing any SMT-LIBv2 escape sequences, and without
+     * the enclosing quotes
+     */
+    public String unescape(String msg) {
+        StringBuilder sb = new StringBuilder();
+        int k = 1;
+        int endPos = msg.length() - 1;
+        if (msg.isEmpty() || msg.charAt(0) != '"') {
+            smtConfig.log.logError("Malformed string literal (missing opening quote): " + msg);
+            return msg;
+        }
+        // The version cannot change mid-string, so this is checked once here rather than
+        // on every iteration; the two loops below are otherwise exactly as they were.
+        if (smtConfig.isVersion(SMTLIB.V20)) { // Version 2.0
+            while (k < endPos) {
+                int kk = msg.indexOf('\\', k);
+                if (kk == -1) {
+                    // No further escapes: the rest is literal, so the closing quote is all
+                    // that should be at endPos. Checked here so an unterminated literal is
+                    // reported in this arm too -- the V2.5ff arm below detects it naturally,
+                    // since it scans for the quote rather than for backslashes. One charAt,
+                    // on a branch that runs at most once per call.
+                    if (msg.charAt(endPos) != '"') {
+                        smtConfig.log.logError("Malformed string literal (missing closing quote): " + msg);
+                    }
+                    sb.append(msg.substring(k, endPos));
+                    break;
+                } else {
+                    if (k < kk) sb.append(msg.substring(k, kk));
+                    if (kk >= endPos) {
+                        // backslash is the last character — no closing quote follows
+                        smtConfig.log.logError("Malformed string literal (backslash at end, missing closing quote): " + msg);
+                        break;
+                    }
+                    char c = msg.charAt(kk + 1);
+                    if (kk + 1 == endPos && c == '"') {
+                        // the escape sequence \\" consumes the closing quote — string is unterminated
+                        smtConfig.log.logError("Malformed string literal (closing quote consumed by escape sequence): " + msg);
+                        sb.append(c);
+                        k = kk + 2;
+                        break;
+                    }
+                    // In SMT-LIB v2.0, \\ is \ , \" is "
+                    // and \x for any other x keeps both chars (\ is not an error per spec)
+                    if (c == '\\' || c == '"') {
+                        sb.append(c);
+                    } else {
+                        sb.append('\\');
+                        sb.append(c);
+                    }
+                    k = kk + 2;
+                }
+            }
+        } else { // Version 2.5ff
+            while (k < endPos) {
+                int kk = msg.indexOf('"', k);
+                if (kk == -1) {
+                    smtConfig.log.logError("Malformed string literal (missing closing quote): " + msg);
+                    sb.append(msg.substring(k, endPos));
+                    break;
+                } else if (kk == endPos) {
+                    sb.append(msg.substring(k, kk));
+                    k = endPos;
+                    break;
+                } else {
+                    if (k < kk) sb.append(msg.substring(k, kk));
+                    char c = msg.charAt(kk + 1);
+                    // In SMT-LIB v2.5ff, the only escape sequence is "" (for ")
+                    if (c == '"') {
+                        sb.append(c);
+                    } else {
+                        smtConfig.log.logError("Malformed string literal (lone quote not followed by quote): " + msg);
+                    }
+                    k = kk + 2;
+                }
+            }
+        }
+        return sb.toString();
+    }
 	
 	//////////////////// NON-STATIC MATERIAL
 
@@ -552,62 +566,62 @@ public class Utils {
 		}
 	}
 
-	/**
-	 * Opens an InputStream for a named logic or theory file.
-	 * Searches the configured logicPath directories first, then falls back to the
-	 * system classpath (with a versioned subfolder prefix when no path is set and
-	 * an older SMT-LIB version is configured).
-	 *
-	 * @param name the logic or theory name (filename without .smt2 suffix)
-	 * @param pos  source position for error messages, or null
-	 * @throws SMTLIBException if the file cannot be found or opened
-	 */
-	private InputStream openLogicStream(String name, IPos pos) throws SMTLIBException {
-		String filename = name + SUFFIX;
-		String path = smtConfig.logicPath;
-		try {
-			if (path != null) {
-				// Explicit path: each component must be a real directory -- a mistyped
-				// component is a configuration error and should fail loudly rather than be
-				// silently treated as "not found here, try the next component". Components
-				// use the same separator character as the Java classpath (File.pathSeparator).
-				for (String d : path.split(File.pathSeparator)) {
-					if (!new File(d).isDirectory()) {
-						throw new SMTLIBException(smtConfig.responseFactory.error(
-								"Invalid logic path: \"" + d + "\" is not a directory", pos));
-					}
-				}
-				for (String d : path.split(File.pathSeparator)) {
-					File f = new File(d + File.separator + filename);
-					if (f.exists()) return new FileInputStream(f);
-				}
-				// Not overridden on this (valid) path: an explicit logic path may deliberately
-				// supply only some logics/theories and rely on the built-in definitions for
-				// everything else, so always fall through to the classpath below.
-			}
-			// No explicit path, or not found on a valid explicit path: try the versioned
-			// subfolder in the classpath first (built-in definitions are organized by
-			// SMT-LIB version), then the top-level (latest-version) copy.
-			List<String> candidates = new ArrayList<>();
-			if (smtConfig.smtlib != null) {
-				SMTLIB cv = SMTLIB.find(smtConfig.smtlib);
-				SMTLIB latest = SMTLIB.values()[SMTLIB.values().length - 1];
-				if (cv != null && cv != latest) candidates.add(cv.id + "/" + filename);
-			}
-			candidates.add(filename);
-			for (String candidate : candidates) {
-				URL url = ClassLoader.getSystemResource(candidate);
-				if (url != null) return url.openStream();
-			}
-			throw new SMTLIBException(smtConfig.responseFactory.error(
-					path == null ? "No logic file found for " + name
-							: "No logic file found for " + name + " on path \"" + path + "\"",
-					pos));
-		} catch (IOException e) {
-			throw new SMTLIBException(smtConfig.responseFactory.error(
-					"Failed to open logic file for " + name + ": " + e, pos));
-		}
-	}
+    /**
+     * Opens an InputStream for a named logic or theory file.
+     * Searches the configured logicPath directories first, then falls back to the
+     * system classpath -- trying a versioned subfolder first whenever the configured
+     * SMT-LIB version is older than the latest, whether or not logicPath is set.
+     *
+     * @param name the logic or theory name (filename without .smt2 suffix)
+     * @param pos  source position for error messages, or null
+     * @throws SMTLIBException if the file cannot be found or opened
+     */
+    private InputStream openLogicStream(String name, IPos pos) throws SMTLIBException {
+        String filename = name + SUFFIX;
+        String path = smtConfig.logicPath;
+        try {
+            if (path != null) {
+                // Explicit path: each component must be a real directory -- a mistyped
+                // component is a configuration error and should fail loudly rather than be
+                // silently treated as "not found here, try the next component". Components
+                // use the same separator character as the Java classpath (File.pathSeparator).
+                for (String d : path.split(File.pathSeparator)) {
+                    if (!new File(d).isDirectory()) {
+                        throw new SMTLIBException(smtConfig.responseFactory.error(
+                                "Invalid logic path: \"" + d + "\" is not a directory", pos));
+                    }
+                }
+                for (String d : path.split(File.pathSeparator)) {
+                    File f = new File(d + File.separator + filename);
+                    if (f.exists()) return new FileInputStream(f);
+                }
+                // Not overridden on this (valid) path: an explicit logic path may deliberately
+                // supply only some logics/theories and rely on the built-in definitions for
+                // everything else, so always fall through to the classpath below.
+            }
+            // No explicit path, or not found on a valid explicit path: try the versioned
+            // subfolder in the classpath first (built-in definitions are organized by
+            // SMT-LIB version), then the top-level (latest-version) copy.
+            List<String> candidates = new ArrayList<>();
+            if (smtConfig.smtlib != null) {
+                SMTLIB cv = SMTLIB.find(smtConfig.smtlib);
+                SMTLIB latest = SMTLIB.values()[SMTLIB.values().length - 1];
+                if (cv != null && cv != latest) candidates.add(cv.id + "/" + filename);
+            }
+            candidates.add(filename);
+            for (String candidate : candidates) {
+                URL url = ClassLoader.getSystemResource(candidate);
+                if (url != null) return url.openStream();
+            }
+            throw new SMTLIBException(smtConfig.responseFactory.error(
+                    path == null ? "No logic file found for " + name
+                            : "No logic file found for " + name + " on path \"" + path + "\"",
+                    pos));
+        } catch (IOException e) {
+            throw new SMTLIBException(smtConfig.responseFactory.error(
+                    "Failed to open logic file for " + name + ": " + e, pos));
+        }
+    }
 
 	/**
 	 * Reads a logic file, parses it, validates the name, and checks the version.
@@ -673,46 +687,46 @@ public class Utils {
 		return null;
 	}
 
-	/**
-	 * Reads a theory file, returning the S-expression that it holds.
-	 * 
-	 * @param name
-	 *            the name of the theory
-	 * @param path
-	 *            the directory path in which theory files are stored
-	 * @return an ISexpr that holds a theory definition
-	 * @throws SMTLIBException if an error occurs
-	 */
-	// FIXME Fix the use of path here - it actually is used only for error messages and should not be null
-	public ITheory findTheory(String name, /* @Nullable */ String path) throws SMTLIBException {
-		ISource source;
-		try (var input = openLogicStream(name, null)) {
-			SMT.Configuration config = smtConfig.clone();
-			config.interactive = false;
-			source = config.smtFactory.createSource(config, input, null);
-			IParser p = config.smtFactory.createParser(config, source);
-			ITheory th = p.parseTheory();
-			if (!name.equals(th.theoryName().value())) {
-				throw new SMTLIBException(smtConfig.responseFactory.error(
-						"Theory file for " + name + " declares theory name '"
-						+ th.theoryName().value() + "'"));
-			}
-			IResponse.IError verErr = checkVersion("Theory", name, th.value(SMTLIB_VERSION));
-			if (verErr != null) throw new SMTLIBException(verErr);
-			return th;
-		} catch (IParser.ParserException e) {
-			throw new SMTLIBException(smtConfig.log.logError(smtConfig.responseFactory.error(
-					"Failed to parse the theory file " + name + " in " + path
-							+ ": " + e, e.pos())));
-		} catch (SMTLIBException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new SMTLIBException(smtConfig.log.logError(smtConfig.responseFactory.error(
-					"Failed to read the theory file " + name + " in " + path
-							+ ": " + e, null)));
-		} finally {
-		}
-	}
+    /**
+     * Reads a theory file, returning the S-expression that it holds.
+     *
+     * @param name
+     *            the name of the theory
+     * @param path
+     *            the directory path in which theory files are stored
+     * @return the parsed ITheory
+     * @throws SMTLIBException if an error occurs
+     */
+    // FIXME Fix the use of path here - it actually is used only for error messages and should not be null
+    public ITheory findTheory(String name, /* @Nullable */ String path) throws SMTLIBException {
+        ISource source;
+        try (var input = openLogicStream(name, null)) {
+            SMT.Configuration config = smtConfig.clone();
+            config.interactive = false;
+            source = config.smtFactory.createSource(config, input, null);
+            IParser p = config.smtFactory.createParser(config, source);
+            ITheory th = p.parseTheory();
+            if (!name.equals(th.theoryName().value())) {
+                throw new SMTLIBException(smtConfig.responseFactory.error(
+                        "Theory file for " + name + " declares theory name '"
+                        + th.theoryName().value() + "'"));
+            }
+            IResponse.IError verErr = checkVersion("Theory", name, th.value(SMTLIB_VERSION));
+            if (verErr != null) throw new SMTLIBException(verErr);
+            return th;
+        } catch (IParser.ParserException e) {
+            throw new SMTLIBException(smtConfig.log.logError(smtConfig.responseFactory.error(
+                    "Failed to parse the theory file " + name + " in " + path
+                            + ": " + e, e.pos())));
+        } catch (SMTLIBException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new SMTLIBException(smtConfig.log.logError(smtConfig.responseFactory.error(
+                    "Failed to read the theory file " + name + " in " + path
+                            + ": " + e, null)));
+        } finally {
+        }
+    }
 
 	/**
 	 * Finds and loads a logic into the given symbol table
@@ -759,12 +773,12 @@ public class Utils {
 		
 		/* @Nullable */IResponse response = loadTheory(th, symTable);
 		if (response == null) {
-			if (theoryName.equals("Fixed_Size_BitVectors") || theoryName.equals("FixedSizeBitVectors"))
-				symTable.bitVectorTheorySet = true;
-			if (theoryName.equals("Reals_Ints"))
-				symTable.realsIntsTheorySet = true;
-			if (theoryName.equals("FloatingPoint"))
-				symTable.floatingPointTheorySet = true;
+			// |= not =: these accumulate across every theory a logic loads (QF_BVFP loads
+			// both FixedSizeBitVectors and FloatingPoint), so a plain assignment would have
+			// each theory clear the flags the previous ones set.
+			symTable.bitVectorTheorySet |= theoryName.equals("Fixed_Size_BitVectors") || theoryName.equals("FixedSizeBitVectors");
+			symTable.realsIntsTheorySet |= theoryName.equals("Reals_Ints");
+			symTable.floatingPointTheorySet |= theoryName.equals("FloatingPoint");
 		}
 		return response;
 	}
@@ -810,9 +824,11 @@ public class Utils {
 				res = loadTheory(th, symTable);
 				if (res == null) {
 					String tname = th.theoryName().value();
-					if (tname.equals("Fixed_Size_BitVectors") || tname.equals("FixedSizeBitVectors")) symTable.bitVectorTheorySet = true;
-					if (tname.equals("Reals_Ints")) symTable.realsIntsTheorySet = true;
-					if (tname.equals("FloatingPoint")) symTable.floatingPointTheorySet = true;
+					// |= not =: this runs once per theory in the logic's :theories list, so a
+					// plain assignment would leave only the last theory's flag set.
+					symTable.bitVectorTheorySet |= tname.equals("Fixed_Size_BitVectors") || tname.equals("FixedSizeBitVectors");
+					symTable.realsIntsTheorySet |= tname.equals("Reals_Ints");
+					symTable.floatingPointTheorySet |= tname.equals("FloatingPoint");
 				}
 			} else {
 				res = loadTheory(theoryName.value(), symTable);
@@ -852,6 +868,7 @@ public class Utils {
 				// still errors "unknown sort") until/unless something actually needs them,
 				// rather than resolving to a sort that is not really interchangeable with the
 				// (_ FloatingPoint eb sb) form it is supposed to mean.
+				// FIXME - check this - the comment sounds like AI-speak for unimplemented/unsupported material
 				if (theoryName.equals("FloatingPoint") && (name.value().equals("Float16")
 						|| name.value().equals("Float32") || name.value().equals("Float64")
 						|| name.value().equals("Float128"))) {
@@ -866,16 +883,6 @@ public class Utils {
 			IResponse r = loadFuns(funsVal, theoryName, symTable);
 			if (r != null) return r;
 		}
-		// store/select (ArraysEx) and @ (HO-Core) used to need placeholder entries registered
-		// here (empty/null sort, just to mark the name as defined): loadFuns() used to skip
-		// any :funs entry beginning with "par" entirely, so these par-declared names were
-		// never registered by the loop above, and TypeChecker.visit(IFcnExpr) special-cased
-		// them by name instead of consulting the symbol table. Now that loadFuns() parses
-		// "par" declarations (see loadParFun()) and TypeChecker consults the general lookup
-        // path for these names too, real entries are already registered above -- a
-        // placeholder here would only add a second, malformed (null-result-sort) candidate
-        // that the general lookup would then also have to consider.
-
 		return null;
 	}
 
@@ -884,6 +891,7 @@ public class Utils {
 	 * iterator (or null if there is no attribute tail at all). Shared by loadTheory's sort
 	 * declarations and loadFuns' function declarations, since both end with the same
 	 * attribute* grammar production. */
+	// FIXME - this needs a bit of explanatory documentation
 	private List<IExpr.IAttribute<?>> parseAttributeTail(Iterator<ISexpr> iter2, /*@Nullable*/ ISexpr firstKey) {
 		List<IExpr.IAttribute<?>> attrs = new LinkedList<IExpr.IAttribute<?>>();
 		ISexpr key = firstKey;
@@ -909,6 +917,7 @@ public class Utils {
 		return attrs;
 	}
 
+	/** Loads all the functions listed in the 'funsValue' into the symbol table */
 	private /* @Nullable */ IResponse loadFuns(IAttributeValue funsVal, String theoryName, SymbolTable symTable) {
 		if (!(funsVal instanceof ISexpr.ISeq)) return smtConfig.responseFactory.error("Expected a sequence of function declarations instead of " + funsVal);
 		Iterator<ISexpr> iter = ((ISexpr.ISeq) funsVal).sexprs().iterator();
@@ -1013,6 +1022,7 @@ public class Utils {
 		return null;
 	}
 
+	// FIXME - needs an explanation
 	public /* @Nullable */ ISort asSort(ISexpr sexpr, SymbolTable symtab) {
 		if (sexpr instanceof IExpr.ISymbol) {
 			IExpr.ISymbol sym = (IExpr.ISymbol) sexpr;
@@ -1061,39 +1071,11 @@ public class Utils {
 		}
 	}
 	
-    /** Concatenates two or more arrays of the same component type into a single new array. */
-    @SafeVarargs // requires an argument that is not empty
-    public static <T> T[] cat(T[] ... arrays) {
-        int n = 0;
-        for (T[] a: arrays) n += a.length;
-        @SuppressWarnings("unchecked")
-        T[] r = (T[])Array.newInstance(arrays[0].getClass().getComponentType(), n);
-        int k = 0;
-        for (T[] a: arrays) {
-            System.arraycopy(a,  0,  r,  k, a.length);
-            k += a.length;
-        }
-        return r;
-    }
-
-    /** Concatenates an array and additional individual elements into a single new array. */
-    @SafeVarargs
-    @SuppressWarnings("varargs")
-    public static <T> T[] cat(T[] aa, T ... rest) {
-        int n = aa.length + rest.length;
-        @SuppressWarnings("unchecked")
-        T[] r = (T[])Array.newInstance(aa[0].getClass(), n);
-        System.arraycopy(aa,  0,  r,  0, aa.length);
-        System.arraycopy(rest,  0,  r,  aa.length, rest.length);
-        return r;
-    }
-    
     /** Called at branches that should never be executed in a correct program;
-     *  prints a stack trace so that JaCoCo coverage failures are immediately visible. */
+     *  prints a stack trace so that JaCoCo coverage failures are immediately visible at runtime. */
     public static void jacocoNeverExecuted() {
         RuntimeException e = new RuntimeException("Utils.jacocoNeverExecuted is unexpectedly called");
         System.out.println(e.getMessage());
         e.printStackTrace(System.out);
     }
-
 }

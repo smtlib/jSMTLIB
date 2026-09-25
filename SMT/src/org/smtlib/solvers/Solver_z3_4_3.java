@@ -84,42 +84,46 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 	 *  succeeded, never unconditionally. */
 	protected int pushesDepth = 0;
 	
-	/** Creates an instance of the Z3 solver */
-	public Solver_z3_4_3(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
-		this.smtConfig = smtConfig;
-		if (isWindows) {
-			cmds = cmds_win;
-		} else if (isMac) {
-			cmds = cmds_mac;
-			if (smtConfig.seed != 0) {
-			    cmds = Utils.cat(cmds,"-rs:"+smtConfig.seed);
-			}
-		} else {
-			cmds = cmds_unix;
-            if (smtConfig.seed != 0) {
-                cmds = Utils.cat(cmds,"-rs:"+smtConfig.seed);
-            }
-		}
-		cmds[0] = executable;
-		options.putAll(smtConfig.utils.defaults);
-		cmds = withTimeoutArgs(cmds, smtConfig, isWindows);
-		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
-		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
-	}
-
-	/** Creates an instance of the Z3 solver */
-	public Solver_z3_4_3(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
-		this.smtConfig = smtConfig;
-		cmds = command;
-		options.putAll(smtConfig.utils.defaults);
-        if (smtConfig.seed != 0) {
-            if (isWindows) {}//cmds = Utils.cat(cmds,"/rs:"+smtConfig.seed);
-            else           cmds = Utils.cat(cmds,"-rs:"+smtConfig.seed);
+    /** Creates an instance of the Z3 solver */
+    public Solver_z3_4_3(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
+        this.smtConfig = smtConfig;
+        if (isWindows) {
+            cmds = cmds_win;
+        } else if (isMac) {
+            cmds = cmds_mac;
+        } else {
+            cmds = cmds_unix;
         }
-		cmds = withTimeoutArgs(cmds, smtConfig, isWindows);
-		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
-		responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
-	}
+        // -rs:N is appended for mac/unix only; the Windows build is deliberately not given a
+        // seed flag (see the String[]-command constructor below for the same exclusion).
+        if (smtConfig.seed != 0 && !isWindows) {
+            List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
+            args.add("-rs:" + smtConfig.seed);
+            cmds = args.toArray(new String[args.size()]);
+        }
+        cmds[0] = executable;
+        options.putAll(smtConfig.utils.defaults);
+        cmds = withTimeoutArgs(cmds, smtConfig, isWindows);
+        solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
+        responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
+    }
+
+    /** Creates an instance of the Z3 solver */
+    public Solver_z3_4_3(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
+        this.smtConfig = smtConfig;
+        cmds = command;
+        options.putAll(smtConfig.utils.defaults);
+        // Windows is deliberately excluded -- the equivalent there would be
+        // args.add("/rs:" + smtConfig.seed), which was commented out rather than used.
+        if (smtConfig.seed != 0 && !isWindows) {
+            List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
+            args.add("-rs:" + smtConfig.seed);
+            cmds = args.toArray(new String[args.size()]);
+        }
+        cmds = withTimeoutArgs(cmds, smtConfig, isWindows);
+        solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
+        responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
+    }
 
 	/** Appends z3-4.3's own timeout flags for smtConfig's two jSMTLIB-level, seconds-based
 	 *  timeout values, if set: {@code -t:N} (or {@code /t:N} on Windows) for the per-query
