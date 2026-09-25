@@ -457,8 +457,10 @@ public class Utils {
 			smtConfig.log.logError("Malformed string literal (missing opening quote): " + msg);
 			return msg;
 		}
-		while (k < endPos) {
-			if (smtConfig.isVersion(SMTLIB.V20)) { // Version 2.0
+		// The version cannot change mid-string, so this is checked once here rather than
+		// on every iteration; the two loops below are otherwise exactly as they were.
+		if (smtConfig.isVersion(SMTLIB.V20)) { // Version 2.0
+			while (k < endPos) {
 				int kk = msg.indexOf('\\', k);
 				if (kk == -1) {
 					sb.append(msg.substring(k, endPos));
@@ -488,7 +490,9 @@ public class Utils {
 					}
 					k = kk + 2;
 				}
-			} else { // Version 2.5ff
+			}
+		} else { // Version 2.5ff
+			while (k < endPos) {
 				int kk = msg.indexOf('"', k);
 				if (kk == -1) {
 					smtConfig.log.logError("Malformed string literal (missing closing quote): " + msg);
@@ -766,12 +770,12 @@ public class Utils {
 		
 		/* @Nullable */IResponse response = loadTheory(th, symTable);
 		if (response == null) {
-			if (theoryName.equals("Fixed_Size_BitVectors") || theoryName.equals("FixedSizeBitVectors"))
-				symTable.bitVectorTheorySet = true;
-			if (theoryName.equals("Reals_Ints"))
-				symTable.realsIntsTheorySet = true;
-			if (theoryName.equals("FloatingPoint"))
-				symTable.floatingPointTheorySet = true;
+			// |= not =: these accumulate across every theory a logic loads (QF_BVFP loads
+			// both FixedSizeBitVectors and FloatingPoint), so a plain assignment would have
+			// each theory clear the flags the previous ones set.
+			symTable.bitVectorTheorySet |= theoryName.equals("Fixed_Size_BitVectors") || theoryName.equals("FixedSizeBitVectors");
+			symTable.realsIntsTheorySet |= theoryName.equals("Reals_Ints");
+			symTable.floatingPointTheorySet |= theoryName.equals("FloatingPoint");
 		}
 		return response;
 	}
@@ -817,9 +821,11 @@ public class Utils {
 				res = loadTheory(th, symTable);
 				if (res == null) {
 					String tname = th.theoryName().value();
-					if (tname.equals("Fixed_Size_BitVectors") || tname.equals("FixedSizeBitVectors")) symTable.bitVectorTheorySet = true;
-					if (tname.equals("Reals_Ints")) symTable.realsIntsTheorySet = true;
-					if (tname.equals("FloatingPoint")) symTable.floatingPointTheorySet = true;
+					// |= not =: this runs once per theory in the logic's :theories list, so a
+					// plain assignment would leave only the last theory's flag set.
+					symTable.bitVectorTheorySet |= tname.equals("Fixed_Size_BitVectors") || tname.equals("FixedSizeBitVectors");
+					symTable.realsIntsTheorySet |= tname.equals("Reals_Ints");
+					symTable.floatingPointTheorySet |= tname.equals("FloatingPoint");
 				}
 			} else {
 				res = loadTheory(theoryName.value(), symTable);
@@ -859,6 +865,7 @@ public class Utils {
 				// still errors "unknown sort") until/unless something actually needs them,
 				// rather than resolving to a sort that is not really interchangeable with the
 				// (_ FloatingPoint eb sb) form it is supposed to mean.
+				// FIXME - check this - the comment sounds like AI-speak for unimplemented/unsupported material
 				if (theoryName.equals("FloatingPoint") && (name.value().equals("Float16")
 						|| name.value().equals("Float32") || name.value().equals("Float64")
 						|| name.value().equals("Float128"))) {
@@ -873,16 +880,6 @@ public class Utils {
 			IResponse r = loadFuns(funsVal, theoryName, symTable);
 			if (r != null) return r;
 		}
-		// store/select (ArraysEx) and @ (HO-Core) used to need placeholder entries registered
-		// here (empty/null sort, just to mark the name as defined): loadFuns() used to skip
-		// any :funs entry beginning with "par" entirely, so these par-declared names were
-		// never registered by the loop above, and TypeChecker.visit(IFcnExpr) special-cased
-		// them by name instead of consulting the symbol table. Now that loadFuns() parses
-		// "par" declarations (see loadParFun()) and TypeChecker consults the general lookup
-        // path for these names too, real entries are already registered above -- a
-        // placeholder here would only add a second, malformed (null-result-sort) candidate
-        // that the general lookup would then also have to consider.
-
 		return null;
 	}
 
@@ -891,6 +888,7 @@ public class Utils {
 	 * iterator (or null if there is no attribute tail at all). Shared by loadTheory's sort
 	 * declarations and loadFuns' function declarations, since both end with the same
 	 * attribute* grammar production. */
+	// FIXME - this needs a bit of explanatory documentation
 	private List<IExpr.IAttribute<?>> parseAttributeTail(Iterator<ISexpr> iter2, /*@Nullable*/ ISexpr firstKey) {
 		List<IExpr.IAttribute<?>> attrs = new LinkedList<IExpr.IAttribute<?>>();
 		ISexpr key = firstKey;
@@ -916,6 +914,7 @@ public class Utils {
 		return attrs;
 	}
 
+	/** Loads all the functions listed in the 'funsValue' into the symbol table */
 	private /* @Nullable */ IResponse loadFuns(IAttributeValue funsVal, String theoryName, SymbolTable symTable) {
 		if (!(funsVal instanceof ISexpr.ISeq)) return smtConfig.responseFactory.error("Expected a sequence of function declarations instead of " + funsVal);
 		Iterator<ISexpr> iter = ((ISexpr.ISeq) funsVal).sexprs().iterator();
@@ -1020,6 +1019,7 @@ public class Utils {
 		return null;
 	}
 
+	// FIXME - needs an explanation
 	public /* @Nullable */ ISort asSort(ISexpr sexpr, SymbolTable symtab) {
 		if (sexpr instanceof IExpr.ISymbol) {
 			IExpr.ISymbol sym = (IExpr.ISymbol) sexpr;
@@ -1096,11 +1096,10 @@ public class Utils {
     }
     
     /** Called at branches that should never be executed in a correct program;
-     *  prints a stack trace so that JaCoCo coverage failures are immediately visible. */
+     *  prints a stack trace so that JaCoCo coverage failures are immediately visible at runtime. */
     public static void jacocoNeverExecuted() {
         RuntimeException e = new RuntimeException("Utils.jacocoNeverExecuted is unexpectedly called");
         System.out.println(e.getMessage());
         e.printStackTrace(System.out);
     }
-
 }

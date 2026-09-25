@@ -97,23 +97,12 @@ public class SMT {
 			//c.commandExtensionPrefixes = Array.copy(commandExtensionPrefixes);
 			c.commands = new HashMap<String,Class<? extends ICommand>>();
 			c.commands.putAll(commands);
-			// A fresh Log, not just repointing the field: c.log is still the same object as
-			// this.log (a shallow field copy from super.clone()) until replaced here, so
-			// redirecting one's output channel (e.g. via :regular-output-channel) would
-			// otherwise silently redirect the other's too. Points the new Log's channels at
-			// whatever this Configuration's are currently pointed at (so cloning doesn't
-			// itself change where output goes), but as unowned streams -- the clone doesn't
-			// take over responsibility for closing a file the original's Log opened.
 			c.log = new Log(c);
 			c.log.setChannels(log.getOut(), log.getDiag());
 			c.reservedWords = new HashSet<String>();
 			c.reservedWords.addAll(reservedWords);
 			c.reservedWordsNotCommands = new HashSet<String>();
 			c.reservedWordsNotCommands.addAll(reservedWordsNotCommands);
-			// A fresh Utils, not just repointing the field: c.utils is still the same
-			// object as this.utils (a shallow field copy from super.clone()), so merely
-			// setting c.utils.smtConfig = c would also repoint this.utils.smtConfig at
-			// the clone, since it's literally the same object.
 			c.utils = new Utils(c);
 			return c;
 		}
@@ -204,11 +193,12 @@ public class SMT {
 		/** The file to which to write the communication, for debugging or reference; null means default */
 		/*@Nullable*/ public String logfile = null;
 		
-		/** The files of SMT-LIB commands to process; if null or empty then the standard input is used */
+		/** The files of SMT-LIB commands to process; if null or empty then the standard input is used */ // FIXME -- are these processed as if concateneated or with intervening reset
 		/*@Nullable*/ public List<String> files = new LinkedList<String>();
 		
 		/** A string containing the SMT-LIB commands to use; if null the given file is used; if non-null
 		 * this text is used instead of the content of the file or the input from a port.
+		 * A typical use is when the SMT text is generated rather than read.
 		 */
 		/*@Nullable*/ public String text = null;
 		
@@ -217,6 +207,8 @@ public class SMT {
         
         /** If non-zero, a seed to pass to the solver to initialize its random number generator */
         public int seed = 0;
+        
+        // FIXME - review the use of out/diag/log/stdout/stderr
         
 		/** If non-null, the file name (or 'stdout'/'stderr') to use for regular output. */
 		/*@Nullable*/ public String out = null;
@@ -270,7 +262,7 @@ public class SMT {
         public String[] commandExtensionPrefixes = { "org.smtlib.command.C_","org.smtlib.ext.C_"};
         public String[] strictCommandExtensionPrefixes = { "org.smtlib.command.C_" };
 		
-		/** The path on which to find logic and theory definitions - currently a single directory */
+		/** The path on which to find logic and theory definitions */
 		public /*@Nullable*/ String logicPath = null;
 		
 		/** The prompt to use when needing new input from the user in an interactive mode. */
