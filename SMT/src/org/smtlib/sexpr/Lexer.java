@@ -230,24 +230,24 @@ public class Lexer {
      */
     public static final Pattern combined = Pattern.compile(
             "((?:" + rgxWhiteSpace + "|" + rgxComment + ")*)((" // first skip all whitespace and comments
-                + "\\(" + ")|("        	// group 3: left parenthesis
-                + "\\)" + ")|("			// group 4: right parenthesis
-                + rgxNumeral + ")" + trailer + "|("	// group 5: numeral
-                + rgxSymbol  + ")|(" 	// group 6: symbol
-                //+ rgxStringLiteral + ")|(" 	// group 7: string literal
-                + "\""        + ")|(" 	// group 7: string  - just matches the opening character - see code below and comment above
-                + rgxQuotedSymbol + ")|("	// group 8: quoted symbol
-                + rgxKeyword + ")|("	// group 9: keyword
-                + rgxDecimal + ")" + trailer + "|("	// group 10: decimal
+                + "\\(" + ")|("         // group 3: left parenthesis
+                + "\\)" + ")|("        // group 4: right parenthesis
+                + rgxNumeral + ")" + trailer + "|(" // group 5: numeral
+                + rgxSymbol  + ")|("    // group 6: symbol
+                //+ rgxStringLiteral + ")|("    // group 7: string literal
+                + "\""        + ")|("   // group 7: string  - just matches the opening character - see code below and comment above
+                + rgxQuotedSymbol + ")|("   // group 8: quoted symbol
+                + rgxKeyword + ")|("    // group 9: keyword
+                + rgxDecimal + ")" + trailer + "|(" // group 10: decimal
                 + rgxBinary  + ")" + trailer + "|("                 // group 11,12: binary literal
                 + rgxHex  + ")" + trailer + "|("                    // group 13,14: hex literal
-                + rgxEndOfInput + ")|("				// group 15: end of input
-                + rgxNonTermQuotedSymbol + ")|("	// group 16: error - non terminated quoted symbol
-                + rgxLeadingZero + ")" + trailer + "|"	// group 17: invalid leading zero
-                + "\"(" + rgxInvalidString + ")\"" + "|("		// group 18: invalid string // NO LONGER MATCHES SINCE CHANGING THE STRING MATCHING
-                + "\\030" + ")|("		// group 19: the control-X character to kill input
-                + rgxAnyNonWS + ")"		// group 20: error symbol
-                + "|([ \t\r\n]+)"				// group 21: stop-gap whitespace
+                + rgxEndOfInput + ")|("          // group 15: end of input
+                + rgxNonTermQuotedSymbol + ")|("    // group 16: error - non terminated quoted symbol
+                + rgxLeadingZero + ")" + trailer + "|"  // group 17: invalid leading zero
+                + "\"(" + rgxInvalidString + ")\"" + "|("     // group 18: invalid string // NO LONGER MATCHES SINCE CHANGING THE STRING MATCHING
+                + "\\030" + ")|("     // group 19: the control-X character to kill input
+                + rgxAnyNonWS + ")"     // group 20: error symbol
+                + "|([ \t\r\n]+)"          // group 21: stop-gap whitespace
         +   ")"  );
 
     /** A pattern to skip up to the end of the line */

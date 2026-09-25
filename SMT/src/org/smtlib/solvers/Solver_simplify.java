@@ -901,25 +901,25 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
      *  
      *  QUESTIONS: what about overloaded functions
      */
-    /*    SMTLIB			SIMPLIFY
+    /*    SMTLIB         SIMPLIFY
      * FORMULAE:
-     * (or p q r ...)	(OR p q r ...)
-     * (and p q r ...)	(AND p q r ...)
-     * (not p)			(NOT p)
-     * (=> p q r ...)	(IMPLIES p (IMPLIES q r...))
-     * (xor p q r ...)	(NOT ( IFF ( NOT (IFF p q)) r )) ...
-     * (= p q r ...)	(IFF (IFF p q) r)  -- formulas
-     * (= p q r ...)	(AND (EQ p q ) ( EQ q r) ...)  -- terms
-     * (distinct p q r)	-- does not make sense for more than 2 arguments if the arguments are boolean 
-     * (distinct x y z)	(DISTINCT x y z)  -- x,y,z are terms, result is a formula
-     * true				TRUE - when used as a formula
-     * false			FALSE - when used as a formula
-     * (ite b p q)		_ITEB for formula arguments; _ITET for term arguments
+     * (or p q r ...)   (OR p q r ...)
+     * (and p q r ...)  (AND p q r ...)
+     * (not p)       (NOT p)
+     * (=> p q r ...)   (IMPLIES p (IMPLIES q r...))
+     * (xor p q r ...)  (NOT ( IFF ( NOT (IFF p q)) r )) ...
+     * (= p q r ...)    (IFF (IFF p q) r)  -- formulas
+     * (= p q r ...)    (AND (EQ p q ) ( EQ q r) ...)  -- terms
+     * (distinct p q r) -- does not make sense for more than 2 arguments if the arguments are boolean 
+     * (distinct x y z) (DISTINCT x y z)  -- x,y,z are terms, result is a formula
+     * true          TRUE - when used as a formula
+     * false         FALSE - when used as a formula
+     * (ite b p q)   _ITEB for formula arguments; _ITET for term arguments
      * 
-     * < <= > >=		< <= > >= - arguments are terms, result is a formula
+     * < <= > >=       < <= > >= - arguments are terms, result is a formula
      *
      * TERMS
-     * + - *			+ - *
+     * + - *         + - *
      *                     select store  - for arrays
      * 
      * In simplify EQ NEQ < <= > >= DISTINCT take terms as arguments, produce formulas
@@ -953,17 +953,17 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         fcn.put("or","OR");  // >2 arguments OK for simplify (left-assoc)
         fcn.put("not","NOT");
         fcn.put("and","AND");  // >2 arguments OK for simplify (left-assoc)
-        fcn.put("=","EQ");		  // >2 arguments NOT OK for simplify (chainable)
+        fcn.put("=","EQ");     // >2 arguments NOT OK for simplify (chainable)
         fcn.put("=>","IMPLIES"); // >2 arguments NOT OK for simplify (right-assoc)
         fcn.put("distinct","DISTINCT"); // >2 arguments OK for simplify (pairwise)
-        fcn.put("xor","NEQ");			// >2 arguments NOT OK for simplify (left-assoc)
-        fcn.put("+","+");				// >2 arguments  OK for simplify (left-assoc)
-        fcn.put("-","-");				// >2 arguments NOT OK for simplify (left-assoc)
-        fcn.put("*","*");				// >2 arguments  OK for simplify (left-assoc)
-        fcn.put(">",">");				// >2 arguments NOT OK for simplify (left-assoc)
-        fcn.put(">=",">=");			// >2 arguments NOT OK for simplify (chainable)
-        fcn.put("<","<");				// >2 arguments NOT OK for simplify (chainable)
-        fcn.put("<=","<=");			// >2 arguments NOT OK for simplify (chainable)
+        fcn.put("xor","NEQ");      // >2 arguments NOT OK for simplify (left-assoc)
+        fcn.put("+","+");          // >2 arguments  OK for simplify (left-assoc)
+        fcn.put("-","-");          // >2 arguments NOT OK for simplify (left-assoc)
+        fcn.put("*","*");          // >2 arguments  OK for simplify (left-assoc)
+        fcn.put(">",">");          // >2 arguments NOT OK for simplify (left-assoc)
+        fcn.put(">=",">=");        // >2 arguments NOT OK for simplify (chainable)
+        fcn.put("<","<");          // >2 arguments NOT OK for simplify (chainable)
+        fcn.put("<=","<=");        // >2 arguments NOT OK for simplify (chainable)
         fcn.put("true","TRUE");
         fcn.put("false","FALSE");
         fcn.put("ite",ite_term);
