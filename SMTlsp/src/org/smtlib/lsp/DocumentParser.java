@@ -31,6 +31,7 @@ public class DocumentParser {
 
         smtConfig.log.addListener(new Log.IListener() {
             @Override public void logOut(String msg) {}
+            @Override public void logOutNoln(String msg) {}
             @Override public void logOut(IResponse result) {}
             @Override public void logDiag(String msg) {}
             @Override public void indent(String chars) {}
