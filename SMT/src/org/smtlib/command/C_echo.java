@@ -8,7 +8,6 @@ package org.smtlib.command;
 
 import org.smtlib.ICommand.Iecho;
 import org.smtlib.IParser.ParserException;
-import org.smtlib.IExpr;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IResponse;
 import org.smtlib.ISolver;

@@ -3,7 +3,6 @@ import java.util.List;
 
 import org.smtlib.*;
 import org.smtlib.command.C_declare_fun;
-import org.smtlib.impl.Script;
 
 public class APIExample {
 

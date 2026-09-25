@@ -3,14 +3,7 @@ package org.smtlib.lsp;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Range;
-import org.smtlib.CharSequenceReader;
-import org.smtlib.ICommand;
-import org.smtlib.IParser;
-import org.smtlib.IPos;
-import org.smtlib.IResponse;
-import org.smtlib.ISource;
-import org.smtlib.Log;
-import org.smtlib.SMT;
+import org.smtlib.*;
 
 import java.io.StringReader;
 import java.util.ArrayList;

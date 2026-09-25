@@ -16,7 +16,6 @@ import org.smtlib.IResponse;
 import org.smtlib.ISolver;
 import org.smtlib.ISource;
 import org.smtlib.SMT;
-import org.smtlib.Utils.SMTLIBException;
 
 public class LogicsBase {
 

@@ -15,7 +15,6 @@ import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.IQualifiedIdentifier;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.sexpr.Parser;
-import org.smtlib.IPrinter;
 
 /** This is the interface to a parser for SMT-LIB.  The interface is independent
  * of the concrete syntax being used; a specific implementation of this interface

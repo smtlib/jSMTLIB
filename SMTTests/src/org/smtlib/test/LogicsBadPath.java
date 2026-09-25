@@ -3,7 +3,6 @@ package org.smtlib.test;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.ParameterizedWithNames;
-import org.smtlib.SMT;
 import org.smtlib.SMT.Configuration.SMTLIB;
 
 @RunWith(ParameterizedWithNames.class)

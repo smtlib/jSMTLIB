@@ -17,7 +17,6 @@ import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IParser.AbortInputException;
 import org.smtlib.IParser.ParserException;
 import org.smtlib.IPos.IPosable;
-import org.smtlib.solvers.Printer;
 
 //import checkers.javari.quals.Mutable; NonNull
 

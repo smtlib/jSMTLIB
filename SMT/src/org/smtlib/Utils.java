@@ -11,14 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.smtlib.IExpr.IDecimal;
 import org.smtlib.IExpr.IKeyword;
@@ -652,7 +645,7 @@ public class Utils {
 	}
 
 	/**
-	 * Checks that a :smt-lib-version attribute value is a recognised decimal version
+	 * Checks that a :smt-lib-version attribute value is a recognized decimal version
 	 * and that the configured version is at least as new. Returns an error response if
 	 * any check fails; returns null if the attribute is absent or all checks pass.
 	 *
