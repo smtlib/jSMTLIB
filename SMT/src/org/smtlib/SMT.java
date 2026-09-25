@@ -733,221 +733,221 @@ public class SMT {
 	/** The response from the most recently executed command; used to export results in interactive mode. */
 	public IResponse lastResponse = null;
 	
-	// FIXME - 'restart' is now always true: execCommand(), the only caller that passed
-	// false, was deleted as dead code (its "reuse the active solver" contract could not
-	// work anyway, since this method unconditionally force-exits the solver before
-	// returning). Either drop the parameter or restore a real incremental-use caller.
-	protected int doParser(IParser p, boolean restart) { 
-		// FIXME - checkMode is assigned but never read; javac does not warn about this.
-		boolean checkMode = Utils.TEST_SOLVER.equals(smtConfig.solvername);
-		boolean abortMode = smtConfig.abort;
+    // FIXME - 'restart' is now always true: execCommand(), the only caller that passed
+    // false, was deleted as dead code (its "reuse the active solver" contract could not
+    // work anyway, since this method unconditionally force-exits the solver before
+    // returning). Either drop the parameter or restore a real incremental-use caller.
+    protected int doParser(IParser p, boolean restart) {
+        // FIXME - checkMode is assigned but never read; javac does not warn about this.
+        boolean checkMode = Utils.TEST_SOLVER.equals(smtConfig.solvername);
+        boolean abortMode = smtConfig.abort;
 
-		if (restart && solver != null) {
-		    solver.exit();
-		    solver = null;
-		}
-		if (restart || solver == null) solver = startSolver(smtConfig, smtConfig.solvername, smtConfig.executable);
-		if (solver == null) return 1;
-		IKeyword printSuccessKW = smtConfig.exprFactory.keyword(Utils.PRINT_SUCCESS);
-		if (smtConfig.nosuccess) {
-			solver.set_option(printSuccessKW,Utils.FALSE);
-		}
-		if (smtConfig.logic != null) solver.set_logic(smtConfig.logic,null);
-		// FIXME: if (smtConfig.verboseSolver) 
-		int retcode = 0;
-		// :smt-lib-version may only be set as the first command of a script, or immediately
-		// after a reset (which conceptually returns to the state right after start, though
-		// the standard does not explicitly address this case) -- tracked here rather than in
-		// the solver itself, since this is about script structure, not solver state, and
-		// applies uniformly regardless of which solver backend is in use.
-		boolean smtlibVersionAllowed = true;
-		try {
-			IResponse result = null;
-			ICommand command = null;
-			while (!(command instanceof ICommand.Iexit) && !p.isEOD()) {
-				try {
-					command = p.parseCommand();
-					if (command == null) {
-						retcode = 1;
-						if (abortMode) {
-							if (!smtConfig.interactive) {
-								smtConfig.log.logDiag("Aborting because of a parsing error");
-								break;
-							}
-							p.abortLine();
-						}
-						result = p.lastError();
-						continue;
-					}
+        if (restart && solver != null) {
+            solver.exit();
+            solver = null;
+        }
+        if (restart || solver == null) solver = startSolver(smtConfig, smtConfig.solvername, smtConfig.executable);
+        if (solver == null) return 1;
+        IKeyword printSuccessKW = smtConfig.exprFactory.keyword(Utils.PRINT_SUCCESS);
+        if (smtConfig.nosuccess) {
+            solver.set_option(printSuccessKW,Utils.FALSE);
+        }
+        if (smtConfig.logic != null) solver.set_logic(smtConfig.logic,null);
+        // FIXME: if (smtConfig.verboseSolver)
+        int retcode = 0;
+        // :smt-lib-version may only be set as the first command of a script, or immediately
+        // after a reset (which conceptually returns to the state right after start, though
+        // the standard does not explicitly address this case) -- tracked here rather than in
+        // the solver itself, since this is about script structure, not solver state, and
+        // applies uniformly regardless of which solver backend is in use.
+        boolean smtlibVersionAllowed = true;
+        try {
+            IResponse result = null;
+            ICommand command = null;
+            while (!(command instanceof ICommand.Iexit) && !p.isEOD()) {
+                try {
+                    command = p.parseCommand();
+                    if (command == null) {
+                        retcode = 1;
+                        if (abortMode) {
+                            if (!smtConfig.interactive) {
+                                smtConfig.log.logDiag("Aborting because of a parsing error");
+                                break;
+                            }
+                            p.abortLine();
+                        }
+                        result = p.lastError();
+                        continue;
+                    }
 
-					{
-						java.util.List<IResponse> validationErrors = TypeChecker.validate(smtConfig, command);
-						if (!validationErrors.isEmpty()) {
-							retcode = 1;
-							IResponse.IError eresult = (IResponse.IError)validationErrors.get(0);
-							smtConfig.log.logError(eresult);
-							command = null;
-							if (abortMode) {
-								if (!smtConfig.interactive) {
-									smtConfig.log.logDiag("Aborting because of a validation error");
-									break;
-								}
-								p.abortLine();
-							}
-							continue;
-						}
-					}
+                    {
+                        java.util.List<IResponse> validationErrors = TypeChecker.validate(smtConfig, command);
+                        if (!validationErrors.isEmpty()) {
+                            retcode = 1;
+                            IResponse.IError eresult = (IResponse.IError)validationErrors.get(0);
+                            smtConfig.log.logError(eresult);
+                            command = null;
+                            if (abortMode) {
+                                if (!smtConfig.interactive) {
+                                    smtConfig.log.logDiag("Aborting because of a validation error");
+                                    break;
+                                }
+                                p.abortLine();
+                            }
+                            continue;
+                        }
+                    }
 
-					if (smtConfig.echo) {
-						smtConfig.log.logDiag(smtConfig.defaultPrinter.toString(command));
-					}
-					else if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Command to execute: " +  command);
-					boolean isSmtlibVersionInfo = command instanceof ICommand.Iset_info
-							&& Utils.SMTLIB_VERSION.equals(((ICommand.Iset_info) command).infoflag());
-					if (isSmtlibVersionInfo && !smtlibVersionAllowed) {
-						result = smtConfig.responseFactory.error(
-							"The :smt-lib-version attribute may only be set as the first command of a script, or immediately after a reset command",
-							command instanceof IPosable ? ((IPosable)command).pos() : null);
-					} else {
-						try {
-							result = command.execute(solver);
-						} catch (UnsupportedOperationException e) {
-							result = smtConfig.responseFactory.error(
-								"The " + smtConfig.solvername + " solver does not support this operation: " + e.getMessage(),
-								command instanceof IPosable ? ((IPosable)command).pos() : null);
-						}
-						if (!result.isError() && isSmtlibVersionInfo) {
-							ICommand.Iset_info si = (ICommand.Iset_info) command;
-							if (si.value() instanceof IExpr.IDecimal) {
-								smtConfig.smtlib = "V" + si.value().toString();
-							}
-						}
-					}
-					// A leading comment must not count as "using up" the first-command slot --
-					// it's not a real script command, just carried along so it can be
-					// forwarded to the solver (see issue #42).
-					// FIXME - result is dereferenced here and below without a null check; this
-					// assumes no ICommand.execute() implementation ever returns null.
-					if (!(command instanceof ICommand.Icomment)) {
-						smtlibVersionAllowed = (command instanceof ICommand.Ireset)
-								|| (isSmtlibVersionInfo && !result.isError());
-					}
-					if (result.isError()) {
-						IResponse.IError eresult = (IResponse.IError)result;
-						if (eresult.pos() == null && command instanceof IPosable) {
-							// This is in case we omitted setting the position when the error
-							// was generated - we set it to the whole command.  However, we ought
-							// to root out all such omissions and correct them where possible.
-							eresult.setPos(((IPosable)command).pos());
-						}
-						smtConfig.log.logError(eresult);
-						retcode = 1;
-						if (abortMode) {
-							if (!smtConfig.interactive) {
-								smtConfig.log.logDiag("Aborting because of a type-checking error");
-								break;
-							}
-							p.abortLine();
-						}
-					} else if (result.toString().equals("success")) {  // FIXME need a better way to do this
-						if (!smtConfig.nosuccess) smtConfig.log.logOut(result);
-					} else if (!result.toString().isEmpty()) { // FIXME - is there a more abstract way to do this?
-						smtConfig.log.logOut(result);
-					}
-					lastResponse = result;
-				} catch (AbortInputException e) {
-					smtConfig.topLevel = true;
-					if (abortMode) {
-						if (!smtConfig.interactive) {
-							smtConfig.log.logDiag("Aborting because of a lexical error");
-							break;
-						}
-						p.abortLine();
-					}
-				}
-			}
-			checkSatStatus = solver.checkSatStatus();
-		} catch (IOException e) {
-			error("IOException reading input: " + e);
-			retcode = 2;
-		} catch (ParserException e) {
-			error("ParserException reading input: " + e);
-			retcode = 2;
-		} catch (StackOverflowError e) {
-			error("Stack overflow while processing input");
-			retcode = 2;
-		} catch (OutOfMemoryError e) {
-			error("Out of memory while processing input");
-			retcode = 2;
-		}
-		solver.forceExit();  // Just in case the solver was not explicitly exited
-		solver = null;
-		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Exiting program");
-		return retcode;
-	}
+                    if (smtConfig.echo) {
+                        smtConfig.log.logDiag(smtConfig.defaultPrinter.toString(command));
+                    }
+                    else if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Command to execute: " +  command);
+                    boolean isSmtlibVersionInfo = command instanceof ICommand.Iset_info
+                            && Utils.SMTLIB_VERSION.equals(((ICommand.Iset_info) command).infoflag());
+                    if (isSmtlibVersionInfo && !smtlibVersionAllowed) {
+                        result = smtConfig.responseFactory.error(
+                            "The :smt-lib-version attribute may only be set as the first command of a script, or immediately after a reset command",
+                            command instanceof IPosable ? ((IPosable)command).pos() : null);
+                    } else {
+                        try {
+                            result = command.execute(solver);
+                        } catch (UnsupportedOperationException e) {
+                            result = smtConfig.responseFactory.error(
+                                "The " + smtConfig.solvername + " solver does not support this operation: " + e.getMessage(),
+                                command instanceof IPosable ? ((IPosable)command).pos() : null);
+                        }
+                        if (!result.isError() && isSmtlibVersionInfo) {
+                            ICommand.Iset_info si = (ICommand.Iset_info) command;
+                            if (si.value() instanceof IExpr.IDecimal) {
+                                smtConfig.smtlib = "V" + si.value().toString();
+                            }
+                        }
+                    }
+                    // A leading comment must not count as "using up" the first-command slot --
+                    // it's not a real script command, just carried along so it can be
+                    // forwarded to the solver (see issue #42).
+                    // FIXME - result is dereferenced here and below without a null check; this
+                    // assumes no ICommand.execute() implementation ever returns null.
+                    if (!(command instanceof ICommand.Icomment)) {
+                        smtlibVersionAllowed = (command instanceof ICommand.Ireset)
+                                || (isSmtlibVersionInfo && !result.isError());
+                    }
+                    if (result.isError()) {
+                        IResponse.IError eresult = (IResponse.IError)result;
+                        if (eresult.pos() == null && command instanceof IPosable) {
+                            // This is in case we omitted setting the position when the error
+                            // was generated - we set it to the whole command.  However, we ought
+                            // to root out all such omissions and correct them where possible.
+                            eresult.setPos(((IPosable)command).pos());
+                        }
+                        smtConfig.log.logError(eresult);
+                        retcode = 1;
+                        if (abortMode) {
+                            if (!smtConfig.interactive) {
+                                smtConfig.log.logDiag("Aborting because of a type-checking error");
+                                break;
+                            }
+                            p.abortLine();
+                        }
+                    } else if (result.toString().equals("success")) {  // FIXME need a better way to do this
+                        if (!smtConfig.nosuccess) smtConfig.log.logOut(result);
+                    } else if (!result.toString().isEmpty()) { // FIXME - is there a more abstract way to do this?
+                        smtConfig.log.logOut(result);
+                    }
+                    lastResponse = result;
+                } catch (AbortInputException e) {
+                    smtConfig.topLevel = true;
+                    if (abortMode) {
+                        if (!smtConfig.interactive) {
+                            smtConfig.log.logDiag("Aborting because of a lexical error");
+                            break;
+                        }
+                        p.abortLine();
+                    }
+                }
+            }
+            checkSatStatus = solver.checkSatStatus();
+        } catch (IOException e) {
+            error("IOException reading input: " + e);
+            retcode = 2;
+        } catch (ParserException e) {
+            error("ParserException reading input: " + e);
+            retcode = 2;
+        } catch (StackOverflowError e) {
+            error("Stack overflow while processing input");
+            retcode = 2;
+        } catch (OutOfMemoryError e) {
+            error("Out of memory while processing input");
+            retcode = 2;
+        }
+        solver.forceExit();  // Just in case the solver was not explicitly exited
+        solver = null;
+        if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Exiting program");
+        return retcode;
+    }
 	
-	/** Parses the command-line, setting any option in the given configuration argument. */
-	public int processCommandLine(String[] args, SMT.Configuration options) {
-		//smtConfig.log.logDiag("#Start processing command-line");
-		// Handle smtConfig
-		int i = 0;
-		while (i < args.length) {
-			String s = args[i++];
-			if ("--solver".equals(s) || "-s".equals(s)) {
-				if (i >= args.length) {
-					error("The --solver option expects an argument");
-					usage();
-					return 1;
-				}
-				options.solvername = args[i++];
+    /** Parses the command-line, setting any option in the given configuration argument. */
+    public int processCommandLine(String[] args, SMT.Configuration options) {
+        //smtConfig.log.logDiag("#Start processing command-line");
+        // Handle smtConfig
+        int i = 0;
+        while (i < args.length) {
+            String s = args[i++];
+            if ("--solver".equals(s) || "-s".equals(s)) {
+                if (i >= args.length) {
+                    error("The --solver option expects an argument");
+                    usage();
+                    return 1;
+                }
+                options.solvername = args[i++];
 
-			} else if ("--exec".equals(s) || "-e".equals(s)) {
-				if (i >= args.length) {
-					error("The --exec option expects an argument");
-					usage();
-					return 1;
-				}
-				options.executable = args[i++]; 
+            } else if ("--exec".equals(s) || "-e".equals(s)) {
+                if (i >= args.length) {
+                    error("The --exec option expects an argument");
+                    usage();
+                    return 1;
+                }
+                options.executable = args[i++];
 
-			} else if ("--logics".equals(s) || "-L".equals(s)) {
-				if (i >= args.length) {
-					error("The --logics option expects an argument");
-					usage();
-					return 1;
-				}
-				options.logicPath = trimToNull(args[i++]);
+            } else if ("--logics".equals(s) || "-L".equals(s)) {
+                if (i >= args.length) {
+                    error("The --logics option expects an argument");
+                    usage();
+                    return 1;
+                }
+                options.logicPath = trimToNull(args[i++]);
 
-			} else if ("--diag".equals(s)) {
-				if (i >= args.length) {
-					error("The --diag option expects an argument");
-					usage();
-					return 1;
-				}
-				options.diag = args[i++];
+            } else if ("--diag".equals(s)) {
+                if (i >= args.length) {
+                    error("The --diag option expects an argument");
+                    usage();
+                    return 1;
+                }
+                options.diag = args[i++];
 
-			} else if ("--out".equals(s)) {
-				if (i >= args.length) {
-					error("The --out option expects an argument");
-					usage();
-					return 1;
-				}
-				options.out = args[i++];
+            } else if ("--out".equals(s)) {
+                if (i >= args.length) {
+                    error("The --out option expects an argument");
+                    usage();
+                    return 1;
+                }
+                options.out = args[i++];
 
-			} else if ("--port".equals(s)) {
-				if (i >= args.length) {
-					error("The --port option expects an argument");
-					usage();
-					return 1;
-				}
-				options.port = Integer.valueOf(args[i++]).intValue();
+            } else if ("--port".equals(s)) {
+                if (i >= args.length) {
+                    error("The --port option expects an argument");
+                    usage();
+                    return 1;
+                }
+                options.port = Integer.valueOf(args[i++]).intValue();
 
-			} else if ("--text".equals(s)) {
-				if (i >= args.length) {
-					error("The --text option expects an argument");
-					usage();
-					return 1;
-				}
-				options.text = args[i++];
+            } else if ("--text".equals(s)) {
+                if (i >= args.length) {
+                    error("The --text option expects an argument");
+                    usage();
+                    return 1;
+                }
+                options.text = args[i++];
 
             } else if ("-v".equals(s)) {
                 options.verbose = 1;
@@ -970,54 +970,54 @@ public class SMT {
                     return 1;
                 }
 
-			} else if ("--help".equals(s) || "-h".equals(s)) {
-				help();
-				return -1;
-			} else if ("--version".equals(s)) {
-				smtConfig.log.getOut().println(Version.version());
-				return -1;
-			} else if ("--echo".equals(s)) {
-				options.echo = true;
-			} else if ("--nosuccess".equals(s) || "-q".equals(s)) {
-				options.nosuccess = true;
-			} else if ("--abort".equals(s)) {
-				options.abort = true;
-			} else if ("--relax".equals(s) || "-r".equals(s)) {
-				options.relax = true;
-			} else if ("--testing".equals(s)) {
-				options.testing = true;
+            } else if ("--help".equals(s) || "-h".equals(s)) {
+                help();
+                return -1;
+            } else if ("--version".equals(s)) {
+                smtConfig.log.getOut().println(Version.version());
+                return -1;
+            } else if ("--echo".equals(s)) {
+                options.echo = true;
+            } else if ("--nosuccess".equals(s) || "-q".equals(s)) {
+                options.nosuccess = true;
+            } else if ("--abort".equals(s)) {
+                options.abort = true;
+            } else if ("--relax".equals(s) || "-r".equals(s)) {
+                options.relax = true;
+            } else if ("--testing".equals(s)) {
+                options.testing = true;
             } else if ("--noshow".equals(s)) {
                 options.noshow = true;
-			} else if ("--timeout".equals(s) || "-t".equals(s)) {
-				if (i >= args.length) {
-					error("The --timeout option expects a numeric argument, in seconds");
-					usage();
-					return 1;
-				}
-				String a = args[i];
-				try {
-					options.timeout = Double.parseDouble(a);
-					i++;
-				} catch (NumberFormatException e) {
-					error("The --timeout option expects a numeric value, in seconds: " + a);
-					usage();
-					return 1;
-				}
-			} else if ("--timeout-total".equals(s) || "-T".equals(s)) {
-				if (i >= args.length) {
-					error("The --timeout-total option expects a numeric argument, in seconds");
-					usage();
-					return 1;
-				}
-				String a = args[i];
-				try {
-					options.timeoutTotal = Double.parseDouble(a);
-					i++;
-				} catch (NumberFormatException e) {
-					error("The --timeout-total option expects a numeric value, in seconds: " + a);
-					usage();
-					return 1;
-				}
+            } else if ("--timeout".equals(s) || "-t".equals(s)) {
+                if (i >= args.length) {
+                    error("The --timeout option expects a numeric argument, in seconds");
+                    usage();
+                    return 1;
+                }
+                String a = args[i];
+                try {
+                    options.timeout = Double.parseDouble(a);
+                    i++;
+                } catch (NumberFormatException e) {
+                    error("The --timeout option expects a numeric value, in seconds: " + a);
+                    usage();
+                    return 1;
+                }
+            } else if ("--timeout-total".equals(s) || "-T".equals(s)) {
+                if (i >= args.length) {
+                    error("The --timeout-total option expects a numeric argument, in seconds");
+                    usage();
+                    return 1;
+                }
+                String a = args[i];
+                try {
+                    options.timeoutTotal = Double.parseDouble(a);
+                    i++;
+                } catch (NumberFormatException e) {
+                    error("The --timeout-total option expects a numeric value, in seconds: " + a);
+                    usage();
+                    return 1;
+                }
             } else if ("--seed".equals(s)) {
                 options.seed = 0;
                 if (i >= args.length) {
@@ -1034,66 +1034,66 @@ public class SMT {
                     usage();
                     return 1;
                 }
-			} else if (s.startsWith("-")) {
-				error("Unknown option: " + s);
-				usage();
-				return 1;
-			} else {
-				if (options.files == null) options.files = new LinkedList<String>();
-				options.files.add(s);
-			}
-		}
-		
-		// --out/--diag must be applied before readProperties() below: that call's own
-		// verbose "#reading properties ..." diagnostics go out through smtConfig.log
-		// immediately as they happen, so if it ran first, they'd always land on whatever
-		// channel was in effect before this command line was even parsed (e.g. the real
-		// System.out/System.err in a genuine CLI run) rather than a channel this same
-		// command line just asked to redirect to.
-		if (options.out != null) {
-			try {
-				options.log.setRegularOutputChannel(options.out);
-			} catch (java.io.IOException e) {
-				options.log.logOut("Failed to open output stream on " + options.out);
-			}
-		}
-		if (options.diag != null) {
-			try {
-				options.log.setDiagnosticOutputChannel(options.diag);
-			} catch (java.io.IOException e) {
-				options.log.logOut("Failed to open output stream on " + options.diag);
-			}
-		}
+            } else if (s.startsWith("-")) {
+                error("Unknown option: " + s);
+                usage();
+                return 1;
+            } else {
+                if (options.files == null) options.files = new LinkedList<String>();
+                options.files.add(s);
+            }
+        }
 
-		// Only read properties if the caller hasn't already supplied some (e.g. FileTests'
-		// init() pre-populates this via readPropertiesAndAddDefaults(), including test-only
-		// fallback entries that a second, unconditional read here would otherwise silently
-		// discard). A real CLI invocation always starts with props == null, so this is a
-		// no-op there -- same read, same position relative to --out/--diag/--verbose above.
-		if (options.props == null) options.props = options.readProperties();
+        // --out/--diag must be applied before readProperties() below: that call's own
+        // verbose "#reading properties ..." diagnostics go out through smtConfig.log
+        // immediately as they happen, so if it ran first, they'd always land on whatever
+        // channel was in effect before this command line was even parsed (e.g. the real
+        // System.out/System.err in a genuine CLI run) rather than a channel this same
+        // command line just asked to redirect to.
+        if (options.out != null) {
+            try {
+                options.log.setRegularOutputChannel(options.out);
+            } catch (java.io.IOException e) {
+                options.log.logOut("Failed to open output stream on " + options.out);
+            }
+        }
+        if (options.diag != null) {
+            try {
+                options.log.setDiagnosticOutputChannel(options.diag);
+            } catch (java.io.IOException e) {
+                options.log.logOut("Failed to open output stream on " + options.diag);
+            }
+        }
 
-		if (options.logicPath == null) options.logicPath = trimToNull(options.props.getProperty(Utils.PROPS_LOGIC_PATH));
+        // Only read properties if the caller hasn't already supplied some (e.g. FileTests'
+        // init() pre-populates this via readPropertiesAndAddDefaults(), including test-only
+        // fallback entries that a second, unconditional read here would otherwise silently
+        // discard). A real CLI invocation always starts with props == null, so this is a
+        // no-op there -- same read, same position relative to --out/--diag/--verbose above.
+        if (options.props == null) options.props = options.readProperties();
 
-		if (options.files != null && !options.files.isEmpty() && options.port >= 0) {
-			error("You may not specify both a port and file input");
-			usage();
-			return 1;
-		}
+        if (options.logicPath == null) options.logicPath = trimToNull(options.props.getProperty(Utils.PROPS_LOGIC_PATH));
 
-		if (options.solvername == null) {
-			String p = options.props.getProperty(Utils.PROPS_DEFAULT_SOLVER);
-			if (p == null || p.isEmpty()) p = Utils.TEST_SOLVER;
-			// FIXME - this assignment is discarded whenever the --exec check just below
-			// fails; the check probably belongs before it (or outside this block entirely).
-			options.solvername = p;
-			if (options.executable != null) {
-				error("If you specify an executable, you must also specify a solver");
-				usage();
-				return 1;
-			}
-		}
-		return 0;
-	}
+        if (options.files != null && !options.files.isEmpty() && options.port >= 0) {
+            error("You may not specify both a port and file input");
+            usage();
+            return 1;
+        }
+
+        if (options.solvername == null) {
+            String p = options.props.getProperty(Utils.PROPS_DEFAULT_SOLVER);
+            if (p == null || p.isEmpty()) p = Utils.TEST_SOLVER;
+            // FIXME - this assignment is discarded whenever the --exec check just below
+            // fails; the check probably belongs before it (or outside this block entirely).
+            options.solvername = p;
+            if (options.executable != null) {
+                error("If you specify an executable, you must also specify a solver");
+                usage();
+                return 1;
+            }
+        }
+        return 0;
+    }
 	
 	/**
 	 * Resolves an executable path read from properties.
@@ -1173,49 +1173,49 @@ public class SMT {
 		return "linux";
 	}
 
-	/** Starts the solver with the given name and executable, preset according to the given configuration.
-	 * If executable is null, the path is resolved from jsmtlib.properties -- the
-	 * org.smtlib.solver_&lt;name&gt;.exec.&lt;platform&gt; entry, then org.smtlib.solver_&lt;name&gt;.exec,
-	 * then the solver name itself -- with any relative result taken against $SMT_SOLVER_DIR
-	 * (see {@link SMT.Configuration#createSolver} and {@link #resolveExecutablePath}).
-	 * <p>
-	 * This is a thin, CLI-flavored wrapper around {@link SMT.Configuration#createSolver}: it resolves
-	 * and constructs the adapter by delegating there, translating a thrown {@link ISolver.CreationException}
-	 * into this method's own {@code error()}/{@code usage()}/{@code null}-return contract (preserved here
-	 * unchanged for backward compatibility with the CLI's own {@code --solver} flag handling and its
-	 * tests), then itself starts the constructed solver and applies the same response-checking this
-	 * method has always done.
-	 * @param smtConfig the configuration object to use for solver settings
-	 * @param solvername the name of the solver to use
-	 * @param executable the executable path
-	 * @return the ISolver object, or null if errors happened
-	 */
-	/*@Nullable*/
-	public ISolver startSolver(SMT.Configuration smtConfig, /*@NonNull*/String solvername, /*@Nullable*/String executable) {
-		/*@NonNull*/ ISolver solver;
-		try {
-			solver = smtConfig.createSolver(solvername, executable);
-		} catch (ISolver.CreationException e) {
-			error(e.getMessage());
-			usage();
-			return null;
-		}
+    /** Starts the solver with the given name and executable, preset according to the given configuration.
+     * If executable is null, the path is resolved from jsmtlib.properties -- the
+     * org.smtlib.solver_&lt;name&gt;.exec.&lt;platform&gt; entry, then org.smtlib.solver_&lt;name&gt;.exec,
+     * then the solver name itself -- with any relative result taken against $SMT_SOLVER_DIR
+     * (see {@link SMT.Configuration#createSolver} and {@link #resolveExecutablePath}).
+     * <p>
+     * This is a thin, CLI-flavored wrapper around {@link SMT.Configuration#createSolver}: it resolves
+     * and constructs the adapter by delegating there, translating a thrown {@link ISolver.CreationException}
+     * into this method's own {@code error()}/{@code usage()}/{@code null}-return contract (preserved here
+     * unchanged for backward compatibility with the CLI's own {@code --solver} flag handling and its
+     * tests), then itself starts the constructed solver and applies the same response-checking this
+     * method has always done.
+     * @param smtConfig the configuration object to use for solver settings
+     * @param solvername the name of the solver to use
+     * @param executable the executable path
+     * @return the ISolver object, or null if errors happened
+     */
+    /*@Nullable*/
+    public ISolver startSolver(SMT.Configuration smtConfig, /*@NonNull*/String solvername, /*@Nullable*/String executable) {
+        /*@NonNull*/ ISolver solver;
+        try {
+            solver = smtConfig.createSolver(solvername, executable);
+        } catch (ISolver.CreationException e) {
+            error(e.getMessage());
+            usage();
+            return null;
+        }
 
-		try {
-			//if (smtConfig.verbose != 0) smtConfig.log.logDiag("#SMT START " + solver);
-			IResponse res = solver.start();
-			//if (smtConfig.verbose != 0) smtConfig.log.logDiag("#SMT RES " + res);
-			if (res.isError()) {
-				smtConfig.log.logError((IResponse.IError)res);
-				error(solvername + " failed to start: " + ((IResponse.IError)res).errorMsg());
-				return null;
-			}
-		} catch (SolverProcess.ProverException e) {
-			error("Problem in starting or running " + solvername + ": " + e.getMessage());
-			return null;
-		}
-		return solver;
-	}
+        try {
+            //if (smtConfig.verbose != 0) smtConfig.log.logDiag("#SMT START " + solver);
+            IResponse res = solver.start();
+            //if (smtConfig.verbose != 0) smtConfig.log.logDiag("#SMT RES " + res);
+            if (res.isError()) {
+                smtConfig.log.logError((IResponse.IError)res);
+                error(solvername + " failed to start: " + ((IResponse.IError)res).errorMsg());
+                return null;
+            }
+        } catch (SolverProcess.ProverException e) {
+            error("Problem in starting or running " + solvername + ": " + e.getMessage());
+            return null;
+        }
+        return solver;
+    }
 	
 	/** Helper function to log a command-line error */
 	protected void error(String msg) {

@@ -66,37 +66,37 @@ public class Solver_cvc5 extends AbstractSolver implements ISolver {
 	protected String cmds_mac[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet","--print-success","--strict-parsing"};
 	protected String cmds_unix[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet","--print-success","--strict-parsing"};
 
-	/** Creates an instance of the solver */
-	public Solver_cvc5(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
-		this.smtConfig = smtConfig;
-		if (isWindows) {
-			cmds = cmds_win;
-		} else if (isMac) {
-			cmds = cmds_mac;
-		} else {
-			cmds = cmds_unix;
-		}
-		if (smtConfig.seed != 0) {
-			List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
-			args.add("--seed");
-			args.add("" + smtConfig.seed);
-			cmds = args.toArray(new String[args.size()]);
-		}
-		double timeout = smtConfig.timeout;
-		double timeoutTotal = smtConfig.timeoutTotal;
-		if (timeout > 0 || timeoutTotal > 0) {
-			// cvc5 has separate per-query and whole-run flags, both in milliseconds
-			// (jSMTLIB's timeout/timeoutTotal are always in seconds -- see SMT.Configuration).
-			List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
-			if (timeout > 0) args.add("--tlimit-per=" + Long.toString(Math.round(1000*timeout+0.5)));
-			if (timeoutTotal > 0) args.add("--tlimit=" + Long.toString(Math.round(1000*timeoutTotal+0.5)));
-			cmds = args.toArray(new String[args.size()]);
-		}
-		cmds[0] = executable;
-		// With --quiet, cvc5 never prints an interactive "cvc5> " prompt, so "\n" (like
-		// Solver_smt) is the right end marker, not a prompt string.
-		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
-	}
+    /** Creates an instance of the solver */
+    public Solver_cvc5(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
+        this.smtConfig = smtConfig;
+        if (isWindows) {
+            cmds = cmds_win;
+        } else if (isMac) {
+            cmds = cmds_mac;
+        } else {
+            cmds = cmds_unix;
+        }
+        if (smtConfig.seed != 0) {
+            List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
+            args.add("--seed");
+            args.add("" + smtConfig.seed);
+            cmds = args.toArray(new String[args.size()]);
+        }
+        double timeout = smtConfig.timeout;
+        double timeoutTotal = smtConfig.timeoutTotal;
+        if (timeout > 0 || timeoutTotal > 0) {
+            // cvc5 has separate per-query and whole-run flags, both in milliseconds
+            // (jSMTLIB's timeout/timeoutTotal are always in seconds -- see SMT.Configuration).
+            List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
+            if (timeout > 0) args.add("--tlimit-per=" + Long.toString(Math.round(1000*timeout+0.5)));
+            if (timeoutTotal > 0) args.add("--tlimit=" + Long.toString(Math.round(1000*timeoutTotal+0.5)));
+            cmds = args.toArray(new String[args.size()]);
+        }
+        cmds[0] = executable;
+        // With --quiet, cvc5 never prints an interactive "cvc5> " prompt, so "\n" (like
+        // Solver_smt) is the right end marker, not a prompt string.
+        solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
+    }
 
 	@Override
 	public IResponse start() {
