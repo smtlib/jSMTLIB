@@ -17,52 +17,52 @@ import org.smtlib.sexpr.Parser;
 
 /** Implements the push command */
 public class C_push extends Command implements Ipush {
-	/** The command name */
-	public static final String commandName = "push";
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
-	
-	/** The (non-negative) number of stack frames to push */
-	//@ protected invariant n.value().compareTo(BigInteger.ZERO) > 0;
-	protected INumeral numeral;
-	
-	/** The int value giving the number of stack frames to push (set by check()), if the value is in the range of an int type */
-	//@ protected invariant numeral.value().compareTo(BigInteger.MAX_INT) <= 0 ==> numeral.intValue() == number;
-	protected int number;
-	
-	/** Returns the number of assertion set scopes to push. */
-	@Override
-	public INumeral number() { 
-		return numeral;
-	}
-	/** Constructs a command instance */
-	//@ requires n.value().compareTo(BigInteger.ZERO) > 0;
-	public C_push(INumeral n) {
-		numeral = n;
-		number = n.intValue(); 
-	}
-	
-	/** Parses the arguments of the command, producing a new command instance */
-	static public C_push parse(Parser p) throws ParserException {
-		INumeral num = p.parseNumeral();
-		return new C_push(num);
-	}
+    /** The command name */
+    public static final String commandName = "push";
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
 
-	@Override
-	public IResponse execute(ISolver solver) {
-		// numeral.intValue() (see the constructor) silently truncates a BigInteger beyond
-		// int range to the low-order 32 bits -- reject that here rather than handing
-		// solver.push() a wrapped-around, possibly negative or huge, garbage value.
-		if (numeral.value().bitLength() > 31) {
-			return solver.smt().responseFactory.error(
-					"The argument to a push command is too large: " + numeral.value(), numeral.pos());
-		}
-		return solver.push(number);
-	}
+    /** The (non-negative) number of stack frames to push */
+    //@ protected invariant n.value().compareTo(BigInteger.ZERO) > 0;
+    protected INumeral numeral;
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    /** The int value giving the number of stack frames to push (set by check()), if the value is in the range of an int type */
+    //@ protected invariant numeral.value().compareTo(BigInteger.MAX_INT) <= 0 ==> numeral.intValue() == number;
+    protected int number;
+
+    /** Returns the number of assertion set scopes to push. */
+    @Override
+    public INumeral number() { 
+        return numeral;
+    }
+    /** Constructs a command instance */
+    //@ requires n.value().compareTo(BigInteger.ZERO) > 0;
+    public C_push(INumeral n) {
+        numeral = n;
+        number = n.intValue(); 
+    }
+
+    /** Parses the arguments of the command, producing a new command instance */
+    static public C_push parse(Parser p) throws ParserException {
+        INumeral num = p.parseNumeral();
+        return new C_push(num);
+    }
+
+    @Override
+    public IResponse execute(ISolver solver) {
+        // numeral.intValue() (see the constructor) silently truncates a BigInteger beyond
+        // int range to the low-order 32 bits -- reject that here rather than handing
+        // solver.push() a wrapped-around, possibly negative or huge, garbage value.
+        if (numeral.value().bitLength() > 31) {
+            return solver.smt().responseFactory.error(
+                    "The argument to a push command is too large: " + numeral.value(), numeral.pos());
+        }
+        return solver.push(number);
+    }
+
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 }

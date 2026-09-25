@@ -19,38 +19,38 @@ import org.smtlib.sexpr.Parser;
 /** Implements the get-value command */
 public class C_get_value extends Command implements Iget_value {
 
-	/** The command name */
-	public static final String commandName = "get-value";
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
+    /** The command name */
+    public static final String commandName = "get-value";
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
 
-	/** The terms whose values are to be gotten */
-	protected List<IExpr> terms;
-	
-	/** The terms whose values are to be gotten */
-	@Override
-	public List<IExpr> exprs() { return terms; }
-	
-	/** Constructs a command instance */
-	public C_get_value(List<IExpr> terms) {
-		this.terms = terms;
-	}
-	
-	/** Parses the command, producing a new command instance */
-	static public C_get_value parse(Parser p) throws ParserException {
-		List<IExpr> list = p.parseListTerms(p);
-		return new C_get_value(list);
-	}
+    /** The terms whose values are to be gotten */
+    protected List<IExpr> terms;
+
+    /** The terms whose values are to be gotten */
+    @Override
+    public List<IExpr> exprs() { return terms; }
+
+    /** Constructs a command instance */
+    public C_get_value(List<IExpr> terms) {
+        this.terms = terms;
+    }
+
+    /** Parses the command, producing a new command instance */
+    static public C_get_value parse(Parser p) throws ParserException {
+        List<IExpr> list = p.parseListTerms(p);
+        return new C_get_value(list);
+    }
 
 
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.get_value(exprs().toArray(new IExpr[exprs().size()]));
-	}
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.get_value(exprs().toArray(new IExpr[exprs().size()]));
+    }
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 }

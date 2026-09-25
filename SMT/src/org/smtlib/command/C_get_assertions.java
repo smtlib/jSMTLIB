@@ -16,28 +16,28 @@ import org.smtlib.sexpr.Parser;
 
 /** Implements the get-assertions command */
 public class C_get_assertions extends Command implements Iget_assertions {
-	/** Constructs a command instance */
-	public C_get_assertions() {
-	}
-	
-	/** Parses the command, producing a new command instance */
-	static public /*@Nullable*/ C_get_assertions parse(Parser p) throws ParserException {
-		return p.checkNoArg() ? new C_get_assertions() : null;
-	}
+    /** Constructs a command instance */
+    public C_get_assertions() {
+    }
 
-	/** The command name */
-	public static final String commandName = "get-assertions";
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
-	
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.get_assertions();
-	}
+    /** Parses the command, producing a new command instance */
+    static public /*@Nullable*/ C_get_assertions parse(Parser p) throws ParserException {
+        return p.checkNoArg() ? new C_get_assertions() : null;
+    }
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    /** The command name */
+    public static final String commandName = "get-assertions";
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
+
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.get_assertions();
+    }
+
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 }

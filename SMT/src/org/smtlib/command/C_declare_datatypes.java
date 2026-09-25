@@ -20,51 +20,51 @@ import org.smtlib.sexpr.Parser;
 
 /** Implements the declare-datatypes command */
 public class C_declare_datatypes extends Command implements Ideclare_datatypes {
-	/** The command name */
-	public static final String commandName = "declare-datatypes";
+    /** The command name */
+    public static final String commandName = "declare-datatypes";
 
-	@Override
-	public String commandName() { return commandName; }
+    @Override
+    public String commandName() { return commandName; }
 
-	/** The sort declarations: (symbol arity) pairs */
-	protected List<ISortDeclaration> sortDeclarations;
-	/** The datatype declarations, parallel to sortDeclarations */
-	protected List<ISort.IDatatype> datatypes;
+    /** The sort declarations: (symbol arity) pairs */
+    protected List<ISortDeclaration> sortDeclarations;
+    /** The datatype declarations, parallel to sortDeclarations */
+    protected List<ISort.IDatatype> datatypes;
 
-	@Override
-	public List<ISortDeclaration> sortDeclarations() { return sortDeclarations; }
-	@Override
-	public List<ISort.IDatatype> datatypes() { return datatypes; }
+    @Override
+    public List<ISortDeclaration> sortDeclarations() { return sortDeclarations; }
+    @Override
+    public List<ISort.IDatatype> datatypes() { return datatypes; }
 
-	/** Constructs a new command object */
-	public C_declare_datatypes(List<ISortDeclaration> sortDeclarations, List<ISort.IDatatype> datatypes) {
-		this.sortDeclarations = sortDeclarations;
-		this.datatypes = datatypes;
-	}
+    /** Constructs a new command object */
+    public C_declare_datatypes(List<ISortDeclaration> sortDeclarations, List<ISort.IDatatype> datatypes) {
+        this.sortDeclarations = sortDeclarations;
+        this.datatypes = datatypes;
+    }
 
-	/** Parses the arguments: ( (symbol numeral)+ ) ( datatype_dec+ ) */
-	static public C_declare_datatypes parse(Parser p) throws ParserException {
-		List<ISortDeclaration> sortDecls = new LinkedList<>();
-		p.parseLP();
-		while (!p.isRP() && !p.isEOD()) {
-			p.parseLP();
-			ISymbol sym = p.parseSymbol();
-			INumeral arity = p.parseNumeral();
-			p.parseRP();
-			sortDecls.add(p.smt().exprFactory.sortDeclaration(sym, arity));
-		}
-		p.parseRP();
-		List<ISort.IDatatype> datatypes = p.parseList(p::parseDatatype, "datatype declaration", false);
-		return new C_declare_datatypes(sortDecls, datatypes);
-	}
+    /** Parses the arguments: ( (symbol numeral)+ ) ( datatype_dec+ ) */
+    static public C_declare_datatypes parse(Parser p) throws ParserException {
+        List<ISortDeclaration> sortDecls = new LinkedList<>();
+        p.parseLP();
+        while (!p.isRP() && !p.isEOD()) {
+            p.parseLP();
+            ISymbol sym = p.parseSymbol();
+            INumeral arity = p.parseNumeral();
+            p.parseRP();
+            sortDecls.add(p.smt().exprFactory.sortDeclaration(sym, arity));
+        }
+        p.parseRP();
+        List<ISort.IDatatype> datatypes = p.parseList(p::parseDatatype, "datatype declaration", false);
+        return new C_declare_datatypes(sortDecls, datatypes);
+    }
 
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.declare_datatypes(this);
-	}
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.declare_datatypes(this);
+    }
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 }

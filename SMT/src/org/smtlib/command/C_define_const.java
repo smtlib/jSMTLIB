@@ -20,33 +20,33 @@ import org.smtlib.sexpr.Parser;
 /** Implements the define-const command: syntactic sugar for define-fun with no parameters */
 public class C_define_const extends C_define_fun implements Idefine_const {
 
-	/** The command name */
-	public static final String commandName = "define-const";
+    /** The command name */
+    public static final String commandName = "define-const";
 
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
 
-	/** Constructs a command instance */
-	public C_define_const(ISymbol symbol, ISort resultSort, IExpr expression) {
-		super(symbol, Collections.emptyList(), resultSort, expression);
-	}
+    /** Constructs a command instance */
+    public C_define_const(ISymbol symbol, ISort resultSort, IExpr expression) {
+        super(symbol, Collections.emptyList(), resultSort, expression);
+    }
 
-	/** Parses the arguments of the command, producing a new command instance */
-	static public C_define_const parse(Parser p) throws ParserException {
-		ISymbol symbol = p.parseSymbol();
-		ISort resultSort = p.parseSort(null);
-		IExpr expr = p.parseExpr();
-		return new C_define_const(symbol, resultSort, expr);
-	}
+    /** Parses the arguments of the command, producing a new command instance */
+    static public C_define_const parse(Parser p) throws ParserException {
+        ISymbol symbol = p.parseSymbol();
+        ISort resultSort = p.parseSort(null);
+        IExpr expr = p.parseExpr();
+        return new C_define_const(symbol, resultSort, expr);
+    }
 
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.define_const(this);
-	}
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.define_const(this);
+    }
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit((Idefine_const)this);
-	}
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit((Idefine_const)this);
+    }
 }

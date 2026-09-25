@@ -16,28 +16,28 @@ import org.smtlib.sexpr.Parser;
 
 /** Implements the get-assignment command */
 public class C_get_assignment extends Command implements Iget_assignment {
-	/** Constructs a command instance */
-	public C_get_assignment() {
-	}
-	
-	/** Parses the command, producing a new command instance */
-	static public /*@Nullable*/ C_get_assignment parse(Parser p) throws ParserException {
-		return p.checkNoArg() ? new C_get_assignment() : null;
-	}
+    /** Constructs a command instance */
+    public C_get_assignment() {
+    }
 
-	/** The command name */
-	public static final String commandName = "get-assignment";
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
-	
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.get_assignment();
-	}
+    /** Parses the command, producing a new command instance */
+    static public /*@Nullable*/ C_get_assignment parse(Parser p) throws ParserException {
+        return p.checkNoArg() ? new C_get_assignment() : null;
+    }
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    /** The command name */
+    public static final String commandName = "get-assignment";
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
+
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.get_assignment();
+    }
+
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 }

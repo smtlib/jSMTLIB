@@ -15,53 +15,53 @@ import org.smtlib.sexpr.Printer;
 
 /** Implements the non-standard exec command */
 public class C_exec extends Command implements Iexec {
-	/** The command name */
-	public static final String commandName = "exec";
-	
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
-	
-	/** The command script to be run */
-	protected IScript script;
-	
-	/** Returns a reference to the command script to be run */
-	@Override
-	public IScript script() { return script; }
+    /** The command name */
+    public static final String commandName = "exec";
 
-	/** Constructs a command object for the given script */
-	public C_exec(IScript script) {
-		this.script = script;
-	}
-	
-	/** Parses the arguments of the command, producing a new command instance */
-	static public C_exec parse(Parser p) throws ParserException {
-		if (!p.smt().relax) {
-			throw error(p.smt(),"Invalid SMT-LIB command: " + commandName,p.commandName.pos());
-		}
-		IScript script = p.parseScript();
-		if (script == null) return null;
-		return new C_exec(script);
-	}
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
 
-	@Override
-	public void writeArgs(Printer p) throws IOException {
-		try {
-			p.writer().append(" ");
-			script.accept(p);
-		} catch (IVisitor.VisitorException e) {
-			p.error(e.getMessage());
-		}
-	}
-	
-	/** Executes the command, which executes the script */
-	@Override
-	public IResponse execute(ISolver solver) {
-		return script().execute(solver);
-	}
+    /** The command script to be run */
+    protected IScript script;
 
-	@Override
-	public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    /** Returns a reference to the command script to be run */
+    @Override
+    public IScript script() { return script; }
+
+    /** Constructs a command object for the given script */
+    public C_exec(IScript script) {
+        this.script = script;
+    }
+
+    /** Parses the arguments of the command, producing a new command instance */
+    static public C_exec parse(Parser p) throws ParserException {
+        if (!p.smt().relax) {
+            throw error(p.smt(),"Invalid SMT-LIB command: " + commandName,p.commandName.pos());
+        }
+        IScript script = p.parseScript();
+        if (script == null) return null;
+        return new C_exec(script);
+    }
+
+    @Override
+    public void writeArgs(Printer p) throws IOException {
+        try {
+            p.writer().append(" ");
+            script.accept(p);
+        } catch (IVisitor.VisitorException e) {
+            p.error(e.getMessage());
+        }
+    }
+
+    /** Executes the command, which executes the script */
+    @Override
+    public IResponse execute(ISolver solver) {
+        return script().execute(solver);
+    }
+
+    @Override
+    public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 }

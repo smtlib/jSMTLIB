@@ -17,38 +17,38 @@ import org.smtlib.sexpr.Parser;
 /** Implements the set-logic command. */
 public class C_set_logic extends Command implements Iset_logic {
 
-	/** The command name */
-	public final static String commandName = "set-logic";
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
+    /** The command name */
+    public final static String commandName = "set-logic";
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
 
-	/** The name of the logic to set */
-	protected ISymbol logicName;
-	
-	/** The name of the logic to set */
-	@Override
-	public ISymbol logic() { return logicName; }
+    /** The name of the logic to set */
+    protected ISymbol logicName;
 
-	/** Constructs a command instance for the given logic name. */
-	public C_set_logic(ISymbol logic) {
-		super();
-		this.logicName = logic;
-	}
-	
-	/** Creates a command instance by parsing the S-expression concrete syntax */
-	static public C_set_logic parse(Parser p) throws ParserException {
-		ISymbol logic = p.parseSymbol();
-		return new C_set_logic(logic);
-	}
-	
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.set_logic(logicName.value(),logicName.pos());
-	}
+    /** The name of the logic to set */
+    @Override
+    public ISymbol logic() { return logicName; }
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    /** Constructs a command instance for the given logic name. */
+    public C_set_logic(ISymbol logic) {
+        super();
+        this.logicName = logic;
+    }
+
+    /** Creates a command instance by parsing the S-expression concrete syntax */
+    static public C_set_logic parse(Parser p) throws ParserException {
+        ISymbol logic = p.parseSymbol();
+        return new C_set_logic(logic);
+    }
+
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.set_logic(logicName.value(),logicName.pos());
+    }
+
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 }

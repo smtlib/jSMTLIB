@@ -14,67 +14,67 @@ import org.smtlib.IExpr.*;
 /** This logic does not allow uninterpreted functions or nonlinear arithmetic terms */
 public class LRA extends Logic {
 
-	public LRA(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(smtConfig,name,attributes);
-	}
-	
-	public boolean isConst(IExpr expr) {
-		if (expr instanceof IExpr.INumeral) return true;
-		if (expr instanceof IExpr.IDecimal) return true;
-		if (!(expr instanceof IExpr.IFcnExpr)) return false;
-		IExpr.IFcnExpr f = (IExpr.IFcnExpr)expr;
-		if (Utils.MINUS.equals(f.head()) && f.args().size() == 1) {
-			return isConst(f.args().get(0));
-		}
-		if (Utils.SLASH.equals(f.head()) && f.args().size() == 2) {
-			expr = f.args().get(0);
-			if (!isInteger(expr)) return false;
-			expr = f.args().get(1);
-			if (expr instanceof IExpr.INumeral) {
-				if (((IExpr.INumeral)expr).intValue() == 0) return false;
-				return true;
-			}
-			return false;
-		}
-		return false;
-	}
-	
-	@Override
-	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
-		IVisitor<Void> visitor = new IVisitor.TreeVisitor<Void>() {
-			@Override
-			public Void visit(IExpr.IFcnExpr e) throws IVisitor.VisitorException {
-				if (e.args().size() == 2) {
-					IQualifiedIdentifier fcn = e.head();
-					if (Utils.MULT.equals(fcn)) {
-						if (!(isConst(e.args().get(0)) || isConst(e.args().get(1)))) {
-								throw restrictionError("The expression must be linear", e);
-						}
-					} else if (Utils.SLASH.equals(fcn)) {
-						if (!(isConst(e.args().get(0)) && isConst(e.args().get(1)))) {
-							throw restrictionError("The expression must be linear", e);
-						}
-					} else {
-						super.visit(e); // checks all the arguments
-					}
-						
-				} else {
-					super.visit(e); // checks all the arguments
-				}
-				return (Void)null;
-			}
-		};
-		expression.accept(visitor);
-	}
-	
-	@Override
-	public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
-		// May declare constants, but not functions without definitions
-		noFunctions(id,argSorts,resultSort,definition);
-	}
+    public LRA(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+        super(smtConfig,name,attributes);
+    }
 
-	@Override
-	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
-		noSorts(id,params,expr);
-	}
+    public boolean isConst(IExpr expr) {
+        if (expr instanceof IExpr.INumeral) return true;
+        if (expr instanceof IExpr.IDecimal) return true;
+        if (!(expr instanceof IExpr.IFcnExpr)) return false;
+        IExpr.IFcnExpr f = (IExpr.IFcnExpr)expr;
+        if (Utils.MINUS.equals(f.head()) && f.args().size() == 1) {
+            return isConst(f.args().get(0));
+        }
+        if (Utils.SLASH.equals(f.head()) && f.args().size() == 2) {
+            expr = f.args().get(0);
+            if (!isInteger(expr)) return false;
+            expr = f.args().get(1);
+            if (expr instanceof IExpr.INumeral) {
+                if (((IExpr.INumeral)expr).intValue() == 0) return false;
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
+
+    @Override
+    public void validExpression(IExpr expression) throws IVisitor.VisitorException {
+        IVisitor<Void> visitor = new IVisitor.TreeVisitor<Void>() {
+            @Override
+            public Void visit(IExpr.IFcnExpr e) throws IVisitor.VisitorException {
+                if (e.args().size() == 2) {
+                    IQualifiedIdentifier fcn = e.head();
+                    if (Utils.MULT.equals(fcn)) {
+                        if (!(isConst(e.args().get(0)) || isConst(e.args().get(1)))) {
+                                throw restrictionError("The expression must be linear", e);
+                        }
+                    } else if (Utils.SLASH.equals(fcn)) {
+                        if (!(isConst(e.args().get(0)) && isConst(e.args().get(1)))) {
+                            throw restrictionError("The expression must be linear", e);
+                        }
+                    } else {
+                        super.visit(e); // checks all the arguments
+                    }
+
+                } else {
+                    super.visit(e); // checks all the arguments
+                }
+                return (Void)null;
+            }
+        };
+        expression.accept(visitor);
+    }
+
+    @Override
+    public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
+        // May declare constants, but not functions without definitions
+        noFunctions(id,argSorts,resultSort,definition);
+    }
+
+    @Override
+    public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
+        noSorts(id,params,expr);
+    }
 }

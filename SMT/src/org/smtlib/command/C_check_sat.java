@@ -15,30 +15,30 @@ import org.smtlib.sexpr.Parser;
 
 /** Implements the check-sat command */
 public class C_check_sat extends Command implements Icheck_sat {
-	/** Creates a check_sat command (which has no arguments) */
-	public C_check_sat() {
-	}
-	
-	/** Parses the arguments of the command, producing a new command instance */
-	static public /*@Nullable*/ C_check_sat parse(Parser p) {
-		return p.checkNoArg() ? new C_check_sat() : null;
-	}
+    /** Creates a check_sat command (which has no arguments) */
+    public C_check_sat() {
+    }
+
+    /** Parses the arguments of the command, producing a new command instance */
+    static public /*@Nullable*/ C_check_sat parse(Parser p) {
+        return p.checkNoArg() ? new C_check_sat() : null;
+    }
 
 
-	/** The command name */
-	public static final String commandName = "check-sat";
-	
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
-	
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.check_sat();
-	}
+    /** The command name */
+    public static final String commandName = "check-sat";
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
+
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.check_sat();
+    }
+
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 }

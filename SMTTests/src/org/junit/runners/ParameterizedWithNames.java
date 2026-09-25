@@ -87,7 +87,7 @@ public class ParameterizedWithNames extends Suite
                 throw new Exception(String.format("%s.%s() must return a Collection of arrays.", new Object[] { getTestClass().getName(), getTestClass().getName() })); //$NON-NLS-1$
             }
         }
-        
+
         // This method is changed to have the name be a combination of the parameters
         // (This is the whole purpose of this revision of Parameterized)
         public String name() {
@@ -100,7 +100,7 @@ public class ParameterizedWithNames extends Suite
             }
             return s;
         }
-        
+
         String toString(Object o) {
             if (o.getClass().isArray()) {
                 return arrayToString((Object[])o);
@@ -109,9 +109,9 @@ public class ParameterizedWithNames extends Suite
             } else {
                 return o.toString();
             }
-            
+
         }
-        
+
         String arrayToString(Object[] array) {
             String s = "[";
             boolean first = true;

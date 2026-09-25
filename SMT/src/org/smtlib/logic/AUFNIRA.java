@@ -14,21 +14,21 @@ import org.smtlib.IExpr.ISymbol;
 
 public class AUFNIRA extends Logic {
 
-	public AUFNIRA(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(smtConfig,name,attributes);
-	}
+    public AUFNIRA(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+        super(smtConfig,name,attributes);
+    }
 
-	@Override
-	public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
-	}
+    @Override
+    public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
+    }
 
-	@Override
-	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
-	}
-	
-	@Override
-	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
-	}
+    @Override
+    public void validExpression(IExpr expression) throws IVisitor.VisitorException {
+    }
+
+    @Override
+    public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
+    }
 
 // FIXME - needs to allow implicit casts
 }

@@ -13,8 +13,8 @@ import org.smtlib.IExpr.ISymbol;
  *  here). */
 public class QF_UFBV extends QF_UF {
 
-	public QF_UFBV(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(smtConfig,name,attributes);
-	}
+    public QF_UFBV(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+        super(smtConfig,name,attributes);
+    }
 
 }

@@ -19,47 +19,47 @@ import org.smtlib.sexpr.Parser;
 
 /** Implements the declare-sort command */
 public class C_declare_sort extends Command implements Ideclare_sort {
-	/** The command name */
-	public static final String commandName = "declare-sort";
+    /** The command name */
+    public static final String commandName = "declare-sort";
 
-	/** The new sort symbol */
-	protected ISymbol sortSymbol;
-	
-	/** The arity of the sort symbol */
-	protected INumeral arity;
-	
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
+    /** The new sort symbol */
+    protected ISymbol sortSymbol;
 
-	/** The arity of the sort symbol */
-	@Override
-	public INumeral arity() { return arity; }
-	
-	/** The sort symbol declared by this command */
-	@Override
-	public ISymbol sortSymbol() { return sortSymbol; }
-	
-	/** Constructs a new command object */
-	public C_declare_sort(ISymbol id, INumeral n) {
-		this.sortSymbol = id;
-		this.arity = n;
-	}
-	
-	/** Parses the arguments of the command, producing a new command instance */
-	static public C_declare_sort parse(Parser p) throws IOException, ParserException {
-		ISymbol id = p.parseSymbol();
-		INumeral numeral = p.parseNumeral();
-		return new C_declare_sort(id,numeral);
-	}
+    /** The arity of the sort symbol */
+    protected INumeral arity;
 
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.declare_sort(this);
-	}
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    /** The arity of the sort symbol */
+    @Override
+    public INumeral arity() { return arity; }
+
+    /** The sort symbol declared by this command */
+    @Override
+    public ISymbol sortSymbol() { return sortSymbol; }
+
+    /** Constructs a new command object */
+    public C_declare_sort(ISymbol id, INumeral n) {
+        this.sortSymbol = id;
+        this.arity = n;
+    }
+
+    /** Parses the arguments of the command, producing a new command instance */
+    static public C_declare_sort parse(Parser p) throws IOException, ParserException {
+        ISymbol id = p.parseSymbol();
+        INumeral numeral = p.parseNumeral();
+        return new C_declare_sort(id,numeral);
+    }
+
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.declare_sort(this);
+    }
+
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 }

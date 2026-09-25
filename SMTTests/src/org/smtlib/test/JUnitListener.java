@@ -56,35 +56,35 @@ import org.smtlib.impl.Response;
  *  listener; see the class discussion for why the lists were kept merged regardless. */
 public class JUnitListener implements Log.IListener {
 
-	List<IResponse> msgs = new LinkedList<IResponse>();
+    List<IResponse> msgs = new LinkedList<IResponse>();
 
-	@Override
-	public void logError(IResponse.IError msg) {
-		this.msgs.add(msg);
-	}
+    @Override
+    public void logError(IResponse.IError msg) {
+        this.msgs.add(msg);
+    }
 
-	@Override
-	public void logOut(String msg) {
-	}
+    @Override
+    public void logOut(String msg) {
+    }
 
-	@Override
-	public void logOutNoln(String msg) {
-	}
+    @Override
+    public void logOutNoln(String msg) {
+    }
 
-	@Override
-	public void logOut(IResponse result) {
-	}
+    @Override
+    public void logOut(IResponse result) {
+    }
 
-	@Override
-	public void logError(String msg) {
-		this.msgs.add(new Response.Error(msg));
-	}
+    @Override
+    public void logError(String msg) {
+        this.msgs.add(new Response.Error(msg));
+    }
 
-	@Override
-	public void logDiag(String msg) {
-	}
+    @Override
+    public void logDiag(String msg) {
+    }
 
-	@Override
-	public void indent(String msg) {
-	}
+    @Override
+    public void indent(String msg) {
+    }
 }
