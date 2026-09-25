@@ -43,13 +43,13 @@ import org.smtlib.IPos.IPosable;
  */
 public class SMT {
 
-//	public SMT() {
-//		this(Utils.SMTLIB_VERSION_CURRENT);
-//	}
-//	
-//	public SMT(String version) {
-//		Configuration.smtlib = version;
-//	}
+//    public SMT() {
+//        this(Utils.SMTLIB_VERSION_CURRENT);
+//    }
+//    
+//    public SMT(String version) {
+//        Configuration.smtlib = version;
+//    }
 
     /** Marker interface for configuration objects; reserved for future extension. */
     static public interface IConfiguration {}
@@ -65,10 +65,10 @@ public class SMT {
          * - edit processCommand to be able to set the value from the commandline
          * - edit the help/usage messages
          * - in the plugin, edit Preferences:
-         * 		add a key
-         * 		add a preference object
-         * 		add a preference widget to the right PrferenceWidget array
-         * 		edit extractOptions
+         *         add a key
+         *         add a preference object
+         *         add a preference widget to the right PrferenceWidget array
+         *         edit extractOptions
          */
 
         /** Creates a default configuration, initialized from org.smtlib.impl */

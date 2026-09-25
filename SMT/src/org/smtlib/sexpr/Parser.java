@@ -437,7 +437,7 @@ public class Parser extends Lexer implements IParser {
         }
     }
 
-//	private <T extends IPos.IPosable> T setPos(T p, IPos pos) { p.setPos(pos); return p; }
+//    private <T extends IPos.IPosable> T setPos(T p, IPos pos) { p.setPos(pos); return p; }
 
     /** Parses an 'as' identifier, presuming the left-paren and the 'as' are already parsed,
      * from the token stream, returning null (with logged error messages) if there is not one.
@@ -500,17 +500,17 @@ public class Parser extends Lexer implements IParser {
     public /*@Nullable*/IExpr parseExpr() throws ParserException {
         // Here we suffer a bit for using a hand-written top-down parser.
         // An IExpr can be
-        //		literal
-        //		symbol
-        //		( _ symbol numeral+ )
-        //		( as identifier sort )
-        //		( ! ...
-        //		( forall ...
-        //		( exists ...
-        //		( let ...
-        //		( symbol ...
-        //		( ( _ symbol ...
-        //		( ( as ...
+        //        literal
+        //        symbol
+        //        ( _ symbol numeral+ )
+        //        ( as identifier sort )
+        //        ( ! ...
+        //        ( forall ...
+        //        ( exists ...
+        //        ( let ...
+        //        ( symbol ...
+        //        ( ( _ symbol ...
+        //        ( ( as ...
         if (!isLP()) {
             ILexToken token = getToken();
             if (token instanceof SMTExpr.Error) throw new ParserException(null, token.pos());
@@ -779,13 +779,13 @@ public class Parser extends Lexer implements IParser {
      * next parser tokens.
      */
     // Can be:
-    //		id
-    //		( id sort+ )
+    //        id
+    //        ( id sort+ )
     // so 
-    //		symbol
-    //		( _ symbol numeral+ )
-    //		( symbol sort+ )
-    //		( ( _ symbol numeral+ ) sort+ )
+    //        symbol
+    //        ( _ symbol numeral+ )
+    //        ( symbol sort+ )
+    //        ( ( _ symbol numeral+ ) sort+ )
     @Override
     public /*@Nullable*/Sort parseSort(List<ISort.IParameter> parameters) throws ParserException {
         if (!isLP()) {

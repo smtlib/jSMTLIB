@@ -91,8 +91,8 @@ public class C_set_option extends Command implements Iset_option {
         } else if (smtConfig.utils.numericOptions.contains(key)) {
             if (t instanceof IExpr.INumeral) return null;
             return smtConfig.responseFactory.error("Expected a numeral as the value of " + keyword,t.pos());
-//		} else if (SMT.Configuration.atLeastVersion(SMTLIB.V25)) {
-//			return smtConfig.responseFactory.error("Keyword not supported in V2.5 and higher: " + keyword,t.pos());
+//        } else if (SMT.Configuration.atLeastVersion(SMTLIB.V25)) {
+//            return smtConfig.responseFactory.error("Keyword not supported in V2.5 and higher: " + keyword,t.pos());
         } else {
             // Unspecified option - what kinds of values may it have? TODO
         }

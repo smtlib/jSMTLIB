@@ -323,11 +323,11 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         }
         IResponse res;
         try {
-//			String s = solverProcess.sendAndListen("(BG_PUSH (EQ 0 0))\r\n");
-//			s = solverProcess.sendAndListen("(EQ 0 1)\r\n");
-//			if (s.contains("Valid.")) res = smtConfig.responseFactory.unsat();
-//			else if (s.contains("Invalid.")) res = smtConfig.responseFactory.sat();
-//			else res = smtConfig.responseFactory.unknown();
+//            String s = solverProcess.sendAndListen("(BG_PUSH (EQ 0 0))\r\n");
+//            s = solverProcess.sendAndListen("(EQ 0 1)\r\n");
+//            if (s.contains("Valid.")) res = smtConfig.responseFactory.unsat();
+//            else if (s.contains("Invalid.")) res = smtConfig.responseFactory.sat();
+//            else res = smtConfig.responseFactory.unknown();
 
             String msg = "(NOT (AND TRUE " + conjunction + "\n))\n";
             String s = solverProcess.sendAndListen(msg);
@@ -346,7 +346,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             else if (s.contains("Bad input:") || s.contains("Sx.ReadError")) res = smtConfig.responseFactory.error(s.trim());
             else res = smtConfig.responseFactory.unknown();
             checkSatStatus = res;
-//			s = solverProcess.sendAndListen("(BG_POP)\r\n");
+//            s = solverProcess.sendAndListen("(BG_POP)\r\n");
 
         } catch (IOException e) {
             res = smtConfig.responseFactory.error("Failed to check-sat");
@@ -473,7 +473,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         if (option.value().equals(Utils.PRODUCE_MODELS)) return smtConfig.responseFactory.unsupported();
         if (option.value().equals(Utils.PRODUCE_PROOFS)) return smtConfig.responseFactory.unsupported();
         if (option.value().equals(Utils.PRODUCE_UNSAT_CORES)) return smtConfig.responseFactory.unsupported();
-//		if (option.value().equals(":expand-definitions") && smtConfig.atLeastVersion(SMTLIB.V25)) return smtConfig.responseFactory.unsupported();
+//        if (option.value().equals(":expand-definitions") && smtConfig.atLeastVersion(SMTLIB.V25)) return smtConfig.responseFactory.unsupported();
 
         return setOptionLocal(option,value);
     }
@@ -894,9 +894,9 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
      *  first sees one.  
      *  New predicates are defined with DEFPRED
      *  It has a strict distinction between terms and formulas, so
-     *  	- there are different symbols for equality (EQ and IFF)
-     *  	- there are different symbols for inequality (NEQ and (IFF p (NOT q)))
-     *  	- DISTINCT operates only on terms (and the result is a formula)
+     *      - there are different symbols for equality (EQ and IFF)
+     *      - there are different symbols for inequality (NEQ and (IFF p (NOT q)))
+     *      - DISTINCT operates only on terms (and the result is a formula)
      *  
      *  
      *  QUESTIONS: what about overloaded functions
@@ -920,17 +920,17 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
      *
      * TERMS
      * + - *			+ - *
-     * 	    			select store  - for arrays
+     *                     select store  - for arrays
      * 
      * In simplify EQ NEQ < <= > >= DISTINCT take terms as arguments, produce formulas
      * how to handle boolean terms???
      */
 
     /* Simplify ids:
-     * 		a) sequence of alpha, digits, underscore, beginning with alpha
+     *         a) sequence of alpha, digits, underscore, beginning with alpha
      *      b) sequence of ! # $ % & * + - , / : < = > ? @ [ ] ^ _ { } ~
      *               excludes | ( ) ` \ ; " ' , 
-     * 		c) printable characters and space except \ |, surrounded by |
+     *         c) printable characters and space except \ |, surrounded by |
      *           - also allows undocumented 'escape sequences'
      *  To translate from SMT-LIB use form (c), but have to remove
      *  explicit tabs, newlines, crs; also any \-escape sequences
@@ -1346,9 +1346,9 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         @Override 
         public String visit(IBinding e) throws IVisitor.VisitorException {
-//			StringBuilder sb = new StringBuilder();
-//			sb.append(e.parameter().accept(this));
-//			return sb.toString();
+//            StringBuilder sb = new StringBuilder();
+//            sb.append(e.parameter().accept(this));
+//            return sb.toString();
             throw new VisitorException("Use of bindings is not yet implemented in the Simplify adapter",e.pos()); // FIXME - let in Simplify
         }
 
@@ -1519,16 +1519,16 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         }
 
 
-//		@Override
-//		public String visit(IScript e) throws IVisitor.VisitorException {
-//			throw new VisitorException(e,"Did not expect a Script in an expression to be translated");
-//		}
+//        @Override
+//        public String visit(IScript e) throws IVisitor.VisitorException {
+//            throw new VisitorException(e,"Did not expect a Script in an expression to be translated");
+//        }
 
-//		@Override
-//		public String visit(IResponse e) throws IVisitor.VisitorException {
-//			throw new VisitorException(e,"Did not expect a IResponse in an expression to be translated");
-//		}
-//		
+//        @Override
+//        public String visit(IResponse e) throws IVisitor.VisitorException {
+//            throw new VisitorException(e,"Did not expect a IResponse in an expression to be translated");
+//        }
+//        
     }
 
 

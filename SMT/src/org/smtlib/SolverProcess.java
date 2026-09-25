@@ -112,7 +112,7 @@ public class SolverProcess {
             if (logfile != null) {
                 log = new FileWriter(logfile);
             } else {
-//			    log = pw == null ? (pw = new java.io.PrintWriter(System.out)) : pw;
+//                log = pw == null ? (pw = new java.io.PrintWriter(System.out)) : pw;
             }
         } catch (IOException e) {
             System.err.println("Failed to create solver log file " + logfile + ": " + e);

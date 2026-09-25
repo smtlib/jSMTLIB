@@ -379,13 +379,13 @@ public class Solver_test implements ISolver {
         if (logicSet != null && (Utils.GLOBAL_DECLARATIONS.equals(option)||Utils.INTERACTIVE_MODE.equals(option)||Utils.PRODUCE_ASSERTIONS.equals(option))) {
             return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
         }
-//		if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 
-//				//Utils.PRODUCE_MODELS.equals(option) || 
-//				Utils.PRODUCE_PROOFS.equals(option) ||
-//				Utils.PRODUCE_UNSAT_CORES.equals(option)) {
-//			if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
-//			return smtConfig.responseFactory.unsupported();
-//		}
+//        if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 
+//                //Utils.PRODUCE_MODELS.equals(option) || 
+//                Utils.PRODUCE_PROOFS.equals(option) ||
+//                Utils.PRODUCE_UNSAT_CORES.equals(option)) {
+//            if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
+//            return smtConfig.responseFactory.unsupported();
+//        }
         if (Utils.VERBOSITY.equals(option)) {
             IAttributeValue v = options.get(option);
             smtConfig.verbose = (v instanceof INumeral) ? ((INumeral)v).intValue() : 0;
@@ -458,8 +458,8 @@ public class Solver_test implements ISolver {
             // one additional frame per unmatched push -- so size-1 is the push depth.
             lit = smtConfig.exprFactory.numeral(assertionSetStack.size() - 1);
 
-//		} else if ((value = Utils.stringInfo.get(option)) != null) {
-//			lit = smtConfig.exprFactory.unquotedString(value);
+//        } else if ((value = Utils.stringInfo.get(option)) != null) {
+//            lit = smtConfig.exprFactory.unquotedString(value);
         } else {
             return smtConfig.responseFactory.unsupported();
         }

@@ -284,16 +284,16 @@ public abstract class SMTExpr implements IExpr {
 
         @Override public boolean isError() { return false; }
 
-//		// FIXME - do we want these?
-//		public static class Parameter extends Symbol implements IParameter {
-//			public Parameter(ISymbol s) { super(s.toString()); pos = s.pos(); }
-//		}
+//        // FIXME - do we want these?
+//        public static class Parameter extends Symbol implements IParameter {
+//            public Parameter(ISymbol s) { super(s.toString()); pos = s.pos(); }
+//        }
 //
-//		public static class LetParameter extends Symbol implements ILetParameter {
+//        public static class LetParameter extends Symbol implements ILetParameter {
 //
 //
-//			public LetParameter(ISymbol s) { super(s.toString()); pos = s.pos();  }
-//		}
+//            public LetParameter(ISymbol s) { super(s.toString()); pos = s.pos();  }
+//        }
 
     }
 

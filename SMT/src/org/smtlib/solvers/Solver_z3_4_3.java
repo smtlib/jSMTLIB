@@ -166,8 +166,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         try {
             solverProcess.start(false);
             // FIXME - enable the following lines when the Z3 solver supports them
-//			if (smtConfig.solverVerbosity > 0) solverProcess.sendNoListen("(set-option :verbosity ",Integer.toString(smtConfig.solverVerbosity),")");
-//			if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
+//            if (smtConfig.solverVerbosity > 0) solverProcess.sendNoListen("(set-option :verbosity ",Integer.toString(smtConfig.solverVerbosity),")");
+//            if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
             // Can't turn off printing success, or we get no feedback
             solverProcess.sendAndListen("(set-option :print-success true)\n"); // Z3 4.3.0 needs this because it mistakenly has the default for :print-success as false
             linesOffset ++; 
@@ -676,18 +676,18 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             }
             String r = solverProcess.sendAndListen("))\n");
             IResponse response = parseResponse(r);
-//			if (response instanceof ISeq) {
-//				List<ISexpr> valueslist = new LinkedList<ISexpr>();
-//				Iterator<ISexpr> iter = ((ISeq)response).sexprs().iterator();
-//				for (IExpr e: terms) {
-//					if (!iter.hasNext()) break;
-//					List<ISexpr> values = new LinkedList<ISexpr>();
-//					values.add(new Sexpr.Expr(e));
-//					values.add(iter.next());
-//					valueslist.add(new Sexpr.Seq(values));
-//				}	
-//				return new Sexpr.Seq(valueslist);
-//			}
+//            if (response instanceof ISeq) {
+//                List<ISexpr> valueslist = new LinkedList<ISexpr>();
+//                Iterator<ISexpr> iter = ((ISeq)response).sexprs().iterator();
+//                for (IExpr e: terms) {
+//                    if (!iter.hasNext()) break;
+//                    List<ISexpr> values = new LinkedList<ISexpr>();
+//                    values.add(new Sexpr.Expr(e));
+//                    values.add(iter.next());
+//                    valueslist.add(new Sexpr.Seq(values));
+//                }	
+//                return new Sexpr.Seq(valueslist);
+//            }
             return response;
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);

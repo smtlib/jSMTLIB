@@ -152,9 +152,9 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
 
     public boolean isFreeConstant(IExpr expr) {
         return (expr instanceof ISymbol);
-//		if (!(expr instanceof IExpr.IFcnExpr)) return false;
-//		IExpr.IFcnExpr f = (IExpr.IFcnExpr)expr;
-//		return f.args().size() == 0;
+//        if (!(expr instanceof IExpr.IFcnExpr)) return false;
+//        IExpr.IFcnExpr f = (IExpr.IFcnExpr)expr;
+//        return f.args().size() == 0;
     }
 
     public boolean isLinearInteger(IExpr expr) {

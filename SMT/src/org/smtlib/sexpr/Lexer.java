@@ -454,12 +454,12 @@ public class Lexer {
                 }
             }
             int end = matcher.end(2);
-            //			System.out.println("MATCHED RANGE " + matcher.start() + " " + matcher.end() + " !" + matcher.group() + "!");
-            //			for (int i=3; i<=matcher.groupCount(); i++) {
-            //				if (matcher.group(i) != null) { 
-            //					System.out.println("MATCHED " + i + " RANGE " + matcher.start(i) + " " + matcher.end(i) + " !" + matcher.group(i) + "!" + (int)matcher.group(i).charAt(0));
-            //				}
-            //			}
+            //            System.out.println("MATCHED RANGE " + matcher.start() + " " + matcher.end() + " !" + matcher.group() + "!");
+            //            for (int i=3; i<=matcher.groupCount(); i++) {
+            //                if (matcher.group(i) != null) { 
+            //                    System.out.println("MATCHED " + i + " RANGE " + matcher.start(i) + " " + matcher.end(i) + " !" + matcher.group(i) + "!" + (int)matcher.group(i).charAt(0));
+            //                }
+            //            }
             int k;
             IPos pos;
             String matched = null;
@@ -587,8 +587,8 @@ public class Lexer {
                 //token = factory.error(matched,pos);
                 token = setPos(new LexError("Bar(|)-enclosed symbol is not terminated: " + matched),pos);
                 smtConfig.log.logError(smtConfig.responseFactory.error("Bar(|)-enclosed symbol is not terminated: " + matched,token.pos()));
-//				matcher.region(end,csr.length());
-//				throw new SyntaxException("Invalid token: " + matched,token.pos());
+//                matcher.region(end,csr.length());
+//                throw new SyntaxException("Invalid token: " + matched,token.pos());
             } else if ((matched = matcher.group(k=17)) != null) {
                 pos = pos(matcher.start(k),matcher.end(k));
                 //token = factory.error(matched,pos);
@@ -596,8 +596,8 @@ public class Lexer {
                 token = setPos(new LexError(msg + matched),pos);
                 smtConfig.log.logError(smtConfig.responseFactory.error(msg + matched,token.pos()));
                 end = matcher.end(k);
-//				matcher.region(end,csr.length());
-//				throw new SyntaxException("Leading zeros are not allowed: " + matched,token.pos());
+//                matcher.region(end,csr.length());
+//                throw new SyntaxException("Leading zeros are not allowed: " + matched,token.pos());
             } else if ((matched = matcher.group(k=18)) != null) {
                 // This case no longer matches since we made a special case of string matching.
                 pos = pos(matcher.start(k),matcher.end(k));
@@ -618,8 +618,8 @@ public class Lexer {
                 token = setPos(new LexError("Invalid token: " + matched),pos);
                 smtConfig.log.logError(smtConfig.responseFactory.error("Invalid token: " + matched,
                         pos));
-//				matcher.region(end,csr.length());
-//				throw new SyntaxException("Invalid token: " + matched,token.pos());
+//                matcher.region(end,csr.length());
+//                throw new SyntaxException("Invalid token: " + matched,token.pos());
                 //SMT.out.println(smtConfig.responseFactory.error("Invalid token: " + matched));
             } else if ((matched = matcher.group(k=21)) != null) {
                 // FIXME - This should never happen either - it is a stopgap hack, because
@@ -652,13 +652,13 @@ public class Lexer {
             // Nothing matched - this should not have happened.
             // There is an error in the regular expression, since it is not even
             // reporting an error token.
-//			int n = matcher.groupCount();
-//			String gr = matcher.group(2);
-//			gr = matcher.group(1);
-//			gr = matcher.group(0);
-//			String s = csr.subSequence(b,e>b+100?b+100:e).toString();
-//			throw new SMT.InternalException("Failed to report any match: something is wrong with the regular expression used for parsing "
-//					+ matcher.regionStart() + " " + matcher.regionEnd() + " " + s);
+//            int n = matcher.groupCount();
+//            String gr = matcher.group(2);
+//            gr = matcher.group(1);
+//            gr = matcher.group(0);
+//            String s = csr.subSequence(b,e>b+100?b+100:e).toString();
+//            throw new SMT.InternalException("Failed to report any match: something is wrong with the regular expression used for parsing "
+//                    + matcher.regionStart() + " " + matcher.regionEnd() + " " + s);
         }
         return token;
     }
