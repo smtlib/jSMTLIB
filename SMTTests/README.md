@@ -62,6 +62,8 @@ visible which solvers a given run actually covers. `./runtests` (the legacy
 | `make cov-report` | Merge `.exec` files and generate HTML + XML coverage report |
 | `make cov-show` | Open the HTML coverage report in the default browser |
 | `make cov-all` | `cov-clean` + `cov-test` + `cov-report` + `cov-show` in one step |
+| `make cov-test-by-test` | Like `cov-test`, but writes each test's coverage to its own `cov/by-test/<TestClass>.<method>.exec`, indexed by `cov/by-test/index.tsv` |
+| `make cov-report-by-test` | Merge all per-test files and report them (totals should match `cov-report`'s) |
 
 `SMT_SOLVER_DIR` (also exported by the Makefile) is a separate variable: it
 points at the directory holding the actual solver binaries/executables for

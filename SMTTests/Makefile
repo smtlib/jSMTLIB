@@ -10,7 +10,7 @@ SHELL = /bin/bash
 ##   make cov-test cov-report COV_CLASSES=../SMT/bin
 COV_CLASSES ?= ../SMT/jSMTLIB.jar
 
-.PHONY: test tests test-only clean script-tests smt-tests junit-tests build cov-test cov-clean cov-report cov-show cov-all reports time-solvers ci-cov ci-cov-dev
+.PHONY: test tests test-only clean script-tests smt-tests junit-tests build cov-test cov-test-by-test cov-report-by-test cov-clean cov-report cov-show cov-all reports time-solvers ci-cov ci-cov-dev
 
 ## Resolve the platform-appropriate solver directory, honouring any value already in the
 ## environment (CI sets it via GITHUB_ENV before invoking make; developers can export it
@@ -126,6 +126,31 @@ build:
 ## All coverage is written to cov/junits.exec.
 cov-test:
 	COV_CLASSES=$(COV_CLASSES) COV= bash ./runjunits
+
+## Like cov-test, but split by test case: each JUnit test's coverage (including that of any
+## child JVM it spawns) goes to its own cov/by-test/<TestClass>.<method>.exec, with
+## cov/by-test/index.tsv mapping each file back to its test (class, JUnit display name,
+## PASS/FAIL/SKIP, wall-clock ms). Whatever runs outside any test (class init,
+## @Parameters, @BeforeClass) goes to cov/by-test/_outside-tests.exec. See
+## PerTestCoverageListener.java and setup-coverage for the mechanism. cov-test and
+## cov/junits.exec are untouched. The directory is cleared first: per-test files are
+## appended to during a run, so stale ones from an earlier run would silently mix in.
+cov-test-by-test:
+	rm -rf cov/by-test
+	COV_CLASSES=$(COV_CLASSES) COV= COV_BY_TEST= bash ./runjunits
+
+## Merge every per-test file back into one data set and report it, exactly like
+## cov-report does for cov-test -- a check that splitting lost nothing: its totals should
+## match cov-report's for the same code and SMT_TEST_SOLVERS.
+cov-report-by-test:
+	java -jar jacoco/lib/jacococli.jar merge --quiet cov/by-test/*.exec --destfile cov/by-test-merged.exec
+	java -jar jacoco/lib/jacococli.jar report cov/by-test-merged.exec \
+		--classfiles $(COV_CLASSES) \
+		--classfiles bin \
+		--sourcefiles ../SMT/src \
+		--sourcefiles src \
+		--html cov/html-by-test \
+		--xml cov/coverage-by-test.xml
 
 ## Remove collected coverage data
 cov-clean:
