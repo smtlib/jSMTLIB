@@ -159,9 +159,14 @@ COV_EMPTY :=
 COV_SPACE := $(COV_EMPTY) $(COV_EMPTY)
 COV_ANALYZER_CP := $(subst $(COV_SPACE),$(COV_CP_SEP),$(patsubst %,jacoco/lib/%.jar,$(COV_ANALYZER_JARS)))
 ## jSMTLIB's own classes only: not the test harness, and not JUnit/Hamcrest, which the agent
-## instruments too. Skipped tests are left out. Override to analyze differently, e.g.
+## instruments too. Skipped tests are left out. --variants merges the per-solver runs of each
+## FileTests/LogicTests case (checkFile["<solver>","<file>"], testLogic["<solver>","<version>"])
+## into one unit by dropping the solver parameter: they run the same jSMTLIB code against a
+## different external solver, so the analysis is about test cases, not solver runs. ($$ is a
+## literal $ in make.) Override to analyze differently, e.g.
 ##   make cov-analyze-by-test COV_ANALYZER_ARGS="--include 'org.smtlib.**' --granularity line"
-COV_ANALYZER_ARGS ?= --include 'org.smtlib.**' --exclude 'org.smtlib.test.**' --exclude-status SKIP
+COV_ANALYZER_ARGS ?= --include 'org.smtlib.**' --exclude 'org.smtlib.test.**' --exclude-status SKIP \
+	--variants '^((?:checkFile|testLogic)\[)"[^"]*",(.*)$$'
 
 ## Analyze the data from the last cov-test-by-test run (without re-running the tests):
 ## summary to the terminal and cov/by-test-report.txt, full results as CSV files in
