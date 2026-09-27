@@ -1,0 +1,9 @@
+success
+success
+success
+success
+success
+(
+(= f (lambda ((x Int) ) (+ x 1)))
+)
+success
