@@ -49,6 +49,14 @@ public class Solver_cvc5 extends AbstractSolver implements ISolver {
     @Override
     protected boolean selfReportsImmediateExit() { return true; }
 
+    /** cvc5 carries on after most errors (e.g. sort errors), but after a parse error it no longer
+     *  processes input, and when run interactively it does not always exit either -- so it is
+     *  stopped (see AbstractSolver.checkImmediateExit). */
+    @Override
+    protected boolean errorStopsSolver(IResponse error) {
+        return error instanceof IResponse.IError && ((IResponse.IError)error).errorMsg().startsWith("Parse Error");
+    }
+
     /** The command-line arguments for launching the solver. --print-success turns on
      *  success replies from the very first command onward (confirmed: --interactive does
      *  NOT imply it by itself -- without --print-success, the first command gets no

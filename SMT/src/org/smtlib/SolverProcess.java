@@ -400,6 +400,20 @@ public class SolverProcess {
         return null;
     }
 
+    /** Stops the solver's OS process if it is still running, leaving this object as it is: later
+     *  sends then fail as "Solver process has already exited", and {@link #exit()} cleans up. */
+    public void stopIfRunning() {
+        Process p = process;
+        if (p != null && p.isAlive()) {
+            p.destroyForcibly();
+            try {
+                p.waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
     /** Sends all the given text arguments, then listens for the designated end marker text */
     public /*@Nullable*/ String sendAndListen(String ... args) throws IOException {
         return send(true, args);

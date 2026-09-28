@@ -229,18 +229,24 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     // "plain printing for a single node with no override" correctly; only a whole-subtree
     // bypass was ever the problem. See issue #65.
 
+    /** Rewrites z3 4.3's legacy bit-vector literals (bvVALUE[WIDTH]) as standard #b... literals */
+    protected String rewriteOldBitVectors(String response) {
+        Pattern oldbv = Pattern.compile("bv([0-9]+)\\[([0-9]+)\\]");
+        Matcher mm = oldbv.matcher(response);
+        while (mm.find()) {
+            long val = Long.parseLong(mm.group(1));
+            int base = Integer.parseInt(mm.group(2));
+            String bits = "";
+            for (int i=0; i<base; i++) { bits = ((val&1)==0 ? "0" : "1") + bits; val = val >>> 1; }
+            response = response.substring(0,mm.start()) + "#b" + bits + response.substring(mm.end(),response.length());
+            mm = oldbv.matcher(response);
+        }
+        return response;
+    }
+
     protected IResponse parseResponse(String response) {
         try {
-            Pattern oldbv = Pattern.compile("bv([0-9]+)\\[([0-9]+)\\]");
-            Matcher mm = oldbv.matcher(response);
-            while (mm.find()) {
-                long val = Long.parseLong(mm.group(1));
-                int base = Integer.parseInt(mm.group(2));
-                String bits = "";
-                for (int i=0; i<base; i++) { bits = ((val&1)==0 ? "0" : "1") + bits; val = val >>> 1; }
-                response = response.substring(0,mm.start()) + "#b" + bits + response.substring(mm.end(),response.length());
-                mm = oldbv.matcher(response);
-            }
+            response = rewriteOldBitVectors(response);
             if (isMac && response.startsWith("success")) return smtConfig.responseFactory.success(); // FIXME - this is just to avoid a problem with the Mac Z3 implementation
             if (response.contains("error")) {
                 // Z3 returns an s-expr (always?)
@@ -674,7 +680,18 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             for (IExpr e: terms) {
                 solverProcess.sendNoListen(" ",translate(e));
             }
-            String r = solverProcess.sendAndListen("))\n");
+            String r = rewriteOldBitVectors(solverProcess.sendAndListen("))\n"));
+            // Values are returned structured, as by the other adapters (AbstractSolver.get_value),
+            // so that they print the same way (e.g. (- 1), not the s-expression form ( - 1 )).
+            // Errors -- including z3 4.3's value-then-error responses -- keep the existing handling.
+            if (!isFlatResponse(r) && !r.contains("(error")) {
+                try {
+                    List<IResponse.IPair<IExpr,IExpr>> values = new org.smtlib.sexpr.Parser(smtConfig, new Pos.Source(r, null)).parseValueList();
+                    return smtConfig.responseFactory.get_value_response(values);
+                } catch (ParserException e) {
+                    // fall through to the generic handling below
+                }
+            }
             IResponse response = parseResponse(r);
 //            if (response instanceof ISeq) {
 //                List<ISexpr> valueslist = new LinkedList<ISexpr>();
