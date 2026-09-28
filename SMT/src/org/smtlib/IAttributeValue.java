@@ -9,3 +9,4 @@ public interface IAttributeValue extends IResponse, IPos.IPosable {
     @Override default boolean isOK()    { return false; }
     @Override default boolean isError() { return false; }
 }
+// FIXME - the above need javadoc to explain their semantics
