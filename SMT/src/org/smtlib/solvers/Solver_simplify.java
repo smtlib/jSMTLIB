@@ -1329,6 +1329,15 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         }
 
         @Override
+        public String visit(ILambda e) throws IVisitor.VisitorException {
+            // Simplify does not implement the HO-Core theory at all -- lambda is left
+            // unimplemented here the same way IExpr.IMatch is (see visit(IExpr.IMatch)
+            // below), rather than adding real lambda-translation logic that is out of
+            // scope for this adapter.
+            return null;
+        }
+
+        @Override
         public String visit(ILet e) throws IVisitor.VisitorException {
             // Simplify does not have let
             // We can create a new temp variable (or function of any quantified parameters)

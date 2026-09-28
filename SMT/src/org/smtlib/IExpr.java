@@ -86,6 +86,10 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
         //@ requires params.size() > 0;
         IExists exists(List<IDeclaration> params, IExpr e, List<IExpr> patterns);
 
+        /** Creates a Lambda expression (SMT-LIB 2.7ff, HO-Core theory). */
+        //@ requires params.size() > 0;
+        ILambda lambda(List<IDeclaration> params, IExpr e);
+
         /** Creates an error expression. */
         IError error(String text);
 
@@ -347,6 +351,24 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
 
     /** This interface represents an SMT-LIB quantified exists expression */
     static public interface IExists extends IExpr {
+        //@ ensures \result.size() > 0;
+        List<IDeclaration> parameters();
+        IExpr expr();
+    }
+
+    /** This interface represents an SMT-LIB lambda expression: {@code (lambda (sorted_var+) term)}.
+     *  Lambda is only available as of SMT-LIB version 2.7 and later ("2.7ff") -- it was added to
+     *  the {@code <term>} grammar as part of the optional {@code HO-Core} theory (see
+     *  {@code SMT/logics/HO-Core.smt2}), the same way the non-standard {@code par}-polymorphic
+     *  {@code declare-fun} extension documents its own version/scope restrictions elsewhere.
+     *  jSMTLIB has no general runtime mechanism that would reject this node under an older
+     *  configured version merely for existing; {@link org.smtlib.TypeChecker#visit(ILambda)}
+     *  does check the configured SMT-LIB version explicitly, the same way it already does for
+     *  {@link IMatch}. A lambda's own sort is the function/array sort mapping its parameters'
+     *  sorts to its body's sort -- see {@code TypeChecker.visit(ILambda)} for exactly how (and
+     *  under what conditions) that result sort is computed, using the SMT-LIB 2.7 {@code
+     *  (-> sort+ sort)} function-sort constructor that HO-Core also declares. */
+    static public interface ILambda extends IExpr {
         //@ ensures \result.size() > 0;
         List<IDeclaration> parameters();
         IExpr expr();
