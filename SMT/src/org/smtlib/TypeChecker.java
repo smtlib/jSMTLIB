@@ -312,6 +312,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 			@Override public Void visit(IFcnExpr e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
 			@Override public Void visit(IForall e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
 			@Override public Void visit(IHexLiteral e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
+			@Override public Void visit(ILambda e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
 			@Override public Void visit(ILet e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
 			@Override public Void visit(INumeral e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
 			@Override public Void visit(IParameterizedIdentifier e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
@@ -1311,6 +1312,82 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 			if (errors) return null;
 			ISort s = e.expr().accept(this);
 			return save(e,s);
+		} finally {
+			currentScope = parameters.remove(0);
+		}
+	}
+
+	/** Type-checks a lambda expression: {@code (lambda (sorted_var+) term)}, SMT-LIB 2.7ff
+	 *  (the optional HO-Core theory -- see {@code SMT/logics/HO-Core.smt2}).
+	 *  <P>
+	 *  Parameter/body scoping is identical to visit(IForall)/visit(IExists) above: push a
+	 *  new scope, type-check each parameter declaration into it (catching duplicate names),
+	 *  then type-check the body in that scope. Unlike a quantifier, though, a lambda's body
+	 *  is not required to be Bool -- it can be any sort -- and the lambda expression's own
+	 *  computed sort is not its body's sort but the <I>function</I> sort mapping its
+	 *  parameters' sorts to its body's sort.
+	 *  <P>
+	 *  Design decision (see jSMTLIB issue #125): SMT-LIB 2.7 also introduces a
+	 *  {@code (-> sort+ sort)} function-sort constructor for exactly this purpose, and that
+	 *  constructor already exists in this codebase -- not as new work for lambda, but as an
+	 *  ordinary theory-declared sort: HO-Core.smt2 declares {@code :sorts ( (-> 2
+	 *  :right-assoc) )}, so {@code ->} is a plain 2-ary sort family, resolved through the
+	 *  same generic path as any other declared sort (visit(ISort.IApplication) already has a
+	 *  special case unfolding {@code ->} via its :right-assoc attribute when given more than
+	 *  its declared arity of 2 arguments -- see the comment there). So rather than fabricating
+	 *  a placeholder sort (e.g. just the body's sort) or throwing a not-yet-supported error,
+	 *  this builds an (unchecked) {@code (-> paramSort1 ... paramSortN bodySort)}
+	 *  sort-application node and runs it through this same type checker, exactly the way
+	 *  makeBitVec()/makeFloatingPoint()/makeReal() above already construct-then-check a sort
+	 *  expression rather than hand-building one. Two honest, non-fabricated outcomes follow
+	 *  directly from reusing that existing machinery, with no new logic of its own:
+	 *  <UL>
+	 *  <LI>If the active logic/theory declares {@code ->} (i.e. HO-Core is loaded, as with
+	 *  {@code (set-logic ALL)}), the lambda's sort is the real, correctly-computed function
+	 *  sort -- e.g. {@code (-> Int Int)} for {@code (lambda ((x Int)) (+ x 1))}.</LI>
+	 *  <LI>If it does not, this reports the same "No such sort symbol declared: -&gt;" error
+	 *  that any other undeclared sort symbol would get -- exactly like using any other
+	 *  theory-specific symbol without its theory loaded, not a crash or a silently-wrong
+	 *  sort.</LI>
+	 *  </UL>
+	 */
+	@Override
+	public /*@Nullable*/ ISort visit(ILambda e) throws IVisitor.VisitorException {
+		// lambda is new in SMT-LIB 2.7 (HO-Core) -- gate on the configured version the same
+		// way visit(IExpr.IMatch) below already gates match and its wildcard pattern on
+		// SMTLIB.V26/V27, rather than silently accepting it under an older configured version.
+		if (!smtConfig.atLeastVersion(SMTLIB.V27)) {
+			error("The lambda expression requires SMT-LIB " + SMTLIB.V27 + " or later", e.pos());
+			return null;
+		}
+		Map<ISymbol,Variable> saved = new HashMap<ISymbol,Variable>();
+		saved.putAll(currentScope);
+		parameters.add(0,saved);
+		boolean errors = false;
+		Set<ISymbol> seen = new HashSet<>();
+		List<ISort> paramSorts = new LinkedList<ISort>();
+		for (IExpr.IDeclaration decl : e.parameters()) {
+			if (!seen.add(decl.parameter())) {
+				error("Parameter list has a duplicate name: " + pr(decl.parameter()), decl.parameter().pos());
+				errors = true;
+			}
+			ISort res = decl.sort().accept(this);
+			if (res == null) errors = true;
+			else {
+				currentScope.put(decl.parameter(),new Variable(decl.parameter(),decl.sort(),null,false));
+				paramSorts.add(decl.sort());
+			}
+		}
+		try {
+			if (errors) return null;
+			ISort bodySort = e.expr().accept(this);
+			if (bodySort == null) return null;
+			List<ISort> arrowArgs = new LinkedList<ISort>(paramSorts);
+			arrowArgs.add(bodySort);
+			IIdentifier arrowId = smtConfig.exprFactory.symbol("->");
+			ISort arrowSort = smtConfig.sortFactory.createSortExpression(arrowId, arrowArgs);
+			ISort checkedArrowSort = arrowSort.accept(this);
+			return save(e, checkedArrowSort);
 		} finally {
 			currentScope = parameters.remove(0);
 		}

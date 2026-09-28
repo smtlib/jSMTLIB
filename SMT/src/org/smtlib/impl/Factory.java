@@ -313,6 +313,11 @@ public class Factory implements IExpr.IFactory, ISort.IFactory, ICommand.IFactor
         return new Exists(params,e);
     }
 
+    @Override
+    public ILambda lambda(List<IDeclaration> params, IExpr e) {
+        return new Lambda(params,e);
+    }
+
 	@Override
 	public IError error(String text) {
 		return new SMTExpr.Error(text);

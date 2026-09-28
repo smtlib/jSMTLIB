@@ -1,0 +1,7 @@
+success
+success
+success
+success
+Exception
+(error "The get-assertions command is only valid if :produce-assertions has been enabled")
+(error "Error writing to solver: (pop 1) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

@@ -1,0 +1,7 @@
+unsupported
+success
+(error "at line 13, column 20: undefined sort constructor: ->")
+(error "Error writing to solver: (push 1) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= f (lambda ((x Int) ) (+ x 1)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The get-assertions command is only valid if :produce-assertions has been enabled")
+(error "Error writing to solver: (pop 1) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

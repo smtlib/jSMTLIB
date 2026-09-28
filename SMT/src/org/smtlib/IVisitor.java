@@ -35,6 +35,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 	public /*@Nullable*/T visit(IHexLiteral e) throws VisitorException;
 	//public /*@Nullable*/T visit(IIdentifier e) throws VisitorException;
 	public /*@Nullable*/T visit(IKeyword e) throws VisitorException;
+	public /*@Nullable*/T visit(ILambda e) throws VisitorException;
 	public /*@Nullable*/T visit(ILet e) throws VisitorException;
 	//public /*@Nullable*/T visit(ILiteral e) throws VisitorException;
 	public /*@Nullable*/T visit(INumeral e) throws VisitorException;
@@ -194,6 +195,13 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 
 		@Override
 		public /*@Nullable*/T visit(IKeyword e) throws VisitorException {
+			return null;
+		}
+
+		@Override
+		public /*@Nullable*/T visit(ILambda e) throws VisitorException {
+			for (IDeclaration d: e.parameters()) d.accept(this);
+			e.expr().accept(this);
 			return null;
 		}
 
