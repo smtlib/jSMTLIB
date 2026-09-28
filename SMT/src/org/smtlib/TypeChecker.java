@@ -1205,7 +1205,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
     /** Checks that a pattern term is binder-free and has no annotations (SMT-LIB 2.7, Section 3.6.5);
      *  returns false, recording an error, if it is not. */
     protected boolean checkPatternTerm(IExpr t) {
-        if (t instanceof IForall || t instanceof IExists || t instanceof ILet || t instanceof IExpr.IMatch) {
+        if (t instanceof IForall || t instanceof IExists || t instanceof ILet || t instanceof IExpr.IMatch || t instanceof IExpr.ILambda) {
             result.add(smtConfig.responseFactory.error("A pattern term may not contain a binder",t.pos()));
             return false;
         }

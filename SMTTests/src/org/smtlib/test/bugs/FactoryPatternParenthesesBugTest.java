@@ -181,6 +181,12 @@ public class FactoryPatternParenthesesBugTest {
     }
 
     @Test
+    public void patternTermWithALambdaIsRejected() throws Exception {
+        IResponse r = assertWithF("(forall ((x Int)) (! (= (f x) x) :pattern ((f (select (lambda ((y Int)) y) x)))))");
+        Assert.assertTrue("a pattern term containing a lambda (a binder) must be rejected: " + r, r.isError());
+    }
+
+    @Test
     public void patternTermWithAnAnnotationIsRejected() throws Exception {
         IResponse r = assertWithF("(forall ((x Int)) (! (= (f x) x) :pattern ((f (! x :named n)))))");
         Assert.assertTrue("a pattern term containing an annotation must be rejected: " + r, r.isError());
