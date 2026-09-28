@@ -26,794 +26,781 @@ import org.smtlib.ISort.IParameter;
  *  issue #36. */
 public class SymbolTable {
 
-	/** true if the bit-vector theory has been set */
-	// Used only while we have BitVec built in
-	public boolean bitVectorTheorySet = false;
+    /** true if the bit-vector theory has been set */
+    // Used only while we have BitVec built in
+    public boolean bitVectorTheorySet = false;
 
-	/** true if the RealsInts theory is set (which allows implicit promotion of ints to reals) */
-	public boolean realsIntsTheorySet = false;
+    /** true if the RealsInts theory is set (which allows implicit promotion of ints to reals) */
+    public boolean realsIntsTheorySet = false;
 
-	/** true if the FloatingPoint theory has been set */
-	// Used only while we have FloatingPoint built in
-	public boolean floatingPointTheorySet = false;
+    /** true if the FloatingPoint theory has been set */
+    // Used only while we have FloatingPoint built in
+    public boolean floatingPointTheorySet = false;
 
 
-	/** Maps each datatype sort name to its constructors (in declaration order); populated by declare-datatype/declare-datatypes */
-	public Map<String, List<ISymbol>> datatypeConstructors = new HashMap<>();
+    /** Maps each datatype sort name to its constructors (in declaration order); populated by declare-datatype/declare-datatypes */
+    public Map<String, List<ISymbol>> datatypeConstructors = new HashMap<>();
 
-	/** The logic that is being used - this value is used to check that
-	 * expressions, etc., conform to the language restrictions of the current
-	 * logic.
-	 */
-	public ILogic logicInUse = null;
-	
-	/** A reference to the Configuration for this instance of SMT. */
-	public SMT.Configuration smtConfig;
-	
-	/* The tops of the stack are at the beginning of the lists.  The table 
-	 * manages a stack of scopes, each stack element holds a scope.  
-	 * Within a scope, a symbol can be defined with various different arities 
-	 * (and multiple mappings for a given arity) and different sort arguments. 
-	 */
-	
-	//@ private invariant sorts = sortStack.get(0);
-	/** The stack of Sort declaration scopes */
-	private List<Map<IIdentifier,ISort.IDefinition>> sortStack;
-	/** The top-most Sort scope */
-	private Map<IIdentifier,ISort.IDefinition> sorts;
-	
-	//@ private invariant names == symStack.get(0);
-	/** The stack of Symbol scopes. Entries for a given name are kept in one flat list (not
-	 * bucketed by arity): an attributed (:left-assoc etc.) or par-polymorphic entry's
-	 * declared arity need not match the arity of an actual call it can still be used for, so
-	 * a per-arity index would have to be bypassed for those cases anyway -- see lookup(). */
-	private List<Map<IIdentifier,List<Entry>>> symStack;
-	/** The top-most Symbol scope */
-	private Map<IIdentifier,List<Entry>> names;
-	
-	/** Thrown internally within lookup() to report, with a specific reason, why a single
-	 * candidate entry could not be matched against an actual call -- caught per candidate and
-	 * turned into a reason string, so a failed lookup can report something as specific as the
-	 * hardcoded per-operator TypeChecker branches this general mechanism is meant to replace,
-	 * instead of one generic "no matching declaration" message. Not populated with a stack
-	 * trace: this fires routinely (e.g. once per rejected overload), it is not a bug. */
-	private static class NoMatch extends RuntimeException {
-		private static final long serialVersionUID = 1L;
-		NoMatch(String reason) { super(reason, null, false, false); }
-	}
+    /** The logic that is being used - this value is used to check that
+     * expressions, etc., conform to the language restrictions of the current
+     * logic.
+     */
+    public ILogic logicInUse = null;
 
-	/** An object that holds all the information about the defined symbol (or aliased definition). */
-	public static class Entry {
-		
-		/** Constructs a symbol table entry */
-		public Entry(IIdentifier name, ISort.IFcnSort sort, /*@Nullable*/ List<IExpr.IAttribute<?>> attrs, /*@Nullable*/ List<ISort.IParameter> parameters) {
-			this.name = name;
-			this.sort = sort;
-			this.attributes = attrs;
-			this.parameters = parameters;
-			this.definition = null;
-		}
+    /** A reference to the Configuration for this instance of SMT. */
+    public SMT.Configuration smtConfig;
 
-		/** The identifier */
-		public IIdentifier name;
-		/** The Sort of the identifier */ // FIXME _ what about parameter names ?
-		public ISort.IFcnSort sort;
-		/** Any attributes (null if none), e.g. :left-assoc */
-		public /*@Nullable*/ List<IExpr.IAttribute<?>> attributes;
-		/** The par-polymorphic parameters declared for this entry (null if this is a plain,
-		 * monomorphic fun_symbol_decl rather than a par_fun_symbol_decl); sort's argSorts/
-		 * resultSort may reference these as ISort.IParameter placeholders, to be bound
-		 * against actual argument sorts by a caller that wants to use this entry. */
-		public /*@Nullable*/ List<ISort.IParameter> parameters;
-		/** The definition of the symbol, if any */
-		public /*@Nullable*/ IExpr definition;
-	}
-	
-	/** An iterator over all of the Symbols in the symbol scope stack from the top-most scope
-	 * on down.
-	 * @author David R. Cok
-	 */
-	public static class Iterator implements java.util.Iterator<Entry> {
-		private java.util.Iterator<Map<IIdentifier,List<Entry>>> stackIter;
-		private /*@Nullable*/ java.util.Iterator<List<Entry>> symIter = null;
-		private /*@Nullable*/ java.util.Iterator<Entry> entryIter = null;
+    /* The tops of the stack are at the beginning of the lists.  The table 
+     * manages a stack of scopes, each stack element holds a scope.  
+     * Within a scope, a symbol can be defined with various different arities 
+     * (and multiple mappings for a given arity) and different sort arguments. 
+     */
 
-		/** Constructs a new iterator, initialized at the beginning */
-		public Iterator(SymbolTable sym) {
-			stackIter = sym.symStack.iterator();
-		}
+    //@ private invariant sorts = sortStack.get(0);
+    /** The stack of Sort declaration scopes */
+    private List<Map<IIdentifier,ISort.IDefinition>> sortStack;
+    /** The top-most Sort scope */
+    private Map<IIdentifier,ISort.IDefinition> sorts;
 
-		/*@AssertNonNullIfTrue({"symIter"})*/
-		@Override
-		public boolean hasNext() {
-			while (entryIter == null || !entryIter.hasNext()) {
-				while (symIter == null || !symIter.hasNext()) {
-					if (!stackIter.hasNext()) return false;
-					symIter = stackIter.next().values().iterator();
-				}
-				entryIter = symIter.next().iterator();
-			}
-			return true;
-		}
-		
-		@Override
-		public Entry next() {
-			if (!hasNext()) throw new NoSuchElementException();
-			return entryIter.next();
-		}
-		
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException();
-		}
-	}
-	
-	/** Constructs an empty symbol table */
-	public SymbolTable(SMT.Configuration smtConfig) {
-		this.smtConfig = smtConfig;
-		clear(false);
-	}
-	
-	/** Disabled -- currently unused (the only constructor called anywhere is the single-arg
-	 *  {@link #SymbolTable(SMT.Configuration)}) and its original implementation was a
-	 *  mutation-aliasing trap: it copied the list of stack frames but not the frames
-	 *  themselves, so mutating an already-present scope (not a newly pushed one) through the
-	 *  "copy" silently mutated the original too, and vice versa. Left private and throwing
-	 *  rather than deleted, so the trap can't resurface silently -- if a real caller ever needs
-	 *  this, implement it as a genuine deep copy (a fresh {@code HashMap<>(frame)} for each
-	 *  frame in {@code sortStack}/{@code symStack}, not just {@code addAll} on the stacks).
-	 *  See issue #29. */
-	private SymbolTable(SymbolTable s) {
-		throw new UnsupportedOperationException("SymbolTable's copy constructor is not implemented -- see issue #29");
-	}
+    //@ private invariant names == symStack.get(0);
+    /** The stack of Symbol scopes. Entries for a given name are kept in one flat list (not
+     * bucketed by arity): an attributed (:left-assoc etc.) or par-polymorphic entry's
+     * declared arity need not match the arity of an actual call it can still be used for, so
+     * a per-arity index would have to be bypassed for those cases anyway -- see lookup(). */
+    private List<Map<IIdentifier,List<Entry>>> symStack;
+    /** The top-most Symbol scope */
+    private Map<IIdentifier,List<Entry>> names;
 
-	/** Returns a fresh iterator over the symbol table's contents */
-	public Iterator iterator() {
-		return new Iterator(this);
-	}
-	
-	/** Initializes the symbol table with an empty background frame and one empty frame. */
-	public void clear(boolean keepBackground) {
-		if (keepBackground) {
-			while (sortStack.size() > 1) sortStack.remove(0);
-			while (symStack.size() > 1) symStack.remove(0);
-			// add()/addSortParameter() write through the sorts/names fields, not through
-			// symStack/sortStack directly -- without this they'd keep pointing at the
-			// frame Map just removed above, silently losing any subsequent declaration.
-			sorts = sortStack.get(0);
-			names = symStack.get(0);
-		} else {
-			sortStack = new LinkedList<Map<IIdentifier,ISort.IDefinition>>();
-			symStack = new LinkedList<Map<IIdentifier,List<Entry>>>();
-			datatypeConstructors = new HashMap<>();
-			push(); // an empty background frame
-			push(); // an empty primary frame
-		}
-	}
+    /** Thrown internally within lookup() to report, with a specific reason, why a single
+     * candidate entry could not be matched against an actual call -- caught per candidate and
+     * turned into a reason string, so a failed lookup can report something as specific as the
+     * hardcoded per-operator TypeChecker branches this general mechanism is meant to replace,
+     * instead of one generic "no matching declaration" message. Not populated with a stack
+     * trace: this fires routinely (e.g. once per rejected overload), it is not a bug. */
+    private static class NoMatch extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+        NoMatch(String reason) { super(reason, null, false, false); }
+    }
 
-	/** Adds a new empty frame on the top of the symbol table stack. */
-	public void push() {
-		sortStack.add(0,sorts=new HashMap<IIdentifier,ISort.IDefinition>());
-		symStack.add(0,names=new HashMap<IIdentifier,List<Entry>>());
-	}
+    /** An object that holds all the information about the defined symbol (or aliased definition). */
+    public static class Entry {
 
-	/** Combines the top two symbol scopes, removing the current top scope; presumes that there
-	 * is no shadowing of symbols; the top sort scope is discarded.
-	 */ // TODO - say more about why this is used/needed; also review this
-	public void merge() {
-		Map<IIdentifier,List<SymbolTable.Entry>> oldnames = names;
-		pop();
-		// Put everything in oldnames into the current top
-		for (List<SymbolTable.Entry> ee: oldnames.values()) {
-			for (SymbolTable.Entry entry: ee) {
-				// We have already checked that there is no shadowing
-				add(entry, false);
-			}
-		}
-	}
-	
-	/** Removes the top frame from the symbol table stack. 
-	 * The symbol table must have at least one non-background scope or an 
-	 * InternalException will be thrown.
-	 */
-	public void pop() {
-		// The comparison is <= 1 since there is always also the background scope
-		if (symStack.size() <= 1) {
-			// We throw an InternalException (that is, a bug), since pop should not be called if
-			// there are no scopes to pop.
-			throw new SMT.InternalException("Invalid pop - no more symbol table scopes to pop");
-		}
-		sortStack.remove(0);
-		symStack.remove(0);
-		sorts = sortStack.get(0);
-		names = symStack.get(0);
-	}
-	
-	// FIXME _ why is this needed?
-	/** Removes the previous background frame, then removes the top frame and 
-	 * inserts it as the bottom (background) frame. */
-	public void moveToBackground() {
-		sortStack.remove(sortStack.size()-1);
-		symStack.remove(symStack.size()-1);
-		sortStack.add(sortStack.remove(0));
-		symStack.add(symStack.remove(0));
-		names = symStack.get(0);
-		sorts = sortStack.get(0);
-	}
-	
-	/** Adds the given symbol as a sort to the top scope of the sort table; 
-	 * returns false if the given symbol is already in the top scope (and the sort table is unchanged);
-	 * returns true if the symbol is not already in the top scope.
-	 * @param symbol the symbol to add
-	 * @return true if successfully added, false if already present
-	 */
-	public boolean addSortParameter(ISymbol symbol, boolean global) {
-		Map<IIdentifier, ISort.IDefinition> target = global ? sortStack.get(sortStack.size()-1) : sorts;
-		ISort.IDefinition previous = target.put(symbol, smtConfig.sortFactory.createSortParameter(symbol));
-		if (previous == null) return true;
-		target.put(symbol, previous);
-		return false;
-	}
+        /** Constructs a symbol table entry */
+        public Entry(IIdentifier name, ISort.IFcnSort sort, /*@Nullable*/ List<IExpr.IAttribute<?>> attrs, /*@Nullable*/ List<ISort.IParameter> parameters) {
+            this.name = name;
+            this.sort = sort;
+            this.attributes = attrs;
+            this.parameters = parameters;
+            this.definition = null;
+        }
 
-	/** Adds a new sort declaration to the given frame (global = background, else current).
-	 *
-	 * @param identifier the identifier of the new Sort definition
-	 * @param arity the arity of the new Sort definition
-	 * @param global if true, add to the background frame; otherwise add to the current frame
-	 * @return true if successfully added, false if there already is a sort (in any scope) with this identifier
-	 */
-	/** Adds a new sort family definition, with attributes (e.g. :right-assoc; null or empty if
-	 * none), to the given frame (global = background, else current).
-	 *
-	 * @param identifier the identifier of the new Sort definition
-	 * @param arity the arity of the new Sort definition
-	 * @param attributes any attributes declared on the sort symbol (null or empty if none)
-	 * @param global if true, add to the background frame; otherwise add to the current frame
-	 * @return true if successfully added, false if there already is a sort (in any scope) with this identifier
-	 */
-	public boolean addSortDefinition(IIdentifier identifier, INumeral arity, /*@Nullable*/ List<IExpr.IAttribute<?>> attributes, boolean global) {
-		ISort.IDefinition s = lookupSort(identifier);
-		if (s != null) return false;
-		ISort.IDefinition def = smtConfig.sortFactory.createSortFamily(identifier,arity,attributes);
-		(global ? sortStack.get(sortStack.size()-1) : sorts).put(identifier, def);
-		return true;
-	}
+        /** The identifier */
+        public IIdentifier name;
+        /** The Sort of the identifier */ // FIXME _ what about parameter names ?
+        public ISort.IFcnSort sort;
+        /** Any attributes (null if none), e.g. :left-assoc */
+        public /*@Nullable*/ List<IExpr.IAttribute<?>> attributes;
+        /** The par-polymorphic parameters declared for this entry (null if this is a plain,
+         * monomorphic fun_symbol_decl rather than a par_fun_symbol_decl); sort's argSorts/
+         * resultSort may reference these as ISort.IParameter placeholders, to be bound
+         * against actual argument sorts by a caller that wants to use this entry. */
+        public /*@Nullable*/ List<ISort.IParameter> parameters;
+        /** The definition of the symbol, if any */
+        public /*@Nullable*/ IExpr definition;
+    }
 
-	/** Adds a new sort abbreviation definition to the given frame (global = background, else current).
-	 *
-	 * @param identifier the name of the new Sort definition
-	 * @param parameters the names of the parameters of the Sort abbreviation
-	 * @param definition the expression of the Sort abbreviation
-	 * @param global if true, add to the background frame; otherwise add to the current frame
-	 * @return true if successfully added, false if there already is a sort by this name in the target scope
-	 */
-	public boolean addSortDefinition(IIdentifier identifier, List<IParameter> parameters, ISort definition, boolean global) {
-		Map<IIdentifier, ISort.IDefinition> target = global ? sortStack.get(sortStack.size()-1) : sorts;
-		if (target.get(identifier) != null) return false;
-		target.put(identifier, smtConfig.sortFactory.createSortAbbreviation(identifier,parameters,definition));
-		return true;
-	}
-	
-	/** Looks up the Sort definition with the given name
-	 * 
-	 * @param name the name of the Sort definition to find
-	 * @return null if not found
-	 */
-	/*@Nullable*/
-	public ISort.IDefinition lookupSort(IIdentifier name) {
-		for (Map<IIdentifier,ISort.IDefinition> set: sortStack) {
-			ISort.IDefinition s = set.get(name);
-			if (s != null) return s;
-		}
-		
-		// FIXME _ improve so this is not hard coded
-		if (name instanceof IParameterizedIdentifier) {
-			IParameterizedIdentifier pf = (IParameterizedIdentifier)name;
-			if (bitVectorTheorySet && Utils.BITVEC_SYM.equals(pf.headSymbol())) {
-				if (pf.indices().size() != 1 || !(pf.indices().get(0) instanceof INumeral)) {
-					return smtConfig.sortFactory.createErrorDefinition(name,"A bit-vector sort must have exactly one numeral",
-							pf.indices().size() > 1 ? pf.indices().get(1).pos()
-									: pf.headSymbol().pos());
-				}
-				if (((INumeral) pf.indices().get(0)).intValue() == 0) {
-					return smtConfig.sortFactory.createErrorDefinition(name,"A bit-vector sort must have a length of at least 1",pf.indices().get(0).pos());
-				}
-				ISort.IDefinition def = smtConfig.sortFactory.createSortFamily(name,smtConfig.exprFactory.numeral(0),null);
-				sorts.put(name, def);
-				return def;
-			}
-			if (floatingPointTheorySet && Utils.FLOATINGPOINT_SYM.equals(pf.headSymbol())) {
-				if (pf.indices().size() != 2 || !(pf.indices().get(0) instanceof INumeral) || !(pf.indices().get(1) instanceof INumeral)) {
-					return smtConfig.sortFactory.createErrorDefinition(name,"A FloatingPoint sort must have exactly two numerals (eb sb)",
-							pf.indices().size() > 0 ? pf.indices().get(pf.indices().size()-1).pos()
-									: pf.headSymbol().pos());
-				}
-				int eb = ((INumeral) pf.indices().get(0)).intValue();
-				int sb = ((INumeral) pf.indices().get(1)).intValue();
-				if (eb <= 1 || sb <= 1) {
-					return smtConfig.sortFactory.createErrorDefinition(name,"A FloatingPoint sort must have exponent and significand sizes greater than 1",
-							(eb <= 1 ? pf.indices().get(0) : pf.indices().get(1)).pos());
-				}
-				ISort.IDefinition def = smtConfig.sortFactory.createSortFamily(name,smtConfig.exprFactory.numeral(0),null);
-				sorts.put(name, def);
-				return def;
-			}
-		} else if (floatingPointTheorySet) {
-			// Float16/Float32/Float64/Float128 are documented (FloatingPoint.smt2's :notes)
-			// as synonyms for specific (_ FloatingPoint eb sb) instances. A first attempt at
-			// this just returned the (_ FloatingPoint eb sb) IFamily directly, on the theory
-			// that sharing the same IDefinition object would make the two sorts compare equal
-			// -- it does not: Sort.Application.expand() short-circuits ("return ss unchanged")
-			// the moment definition() is an IFamily, on the assumption an IFamily-backed
-			// application is already in its own canonical form, which is false here (the
-			// application's own family() is still literally "Float32", not "FloatingPoint").
-			// equals() calls expand() first, so two IFamily-sharing-but-differently-named
-			// applications never compared equal -- declare-fun ... Float32 stopped erroring,
-			// but a Float32-sorted value was then never usable anywhere a real
-			// (_ FloatingPoint eb sb) value was expected, silently reintroducing the exact
-			// "documented synonym that is not really interchangeable" problem this whole
-			// mechanism exists to avoid (see Utils.loadTheory's exclusion of these names from
-			// the generic :sorts loader, for the same underlying problem there).
-			// The fix is to make Float32 a genuine ISort.IAbbreviation for (_ FloatingPoint eb
-			// sb) instead (the same kind of definition define-sort produces): expand()'s loop
-			// does not short-circuit on an IAbbreviation -- it calls eval() to substitute down
-			// to the target sort expression and keeps looping, terminating only once that
-			// target's own definition() is an IFamily (true here, since it is pre-resolved
-			// below) -- so expand() now actually returns the (_ FloatingPoint eb sb)-shaped
-			// application, which compares structurally equal to one written out directly.
-			int eb = -1, sb = -1;
-			if (Utils.FLOAT16.equals(name)) { eb = 5; sb = 11; }
-			else if (Utils.FLOAT32.equals(name)) { eb = 8; sb = 24; }
-			else if (Utils.FLOAT64.equals(name)) { eb = 11; sb = 53; }
-			else if (Utils.FLOAT128.equals(name)) { eb = 15; sb = 113; }
-			if (eb > 0) {
-				List<IExpr.IIndex> nums = new LinkedList<IExpr.IIndex>();
-				nums.add(smtConfig.exprFactory.numeral(eb));
-				nums.add(smtConfig.exprFactory.numeral(sb));
-				IIdentifier fpId = smtConfig.exprFactory.id(smtConfig.exprFactory.symbol(Utils.FLOATINGPOINT), nums);
-				ISort.IDefinition fpDef = lookupSort(fpId); // resolves/caches (_ FloatingPoint eb sb) itself
-				ISort.IApplication target = smtConfig.sortFactory.createSortExpression(fpId, new ISort[0]);
-				target.definition(fpDef); // pre-resolved so expand()'s loop terminates on this application,
-				                           // not an unresolved one -- see comment above
-				ISort.IDefinition def = smtConfig.sortFactory.createSortAbbreviation(name, new LinkedList<IParameter>(), target);
-				sorts.put(name, def);
-				return def;
-			}
-		}
+    /** An iterator over all of the Symbols in the symbol scope stack from the top-most scope
+     * on down.
+     * @author David R. Cok
+     */
+    public static class Iterator implements java.util.Iterator<Entry> {
+        private java.util.Iterator<Map<IIdentifier,List<Entry>>> stackIter;
+        private /*@Nullable*/ java.util.Iterator<List<Entry>> symIter = null;
+        private /*@Nullable*/ java.util.Iterator<Entry> entryIter = null;
 
-		return null;
-	}
-	
-	/** Lookup the Symbol with the given identifier and arity, returning its Sort.
-	 * @param arity the arity of the Symbol
-	 * @param name the name of the Symbol
-	 * @return null if not found, the Sort of the Symbol if found
-	 */
-	/*@Nullable*/
-	public IFcnSort lookup(int arity, IIdentifier name) {
-		for (Map<IIdentifier,List<Entry>> set: symStack) {
-			List<Entry> entrylist = set.get(name);
-			if (entrylist != null) {
-				for (Entry e: entrylist) {
-					if (e.sort.argSorts().length == arity) return e.sort;
-				}
-			}
-		}
-		return null;
-	}
+        /** Constructs a new iterator, initialized at the beginning */
+        public Iterator(SymbolTable sym) {
+            stackIter = sym.symStack.iterator();
+        }
 
-	/** Lookup the Symbol with the given identifier, returning all of its declared entries
-	 * (of any arity).
-	 * @param name the name of the Symbol
-	 * @return null if not found, the corresponding List&lt;Entry&gt; from the
-	 * top-most scope in which the identifier is found
-	 */
-	public /*@Nullable*/ List<Entry> lookup(IIdentifier name) {
-		for (Map<IIdentifier,List<Entry>> set: symStack) {
-			List<Entry> entrylist = set.get(name);
-			if (entrylist != null) return entrylist;
-		}
-		return null;
-	}
-	
-	/** Lookup a Symbol with the given name and argument Sorts and result Sort.
-	 * @param name the name to find
-	 * @param argSorts the Sorts of the arguments
-	 * @param resultSort the expected result sort (from an `as` qualifier), or null if none given
-	 * @param reason if not null and this call returns null because some candidate(s) were
-	 * found for `name` but none matched, set to a diagnostic message: the one candidate's own
-	 * specific reason if there was exactly one, or a generic "no match" message listing the
-	 * available signatures if there was more than one (overloading is rare, so a pile of
-	 * per-candidate reasons is more noise than help once there's more than one to explain).
-	 * Left untouched if `name` has no declared candidates at all, or if a match is found.
-	 * @return the result Sort of the matching declaration, or null if none matches
-	 */
-	// The background scope may overload an identifier with definitions of the same or
-	// different arity (but different sort). However, in non-background scopes, no
-	// overloading is allowed of any arity in any scope.
-	//
-	// A candidate entry's declared arity is not necessarily the actual call's arity: a
-	// :left-assoc/:right-assoc/:chainable/:pairwise entry is always declared at arity 2 but
-	// can be called at arity 2..N (SMT-LIB Sec. 3.6.2's n-ary sugar), so entries are not
-	// bucketed by arity -- every candidate for `name` is tried, exact-arity first, then (only
-	// if nothing matched and the call has more than two arguments) the 2-arg/attributed
-	// fallback. A par-polymorphic entry (entry.parameters != null) is tried via unify()
-	// instead of plain equality; either way a mismatch on one candidate just moves on to the
-	// next -- overloading means a unification/equality failure is not itself an error.
-	/*@Nullable*/
-	public ISort lookup(IIdentifier name, List<ISort> argSorts, ISort resultSort, /*@Nullable*/ StringBuilder reason) {
-		int arity = argSorts.size();
-		for (Map<IIdentifier,List<Entry>> set: symStack) {
-			List<Entry> entrylist = set.get(name);
-			if (entrylist == null) continue;
-			// We have a name match. First check for an exact match on arity.
-			Entry found = null;
-			ISort foundResult = null;
-			boolean foundMatchButNotOnResult = false;
-			List<Entry> tried = new LinkedList<Entry>();
-			List<String> failures = new LinkedList<String>();
-			for (Entry entry: entrylist) {
-				if (entry.sort.argSorts().length != arity) continue;
-				tried.add(entry);
-				ISort candidateResult;
-				try {
-					candidateResult = matchExact(entry, argSorts);
-				} catch (NoMatch nm) {
-					failures.add(nm.getMessage());
-					continue;
-				}
-				// Cases to consider
-				//   resultSort != null & just one argument sort match -> error - not supposed to use a qualifier
-				//   resultSort != null & multiple argument sort matches -> pick the one that matches on result sort
-				//   resultSort == null & and just one argument sort match -> return it
-				//   resultSort == null & multiple argument sort matches -> ambiguous
-				if (resultSort != null) {
-					if (resultSort.equals(candidateResult)) {
-						if (found != null) {
-							// FIXME - there appear to be two entries that match on all arguments and the result
-							return null;
-						}
-						found = entry;
-						foundResult = candidateResult;
-					} else {
-						foundMatchButNotOnResult = true;
-						failures.add("has result sort " + smtConfig.defaultPrinter.toString(candidateResult)
-								+ ", expected " + smtConfig.defaultPrinter.toString(resultSort) + " (from the `as` qualifier)");
-					}
-				} else {
-					// No result sort specified - there should not be any overloading
-					if (found != null) {
-						// Found something previously and now have this match - so ambiguous
-						// FIXME - no place to give an error message that the result sort is ambiguous
-						return null;
-					}
-					found = entry;
-					foundResult = candidateResult;
-					// Otherwise have just one match - keep checking the rest of the list
-				}
-			}
-			if (resultSort != null && found != null && !foundMatchButNotOnResult) {
-				// FIXME - should report unneeded disambiguation
-				return null;
-			}
-			if (found != null) return foundResult;
+        /*@AssertNonNullIfTrue({"symIter"})*/
+        @Override
+        public boolean hasNext() {
+            while (entryIter == null || !entryIter.hasNext()) {
+                while (symIter == null || !symIter.hasNext()) {
+                    if (!stackIter.hasNext()) return false;
+                    symIter = stackIter.next().values().iterator();
+                }
+                entryIter = symIter.next().iterator();
+            }
+            return true;
+        }
 
-			// Check for left-assoc etc.
-			if (arity <= 2) {
-				setReason(reason, name, tried, failures, entrylist);
-				return null;
-			}
-			for (Entry entry: entrylist) {
-				if (entry.sort.argSorts().length != 2) continue;
-				tried.add(entry);
-				try {
-					return matchAssociative(entry, argSorts);
-				} catch (NoMatch nm) {
-					failures.add(nm.getMessage());
-				}
-			}
-			setReason(reason, name, tried, failures, entrylist);
-			return null;
-		}
-		return null;
-	}
+        @Override
+        public Entry next() {
+            if (!hasNext()) throw new NoSuchElementException();
+            return entryIter.next();
+        }
 
-	/** Fills in lookup()'s `reason` output as described there, given the candidates actually
-	 * tried for `name` (same declared arity, or 2-arg-with-an-associativity-attribute, as the
-	 * call) and each one's failure message (same size and order as `tried`); with exactly one
-	 * candidate tried, its own message is used as-is. If nothing was even arity-eligible to
-	 * try (e.g. a 1-argument call to a name only ever declared at arity 2), falls back to
-	 * listing entrylist -- every declaration that exists for `name`, regardless of arity --
-	 * so the message still says something useful rather than reducing to the fully generic
-	 * "unknown symbol" one. */
-	private void setReason(/*@Nullable*/ StringBuilder reason, IIdentifier name, List<Entry> tried, List<String> failures, List<Entry> entrylist) {
-		if (reason == null) return;
-		if (tried.size() == 1) {
-			reason.append(failures.get(0));
-			return;
-		}
-		if (tried.isEmpty() && entrylist.size() == 1) {
-			// No declared candidate even had an eligible arity to try -- with a single
-			// declaration, stating its required arity directly (SMT-LIB Sec. 3.6.2's n-ary
-			// sugar means an associativity-attributed 2-arg declaration accepts more) reads
-			// more naturally than the generic "no matching declaration" signature listing.
-			Entry entry = entrylist.get(0);
-			int declaredArity = entry.sort.argSorts().length;
-			reason.append("The function symbol ")
-				.append(smtConfig.defaultPrinter.toString(name))
-				.append(" takes ")
-				.append(numberWord(declaredArity));
-			if (hasAttribute(entry,":left-assoc") || hasAttribute(entry,":right-assoc")
-					|| hasAttribute(entry,":chainable") || hasAttribute(entry,":pairwise")) {
-				reason.append(" or more arguments");
-			} else {
-				reason.append(declaredArity == 1 ? " argument" : " arguments");
-			}
-			return;
-		}
-		List<Entry> toList = tried.isEmpty() ? entrylist : tried;
-		reason.append("No matching declaration for function symbol ")
-			.append(smtConfig.defaultPrinter.toString(name))
-			.append(". Available signatures: ");
-		boolean first = true;
-		for (Entry entry: toList) {
-			if (!first) reason.append("; ");
-			first = false;
-			reason.append(signature(entry));
-		}
-	}
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
 
-	private static final String[] NUMBER_WORDS = {
-		"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"
-	};
+    /** Constructs an empty symbol table */
+    public SymbolTable(SMT.Configuration smtConfig) {
+        this.smtConfig = smtConfig;
+        clear(false);
+    }
 
-	/** Spells out small non-negative integers (e.g. for "takes two arguments"); falls back to
-	 * the numeral itself beyond the spelled-out range. */
-	private static String numberWord(int n) {
-		return (n >= 0 && n < NUMBER_WORDS.length) ? NUMBER_WORDS[n] : String.valueOf(n);
-	}
+    /* A copy constructor, SymbolTable(SymbolTable s), deliberately does not exist here.
+     * A previous implementation was a mutation-aliasing trap: it copied the list of stack
+     * frames but not the frames themselves, so mutating an already-present scope (not a
+     * newly pushed one) through the "copy" silently mutated the original too, and vice
+     * versa. Kept for a while as a private, throwing stub (rather than deleted outright) so
+     * the trap couldn't resurface silently -- but a stub constructor's field initializers
+     * are compiled into it just like any real constructor's, so it permanently showed as
+     * partially covered in JaCoCo reports (the stub itself is deliberately never called).
+     * Removed for real once that tradeoff stopped being worth it. If a real caller ever
+     * needs this, implement it as a genuine deep copy (a fresh HashMap<>(frame) for each
+     * frame in sortStack/symStack, not just addAll on the stacks). See issue #29. */
 
-	/** A human-readable rendering of an entry's declared signature, e.g. "(select (Array A B)
-	 * A) -> B :pairwise", for listing candidates in a "no matching declaration" message. */
-	private String signature(Entry entry) {
-		StringBuilder sb = new StringBuilder();
-		sb.append("(").append(smtConfig.defaultPrinter.toString(entry.name));
-		for (ISort s: entry.sort.argSorts()) {
-			sb.append(" ").append(smtConfig.defaultPrinter.toString(s));
-		}
-		sb.append(") -> ").append(smtConfig.defaultPrinter.toString(entry.sort.resultSort()));
-		if (entry.attributes != null) {
-			for (IExpr.IAttribute<?> a: entry.attributes) {
-				sb.append(" ").append(a.keyword().value());
-			}
-		}
-		return sb.toString();
-	}
+    /** Returns a fresh iterator over the symbol table's contents */
+    public Iterator iterator() {
+        return new Iterator(this);
+    }
 
-	/** Tries a single candidate entry, already known to have the actual call's arity, as an
-	 * exact match: plain structural equality for a monomorphic entry, unification for a
-	 * par-polymorphic one (substituting any discovered parameter bindings into the declared
-	 * result sort). Returns the concrete result sort on success; throws NoMatch, naming the
-	 * specific argument and sorts involved, on mismatch. */
-	private ISort matchExact(Entry entry, List<ISort> argSorts) {
-		ISort[] declaredArgs = entry.sort.argSorts();
-		if (entry.parameters == null) {
-			for (int i = 0; i < declaredArgs.length; i++) {
-				if (!declaredArgs[i].equals(argSorts.get(i))) {
-					throw new NoMatch("Argument " + (i+1) + " of " + smtConfig.defaultPrinter.toString(entry.name)
-							+ " has sort " + smtConfig.defaultPrinter.toString(argSorts.get(i))
-							+ ", expected " + smtConfig.defaultPrinter.toString(declaredArgs[i]));
-				}
-			}
-			return entry.sort.resultSort();
-		}
-		Map<ISort.IParameter,ISort> bindings = new HashMap<ISort.IParameter,ISort>();
-		for (int i = 0; i < declaredArgs.length; i++) {
-			try {
-				bindings = unify(declaredArgs[i], argSorts.get(i), bindings);
-			} catch (NoMatch nm) {
-				throw new NoMatch("Argument " + (i+1) + " of " + smtConfig.defaultPrinter.toString(entry.name)
-						+ " " + nm.getMessage());
-			}
-		}
-		return entry.sort.resultSort().substitute(bindings);
-	}
+    /** Initializes the symbol table with an empty background frame and one empty frame. */
+    public void clear(boolean keepBackground) {
+        if (keepBackground) {
+            while (sortStack.size() > 1) sortStack.remove(0);
+            while (symStack.size() > 1) symStack.remove(0);
+            // add()/addSortParameter() write through the sorts/names fields, not through
+            // symStack/sortStack directly -- without this they'd keep pointing at the
+            // frame Map just removed above, silently losing any subsequent declaration.
+            sorts = sortStack.get(0);
+            names = symStack.get(0);
+        } else {
+            sortStack = new LinkedList<Map<IIdentifier,ISort.IDefinition>>();
+            symStack = new LinkedList<Map<IIdentifier,List<Entry>>>();
+            datatypeConstructors = new HashMap<>();
+            push(); // an empty background frame
+            push(); // an empty primary frame
+        }
+    }
 
-	/** Tries a single 2-arg candidate entry, carrying an associativity attribute, against an
-	 * actual call with more than two arguments -- the SMT-LIB Sec. 3.6.2 n-ary sugar for
-	 * :left-assoc ((f t1 t2 t3) = (f (f t1 t2) t3)), :right-assoc ((f t1 t2 t3) =
-	 * (f t1 (f t2 t3))), and :chainable/:pairwise (every argument must independently match
-	 * the declared, shared argument sort). A monomorphic entry is matched with plain
-	 * equality; a par entry unifies at each fold step, which can rebind its parameters
-	 * differently every time -- needed for e.g. HO-Core's @, where each curry step's ->
-	 * domain/codomain differ. Returns the concrete result sort on success; throws NoMatch,
-	 * naming the specific argument and sorts involved, if this entry's attribute doesn't
-	 * apply at all or the sorts don't match at some fold step. */
-	private ISort matchAssociative(Entry entry, List<ISort> argSorts) {
-		ISort left = entry.sort.argSorts()[0];
-		ISort right = entry.sort.argSorts()[1];
-		ISort declaredResult = entry.sort.resultSort();
-		boolean isPar = entry.parameters != null;
-		String nm = smtConfig.defaultPrinter.toString(entry.name);
-		if (hasAttribute(entry,":left-assoc")) {
-			ISort acc = argSorts.get(0);
-			for (int i = 1; i < argSorts.size(); i++) {
-				ISort next = argSorts.get(i);
-				if (isPar) {
-					Map<ISort.IParameter,ISort> bindings;
-					try {
-						bindings = unify(left, acc, new HashMap<ISort.IParameter,ISort>());
-						bindings = unify(right, next, bindings);
-					} catch (NoMatch e) {
-						throw new NoMatch("Left-associative application of " + nm + " fails at argument " + (i+1) + ": " + e.getMessage());
-					}
-					acc = declaredResult.substitute(bindings);
-				} else {
-					if (!acc.equals(left) || !next.equals(right)) {
-						throw new NoMatch("Left-associative application of " + nm + " fails at argument " + (i+1)
-								+ ": has sort " + smtConfig.defaultPrinter.toString(next)
-								+ ", expected " + smtConfig.defaultPrinter.toString(right));
-					}
-					acc = declaredResult;
-				}
-			}
-			return acc;
-		} else if (hasAttribute(entry,":right-assoc")) {
-			ISort acc = argSorts.get(argSorts.size() - 1);
-			for (int i = argSorts.size() - 2; i >= 0; i--) {
-				ISort next = argSorts.get(i);
-				if (isPar) {
-					Map<ISort.IParameter,ISort> bindings;
-					try {
-						bindings = unify(left, next, new HashMap<ISort.IParameter,ISort>());
-						bindings = unify(right, acc, bindings);
-					} catch (NoMatch e) {
-						throw new NoMatch("Right-associative application of " + nm + " fails at argument " + (i+1) + ": " + e.getMessage());
-					}
-					acc = declaredResult.substitute(bindings);
-				} else {
-					if (!next.equals(left) || !acc.equals(right)) {
-						throw new NoMatch("Right-associative application of " + nm + " fails at argument " + (i+1)
-								+ ": has sort " + smtConfig.defaultPrinter.toString(next)
-								+ ", expected " + smtConfig.defaultPrinter.toString(left));
-					}
-					acc = declaredResult;
-				}
-			}
-			return acc;
-		} else if (hasAttribute(entry,":chainable") || hasAttribute(entry,":pairwise")) {
-			int i = 0;
-			if (isPar) {
-				Map<ISort.IParameter,ISort> bindings = new HashMap<ISort.IParameter,ISort>();
-				for (ISort actual: argSorts) {
-					i++;
-					try {
-						bindings = unify(left, actual, bindings);
-					} catch (NoMatch e) {
-						throw new NoMatch("Chained/pairwise application of " + nm + " fails at argument " + i + ": " + e.getMessage());
-					}
-				}
-				return declaredResult.substitute(bindings);
-			} else {
-				for (ISort actual: argSorts) {
-					i++;
-					if (!actual.equals(left)) {
-						throw new NoMatch("Chained/pairwise application of " + nm + " fails at argument " + i
-								+ ": has sort " + smtConfig.defaultPrinter.toString(actual)
-								+ ", expected " + smtConfig.defaultPrinter.toString(left));
-					}
-				}
-				return declaredResult;
-			}
-		}
-		throw new NoMatch(nm + " does not accept more than two arguments");
-	}
+    /** Adds a new empty frame on the top of the symbol table stack. */
+    public void push() {
+        sortStack.add(0,sorts=new HashMap<IIdentifier,ISort.IDefinition>());
+        symStack.add(0,names=new HashMap<IIdentifier,List<Entry>>());
+    }
 
-	/** Attempts to unify a (possibly parameter-containing) declared sort against a concrete
-	 * actual sort, extending the given bindings with any newly-discovered parameter
-	 * bindings. Returns the (possibly extended) bindings on success -- a new map is returned
-	 * rather than mutating the argument in place, so callers must use the return value.
-	 * Throws NoMatch, describing the specific mismatch, if the two cannot be unified (a
-	 * structural mismatch, or a parameter that would need two different bindings). */
-	private Map<ISort.IParameter,ISort> unify(ISort declared, ISort actual, Map<ISort.IParameter,ISort> bindings) {
-		// Application.equals() always expands both sides before comparing (folding e.g. a ->
-		// sort still in its flat, un-folded :right-assoc-sugar form -- see the comment on
-		// Sort.Application.expand()); unify() does its own structural walk instead of
-		// delegating to equals(), so it needs the same normalization explicitly, or a still-
-		// flat actual sort (e.g. a declare-fun's raw, un-folded stored sort) silently fails to
-		// unify against a canonically-shaped declared pattern like (-> A B).
-		if (actual instanceof ISort.IApplication) actual = ((ISort.IApplication) actual).expand();
-		if (declared instanceof ISort.IApplication) declared = ((ISort.IApplication) declared).expand();
-		if (declared instanceof ISort.IParameter) {
-			ISort bound = bindings.get(declared);
-			if (bound == null) {
-				Map<ISort.IParameter,ISort> next = new HashMap<ISort.IParameter,ISort>(bindings);
-				next.put((ISort.IParameter) declared, actual);
-				return next;
-			}
-			if (!bound.equals(actual)) {
-				throw new NoMatch("has sort " + smtConfig.defaultPrinter.toString(actual)
-						+ ", expected " + smtConfig.defaultPrinter.toString(bound) + " (to match an earlier argument)");
-			}
-			return bindings;
-		}
-		if (declared instanceof ISort.IApplication) {
-			ISort.IApplication da = (ISort.IApplication) declared;
-			if (!(actual instanceof ISort.IApplication) || !da.family().equals(((ISort.IApplication)actual).family())) {
-				throw new NoMatch("has sort " + smtConfig.defaultPrinter.toString(actual)
-						+ ", expected sort family " + smtConfig.defaultPrinter.toString(da.family()));
-			}
-			ISort.IApplication aa = (ISort.IApplication) actual;
-			List<ISort> dparams = da.parameters();
-			List<ISort> aparams = aa.parameters();
-			if (dparams.size() != aparams.size()) {
-				throw new NoMatch("has sort " + smtConfig.defaultPrinter.toString(actual)
-						+ ", expected sort family " + smtConfig.defaultPrinter.toString(da.family()));
-			}
-			Map<ISort.IParameter,ISort> current = bindings;
-			for (int i = 0; i < dparams.size(); i++) {
-				current = unify(dparams.get(i), aparams.get(i), current);
-			}
-			return current;
-		}
-		if (!declared.equals(actual)) {
-			throw new NoMatch("has sort " + smtConfig.defaultPrinter.toString(actual)
-					+ ", expected " + smtConfig.defaultPrinter.toString(declared));
-		}
-		return bindings;
-	}
+    /** Combines the top two symbol scopes, removing the current top scope; presumes that there
+     * is no shadowing of symbols; the top sort scope is discarded.
+     */ // TODO - say more about why this is used/needed; also review this
+    public void merge() {
+        Map<IIdentifier,List<SymbolTable.Entry>> oldnames = names;
+        pop();
+        // Put everything in oldnames into the current top
+        for (List<SymbolTable.Entry> ee: oldnames.values()) {
+            for (SymbolTable.Entry entry: ee) {
+                // We have already checked that there is no shadowing
+                add(entry, false);
+            }
+        }
+    }
 
-	/** Returns true if the entry contains a value for the given attribute name (e.g.
-	 *  ":left-assoc"). Deliberately takes the name as a String and compares against each
-	 *  attribute's keyword by value rather than requiring callers to build/compare IKeyword
-	 *  objects: every call site here passes a literal attribute name, and the list scanned is
-	 *  always tiny, so there is no correctness or performance benefit to keyword-object lookup
-	 *  -- just more ceremony at each call site. See issue #36. */
-	private boolean hasAttribute(Entry entry, String attr) {
-	    if (entry.attributes != null) {
-	        for (IExpr.IAttribute<?> a: entry.attributes) {
-	            if (a.keyword().value().equals(attr)) return true;
-	        }
-	    }
-		return false;
-	}
-	
-	/** Adds the given entry to the symbol table.
-	 * @param entry the Entry to add
-	 */
-	public void add(Entry entry, boolean global) {
-		Map<IIdentifier,List<Entry>> lnames = names;
-		if (global) {
-			lnames = symStack.get(symStack.size()-1);
-		}
-		List<Entry> entrylist = lnames.get(entry.name);
-		if (entrylist == null) {
-			entrylist = new LinkedList<Entry>();
-			lnames.put(entry.name,entrylist);
-		}
-		entrylist.add(entry);
-	}
-	
-	/** Adds the given entry to the symbol table; if overload is false and the 
-	 * identifier in the entry is already in the table,
-	 * the method returns false (without changing the symbol table); 
-	 * otherwise the entry is added and the
-	 * method returns true
-	 * 
-	 * @param entry the Entry to add
-	 */
-	public boolean add(Entry entry, boolean global, boolean overload) {
-		// Check if the entry is already present in any scope;
-		// return false if it is.  Allow overloading if overload is true.
-		if (!overload) {
-			for (Map<IIdentifier,List<Entry>> set: symStack) {
-				if (set.get(entry.name) != null) {
-					return false;
-				}
-			}
-		}
-		// Symbol is not present or overloading is allowed, so add it
-		add(entry, global);
-		return true;
-	}
+    /** Removes the top frame from the symbol table stack. 
+     * The symbol table must have at least one non-background scope or an 
+     * InternalException will be thrown.
+     */
+    public void pop() {
+        // The comparison is <= 1 since there is always also the background scope
+        if (symStack.size() <= 1) {
+            // We throw an InternalException (that is, a bug), since pop should not be called if
+            // there are no scopes to pop.
+            throw new SMT.InternalException("Invalid pop - no more symbol table scopes to pop");
+        }
+        sortStack.remove(0);
+        symStack.remove(0);
+        sorts = sortStack.get(0);
+        names = symStack.get(0);
+    }
+
+    /** Adds the given symbol as a sort to the top scope of the sort table;
+     * returns false if the given symbol is already in the top scope (and the sort table is unchanged);
+     * returns true if the symbol is not already in the top scope.
+     * @param symbol the symbol to add
+     * @return true if successfully added, false if already present
+     */
+    public boolean addSortParameter(ISymbol symbol, boolean global) {
+        Map<IIdentifier, ISort.IDefinition> target = global ? sortStack.get(sortStack.size()-1) : sorts;
+        ISort.IDefinition previous = target.put(symbol, smtConfig.sortFactory.createSortParameter(symbol));
+        if (previous == null) return true;
+        target.put(symbol, previous);
+        return false;
+    }
+
+    /** Adds a new sort declaration to the given frame (global = background, else current).
+     *
+     * @param identifier the identifier of the new Sort definition
+     * @param arity the arity of the new Sort definition
+     * @param global if true, add to the background frame; otherwise add to the current frame
+     * @return true if successfully added, false if there already is a sort (in any scope) with this identifier
+     */
+    /** Adds a new sort family definition, with attributes (e.g. :right-assoc; null or empty if
+     * none), to the given frame (global = background, else current).
+     *
+     * @param identifier the identifier of the new Sort definition
+     * @param arity the arity of the new Sort definition
+     * @param attributes any attributes declared on the sort symbol (null or empty if none)
+     * @param global if true, add to the background frame; otherwise add to the current frame
+     * @return true if successfully added, false if there already is a sort (in any scope) with this identifier
+     */
+    public boolean addSortDefinition(IIdentifier identifier, INumeral arity, /*@Nullable*/ List<IExpr.IAttribute<?>> attributes, boolean global) {
+        ISort.IDefinition s = lookupSort(identifier);
+        if (s != null) return false;
+        ISort.IDefinition def = smtConfig.sortFactory.createSortFamily(identifier,arity,attributes);
+        (global ? sortStack.get(sortStack.size()-1) : sorts).put(identifier, def);
+        return true;
+    }
+
+    /** Adds a new sort abbreviation definition to the given frame (global = background, else current).
+     *
+     * @param identifier the name of the new Sort definition
+     * @param parameters the names of the parameters of the Sort abbreviation
+     * @param definition the expression of the Sort abbreviation
+     * @param global if true, add to the background frame; otherwise add to the current frame
+     * @return true if successfully added, false if there already is a sort by this name in the target scope
+     */
+    public boolean addSortDefinition(IIdentifier identifier, List<IParameter> parameters, ISort definition, boolean global) {
+        Map<IIdentifier, ISort.IDefinition> target = global ? sortStack.get(sortStack.size()-1) : sorts;
+        if (target.get(identifier) != null) return false;
+        target.put(identifier, smtConfig.sortFactory.createSortAbbreviation(identifier,parameters,definition));
+        return true;
+    }
+
+    /** Looks up the Sort definition with the given name
+     * 
+     * @param name the name of the Sort definition to find
+     * @return null if not found
+     */
+    /*@Nullable*/
+    public ISort.IDefinition lookupSort(IIdentifier name) {
+        for (Map<IIdentifier,ISort.IDefinition> set: sortStack) {
+            ISort.IDefinition s = set.get(name);
+            if (s != null) return s;
+        }
+
+        // FIXME _ improve so this is not hard coded
+        if (name instanceof IParameterizedIdentifier) {
+            IParameterizedIdentifier pf = (IParameterizedIdentifier)name;
+            if (bitVectorTheorySet && Utils.BITVEC_SYM.equals(pf.headSymbol())) {
+                if (pf.indices().size() != 1 || !(pf.indices().get(0) instanceof INumeral)) {
+                    return smtConfig.sortFactory.createErrorDefinition(name,"A bit-vector sort must have exactly one numeral",
+                            pf.indices().size() > 1 ? pf.indices().get(1).pos()
+                                    : pf.headSymbol().pos());
+                }
+                if (((INumeral) pf.indices().get(0)).intValue() == 0) {
+                    return smtConfig.sortFactory.createErrorDefinition(name,"A bit-vector sort must have a length of at least 1",pf.indices().get(0).pos());
+                }
+                ISort.IDefinition def = smtConfig.sortFactory.createSortFamily(name,smtConfig.exprFactory.numeral(0),null);
+                sorts.put(name, def);
+                return def;
+            }
+            if (floatingPointTheorySet && Utils.FLOATINGPOINT_SYM.equals(pf.headSymbol())) {
+                if (pf.indices().size() != 2 || !(pf.indices().get(0) instanceof INumeral) || !(pf.indices().get(1) instanceof INumeral)) {
+                    return smtConfig.sortFactory.createErrorDefinition(name,"A FloatingPoint sort must have exactly two numerals (eb sb)",
+                            pf.indices().size() > 0 ? pf.indices().get(pf.indices().size()-1).pos()
+                                    : pf.headSymbol().pos());
+                }
+                int eb = ((INumeral) pf.indices().get(0)).intValue();
+                int sb = ((INumeral) pf.indices().get(1)).intValue();
+                if (eb <= 1 || sb <= 1) {
+                    return smtConfig.sortFactory.createErrorDefinition(name,"A FloatingPoint sort must have exponent and significand sizes greater than 1",
+                            (eb <= 1 ? pf.indices().get(0) : pf.indices().get(1)).pos());
+                }
+                ISort.IDefinition def = smtConfig.sortFactory.createSortFamily(name,smtConfig.exprFactory.numeral(0),null);
+                sorts.put(name, def);
+                return def;
+            }
+        } else if (floatingPointTheorySet) {
+            // Float16/Float32/Float64/Float128 are documented (FloatingPoint.smt2's :notes)
+            // as synonyms for specific (_ FloatingPoint eb sb) instances. A first attempt at
+            // this just returned the (_ FloatingPoint eb sb) IFamily directly, on the theory
+            // that sharing the same IDefinition object would make the two sorts compare equal
+            // -- it does not: Sort.Application.expand() short-circuits ("return ss unchanged")
+            // the moment definition() is an IFamily, on the assumption an IFamily-backed
+            // application is already in its own canonical form, which is false here (the
+            // application's own family() is still literally "Float32", not "FloatingPoint").
+            // equals() calls expand() first, so two IFamily-sharing-but-differently-named
+            // applications never compared equal -- declare-fun ... Float32 stopped erroring,
+            // but a Float32-sorted value was then never usable anywhere a real
+            // (_ FloatingPoint eb sb) value was expected, silently reintroducing the exact
+            // "documented synonym that is not really interchangeable" problem this whole
+            // mechanism exists to avoid (see Utils.loadTheory's exclusion of these names from
+            // the generic :sorts loader, for the same underlying problem there).
+            // The fix is to make Float32 a genuine ISort.IAbbreviation for (_ FloatingPoint eb
+            // sb) instead (the same kind of definition define-sort produces): expand()'s loop
+            // does not short-circuit on an IAbbreviation -- it calls eval() to substitute down
+            // to the target sort expression and keeps looping, terminating only once that
+            // target's own definition() is an IFamily (true here, since it is pre-resolved
+            // below) -- so expand() now actually returns the (_ FloatingPoint eb sb)-shaped
+            // application, which compares structurally equal to one written out directly.
+            int eb = -1, sb = -1;
+            if (Utils.FLOAT16.equals(name)) { eb = 5; sb = 11; }
+            else if (Utils.FLOAT32.equals(name)) { eb = 8; sb = 24; }
+            else if (Utils.FLOAT64.equals(name)) { eb = 11; sb = 53; }
+            else if (Utils.FLOAT128.equals(name)) { eb = 15; sb = 113; }
+            if (eb > 0) {
+                List<IExpr.IIndex> nums = new LinkedList<IExpr.IIndex>();
+                nums.add(smtConfig.exprFactory.numeral(eb));
+                nums.add(smtConfig.exprFactory.numeral(sb));
+                IIdentifier fpId = smtConfig.exprFactory.id(smtConfig.exprFactory.symbol(Utils.FLOATINGPOINT), nums);
+                ISort.IDefinition fpDef = lookupSort(fpId); // resolves/caches (_ FloatingPoint eb sb) itself
+                ISort.IApplication target = smtConfig.sortFactory.createSortExpression(fpId, new ISort[0]);
+                target.definition(fpDef); // pre-resolved so expand()'s loop terminates on this application,
+                                           // not an unresolved one -- see comment above
+                ISort.IDefinition def = smtConfig.sortFactory.createSortAbbreviation(name, new LinkedList<IParameter>(), target);
+                sorts.put(name, def);
+                return def;
+            }
+        }
+
+        return null;
+    }
+
+    /** Lookup the Symbol with the given identifier and arity, returning its Sort.
+     * @param arity the arity of the Symbol
+     * @param name the name of the Symbol
+     * @return null if not found, the Sort of the Symbol if found
+     */
+    /*@Nullable*/
+    public IFcnSort lookup(int arity, IIdentifier name) {
+        for (Map<IIdentifier,List<Entry>> set: symStack) {
+            List<Entry> entrylist = set.get(name);
+            if (entrylist != null) {
+                for (Entry e: entrylist) {
+                    if (e.sort.argSorts().length == arity) return e.sort;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Lookup the Symbol with the given identifier, returning all of its declared entries
+     * (of any arity).
+     * @param name the name of the Symbol
+     * @return null if not found, the corresponding List&lt;Entry&gt; from the
+     * top-most scope in which the identifier is found
+     */
+    public /*@Nullable*/ List<Entry> lookup(IIdentifier name) {
+        for (Map<IIdentifier,List<Entry>> set: symStack) {
+            List<Entry> entrylist = set.get(name);
+            if (entrylist != null) return entrylist;
+        }
+        return null;
+    }
+
+    /** Lookup a Symbol with the given name and argument Sorts and result Sort.
+     * @param name the name to find
+     * @param argSorts the Sorts of the arguments
+     * @param resultSort the expected result sort (from an `as` qualifier), or null if none given
+     * @param reason if not null and this call returns null because some candidate(s) were
+     * found for `name` but none matched, set to a diagnostic message: the one candidate's own
+     * specific reason if there was exactly one, or a generic "no match" message listing the
+     * available signatures if there was more than one (overloading is rare, so a pile of
+     * per-candidate reasons is more noise than help once there's more than one to explain).
+     * Left untouched if `name` has no declared candidates at all, or if a match is found.
+     * @return the result Sort of the matching declaration, or null if none matches
+     */
+    // The background scope may overload an identifier with definitions of the same or
+    // different arity (but different sort). However, in non-background scopes, no
+    // overloading is allowed of any arity in any scope.
+    //
+    // A candidate entry's declared arity is not necessarily the actual call's arity: a
+    // :left-assoc/:right-assoc/:chainable/:pairwise entry is always declared at arity 2 but
+    // can be called at arity 2..N (SMT-LIB Sec. 3.6.2's n-ary sugar), so entries are not
+    // bucketed by arity -- every candidate for `name` is tried, exact-arity first, then (only
+    // if nothing matched and the call has more than two arguments) the 2-arg/attributed
+    // fallback. A par-polymorphic entry (entry.parameters != null) is tried via unify()
+    // instead of plain equality; either way a mismatch on one candidate just moves on to the
+    // next -- overloading means a unification/equality failure is not itself an error.
+    /*@Nullable*/
+    public ISort lookup(IIdentifier name, List<ISort> argSorts, ISort resultSort, /*@Nullable*/ StringBuilder reason) {
+        int arity = argSorts.size();
+        for (Map<IIdentifier,List<Entry>> set: symStack) {
+            List<Entry> entrylist = set.get(name);
+            if (entrylist == null) continue;
+            // We have a name match. First check for an exact match on arity.
+            Entry found = null;
+            ISort foundResult = null;
+            boolean foundMatchButNotOnResult = false;
+            List<Entry> tried = new LinkedList<Entry>();
+            List<String> failures = new LinkedList<String>();
+            for (Entry entry: entrylist) {
+                if (entry.sort.argSorts().length != arity) continue;
+                tried.add(entry);
+                ISort candidateResult;
+                try {
+                    candidateResult = matchExact(entry, argSorts);
+                } catch (NoMatch nm) {
+                    failures.add(nm.getMessage());
+                    continue;
+                }
+                // Cases to consider
+                //   resultSort != null & just one argument sort match -> error - not supposed to use a qualifier
+                //   resultSort != null & multiple argument sort matches -> pick the one that matches on result sort
+                //   resultSort == null & and just one argument sort match -> return it
+                //   resultSort == null & multiple argument sort matches -> ambiguous
+                if (resultSort != null) {
+                    if (resultSort.equals(candidateResult)) {
+                        if (found != null) {
+                            // FIXME - there appear to be two entries that match on all arguments and the result
+                            return null;
+                        }
+                        found = entry;
+                        foundResult = candidateResult;
+                    } else {
+                        foundMatchButNotOnResult = true;
+                        failures.add("has result sort " + smtConfig.defaultPrinter.toString(candidateResult)
+                                + ", expected " + smtConfig.defaultPrinter.toString(resultSort) + " (from the `as` qualifier)");
+                    }
+                } else {
+                    // No result sort specified - there should not be any overloading
+                    if (found != null) {
+                        // Found something previously and now have this match - so ambiguous
+                        // FIXME - no place to give an error message that the result sort is ambiguous
+                        return null;
+                    }
+                    found = entry;
+                    foundResult = candidateResult;
+                    // Otherwise have just one match - keep checking the rest of the list
+                }
+            }
+            if (resultSort != null && found != null && !foundMatchButNotOnResult) {
+                // FIXME - should report unneeded disambiguation
+                return null;
+            }
+            if (found != null) return foundResult;
+
+            // Check for left-assoc etc.
+            if (arity <= 2) {
+                setReason(reason, name, tried, failures, entrylist);
+                return null;
+            }
+            for (Entry entry: entrylist) {
+                if (entry.sort.argSorts().length != 2) continue;
+                tried.add(entry);
+                try {
+                    return matchAssociative(entry, argSorts);
+                } catch (NoMatch nm) {
+                    failures.add(nm.getMessage());
+                }
+            }
+            setReason(reason, name, tried, failures, entrylist);
+            return null;
+        }
+        return null;
+    }
+
+    /** Fills in lookup()'s `reason` output as described there, given the candidates actually
+     * tried for `name` (same declared arity, or 2-arg-with-an-associativity-attribute, as the
+     * call) and each one's failure message (same size and order as `tried`); with exactly one
+     * candidate tried, its own message is used as-is. If nothing was even arity-eligible to
+     * try (e.g. a 1-argument call to a name only ever declared at arity 2), falls back to
+     * listing entrylist -- every declaration that exists for `name`, regardless of arity --
+     * so the message still says something useful rather than reducing to the fully generic
+     * "unknown symbol" one. */
+    private void setReason(/*@Nullable*/ StringBuilder reason, IIdentifier name, List<Entry> tried, List<String> failures, List<Entry> entrylist) {
+        if (reason == null) return;
+        if (tried.size() == 1) {
+            reason.append(failures.get(0));
+            return;
+        }
+        if (tried.isEmpty() && entrylist.size() == 1) {
+            // No declared candidate even had an eligible arity to try -- with a single
+            // declaration, stating its required arity directly (SMT-LIB Sec. 3.6.2's n-ary
+            // sugar means an associativity-attributed 2-arg declaration accepts more) reads
+            // more naturally than the generic "no matching declaration" signature listing.
+            Entry entry = entrylist.get(0);
+            int declaredArity = entry.sort.argSorts().length;
+            reason.append("The function symbol ")
+                .append(smtConfig.defaultPrinter.toString(name))
+                .append(" takes ")
+                .append(numberWord(declaredArity));
+            if (hasAttribute(entry,":left-assoc") || hasAttribute(entry,":right-assoc")
+                    || hasAttribute(entry,":chainable") || hasAttribute(entry,":pairwise")) {
+                reason.append(" or more arguments");
+            } else {
+                reason.append(declaredArity == 1 ? " argument" : " arguments");
+            }
+            return;
+        }
+        List<Entry> toList = tried.isEmpty() ? entrylist : tried;
+        reason.append("No matching declaration for function symbol ")
+            .append(smtConfig.defaultPrinter.toString(name))
+            .append(". Available signatures: ");
+        boolean first = true;
+        for (Entry entry: toList) {
+            if (!first) reason.append("; ");
+            first = false;
+            reason.append(signature(entry));
+        }
+    }
+
+    private static final String[] NUMBER_WORDS = {
+        "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"
+    };
+
+    /** Spells out small non-negative integers (e.g. for "takes two arguments"); falls back to
+     * the numeral itself beyond the spelled-out range. */
+    private static String numberWord(int n) {
+        return (n >= 0 && n < NUMBER_WORDS.length) ? NUMBER_WORDS[n] : String.valueOf(n);
+    }
+
+    /** A human-readable rendering of an entry's declared signature, e.g. "(select (Array A B)
+     * A) -> B :pairwise", for listing candidates in a "no matching declaration" message. */
+    private String signature(Entry entry) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("(").append(smtConfig.defaultPrinter.toString(entry.name));
+        for (ISort s: entry.sort.argSorts()) {
+            sb.append(" ").append(smtConfig.defaultPrinter.toString(s));
+        }
+        sb.append(") -> ").append(smtConfig.defaultPrinter.toString(entry.sort.resultSort()));
+        if (entry.attributes != null) {
+            for (IExpr.IAttribute<?> a: entry.attributes) {
+                sb.append(" ").append(a.keyword().value());
+            }
+        }
+        return sb.toString();
+    }
+
+    /** Tries a single candidate entry, already known to have the actual call's arity, as an
+     * exact match: plain structural equality for a monomorphic entry, unification for a
+     * par-polymorphic one (substituting any discovered parameter bindings into the declared
+     * result sort). Returns the concrete result sort on success; throws NoMatch, naming the
+     * specific argument and sorts involved, on mismatch. */
+    private ISort matchExact(Entry entry, List<ISort> argSorts) {
+        ISort[] declaredArgs = entry.sort.argSorts();
+        if (entry.parameters == null) {
+            for (int i = 0; i < declaredArgs.length; i++) {
+                if (!declaredArgs[i].equals(argSorts.get(i))) {
+                    throw new NoMatch("Argument " + (i+1) + " of " + smtConfig.defaultPrinter.toString(entry.name)
+                            + " has sort " + smtConfig.defaultPrinter.toString(argSorts.get(i))
+                            + ", expected " + smtConfig.defaultPrinter.toString(declaredArgs[i]));
+                }
+            }
+            return entry.sort.resultSort();
+        }
+        Map<ISort.IParameter,ISort> bindings = new HashMap<ISort.IParameter,ISort>();
+        for (int i = 0; i < declaredArgs.length; i++) {
+            try {
+                bindings = unify(declaredArgs[i], argSorts.get(i), bindings);
+            } catch (NoMatch nm) {
+                throw new NoMatch("Argument " + (i+1) + " of " + smtConfig.defaultPrinter.toString(entry.name)
+                        + " " + nm.getMessage());
+            }
+        }
+        return entry.sort.resultSort().substitute(bindings);
+    }
+
+    /** Tries a single 2-arg candidate entry, carrying an associativity attribute, against an
+     * actual call with more than two arguments -- the SMT-LIB Sec. 3.6.2 n-ary sugar for
+     * :left-assoc ((f t1 t2 t3) = (f (f t1 t2) t3)), :right-assoc ((f t1 t2 t3) =
+     * (f t1 (f t2 t3))), and :chainable/:pairwise (every argument must independently match
+     * the declared, shared argument sort). A monomorphic entry is matched with plain
+     * equality; a par entry unifies at each fold step, which can rebind its parameters
+     * differently every time -- needed for e.g. HO-Core's @, where each curry step's ->
+     * domain/codomain differ. Returns the concrete result sort on success; throws NoMatch,
+     * naming the specific argument and sorts involved, if this entry's attribute doesn't
+     * apply at all or the sorts don't match at some fold step. */
+    private ISort matchAssociative(Entry entry, List<ISort> argSorts) {
+        ISort left = entry.sort.argSorts()[0];
+        ISort right = entry.sort.argSorts()[1];
+        ISort declaredResult = entry.sort.resultSort();
+        boolean isPar = entry.parameters != null;
+        String nm = smtConfig.defaultPrinter.toString(entry.name);
+        if (hasAttribute(entry,":left-assoc")) {
+            ISort acc = argSorts.get(0);
+            for (int i = 1; i < argSorts.size(); i++) {
+                ISort next = argSorts.get(i);
+                if (isPar) {
+                    Map<ISort.IParameter,ISort> bindings;
+                    try {
+                        bindings = unify(left, acc, new HashMap<ISort.IParameter,ISort>());
+                        bindings = unify(right, next, bindings);
+                    } catch (NoMatch e) {
+                        throw new NoMatch("Left-associative application of " + nm + " fails at argument " + (i+1) + ": " + e.getMessage());
+                    }
+                    acc = declaredResult.substitute(bindings);
+                } else {
+                    if (!acc.equals(left) || !next.equals(right)) {
+                        throw new NoMatch("Left-associative application of " + nm + " fails at argument " + (i+1)
+                                + ": has sort " + smtConfig.defaultPrinter.toString(next)
+                                + ", expected " + smtConfig.defaultPrinter.toString(right));
+                    }
+                    acc = declaredResult;
+                }
+            }
+            return acc;
+        } else if (hasAttribute(entry,":right-assoc")) {
+            ISort acc = argSorts.get(argSorts.size() - 1);
+            for (int i = argSorts.size() - 2; i >= 0; i--) {
+                ISort next = argSorts.get(i);
+                if (isPar) {
+                    Map<ISort.IParameter,ISort> bindings;
+                    try {
+                        bindings = unify(left, next, new HashMap<ISort.IParameter,ISort>());
+                        bindings = unify(right, acc, bindings);
+                    } catch (NoMatch e) {
+                        throw new NoMatch("Right-associative application of " + nm + " fails at argument " + (i+1) + ": " + e.getMessage());
+                    }
+                    acc = declaredResult.substitute(bindings);
+                } else {
+                    if (!next.equals(left) || !acc.equals(right)) {
+                        throw new NoMatch("Right-associative application of " + nm + " fails at argument " + (i+1)
+                                + ": has sort " + smtConfig.defaultPrinter.toString(next)
+                                + ", expected " + smtConfig.defaultPrinter.toString(left));
+                    }
+                    acc = declaredResult;
+                }
+            }
+            return acc;
+        } else if (hasAttribute(entry,":chainable") || hasAttribute(entry,":pairwise")) {
+            int i = 0;
+            if (isPar) {
+                Map<ISort.IParameter,ISort> bindings = new HashMap<ISort.IParameter,ISort>();
+                for (ISort actual: argSorts) {
+                    i++;
+                    try {
+                        bindings = unify(left, actual, bindings);
+                    } catch (NoMatch e) {
+                        throw new NoMatch("Chained/pairwise application of " + nm + " fails at argument " + i + ": " + e.getMessage());
+                    }
+                }
+                return declaredResult.substitute(bindings);
+            } else {
+                for (ISort actual: argSorts) {
+                    i++;
+                    if (!actual.equals(left)) {
+                        throw new NoMatch("Chained/pairwise application of " + nm + " fails at argument " + i
+                                + ": has sort " + smtConfig.defaultPrinter.toString(actual)
+                                + ", expected " + smtConfig.defaultPrinter.toString(left));
+                    }
+                }
+                return declaredResult;
+            }
+        }
+        throw new NoMatch(nm + " does not accept more than two arguments");
+    }
+
+    /** Attempts to unify a (possibly parameter-containing) declared sort against a concrete
+     * actual sort, extending the given bindings with any newly-discovered parameter
+     * bindings. Returns the (possibly extended) bindings on success -- a new map is returned
+     * rather than mutating the argument in place, so callers must use the return value.
+     * Throws NoMatch, describing the specific mismatch, if the two cannot be unified (a
+     * structural mismatch, or a parameter that would need two different bindings). */
+    private Map<ISort.IParameter,ISort> unify(ISort declared, ISort actual, Map<ISort.IParameter,ISort> bindings) {
+        // Application.equals() always expands both sides before comparing (folding e.g. a ->
+        // sort still in its flat, un-folded :right-assoc-sugar form -- see the comment on
+        // Sort.Application.expand()); unify() does its own structural walk instead of
+        // delegating to equals(), so it needs the same normalization explicitly, or a still-
+        // flat actual sort (e.g. a declare-fun's raw, un-folded stored sort) silently fails to
+        // unify against a canonically-shaped declared pattern like (-> A B).
+        if (actual instanceof ISort.IApplication) actual = ((ISort.IApplication) actual).expand();
+        if (declared instanceof ISort.IApplication) declared = ((ISort.IApplication) declared).expand();
+        if (declared instanceof ISort.IParameter) {
+            ISort bound = bindings.get(declared);
+            if (bound == null) {
+                Map<ISort.IParameter,ISort> next = new HashMap<ISort.IParameter,ISort>(bindings);
+                next.put((ISort.IParameter) declared, actual);
+                return next;
+            }
+            if (!bound.equals(actual)) {
+                throw new NoMatch("has sort " + smtConfig.defaultPrinter.toString(actual)
+                        + ", expected " + smtConfig.defaultPrinter.toString(bound) + " (to match an earlier argument)");
+            }
+            return bindings;
+        }
+        if (declared instanceof ISort.IApplication) {
+            ISort.IApplication da = (ISort.IApplication) declared;
+            if (!(actual instanceof ISort.IApplication) || !da.family().equals(((ISort.IApplication)actual).family())) {
+                throw new NoMatch("has sort " + smtConfig.defaultPrinter.toString(actual)
+                        + ", expected sort family " + smtConfig.defaultPrinter.toString(da.family()));
+            }
+            ISort.IApplication aa = (ISort.IApplication) actual;
+            List<ISort> dparams = da.parameters();
+            List<ISort> aparams = aa.parameters();
+            if (dparams.size() != aparams.size()) {
+                throw new NoMatch("has sort " + smtConfig.defaultPrinter.toString(actual)
+                        + ", expected sort family " + smtConfig.defaultPrinter.toString(da.family()));
+            }
+            Map<ISort.IParameter,ISort> current = bindings;
+            for (int i = 0; i < dparams.size(); i++) {
+                current = unify(dparams.get(i), aparams.get(i), current);
+            }
+            return current;
+        }
+        if (!declared.equals(actual)) {
+            throw new NoMatch("has sort " + smtConfig.defaultPrinter.toString(actual)
+                    + ", expected " + smtConfig.defaultPrinter.toString(declared));
+        }
+        return bindings;
+    }
+
+    /** Returns true if the entry contains a value for the given attribute name (e.g.
+     *  ":left-assoc"). Deliberately takes the name as a String and compares against each
+     *  attribute's keyword by value rather than requiring callers to build/compare IKeyword
+     *  objects: every call site here passes a literal attribute name, and the list scanned is
+     *  always tiny, so there is no correctness or performance benefit to keyword-object lookup
+     *  -- just more ceremony at each call site. See issue #36. */
+    private boolean hasAttribute(Entry entry, String attr) {
+        if (entry.attributes != null) {
+            for (IExpr.IAttribute<?> a: entry.attributes) {
+                if (a.keyword().value().equals(attr)) return true;
+            }
+        }
+        return false;
+    }
+
+    /** Adds the given entry to the symbol table.
+     * @param entry the Entry to add
+     */
+    public void add(Entry entry, boolean global) {
+        Map<IIdentifier,List<Entry>> lnames = names;
+        if (global) {
+            lnames = symStack.get(symStack.size()-1);
+        }
+        List<Entry> entrylist = lnames.get(entry.name);
+        if (entrylist == null) {
+            entrylist = new LinkedList<Entry>();
+            lnames.put(entry.name,entrylist);
+        }
+        entrylist.add(entry);
+    }
+
+    /** Adds the given entry to the symbol table; if overload is false and the 
+     * identifier in the entry is already in the table,
+     * the method returns false (without changing the symbol table); 
+     * otherwise the entry is added and the
+     * method returns true
+     * 
+     * @param entry the Entry to add
+     */
+    public boolean add(Entry entry, boolean global, boolean overload) {
+        // Check if the entry is already present in any scope;
+        // return false if it is.  Allow overloading if overload is true.
+        if (!overload) {
+            for (Map<IIdentifier,List<Entry>> set: symStack) {
+                if (set.get(entry.name) != null) {
+                    return false;
+                }
+            }
+        }
+        // Symbol is not present or overloading is allowed, so add it
+        add(entry, global);
+        return true;
+    }
 }

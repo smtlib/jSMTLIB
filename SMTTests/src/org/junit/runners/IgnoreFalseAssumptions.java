@@ -5,13 +5,12 @@ import org.junit.internal.AssumptionViolatedException;
 import org.junit.internal.runners.model.EachTestNotifier;
 import org.junit.runner.Description;
 import org.junit.runner.notification.RunNotifier;
-import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 
 public class IgnoreFalseAssumptions extends BlockJUnit4ClassRunner {
-    
+
     public IgnoreFalseAssumptions(Class<?> klass) throws InitializationError {
         super(klass);
     }

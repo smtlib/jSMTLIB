@@ -8,7 +8,6 @@ package org.smtlib.command;
 
 import org.smtlib.ICommand.Iecho;
 import org.smtlib.IParser.ParserException;
-import org.smtlib.IExpr;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IResponse;
 import org.smtlib.ISolver;
@@ -18,38 +17,38 @@ import org.smtlib.sexpr.Parser;
 
 /** Implements the echo command */
 public class C_echo extends Command implements Iecho {
-	protected IStringLiteral arg;
+    protected IStringLiteral arg;
 
-	/** The string literal argument to be echoed. */
-	@Override
-	public IStringLiteral arg() {
-	    return arg;
-	}
-	
-	/** Constructs an instance of the command */
-	public C_echo(IStringLiteral arg) {
-		this.arg = arg;
-	}
-	
-	/** Parses the arguments of the command, producing a new command instance */
-	static public C_echo parse(Parser p) throws ParserException {
-		IStringLiteral expr = p.parseStringLiteral();
-		return new C_echo(expr);
-	}
+    /** The string literal argument to be echoed. */
+    @Override
+    public IStringLiteral arg() {
+        return arg;
+    }
 
-	public static final String commandName = "echo";
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
-	
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.echo(arg);
-	}
+    /** Constructs an instance of the command */
+    public C_echo(IStringLiteral arg) {
+        this.arg = arg;
+    }
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
-	
+    /** Parses the arguments of the command, producing a new command instance */
+    static public C_echo parse(Parser p) throws ParserException {
+        IStringLiteral expr = p.parseStringLiteral();
+        return new C_echo(expr);
+    }
+
+    public static final String commandName = "echo";
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
+
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.echo(arg);
+    }
+
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
+
 }

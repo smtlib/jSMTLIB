@@ -16,179 +16,179 @@ import java.util.List;
 
 /** The Driver class is a client that can send commands to the SMT application acting as a server. */
 public class Driver {
-	
-	// These constants are exit codes emitted from the application
-	
-	/** The exit code corresponding to a 'success' response to an SMT-LIB command */
-	static final int EX_SUCCESS = 0;
 
-	/** The exit code corresponding to a 'sat' response to an SMT-LIB command */
-	static final int EX_SMT_SAT = 2;
+    // These constants are exit codes emitted from the application
 
-	/** The exit code corresponding to a 'unsat' response to an SMT-LIB command */
-	static final int EX_SMT_UNSAT = 3;
+    /** The exit code corresponding to a 'success' response to an SMT-LIB command */
+    static final int EX_SUCCESS = 0;
 
-	/** The exit code corresponding to a 'unknown' response to an SMT-LIB command */
-	static final int EX_SMT_UNKNOWN = 4;
+    /** The exit code corresponding to a 'sat' response to an SMT-LIB command */
+    static final int EX_SMT_SAT = 2;
 
-	/** The exit code corresponding to any other response to an SMT-LIB command */
-	static final int EX_SMT_OTHER = 5;
+    /** The exit code corresponding to a 'unsat' response to an SMT-LIB command */
+    static final int EX_SMT_UNSAT = 3;
 
-	/** The exit code corresponding to and 'error' response to an SMT-LIB command */
-	static final int EX_SMT_ERROR = 10;
+    /** The exit code corresponding to a 'unknown' response to an SMT-LIB command */
+    static final int EX_SMT_UNKNOWN = 4;
 
-	/** The exit code used when there is an error in the command-line arguments */
-	static final int EX_CMD_LINE_ERROR = 11;
+    /** The exit code corresponding to any other response to an SMT-LIB command */
+    static final int EX_SMT_OTHER = 5;
 
-	/** The exit code used when there is an internal exception in the application */
-	static final int EX_EXCEPTION = 12;
-	
-	/** The port to which to send commands (set as a command-line option)*/
-	protected int port = 0;
+    /** The exit code corresponding to and 'error' response to an SMT-LIB command */
+    static final int EX_SMT_ERROR = 10;
 
-	/** If true, verbose, debugging information is emitted by the application (set as a command-line option)*/
-	protected boolean verbose = false;
+    /** The exit code used when there is an error in the command-line arguments */
+    static final int EX_CMD_LINE_ERROR = 11;
 
-	/** If true, do not echo 'success' responses (unless verbose is enabled) */
-	protected boolean quiet = false;
+    /** The exit code used when there is an internal exception in the application */
+    static final int EX_EXCEPTION = 12;
 
-	/** Whether to start a service process from this process */
-	protected boolean start = false;
-	
-	/** The commands as specified on the command-line */
-	protected List<String> commands = new LinkedList<String>();
-	
-	/** The main entry point to the application 
-	 * @param args the command-line arguments
-	 */
-	public static void main(String[] args) {
-		int exitCode = (new Driver()).exec(args);
-		System.exit(exitCode);
-	}
-	
-	/** The non-static entry point to the application 
-	 * @param args the command-line arguments
-	 * @return the exit code
-	 */
-	public int exec(String[] args) {
-		int exitCode = processOptions(args);
-		if (exitCode != 0) return exitCode>0 ? exitCode : 0;
-		if (port <= 0) {
-			System.out.println("Error: no port is specified");
-			return EX_CMD_LINE_ERROR;
-		}
-		try {
-			exitCode = send();
-		} catch (Throwable e) {
-		    // Not likely to be called by anything but still here as a defensive check
-		    // in case of a bug (that causes an NPE for example)
-		    Utils.jacocoNeverExecuted();
-			System.out.println(e);
-			e.printStackTrace(System.out);
-			exitCode = EX_EXCEPTION;
-		}
-		return exitCode;
-	}
-	
-	/** Sets the fields of the class according to the command-line */
-	protected int processOptions(String[] args) {
-		int i = 0;
-		while (i < args.length) {
-			if ("--port".equals(args[i]) || "-p".equals(args[i])) {
-				++i;
-				if (i >= args.length) {
-					System.out.println("--port option must have an integer value");
-					return EX_CMD_LINE_ERROR;
-				} else {
-					try {
-						port = Integer.valueOf(args[i]).intValue();
-					} catch (NumberFormatException e) {
-						System.out.println(e);
-						return EX_CMD_LINE_ERROR;
-					}
-				}
-			} else if ("--verbose".equals(args[i]) || "-v".equals(args[i])) {
-				verbose = true;
-				quiet = false;
-			} else if ("--nosuccess".equals(args[i]) || "-q".equals(args[i])) {
-				quiet = true;
-			} else if ("--help".equals(args[i]) || "-h".equals(args[i])) {
-				usage();
-				return -1;
-			} else if (args[i].startsWith("-")) {
-				System.out.println("Unknown option: " + args[i]);
-				return EX_CMD_LINE_ERROR;
-			} else {
-				commands.add(args[i]);
-			}
-			++i;
-		}
-		return EX_SUCCESS;
-	}
-	
-	/** Prints out the usage information */
-	public void usage() {
-		System.out.println("java org.smtlib.Driver [options] commands");
-		System.out.println("  -h or --help : prints out the usage information");
-		System.out.println("  -v or --verbose : enables printing of detailed progress information");
-		System.out.println("  -q or --nosuccess : disables printing the 'success' reponses");
-		System.out.println("  -p <number> or --port <number> : (required) specifies the port to which to send commands");
-		System.out.println("    The port must match the port on which the server process is listening");
-		System.out.println("  This process sends SMT-LIB commands (as specified on the command-line) to a");
-		System.out.println("  server process, which must be on the local host, and is started by ");
-		System.out.println("  'java org.smtlib.SMT --port <number>' ");
-		System.out.println("  Each SMT command is a (quoted) single command-line argument.");
-	}
+    /** The port to which to send commands (set as a command-line option)*/
+    protected int port = 0;
 
-	/** Sends the options and commands to the port; returns the exit code corresponding to the response
-	 * from the last command. Retries on ConnectException to tolerate slow server startup. */
-	public int send() throws IOException {
-		int delayMs = 200;
-		ConnectException lastConnectException = null;
-		for (int attempt = 0; attempt < 10; attempt++) {
-			try {
-				return sendOnce();
-			} catch (ConnectException e) {
-				lastConnectException = e;
-				try { Thread.sleep(delayMs); } catch (InterruptedException ie) {
-					Thread.currentThread().interrupt();
-					break;
-				}
-				delayMs = Math.min(delayMs * 2, 2000);
-			} catch (IOException e) {
-				System.err.println("Couldn't get I/O from the socket connection: " + e);
-				return EX_EXCEPTION;
-			}
-		}
-		System.err.println("Couldn't get I/O from the socket connection: " + lastConnectException);
-		return EX_EXCEPTION;
-	}
+    /** If true, verbose, debugging information is emitted by the application (set as a command-line option)*/
+    protected boolean verbose = false;
 
-	/** Attempts one connection to the port and sends all commands; throws IOException on failure. */
-	private int sendOnce() throws IOException {
-		try (Socket serverSocket = new Socket(InetAddress.getLoopbackAddress(), port);
-			 PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
-			 BufferedReader in = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()))) {
+    /** If true, do not echo 'success' responses (unless verbose is enabled) */
+    protected boolean quiet = false;
 
-			int exitcode = -1;
-			for (String command: commands) {
-				if (verbose) System.out.println("send: " + command);
-				out.println(command);
-				// TODO: loop here accumulating lines until parentheses balance,
-				// to support multi-line responses such as (get-model).
-				String answer = in.readLine();
-				if (answer == null) break; // server closed the connection
-				if ("success".equals(answer)) exitcode = EX_SUCCESS;
-				else if ("sat".equals(answer)) exitcode = EX_SMT_SAT;
-				else if ("unsat".equals(answer)) exitcode = EX_SMT_UNSAT;
-				else if ("unknown".equals(answer)) exitcode = EX_SMT_UNKNOWN;
-				else if (answer.indexOf("error") != -1) exitcode = EX_SMT_ERROR;
-				else exitcode = EX_SMT_OTHER;
-				if (!quiet || verbose || exitcode != EX_SUCCESS) System.out.println("SMT: " + answer);
-			}
+    /** Whether to start a service process from this process */
+    protected boolean start = false;
 
-			if (verbose) System.out.println("exitcode = " + exitcode);
-			return exitcode;
-		}
-	}
+    /** The commands as specified on the command-line */
+    protected List<String> commands = new LinkedList<String>();
+
+    /** The main entry point to the application 
+     * @param args the command-line arguments
+     */
+    public static void main(String[] args) {
+        int exitCode = (new Driver()).exec(args);
+        System.exit(exitCode);
+    }
+
+    /** The non-static entry point to the application 
+     * @param args the command-line arguments
+     * @return the exit code
+     */
+    public int exec(String[] args) {
+        int exitCode = processOptions(args);
+        if (exitCode != 0) return exitCode>0 ? exitCode : 0;
+        if (port <= 0) {
+            System.out.println("Error: no port is specified");
+            return EX_CMD_LINE_ERROR;
+        }
+        try {
+            exitCode = send();
+        } catch (Throwable e) {
+            // Not likely to be called by anything but still here as a defensive check
+            // in case of a bug (that causes an NPE for example)
+            Utils.jacocoNeverExecuted();
+            System.out.println(e);
+            e.printStackTrace(System.out);
+            exitCode = EX_EXCEPTION;
+        }
+        return exitCode;
+    }
+
+    /** Sets the fields of the class according to the command-line */
+    protected int processOptions(String[] args) {
+        int i = 0;
+        while (i < args.length) {
+            if ("--port".equals(args[i]) || "-p".equals(args[i])) {
+                ++i;
+                if (i >= args.length) {
+                    System.out.println("--port option must have an integer value");
+                    return EX_CMD_LINE_ERROR;
+                } else {
+                    try {
+                        port = Integer.valueOf(args[i]).intValue();
+                    } catch (NumberFormatException e) {
+                        System.out.println(e);
+                        return EX_CMD_LINE_ERROR;
+                    }
+                }
+            } else if ("--verbose".equals(args[i]) || "-v".equals(args[i])) {
+                verbose = true;
+                quiet = false;
+            } else if ("--nosuccess".equals(args[i]) || "-q".equals(args[i])) {
+                quiet = true;
+            } else if ("--help".equals(args[i]) || "-h".equals(args[i])) {
+                usage();
+                return -1;
+            } else if (args[i].startsWith("-")) {
+                System.out.println("Unknown option: " + args[i]);
+                return EX_CMD_LINE_ERROR;
+            } else {
+                commands.add(args[i]);
+            }
+            ++i;
+        }
+        return EX_SUCCESS;
+    }
+
+    /** Prints out the usage information */
+    public void usage() {
+        System.out.println("java org.smtlib.Driver [options] commands");
+        System.out.println("  -h or --help : prints out the usage information");
+        System.out.println("  -v or --verbose : enables printing of detailed progress information");
+        System.out.println("  -q or --nosuccess : disables printing the 'success' reponses");
+        System.out.println("  -p <number> or --port <number> : (required) specifies the port to which to send commands");
+        System.out.println("    The port must match the port on which the server process is listening");
+        System.out.println("  This process sends SMT-LIB commands (as specified on the command-line) to a");
+        System.out.println("  server process, which must be on the local host, and is started by ");
+        System.out.println("  'java org.smtlib.SMT --port <number>' ");
+        System.out.println("  Each SMT command is a (quoted) single command-line argument.");
+    }
+
+    /** Sends the options and commands to the port; returns the exit code corresponding to the response
+     * from the last command. Retries on ConnectException to tolerate slow server startup. */
+    public int send() throws IOException {
+        int delayMs = 200;
+        ConnectException lastConnectException = null;
+        for (int attempt = 0; attempt < 10; attempt++) {
+            try {
+                return sendOnce();
+            } catch (ConnectException e) {
+                lastConnectException = e;
+                try { Thread.sleep(delayMs); } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+                delayMs = Math.min(delayMs * 2, 2000);
+            } catch (IOException e) {
+                System.err.println("Couldn't get I/O from the socket connection: " + e);
+                return EX_EXCEPTION;
+            }
+        }
+        System.err.println("Couldn't get I/O from the socket connection: " + lastConnectException);
+        return EX_EXCEPTION;
+    }
+
+    /** Attempts one connection to the port and sends all commands; throws IOException on failure. */
+    private int sendOnce() throws IOException {
+        try (Socket serverSocket = new Socket(InetAddress.getLoopbackAddress(), port);
+             PrintWriter out = new PrintWriter(serverSocket.getOutputStream(), true);
+             BufferedReader in = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()))) {
+
+            int exitcode = -1;
+            for (String command: commands) {
+                if (verbose) System.out.println("send: " + command);
+                out.println(command);
+                // TODO: loop here accumulating lines until parentheses balance,
+                // to support multi-line responses such as (get-model).
+                String answer = in.readLine();
+                if (answer == null) break; // server closed the connection
+                if ("success".equals(answer)) exitcode = EX_SUCCESS;
+                else if ("sat".equals(answer)) exitcode = EX_SMT_SAT;
+                else if ("unsat".equals(answer)) exitcode = EX_SMT_UNSAT;
+                else if ("unknown".equals(answer)) exitcode = EX_SMT_UNKNOWN;
+                else if (answer.indexOf("error") != -1) exitcode = EX_SMT_ERROR;
+                else exitcode = EX_SMT_OTHER;
+                if (!quiet || verbose || exitcode != EX_SUCCESS) System.out.println("SMT: " + answer);
+            }
+
+            if (verbose) System.out.println("exitcode = " + exitcode);
+            return exitcode;
+        }
+    }
 }

@@ -3,14 +3,7 @@ package org.smtlib.lsp;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Range;
-import org.smtlib.CharSequenceReader;
-import org.smtlib.ICommand;
-import org.smtlib.IParser;
-import org.smtlib.IPos;
-import org.smtlib.IResponse;
-import org.smtlib.ISource;
-import org.smtlib.Log;
-import org.smtlib.SMT;
+import org.smtlib.*;
 
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -38,6 +31,7 @@ public class DocumentParser {
 
         smtConfig.log.addListener(new Log.IListener() {
             @Override public void logOut(String msg) {}
+            @Override public void logOutNoln(String msg) {}
             @Override public void logOut(IResponse result) {}
             @Override public void logDiag(String msg) {}
             @Override public void indent(String chars) {}

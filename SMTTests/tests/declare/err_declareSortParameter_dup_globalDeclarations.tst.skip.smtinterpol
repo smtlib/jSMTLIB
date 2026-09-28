@@ -1,0 +1,1 @@
+SMTInterpol hangs (no response ever sent) after receiving the SAME malformed (declare-sort-parameter T) command twice in a row -- confirmed via direct piping, not a jSMTLIB SolverProcess issue. Batch/redirected-file input handles it fine; only the interactive one-command-at-a-time protocol triggers the hang.

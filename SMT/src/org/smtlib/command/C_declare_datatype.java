@@ -20,45 +20,45 @@ import org.smtlib.sexpr.Parser;
 
 /** Implements the declare-datatype command */
 public class C_declare_datatype extends Command implements Ideclare_datatype {
-	/** The command name */
-	public static final String commandName = "declare-datatype";
+    /** The command name */
+    public static final String commandName = "declare-datatype";
 
-	/** The sort declaration (symbol + arity derived from datatype body) */
-	protected ISortDeclaration sortDeclaration;
+    /** The sort declaration (symbol + arity derived from datatype body) */
+    protected ISortDeclaration sortDeclaration;
 
-	protected ISort.IDatatype datatype;
+    protected ISort.IDatatype datatype;
 
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
 
-	@Override
-	public ISortDeclaration sortDeclaration() { return sortDeclaration; }
+    @Override
+    public ISortDeclaration sortDeclaration() { return sortDeclaration; }
 
-	/** Constructs a new command object */
-	public C_declare_datatype(ISortDeclaration sortDeclaration, ISort.IDatatype d) {
-		this.sortDeclaration = sortDeclaration;
-		this.datatype = d;
-	}
+    /** Constructs a new command object */
+    public C_declare_datatype(ISortDeclaration sortDeclaration, ISort.IDatatype d) {
+        this.sortDeclaration = sortDeclaration;
+        this.datatype = d;
+    }
 
-	/** Parses the arguments of the command, producing a new command instance */
-	static public C_declare_datatype parse(Parser p) throws IOException, ParserException {
-		ISymbol id = p.parseSymbol();
-		ISort.IDatatype datatype = p.parseDatatype();
-		int arityVal = datatype.symbols() == null ? 0 : datatype.symbols().size();
-		ISortDeclaration sortDecl = p.smt().exprFactory.sortDeclaration(id, p.smt().exprFactory.numeral(arityVal));
-		return new C_declare_datatype(sortDecl, datatype);
-	}
+    /** Parses the arguments of the command, producing a new command instance */
+    static public C_declare_datatype parse(Parser p) throws IOException, ParserException {
+        ISymbol id = p.parseSymbol();
+        ISort.IDatatype datatype = p.parseDatatype();
+        int arityVal = datatype.symbols() == null ? 0 : datatype.symbols().size();
+        ISortDeclaration sortDecl = p.smt().exprFactory.sortDeclaration(id, p.smt().exprFactory.numeral(arityVal));
+        return new C_declare_datatype(sortDecl, datatype);
+    }
 
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.declare_datatype(this);
-	}
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.declare_datatype(this);
+    }
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 
     @Override
     public ISort.IDatatype datatype() { return datatype; }

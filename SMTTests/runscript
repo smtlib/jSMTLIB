@@ -11,6 +11,17 @@ if [[ -z "${SMT_CMD:-}" ]]; then
     source setup
 fi
 
+# Per-test coverage (see setup-coverage): point this script's child JVMs at the file of
+# the test that is running now, as recorded by PerTestCoverageListener. Run outside a
+# per-test JUnit run (e.g. by hand), their coverage goes to _unattributed.exec instead.
+if [[ -n "${COV_BY_TEST_DIR:-}" ]]; then
+    _cov_test=$(cat "$COV_BY_TEST_DIR/.current-test" 2>/dev/null)
+    _cov_test=${_cov_test:-_unattributed}
+    SMT_CMD=${SMT_CMD//@COV_TEST@/$_cov_test}
+    SMT_DRIVER=${SMT_DRIVER//@COV_TEST@/$_cov_test}
+    COV_AGENT=${COV_AGENT//@COV_TEST@/$_cov_test}
+fi
+
 # PLATFORM/PLATFORM_ARCH are always (re)computed here directly, rather than trusting
 # only the inherited value from the skip-source-setup optimization above: a Windows CI
 # run picked the wrong-platform golden for batch-smt4.scr even though the .windows

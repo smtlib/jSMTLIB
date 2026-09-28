@@ -14,30 +14,30 @@ import org.smtlib.IExpr.ISymbol;
 
 public class QF_BV extends Logic {
 
-	public QF_BV(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(smtConfig,name,attributes);
-	}
+    public QF_BV(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+        super(smtConfig,name,attributes);
+    }
 
-	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
-		noQuantifiers(expression);
-	}
-	
+    public void validExpression(IExpr expression) throws IVisitor.VisitorException {
+        noQuantifiers(expression);
+    }
 
-	public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
-		// May declare constants, but not functions without definitions
-		noFunctions(id,argSorts,resultSort,definition);
-	}
 
-	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
-		noSorts(id,params,expr);
-	}
+    public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
+        // May declare constants, but not functions without definitions
+        noFunctions(id,argSorts,resultSort,definition);
+    }
 
-	// All sorts are bitvector sorts; no new functions.
-	// The spec's "Formulas in ite terms must satisfy the same restriction as well [i.e. be
-	// quantifier-free], with the exception that they need not be closed" doesn't need any
-	// extra handling here: noQuantifiers() recurses into every subexpression via the
-	// ordinary IVisitor.TreeVisitor traversal, including an ite's condition argument, since
-	// this class never overrides visit(IFcnExpr) to special-case ite. A quantifier nested
-	// inside an ite condition is already rejected.
+    public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
+        noSorts(id,params,expr);
+    }
+
+    // All sorts are bitvector sorts; no new functions.
+    // The spec's "Formulas in ite terms must satisfy the same restriction as well [i.e. be
+    // quantifier-free], with the exception that they need not be closed" doesn't need any
+    // extra handling here: noQuantifiers() recurses into every subexpression via the
+    // ordinary IVisitor.TreeVisitor traversal, including an ite's condition argument, since
+    // this class never overrides visit(IFcnExpr) to special-case ite. A quantifier nested
+    // inside an ite condition is already rejected.
 
 }

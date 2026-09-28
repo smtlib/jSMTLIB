@@ -18,42 +18,42 @@ import org.smtlib.sexpr.Parser;
 
 /** Implements the check-sat-assuming command */
 public class C_check_sat_assuming extends Command implements Icheck_sat_assuming {
-	/** Creates a check-sat-assuming command with the given assumption terms. */
-	public C_check_sat_assuming(List<IExpr> terms) {
-	    this.terms = terms;
-	}
-	
-	/** Parses the arguments of the command, producing a new command instance */
-	static public C_check_sat_assuming parse(Parser p) throws ParserException {
+    /** Creates a check-sat-assuming command with the given assumption terms. */
+    public C_check_sat_assuming(List<IExpr> terms) {
+        this.terms = terms;
+    }
+
+    /** Parses the arguments of the command, producing a new command instance */
+    static public C_check_sat_assuming parse(Parser p) throws ParserException {
         // Not p.parseListTerms(p): that shared default hard-codes allowEmpty=false, which
         // is right for get-value's ( <term>+ ) grammar but wrong here -- check-sat-assuming's
         // own grammar is ( <prop_literal>* ), zero or more, equivalent to a plain check-sat
         // when empty.
         List<IExpr> list = p.parseList(p::parseExpr, "term", true);
-		return new C_check_sat_assuming(list);
-	}
+        return new C_check_sat_assuming(list);
+    }
 
     /** The boolean-sorted terms to assume. */
     protected List<IExpr> terms;
 
-	/** The command name */
-	public static final String commandName = "check-sat-assuming";
+    /** The command name */
+    public static final String commandName = "check-sat-assuming";
 
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
 
     /** Returns the boolean-sorted terms to assume. */
     @Override
     public List<IExpr> terms() { return terms; }
 
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.check_sat_assuming(terms().toArray(new IExpr[0]));
-	}
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.check_sat_assuming(terms().toArray(new IExpr[0]));
+    }
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 }

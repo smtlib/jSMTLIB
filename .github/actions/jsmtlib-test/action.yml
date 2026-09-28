@@ -168,7 +168,13 @@ runs:
         make -C jSMTLIB/SMTTests cov-test
         TEST_EXIT=$?
         set -e
-        make -C jSMTLIB/SMTTests cov-report || echo "::warning::Coverage report generation failed (test exit code $TEST_EXIT is unaffected)"
+        # Per-leg HTML/XML isn't generally needed -- only the combined report built from
+        # all 5 legs' merged junits.exec (`make ci-cov`, see SMTTests/Makefile) is. Left
+        # commented rather than removed: the raw junits.exec this leg uploads is still
+        # enough to regenerate this leg's own HTML/XML by hand if ever wanted (`make -C
+        # jSMTLIB/SMTTests cov-report`), and uncommenting this line restores it as a
+        # standard part of every coverage run.
+        # make -C jSMTLIB/SMTTests cov-report || echo "::warning::Coverage report generation failed (test exit code $TEST_EXIT is unaffected)"
         exit $TEST_EXIT
 
     ## Captures exactly what's needed to debug a failure after the fact, without needing
@@ -206,23 +212,34 @@ runs:
 
     ## Uploaded every run, not just failures (unlike the artifact above) -- coverage data
     ## is useful whether or not the tests it came from all passed. The whole cov/ directory
-    ## goes up, not just a percentage: cov/html/ is the full per-package/per-class/per-line
-    ## drill-down report (open cov/html/index.html), cov/coverage.xml is the same data in a
-    ## machine-readable form, and cov/junits.exec is the raw JaCoCo execution data, kept in
-    ## case it's ever useful to merge coverage across runs offline. One artifact per matrix
-    ## leg (matching test-failure-* above) since each platform's run exercises a different
-    ## subset of solver-adapter code (isWindows/isMac branches, per-platform solver
-    ## availability, etc.) -- a single merged report would hide that platform-specific
-    ## signal. if-no-files-found is 'warn', not 'error', for the same reason as above: a
-    ## failure before any test ran (e.g. a compile error) can leave cov/ empty or missing.
-    ## Gated on inputs.coverage (not just always()): with coverage off, cov/ never gets
-    ## created at all, so this would otherwise just be a guaranteed "no files found"
-    ## warning on every single run.
+    ## goes up, not just a percentage -- currently just cov/junits.exec, the raw JaCoCo
+    ## execution data, since the "Run jSMTLIB tests (with coverage)" step's cov-report
+    ## call (which would also produce cov/html/ and cov/coverage.xml, a full
+    ## per-package/per-class/per-line drill-down for this one leg) is commented out there:
+    ## only the combined report built from every leg's merged junits.exec is generally
+    ## needed, and uncommenting that call restores this leg's own html/xml here too, with
+    ## no change needed on this end. bin/ (the compiled
+    ## org.smtlib.test/org.smtlib.test.bugs JUnit classes cov-test itself compiled) goes up
+    ## alongside it -- cov-report's own --classfiles bin (see SMTTests/Makefile) already
+    ## covers this leg's own html/xml, but `make ci-cov`'s client-side merge across every
+    ## leg's junits.exec needs its own matching classfiles for those same classes, and (per
+    ## issue #122's lesson for the production jar) that has to be classfiles that actually
+    ## produced this run's execution data, not a local recompile with no guaranteed
+    ## relationship to it. One artifact per matrix leg (matching test-failure-* above) since
+    ## each platform's run exercises a different subset of solver-adapter code
+    ## (isWindows/isMac branches, per-platform solver availability, etc.) -- a single merged
+    ## report would hide that platform-specific signal. if-no-files-found is 'warn', not
+    ## 'error', for the same reason as above: a failure before any test ran (e.g. a compile
+    ## error) can leave cov/ (and bin/) empty or missing. Gated on inputs.coverage (not just
+    ## always()): with coverage off, cov/ never gets created at all, so this would otherwise
+    ## just be a guaranteed "no files found" warning on every single run.
     - name: Upload coverage artifact
       if: always() && inputs.coverage == 'true'
       uses: actions/upload-artifact@v7
       with:
         name: coverage-${{ inputs.label != '' && inputs.label || format('{0}-{1}', runner.os, runner.arch) }}
-        path: jSMTLIB/SMTTests/cov
+        path: |
+          jSMTLIB/SMTTests/cov
+          jSMTLIB/SMTTests/bin
         if-no-files-found: warn
         retention-days: 14

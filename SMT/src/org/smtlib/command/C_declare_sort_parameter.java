@@ -18,37 +18,37 @@ import org.smtlib.sexpr.Parser;
 
 /** Implements the declare-sort-parameter command */
 public class C_declare_sort_parameter extends Command implements Ideclare_sort_parameter{
-	/** The command name */
-	public static final String commandName = "declare-sort-parameter";
+    /** The command name */
+    public static final String commandName = "declare-sort-parameter";
 
-	/** The new sort symbol */
-	protected ISymbol sortSymbol;
-	
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
+    /** The new sort symbol */
+    protected ISymbol sortSymbol;
 
-	/** The sort symbol declared by this command */
-	public ISymbol sortSymbol() { return sortSymbol; }
-	
-	/** Constructs a new command object */
-	public C_declare_sort_parameter(ISymbol id) {
-		this.sortSymbol = id;
-	}
-	
-	/** Parses the arguments of the command, producing a new command instance */
-	static public C_declare_sort_parameter parse(Parser p) throws IOException, ParserException {
-		ISymbol id = p.parseSymbol();
-		return new C_declare_sort_parameter(id);
-	}
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
 
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.declare_sort_parameter(this);
-	}
+    /** The sort symbol declared by this command */
+    public ISymbol sortSymbol() { return sortSymbol; }
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    /** Constructs a new command object */
+    public C_declare_sort_parameter(ISymbol id) {
+        this.sortSymbol = id;
+    }
+
+    /** Parses the arguments of the command, producing a new command instance */
+    static public C_declare_sort_parameter parse(Parser p) throws IOException, ParserException {
+        ISymbol id = p.parseSymbol();
+        return new C_declare_sort_parameter(id);
+    }
+
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.declare_sort_parameter(this);
+    }
+
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 }

@@ -46,77 +46,80 @@ import org.smtlib.*;
  *  command's liveness check runs. */
 public class Solver_cvc5 extends AbstractSolver implements ISolver {
 
-	@Override
-	protected boolean selfReportsImmediateExit() { return true; }
+    @Override
+    protected boolean selfReportsImmediateExit() { return true; }
 
-	/** The command-line arguments for launching the solver. --print-success turns on
-	 *  success replies from the very first command onward (confirmed: --interactive does
-	 *  NOT imply it by itself -- without --print-success, the first command gets no
-	 *  reply at all), so no priming (set-option :print-success true) is needed in
-	 *  start(). */
-	protected String cmds[];
-	// --no-full-saturate-quant removed (issue #69): no rationale for this Windows-only
-	// flag survived anywhere in the project's history (git archaeology found only an
-	// unexplained WIP commit that first added it). Confirmed safe to remove via a full
-	// CI run on Windows (run 35416506960): all 1454 cvc5-1.3.2 test executions passed
-	// (or hit pre-existing, unrelated .skip.cvc5-1.3.2 cases) with the flag gone,
-	// including every quantifier-touching test in the suite -- no hang, no timeout, no
-	// behavior change observed.
-	protected String cmds_win[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet","--print-success","--strict-parsing"};
-	protected String cmds_mac[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet","--print-success","--strict-parsing"};
-	protected String cmds_unix[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet","--print-success","--strict-parsing"};
+    /** The command-line arguments for launching the solver. --print-success turns on
+     *  success replies from the very first command onward (confirmed: --interactive does
+     *  NOT imply it by itself -- without --print-success, the first command gets no
+     *  reply at all), so no priming (set-option :print-success true) is needed in
+     *  start(). */
+    protected String cmds[];
+    // --no-full-saturate-quant removed (issue #69): no rationale for this Windows-only
+    // flag survived anywhere in the project's history (git archaeology found only an
+    // unexplained WIP commit that first added it). Confirmed safe to remove via a full
+    // CI run on Windows (run 35416506960): all 1454 cvc5-1.3.2 test executions passed
+    // (or hit pre-existing, unrelated .skip.cvc5-1.3.2 cases) with the flag gone,
+    // including every quantifier-touching test in the suite -- no hang, no timeout, no
+    // behavior change observed.
+    protected String cmds_win[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet","--print-success","--strict-parsing"};
+    protected String cmds_mac[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet","--print-success","--strict-parsing"};
+    protected String cmds_unix[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet","--print-success","--strict-parsing"};
 
-	/** Creates an instance of the solver */
-	public Solver_cvc5(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
-		this.smtConfig = smtConfig;
-		if (isWindows) {
-			cmds = cmds_win;
-		} else if (isMac) {
-			cmds = cmds_mac;
-		} else {
-			cmds = cmds_unix;
-		}
-		if (smtConfig.seed != 0) {
-			cmds = Utils.cat(cmds,"--seed",""+smtConfig.seed);
-		}
-		double timeout = smtConfig.timeout;
-		double timeoutTotal = smtConfig.timeoutTotal;
-		if (timeout > 0 || timeoutTotal > 0) {
-			// cvc5 has separate per-query and whole-run flags, both in milliseconds
-			// (jSMTLIB's timeout/timeoutTotal are always in seconds -- see SMT.Configuration).
-			List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
-			if (timeout > 0) args.add("--tlimit-per=" + Long.toString(Math.round(1000*timeout+0.5)));
-			if (timeoutTotal > 0) args.add("--tlimit=" + Long.toString(Math.round(1000*timeoutTotal+0.5)));
-			cmds = args.toArray(new String[args.size()]);
-		}
-		cmds[0] = executable;
-		// With --quiet, cvc5 never prints an interactive "cvc5> " prompt, so "\n" (like
-		// Solver_smt) is the right end marker, not a prompt string.
-		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
-	}
+    /** Creates an instance of the solver */
+    public Solver_cvc5(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
+        this.smtConfig = smtConfig;
+        if (isWindows) {
+            cmds = cmds_win;
+        } else if (isMac) {
+            cmds = cmds_mac;
+        } else {
+            cmds = cmds_unix;
+        }
+        if (smtConfig.seed != 0) {
+            List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
+            args.add("--seed");
+            args.add("" + smtConfig.seed);
+            cmds = args.toArray(new String[args.size()]);
+        }
+        double timeout = smtConfig.timeout;
+        double timeoutTotal = smtConfig.timeoutTotal;
+        if (timeout > 0 || timeoutTotal > 0) {
+            // cvc5 has separate per-query and whole-run flags, both in milliseconds
+            // (jSMTLIB's timeout/timeoutTotal are always in seconds -- see SMT.Configuration).
+            List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
+            if (timeout > 0) args.add("--tlimit-per=" + Long.toString(Math.round(1000*timeout+0.5)));
+            if (timeoutTotal > 0) args.add("--tlimit=" + Long.toString(Math.round(1000*timeoutTotal+0.5)));
+            cmds = args.toArray(new String[args.size()]);
+        }
+        cmds[0] = executable;
+        // With --quiet, cvc5 never prints an interactive "cvc5> " prompt, so "\n" (like
+        // Solver_smt) is the right end marker, not a prompt string.
+        solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
+    }
 
-	@Override
-	public IResponse start() {
-		try {
-			solverProcess.start(false);
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
-			return smtConfig.responseFactory.success();
-		} catch (Exception e) {
-			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
-		}
-	}
+    @Override
+    public IResponse start() {
+        try {
+            solverProcess.start(false);
+            if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
+            return smtConfig.responseFactory.success();
+        } catch (Exception e) {
+            return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
+        }
+    }
 
-	/** See the class Javadoc: wraps a bare-symbol answer for a string-typed option
-	 *  (Utils.stringOptions -- currently just :regular-output-channel and
-	 *  :diagnostic-output-channel) into a proper SMT-LIB string literal with the same
-	 *  text, working around cvc5 answering those two with an unquoted symbol instead. */
-	@Override
-	public IResponse get_option(IExpr.IKeyword option) {
-		IResponse response = super.get_option(option);
-		if (response instanceof IExpr.ISymbol && smtConfig.utils.stringOptions.contains(option.value())) {
-			return smtConfig.exprFactory.unquotedString(((IExpr.ISymbol)response).value());
-		}
-		return response;
-	}
+    /** See the class Javadoc: wraps a bare-symbol answer for a string-typed option
+     *  (Utils.stringOptions -- currently just :regular-output-channel and
+     *  :diagnostic-output-channel) into a proper SMT-LIB string literal with the same
+     *  text, working around cvc5 answering those two with an unquoted symbol instead. */
+    @Override
+    public IResponse get_option(IExpr.IKeyword option) {
+        IResponse response = super.get_option(option);
+        if (response instanceof IExpr.ISymbol && smtConfig.utils.stringOptions.contains(option.value())) {
+            return smtConfig.exprFactory.unquotedString(((IExpr.ISymbol)response).value());
+        }
+        return response;
+    }
 
 }

@@ -15,45 +15,45 @@ import org.smtlib.sexpr.Parser;
 
 /** Implements the set-info command */
 public class C_set_info extends Command implements Iset_info {
-	/** The command name */
-	public static final String commandName = "set-info";
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
+    /** The command name */
+    public static final String commandName = "set-info";
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
 
-	/** The keyword info flag */
-	protected IKeyword infoflag;
+    /** The keyword info flag */
+    protected IKeyword infoflag;
 
-	/** The value of the info flag */
-	protected /*@Nullable*/IAttributeValue value;
+    /** The value of the info flag */
+    protected /*@Nullable*/IAttributeValue value;
 
-	@Override
-	public IKeyword infoflag() { return infoflag; }
+    @Override
+    public IKeyword infoflag() { return infoflag; }
 
-	@Override
-	public IAttributeValue value() { return value; }
+    @Override
+    public IAttributeValue value() { return value; }
 
-	/** Construct an instance of the command */
-	public C_set_info(IKeyword keyword, IAttributeValue value) {
-		super();
-		this.infoflag = keyword;
-		this.value = value;
-	}
-	
-	/** Creates a command instance by parsing the concrete S-expression syntax */
-	static public C_set_info parse(Parser p) throws ParserException  {
-		IKeyword key = p.parseKeyword();
-		IAttributeValue value = p.parseAttributeValue();
-		return new C_set_info(key,value);
-	}
+    /** Construct an instance of the command */
+    public C_set_info(IKeyword keyword, IAttributeValue value) {
+        super();
+        this.infoflag = keyword;
+        this.value = value;
+    }
 
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.set_info(infoflag,value);
-	}
+    /** Creates a command instance by parsing the concrete S-expression syntax */
+    static public C_set_info parse(Parser p) throws ParserException  {
+        IKeyword key = p.parseKeyword();
+        IAttributeValue value = p.parseAttributeValue();
+        return new C_set_info(key,value);
+    }
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.set_info(infoflag,value);
+    }
+
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 }

@@ -10,7 +10,7 @@ SHELL = /bin/bash
 ##   make cov-test cov-report COV_CLASSES=../SMT/bin
 COV_CLASSES ?= ../SMT/jSMTLIB.jar
 
-.PHONY: test tests test-only clean script-tests smt-tests junit-tests build cov-test cov-clean cov-report cov-show cov-all reports time-solvers ci-cov ci-cov-dev
+.PHONY: test tests test-only clean script-tests smt-tests junit-tests build cov-test cov-test-by-test cov-analyze-by-test cov-report-by-test cov-clean cov-report cov-show cov-all reports time-solvers ci-cov ci-cov-dev
 
 ## Resolve the platform-appropriate solver directory, honouring any value already in the
 ## environment (CI sets it via GITHUB_ENV before invoking make; developers can export it
@@ -127,15 +127,87 @@ build:
 cov-test:
 	COV_CLASSES=$(COV_CLASSES) COV= bash ./runjunits
 
+## Like cov-test, but split by test case: each JUnit test's coverage (including that of any
+## child JVM it spawns) goes to its own cov/by-test/<TestClass>.<method>.exec, with
+## cov/by-test/index.tsv mapping each file back to its test (class, JUnit display name,
+## PASS/FAIL/SKIP, wall-clock ms). Whatever runs outside any test (class init,
+## @Parameters, @BeforeClass) goes to cov/by-test/_outside-tests.exec. See
+## PerTestCoverageListener.java and setup-coverage for the mechanism. cov-test and
+## cov/junits.exec are untouched. The directory is cleared first: per-test files are
+## appended to during a run, so stale ones from an earlier run would silently mix in.
+## The analysis (cov-analyze-by-test) then runs on the result, even if some tests failed;
+## the target still fails if the tests did.
+cov-test-by-test:
+	rm -rf cov/by-test
+	COV_CLASSES=$(COV_CLASSES) COV= COV_BY_TEST= bash ./runjunits; status=$$?; \
+	$(MAKE) cov-analyze-by-test COV_CLASSES=$(COV_CLASSES); exit $$status
+
+## coverage-analyzer (~/projects/jacoco/coverage-analyzer): finds tests that add nothing to
+## coverage -- empty, duplicate and subsumed tests, and a minimum-run-time set of tests that
+## covers everything the suite covers. Its classpath is its own jar plus the org.jacoco.core
+## and ASM jars that ../jacoco's `make copy` vendors into jacoco/lib alongside
+## jacocoagent.jar: the very JaCoCo build that recorded the data. That matters here -- the
+## customized agent places probes differently from stock JaCoCo, and the analyzer maps
+## probes back to source lines by re-deriving that layout from the class files.
+COV_ANALYZER_JARS := coverage-analyzer org.jacoco.core asm asm-commons asm-tree
+ifeq ($(OS),Windows_NT)
+  COV_CP_SEP := ;
+else
+  COV_CP_SEP := :
+endif
+COV_EMPTY :=
+COV_SPACE := $(COV_EMPTY) $(COV_EMPTY)
+COV_ANALYZER_CP := $(subst $(COV_SPACE),$(COV_CP_SEP),$(patsubst %,jacoco/lib/%.jar,$(COV_ANALYZER_JARS)))
+## jSMTLIB's own classes only: not the test harness, and not JUnit/Hamcrest, which the agent
+## instruments too. Skipped tests are left out. --variants merges the per-solver runs of each
+## FileTests/LogicTests case (checkFile["<solver>","<file>"], testLogic["<solver>","<version>"])
+## into one unit by dropping the solver parameter: they run the same jSMTLIB code against a
+## different external solver, so the analysis is about test cases, not solver runs. ($$ is a
+## literal $ in make.) Override to analyze differently, e.g.
+##   make cov-analyze-by-test COV_ANALYZER_ARGS="--include 'org.smtlib.**' --granularity line"
+COV_ANALYZER_ARGS ?= --include 'org.smtlib.**' --exclude 'org.smtlib.test.**' --exclude-status SKIP \
+	--variants '^((?:checkFile|testLogic)\[)"[^"]*",(.*)$$'
+
+## Analyze the data from the last cov-test-by-test run (without re-running the tests):
+## summary to the terminal and cov/by-test-report.txt, full results as CSV files in
+## cov/by-test-report/. --strip removes this directory's absolute path, which ScriptTests'
+## and FileTests' display names carry, from the test names in the report.
+cov-analyze-by-test:
+	set -o pipefail; java -cp "$(COV_ANALYZER_CP)" com.sigillogic.coverage.analyzer.Main \
+		--index cov/by-test/index.tsv --classfiles $(COV_CLASSES) --strip "$(CURDIR)/" \
+		$(COV_ANALYZER_ARGS) --out cov/by-test-report | tee cov/by-test-report.txt
+
+## Merge every per-test file back into one data set and report it, exactly like
+## cov-report does for cov-test -- a check that splitting lost nothing: its totals should
+## match cov-report's for the same code and SMT_TEST_SOLVERS.
+cov-report-by-test:
+	java -jar jacoco/lib/jacococli.jar merge --quiet cov/by-test/*.exec --destfile cov/by-test-merged.exec
+	java -jar jacoco/lib/jacococli.jar report cov/by-test-merged.exec \
+		--classfiles $(COV_CLASSES) \
+		--classfiles bin \
+		--sourcefiles ../SMT/src \
+		--sourcefiles src \
+		--html cov/html-by-test \
+		--xml cov/coverage-by-test.xml
+
 ## Remove collected coverage data
 cov-clean:
 	rm -rf cov
 
-## Generate HTML + XML coverage report from the single exec file produced by cov-test
+## Generate HTML + XML coverage report from the single exec file produced by cov-test.
+## Two --classfiles/--sourcefiles pairs, not one: $(COV_CLASSES) covers org.smtlib itself,
+## and bin/src cover org.smtlib.test/org.smtlib.test.bugs (the JUnit test harness --
+## FileTests, LogicTests, etc. -- compiled by cov-test's own runjunits into bin/) --
+## jacococli accepts each option repeated, unioning every location given. Test-harness
+## code is exercised by the very tests being measured and is worth the same coverage
+## visibility as anything under SMT/src (e.g. a change to FileTests/LogicTests should
+## show up here too, not just in whether the suite as a whole still passes).
 cov-report:
 	java -jar jacoco/lib/jacococli.jar report cov/junits.exec \
 		--classfiles $(COV_CLASSES) \
+		--classfiles bin \
 		--sourcefiles ../SMT/src \
+		--sourcefiles src \
 		--html cov/html \
 		--xml cov/coverage.xml
 
@@ -173,7 +245,12 @@ CI_SOLVERS ?= $(SMT_TEST_SOLVERS)
 ## all) -- so this downloads the same jsmtlib-release-<run_id> jar CI built and
 ## instrumented for this run and reports against that, rather than $(COV_CLASSES)'s local
 ## build, which has no guaranteed relationship to what actually ran on CI (issue #122: a
-## stale/incrementally-built local jar showed long-deleted classes in the report).
+## stale/incrementally-built local jar showed long-deleted classes in the report). The
+## compiled org.smtlib.test/org.smtlib.test.bugs classes (the JUnit test harness itself --
+## FileTests, LogicTests, etc. -- also worth coverage visibility, same as cov-report's
+## local --classfiles bin) get the same treatment: each coverage-<label> artifact now also
+## carries its own bin/, and any one of them is added alongside the jar (they're expected
+## to be identical across platforms, being plain Java bytecode from the same commit).
 ## Requires the gh CLI, authenticated against this repo (gh auth status).
 ## Override the dispatched branch or solver list on the command line, e.g.:
 ##   make ci-cov CI_BRANCH=dev CI_SOLVERS="test cvc5-1.3.2"
@@ -216,6 +293,7 @@ ci-cov:
 	gh run download "$$run_id" -n "jsmtlib-release-$$run_id" -D cov/ci/jar; \
 	execs=$$(find cov/ci -name junits.exec); \
 	classjar=$$(find cov/ci/jar -name jSMTLIB.jar | head -1); \
+	testbin=$$(find cov/ci -type d -name bin | head -1); \
 	if [ -z "$$execs" ]; then \
 		echo "WARNING: no junits.exec files found in the downloaded artifacts -- skipping merge"; \
 	elif [ -z "$$classjar" ]; then \
@@ -223,9 +301,17 @@ ci-cov:
 	else \
 		echo "Merging $$(echo "$$execs" | wc -l | tr -d ' ') per-platform .exec files into one report..."; \
 		java -jar jacoco/lib/jacococli.jar merge $$execs --destfile cov/ci/merged.exec; \
+		classfiles_args="--classfiles $$classjar"; \
+		sourcefiles_args="--sourcefiles ../SMT/src"; \
+		if [ -n "$$testbin" ]; then \
+			classfiles_args="$$classfiles_args --classfiles $$testbin"; \
+			sourcefiles_args="$$sourcefiles_args --sourcefiles src"; \
+		else \
+			echo "WARNING: no compiled org.smtlib.test bin/ found in the downloaded artifacts -- report will omit test-harness coverage"; \
+		fi; \
 		java -jar jacoco/lib/jacococli.jar report cov/ci/merged.exec \
-			--classfiles "$$classjar" \
-			--sourcefiles ../SMT/src \
+			$$classfiles_args \
+			$$sourcefiles_args \
 			--html cov/ci/html \
 			--xml cov/ci/coverage.xml; \
 		echo "Consolidated report: cov/ci/html/index.html"; \

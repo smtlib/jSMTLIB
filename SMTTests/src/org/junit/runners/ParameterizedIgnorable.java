@@ -16,7 +16,6 @@ import org.junit.internal.runners.model.EachTestNotifier;
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
 import org.junit.runner.notification.RunNotifier;
-import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
@@ -90,12 +89,12 @@ public class ParameterizedIgnorable extends org.junit.runners.Suite {
         protected Statement classBlock(RunNotifier notifier) {
             return childrenInvoker(notifier);
         }
-        
+
         @Override
         protected Annotation[] getRunnerAnnotations() {
             return new Annotation[0];
         }
-        
+
         @Override
         protected void runChild(final FrameworkMethod method, RunNotifier notifier) {
             Description description= describeChild(method);
@@ -158,5 +157,5 @@ public class ParameterizedIgnorable extends org.junit.runners.Suite {
         throw new Exception("No public static parameters method on class "
                 + testClass.getName());
     }
-    
+
 }

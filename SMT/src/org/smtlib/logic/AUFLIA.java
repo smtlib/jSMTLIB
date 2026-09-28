@@ -14,24 +14,24 @@ import org.smtlib.IExpr.ISymbol;
 
 public class AUFLIA extends Logic {
 
-	public AUFLIA(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(smtConfig,name,attributes);
-	}
+    public AUFLIA(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+        super(smtConfig,name,attributes);
+    }
 
-	@Override
-	public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
-	}
+    @Override
+    public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
+    }
 
-	@Override
-	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
-		if (!isLinearInteger(expression)) {
-			throw new IVisitor.VisitorException("Integer expressions must be linear in this logic",expression.pos());
-		}
-	}
-	
-	@Override
-	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
-		if (expr != null) checkArraySort(expr, id, "(Array Int Int)", sortApp("Array", sortApp("Int"), sortApp("Int")));
-	}
+    @Override
+    public void validExpression(IExpr expression) throws IVisitor.VisitorException {
+        if (!isLinearInteger(expression)) {
+            throw new IVisitor.VisitorException("Integer expressions must be linear in this logic",expression.pos());
+        }
+    }
+
+    @Override
+    public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
+        if (expr != null) checkArraySort(expr, id, "(Array Int Int)", sortApp("Array", sortApp("Int"), sortApp("Int")));
+    }
 
 }

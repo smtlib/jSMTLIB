@@ -21,241 +21,241 @@ import org.smtlib.IResponse.*;
 /** This class holds subclasses that are implementations of the various IResponse interfaces.
  *  It is never itself instantiated -- only its nested classes and the constants below are used. */
 public abstract class Response {
-	/** Never instantiated -- this class exists only to hold the nested response
-	 *  implementation classes and the constants below. */
-	private Response() {}
+    /** Never instantiated -- this class exists only to hold the nested response
+     *  implementation classes and the constants below. */
+    private Response() {}
 
-	final static String ERROR = "error";
-	final static String OK = "success";
-	final static public SMTExpr.Symbol EMPTY = new SMTExpr.Symbol("");
-	final static public SMTExpr.Symbol SUCCESS = new SMTExpr.Symbol(OK);
-	final static public SMTExpr.Symbol UNSUPPORTED = new SMTExpr.Symbol("unsupported");
-	final static public SMTExpr.Symbol UNKNOWN = new SMTExpr.Symbol("unknown");
-	final static public SMTExpr.Symbol SAT = new SMTExpr.Symbol("sat");
-	final static public SMTExpr.Symbol UNSAT = new SMTExpr.Symbol("unsat");
-	final static public SMTExpr.Symbol IMMEDIATE_EXIT = new SMTExpr.Symbol(Utils.IMMEDIATE_EXIT);
-	final static public SMTExpr.Symbol CONTINUED_EXECUTION = new SMTExpr.Symbol(Utils.CONTINUED_EXECUTION);
-	final static public SMTExpr.Symbol MEMOUT = new SMTExpr.Symbol(Utils.MEMOUT);
-	final static public SMTExpr.Symbol TIMEOUT = new SMTExpr.Symbol("timeout"); // TODO - timeout is not standard SMTLIB
-	final static public SMTExpr.Symbol INCOMPLETE = new SMTExpr.Symbol(Utils.INCOMPLETE); // TODO - incomplete is not standard SMTLIB
-	
-	/** Implements the IResponse.IPair interface */
-	static public class Pair<T1,T2> implements IResponse.IPair<T1,T2>{
-		public Pair(T1 first, T2 second) { this.first = first; this.second = second; }
-		protected T1 first;
-		protected T2 second;
-		@Override
-		public T1 first() { return first; }
-		@Override
-		public T2 second() { return second; }
-	}
-	
-	/** Implements the IResponse.IFactory interface */
-	static public class Factory implements IResponse.IFactory {
-		public boolean printSuccess = true;
-		
-		SMT.Configuration smtConfig;
-		public Factory(SMT.Configuration smtConfig) { this.smtConfig = smtConfig; }
+    final static String ERROR = "error";
+    final static String OK = "success";
+    final static public SMTExpr.Symbol EMPTY = new SMTExpr.Symbol("");
+    final static public SMTExpr.Symbol SUCCESS = new SMTExpr.Symbol(OK);
+    final static public SMTExpr.Symbol UNSUPPORTED = new SMTExpr.Symbol("unsupported");
+    final static public SMTExpr.Symbol UNKNOWN = new SMTExpr.Symbol("unknown");
+    final static public SMTExpr.Symbol SAT = new SMTExpr.Symbol("sat");
+    final static public SMTExpr.Symbol UNSAT = new SMTExpr.Symbol("unsat");
+    final static public SMTExpr.Symbol IMMEDIATE_EXIT = new SMTExpr.Symbol(Utils.IMMEDIATE_EXIT);
+    final static public SMTExpr.Symbol CONTINUED_EXECUTION = new SMTExpr.Symbol(Utils.CONTINUED_EXECUTION);
+    final static public SMTExpr.Symbol MEMOUT = new SMTExpr.Symbol(Utils.MEMOUT);
+    final static public SMTExpr.Symbol TIMEOUT = new SMTExpr.Symbol("timeout"); // TODO - timeout is not standard SMTLIB
+    final static public SMTExpr.Symbol INCOMPLETE = new SMTExpr.Symbol(Utils.INCOMPLETE); // TODO - incomplete is not standard SMTLIB
 
-		@Override
-		public IError error(String msg) { return new Error(msg); }
+    /** Implements the IResponse.IPair interface */
+    static public class Pair<T1,T2> implements IResponse.IPair<T1,T2>{
+        public Pair(T1 first, T2 second) { this.first = first; this.second = second; }
+        protected T1 first;
+        protected T2 second;
+        @Override
+        public T1 first() { return first; }
+        @Override
+        public T2 second() { return second; }
+    }
 
-		@Override
-		public IError error(String msg, /*@Nullable*//*@ReadOnly*/ IPos pos) { return new Error(msg,pos); }
+    /** Implements the IResponse.IFactory interface */
+    static public class Factory implements IResponse.IFactory {
+        public boolean printSuccess = true;
 
-		@Override
-		public IResponse empty() { return EMPTY; }
+        SMT.Configuration smtConfig;
+        public Factory(SMT.Configuration smtConfig) { this.smtConfig = smtConfig; }
 
-		@Override
-		public IResponse success() { return printSuccess ? SUCCESS : EMPTY; }
+        @Override
+        public IError error(String msg) { return new Error(msg); }
 
-		@Override
-		public IResponse unsupported() { return UNSUPPORTED; }
+        @Override
+        public IError error(String msg, /*@Nullable*//*@ReadOnly*/ IPos pos) { return new Error(msg,pos); }
 
-		@Override
-		public IResponse unknown() { return UNKNOWN; }
+        @Override
+        public IResponse empty() { return EMPTY; }
 
-		@Override
-		public IResponse sat() { return SAT; }
+        @Override
+        public IResponse success() { return printSuccess ? SUCCESS : EMPTY; }
 
-		@Override
-		public IResponse unsat() { return UNSAT; }
+        @Override
+        public IResponse unsupported() { return UNSUPPORTED; }
 
-		@Override
-		public IResponse immediate_exit() { return IMMEDIATE_EXIT; }
+        @Override
+        public IResponse unknown() { return UNKNOWN; }
 
-		@Override
-		public IResponse continued_execution() { return CONTINUED_EXECUTION; }
+        @Override
+        public IResponse sat() { return SAT; }
 
-		@Override
-		public IResponse memout() { return MEMOUT; }
+        @Override
+        public IResponse unsat() { return UNSAT; }
 
-		@Override
-		public IResponse incomplete() { return INCOMPLETE; }
+        @Override
+        public IResponse immediate_exit() { return IMMEDIATE_EXIT; }
 
-		@Override
-		public ISymbol constant(String sym) { return new SMTExpr.Symbol(sym); }
+        @Override
+        public IResponse continued_execution() { return CONTINUED_EXECUTION; }
 
-		@Override
-		public IStringLiteral stringLiteral(String value) { return new SMTExpr.StringLiteral(smtConfig,value,false); }
+        @Override
+        public IResponse memout() { return MEMOUT; }
 
-		@Override
-		public INumeral numericLiteral(int value) { return new SMTExpr.Numeral(value); }
+        @Override
+        public IResponse incomplete() { return INCOMPLETE; }
 
-		@Override
-		public IResponse.IAttributeList get_info_response(IAttribute<? extends IAttributeValue> attr) {
-			return new Seq(attr);
-		}
-		
-		@Override
-		public IResponse.IAttributeList get_info_response(List<IAttribute<? extends IAttributeValue>> attributes) {
-			return new Seq(attributes);
-		}
-		
-		@Override
-		public <T1,T2> Pair<T1,T2> pair(T1 first, T2 second) {
-			return new Pair<T1,T2>(first,second);
-		}
+        @Override
+        public ISymbol constant(String sym) { return new SMTExpr.Symbol(sym); }
 
-		// The response to get-option is a literal or symbol or s-expression 
-		@Override
-		public IResponse get_option_response(IAttributeValue v) {
-			return v;
-		}
-		
-		@Override
-		public ProofResponse get_proof_response() { return new ProofResponse(); }
-		
-		@Override
-		public ValueResponse get_value_response(List<IPair<IExpr,IExpr>> values) {
-			return new ValueResponse(values);
-		}
+        @Override
+        public IStringLiteral stringLiteral(String value) { return new SMTExpr.StringLiteral(smtConfig,value,false); }
 
-		@Override
-		public AssignmentResponse get_assignment_response(List<IResponse.IPair<IExpr.ISymbol,Boolean>> assignments) {
-			return new AssignmentResponse(assignments);
-		}
-		
+        @Override
+        public INumeral numericLiteral(int value) { return new SMTExpr.Numeral(value); }
+
+        @Override
+        public IResponse.IAttributeList get_info_response(IAttribute<? extends IAttributeValue> attr) {
+            return new Seq(attr);
+        }
+
+        @Override
+        public IResponse.IAttributeList get_info_response(List<IAttribute<? extends IAttributeValue>> attributes) {
+            return new Seq(attributes);
+        }
+
+        @Override
+        public <T1,T2> Pair<T1,T2> pair(T1 first, T2 second) {
+            return new Pair<T1,T2>(first,second);
+        }
+
+        // The response to get-option is a literal or symbol or s-expression 
+        @Override
+        public IResponse get_option_response(IAttributeValue v) {
+            return v;
+        }
+
+        @Override
+        public ProofResponse get_proof_response() { return new ProofResponse(); }
+
+        @Override
+        public ValueResponse get_value_response(List<IPair<IExpr,IExpr>> values) {
+            return new ValueResponse(values);
+        }
+
+        @Override
+        public AssignmentResponse get_assignment_response(List<IResponse.IPair<IExpr.ISymbol,Boolean>> assignments) {
+            return new AssignmentResponse(assignments);
+        }
+
         @Override
         public UnsatAssumptionsResponse get_unsat_assumptions_response(List<ISymbol> names) {
             return new UnsatAssumptionsResponse(names);
         }
-        
+
         @Override
         public UnsatCoreResponse get_unsat_core_response(List<ISymbol> names) {
             return new UnsatCoreResponse(names);
         }
-        
-		@Override
-		public AssertionsResponse get_assertions_response(List<IExpr> exprs) {
-			return new AssertionsResponse(exprs);
-		}
 
-	}
-	
-	/** Implements the IResponse.IError interface */
-	static public class Error extends Pos.Printable implements IResponse.IError {
+        @Override
+        public AssertionsResponse get_assertions_response(List<IExpr> exprs) {
+            return new AssertionsResponse(exprs);
+        }
 
-		private String msg;
+    }
 
-		public Error(String errorMsg) {
-			this(errorMsg,null);
-		}
+    /** Implements the IResponse.IError interface */
+    static public class Error extends Pos.Printable implements IResponse.IError {
 
-		public Error(String errorMsg, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-			setPos(pos);
-			this.msg = errorMsg;
-		}
+        private String msg;
 
-		@Override
-		public boolean isOK() {
-			return false;
-		}
+        public Error(String errorMsg) {
+            this(errorMsg,null);
+        }
 
-		@Override
-		public boolean isError() {
-			return true;
-		}
+        public Error(String errorMsg, /*@Nullable*//*@ReadOnly*/ IPos pos) {
+            setPos(pos);
+            this.msg = errorMsg;
+        }
 
-		@Override
-		public String errorMsg() {
-			return msg;
-		}
+        @Override
+        public boolean isOK() {
+            return false;
+        }
 
-		/** Setting the textual position of the command */
-		public <T extends IPosable> T setPos(T t, /*@Nullable*/ IPos p) { t.setPos(p); return t; }
+        @Override
+        public boolean isError() {
+            return true;
+        }
 
-		@Override
-		public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-			return v.visit(this);
-		}
-	}
+        @Override
+        public String errorMsg() {
+            return msg;
+        }
 
-	/** Implements the IResponse.IAssignmentResponse interface */
-	static public class AssignmentResponse extends Pos.Printable implements IResponse.IAssignmentResponse {
-		private List<IPair<IExpr.ISymbol,Boolean>> assignments = new LinkedList<IPair<IExpr.ISymbol,Boolean>>();
-		@Override
-		public List<IPair<IExpr.ISymbol,Boolean>> assignments() { return assignments; }
-		public AssignmentResponse(List<IPair<IExpr.ISymbol,Boolean>> assignments) {
-			this.assignments = assignments;
-		}
+        /** Setting the textual position of the command */
+        public <T extends IPosable> T setPos(T t, /*@Nullable*/ IPos p) { t.setPos(p); return t; }
 
-		@Override public boolean isOK() { return false; }
-		@Override public boolean isError() { return false; }
-		public void add(IExpr.ISymbol name, Boolean value) {
-			assignments.add(new Pair<IExpr.ISymbol,Boolean>(name,value));
-		}
+        @Override
+        public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+            return v.visit(this);
+        }
+    }
 
-		@Override
-		public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-			return v.visit(this);
-		}
-	}
+    /** Implements the IResponse.IAssignmentResponse interface */
+    static public class AssignmentResponse extends Pos.Printable implements IResponse.IAssignmentResponse {
+        private List<IPair<IExpr.ISymbol,Boolean>> assignments = new LinkedList<IPair<IExpr.ISymbol,Boolean>>();
+        @Override
+        public List<IPair<IExpr.ISymbol,Boolean>> assignments() { return assignments; }
+        public AssignmentResponse(List<IPair<IExpr.ISymbol,Boolean>> assignments) {
+            this.assignments = assignments;
+        }
 
-	/** Implements the IResponse.IValueResponse interface */
-	static public class ValueResponse extends Pos.Printable implements IResponse.IValueResponse {
-		private List<IPair<IExpr,IExpr>> values = new LinkedList<IPair<IExpr,IExpr>>();
-		@Override public List<IPair<IExpr,IExpr>> values() { return values; }
-		public ValueResponse(List<IPair<IExpr,IExpr>> values) {
-			this.values = values;
-		}
-		
-		@Override
-		public boolean isOK() { return false; }
-		@Override
-		public boolean isError() { return false; }
+        @Override public boolean isOK() { return false; }
+        @Override public boolean isError() { return false; }
+        public void add(IExpr.ISymbol name, Boolean value) {
+            assignments.add(new Pair<IExpr.ISymbol,Boolean>(name,value));
+        }
 
-		@Override
-		public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-			return v.visit(this);
-		}
-	}
+        @Override
+        public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+            return v.visit(this);
+        }
+    }
 
-	/** Implements the IResponse.IAssertionsResponse interface */
-	static public class AssertionsResponse extends Pos.Printable implements IResponse.IAssertionsResponse {
-		private List<IExpr> assertions = new LinkedList<IExpr>();
-		@Override public List<IExpr> assertions() { return assertions; }
-		public AssertionsResponse(List<IExpr> assertions) {
-			this.assertions = assertions;
-		}
+    /** Implements the IResponse.IValueResponse interface */
+    static public class ValueResponse extends Pos.Printable implements IResponse.IValueResponse {
+        private List<IPair<IExpr,IExpr>> values = new LinkedList<IPair<IExpr,IExpr>>();
+        @Override public List<IPair<IExpr,IExpr>> values() { return values; }
+        public ValueResponse(List<IPair<IExpr,IExpr>> values) {
+            this.values = values;
+        }
 
-		@Override
-		public boolean isOK() { return false; }
-		@Override
-		public boolean isError() { return false; }
+        @Override
+        public boolean isOK() { return false; }
+        @Override
+        public boolean isError() { return false; }
 
-		@Override
-		public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-			return v.visit(this);
-		}
-	}
+        @Override
+        public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+            return v.visit(this);
+        }
+    }
+
+    /** Implements the IResponse.IAssertionsResponse interface */
+    static public class AssertionsResponse extends Pos.Printable implements IResponse.IAssertionsResponse {
+        private List<IExpr> assertions = new LinkedList<IExpr>();
+        @Override public List<IExpr> assertions() { return assertions; }
+        public AssertionsResponse(List<IExpr> assertions) {
+            this.assertions = assertions;
+        }
+
+        @Override
+        public boolean isOK() { return false; }
+        @Override
+        public boolean isError() { return false; }
+
+        @Override
+        public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+            return v.visit(this);
+        }
+    }
 
     /** Implements the IResponse.IUnsatAssumptionsResponse interface */
     static public class UnsatAssumptionsResponse extends Pos.Printable implements IResponse.IUnsatAssumptionsResponse {
         private List<ISymbol> names = new LinkedList<ISymbol>();
         @Override 
         public List<ISymbol> names() { return names; }
-        
+
         public UnsatAssumptionsResponse(List<ISymbol> names) {
             this.names = names;
         }
@@ -276,7 +276,7 @@ public abstract class Response {
         private List<ISymbol> names = new LinkedList<ISymbol>();
         @Override 
         public List<ISymbol> names() { return names; }
-        
+
         public UnsatCoreResponse(List<ISymbol> names) {
             this.names = names;
         }
@@ -292,51 +292,51 @@ public abstract class Response {
         }
     }
 
-	/** Implements the IResponse.IProofResponse interface */
-	static public class ProofResponse extends Pos.Printable implements IResponse.IProofResponse {
-		// TODO - no implementation for proofs as yet
-		public ProofResponse() {}
-		@Override public Object proof() { return null; }
-		@Override public boolean isOK() { return false; }
-		@Override public boolean isError() { return false; }
+    /** Implements the IResponse.IProofResponse interface */
+    static public class ProofResponse extends Pos.Printable implements IResponse.IProofResponse {
+        // TODO - no implementation for proofs as yet
+        public ProofResponse() {}
+        @Override public Object proof() { return null; }
+        @Override public boolean isOK() { return false; }
+        @Override public boolean isError() { return false; }
 
-		@Override
-		public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-			return v.visit(this);
-		}
-	}
+        @Override
+        public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+            return v.visit(this);
+        }
+    }
 
-	/** Implementation of IAttributeList: a list of attributes returned by get-info. */
-	static public class Seq extends Pos.Printable implements IAttributeList {
-		List<IAttribute<? extends IAttributeValue>> list = new LinkedList<IAttribute<? extends IAttributeValue>>();
+    /** Implementation of IAttributeList: a list of attributes returned by get-info. */
+    static public class Seq extends Pos.Printable implements IAttributeList {
+        List<IAttribute<? extends IAttributeValue>> list = new LinkedList<IAttribute<? extends IAttributeValue>>();
 
-		public <T extends IAttributeValue> Seq(IAttribute<T> attr) {
-			list.add(attr);
-		}
+        public <T extends IAttributeValue> Seq(IAttribute<T> attr) {
+            list.add(attr);
+        }
 
-		public Seq(List<IAttribute<? extends IAttributeValue>> list) {
-			this.list = list;
-		}
+        public Seq(List<IAttribute<? extends IAttributeValue>> list) {
+            this.list = list;
+        }
 
-		@Override
-		public List<IAttribute<? extends IAttributeValue>> attributes() { return list; }
+        @Override
+        public List<IAttribute<? extends IAttributeValue>> attributes() { return list; }
 
 
-		@Override
-		public boolean isOK() {
-			return false;
-		}
+        @Override
+        public boolean isOK() {
+            return false;
+        }
 
-		@Override
-		public boolean isError() {
-			return false;
-		}
+        @Override
+        public boolean isError() {
+            return false;
+        }
 
-		@Override
-		public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-			return v.visit(this);
-		}
-	}
+        @Override
+        public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+            return v.visit(this);
+        }
+    }
 
 
 }

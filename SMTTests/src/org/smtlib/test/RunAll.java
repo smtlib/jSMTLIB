@@ -50,6 +50,13 @@ public class RunAll {
             JUnitCore core = new JUnitCore();
             core.addListener(new LoggingRunListener(w));
             core.addListener(new TextListener(System.out)); // keep the familiar dots + final summary
+            // Per-test coverage (make cov-test-by-test): setup-coverage exports
+            // COV_BY_TEST_DIR only in that mode, so a normal or cov-test run is unaffected.
+            String byTestDir = System.getenv("COV_BY_TEST_DIR");
+            if (byTestDir != null && !byTestDir.isEmpty()) {
+                PerTestCoverageListener l = PerTestCoverageListener.create(new File(byTestDir));
+                if (l != null) core.addListener(l);
+            }
             Result result = core.run(classes.toArray(new Class<?>[0]));
             // heartbeat.interrupt();
             System.exit(result.wasSuccessful() ? 0 : 1);
