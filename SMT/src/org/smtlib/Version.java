@@ -11,11 +11,11 @@ public class Version {
 
     /** Returns the release version string for this build of jSMTLIB. */
     public static String version() throws RuntimeException {
-    	String key = "release";
-    	if (versionRB == null) {
-    		versionRB = ResourceBundle.getBundle(versionRBName);
-    	}
-    	return versionRB.getString(key);
+        String key = "release";
+        if (versionRB == null) {
+            versionRB = ResourceBundle.getBundle(versionRBName);
+        }
+        return versionRB.getString(key);
     }
 
 }

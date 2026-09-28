@@ -27,91 +27,91 @@ import org.smtlib.solvers.Solver_test;
  */
 public class C_what extends Command implements Iwhat {
 
-	/** The command name */
-	public static final String commandName = "what";
-	
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
-	
-	/** The ids that are the arguments of the command */
-	protected List<IIdentifier> ids;
-	
-	/** The ids that are the arguments of the command */
-	@Override
-	public List<IIdentifier> ids() { return ids; }
+    /** The command name */
+    public static final String commandName = "what";
 
-	/** Constructs a command instance for the given identifiers. */
-	public C_what(List<IIdentifier> ids) {
-		this.ids = ids;
-	}
-	
-	/** Parses the input concrete S-expression syntax to produce a command instance */
-	static public C_what parse(Parser p) throws IOException, ParserException {
-		if (!p.smt().relax) {
-			throw error(p.smt(),"Invalid SMT-LIB command: " + commandName, p.commandName.pos());
-		}
-		List<IIdentifier> ids = new LinkedList<IIdentifier>();
-		while (!p.isRP()) {
-			if (p.isEOD()) {
-				throw new ParserException("Unexpected end of data while parsing a what command",
-						p.savedlp == null ? null : p.pos(p.savedlp.pos().charStart(),p.currentPos()));
-			}
-			ids.add(p.parseIdentifier());
-		}
-		return new C_what(ids);
-	}
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
 
-	@Override
-	public void writeArgs(Printer p) throws IOException {
-		try {
-			for (IIdentifier id: ids()) {
-				p.writer().append(" ");
-				id.accept(p);
-			}
-		} catch (IVisitor.VisitorException e) {
-			p.error(e.getMessage());
-		}
-	}
+    /** The ids that are the arguments of the command */
+    protected List<IIdentifier> ids;
 
-	@Override
-	public IResponse execute(ISolver solver) {
-		SMT.Configuration smtConfig = solver.smt();
-		if (!(solver instanceof Solver_test)) {
-			return smtConfig.responseFactory.error("This kind of solver (" + solver.getClass() + ") is not able to execute a what command",null);
-		}
-		IPrinter printer = smtConfig.defaultPrinter;
-		SymbolTable symTable = ((Solver_test)solver).symTable; 
-		Iterator<IIdentifier> iter = ids().iterator();
-		if (!iter.hasNext()) {
-			// No arguments - print everything in the symbol table
-			SymbolTable.Iterator symiter = symTable.iterator();
-			while (symiter.hasNext()) {
-				SymbolTable.Entry n = symiter.next();
-				smtConfig.log.logOut(printer.toString(n.name) + " : " + printer.toString(n.sort));
-			}
-		} else {
-			while (iter.hasNext()) {
-				IIdentifier s = iter.next();
-				ISort.IDefinition sortDef = symTable.lookupSort(s); 
-				if (sortDef != null) smtConfig.log.logOut(printer.toString(s) + " : " + printer.toString(sortDef));
-				else {
-					List<SymbolTable.Entry> entrylist = symTable.lookup(s);
-					if (entrylist != null && entrylist.size() != 0) {
-						for (SymbolTable.Entry entry: entrylist) {
-							smtConfig.log.logOut(printer.toString(s) + " : " + printer.toString(entry.sort));
-						}
-					} else {
-						smtConfig.log.logOut(printer.toString(s) + " : -no entry- ");
-					}
-				}
-			}
-		}
-		return smtConfig.responseFactory.success();
-	}
-	
-	@Override
-	public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    /** The ids that are the arguments of the command */
+    @Override
+    public List<IIdentifier> ids() { return ids; }
+
+    /** Constructs a command instance for the given identifiers. */
+    public C_what(List<IIdentifier> ids) {
+        this.ids = ids;
+    }
+
+    /** Parses the input concrete S-expression syntax to produce a command instance */
+    static public C_what parse(Parser p) throws IOException, ParserException {
+        if (!p.smt().relax) {
+            throw error(p.smt(),"Invalid SMT-LIB command: " + commandName, p.commandName.pos());
+        }
+        List<IIdentifier> ids = new LinkedList<IIdentifier>();
+        while (!p.isRP()) {
+            if (p.isEOD()) {
+                throw new ParserException("Unexpected end of data while parsing a what command",
+                        p.savedlp == null ? null : p.pos(p.savedlp.pos().charStart(),p.currentPos()));
+            }
+            ids.add(p.parseIdentifier());
+        }
+        return new C_what(ids);
+    }
+
+    @Override
+    public void writeArgs(Printer p) throws IOException {
+        try {
+            for (IIdentifier id: ids()) {
+                p.writer().append(" ");
+                id.accept(p);
+            }
+        } catch (IVisitor.VisitorException e) {
+            p.error(e.getMessage());
+        }
+    }
+
+    @Override
+    public IResponse execute(ISolver solver) {
+        SMT.Configuration smtConfig = solver.smt();
+        if (!(solver instanceof Solver_test)) {
+            return smtConfig.responseFactory.error("This kind of solver (" + solver.getClass() + ") is not able to execute a what command",null);
+        }
+        IPrinter printer = smtConfig.defaultPrinter;
+        SymbolTable symTable = ((Solver_test)solver).symTable; 
+        Iterator<IIdentifier> iter = ids().iterator();
+        if (!iter.hasNext()) {
+            // No arguments - print everything in the symbol table
+            SymbolTable.Iterator symiter = symTable.iterator();
+            while (symiter.hasNext()) {
+                SymbolTable.Entry n = symiter.next();
+                smtConfig.log.logOut(printer.toString(n.name) + " : " + printer.toString(n.sort));
+            }
+        } else {
+            while (iter.hasNext()) {
+                IIdentifier s = iter.next();
+                ISort.IDefinition sortDef = symTable.lookupSort(s); 
+                if (sortDef != null) smtConfig.log.logOut(printer.toString(s) + " : " + printer.toString(sortDef));
+                else {
+                    List<SymbolTable.Entry> entrylist = symTable.lookup(s);
+                    if (entrylist != null && entrylist.size() != 0) {
+                        for (SymbolTable.Entry entry: entrylist) {
+                            smtConfig.log.logOut(printer.toString(s) + " : " + printer.toString(entry.sort));
+                        }
+                    } else {
+                        smtConfig.log.logOut(printer.toString(s) + " : -no entry- ");
+                    }
+                }
+            }
+        }
+        return smtConfig.responseFactory.success();
+    }
+
+    @Override
+    public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 }

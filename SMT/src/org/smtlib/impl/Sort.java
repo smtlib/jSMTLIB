@@ -15,461 +15,461 @@ import org.smtlib.impl.SMTExpr.Symbol;
 
 /** This class implements the abstract ISort interface */
 public abstract class Sort extends Pos.Printable implements ISort {
-	
-	/** Returns true iff the receiver is a Sort expression designating the pre-defined Bool sort */
-	@Override
-	public boolean isBool() {
-		return this == Bool || ((this instanceof IApplication) && Bool.family().equals(((IApplication)this).family()));
-	}
 
-	/** Returns the pre-defined Bool sort */
-	static public ISort.IApplication Bool() {
-		return Bool;
-	}
-	
-	/** Concrete syntax for the pre-defined Bool sort */
-	static final private String BOOL = "Bool";
-	
-	/** A cached instance of the pre-defined Bool sort */
-	static final private Sort.Application Bool = new Sort.Application(new Symbol(BOOL), new LinkedList<ISort>());
-	static {
-		// Application.equals()/expand() require definition() to be set (as symTable-driven
-		// sort resolution normally does via Family.eval()); without this, comparing this
-		// singleton against a distinct (non-identical) Bool instance NPEs inside expand().
-		Bool.definition(new Sort.Family(new Symbol(BOOL), new Numeral(0), null));
-	}
+    /** Returns true iff the receiver is a Sort expression designating the pre-defined Bool sort */
+    @Override
+    public boolean isBool() {
+        return this == Bool || ((this instanceof IApplication) && Bool.family().equals(((IApplication)this).family()));
+    }
 
-	/** Represents a new sort symbol, with a given identifier and arity */
-	static public class Family extends Pos.Printable implements IFamily {
-		protected IIdentifier identifier;
-		protected INumeral arity;
-		protected List<IExpr.IAttribute<?>> attributes;
-		/** Creates a sort family with the given identifier, arity, and attributes (null or empty if none). */
-		public Family(IIdentifier identifier, INumeral arity, /*@Nullable*/ List<IExpr.IAttribute<?>> attributes) {
-			this.identifier = identifier;
-			this.arity = arity;
-			this.attributes = attributes == null ? Collections.<IExpr.IAttribute<?>>emptyList() : attributes;
-		}
-		@Override
-		public IIdentifier identifier() { return identifier; }
+    /** Returns the pre-defined Bool sort */
+    static public ISort.IApplication Bool() {
+        return Bool;
+    }
 
-		@Override
-		public INumeral arity() { return arity; }
+    /** Concrete syntax for the pre-defined Bool sort */
+    static final private String BOOL = "Bool";
 
-		@Override
-		public List<IExpr.IAttribute<?>> attributes() { return attributes; }
+    /** A cached instance of the pre-defined Bool sort */
+    static final private Sort.Application Bool = new Sort.Application(new Symbol(BOOL), new LinkedList<ISort>());
+    static {
+        // Application.equals()/expand() require definition() to be set (as symTable-driven
+        // sort resolution normally does via Family.eval()); without this, comparing this
+        // singleton against a distinct (non-identical) Bool instance NPEs inside expand().
+        Bool.definition(new Sort.Family(new Symbol(BOOL), new Numeral(0), null));
+    }
 
-		@Override
-		public int intArity() { return arity().intValue(); }
+    /** Represents a new sort symbol, with a given identifier and arity */
+    static public class Family extends Pos.Printable implements IFamily {
+        protected IIdentifier identifier;
+        protected INumeral arity;
+        protected List<IExpr.IAttribute<?>> attributes;
+        /** Creates a sort family with the given identifier, arity, and attributes (null or empty if none). */
+        public Family(IIdentifier identifier, INumeral arity, /*@Nullable*/ List<IExpr.IAttribute<?>> attributes) {
+            this.identifier = identifier;
+            this.arity = arity;
+            this.attributes = attributes == null ? Collections.<IExpr.IAttribute<?>>emptyList() : attributes;
+        }
+        @Override
+        public IIdentifier identifier() { return identifier; }
 
-		@Override
-		public IApplication eval(List<ISort> sorts) {
-			if (sorts.size() != arity().intValue()) {
-				throw new SMT.InternalException("Incorrect number of arguments: " + sorts.size() + "vs. " +  arity().intValue());
-			}
-			Application e = new Application(this.identifier(),sorts);
-			e.definition(this);
-			return e;
-		}
+        @Override
+        public INumeral arity() { return arity; }
 
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (!(o instanceof IFamily)) return false;
-			return identifier().equals(((IFamily)o).identifier());  // FIXME - is this sufficient in the presence of overriding symbols?
-		}
+        @Override
+        public List<IExpr.IAttribute<?>> attributes() { return attributes; }
 
-		@Override
-		public int hashCode() {
-			return identifier.hashCode();
-		}
-		
-		@Override
-		public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
-			return v.visit(this);
-		}
-	}
+        @Override
+        public int intArity() { return arity().intValue(); }
 
-	/** Implements a Sort abbreviation (parameterized definition, possibly with no parameters) */
-	static public class Abbreviation extends Pos.Printable implements IAbbreviation {
+        @Override
+        public IApplication eval(List<ISort> sorts) {
+            if (sorts.size() != arity().intValue()) {
+                throw new SMT.InternalException("Incorrect number of arguments: " + sorts.size() + "vs. " +  arity().intValue());
+            }
+            Application e = new Application(this.identifier(),sorts);
+            e.definition(this);
+            return e;
+        }
 
-		protected IIdentifier identifier;
-		protected List<IParameter> parameters;
-		protected ISort sortExpression;
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof IFamily)) return false;
+            return identifier().equals(((IFamily)o).identifier());  // FIXME - is this sufficient in the presence of overriding symbols?
+        }
 
-		/** Creates a sort abbreviation with the given identifier, parameter list, and defining expression. */
-		public Abbreviation(IIdentifier identifier, List<IParameter> parameters, ISort sortExpression) {
-			this.identifier = identifier;
-			this.parameters = parameters;
-			this.sortExpression = sortExpression;
-		}
-		
-		@Override
-		public IIdentifier identifier() { return identifier; }
-		
-		@Override
-		public List<IParameter> parameters() { return parameters; }
-		
-		@Override
-		public ISort sortExpression() { return sortExpression; }
+        @Override
+        public int hashCode() {
+            return identifier.hashCode();
+        }
 
-		@Override
-		public int intArity() { return parameters().size(); }
-		
-		@Override
-		public ISort eval(List<ISort> sorts) {
-			if (sorts.size() != parameters().size()) {
-				throw new SMT.InternalException("Incorrect number of arguments: " + sorts.size() + " instead of " + parameters().size());
-			}
-			Map<IParameter,ISort> map = new HashMap<IParameter,ISort>();
-			int i = 0;
-			for (IParameter p: parameters) {
-				if (map.put(p,sorts.get(i))!=null) {
-					throw new SMT.InternalException("Duplicate parameter: " + p);
-				}
-				i++;
-			}
-			return sortExpression.substitute(map);
-		}
-		
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (!(o instanceof IAbbreviation)) return false;
-			IAbbreviation a = (IAbbreviation)o;
-			return identifier().equals(a.identifier())
-					&& parameters().equals(a.parameters())
-					&& sortExpression().equals(a.sortExpression());
-		}
+        @Override
+        public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
+            return v.visit(this);
+        }
+    }
 
-		@Override
-		public int hashCode() {
-			return java.util.Objects.hash(identifier(), parameters(), sortExpression());
-		}
-		
-		@Override
-		public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
-			return v.visit(this);
-		}
-	}
+    /** Implements a Sort abbreviation (parameterized definition, possibly with no parameters) */
+    static public class Abbreviation extends Pos.Printable implements IAbbreviation {
 
-	/** Represents a sort expression consisting of a sort symbol or sort abbreviation symbol applied to a
-	 * corresponding number of sort arguments 
-	 */
-	static public class Application extends Sort implements IApplication {
-		protected IIdentifier sortID;
-		protected List<ISort> sortParameters;
-		
-		/** Reference to definition; filled in during type-checking */
-		protected ISort.IDefinition definition;
+        protected IIdentifier identifier;
+        protected List<IParameter> parameters;
+        protected ISort sortExpression;
 
-		/** Cached value for expanded() */
-		protected ISort expanded = null;
-		
-		/** Creates a sort application from a sort identifier and a list of sort arguments. */
-		public Application(IIdentifier sortID, List<ISort> sortParameters) {
-			this.sortID = sortID;
-			this.sortParameters = sortParameters;
-		}
+        /** Creates a sort abbreviation with the given identifier, parameter list, and defining expression. */
+        public Abbreviation(IIdentifier identifier, List<IParameter> parameters, ISort sortExpression) {
+            this.identifier = identifier;
+            this.parameters = parameters;
+            this.sortExpression = sortExpression;
+        }
 
-		/** Creates a sort application from a sort identifier and a varargs array of sort arguments. */
-		public Application(IIdentifier sortID, ISort... sortParameters) {
-			this.sortID = sortID;
-			this.sortParameters = Arrays.asList(sortParameters);
-		}
-		
-		@Override
-		public IIdentifier family() { return sortID; }
-		
-		@Override
-		public ISort param(int i) { return sortParameters.get(i); }
-		
-		@Override
-		public List<ISort> parameters() { return sortParameters; }
-		
-		@Override
-		public IDefinition definition() { return definition; }
-		
-		@Override
-		public IDefinition definition(IDefinition definition) {
-			this.definition = definition;
-			return definition;
-		}
-		
-		@Override
-		public ISort expand() {
-			// Note we could call definition().eval(sortParameters) always, but that 
-			// creates a duplicate object in Family.eval
-			
-			if (expanded == null) {
-				boolean changed = false;
-				ISort ss = this;
-				for (ISort param: parameters()) {
-					ISort p = param.expand();
-					if (p != param) changed = true;
-				}
-				while (ss instanceof Application) {
-					Application app = (Application)ss;
-					// -> is declared :right-assoc (SMT-LIB Sec. 3.7.2): a flat application
-					// with more than its declared 2-ary arity, e.g. (-> A B C), is sugar for
-					// the right-nested (-> A (-> B C)). TypeChecker.visit(ISort.IApplication)
-					// already accepts this where a -> sort expression is first type-checked,
-					// but the properly-folded value it computes there isn't always what ends
-					// up stored and later reused -- e.g. declare-fun stores cmd.resultSort(),
-					// the original still-flat parsed AST node (with definition() never set),
-					// directly, not TypeChecker's replacement -- so a flat, un-folded ->
-					// application can still reach here, e.g. via an equals() comparison
-					// against a properly-nested value. Fold on demand rather than assume any
-					// -> application already has the canonical (<=2-parameter) shape.
-					if (Utils.ARROW.equals(app.family().headSymbol()) && app.parameters().size() > 2) {
-						List<ISort> params = app.parameters();
-						ISort result = params.get(params.size() - 1);
-						for (int i = params.size() - 2; i >= 0; i--) {
-							List<ISort> pair = new LinkedList<ISort>();
-							pair.add(params.get(i));
-							pair.add(result);
-							Application step = new Application(app.family(), pair);
-							step.definition(new Family(app.family(), new Numeral(2), null));
-							result = step;
-						}
-						return result;
-					}
-					if (app.definition() instanceof IFamily) return ss;
-					ss = definition().eval(sortParameters);
-				}
-				expanded = ss;
-			}
-			return expanded;
-		}
-		
-		@Override
-		public boolean equals(Object sort) {
-			if (this == sort) return true;
-			if (!(sort instanceof ISort)) return false;
-			return expand().equalsNoExpand( ((ISort)sort).expand());
-		}
+        @Override
+        public IIdentifier identifier() { return identifier; }
 
-		@Override
-		public boolean equalsNoExpand(ISort sort) {
-			if (this == sort) return true;
-			if (!(sort instanceof IApplication)) return false;
-			IApplication esort = (IApplication)sort;
-			if (esort.family().equals(this.family())) {
-				// If the family() is equal, the arity must be equal
-				int i = 0;
-				for (ISort p: this.parameters()) {
-					if (!p.equalsNoExpand(esort.param(i++))) return false;
-				}
-				return true;
-			} else {
-				return false;
-			}
-		}
+        @Override
+        public List<IParameter> parameters() { return parameters; }
 
-		@Override
-		public int hashCode() {
-			// Must mirror equals(), which expands abbreviations before comparing (a
-			// user-defined alias and its literal expansion are .equals()) -- computing
-			// this directly from the unexpanded sortID/sortParameters instead violates the
-			// equals/hashCode contract for exactly that case. expand() returns this
-			// unchanged (identity) once there's nothing left to expand (e.g. an ordinary,
-			// non-abbreviation family), which is the base case below; expand()'s own
-			// caching keeps the recursion cheap.
-			ISort e = expand();
-			if (e != this) return e.hashCode();
-			int hash = sortID.hashCode();
-			for (ISort s: sortParameters) {
-				hash += s.hashCode();
-			}
-			return hash;
-		}
+        @Override
+        public ISort sortExpression() { return sortExpression; }
 
-		@Override
-		public ISort substitute(Map<IParameter,ISort> map) {
-			IIdentifier id = family();
-			List<ISort> params = new LinkedList<ISort>();
-			for (ISort s: sortParameters) {
-				params.add(s.substitute(map));
-			}
-			ISort s = map.get(id);
-			if (s != null) return s;
-			Application e = new Application(id,params);
-			e.definition(this.definition());
-			return e;
-		}
-		
-		@Override
-		public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
-			return v.visit(this);
-		}
-	}
+        @Override
+        public int intArity() { return parameters().size(); }
 
-	/** Represents the class of the sort of a function symbol.  This is not a 
-	 * sort that can be expressed in SMT-LIB sort grammar, except implicitly 
-	 * when function ids are defined in define-fun and declare-fun
-	 * commands and in theory definitions.
-	 */
-	static public class FcnSort extends Sort implements IFcnSort {
-		static protected final ISort[] noargs = new ISort[0];
-		protected ISort resultSort;
-		protected ISort[] argSorts;
-		
-		/** Creates a function sort with the given argument sorts and result sort. */
-		public FcnSort(ISort[] argSorts, ISort resultSort) {
-			this.argSorts = argSorts;
-			this.resultSort = resultSort;
-		}
+        @Override
+        public ISort eval(List<ISort> sorts) {
+            if (sorts.size() != parameters().size()) {
+                throw new SMT.InternalException("Incorrect number of arguments: " + sorts.size() + " instead of " + parameters().size());
+            }
+            Map<IParameter,ISort> map = new HashMap<IParameter,ISort>();
+            int i = 0;
+            for (IParameter p: parameters) {
+                if (map.put(p,sorts.get(i))!=null) {
+                    throw new SMT.InternalException("Duplicate parameter: " + p);
+                }
+                i++;
+            }
+            return sortExpression.substitute(map);
+        }
 
-		/** Creates a zero-argument (nullary) function sort with the given result sort. */
-		public FcnSort(ISort resultSort) {
-			this.argSorts = noargs;
-			this.resultSort = resultSort;
-		}
-		
-		@Override
-		public ISort expand() { return this; } // TODO: Fix this?
-		
-		@Override
-		public ISort resultSort() { return resultSort; }
-		
-		@Override
-		public ISort[] argSorts() { return argSorts; }
-		
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (!(o instanceof IFcnSort)) return false;
-			IFcnSort fs = (IFcnSort)o;
-			if (!(fs.resultSort().equals(resultSort))) return false;
-			if (fs.argSorts().length != argSorts.length) return false;
-			for (int i=0; i<argSorts.length; ++i) {
-				if (!(fs.argSorts()[i].equals(argSorts[i]))) return false;
-			}
-			return true;
-		}
-		
-		@Override
-		public boolean equalsNoExpand(ISort sort) {
-			if (this == sort) return true;
-			if (!(sort instanceof IFcnSort)) return false;
-			IFcnSort fs = (IFcnSort)sort;
-			if (!(fs.resultSort().equals(resultSort))) return false;
-			if (fs.argSorts().length != argSorts.length) return false;
-			for (int i=0; i<argSorts.length; ++i) {
-				if (!(fs.argSorts()[i].equalsNoExpand(argSorts[i]))) return false;
-			}
-			return true;
-		}
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof IAbbreviation)) return false;
+            IAbbreviation a = (IAbbreviation)o;
+            return identifier().equals(a.identifier())
+                    && parameters().equals(a.parameters())
+                    && sortExpression().equals(a.sortExpression());
+        }
 
-		@Override
-		public int hashCode() {
-			int hash = resultSort.hashCode();
-			for (ISort s: argSorts) {
-				hash += s.hashCode();
-			}
-			return hash;
-		}
-		
-		@Override
-		public ISort substitute(Map<IParameter, ISort> map) {
-			// Actually, do not expect a FcnSort to have any substitutable parameters
-			ISort newResult = resultSort.substitute(map);
-			ISort[] newArgs = new ISort[argSorts.length];
-			for (int i = 0; i<argSorts.length; ++i) {
-				newArgs[i] = ((Sort)argSorts[i]).substitute(map);
-			}
-			return new FcnSort(newArgs,newResult);
-		}
-		
-		@Override
-		public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
-			return v.visit(this);
-		}
-	}
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hash(identifier(), parameters(), sortExpression());
+        }
 
-	/** Represents a Sort parameter, such as in either the parameter list or the expression of a Sort abbreviation */
-	static public class Parameter extends Sort implements IParameter {
-		protected IExpr.ISymbol symbol;
+        @Override
+        public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
+            return v.visit(this);
+        }
+    }
 
-		/** Creates a sort parameter for the given symbol name. */
-		public Parameter(IExpr.ISymbol symbol) {
-			this.symbol = symbol;
-		}
-		
-		@Override
-		public IExpr.ISymbol symbol() { return symbol; }
-		
-		@Override
-		public ISort substitute(Map<IParameter,ISort> map) {
-			ISort s = map.get(this);
-			return s == null ? this : s;
-		}
-		
-		@Override
-		public ISort expand() { return this; } // TODO: Fix this?
-		
-		@Override
-		public boolean equals(Object o) {
-			// Parameters are equal only under object equality
-			// Two parameters with the same name in different scopes are not equal
-			return this == o;
-		}
-		
-		@Override
-		public boolean equalsNoExpand(ISort sort) {
-			return this == sort;
-		}
+    /** Represents a sort expression consisting of a sort symbol or sort abbreviation symbol applied to a
+     * corresponding number of sort arguments 
+     */
+    static public class Application extends Sort implements IApplication {
+        protected IIdentifier sortID;
+        protected List<ISort> sortParameters;
 
-		@Override
-		public int hashCode() {
-			return System.identityHashCode(this);
-		}
-		
-		@Override
-		public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
-			return v.visit(this);
-		}
+        /** Reference to definition; filled in during type-checking */
+        protected ISort.IDefinition definition;
 
-		@Override
-		public IIdentifier identifier() {
-			return symbol;
-		}
-		
-		@Override
-		public ISort eval(List<ISort> sorts) {
-			// Do nothing to evaluate a parameter that does not have arguments
-			if (!sorts.isEmpty()) throw new SMT.InternalException("May not call eval on an IParameter with arguments");
-			return this;
-		}
-		
-		@Override
-		public int intArity() {
-			return 0;
-		}
-	}
+        /** Cached value for expanded() */
+        protected ISort expanded = null;
 
-	/** A placeholder sort definition used when a sort declaration is ill-formed, to suppress cascading errors. */
-	static public class ErrorDefinition extends Pos.Printable implements ISort.IErrorDefinition {
-		protected IIdentifier id;
-		protected String error;
+        /** Creates a sort application from a sort identifier and a list of sort arguments. */
+        public Application(IIdentifier sortID, List<ISort> sortParameters) {
+            this.sortID = sortID;
+            this.sortParameters = sortParameters;
+        }
 
-		/** Creates an error placeholder for the given identifier, error message, and source position. */
-		public ErrorDefinition(IIdentifier id, String error, IPos pos) {
-			this.id = id;
-			this.error = error;
-			setPos(pos);
-		}
+        /** Creates a sort application from a sort identifier and a varargs array of sort arguments. */
+        public Application(IIdentifier sortID, ISort... sortParameters) {
+            this.sortID = sortID;
+            this.sortParameters = Arrays.asList(sortParameters);
+        }
 
-		@Override public String errorMessage() { return error; }
-		@Override public IPos errorPos() { return pos(); }
-		@Override public IIdentifier identifier() { return id; }
-		@Override public ISort eval(List<ISort> sorts) { return null; }
-		@Override public int intArity() { return 0; }
+        @Override
+        public IIdentifier family() { return sortID; }
 
-		@Override
-		public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-			return null;
-		}
-	}
+        @Override
+        public ISort param(int i) { return sortParameters.get(i); }
+
+        @Override
+        public List<ISort> parameters() { return sortParameters; }
+
+        @Override
+        public IDefinition definition() { return definition; }
+
+        @Override
+        public IDefinition definition(IDefinition definition) {
+            this.definition = definition;
+            return definition;
+        }
+
+        @Override
+        public ISort expand() {
+            // Note we could call definition().eval(sortParameters) always, but that 
+            // creates a duplicate object in Family.eval
+
+            if (expanded == null) {
+                boolean changed = false;
+                ISort ss = this;
+                for (ISort param: parameters()) {
+                    ISort p = param.expand();
+                    if (p != param) changed = true;
+                }
+                while (ss instanceof Application) {
+                    Application app = (Application)ss;
+                    // -> is declared :right-assoc (SMT-LIB Sec. 3.7.2): a flat application
+                    // with more than its declared 2-ary arity, e.g. (-> A B C), is sugar for
+                    // the right-nested (-> A (-> B C)). TypeChecker.visit(ISort.IApplication)
+                    // already accepts this where a -> sort expression is first type-checked,
+                    // but the properly-folded value it computes there isn't always what ends
+                    // up stored and later reused -- e.g. declare-fun stores cmd.resultSort(),
+                    // the original still-flat parsed AST node (with definition() never set),
+                    // directly, not TypeChecker's replacement -- so a flat, un-folded ->
+                    // application can still reach here, e.g. via an equals() comparison
+                    // against a properly-nested value. Fold on demand rather than assume any
+                    // -> application already has the canonical (<=2-parameter) shape.
+                    if (Utils.ARROW.equals(app.family().headSymbol()) && app.parameters().size() > 2) {
+                        List<ISort> params = app.parameters();
+                        ISort result = params.get(params.size() - 1);
+                        for (int i = params.size() - 2; i >= 0; i--) {
+                            List<ISort> pair = new LinkedList<ISort>();
+                            pair.add(params.get(i));
+                            pair.add(result);
+                            Application step = new Application(app.family(), pair);
+                            step.definition(new Family(app.family(), new Numeral(2), null));
+                            result = step;
+                        }
+                        return result;
+                    }
+                    if (app.definition() instanceof IFamily) return ss;
+                    ss = definition().eval(sortParameters);
+                }
+                expanded = ss;
+            }
+            return expanded;
+        }
+
+        @Override
+        public boolean equals(Object sort) {
+            if (this == sort) return true;
+            if (!(sort instanceof ISort)) return false;
+            return expand().equalsNoExpand( ((ISort)sort).expand());
+        }
+
+        @Override
+        public boolean equalsNoExpand(ISort sort) {
+            if (this == sort) return true;
+            if (!(sort instanceof IApplication)) return false;
+            IApplication esort = (IApplication)sort;
+            if (esort.family().equals(this.family())) {
+                // If the family() is equal, the arity must be equal
+                int i = 0;
+                for (ISort p: this.parameters()) {
+                    if (!p.equalsNoExpand(esort.param(i++))) return false;
+                }
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            // Must mirror equals(), which expands abbreviations before comparing (a
+            // user-defined alias and its literal expansion are .equals()) -- computing
+            // this directly from the unexpanded sortID/sortParameters instead violates the
+            // equals/hashCode contract for exactly that case. expand() returns this
+            // unchanged (identity) once there's nothing left to expand (e.g. an ordinary,
+            // non-abbreviation family), which is the base case below; expand()'s own
+            // caching keeps the recursion cheap.
+            ISort e = expand();
+            if (e != this) return e.hashCode();
+            int hash = sortID.hashCode();
+            for (ISort s: sortParameters) {
+                hash += s.hashCode();
+            }
+            return hash;
+        }
+
+        @Override
+        public ISort substitute(Map<IParameter,ISort> map) {
+            IIdentifier id = family();
+            List<ISort> params = new LinkedList<ISort>();
+            for (ISort s: sortParameters) {
+                params.add(s.substitute(map));
+            }
+            ISort s = map.get(id);
+            if (s != null) return s;
+            Application e = new Application(id,params);
+            e.definition(this.definition());
+            return e;
+        }
+
+        @Override
+        public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
+            return v.visit(this);
+        }
+    }
+
+    /** Represents the class of the sort of a function symbol.  This is not a 
+     * sort that can be expressed in SMT-LIB sort grammar, except implicitly 
+     * when function ids are defined in define-fun and declare-fun
+     * commands and in theory definitions.
+     */
+    static public class FcnSort extends Sort implements IFcnSort {
+        static protected final ISort[] noargs = new ISort[0];
+        protected ISort resultSort;
+        protected ISort[] argSorts;
+
+        /** Creates a function sort with the given argument sorts and result sort. */
+        public FcnSort(ISort[] argSorts, ISort resultSort) {
+            this.argSorts = argSorts;
+            this.resultSort = resultSort;
+        }
+
+        /** Creates a zero-argument (nullary) function sort with the given result sort. */
+        public FcnSort(ISort resultSort) {
+            this.argSorts = noargs;
+            this.resultSort = resultSort;
+        }
+
+        @Override
+        public ISort expand() { return this; } // TODO: Fix this?
+
+        @Override
+        public ISort resultSort() { return resultSort; }
+
+        @Override
+        public ISort[] argSorts() { return argSorts; }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof IFcnSort)) return false;
+            IFcnSort fs = (IFcnSort)o;
+            if (!(fs.resultSort().equals(resultSort))) return false;
+            if (fs.argSorts().length != argSorts.length) return false;
+            for (int i=0; i<argSorts.length; ++i) {
+                if (!(fs.argSorts()[i].equals(argSorts[i]))) return false;
+            }
+            return true;
+        }
+
+        @Override
+        public boolean equalsNoExpand(ISort sort) {
+            if (this == sort) return true;
+            if (!(sort instanceof IFcnSort)) return false;
+            IFcnSort fs = (IFcnSort)sort;
+            if (!(fs.resultSort().equals(resultSort))) return false;
+            if (fs.argSorts().length != argSorts.length) return false;
+            for (int i=0; i<argSorts.length; ++i) {
+                if (!(fs.argSorts()[i].equalsNoExpand(argSorts[i]))) return false;
+            }
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = resultSort.hashCode();
+            for (ISort s: argSorts) {
+                hash += s.hashCode();
+            }
+            return hash;
+        }
+
+        @Override
+        public ISort substitute(Map<IParameter, ISort> map) {
+            // Actually, do not expect a FcnSort to have any substitutable parameters
+            ISort newResult = resultSort.substitute(map);
+            ISort[] newArgs = new ISort[argSorts.length];
+            for (int i = 0; i<argSorts.length; ++i) {
+                newArgs[i] = ((Sort)argSorts[i]).substitute(map);
+            }
+            return new FcnSort(newArgs,newResult);
+        }
+
+        @Override
+        public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
+            return v.visit(this);
+        }
+    }
+
+    /** Represents a Sort parameter, such as in either the parameter list or the expression of a Sort abbreviation */
+    static public class Parameter extends Sort implements IParameter {
+        protected IExpr.ISymbol symbol;
+
+        /** Creates a sort parameter for the given symbol name. */
+        public Parameter(IExpr.ISymbol symbol) {
+            this.symbol = symbol;
+        }
+
+        @Override
+        public IExpr.ISymbol symbol() { return symbol; }
+
+        @Override
+        public ISort substitute(Map<IParameter,ISort> map) {
+            ISort s = map.get(this);
+            return s == null ? this : s;
+        }
+
+        @Override
+        public ISort expand() { return this; } // TODO: Fix this?
+
+        @Override
+        public boolean equals(Object o) {
+            // Parameters are equal only under object equality
+            // Two parameters with the same name in different scopes are not equal
+            return this == o;
+        }
+
+        @Override
+        public boolean equalsNoExpand(ISort sort) {
+            return this == sort;
+        }
+
+        @Override
+        public int hashCode() {
+            return System.identityHashCode(this);
+        }
+
+        @Override
+        public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
+            return v.visit(this);
+        }
+
+        @Override
+        public IIdentifier identifier() {
+            return symbol;
+        }
+
+        @Override
+        public ISort eval(List<ISort> sorts) {
+            // Do nothing to evaluate a parameter that does not have arguments
+            if (!sorts.isEmpty()) throw new SMT.InternalException("May not call eval on an IParameter with arguments");
+            return this;
+        }
+
+        @Override
+        public int intArity() {
+            return 0;
+        }
+    }
+
+    /** A placeholder sort definition used when a sort declaration is ill-formed, to suppress cascading errors. */
+    static public class ErrorDefinition extends Pos.Printable implements ISort.IErrorDefinition {
+        protected IIdentifier id;
+        protected String error;
+
+        /** Creates an error placeholder for the given identifier, error message, and source position. */
+        public ErrorDefinition(IIdentifier id, String error, IPos pos) {
+            this.id = id;
+            this.error = error;
+            setPos(pos);
+        }
+
+        @Override public String errorMessage() { return error; }
+        @Override public IPos errorPos() { return pos(); }
+        @Override public IIdentifier identifier() { return id; }
+        @Override public ISort eval(List<ISort> sorts) { return null; }
+        @Override public int intArity() { return 0; }
+
+        @Override
+        public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+            return null;
+        }
+    }
 
 }

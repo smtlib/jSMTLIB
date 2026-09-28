@@ -14,26 +14,26 @@ import org.smtlib.IExpr.ISymbol;
 
 public class AUFLIRA extends Logic {
 
-	public AUFLIRA(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(smtConfig,name,attributes);
-	}
+    public AUFLIRA(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+        super(smtConfig,name,attributes);
+    }
 
-	@Override
-	public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
-	}
+    @Override
+    public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
+    }
 
-	@Override
-	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
-		if (!isLinearReal(expression))
-			throw new IVisitor.VisitorException("Arithmetic expressions must be linear in the " + logicName + " logic", expression.pos());
-	}
-	
-	@Override
-	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
-		if (expr != null) checkArraySort(expr, id,
-				"(Array Int Real) or (Array Int (Array Int Real))",
-				sortApp("Array", sortApp("Int"), sortApp("Real")),
-				sortApp("Array", sortApp("Int"), sortApp("Array", sortApp("Int"), sortApp("Real"))));
-	}
+    @Override
+    public void validExpression(IExpr expression) throws IVisitor.VisitorException {
+        if (!isLinearReal(expression))
+            throw new IVisitor.VisitorException("Arithmetic expressions must be linear in the " + logicName + " logic", expression.pos());
+    }
+
+    @Override
+    public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
+        if (expr != null) checkArraySort(expr, id,
+                "(Array Int Real) or (Array Int (Array Int Real))",
+                sortApp("Array", sortApp("Int"), sortApp("Real")),
+                sortApp("Array", sortApp("Int"), sortApp("Array", sortApp("Int"), sortApp("Real"))));
+    }
 
 }

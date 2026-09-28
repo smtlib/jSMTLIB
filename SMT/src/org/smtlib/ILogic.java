@@ -13,13 +13,13 @@ import org.smtlib.IExpr.ISymbol;
 
 /** This interface represents a definition of an SMT_LIB logic */
 public interface ILogic extends INode, ILanguage {
-	/** The name of the logic */
-	ISymbol logicName();
-	
-	/** The attributes of the logic */
-	//@ ensures \result.size() > 0;
-	Map<IKeyword,IAttribute<?>> attributes();
-	
-	/** The value of an attribute; returns null if the attribute does not exist for this logic. */
-	/*@Nullable*/IAttributeValue value(IKeyword keyword);
+    /** The name of the logic */
+    ISymbol logicName();
+
+    /** The attributes of the logic */
+    //@ ensures \result.size() > 0;
+    Map<IKeyword,IAttribute<?>> attributes();
+
+    /** The value of an attribute; returns null if the attribute does not exist for this logic. */
+    /*@Nullable*/IAttributeValue value(IKeyword keyword);
 }

@@ -89,12 +89,12 @@ public class ParameterizedIgnorable extends org.junit.runners.Suite {
         protected Statement classBlock(RunNotifier notifier) {
             return childrenInvoker(notifier);
         }
-        
+
         @Override
         protected Annotation[] getRunnerAnnotations() {
             return new Annotation[0];
         }
-        
+
         @Override
         protected void runChild(final FrameworkMethod method, RunNotifier notifier) {
             Description description= describeChild(method);
@@ -157,5 +157,5 @@ public class ParameterizedIgnorable extends org.junit.runners.Suite {
         throw new Exception("No public static parameters method on class "
                 + testClass.getName());
     }
-    
+
 }

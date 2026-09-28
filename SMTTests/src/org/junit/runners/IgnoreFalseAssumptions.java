@@ -10,7 +10,7 @@ import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 
 public class IgnoreFalseAssumptions extends BlockJUnit4ClassRunner {
-    
+
     public IgnoreFalseAssumptions(Class<?> klass) throws InitializationError {
         super(klass);
     }

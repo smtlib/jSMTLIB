@@ -11,13 +11,13 @@ import org.smtlib.IExpr.ISymbol;
 
 public class QF_LIA extends LIA {
 
-	public QF_LIA(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(smtConfig,name,attributes);
-	}
+    public QF_LIA(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+        super(smtConfig,name,attributes);
+    }
 
-	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
-		noQuantifiers(expression);
-		super.validExpression(expression);
-	}
+    public void validExpression(IExpr expression) throws IVisitor.VisitorException {
+        noQuantifiers(expression);
+        super.validExpression(expression);
+    }
 
 }

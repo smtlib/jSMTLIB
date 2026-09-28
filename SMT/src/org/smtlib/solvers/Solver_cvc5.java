@@ -46,25 +46,25 @@ import org.smtlib.*;
  *  command's liveness check runs. */
 public class Solver_cvc5 extends AbstractSolver implements ISolver {
 
-	@Override
-	protected boolean selfReportsImmediateExit() { return true; }
+    @Override
+    protected boolean selfReportsImmediateExit() { return true; }
 
-	/** The command-line arguments for launching the solver. --print-success turns on
-	 *  success replies from the very first command onward (confirmed: --interactive does
-	 *  NOT imply it by itself -- without --print-success, the first command gets no
-	 *  reply at all), so no priming (set-option :print-success true) is needed in
-	 *  start(). */
-	protected String cmds[];
-	// --no-full-saturate-quant removed (issue #69): no rationale for this Windows-only
-	// flag survived anywhere in the project's history (git archaeology found only an
-	// unexplained WIP commit that first added it). Confirmed safe to remove via a full
-	// CI run on Windows (run 35416506960): all 1454 cvc5-1.3.2 test executions passed
-	// (or hit pre-existing, unrelated .skip.cvc5-1.3.2 cases) with the flag gone,
-	// including every quantifier-touching test in the suite -- no hang, no timeout, no
-	// behavior change observed.
-	protected String cmds_win[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet","--print-success","--strict-parsing"};
-	protected String cmds_mac[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet","--print-success","--strict-parsing"};
-	protected String cmds_unix[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet","--print-success","--strict-parsing"};
+    /** The command-line arguments for launching the solver. --print-success turns on
+     *  success replies from the very first command onward (confirmed: --interactive does
+     *  NOT imply it by itself -- without --print-success, the first command gets no
+     *  reply at all), so no priming (set-option :print-success true) is needed in
+     *  start(). */
+    protected String cmds[];
+    // --no-full-saturate-quant removed (issue #69): no rationale for this Windows-only
+    // flag survived anywhere in the project's history (git archaeology found only an
+    // unexplained WIP commit that first added it). Confirmed safe to remove via a full
+    // CI run on Windows (run 35416506960): all 1454 cvc5-1.3.2 test executions passed
+    // (or hit pre-existing, unrelated .skip.cvc5-1.3.2 cases) with the flag gone,
+    // including every quantifier-touching test in the suite -- no hang, no timeout, no
+    // behavior change observed.
+    protected String cmds_win[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet","--print-success","--strict-parsing"};
+    protected String cmds_mac[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet","--print-success","--strict-parsing"};
+    protected String cmds_unix[] = new String[]{ "", "--lang","smt","--interactive","--incremental","--quiet","--print-success","--strict-parsing"};
 
     /** Creates an instance of the solver */
     public Solver_cvc5(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
@@ -98,28 +98,28 @@ public class Solver_cvc5 extends AbstractSolver implements ISolver {
         solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
     }
 
-	@Override
-	public IResponse start() {
-		try {
-			solverProcess.start(false);
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
-			return smtConfig.responseFactory.success();
-		} catch (Exception e) {
-			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
-		}
-	}
+    @Override
+    public IResponse start() {
+        try {
+            solverProcess.start(false);
+            if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
+            return smtConfig.responseFactory.success();
+        } catch (Exception e) {
+            return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
+        }
+    }
 
-	/** See the class Javadoc: wraps a bare-symbol answer for a string-typed option
-	 *  (Utils.stringOptions -- currently just :regular-output-channel and
-	 *  :diagnostic-output-channel) into a proper SMT-LIB string literal with the same
-	 *  text, working around cvc5 answering those two with an unquoted symbol instead. */
-	@Override
-	public IResponse get_option(IExpr.IKeyword option) {
-		IResponse response = super.get_option(option);
-		if (response instanceof IExpr.ISymbol && smtConfig.utils.stringOptions.contains(option.value())) {
-			return smtConfig.exprFactory.unquotedString(((IExpr.ISymbol)response).value());
-		}
-		return response;
-	}
+    /** See the class Javadoc: wraps a bare-symbol answer for a string-typed option
+     *  (Utils.stringOptions -- currently just :regular-output-channel and
+     *  :diagnostic-output-channel) into a proper SMT-LIB string literal with the same
+     *  text, working around cvc5 answering those two with an unquoted symbol instead. */
+    @Override
+    public IResponse get_option(IExpr.IKeyword option) {
+        IResponse response = super.get_option(option);
+        if (response instanceof IExpr.ISymbol && smtConfig.utils.stringOptions.contains(option.value())) {
+            return smtConfig.exprFactory.unquotedString(((IExpr.ISymbol)response).value());
+        }
+        return response;
+    }
 
 }

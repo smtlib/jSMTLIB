@@ -42,92 +42,92 @@ import org.smtlib.*;
  *  z3-specific golden reflecting it. */
 public class Solver_z3_recent extends AbstractSolver implements ISolver {
 
-	/** The command-line arguments for launching the solver. */
-	protected String cmds[];
-	// WARNING=false suppresses z3's own diagnostic WARNING messages (e.g. "pattern does not
-	// contain all quantified variables"): these print as a bare "WARNING" line with no
-	// parens before the rest of the message follows on a later flush, which fools
-	// SolverProcess's paren-balance response-completion heuristic into treating the
-	// response as already complete and truncating it.
-	protected String cmds_win[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
-	protected String cmds_mac[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
-	protected String cmds_unix[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
+    /** The command-line arguments for launching the solver. */
+    protected String cmds[];
+    // WARNING=false suppresses z3's own diagnostic WARNING messages (e.g. "pattern does not
+    // contain all quantified variables"): these print as a bare "WARNING" line with no
+    // parens before the rest of the message follows on a later flush, which fools
+    // SolverProcess's paren-balance response-completion heuristic into treating the
+    // response as already complete and truncating it.
+    protected String cmds_win[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
+    protected String cmds_mac[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
+    protected String cmds_unix[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
 
-	/** True only on the platform where the print-success priming command below is needed
-	 *  (see the class javadoc) -- also gates the linesOffset compensation in
-	 *  parseResponse(), since the two must always travel together. */
-	protected final boolean needsPrintSuccessPriming = !isWindows && !isMac;
+    /** True only on the platform where the print-success priming command below is needed
+     *  (see the class javadoc) -- also gates the linesOffset compensation in
+     *  parseResponse(), since the two must always travel together. */
+    protected final boolean needsPrintSuccessPriming = !isWindows && !isMac;
 
-	// linesOffset is inherited from AbstractSolver -- see its own doc comment there.
-	// Incremented by the priming command in start() (never more than once -- start() is
-	// only ever called once per instance): every "line N" a Linux z3 process reports needs
-	// N-linesOffset to stay consistent with the user's own script, since z3 counts input
-	// lines from the very start of the stream it receives, including the priming line
-	// jSMTLIB adds before the user's script begins. Stays 0 (a no-op in parseResponse()) on
-	// every platform that doesn't need the priming command at all.
+    // linesOffset is inherited from AbstractSolver -- see its own doc comment there.
+    // Incremented by the priming command in start() (never more than once -- start() is
+    // only ever called once per instance): every "line N" a Linux z3 process reports needs
+    // N-linesOffset to stay consistent with the user's own script, since z3 counts input
+    // lines from the very start of the stream it receives, including the priming line
+    // jSMTLIB adds before the user's script begins. Stays 0 (a no-op in parseResponse()) on
+    // every platform that doesn't need the priming command at all.
 
-	private static final Pattern LINE_NUMBER = Pattern.compile("line (\\d+)");
+    private static final Pattern LINE_NUMBER = Pattern.compile("line (\\d+)");
 
-	/** Creates an instance of the solver */
-	public Solver_z3_recent(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
-		this.smtConfig = smtConfig;
-		if (isWindows) {
-			cmds = cmds_win;
-		} else if (isMac) {
-			cmds = cmds_mac;
-		} else {
-			cmds = cmds_unix;
-		}
-		double timeout = smtConfig.timeout;
-		double timeoutTotal = smtConfig.timeoutTotal;
-		if (timeout > 0 || timeoutTotal > 0) {
-			List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
-			// Recent z3's own -t: is per-query but in MILLISECONDS (unlike z3-4.3's -t:,
-			// which is seconds -- the unit silently changed between versions); -T: is the
-			// whole-run limit and stayed in seconds. Earlier code here wired
-			// smtConfig.timeout (per-query) to -T: (whole-run) -- wrong flag for the
-			// intended semantics -- fixed to use -t: for the per-query value.
-			if (timeout > 0) args.add("-t:" + Long.toString(Math.round(timeout*1000)));
-			if (timeoutTotal > 0) args.add("-T:" + Integer.toString((int)Math.ceil(timeoutTotal)));
-			cmds = args.toArray(new String[args.size()]);
-		}
-		cmds[0] = executable;
-		// z3 -in does not print an interactive prompt, so "\n" is the right end marker.
-		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
-	}
+    /** Creates an instance of the solver */
+    public Solver_z3_recent(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
+        this.smtConfig = smtConfig;
+        if (isWindows) {
+            cmds = cmds_win;
+        } else if (isMac) {
+            cmds = cmds_mac;
+        } else {
+            cmds = cmds_unix;
+        }
+        double timeout = smtConfig.timeout;
+        double timeoutTotal = smtConfig.timeoutTotal;
+        if (timeout > 0 || timeoutTotal > 0) {
+            List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
+            // Recent z3's own -t: is per-query but in MILLISECONDS (unlike z3-4.3's -t:,
+            // which is seconds -- the unit silently changed between versions); -T: is the
+            // whole-run limit and stayed in seconds. Earlier code here wired
+            // smtConfig.timeout (per-query) to -T: (whole-run) -- wrong flag for the
+            // intended semantics -- fixed to use -t: for the per-query value.
+            if (timeout > 0) args.add("-t:" + Long.toString(Math.round(timeout*1000)));
+            if (timeoutTotal > 0) args.add("-T:" + Integer.toString((int)Math.ceil(timeoutTotal)));
+            cmds = args.toArray(new String[args.size()]);
+        }
+        cmds[0] = executable;
+        // z3 -in does not print an interactive prompt, so "\n" is the right end marker.
+        solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
+    }
 
-	@Override
-	public IResponse start() {
-		try {
-			solverProcess.start(false);
-			if (needsPrintSuccessPriming) {
-				solverProcess.sendAndListen("(set-option :print-success true)\n");
-				linesOffset++;
-			}
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
-			return smtConfig.responseFactory.success();
-		} catch (Exception e) {
-			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
-		}
-	}
+    @Override
+    public IResponse start() {
+        try {
+            solverProcess.start(false);
+            if (needsPrintSuccessPriming) {
+                solverProcess.sendAndListen("(set-option :print-success true)\n");
+                linesOffset++;
+            }
+            if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
+            return smtConfig.responseFactory.success();
+        } catch (Exception e) {
+            return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
+        }
+    }
 
-	@Override
-	protected IResponse parseResponse(String response) {
-		// Scoped to responses that actually carry an error message: z3 only ever reports a
-		// line number inside an (error "...") response, never in a success/sat/unsat/model
-		// response -- rewriting unconditionally risked mangling an unrelated "line N"
-		// substring that happened to appear elsewhere, e.g. inside a get-value/get-model
-		// response's returned string literal or model value.
-		if (linesOffset != 0 && response.contains("(error")) {
-			Matcher m = LINE_NUMBER.matcher(response);
-			StringBuilder sb = new StringBuilder();
-			while (m.find()) {
-				m.appendReplacement(sb, "line " + (Integer.parseInt(m.group(1)) - linesOffset));
-			}
-			m.appendTail(sb);
-			response = sb.toString();
-		}
-		return super.parseResponse(response);
-	}
+    @Override
+    protected IResponse parseResponse(String response) {
+        // Scoped to responses that actually carry an error message: z3 only ever reports a
+        // line number inside an (error "...") response, never in a success/sat/unsat/model
+        // response -- rewriting unconditionally risked mangling an unrelated "line N"
+        // substring that happened to appear elsewhere, e.g. inside a get-value/get-model
+        // response's returned string literal or model value.
+        if (linesOffset != 0 && response.contains("(error")) {
+            Matcher m = LINE_NUMBER.matcher(response);
+            StringBuilder sb = new StringBuilder();
+            while (m.find()) {
+                m.appendReplacement(sb, "line " + (Integer.parseInt(m.group(1)) - linesOffset));
+            }
+            m.appendTail(sb);
+            response = sb.toString();
+        }
+        return super.parseResponse(response);
+    }
 
 }
