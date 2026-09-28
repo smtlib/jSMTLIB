@@ -57,6 +57,8 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
 		IAttributedExpr attributedExpr(IExpr e, List<IAttribute<?>> attributes);
 		/** Creates an attributed expression with just one attribute. */
 		<T extends IAttributeValue> IAttributedExpr attributedExpr(IExpr e, IKeyword key, /*@Nullable*/T value);
+		/** Creates the value of a {@code :pattern} attribute: the given terms as one (multi-)pattern. */
+		IPatternTerms patternTerms(List<IExpr> terms);
 		/** Creates a function expression (perhaps with an empty argument list). */
         IFcnExpr fcn(IQualifiedIdentifier id, List<IExpr> args);
 		/** Creates a function expression (perhaps with an empty argument list). */
@@ -76,13 +78,15 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
 		/** Creates a Forall expression. */
 		//@ requires params.size() > 0;
         IForall forall(List<IDeclaration> params, IExpr e);
-		/** Creates a Forall expression with trigger patterns. */
+		/** Creates a Forall expression with trigger patterns: each element of patterns is a
+		 *  separate single-term pattern, emitted as {@code :pattern (p)}. */
 		//@ requires params.size() > 0;
         IForall forall(List<IDeclaration> params, IExpr e, List<IExpr> patterns);
 		/** Creates an Exists expression. */
 		//@ requires params.size() > 0;
         IExists exists(List<IDeclaration> params, IExpr e);
-		/** Creates an Exists expression with trigger patterns. */
+		/** Creates an Exists expression with trigger patterns: each element of patterns is a
+		 *  separate single-term pattern, emitted as {@code :pattern (p)}. */
 		//@ requires params.size() > 0;
         IExists exists(List<IDeclaration> params, IExpr e, List<IExpr> patterns);
 
@@ -302,6 +306,14 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
 		List<IAttribute<?>> attributes();
 	}
 	
+	/** This interface represents the value of a {@code :pattern} attribute: a list of terms
+	 *  (a multi-pattern), written in the concrete syntax as {@code ( t1 ... tn )}. SMT-LIB 2.7
+	 *  (Section 3.6.5) allows the list to be empty. */
+	static public interface IPatternTerms extends IAttributeValue, INode {
+		//@ pure
+		List<IExpr> terms();
+	}
+
 	/** This interface represents an SMT-LIB attribute-value pair; the value may be null (keyword-only attribute). */
 	static public interface IAttribute<TT extends IAttributeValue> extends INode, IPosable, IResponse {
 		//@ pure

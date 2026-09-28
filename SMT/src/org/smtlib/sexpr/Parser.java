@@ -553,7 +553,7 @@ public class Parser extends Lexer implements IParser {
 				return parseIdentifierRest(lp);
 			} else if (Utils.ATTRIBUTE.equals(s)) {
 				IExpr expr = parseExpr();
-				List<IAttribute<?>> list = parseAttributeSequence();
+				List<IAttribute<?>> list = parseTermAttributeSequence();
 				ILexToken rp = parseRP();
 				return setPos(smtConfig.exprFactory.attributedExpr(expr,list),pos(lp.pos(), rp.pos()));
 			}
@@ -869,7 +869,11 @@ public class Parser extends Lexer implements IParser {
 	 */
 	@Override
 	public /*@Nullable*/IExpr.IAttribute<?> parseAttribute() throws ParserException {
-		IKeyword keyword = parseKeyword();
+		return parseAttributeRest(parseKeyword());
+	}
+
+	/** Parses the (optional) value of an attribute whose keyword has already been parsed. */
+	protected /*@Nullable*/IExpr.IAttribute<?> parseAttributeRest(IKeyword keyword) throws ParserException {
 		if (isRP() || isEOD()) {
 			return setPos(smtConfig.exprFactory.attribute(keyword),keyword.pos());
 		}
@@ -909,6 +913,45 @@ public class Parser extends Lexer implements IParser {
 		return list;
 	}
 	
+	/** Parses the attributes of an annotated term {@code (! t attr+)} up to the right parenthesis.
+	 * Like {@link #parseAttributeSequence()}, except that a {@code :pattern} value is parsed as
+	 * what SMT-LIB defines it to be, a parenthesized (possibly empty, per SMT-LIB 2.7) list of terms, giving an
+	 * {@link IExpr.IPatternTerms} -- the same representation the expression factory builds.
+	 * A {@code :pattern} value that is not a list is left for the TypeChecker to report.
+	 */
+	public /*@Nullable*/List<IExpr.IAttribute<?>> parseTermAttributeSequence() throws ParserException {
+		List<IExpr.IAttribute<?>> list = new LinkedList<IExpr.IAttribute<?>>();
+		while (!isRP()) {
+			if (isEOD()) {
+				throw new ParserException("Unexpected end of data while parsing attributes",
+						pos(currentPos()-1, currentPos()));
+			}
+			ILexToken n = peekToken();
+			if (!(n instanceof IKeyword) || !Utils.PATTERN.equals(((IKeyword)n).value())) {
+				list.add(parseAttribute());
+				continue;
+			}
+			IKeyword keyword = parseKeyword();
+			if (!isLP()) {
+				list.add(parseAttributeRest(keyword));
+				continue;
+			}
+			ILexToken lp = parseLP();
+			List<IExpr> terms = new LinkedList<IExpr>();
+			while (!isRP()) {
+				if (isEOD()) {
+					throw new ParserException("Unexpected end of data while parsing a pattern",
+							pos(currentPos()-1, currentPos()));
+				}
+				terms.add(parseExpr());
+			}
+			ILexToken rp = parseRP();
+			IExpr.IPatternTerms value = setPos(smtConfig.exprFactory.patternTerms(terms), pos(lp.pos(), rp.pos()));
+			list.add(setPos(smtConfig.exprFactory.attribute(keyword, value), pos(keyword.pos(), rp.pos())));
+		}
+		return list;
+	}
+
 	/** Parses a logic definition (including beginning and ending parentheses, returning null
 	 * with error messages if it fails; only part of the checking of the contents is
 	 * performed in this call (the rest is done in loadLogic).

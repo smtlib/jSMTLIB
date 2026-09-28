@@ -1198,8 +1198,29 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 		return s;
 	}
 
+	/** The body of the innermost quantifier being checked (the only place a :pattern may appear), or null. */
+	protected /*@Nullable*/ IExpr quantifierBody = null;
+
+	/** Checks that a pattern term is binder-free and has no annotations (SMT-LIB 2.7, Section 3.6.5);
+	 *  returns false, recording an error, if it is not. */
+	protected boolean checkPatternTerm(IExpr t) {
+		if (t instanceof IForall || t instanceof IExists || t instanceof ILet || t instanceof IExpr.IMatch) {
+			result.add(smtConfig.responseFactory.error("A pattern term may not contain a binder",t.pos()));
+			return false;
+		}
+		if (t instanceof IAttributedExpr) {
+			result.add(smtConfig.responseFactory.error("A pattern term may not contain an annotation",t.pos()));
+			return false;
+		}
+		if (t instanceof IFcnExpr) {
+			for (IExpr a: ((IFcnExpr)t).args()) if (!checkPatternTerm(a)) return false;
+		}
+		return true;
+	}
+
 	@Override
 	public /*@Nullable*/ ISort visit(IAttributedExpr e) throws IVisitor.VisitorException {
+		boolean isQuantifierBody = e == quantifierBody;
 		ISymbol savedIsClosed = isClosed;
 		isClosed = null;
 		boolean errors = false;
@@ -1227,7 +1248,14 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 					}
 				} else if (name.equals(":pattern")) {
 					IAttributeValue v = a.attrValue();
-					if (!(v instanceof ISeq)) {
+					if (!isQuantifierBody) {
+						result.add(smtConfig.responseFactory.error("A :pattern may only annotate the body of a forall or exists",a.keyword().pos()));
+						errors = true;
+					} else if (v instanceof IExpr.IPatternTerms) {
+						for (IExpr ex: ((IExpr.IPatternTerms)v).terms()) {
+							if (checkPatternTerm(ex)) ex.accept(this); else errors = true;
+						}
+					} else if (!(v instanceof ISeq)) {
 						result.add(smtConfig.responseFactory.error("Expected a sequence after :pattern",v==null?a.keyword().pos():v.pos()));
 						errors = true;
 					} else {
@@ -1282,11 +1310,14 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 			if (res == null) errors = true;
 			else currentScope.put(decl.parameter(),new Variable(decl.parameter(),decl.sort(),null,false));
 		}
+		IExpr savedQuantifierBody = quantifierBody;
 		try {
 			if (errors) return null;
+			quantifierBody = e.expr();
 			ISort s = e.expr().accept(this);
 			return save(e,s);
 		} finally {
+			quantifierBody = savedQuantifierBody;
 			currentScope = parameters.remove(0);
 		}
 	}
@@ -1307,11 +1338,14 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 			if (res == null) errors = true;
 			else currentScope.put(decl.parameter(),new Variable(decl.parameter(),decl.sort(),null,false));
 		}
+		IExpr savedQuantifierBody = quantifierBody;
 		try {
 			if (errors) return null;
+			quantifierBody = e.expr();
 			ISort s = e.expr().accept(this);
 			return save(e,s);
 		} finally {
+			quantifierBody = savedQuantifierBody;
 			currentScope = parameters.remove(0);
 		}
 	}

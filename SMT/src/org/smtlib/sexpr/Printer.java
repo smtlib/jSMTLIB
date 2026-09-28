@@ -321,6 +321,19 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 	}
 
 	@Override
+	public Void visit(IExpr.IPatternTerms e) throws IVisitor.VisitorException {
+		append("(");
+		boolean first = true;
+		for (IExpr t: e.terms()) {
+			if (!first) append(" ");
+			first = false;
+			t.accept(this);
+		}
+		append(")");
+		return null;
+	}
+
+	@Override
 	public Void visit(IAttribute<? extends IAttributeValue> e) throws IVisitor.VisitorException {
 		/*@Nullable*/IAttributeValue o;
 		e.keyword().accept(this);

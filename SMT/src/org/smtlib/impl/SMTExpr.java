@@ -614,6 +614,22 @@ public abstract class SMTExpr implements IExpr {
 		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
 	}
 
+	/** Represents the value of a {@code :pattern} attribute: a list of trigger terms. */
+	static public class PatternTerms extends Pos.Printable implements IExpr.IPatternTerms {
+		protected List<IExpr> terms;
+
+		/** Creates a pattern from the given (possibly empty) list of terms. */
+		public PatternTerms(List<IExpr> terms) {
+			this.terms = terms;
+		}
+
+		@Override
+		public List<IExpr> terms() { return terms; }
+
+		@Override
+		public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+	}
+
 	/** Represents an SMT-LIB attributed expression ({@code (! expr attrs...)}). */
 	static public class AttributedExpr extends Pos.AbstractExpr implements IAttributedExpr {
 		protected IExpr expression;
