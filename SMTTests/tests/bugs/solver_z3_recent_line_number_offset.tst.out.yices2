@@ -8,4 +8,4 @@ success
 (error "Error writing to solver: (declare-fun s () String) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Error writing to solver: (assert (= s ""line 5 of the report"")) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "The get-value command is only valid if :produce-models has been enabled")
+(error "Error writing to solver: (get-option :produce-models) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

@@ -103,6 +103,32 @@ public class AbstractSolver implements ISolver {
      *  guessing from the error's content whether the process will actually exit. */
     protected boolean selfReportsImmediateExit() { return false; }
 
+    /** Called with each response parsed from the solver. After an error response from a
+     *  {@link #selfReportsImmediateExit()} solver, gives its process a moment to finish exiting
+     *  (see {@link #IMMEDIATE_EXIT_SETTLE_MILLIS}). If the error is one after which the solver
+     *  no longer processes input ({@link #errorStopsSolver(IResponse)}) and the process is
+     *  still alive, it is stopped, since a later command -- or exit() -- would otherwise wait
+     *  forever for a reply. Only the OS process is stopped; the adapter is left as it is, so
+     *  later commands fail fast as "Solver process has already exited" and exit() cleans up
+     *  normally. */
+    protected /*@Nullable*/ IResponse checkImmediateExit(/*@Nullable*/ IResponse result) {
+        if (result != null && result.isError() && selfReportsImmediateExit()) {
+            try {
+                Thread.sleep(IMMEDIATE_EXIT_SETTLE_MILLIS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            if (solverProcess != null && errorStopsSolver(result)) solverProcess.stopIfRunning();
+        }
+        return result;
+    }
+
+    /** Whether, after the given error response, the solver stops processing input (whether or
+     *  not its process actually exits). False by default; see Solver_cvc5. */
+    protected boolean errorStopsSolver(IResponse error) {
+        return false;
+    }
+
     /** How long to pause after an error response from a {@link #selfReportsImmediateExit()}
      *  solver, before letting the next command reach {@link SolverProcess}'s liveness check
      *  -- long enough that a process which is genuinely exiting has, in practice, finished
@@ -239,14 +265,7 @@ public class AbstractSolver implements ISolver {
             if (result == null) {
                 return smtConfig.responseFactory.error("Could not parse response from the solver for: " + translatedCmd + " -- raw response: " + response);
             }
-            if (result.isError() && selfReportsImmediateExit()) {
-                try {
-                    Thread.sleep(IMMEDIATE_EXIT_SETTLE_MILLIS);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-            return result;
+            return checkImmediateExit(result);
         } catch (SolverProcess.NoResponseException e) {
             if (tolerateSilentExit) return smtConfig.responseFactory.empty();
             return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
@@ -467,7 +486,10 @@ public class AbstractSolver implements ISolver {
     /** Returns an error response if the given option has not been enabled (per
      *  {@link #get_option(IKeyword)}), else null. */
     protected /*@Nullable*/ IResponse requireOptionEnabled(String commandName, String option) {
-        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(option)))) {
+        IResponse value = get_option(smtConfig.exprFactory.keyword(option));
+        // If asking failed (e.g. the solver has exited), report that rather than claim the option is off
+        if (value != null && value.isError()) return value;
+        if (!Utils.TRUE.equals(value)) {
             return smtConfig.responseFactory.error("The " + commandName + " command is only valid if " + option + " has been enabled");
         }
         return null;
@@ -533,7 +555,7 @@ public class AbstractSolver implements ISolver {
                 sb.append(s.replace('\n',' ').replace("\r",""));
             } while (parens > 0);
             response = sb.toString();
-            if (isFlatResponse(response)) return parseResponse(response);
+            if (isFlatResponse(response)) return checkImmediateExit(parseResponse(response));
             List<IExpr> exprs = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseAssertionList();
             return smtConfig.responseFactory.get_assertions_response(exprs);
         } catch (IOException e) {
@@ -575,7 +597,7 @@ public class AbstractSolver implements ISolver {
         String response = null;
         try {
             response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_unsat_assumptions()), "\n");
-            if (isFlatResponse(response)) return parseResponse(response);
+            if (isFlatResponse(response)) return checkImmediateExit(parseResponse(response));
             List<ISymbol> names = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseSymbolList();
             return smtConfig.responseFactory.get_unsat_assumptions_response(names);
         } catch (IOException e) {
@@ -597,7 +619,7 @@ public class AbstractSolver implements ISolver {
         String response = null;
         try {
             response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_unsat_core()), "\n");
-            if (isFlatResponse(response)) return parseResponse(response);
+            if (isFlatResponse(response)) return checkImmediateExit(parseResponse(response));
             List<ISymbol> names = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseSymbolList();
             return smtConfig.responseFactory.get_unsat_core_response(names);
         } catch (IOException e) {
@@ -619,7 +641,7 @@ public class AbstractSolver implements ISolver {
         String response = null;
         try {
             response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_value(java.util.Arrays.asList(terms))), "\n");
-            if (isFlatResponse(response)) return parseResponse(response);
+            if (isFlatResponse(response)) return checkImmediateExit(parseResponse(response));
             List<IResponse.IPair<IExpr,IExpr>> values = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseValueList();
             return smtConfig.responseFactory.get_value_response(values);
         } catch (IOException e) {
@@ -641,7 +663,7 @@ public class AbstractSolver implements ISolver {
         String response = null;
         try {
             response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_assignment()), "\n");
-            if (isFlatResponse(response)) return parseResponse(response);
+            if (isFlatResponse(response)) return checkImmediateExit(parseResponse(response));
             List<IResponse.IPair<ISymbol,Boolean>> assignments = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseAssignmentList();
             return smtConfig.responseFactory.get_assignment_response(assignments);
         } catch (IOException e) {
