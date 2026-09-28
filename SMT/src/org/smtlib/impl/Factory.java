@@ -8,6 +8,7 @@ package org.smtlib.impl;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -231,6 +232,11 @@ public class Factory implements IExpr.IFactory, ISort.IFactory, ICommand.IFactor
     }
 
     @Override
+    public IExpr.IPatternTerms patternTerms(List<IExpr> terms) {
+        return new SMTExpr.PatternTerms(terms);
+    }
+
+    @Override
     public <T extends IAttributeValue> IAttributedExpr attributedExpr(IExpr e,
             IKeyword key, T value) {
         IAttribute<T> a = attribute(key,value);
@@ -289,7 +295,8 @@ public class Factory implements IExpr.IFactory, ISort.IFactory, ICommand.IFactor
         if (patterns != null) {
             List<IAttribute<?>> attributes = new LinkedList<>();
             for (IExpr p: patterns) {
-                attributes.add(attribute(keyword(":pattern"),p));
+                // A :pattern value is a list of terms, so a single-term pattern is written (p)
+                attributes.add(attribute(keyword(":pattern"),patternTerms(Collections.singletonList(p))));
             }
             e = attributedExpr(e, attributes);
         }
@@ -306,7 +313,8 @@ public class Factory implements IExpr.IFactory, ISort.IFactory, ICommand.IFactor
         if (patterns != null) {
             List<IAttribute<?>> attributes = new LinkedList<>();
             for (IExpr p: patterns) {
-                attributes.add(attribute(keyword(":pattern"),p));
+                // A :pattern value is a list of terms, so a single-term pattern is written (p)
+                attributes.add(attribute(keyword(":pattern"),patternTerms(Collections.singletonList(p))));
             }
             e = attributedExpr(e, attributes);
         }

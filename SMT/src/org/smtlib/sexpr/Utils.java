@@ -26,6 +26,9 @@ public class Utils {
     /** Concrete syntax for the token that starts an attributed expression */
     public static final String ATTRIBUTE = "!";
 
+    /** The keyword for a quantifier trigger pattern attribute */
+    public static final String PATTERN = ":pattern";
+
     // SMT-LIB keyword strings used by the sexpr parser and printer; values
     // match org.smtlib.Utils but are held here so Parser/Printer need only one Utils import.
     public static final String AS      = org.smtlib.Utils.AS;

@@ -25,6 +25,8 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
     public /*@Nullable*/T visit(IAttribute<?> e) throws VisitorException;
     //public /*@Nullable*/T visit(IAttributeValue e) throws VisitorException;
     public /*@Nullable*/T visit(IAttributedExpr e) throws VisitorException;
+    /** Visits the value of a programmatically built {@code :pattern} attribute; by default does nothing. */
+    default public /*@Nullable*/T visit(IPatternTerms e) throws VisitorException { return null; }
     public /*@Nullable*/T visit(IBinaryLiteral e) throws VisitorException;
     public /*@Nullable*/T visit(IBinding e) throws VisitorException;
     public /*@Nullable*/T visit(IDecimal e) throws VisitorException;
@@ -137,6 +139,12 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
         public /*@Nullable*/T visit(IAttributedExpr e) throws VisitorException {
             e.expr().accept(this);
             for (IAttribute<?> a: e.attributes()) a.accept(this);
+            return null;
+        }
+
+        @Override
+        public /*@Nullable*/T visit(IPatternTerms e) throws VisitorException {
+            for (IExpr t: e.terms()) t.accept(this);
             return null;
         }
 

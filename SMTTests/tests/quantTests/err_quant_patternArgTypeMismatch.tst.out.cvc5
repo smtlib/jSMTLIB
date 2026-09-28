@@ -1,6 +1,6 @@
 success
 success
-(error "Parse Error: <shell>:1.108: argument type is not the type of the function's argument type:
+(error "Parse Error: <shell>:1.105: argument type is not the type of the function's argument type:
 argument:  true
 has type:  Bool
 not type: Int

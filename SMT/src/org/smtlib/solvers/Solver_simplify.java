@@ -1370,6 +1370,8 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         @Override
         public String visit(IAttributedExpr e) throws VisitorException {
             // FIXME - ignoring the name - should use a LBL expression
+            // Only :named becomes a label; other attributes (e.g. :pattern triggers) are dropped.
+            if (!e.attributes().get(0).keyword().value().equals(":named")) return e.expr().accept(this);
             StringBuilder sb = new StringBuilder();
             sb.append("(LBL ");
             sb.append(e.attributes().get(0).attrValue().toString()); // Use the standard printer FIXME
