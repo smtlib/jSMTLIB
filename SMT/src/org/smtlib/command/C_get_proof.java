@@ -16,28 +16,28 @@ import org.smtlib.sexpr.Parser;
 
 /** Implements the get-proof command */
 public class C_get_proof extends Command implements Iget_proof {
-	/** Constructs a command instance */
-	public C_get_proof() {
-	}
-	
-	/** Parses the command, producing a new command instance */
-	static public /*@Nullable*/ C_get_proof parse(Parser p) throws ParserException {
-		return p.checkNoArg() ? new C_get_proof() : null;
-	}
+    /** Constructs a command instance */
+    public C_get_proof() {
+    }
 
-	/** The command name */
-	public static final String commandName = "get-proof";
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
-	
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.get_proof();
-	}
+    /** Parses the command, producing a new command instance */
+    static public /*@Nullable*/ C_get_proof parse(Parser p) throws ParserException {
+        return p.checkNoArg() ? new C_get_proof() : null;
+    }
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    /** The command name */
+    public static final String commandName = "get-proof";
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
+
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.get_proof();
+    }
+
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 }

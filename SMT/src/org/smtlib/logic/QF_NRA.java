@@ -14,21 +14,21 @@ import org.smtlib.IExpr.ISymbol;
 
 public class QF_NRA extends Logic {
 
-	public QF_NRA(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(smtConfig,name,attributes);
-	}
-	
-	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
-		noQuantifiers(expression);
-	}
+    public QF_NRA(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+        super(smtConfig,name,attributes);
+    }
 
-	public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
-		// May declare constants, but not functions without definitions
-		noFunctions(id,argSorts,resultSort,definition);
-	}
+    public void validExpression(IExpr expression) throws IVisitor.VisitorException {
+        noQuantifiers(expression);
+    }
 
-	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
-		noSorts(id,params,expr);
-	}
+    public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
+        // May declare constants, but not functions without definitions
+        noFunctions(id,argSorts,resultSort,definition);
+    }
+
+    public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
+        noSorts(id,params,expr);
+    }
 
 }

@@ -54,303 +54,303 @@ import org.smtlib.sexpr.Parser;
  */
 public class AbstractSolver implements ISolver {
 
-	protected static boolean isWindows = System.getProperty("os.name").contains("Wind");
-	protected static boolean isMac = System.getProperty("os.name").contains("Mac");
+    protected static boolean isWindows = System.getProperty("os.name").contains("Wind");
+    protected static boolean isMac = System.getProperty("os.name").contains("Mac");
 
-	final protected IKeyword printSuccess;
+    final protected IKeyword printSuccess;
 
-	protected boolean printSuccessResponse = true;
+    protected boolean printSuccessResponse = true;
 
-	/** The object that interacts with external processes */
-	protected SolverProcess solverProcess;
+    /** The object that interacts with external processes */
+    protected SolverProcess solverProcess;
 
-	/** Running correction applied when rewriting a line number a solver reports back in its
-	 *  own error text, so what the user sees matches their own script's real line numbers
-	 *  rather than whatever the solver itself counted in what was actually sent to it (see
-	 *  issues #96/#97). Every real command line and every real standalone comment line sent
-	 *  to a solver corresponds to exactly one line of the user's own script -- no adjustment
-	 *  needed there -- but two kinds of event break that correspondence and must adjust this
-	 *  field at the point they happen: a line an adapter inserts that has no counterpart in
-	 *  the user's script (e.g. a `:print-success` priming send at start()) increments it by
-	 *  the number of lines inserted; a real script line an adapter deliberately never sends
-	 *  (e.g. Solver_z3_4_3 skipping literal `(set-logic ALL)`, which that solver has no
-	 *  equivalent for) decrements it by the number of lines skipped. A subclass that embeds
-	 *  a solver-reported line number in its own response text should rewrite it as
-	 *  {@code reportedLine - linesOffset} before returning that text -- see
-	 *  Solver_z3_4_3/Solver_z3_recent/Solver_bitwuzla's parseResponse() overrides. Solvers
-	 *  that don't insert or skip any line relative to the user's script (most adapters) never
-	 *  need to touch this at all, and it stays 0. */
-	protected int linesOffset = 0;
+    /** Running correction applied when rewriting a line number a solver reports back in its
+     *  own error text, so what the user sees matches their own script's real line numbers
+     *  rather than whatever the solver itself counted in what was actually sent to it (see
+     *  issues #96/#97). Every real command line and every real standalone comment line sent
+     *  to a solver corresponds to exactly one line of the user's own script -- no adjustment
+     *  needed there -- but two kinds of event break that correspondence and must adjust this
+     *  field at the point they happen: a line an adapter inserts that has no counterpart in
+     *  the user's script (e.g. a `:print-success` priming send at start()) increments it by
+     *  the number of lines inserted; a real script line an adapter deliberately never sends
+     *  (e.g. Solver_z3_4_3 skipping literal `(set-logic ALL)`, which that solver has no
+     *  equivalent for) decrements it by the number of lines skipped. A subclass that embeds
+     *  a solver-reported line number in its own response text should rewrite it as
+     *  {@code reportedLine - linesOffset} before returning that text -- see
+     *  Solver_z3_4_3/Solver_z3_recent/Solver_bitwuzla's parseResponse() overrides. Solvers
+     *  that don't insert or skip any line relative to the user's script (most adapters) never
+     *  need to touch this at all, and it stays 0. */
+    protected int linesOffset = 0;
 
-	/** SMT configuration — set by each concrete subclass constructor. */
-	protected SMT.Configuration smtConfig;
+    /** SMT configuration — set by each concrete subclass constructor. */
+    protected SMT.Configuration smtConfig;
 
-	/** Map that keeps current values of options. */
-	protected Map<String, IAttributeValue> options = new HashMap<String, IAttributeValue>();
+    /** Map that keeps current values of options. */
+    protected Map<String, IAttributeValue> options = new HashMap<String, IAttributeValue>();
 
-	/** The result of the most recent check-sat or check-sat-assuming, or null if none has
-	 *  been issued since the last state-changing command. */
-	protected /*@Nullable*/ IResponse checkSatStatus = null;
+    /** The result of the most recent check-sat or check-sat-assuming, or null if none has
+     *  been issued since the last state-changing command. */
+    protected /*@Nullable*/ IResponse checkSatStatus = null;
 
-	/** Overridden by a subclass whose target solver's :error-behavior is immediate-exit
-	 *  (e.g. cvc5, yices2) rather than the SMT-LIB default of continued-execution -- such a
-	 *  solver's process may start exiting asynchronously right after it reports an error,
-	 *  and {@link SolverProcess#send(boolean, String...)}'s own process.isAlive() check can
-	 *  still read true for a brief window afterward (OS process-death bookkeeping lags the
-	 *  actual exit) -- see {@link #sendCommand(ICommand, boolean)}, which uses this to give
-	 *  a solver that just reported an error a moment to actually finish dying before the
-	 *  next command's liveness check runs, closing that race deterministically rather than
-	 *  guessing from the error's content whether the process will actually exit. */
-	protected boolean selfReportsImmediateExit() { return false; }
+    /** Overridden by a subclass whose target solver's :error-behavior is immediate-exit
+     *  (e.g. cvc5, yices2) rather than the SMT-LIB default of continued-execution -- such a
+     *  solver's process may start exiting asynchronously right after it reports an error,
+     *  and {@link SolverProcess#send(boolean, String...)}'s own process.isAlive() check can
+     *  still read true for a brief window afterward (OS process-death bookkeeping lags the
+     *  actual exit) -- see {@link #sendCommand(ICommand, boolean)}, which uses this to give
+     *  a solver that just reported an error a moment to actually finish dying before the
+     *  next command's liveness check runs, closing that race deterministically rather than
+     *  guessing from the error's content whether the process will actually exit. */
+    protected boolean selfReportsImmediateExit() { return false; }
 
-	/** How long to pause after an error response from a {@link #selfReportsImmediateExit()}
-	 *  solver, before letting the next command reach {@link SolverProcess}'s liveness check
-	 *  -- long enough that a process which is genuinely exiting has, in practice, finished
-	 *  doing so by the time that check runs. Only paid on error responses, not on the
-	 *  (much more frequent) non-error path, so this does not affect ordinary solving
-	 *  performance. */
-	private static final long IMMEDIATE_EXIT_SETTLE_MILLIS = 50;
+    /** How long to pause after an error response from a {@link #selfReportsImmediateExit()}
+     *  solver, before letting the next command reach {@link SolverProcess}'s liveness check
+     *  -- long enough that a process which is genuinely exiting has, in practice, finished
+     *  doing so by the time that check runs. Only paid on error responses, not on the
+     *  (much more frequent) non-error path, so this does not affect ordinary solving
+     *  performance. */
+    private static final long IMMEDIATE_EXIT_SETTLE_MILLIS = 50;
 
-	@Override
-	public String solverName() {
-	    return getClass().toString().substring(6);
-	}
-	
-	@Override
-	public void forceExit() {
-		if (solverProcess != null) solverProcess.exit();
-	}
+    @Override
+    public String solverName() {
+        return getClass().toString().substring(6);
+    }
+
+    @Override
+    public void forceExit() {
+        if (solverProcess != null) solverProcess.exit();
+    }
 
 
-	public AbstractSolver() {
-		try {
-			SMT.Configuration c = new SMT.Configuration();
-			printSuccess = new Parser(c,c.smtFactory.createSource(":print-success",null)).parseKeyword();
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to create an AbstractSolver: " + e);
-		}
-	}
-	
-	public IResponse successOrEmpty(SMT.Configuration smtConfig) {
-		return smtConfig.nosuccess ? smtConfig.responseFactory.empty() : smtConfig.responseFactory.success();
-	}
+    public AbstractSolver() {
+        try {
+            SMT.Configuration c = new SMT.Configuration();
+            printSuccess = new Parser(c,c.smtFactory.createSource(":print-success",null)).parseKeyword();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create an AbstractSolver: " + e);
+        }
+    }
 
-	
-	public IResponse checkPrintSuccess(SMT.Configuration smtConfig,IKeyword key, IAttributeValue value) {
-		if (key.equals(printSuccess)) {
-			// C_set_option.parse() already rejects this eagerly for any text-driven
-			// script -- but this method is also reachable directly via
-			// smtConfig.commandFactory.set_option(key,value), which bypasses that
-			// parse-time check entirely (see issue #41), so a value that isn't literally
-			// true/false can't just be assumed to be "false" the way the previous
-			// !value.toString().equals("true") check silently did.
-			if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
-				return smtConfig.responseFactory.error("The value of the " + key.value() + " option must be 'true' or 'false'", value.pos());
-			}
-			smtConfig.nosuccess = Utils.FALSE.equals(value);
-			return successOrEmpty(smtConfig);
-		}
-		return null;
-	}
+    public IResponse successOrEmpty(SMT.Configuration smtConfig) {
+        return smtConfig.nosuccess ? smtConfig.responseFactory.empty() : smtConfig.responseFactory.success();
+    }
 
-	/** Translates an in-memory node into the text sent to the solver process. The base
-	 *  behavior assumes the solver is fully SMT-LIB compliant, so it is exactly what the
-	 *  default printer produces. Override in a subclass whose target solver deviates from
-	 *  strict SMT-LIB concrete syntax. */
-	protected String translate(INode sexpr) throws IVisitor.VisitorException {
-		StringWriter sw = new StringWriter();
-		org.smtlib.sexpr.Printer.write(smtConfig, sw, sexpr);
-		return sw.toString();
-	}
 
-	/** Parses the solver's raw response text. The base behavior assumes the response is
-	 *  exactly standard SMT-LIB concrete syntax: success/sat/unsat/unknown/unsupported/
-	 *  true/false, an {@code (error "...")} s-expression, a bare value (get-option), or a
-	 *  single {@code (:keyword value)} attribute pair (get-info). It does not build the
-	 *  richer structured IResponse subtypes that get_value/get_model/get_proof/
-	 *  get_assertions/get_unsat_core/get_unsat_assumptions/get_assignment need, nor does it
-	 *  correct for any real solver's non-compliant quirks (e.g. legacy bit-vector literal
-	 *  syntax) — override in a subclass whose target solver needs either. */
-	protected IResponse parseResponse(String response) {
-		try {
-			return new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseResponse(response);
-		} catch (IParser.ParserException e) {
-			return smtConfig.responseFactory.error("ParserException while parsing response: " + response + " " + e);
-		}
-	}
+    public IResponse checkPrintSuccess(SMT.Configuration smtConfig,IKeyword key, IAttributeValue value) {
+        if (key.equals(printSuccess)) {
+            // C_set_option.parse() already rejects this eagerly for any text-driven
+            // script -- but this method is also reachable directly via
+            // smtConfig.commandFactory.set_option(key,value), which bypasses that
+            // parse-time check entirely (see issue #41), so a value that isn't literally
+            // true/false can't just be assumed to be "false" the way the previous
+            // !value.toString().equals("true") check silently did.
+            if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
+                return smtConfig.responseFactory.error("The value of the " + key.value() + " option must be 'true' or 'false'", value.pos());
+            }
+            smtConfig.nosuccess = Utils.FALSE.equals(value);
+            return successOrEmpty(smtConfig);
+        }
+        return null;
+    }
 
-	/** Translates the given command and sends it to the solver process, returning the
-	 *  parsed response. This is the mechanism behind the default implementations below;
-	 *  a subclass may also call it directly to send a command built some other way. */
-	protected IResponse sendCommand(ICommand cmd) {
-		return sendCommand(cmd, false);
-	}
+    /** Translates an in-memory node into the text sent to the solver process. The base
+     *  behavior assumes the solver is fully SMT-LIB compliant, so it is exactly what the
+     *  default printer produces. Override in a subclass whose target solver deviates from
+     *  strict SMT-LIB concrete syntax. */
+    protected String translate(INode sexpr) throws IVisitor.VisitorException {
+        StringWriter sw = new StringWriter();
+        org.smtlib.sexpr.Printer.write(smtConfig, sw, sexpr);
+        return sw.toString();
+    }
 
-	/** Sends the exit command, tolerating the solver producing literally no response
-	 *  (SolverProcess.NoResponseException) as a benign, expected outcome rather than an
-	 *  error -- many solvers legitimately print nothing before terminating in response to
-	 *  exit. The tolerated result is "", which Parser.parseResponse("") already turns into
-	 *  a plain empty response -- the same outcome a real empty response (e.g. under
-	 *  :print-success false) already produces, so no separate response-construction case
-	 *  is needed here. A subclass's exit() should call this instead of
-	 *  sendCommand(commandFactory.exit()) directly. */
-	protected IResponse sendExitCommand() {
-		return sendCommand(smtConfig.commandFactory.exit(), true);
-	}
+    /** Parses the solver's raw response text. The base behavior assumes the response is
+     *  exactly standard SMT-LIB concrete syntax: success/sat/unsat/unknown/unsupported/
+     *  true/false, an {@code (error "...")} s-expression, a bare value (get-option), or a
+     *  single {@code (:keyword value)} attribute pair (get-info). It does not build the
+     *  richer structured IResponse subtypes that get_value/get_model/get_proof/
+     *  get_assertions/get_unsat_core/get_unsat_assumptions/get_assignment need, nor does it
+     *  correct for any real solver's non-compliant quirks (e.g. legacy bit-vector literal
+     *  syntax) — override in a subclass whose target solver needs either. */
+    protected IResponse parseResponse(String response) {
+        try {
+            return new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseResponse(response);
+        } catch (IParser.ParserException e) {
+            return smtConfig.responseFactory.error("ParserException while parsing response: " + response + " " + e);
+        }
+    }
 
-	private IResponse sendCommand(ICommand cmd, boolean tolerateSilentExit) {
-		return sendCommand(cmd, tolerateSilentExit, false);
-	}
+    /** Translates the given command and sends it to the solver process, returning the
+     *  parsed response. This is the mechanism behind the default implementations below;
+     *  a subclass may also call it directly to send a command built some other way. */
+    protected IResponse sendCommand(ICommand cmd) {
+        return sendCommand(cmd, false);
+    }
 
-	/** Replaces known sources of non-deterministic content in a raw solver response with a
-	 *  fixed placeholder, so that --testing runs produce byte-for-byte reproducible output
-	 *  across machines and repeated runs. Deliberately a short, explicit list rather than a
-	 *  broad catch-all, so it can't silently mask an actual difference in solver output:
-	 *  elapsed-time figures (e.g. cvc5's :all-statistics response embeds these as bare,
-	 *  unquoted "NNNms" tokens, which aren't valid SMT-LIB syntax at all and would
-	 *  otherwise cascade into a wall of "Invalid token" parse errors that also differ
-	 *  every run) and :memory/:max-memory usage figures. */
-	protected static String normalizeForTesting(String raw) {
-		String s = raw;
-		s = s.replaceAll("\\d+(\\.\\d+)?ms", "TIME");
-		s = s.replaceAll("(\\(:memory\\s+)[\\d.]+", "$1VALUE");
-		s = s.replaceAll("(\\(:max-memory\\s+)[\\d.]+", "$1VALUE");
-		return s;
-	}
+    /** Sends the exit command, tolerating the solver producing literally no response
+     *  (SolverProcess.NoResponseException) as a benign, expected outcome rather than an
+     *  error -- many solvers legitimately print nothing before terminating in response to
+     *  exit. The tolerated result is "", which Parser.parseResponse("") already turns into
+     *  a plain empty response -- the same outcome a real empty response (e.g. under
+     *  :print-success false) already produces, so no separate response-construction case
+     *  is needed here. A subclass's exit() should call this instead of
+     *  sendCommand(commandFactory.exit()) directly. */
+    protected IResponse sendExitCommand() {
+        return sendCommand(smtConfig.commandFactory.exit(), true);
+    }
 
-	private IResponse sendCommand(ICommand cmd, boolean tolerateSilentExit, boolean scrubNonDeterminism) {
-		String translatedCmd = null;
-		try {
-			translatedCmd = translate(cmd);
-			String response = solverProcess.sendAndListen(translatedCmd, "\n");
-			// A null response (observed rarely, likely a SolverProcess read-timing race)
-			// would otherwise reach parseResponse() and surface as an uncaught
-			// NullPointerException from deep in the parser, crashing the whole run
-			// instead of just this one command.
-			if (response == null) {
-				return smtConfig.responseFactory.error("No response received from the solver for: " + translatedCmd);
-			}
-			if (scrubNonDeterminism && smtConfig.testing) response = normalizeForTesting(response);
-			IResponse result = parseResponse(response);
-			// parseResponse() (or a subclass override) can itself return null for some
-			// malformed/edge-case response text without throwing -- same defensive
-			// reasoning as the null-response guard above: surface it as an error rather
-			// than let a null IResponse propagate up and crash the caller.
-			if (result == null) {
-				return smtConfig.responseFactory.error("Could not parse response from the solver for: " + translatedCmd + " -- raw response: " + response);
-			}
-			if (result.isError() && selfReportsImmediateExit()) {
-				try {
-					Thread.sleep(IMMEDIATE_EXIT_SETTLE_MILLIS);
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-				}
-			}
-			return result;
-		} catch (SolverProcess.NoResponseException e) {
-			if (tolerateSilentExit) return smtConfig.responseFactory.empty();
-			return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
-		} catch (IOException e) {
-			return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
-		} catch (IVisitor.VisitorException e) {
-			return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
-		}
-	}
+    private IResponse sendCommand(ICommand cmd, boolean tolerateSilentExit) {
+        return sendCommand(cmd, tolerateSilentExit, false);
+    }
 
-	/** @see org.smtlib.ISolver#start() */
-	@Override
-	public IResponse start() {
-		throw new UnsupportedOperationException("AbstractSolver.start");
-	}
+    /** Replaces known sources of non-deterministic content in a raw solver response with a
+     *  fixed placeholder, so that --testing runs produce byte-for-byte reproducible output
+     *  across machines and repeated runs. Deliberately a short, explicit list rather than a
+     *  broad catch-all, so it can't silently mask an actual difference in solver output:
+     *  elapsed-time figures (e.g. cvc5's :all-statistics response embeds these as bare,
+     *  unquoted "NNNms" tokens, which aren't valid SMT-LIB syntax at all and would
+     *  otherwise cascade into a wall of "Invalid token" parse errors that also differ
+     *  every run) and :memory/:max-memory usage figures. */
+    protected static String normalizeForTesting(String raw) {
+        String s = raw;
+        s = s.replaceAll("\\d+(\\.\\d+)?ms", "TIME");
+        s = s.replaceAll("(\\(:memory\\s+)[\\d.]+", "$1VALUE");
+        s = s.replaceAll("(\\(:max-memory\\s+)[\\d.]+", "$1VALUE");
+        return s;
+    }
 
-	/** @see org.smtlib.ISolver#exit() */
-	@Override
-	public IResponse exit() {
-		IResponse response = sendExitCommand();
-		solverProcess.exit();
-		if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended " + smtConfig.solvername);
-		solverProcess = null;
-		return response;
-	}
-	
+    private IResponse sendCommand(ICommand cmd, boolean tolerateSilentExit, boolean scrubNonDeterminism) {
+        String translatedCmd = null;
+        try {
+            translatedCmd = translate(cmd);
+            String response = solverProcess.sendAndListen(translatedCmd, "\n");
+            // A null response (observed rarely, likely a SolverProcess read-timing race)
+            // would otherwise reach parseResponse() and surface as an uncaught
+            // NullPointerException from deep in the parser, crashing the whole run
+            // instead of just this one command.
+            if (response == null) {
+                return smtConfig.responseFactory.error("No response received from the solver for: " + translatedCmd);
+            }
+            if (scrubNonDeterminism && smtConfig.testing) response = normalizeForTesting(response);
+            IResponse result = parseResponse(response);
+            // parseResponse() (or a subclass override) can itself return null for some
+            // malformed/edge-case response text without throwing -- same defensive
+            // reasoning as the null-response guard above: surface it as an error rather
+            // than let a null IResponse propagate up and crash the caller.
+            if (result == null) {
+                return smtConfig.responseFactory.error("Could not parse response from the solver for: " + translatedCmd + " -- raw response: " + response);
+            }
+            if (result.isError() && selfReportsImmediateExit()) {
+                try {
+                    Thread.sleep(IMMEDIATE_EXIT_SETTLE_MILLIS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            return result;
+        } catch (SolverProcess.NoResponseException e) {
+            if (tolerateSilentExit) return smtConfig.responseFactory.empty();
+            return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
+        } catch (IOException e) {
+            return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
+        } catch (IVisitor.VisitorException e) {
+            return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
+        }
+    }
 
-	@Override
-	public IResponse echo(IStringLiteral arg) {
-		return sendCommand(smtConfig.commandFactory.echo(arg));
-	}
+    /** @see org.smtlib.ISolver#start() */
+    @Override
+    public IResponse start() {
+        throw new UnsupportedOperationException("AbstractSolver.start");
+    }
 
-	/** Forwards a standalone comment (its own C_comment pseudo-command -- see issue #42) to
-	 *  the real solver process, uniformly for every solver adapter: a comment is legal
-	 *  SMT-LIB input (any conforming solver must silently ignore it), and forwarding it keeps
-	 *  the physical line count of what's actually sent matching the user's own script one
-	 *  real line for one sent line -- which line-number rewriting (see e.g.
-	 *  Solver_z3_4_3/Solver_z3_recent's linesOffset) depends on. sendNoListen is used, not
-	 *  sendAndListen: a comment has no response to wait for. A trailing, same-line comment
-	 *  never reaches here at all -- it's captured as Command.trailingText instead (see
-	 *  Parser.parseCommand()) and is never sent to a solver. */
-	@Override public void comment(String comment) {
-		try {
-			solverProcess.sendNoListen(comment);
-		} catch (IOException e) {
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Failed to send comment to " + smtConfig.solvername + ": " + e);
-		}
-	}
+    /** @see org.smtlib.ISolver#exit() */
+    @Override
+    public IResponse exit() {
+        IResponse response = sendExitCommand();
+        solverProcess.exit();
+        if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended " + smtConfig.solvername);
+        solverProcess = null;
+        return response;
+    }
 
-	/** @see org.smtlib.ISolver#set_logic(String,IPos) */
-	@Override
-	public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
-		checkSatStatus = null;
-		return sendCommand(smtConfig.commandFactory.set_logic(smtConfig.exprFactory.symbol(logicName)));
-	}
 
-	/** @see org.smtlib.ISolver#reset() */
-	@Override
-	public IResponse reset() {
-		checkSatStatus = null;
-		return sendCommand(smtConfig.commandFactory.reset());
-	}
+    @Override
+    public IResponse echo(IStringLiteral arg) {
+        return sendCommand(smtConfig.commandFactory.echo(arg));
+    }
 
-	/** @see org.smtlib.ISolver#reset_assertions() */
-	@Override
-	public IResponse reset_assertions() {
-		checkSatStatus = null;
-		return sendCommand(smtConfig.commandFactory.reset_assertions());
-	}
+    /** Forwards a standalone comment (its own C_comment pseudo-command -- see issue #42) to
+     *  the real solver process, uniformly for every solver adapter: a comment is legal
+     *  SMT-LIB input (any conforming solver must silently ignore it), and forwarding it keeps
+     *  the physical line count of what's actually sent matching the user's own script one
+     *  real line for one sent line -- which line-number rewriting (see e.g.
+     *  Solver_z3_4_3/Solver_z3_recent's linesOffset) depends on. sendNoListen is used, not
+     *  sendAndListen: a comment has no response to wait for. A trailing, same-line comment
+     *  never reaches here at all -- it's captured as Command.trailingText instead (see
+     *  Parser.parseCommand()) and is never sent to a solver. */
+    @Override public void comment(String comment) {
+        try {
+            solverProcess.sendNoListen(comment);
+        } catch (IOException e) {
+            if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Failed to send comment to " + smtConfig.solvername + ": " + e);
+        }
+    }
 
-	/** @see org.smtlib.ISolver#push(int) */
-	@Override
-	public IResponse push(int number) {
-		checkSatStatus = null;
-		return sendCommand(smtConfig.commandFactory.push(smtConfig.exprFactory.numeral(number)));
-	}
+    /** @see org.smtlib.ISolver#set_logic(String,IPos) */
+    @Override
+    public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
+        checkSatStatus = null;
+        return sendCommand(smtConfig.commandFactory.set_logic(smtConfig.exprFactory.symbol(logicName)));
+    }
 
-	/** @see org.smtlib.ISolver#pop(int) */
-	@Override
-	public IResponse pop(int number) {
-		checkSatStatus = null;
-		return sendCommand(smtConfig.commandFactory.pop(smtConfig.exprFactory.numeral(number)));
-	}
+    /** @see org.smtlib.ISolver#reset() */
+    @Override
+    public IResponse reset() {
+        checkSatStatus = null;
+        return sendCommand(smtConfig.commandFactory.reset());
+    }
 
-	/** @see org.smtlib.ISolver#assertExpr(IExpr) */
-	@Override
-	public IResponse assertExpr(IExpr sexpr) {
-		checkSatStatus = null;
-		return sendCommand(smtConfig.commandFactory.assertCommand(sexpr));
-	}
+    /** @see org.smtlib.ISolver#reset_assertions() */
+    @Override
+    public IResponse reset_assertions() {
+        checkSatStatus = null;
+        return sendCommand(smtConfig.commandFactory.reset_assertions());
+    }
 
-	/** @see org.smtlib.ISolver#check_sat()*/
-	@Override
-	public IResponse check_sat() {
-		checkSatStatus = sendCommand(smtConfig.commandFactory.check_sat());
-		return checkSatStatus;
-	}
+    /** @see org.smtlib.ISolver#push(int) */
+    @Override
+    public IResponse push(int number) {
+        checkSatStatus = null;
+        return sendCommand(smtConfig.commandFactory.push(smtConfig.exprFactory.numeral(number)));
+    }
 
-	/** @see org.smtlib.ISolver#check_sat_assuming(IExpr...)*/
-	@Override
-	public IResponse check_sat_assuming(IExpr ... exprs) {
-		checkSatStatus = sendCommand(smtConfig.commandFactory.check_sat_assuming(java.util.Arrays.asList(exprs)));
-		return checkSatStatus;
-	}
+    /** @see org.smtlib.ISolver#pop(int) */
+    @Override
+    public IResponse pop(int number) {
+        checkSatStatus = null;
+        return sendCommand(smtConfig.commandFactory.pop(smtConfig.exprFactory.numeral(number)));
+    }
+
+    /** @see org.smtlib.ISolver#assertExpr(IExpr) */
+    @Override
+    public IResponse assertExpr(IExpr sexpr) {
+        checkSatStatus = null;
+        return sendCommand(smtConfig.commandFactory.assertCommand(sexpr));
+    }
+
+    /** @see org.smtlib.ISolver#check_sat()*/
+    @Override
+    public IResponse check_sat() {
+        checkSatStatus = sendCommand(smtConfig.commandFactory.check_sat());
+        return checkSatStatus;
+    }
+
+    /** @see org.smtlib.ISolver#check_sat_assuming(IExpr...)*/
+    @Override
+    public IResponse check_sat_assuming(IExpr ... exprs) {
+        checkSatStatus = sendCommand(smtConfig.commandFactory.check_sat_assuming(java.util.Arrays.asList(exprs)));
+        return checkSatStatus;
+    }
 
     /** @see org.smtlib.ISolver#define_const(ICommand.Idefine_const)  */
     @Override
@@ -379,27 +379,27 @@ public class AbstractSolver implements ISolver {
         return sendCommand(cmd);
     }
 
-	/** @see org.smtlib.ISolver#declare_const(ICommand.Ideclare_const)  */
-	@Override
-	public IResponse declare_const(Ideclare_const cmd) {
-		// declare-const is syntactic sugar for declare-fun with an empty argument list
-		return declare_fun(smtConfig.commandFactory.declare_fun(
-				cmd.symbol(), new java.util.ArrayList<>(), cmd.resultSort()));
-	}
+    /** @see org.smtlib.ISolver#declare_const(ICommand.Ideclare_const)  */
+    @Override
+    public IResponse declare_const(Ideclare_const cmd) {
+        // declare-const is syntactic sugar for declare-fun with an empty argument list
+        return declare_fun(smtConfig.commandFactory.declare_fun(
+                cmd.symbol(), new java.util.ArrayList<>(), cmd.resultSort()));
+    }
 
-	/** @see org.smtlib.ISolver#declare_fun(ICommand.Ideclare_fun)  */
-	@Override
-	public IResponse declare_fun(Ideclare_fun cmd) {
-		checkSatStatus = null;
-		return sendCommand(cmd);
-	}
+    /** @see org.smtlib.ISolver#declare_fun(ICommand.Ideclare_fun)  */
+    @Override
+    public IResponse declare_fun(Ideclare_fun cmd) {
+        checkSatStatus = null;
+        return sendCommand(cmd);
+    }
 
-	/** @see org.smtlib.ISolver#define_sort(ICommand.Idefine_sort)  */
-	@Override
-	public IResponse define_sort(Idefine_sort cmd){
-		checkSatStatus = null;
-		return sendCommand(cmd);
-	}
+    /** @see org.smtlib.ISolver#define_sort(ICommand.Idefine_sort)  */
+    @Override
+    public IResponse define_sort(Idefine_sort cmd){
+        checkSatStatus = null;
+        return sendCommand(cmd);
+    }
 
     /** @see org.smtlib.ISolver#declare_sort(ICommand.Ideclare_sort)  */
     @Override
@@ -415,155 +415,155 @@ public class AbstractSolver implements ISolver {
         return sendCommand(cmd);
     }
 
-	/** @see org.smtlib.ISolver#set_option(IExpr.IKeyword,IExpr.IAttributeValue)  */
-	@Override
-	public IResponse set_option(IKeyword key, IAttributeValue value) {
-		String option = key.value();
-		if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
-			String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : Utils.STDOUT;
-			try {
-				smtConfig.log.setRegularOutputChannel(name);
-			} catch (IOException e) {
-				return smtConfig.responseFactory.error("Failed to open regular output: " + e.getMessage(), value.pos());
-			}
-			options.put(option, value);
-			return successOrEmpty(smtConfig);
-		}
-		if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
-			String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : Utils.STDERR;
-			try {
-				smtConfig.log.setDiagnosticOutputChannel(name);
-			} catch (IOException e) {
-				return smtConfig.responseFactory.error("Failed to open diagnostic output: " + e.getMessage(), value.pos());
-			}
-			options.put(option, value);
-			return successOrEmpty(smtConfig);
-		}
-		return set_option_impl(key, value);
-	}
+    /** @see org.smtlib.ISolver#set_option(IExpr.IKeyword,IExpr.IAttributeValue)  */
+    @Override
+    public IResponse set_option(IKeyword key, IAttributeValue value) {
+        String option = key.value();
+        if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
+            String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : Utils.STDOUT;
+            try {
+                smtConfig.log.setRegularOutputChannel(name);
+            } catch (IOException e) {
+                return smtConfig.responseFactory.error("Failed to open regular output: " + e.getMessage(), value.pos());
+            }
+            options.put(option, value);
+            return successOrEmpty(smtConfig);
+        }
+        if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
+            String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : Utils.STDERR;
+            try {
+                smtConfig.log.setDiagnosticOutputChannel(name);
+            } catch (IOException e) {
+                return smtConfig.responseFactory.error("Failed to open diagnostic output: " + e.getMessage(), value.pos());
+            }
+            options.put(option, value);
+            return successOrEmpty(smtConfig);
+        }
+        return set_option_impl(key, value);
+    }
 
-	/** Override in subclasses to handle solver-specific options. Channel options are handled by set_option and never reach here.
-	 *  This default handles :print-success client-side (see {@link #checkPrintSuccess}):
-	 *  the solver process is always left with :print-success true at the wire level (see
-	 *  start()/sendCommand()) -- without that, we'd get no acknowledgment at all for other
-	 *  commands once a script turns it off -- so it is answered entirely client-side,
-	 *  matching the local smtConfig.nosuccess flag, and is never itself forwarded to the
-	 *  solver process. A subclass that overrides set_option_impl for other reasons (e.g.
-	 *  to also track option values locally) needs its own checkPrintSuccess call, same as
-	 *  it always has -- this default is only reached by a subclass that doesn't override
-	 *  set_option_impl at all. */
-	protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
-		IResponse r = checkPrintSuccess(smtConfig, key, value);
-		if (r != null) return r;
-		return sendCommand(smtConfig.commandFactory.set_option(key, value));
-	}
+    /** Override in subclasses to handle solver-specific options. Channel options are handled by set_option and never reach here.
+     *  This default handles :print-success client-side (see {@link #checkPrintSuccess}):
+     *  the solver process is always left with :print-success true at the wire level (see
+     *  start()/sendCommand()) -- without that, we'd get no acknowledgment at all for other
+     *  commands once a script turns it off -- so it is answered entirely client-side,
+     *  matching the local smtConfig.nosuccess flag, and is never itself forwarded to the
+     *  solver process. A subclass that overrides set_option_impl for other reasons (e.g.
+     *  to also track option values locally) needs its own checkPrintSuccess call, same as
+     *  it always has -- this default is only reached by a subclass that doesn't override
+     *  set_option_impl at all. */
+    protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
+        IResponse r = checkPrintSuccess(smtConfig, key, value);
+        if (r != null) return r;
+        return sendCommand(smtConfig.commandFactory.set_option(key, value));
+    }
 
-	/** @see org.smtlib.ISolver#set_info(IExpr.IKeyword, IExpr.IAttributeValue)  */
-	@Override
-	public IResponse set_info(IKeyword key, IAttributeValue value){
-		return sendCommand(smtConfig.commandFactory.set_info(key, value));
-	}
+    /** @see org.smtlib.ISolver#set_info(IExpr.IKeyword, IExpr.IAttributeValue)  */
+    @Override
+    public IResponse set_info(IKeyword key, IAttributeValue value){
+        return sendCommand(smtConfig.commandFactory.set_info(key, value));
+    }
 
-	/** Returns an error response if the given option has not been enabled (per
-	 *  {@link #get_option(IKeyword)}), else null. */
-	protected /*@Nullable*/ IResponse requireOptionEnabled(String commandName, String option) {
-		if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(option)))) {
-			return smtConfig.responseFactory.error("The " + commandName + " command is only valid if " + option + " has been enabled");
-		}
-		return null;
-	}
+    /** Returns an error response if the given option has not been enabled (per
+     *  {@link #get_option(IKeyword)}), else null. */
+    protected /*@Nullable*/ IResponse requireOptionEnabled(String commandName, String option) {
+        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(option)))) {
+            return smtConfig.responseFactory.error("The " + commandName + " command is only valid if " + option + " has been enabled");
+        }
+        return null;
+    }
 
-	/** Returns an error response unless {@link #checkSatStatus} is sat or unknown, else null. */
-	protected /*@Nullable*/ IResponse requireSatOrUnknown(String commandName) {
-		if (!smtConfig.responseFactory.sat().equals(checkSatStatus) && !smtConfig.responseFactory.unknown().equals(checkSatStatus)) {
-			return smtConfig.responseFactory.error("The " + commandName + " command is only valid immediately after check-sat returned sat or unknown");
-		}
-		return null;
-	}
+    /** Returns an error response unless {@link #checkSatStatus} is sat or unknown, else null. */
+    protected /*@Nullable*/ IResponse requireSatOrUnknown(String commandName) {
+        if (!smtConfig.responseFactory.sat().equals(checkSatStatus) && !smtConfig.responseFactory.unknown().equals(checkSatStatus)) {
+            return smtConfig.responseFactory.error("The " + commandName + " command is only valid immediately after check-sat returned sat or unknown");
+        }
+        return null;
+    }
 
-	/** Returns an error response unless {@link #checkSatStatus} is unsat, else null. */
-	protected /*@Nullable*/ IResponse requireUnsat(String commandName, String afterWhat) {
-		if (!smtConfig.responseFactory.unsat().equals(checkSatStatus)) {
-			return smtConfig.responseFactory.error("The " + commandName + " command is only valid immediately after " + afterWhat + " returned unsat");
-		}
-		return null;
-	}
+    /** Returns an error response unless {@link #checkSatStatus} is unsat, else null. */
+    protected /*@Nullable*/ IResponse requireUnsat(String commandName, String afterWhat) {
+        if (!smtConfig.responseFactory.unsat().equals(checkSatStatus)) {
+            return smtConfig.responseFactory.error("The " + commandName + " command is only valid immediately after " + afterWhat + " returned unsat");
+        }
+        return null;
+    }
 
-	/** True if the given raw response text is a flat outcome (empty/success/unsupported/an
-	 *  {@code (error ...)} s-expression) rather than a structured list — used by the
-	 *  get_assertions/get_value/get_assignment/get_unsat_core/get_unsat_assumptions
-	 *  defaults below to decide whether to delegate to {@link #parseResponse(String)} or
-	 *  reparse the response as the structured list they actually expect. */
-	protected boolean isFlatResponse(String response) {
-		String r = response.trim();
-		return r.isEmpty() || r.equals("success") || r.equals("unsupported") || r.startsWith("(error");
-	}
+    /** True if the given raw response text is a flat outcome (empty/success/unsupported/an
+     *  {@code (error ...)} s-expression) rather than a structured list — used by the
+     *  get_assertions/get_value/get_assignment/get_unsat_core/get_unsat_assumptions
+     *  defaults below to decide whether to delegate to {@link #parseResponse(String)} or
+     *  reparse the response as the structured list they actually expect. */
+    protected boolean isFlatResponse(String response) {
+        String r = response.trim();
+        return r.isEmpty() || r.equals("success") || r.equals("unsupported") || r.startsWith("(error");
+    }
 
-	/** @see org.smtlib.ISolver#get_assertions() */
-	@Override
-	public IResponse get_assertions(){
-		String key = Utils.produceAssertionsKey(smtConfig);
-		IResponse err = requireOptionEnabled("get-assertions", key);
-		if (err != null) return err;
-		String response = null;
-		try {
-			// A single read may not capture a multi-line response, so keep reading
-			// (paren-balance tracked across all reads so far) until it's complete.
-			String cmdText = translate(smtConfig.commandFactory.get_assertions());
-			StringBuilder sb = new StringBuilder();
-			solverProcess.sendNoListen(cmdText, "\n");
-			int parens = 0;
-			// Tracks whether the scan is currently inside a double-quoted string literal,
-			// carried across reads (a string can in principle straddle a chunk boundary),
-			// so that a '(' or ')' inside a string-sort term value doesn't desync the
-			// balance count -- same in-string tracking SolverProcess.endsWith() already
-			// does for exactly the same reason, just applied incrementally per chunk here
-			// instead of rescanning the whole buffer from the start each time.
-			boolean inString = false;
-			do {
-			    String s = solverProcess.listen();
-				for (int p = 0; p < s.length(); p++) {
-					char c = s.charAt(p);
-					if (c == '"') inString = !inString;
-					else if (!inString) {
-						if (c == '(') parens++;
-						else if (c == ')') parens--;
-					}
-				}
-				sb.append(s.replace('\n',' ').replace("\r",""));
-			} while (parens > 0);
-			response = sb.toString();
-			if (isFlatResponse(response)) return parseResponse(response);
-			List<IExpr> exprs = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseAssertionList();
-			return smtConfig.responseFactory.get_assertions_response(exprs);
-		} catch (IOException e) {
-			return smtConfig.responseFactory.error("Error writing to solver: " + e);
-		} catch (IVisitor.VisitorException e) {
-			return smtConfig.responseFactory.error("Error writing to solver: " + e);
-		} catch (IParser.ParserException e) {
-			return smtConfig.responseFactory.error("Unexpected output from the solver: " + response);
-		}
-	}
+    /** @see org.smtlib.ISolver#get_assertions() */
+    @Override
+    public IResponse get_assertions(){
+        String key = Utils.produceAssertionsKey(smtConfig);
+        IResponse err = requireOptionEnabled("get-assertions", key);
+        if (err != null) return err;
+        String response = null;
+        try {
+            // A single read may not capture a multi-line response, so keep reading
+            // (paren-balance tracked across all reads so far) until it's complete.
+            String cmdText = translate(smtConfig.commandFactory.get_assertions());
+            StringBuilder sb = new StringBuilder();
+            solverProcess.sendNoListen(cmdText, "\n");
+            int parens = 0;
+            // Tracks whether the scan is currently inside a double-quoted string literal,
+            // carried across reads (a string can in principle straddle a chunk boundary),
+            // so that a '(' or ')' inside a string-sort term value doesn't desync the
+            // balance count -- same in-string tracking SolverProcess.endsWith() already
+            // does for exactly the same reason, just applied incrementally per chunk here
+            // instead of rescanning the whole buffer from the start each time.
+            boolean inString = false;
+            do {
+                String s = solverProcess.listen();
+                for (int p = 0; p < s.length(); p++) {
+                    char c = s.charAt(p);
+                    if (c == '"') inString = !inString;
+                    else if (!inString) {
+                        if (c == '(') parens++;
+                        else if (c == ')') parens--;
+                    }
+                }
+                sb.append(s.replace('\n',' ').replace("\r",""));
+            } while (parens > 0);
+            response = sb.toString();
+            if (isFlatResponse(response)) return parseResponse(response);
+            List<IExpr> exprs = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseAssertionList();
+            return smtConfig.responseFactory.get_assertions_response(exprs);
+        } catch (IOException e) {
+            return smtConfig.responseFactory.error("Error writing to solver: " + e);
+        } catch (IVisitor.VisitorException e) {
+            return smtConfig.responseFactory.error("Error writing to solver: " + e);
+        } catch (IParser.ParserException e) {
+            return smtConfig.responseFactory.error("Unexpected output from the solver: " + response);
+        }
+    }
 
-	/** @see org.smtlib.ISolver#get_proof()*/
-	@Override
-	public IResponse get_proof(){
-		IResponse err = requireOptionEnabled("get-proof", Utils.PRODUCE_PROOFS);
-		if (err != null) return err;
-		err = requireUnsat("get-proof", "check-sat");
-		if (err != null) return err;
-		return sendCommand(smtConfig.commandFactory.get_proof());
-	}
+    /** @see org.smtlib.ISolver#get_proof()*/
+    @Override
+    public IResponse get_proof(){
+        IResponse err = requireOptionEnabled("get-proof", Utils.PRODUCE_PROOFS);
+        if (err != null) return err;
+        err = requireUnsat("get-proof", "check-sat");
+        if (err != null) return err;
+        return sendCommand(smtConfig.commandFactory.get_proof());
+    }
 
-	/** @see org.smtlib.ISolver#get_model()*/
-	@Override
-	public IResponse get_model(){
-		IResponse err = requireOptionEnabled("get-model", Utils.PRODUCE_MODELS);
-		if (err != null) return err;
-		err = requireSatOrUnknown("get-model");
-		if (err != null) return err;
-		return sendCommand(smtConfig.commandFactory.get_model());
-	}
+    /** @see org.smtlib.ISolver#get_model()*/
+    @Override
+    public IResponse get_model(){
+        IResponse err = requireOptionEnabled("get-model", Utils.PRODUCE_MODELS);
+        if (err != null) return err;
+        err = requireSatOrUnknown("get-model");
+        if (err != null) return err;
+        return sendCommand(smtConfig.commandFactory.get_model());
+    }
 
     /** @see org.smtlib.ISolver#get_unsat_assumptions()*/
     @Override
@@ -609,89 +609,89 @@ public class AbstractSolver implements ISolver {
         }
     }
 
-	/** @see org.smtlib.ISolver#get_value(IExpr... )*/
-	@Override
-	public IResponse get_value(IExpr... terms){
-		IResponse err = requireOptionEnabled("get-value", Utils.PRODUCE_MODELS);
-		if (err != null) return err;
-		err = requireSatOrUnknown("get-value");
-		if (err != null) return err;
-		String response = null;
-		try {
-			response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_value(java.util.Arrays.asList(terms))), "\n");
-			if (isFlatResponse(response)) return parseResponse(response);
-			List<IResponse.IPair<IExpr,IExpr>> values = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseValueList();
-			return smtConfig.responseFactory.get_value_response(values);
-		} catch (IOException e) {
-			return smtConfig.responseFactory.error("Error writing to solver: " + e);
-		} catch (IVisitor.VisitorException e) {
-			return smtConfig.responseFactory.error("Error writing to solver: " + e);
-		} catch (IParser.ParserException e) {
-			return smtConfig.responseFactory.error("Unexpected output from the solver: " + response);
-		}
-	}
+    /** @see org.smtlib.ISolver#get_value(IExpr... )*/
+    @Override
+    public IResponse get_value(IExpr... terms){
+        IResponse err = requireOptionEnabled("get-value", Utils.PRODUCE_MODELS);
+        if (err != null) return err;
+        err = requireSatOrUnknown("get-value");
+        if (err != null) return err;
+        String response = null;
+        try {
+            response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_value(java.util.Arrays.asList(terms))), "\n");
+            if (isFlatResponse(response)) return parseResponse(response);
+            List<IResponse.IPair<IExpr,IExpr>> values = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseValueList();
+            return smtConfig.responseFactory.get_value_response(values);
+        } catch (IOException e) {
+            return smtConfig.responseFactory.error("Error writing to solver: " + e);
+        } catch (IVisitor.VisitorException e) {
+            return smtConfig.responseFactory.error("Error writing to solver: " + e);
+        } catch (IParser.ParserException e) {
+            return smtConfig.responseFactory.error("Unexpected output from the solver: " + response);
+        }
+    }
 
-	/** @see org.smtlib.ISolver#get_assignment()*/
-	@Override
-	public IResponse get_assignment(){
-		IResponse err = requireOptionEnabled("get-assignment", Utils.PRODUCE_ASSIGNMENTS);
-		if (err != null) return err;
-		err = requireSatOrUnknown("get-assignment");
-		if (err != null) return err;
-		String response = null;
-		try {
-			response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_assignment()), "\n");
-			if (isFlatResponse(response)) return parseResponse(response);
-			List<IResponse.IPair<ISymbol,Boolean>> assignments = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseAssignmentList();
-			return smtConfig.responseFactory.get_assignment_response(assignments);
-		} catch (IOException e) {
-			return smtConfig.responseFactory.error("Error writing to solver: " + e);
-		} catch (IVisitor.VisitorException e) {
-			return smtConfig.responseFactory.error("Error writing to solver: " + e);
-		} catch (IParser.ParserException e) {
-			return smtConfig.responseFactory.error("Unexpected output from the solver: " + response);
-		}
-	}
+    /** @see org.smtlib.ISolver#get_assignment()*/
+    @Override
+    public IResponse get_assignment(){
+        IResponse err = requireOptionEnabled("get-assignment", Utils.PRODUCE_ASSIGNMENTS);
+        if (err != null) return err;
+        err = requireSatOrUnknown("get-assignment");
+        if (err != null) return err;
+        String response = null;
+        try {
+            response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_assignment()), "\n");
+            if (isFlatResponse(response)) return parseResponse(response);
+            List<IResponse.IPair<ISymbol,Boolean>> assignments = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseAssignmentList();
+            return smtConfig.responseFactory.get_assignment_response(assignments);
+        } catch (IOException e) {
+            return smtConfig.responseFactory.error("Error writing to solver: " + e);
+        } catch (IVisitor.VisitorException e) {
+            return smtConfig.responseFactory.error("Error writing to solver: " + e);
+        } catch (IParser.ParserException e) {
+            return smtConfig.responseFactory.error("Unexpected output from the solver: " + response);
+        }
+    }
 
-	/** @see org.smtlib.ISolver#get_option(IExpr.IKeyword)*/
-	@Override
-	public IResponse get_option(IKeyword option){
-		// :print-success is answered client-side (see set_option()); the solver process
-		// itself is always left at :print-success true, so asking it directly would
-		// always report true regardless of the script's own nosuccess state.
-		if (option.equals(printSuccess)) return smtConfig.nosuccess ? Utils.FALSE : Utils.TRUE;
-		// :regular-output-channel and :diagnostic-output-channel are likewise answered
-		// client-side once set (see set_option()): that method only redirects jSMTLIB's own
-		// log streams and never forwards the command to the solver process, so forwarding
-		// get-option to the solver here would just report the solver's own unchanged
-		// default forever, regardless of what the script actually set. Before any
-		// set-option, fall through and ask the solver (or let it error) so its own default
-		// is used, matching pre-set-option behavior for every other option.
-		String opt = option.value();
-		if (Utils.REGULAR_OUTPUT_CHANNEL.equals(opt) || Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(opt)) {
-			IAttributeValue cached = options.get(opt);
-			if (cached != null) return cached;
-		}
-		return sendCommand(smtConfig.commandFactory.get_option(option));
-	}
+    /** @see org.smtlib.ISolver#get_option(IExpr.IKeyword)*/
+    @Override
+    public IResponse get_option(IKeyword option){
+        // :print-success is answered client-side (see set_option()); the solver process
+        // itself is always left at :print-success true, so asking it directly would
+        // always report true regardless of the script's own nosuccess state.
+        if (option.equals(printSuccess)) return smtConfig.nosuccess ? Utils.FALSE : Utils.TRUE;
+        // :regular-output-channel and :diagnostic-output-channel are likewise answered
+        // client-side once set (see set_option()): that method only redirects jSMTLIB's own
+        // log streams and never forwards the command to the solver process, so forwarding
+        // get-option to the solver here would just report the solver's own unchanged
+        // default forever, regardless of what the script actually set. Before any
+        // set-option, fall through and ask the solver (or let it error) so its own default
+        // is used, matching pre-set-option behavior for every other option.
+        String opt = option.value();
+        if (Utils.REGULAR_OUTPUT_CHANNEL.equals(opt) || Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(opt)) {
+            IAttributeValue cached = options.get(opt);
+            if (cached != null) return cached;
+        }
+        return sendCommand(smtConfig.commandFactory.get_option(option));
+    }
 
-	/** @see org.smtlib.ISolver#get_info(IExpr.IKeyword)*/
-	@Override
-	public IResponse get_info(IKeyword option){
-		return sendCommand(smtConfig.commandFactory.get_info(option), false, true);
-	}
+    /** @see org.smtlib.ISolver#get_info(IExpr.IKeyword)*/
+    @Override
+    public IResponse get_info(IKeyword option){
+        return sendCommand(smtConfig.commandFactory.get_info(option), false, true);
+    }
 
-	/** @see org.smtlib.ISolver#smt()*/
-	@Override
-	public Configuration smt() {
-		return smtConfig;
-	}
+    /** @see org.smtlib.ISolver#smt()*/
+    @Override
+    public Configuration smt() {
+        return smtConfig;
+    }
 
-	/** @see org.smtlib.ISolver#checkSatStatus()*/
-	@Override
-	public IResponse checkSatStatus() {
-		return checkSatStatus;
-	}
+    /** @see org.smtlib.ISolver#checkSatStatus()*/
+    @Override
+    public IResponse checkSatStatus() {
+        return checkSatStatus;
+    }
 
 
     @Override

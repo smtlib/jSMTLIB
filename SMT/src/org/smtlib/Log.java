@@ -19,340 +19,340 @@ import java.util.List;
  *
  */
 public class Log {
-	
-	/** Number of errors logged since last clear */
-	public int numErrors = 0;
-	
-	/** Keeps a reference to smtConfig for this instance of the SMT tool*/
-	/*@NonNull*/ private SMT.Configuration smtConfig;
-	
-	/** Constructs a Log based on the given configuration, adding a 
-	 * StandardListener */
-	public Log(SMT.Configuration smtConfig) {
-		this.smtConfig = smtConfig;
-		addListener(new StandardListener());
-	}
-	
-	/** This is an interface to be implemented by any Object that wants to hear log
-	 * messages; the Object must register itself by calling Log.addListener.
-	 */
-	public static interface IListener {
-		/** Called when messages are logged to the normal output (it is expected that a line termination will be added). */
-		public void logOut(String msg);
 
-		/** Called when a message is sent to the normal output with no line termination (e.g. an
-		 *  interactive prompt, which the user's own input is meant to continue on the same line). */
-		public void logOutNoln(String msg);
+    /** Number of errors logged since last clear */
+    public int numErrors = 0;
 
-		/** Called when a response is logged to the normal output (it is expected that a line termination will be added);
-		 * the argument is converted to text using the defaultPrinter in the smt configuration. */
-		public void logOut(/*@ReadOnly*/ IResponse result);
-		
-		/** Called when an error is being recorded on the normal output (it is expected that a line termination will be added) */
-		public void logError(String msg);
-		
-		/** Called when an IError is being recorded on the normal output - the listener has the opportunity to record error location information as well */
-		public void logError(/*@ReadOnly*/ IResponse.IError result);
-		
-		/** Called when a message is sent to the SMT-LIB diagnostic output (it is expected that a line termination will be added) */
-		public void logDiag(String msg);
+    /** Keeps a reference to smtConfig for this instance of the SMT tool*/
+    /*@NonNull*/ private SMT.Configuration smtConfig;
 
-		/** Sets the indent prefix used when displaying error-location carets; typically the current prompt string. */
-		public void indent(String chars);
-	}
-	
-	/** This class logs to the standard PrintStreams out and diag.  The class is not static so that it
-	 * can see out and diag in the containing class; it needs to do this so that changes to out and diag 
-	 * are reflected here as well.
-	 */
-	public class StandardListener implements IListener {
-		/** The current indent prefix (see {@link IListener#indent}), used by {@link #logError(IResponse.IError)}
-		 *  below to align an error-location caret diagram with the prompt the user actually saw it after. */
-		protected String prompt = "";
-		
-		@Override
-		public void indent(String chars) {
-			prompt = chars;
-		}
-		
-		/** Writes the message to the 'out' PrintStream, adding line termination */
-		@Override
-		public void logOut(String msg) {
-			out.println(msg);
-		}
+    /** Constructs a Log based on the given configuration, adding a 
+     * StandardListener */
+    public Log(SMT.Configuration smtConfig) {
+        this.smtConfig = smtConfig;
+        addListener(new StandardListener());
+    }
 
-		/** Writes the message to the 'out' PrintStream with no line termination */
-		@Override
-		public void logOutNoln(String msg) {
-			out.print(msg);
-		}
+    /** This is an interface to be implemented by any Object that wants to hear log
+     * messages; the Object must register itself by calling Log.addListener.
+     */
+    public static interface IListener {
+        /** Called when messages are logged to the normal output (it is expected that a line termination will be added). */
+        public void logOut(String msg);
 
-		/** Writes the given response to the out stream, adding line termination */
-		@Override
-		public void logOut(/*@ReadOnly*/ IResponse response) {
-			out.println(smtConfig.defaultPrinter.toString(response));
-		}
+        /** Called when a message is sent to the normal output with no line termination (e.g. an
+         *  interactive prompt, which the user's own input is meant to continue on the same line). */
+        public void logOutNoln(String msg);
 
-		/** Writes the message to the 'out' PrintStream, adding line termination */
-		@Override
-		public void logError(String msg) {
-			out.println(msg);
-		}
-		
-		/** Writes the offending text line, column location in that line, and the error message
-		 * to the 'out' stream.
-		 */
-		@Override
-		public void logError(/*@ReadOnly*/IResponse.IError result) {
-			IPos pos = result.pos();
-			if (pos != null && pos.source() != null && !smtConfig.noshow) {
-				diag.println(locationIndication(pos,prompt,smtConfig));
-				diag.flush();
-			}
-			// Print the actual response
-			out.println(smtConfig.defaultPrinter.toString(result));
-		}
-		
+        /** Called when a response is logged to the normal output (it is expected that a line termination will be added);
+         * the argument is converted to text using the defaultPrinter in the smt configuration. */
+        public void logOut(/*@ReadOnly*/ IResponse result);
 
-		/** Writes the message to the diag stream */
-		@Override
-		public void logDiag(String msg) {
-			diag.println(msg);
-		}
-		
-	}
-	
-	/** The list of listeners to send log messages to */
-	protected List<IListener> listeners = new LinkedList<IListener>();
+        /** Called when an error is being recorded on the normal output (it is expected that a line termination will be added) */
+        public void logError(String msg);
 
-	/** The stream used for regular output and error information. Private -- see
-	 *  {@link #getOut()}/{@link #setChannels(java.io.PrintStream, java.io.PrintStream)}.
-	 *  Issue #32: this field and {@link #diag} used to be public and were reassigned
-	 *  directly from half a dozen places (this class's own set-option handling, its
-	 *  duplicate in Solver_test, CharSequenceSocket, SMT's startup --out/--diag
-	 *  handling, Solver_bitwuzla's save/restore, and test code that deliberately
-	 *  aliases the two), which made it impossible for any one of those call sites to
-	 *  know whether a stream it was about to overwrite was still needed by another --
-	 *  a file stream opened for :regular-output-channel leaked if the channel was
-	 *  switched to a different file later in the same session, since nothing knew it
-	 *  was safe (or unsafe) to close first. Routing every change through
-	 *  {@link #setChannels} makes this Log the one place that always sees the full
-	 *  old-and-new state of both channels at once, so it can tell -- with certainty,
-	 *  not a guess -- whether an outgoing file stream is still referenced by the
-	 *  other channel before closing it. */
-	private /*@NonNull*/ java.io.PrintStream out = System.out;
+        /** Called when an IError is being recorded on the normal output - the listener has the opportunity to record error location information as well */
+        public void logError(/*@ReadOnly*/ IResponse.IError result);
 
-	/** The stream used for diagnostic log information. Private -- see {@link #diag}'s
-	 *  sibling doc on {@link #out} for why. */
-	private /*@NonNull*/ java.io.PrintStream diag = System.err;
+        /** Called when a message is sent to the SMT-LIB diagnostic output (it is expected that a line termination will be added) */
+        public void logDiag(String msg);
 
-	/** True iff {@link #out} is a file stream this Log opened itself (via {@link
-	 *  #setRegularOutputChannel(String)}) and therefore is this Log's to close when
-	 *  it's replaced -- false for smtConfig.stdout/stderr and for any stream a caller
-	 *  supplied directly via {@link #setChannels}, which this Log never closes. */
-	private boolean outOwned = false;
+        /** Sets the indent prefix used when displaying error-location carets; typically the current prompt string. */
+        public void indent(String chars);
+    }
 
-	/** The {@link #diag} sibling of {@link #outOwned}. */
-	private boolean diagOwned = false;
+    /** This class logs to the standard PrintStreams out and diag.  The class is not static so that it
+     * can see out and diag in the containing class; it needs to do this so that changes to out and diag 
+     * are reflected here as well.
+     */
+    public class StandardListener implements IListener {
+        /** The current indent prefix (see {@link IListener#indent}), used by {@link #logError(IResponse.IError)}
+         *  below to align an error-location caret diagram with the prompt the user actually saw it after. */
+        protected String prompt = "";
 
-	/** Returns the current regular-output stream. */
-	public /*@NonNull*/ java.io.PrintStream getOut() { return out; }
+        @Override
+        public void indent(String chars) {
+            prompt = chars;
+        }
 
-	/** Returns the current diagnostic stream. */
-	public /*@NonNull*/ java.io.PrintStream getDiag() { return diag; }
+        /** Writes the message to the 'out' PrintStream, adding line termination */
+        @Override
+        public void logOut(String msg) {
+            out.println(msg);
+        }
 
-	/** Points both output channels at the given streams -- the one point through which
-	 *  every change to these two channels happens. Never opens a new stream: callers
-	 *  construct whatever they want a channel to point at (including
-	 *  smtConfig.stdout/stderr for the standard streams) and hand it in here, and this
-	 *  Log never closes a stream supplied this way -- ownership of it stays with the
-	 *  caller. (To point a channel at a named file, with this Log itself managing that
-	 *  file's lifecycle, use {@link #setRegularOutputChannel(String)}/{@link
-	 *  #setDiagnosticOutputChannel(String)} instead -- SMT-LIB's
-	 *  :regular-output-channel/:diagnostic-output-channel commands should go through
-	 *  those, not this method, directly.)
-	 *  <p>
-	 *  Does close a stream this Log previously opened for a file, if it's being
-	 *  replaced here and isn't also the other channel's current value (guards the case
-	 *  where both channels were pointed at the same file). */
-	public void setChannels(/*@NonNull*/ java.io.PrintStream out, /*@NonNull*/ java.io.PrintStream diag) {
-		setChannels(out, false, diag, false);
-	}
+        /** Writes the message to the 'out' PrintStream with no line termination */
+        @Override
+        public void logOutNoln(String msg) {
+            out.print(msg);
+        }
 
-	/** The shared implementation behind {@link #setChannels(java.io.PrintStream,
-	 *  java.io.PrintStream)} and the two named-file convenience methods: also records,
-	 *  for each channel, whether the stream now installed is one this Log opened
-	 *  itself (and so is this Log's to close on the next switch). */
-	private void setChannels(/*@NonNull*/ java.io.PrintStream newOut, boolean newOutOwned,
-			/*@NonNull*/ java.io.PrintStream newDiag, boolean newDiagOwned) {
-		java.io.PrintStream oldOut = this.out, oldDiag = this.diag;
-		boolean oldOutStillReferenced = (newOut == oldOut) || (newDiag == oldOut);
-		boolean oldDiagStillReferenced = (newOut == oldDiag) || (newDiag == oldDiag);
-		if (outOwned && !oldOutStillReferenced) oldOut.close();
-		if (diagOwned && !oldDiagStillReferenced && oldDiag != oldOut) oldDiag.close();
-		this.out = newOut; this.outOwned = newOutOwned;
-		this.diag = newDiag; this.diagOwned = newDiagOwned;
-	}
+        /** Writes the given response to the out stream, adding line termination */
+        @Override
+        public void logOut(/*@ReadOnly*/ IResponse response) {
+            out.println(smtConfig.defaultPrinter.toString(response));
+        }
 
-	/** Points the regular-output channel at "stdout", "stderr", or -- for any other
-	 *  value -- opens (in append mode) the file so named, per :regular-output-channel's
-	 *  SMT-LIB semantics. If the channel was previously pointed at a file this Log
-	 *  opened itself (and that file isn't also the current diagnostic channel), closes
-	 *  it first. Throws IOException if a named file can't be opened; the channel is
-	 *  left unchanged in that case -- the caller (AbstractSolver/Solver_test's
-	 *  set_option) is responsible for turning that into the appropriate SMT-LIB error
-	 *  response. */
-	public void setRegularOutputChannel(String spec) throws java.io.IOException {
-		java.io.PrintStream newOut; boolean owned;
-		if (Utils.STDOUT.equals(spec)) { newOut = smtConfig.stdout; owned = false; }
-		else if (Utils.STDERR.equals(spec)) { newOut = smtConfig.stderr; owned = false; }
-		else { newOut = new java.io.PrintStream(new java.io.FileOutputStream(spec, true)); owned = true; }
-		setChannels(newOut, owned, this.diag, this.diagOwned);
-	}
+        /** Writes the message to the 'out' PrintStream, adding line termination */
+        @Override
+        public void logError(String msg) {
+            out.println(msg);
+        }
 
-	/** The {@link #diag} sibling of {@link #setRegularOutputChannel(String)}. */
-	public void setDiagnosticOutputChannel(String spec) throws java.io.IOException {
-		java.io.PrintStream newDiag; boolean owned;
-		if (Utils.STDOUT.equals(spec)) { newDiag = smtConfig.stdout; owned = false; }
-		else if (Utils.STDERR.equals(spec)) { newDiag = smtConfig.stderr; owned = false; }
-		else { newDiag = new java.io.PrintStream(new java.io.FileOutputStream(spec, true)); owned = true; }
-		setChannels(this.out, this.outOwned, newDiag, owned);
-	}
+        /** Writes the offending text line, column location in that line, and the error message
+         * to the 'out' stream.
+         */
+        @Override
+        public void logError(/*@ReadOnly*/IResponse.IError result) {
+            IPos pos = result.pos();
+            if (pos != null && pos.source() != null && !smtConfig.noshow) {
+                diag.println(locationIndication(pos,prompt,smtConfig));
+                diag.flush();
+            }
+            // Print the actual response
+            out.println(smtConfig.defaultPrinter.toString(result));
+        }
 
-	/** Prints the argument on the regular output stream and to any listeners */
-	public void logOut(/*@NonNull*/ IResponse r) {
-		for (IListener listener: listeners) {
-			listener.logOut(r);
-		}
-	}
-	
-	/** Prints the argument on the regular output stream, with a line termination added, and
-	 *  notifies any listeners. */
-	public void logOut(/*@NonNull*/ String message) {
-		for (IListener listener: listeners) {
-			listener.logOut(message);
-		}
-	}
 
-	/** Prints the argument on the regular output stream with no newline appended, and notifies any listeners. */
-	public void logOutNoln(/*@NonNull*/ String message) {
-		for (IListener listener: listeners) {
-			listener.logOutNoln(message);
-		}
-	}
+        /** Writes the message to the diag stream */
+        @Override
+        public void logDiag(String msg) {
+            diag.println(msg);
+        }
 
-	/** Reports the error to any listeners, returning the input. */
-	public IResponse.IError logError(/*@NonNull*//*@ReadOnly*/ IResponse.IError r) {
-		numErrors++;
-		for (IListener listener: listeners) {
-			listener.logError(r);
-		}
-		return r;
-	}
-	
-	/** Reports the error to any listeners. */
-	public void logError(/*@NonNull*/String r) {
-		numErrors++;
-		for (IListener listener: listeners) {
-			listener.logError(r);
-		}
-	}
-	
-	/** Prints the argument to any listeners (adds a line terminator). */
-	public void logDiag(/*@NonNull*/ String message) {
-		for (IListener listener: listeners) {
-			listener.logDiag(message);
-		}
-	}
-	
-	/** Sends the call to any listeners. */
-	public void indent(/*@NonNull*/ String prompt) {
-		for (IListener listener: listeners) {
-			listener.indent(prompt);
-		}
-	}
-	
-	/** Adds a listener */
-	public void addListener(IListener listener) {
-		listeners.add(listener);
-	}
-	
-	/** Clears all listeners */
-	public void clearListeners() {
-		listeners.clear();
-	}
-	
-	/** Removes a listener (found by using object equality ==)
-	 * @param listener the listener to add
-	 * @return true if the argument was in the list
-	 */
-	public boolean removeListener(IListener listener) {
-		return listeners.remove(listener);
-	}
+    }
 
-	/** Creates a two-line, compiler-style caret diagnostic pointing at the given position; the
-	 *  returned value does not have a final line termination.
-	 *  <p>
-	 *  In non-interactive mode, the first line is the source text line containing {@code pos}
-	 *  (if the error is more than 150 characters into a long line, that line is instead shown
-	 *  starting 20 characters before the error, prefixed with {@code "... "}; if the visible
-	 *  portion would still run past 150 characters, it is cut off there and suffixed with
-	 *  {@code "...\n"}). The second line reproduces the leading whitespace/tabs up to the
-	 *  error's start column -- matched against the prompt's width instead, in interactive mode
-	 *  -- followed by one {@code ^} per character spanning {@code pos}'s start-to-end range.
-	 * @param pos the position to indicate
-	 * @param prompt the prompt with which to begin each line
-	 * @param smtConfig the current configuration
-	 * @return a canonical string representation of the location
-	 */
-	static public String locationIndication(IPos pos, String prompt, SMT.Configuration smtConfig) {
-		int s = pos.charStart();
-		int e = pos.charEnd();
-		ISource source = pos.source();
-		int b;
-		StringBuilder sb = new StringBuilder();
-		b = source.lineBeginning(s);
-		String prefix = "";
-		String suffix = "";
-		int start = 0;
-		// Print the text line
-		if (!smtConfig.interactive) {
-			String input = source.textLine(s);
-			int len = input.length();
-			if (s-b > 150) {
-				prefix = "... ";
-				start = 20 * ((s-b)/20 - 1);
-			}
-			if (len-start > 150) {
-				len = start + 150;
-				suffix = "...\n";
-				if (e > b+len) e = b+len;
-			}
-			if (!prefix.isEmpty() || !suffix.isEmpty()) input = prefix + input.substring(start,len) + suffix;
-				
-			// input will have a line terminator
-			sb.append(input);
-		}
-		// Show the location in the text line
-		if (smtConfig.interactive && prompt != null) {
-			int bb = 0;
-			while (bb < prompt.length()) {
-				char c = prompt.charAt(bb);
-				sb.append(c == '\t' ? '\t' : ' ');
-				bb++;
-			}
-		}
-		sb.append(prefix);
-		b += start;
-		while (b < s) {
-			char c = source.charAt(b);
-			sb.append(c == '\t' ? '\t' : ' ');
-			b++;
-		}
-		while (b++ < e) {
-			sb.append('^');
-		}
-		return sb.toString();
-	}
+    /** The list of listeners to send log messages to */
+    protected List<IListener> listeners = new LinkedList<IListener>();
+
+    /** The stream used for regular output and error information. Private -- see
+     *  {@link #getOut()}/{@link #setChannels(java.io.PrintStream, java.io.PrintStream)}.
+     *  Issue #32: this field and {@link #diag} used to be public and were reassigned
+     *  directly from half a dozen places (this class's own set-option handling, its
+     *  duplicate in Solver_test, CharSequenceSocket, SMT's startup --out/--diag
+     *  handling, Solver_bitwuzla's save/restore, and test code that deliberately
+     *  aliases the two), which made it impossible for any one of those call sites to
+     *  know whether a stream it was about to overwrite was still needed by another --
+     *  a file stream opened for :regular-output-channel leaked if the channel was
+     *  switched to a different file later in the same session, since nothing knew it
+     *  was safe (or unsafe) to close first. Routing every change through
+     *  {@link #setChannels} makes this Log the one place that always sees the full
+     *  old-and-new state of both channels at once, so it can tell -- with certainty,
+     *  not a guess -- whether an outgoing file stream is still referenced by the
+     *  other channel before closing it. */
+    private /*@NonNull*/ java.io.PrintStream out = System.out;
+
+    /** The stream used for diagnostic log information. Private -- see {@link #diag}'s
+     *  sibling doc on {@link #out} for why. */
+    private /*@NonNull*/ java.io.PrintStream diag = System.err;
+
+    /** True iff {@link #out} is a file stream this Log opened itself (via {@link
+     *  #setRegularOutputChannel(String)}) and therefore is this Log's to close when
+     *  it's replaced -- false for smtConfig.stdout/stderr and for any stream a caller
+     *  supplied directly via {@link #setChannels}, which this Log never closes. */
+    private boolean outOwned = false;
+
+    /** The {@link #diag} sibling of {@link #outOwned}. */
+    private boolean diagOwned = false;
+
+    /** Returns the current regular-output stream. */
+    public /*@NonNull*/ java.io.PrintStream getOut() { return out; }
+
+    /** Returns the current diagnostic stream. */
+    public /*@NonNull*/ java.io.PrintStream getDiag() { return diag; }
+
+    /** Points both output channels at the given streams -- the one point through which
+     *  every change to these two channels happens. Never opens a new stream: callers
+     *  construct whatever they want a channel to point at (including
+     *  smtConfig.stdout/stderr for the standard streams) and hand it in here, and this
+     *  Log never closes a stream supplied this way -- ownership of it stays with the
+     *  caller. (To point a channel at a named file, with this Log itself managing that
+     *  file's lifecycle, use {@link #setRegularOutputChannel(String)}/{@link
+     *  #setDiagnosticOutputChannel(String)} instead -- SMT-LIB's
+     *  :regular-output-channel/:diagnostic-output-channel commands should go through
+     *  those, not this method, directly.)
+     *  <p>
+     *  Does close a stream this Log previously opened for a file, if it's being
+     *  replaced here and isn't also the other channel's current value (guards the case
+     *  where both channels were pointed at the same file). */
+    public void setChannels(/*@NonNull*/ java.io.PrintStream out, /*@NonNull*/ java.io.PrintStream diag) {
+        setChannels(out, false, diag, false);
+    }
+
+    /** The shared implementation behind {@link #setChannels(java.io.PrintStream,
+     *  java.io.PrintStream)} and the two named-file convenience methods: also records,
+     *  for each channel, whether the stream now installed is one this Log opened
+     *  itself (and so is this Log's to close on the next switch). */
+    private void setChannels(/*@NonNull*/ java.io.PrintStream newOut, boolean newOutOwned,
+            /*@NonNull*/ java.io.PrintStream newDiag, boolean newDiagOwned) {
+        java.io.PrintStream oldOut = this.out, oldDiag = this.diag;
+        boolean oldOutStillReferenced = (newOut == oldOut) || (newDiag == oldOut);
+        boolean oldDiagStillReferenced = (newOut == oldDiag) || (newDiag == oldDiag);
+        if (outOwned && !oldOutStillReferenced) oldOut.close();
+        if (diagOwned && !oldDiagStillReferenced && oldDiag != oldOut) oldDiag.close();
+        this.out = newOut; this.outOwned = newOutOwned;
+        this.diag = newDiag; this.diagOwned = newDiagOwned;
+    }
+
+    /** Points the regular-output channel at "stdout", "stderr", or -- for any other
+     *  value -- opens (in append mode) the file so named, per :regular-output-channel's
+     *  SMT-LIB semantics. If the channel was previously pointed at a file this Log
+     *  opened itself (and that file isn't also the current diagnostic channel), closes
+     *  it first. Throws IOException if a named file can't be opened; the channel is
+     *  left unchanged in that case -- the caller (AbstractSolver/Solver_test's
+     *  set_option) is responsible for turning that into the appropriate SMT-LIB error
+     *  response. */
+    public void setRegularOutputChannel(String spec) throws java.io.IOException {
+        java.io.PrintStream newOut; boolean owned;
+        if (Utils.STDOUT.equals(spec)) { newOut = smtConfig.stdout; owned = false; }
+        else if (Utils.STDERR.equals(spec)) { newOut = smtConfig.stderr; owned = false; }
+        else { newOut = new java.io.PrintStream(new java.io.FileOutputStream(spec, true)); owned = true; }
+        setChannels(newOut, owned, this.diag, this.diagOwned);
+    }
+
+    /** The {@link #diag} sibling of {@link #setRegularOutputChannel(String)}. */
+    public void setDiagnosticOutputChannel(String spec) throws java.io.IOException {
+        java.io.PrintStream newDiag; boolean owned;
+        if (Utils.STDOUT.equals(spec)) { newDiag = smtConfig.stdout; owned = false; }
+        else if (Utils.STDERR.equals(spec)) { newDiag = smtConfig.stderr; owned = false; }
+        else { newDiag = new java.io.PrintStream(new java.io.FileOutputStream(spec, true)); owned = true; }
+        setChannels(this.out, this.outOwned, newDiag, owned);
+    }
+
+    /** Prints the argument on the regular output stream and to any listeners */
+    public void logOut(/*@NonNull*/ IResponse r) {
+        for (IListener listener: listeners) {
+            listener.logOut(r);
+        }
+    }
+
+    /** Prints the argument on the regular output stream, with a line termination added, and
+     *  notifies any listeners. */
+    public void logOut(/*@NonNull*/ String message) {
+        for (IListener listener: listeners) {
+            listener.logOut(message);
+        }
+    }
+
+    /** Prints the argument on the regular output stream with no newline appended, and notifies any listeners. */
+    public void logOutNoln(/*@NonNull*/ String message) {
+        for (IListener listener: listeners) {
+            listener.logOutNoln(message);
+        }
+    }
+
+    /** Reports the error to any listeners, returning the input. */
+    public IResponse.IError logError(/*@NonNull*//*@ReadOnly*/ IResponse.IError r) {
+        numErrors++;
+        for (IListener listener: listeners) {
+            listener.logError(r);
+        }
+        return r;
+    }
+
+    /** Reports the error to any listeners. */
+    public void logError(/*@NonNull*/String r) {
+        numErrors++;
+        for (IListener listener: listeners) {
+            listener.logError(r);
+        }
+    }
+
+    /** Prints the argument to any listeners (adds a line terminator). */
+    public void logDiag(/*@NonNull*/ String message) {
+        for (IListener listener: listeners) {
+            listener.logDiag(message);
+        }
+    }
+
+    /** Sends the call to any listeners. */
+    public void indent(/*@NonNull*/ String prompt) {
+        for (IListener listener: listeners) {
+            listener.indent(prompt);
+        }
+    }
+
+    /** Adds a listener */
+    public void addListener(IListener listener) {
+        listeners.add(listener);
+    }
+
+    /** Clears all listeners */
+    public void clearListeners() {
+        listeners.clear();
+    }
+
+    /** Removes a listener (found by using object equality ==)
+     * @param listener the listener to add
+     * @return true if the argument was in the list
+     */
+    public boolean removeListener(IListener listener) {
+        return listeners.remove(listener);
+    }
+
+    /** Creates a two-line, compiler-style caret diagnostic pointing at the given position; the
+     *  returned value does not have a final line termination.
+     *  <p>
+     *  In non-interactive mode, the first line is the source text line containing {@code pos}
+     *  (if the error is more than 150 characters into a long line, that line is instead shown
+     *  starting 20 characters before the error, prefixed with {@code "... "}; if the visible
+     *  portion would still run past 150 characters, it is cut off there and suffixed with
+     *  {@code "...\n"}). The second line reproduces the leading whitespace/tabs up to the
+     *  error's start column -- matched against the prompt's width instead, in interactive mode
+     *  -- followed by one {@code ^} per character spanning {@code pos}'s start-to-end range.
+     * @param pos the position to indicate
+     * @param prompt the prompt with which to begin each line
+     * @param smtConfig the current configuration
+     * @return a canonical string representation of the location
+     */
+    static public String locationIndication(IPos pos, String prompt, SMT.Configuration smtConfig) {
+        int s = pos.charStart();
+        int e = pos.charEnd();
+        ISource source = pos.source();
+        int b;
+        StringBuilder sb = new StringBuilder();
+        b = source.lineBeginning(s);
+        String prefix = "";
+        String suffix = "";
+        int start = 0;
+        // Print the text line
+        if (!smtConfig.interactive) {
+            String input = source.textLine(s);
+            int len = input.length();
+            if (s-b > 150) {
+                prefix = "... ";
+                start = 20 * ((s-b)/20 - 1);
+            }
+            if (len-start > 150) {
+                len = start + 150;
+                suffix = "...\n";
+                if (e > b+len) e = b+len;
+            }
+            if (!prefix.isEmpty() || !suffix.isEmpty()) input = prefix + input.substring(start,len) + suffix;
+
+            // input will have a line terminator
+            sb.append(input);
+        }
+        // Show the location in the text line
+        if (smtConfig.interactive && prompt != null) {
+            int bb = 0;
+            while (bb < prompt.length()) {
+                char c = prompt.charAt(bb);
+                sb.append(c == '\t' ? '\t' : ' ');
+                bb++;
+            }
+        }
+        sb.append(prefix);
+        b += start;
+        while (b < s) {
+            char c = source.charAt(b);
+            sb.append(c == '\t' ? '\t' : ' ');
+            b++;
+        }
+        while (b++ < e) {
+            sb.append('^');
+        }
+        return sb.toString();
+    }
 
 }

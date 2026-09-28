@@ -11,15 +11,15 @@ package org.smtlib;
  */
 public interface IPrinter {
 
-	/** Prints the argument to the receiver */
-	public <T extends INode> void print(T expr) throws IVisitor.VisitorException;
-	
-	/** Returns the argument as a String using a Printer of the same type as the receiver,
-	 * but does not modify the receiver.
-	 */
-	public <T extends INode> String toString(T expr);
-	
-	/** Creates a new printer of the same type as the receiver, writing to the given Writer. */
-	public IPrinter newPrinter(java.io.Writer pw);
+    /** Prints the argument to the receiver */
+    public <T extends INode> void print(T expr) throws IVisitor.VisitorException;
+
+    /** Returns the argument as a String using a Printer of the same type as the receiver,
+     * but does not modify the receiver.
+     */
+    public <T extends INode> String toString(T expr);
+
+    /** Creates a new printer of the same type as the receiver, writing to the given Writer. */
+    public IPrinter newPrinter(java.io.Writer pw);
 
 }

@@ -14,22 +14,22 @@ import org.smtlib.IExpr.IKeyword;
 
 /** This interface represents a definition of an SMT-LIB theory */
 public interface ITheory extends INode {
-	/** The name of the theory */
-	ISymbol theoryName();
-	
-	/** The attributes (keyword-value pairs) of the theory. */
-	//@ ensures \result.size() > 0;
-	Map<IKeyword,IExpr.IAttribute<?>> attributes();
-	
-	/** The value of an attribute; returns null if the attribute does not exist for this theory */
-	/*@Nullable*/IAttributeValue value(IKeyword keyword);
+    /** The name of the theory */
+    ISymbol theoryName();
 
-	/** All values for a given attribute keyword (handles multiple occurrences of the same keyword).
-	 *  Returns an empty list if the keyword is not present. */
-	default List<IAttributeValue> values(IKeyword keyword) {
-		IAttributeValue v = value(keyword);
-		return v == null ? Collections.emptyList() : Collections.singletonList(v);
-	}
+    /** The attributes (keyword-value pairs) of the theory. */
+    //@ ensures \result.size() > 0;
+    Map<IKeyword,IExpr.IAttribute<?>> attributes();
 
-	// TODO - do we export the pre-defined symbols?
+    /** The value of an attribute; returns null if the attribute does not exist for this theory */
+    /*@Nullable*/IAttributeValue value(IKeyword keyword);
+
+    /** All values for a given attribute keyword (handles multiple occurrences of the same keyword).
+     *  Returns an empty list if the keyword is not present. */
+    default List<IAttributeValue> values(IKeyword keyword) {
+        IAttributeValue v = value(keyword);
+        return v == null ? Collections.emptyList() : Collections.singletonList(v);
+    }
+
+    // TODO - do we export the pre-defined symbols?
 }

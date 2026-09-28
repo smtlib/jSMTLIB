@@ -18,33 +18,33 @@ import org.smtlib.sexpr.Parser;
 
 /** Implements the declare-const command (syntactic sugar for declare-fun with no argument sorts) */
 public class C_declare_const extends C_declare_fun implements Ideclare_const {
-	
-	/** The command name */
-	public static final String commandName = "declare-const";
 
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
-	
-	/** Constructs a command instance from its components */
-	public C_declare_const(ISymbol symbol, ISort resultSort) {
-		super(symbol, Collections.emptyList(), resultSort);
-	}
+    /** The command name */
+    public static final String commandName = "declare-const";
 
-	/** Parses the arguments of the command, producing a new command instance */
-	static public C_declare_const parse(Parser p) throws ParserException {
-		ISymbol symbol = p.parseSymbol();
-		ISort result = p.parseSort(null);
-		return new C_declare_const(symbol,result);
-	}
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
 
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.declare_const(this);
-	}
+    /** Constructs a command instance from its components */
+    public C_declare_const(ISymbol symbol, ISort resultSort) {
+        super(symbol, Collections.emptyList(), resultSort);
+    }
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit((Ideclare_const)this);
-	}
+    /** Parses the arguments of the command, producing a new command instance */
+    static public C_declare_const parse(Parser p) throws ParserException {
+        ISymbol symbol = p.parseSymbol();
+        ISort result = p.parseSort(null);
+        return new C_declare_const(symbol,result);
+    }
+
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.declare_const(this);
+    }
+
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit((Ideclare_const)this);
+    }
 }

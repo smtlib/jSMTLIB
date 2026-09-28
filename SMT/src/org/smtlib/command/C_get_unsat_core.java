@@ -16,28 +16,28 @@ import org.smtlib.sexpr.Parser;
 
 /** Implements the get-unsat-core command */
 public class C_get_unsat_core extends Command implements Iget_unsat_core {
-	/** Constructs a command instance */
-	public C_get_unsat_core() {
-	}
-	
-	/** Parses the command, producing a new command instance */
-	static public /*@Nullable*/ C_get_unsat_core parse(Parser p) throws ParserException {
-		return p.checkNoArg() ? new C_get_unsat_core() : null;
-	}
+    /** Constructs a command instance */
+    public C_get_unsat_core() {
+    }
 
-	/** The command name */
-	public static final String commandName = "get-unsat-core";
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
-	
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.get_unsat_core();
-	}
+    /** Parses the command, producing a new command instance */
+    static public /*@Nullable*/ C_get_unsat_core parse(Parser p) throws ParserException {
+        return p.checkNoArg() ? new C_get_unsat_core() : null;
+    }
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    /** The command name */
+    public static final String commandName = "get-unsat-core";
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
+
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.get_unsat_core();
+    }
+
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 }

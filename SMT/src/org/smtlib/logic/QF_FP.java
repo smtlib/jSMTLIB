@@ -19,20 +19,20 @@ import org.smtlib.IExpr.ISymbol;
  *  any other quantifier-free, no-UF, no-new-sorts logic in this package. */
 public class QF_FP extends Logic {
 
-	public QF_FP(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(smtConfig,name,attributes);
-	}
+    public QF_FP(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+        super(smtConfig,name,attributes);
+    }
 
-	public void validExpression(IExpr expression) throws IVisitor.VisitorException {
-		noQuantifiers(expression);
-	}
+    public void validExpression(IExpr expression) throws IVisitor.VisitorException {
+        noQuantifiers(expression);
+    }
 
-	public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
-		noFunctions(id,argSorts,resultSort,definition);
-	}
+    public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
+        noFunctions(id,argSorts,resultSort,definition);
+    }
 
-	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
-		noSorts(id,params,expr);
-	}
+    public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
+        noSorts(id,params,expr);
+    }
 
 }

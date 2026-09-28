@@ -25,34 +25,34 @@ import org.smtlib.impl.Command;
  *  #42. */
 public class C_comment extends Command implements ICommand.Icomment {
 
-	public static final String commandName = "<comment>";
+    public static final String commandName = "<comment>";
 
-	protected final String text;
+    protected final String text;
 
-	public C_comment(String text) {
-		this.text = text;
-	}
+    public C_comment(String text) {
+        this.text = text;
+    }
 
-	@Override
-	public String commandName() { return commandName; }
+    @Override
+    public String commandName() { return commandName; }
 
-	@Override
-	public String text() { return text; }
+    @Override
+    public String text() { return text; }
 
-	// Printing (write()) used to be overridden here, invoked only via the generic
-	// visit(ICommand) fallback's reflection-based write() lookup -- moved into
-	// sexpr/Printer.visit(ICommand.Icomment) instead, now that Comment is a real, typed
-	// command (see issue #115), so printing logic for every command, including this one,
-	// lives in exactly one place: Printer's own typed visit() methods.
+    // Printing (write()) used to be overridden here, invoked only via the generic
+    // visit(ICommand) fallback's reflection-based write() lookup -- moved into
+    // sexpr/Printer.visit(ICommand.Icomment) instead, now that Comment is a real, typed
+    // command (see issue #115), so printing logic for every command, including this one,
+    // lives in exactly one place: Printer's own typed visit() methods.
 
-	@Override
-	public IResponse execute(ISolver solver) {
-		solver.comment(text);
-		return solver.smt().responseFactory.empty();
-	}
+    @Override
+    public IResponse execute(ISolver solver) {
+        solver.comment(text);
+        return solver.smt().responseFactory.empty();
+    }
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 }

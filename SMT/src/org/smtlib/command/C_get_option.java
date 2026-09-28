@@ -16,40 +16,40 @@ import org.smtlib.sexpr.Parser;
 
 /** Implements the get-option command */
 public class C_get_option extends Command implements Iget_option {
-	/** The command name */
-	public static final String commandName = "get-option";
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
+    /** The command name */
+    public static final String commandName = "get-option";
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
 
-	/** The keyword for the option to fetch */
-	protected IKeyword option;
-	
-	/** The keyword for the option to fetch */
-	@Override
-	public IKeyword option() {
-		return option;
-	}
-	
-	/** Constructs a command instance for the given keyword */
-	public C_get_option(IKeyword keyword) { 
-		super();
-		this.option = keyword;
-	}
-	
-	/** Creates a command instance by parsing the concrete S-expression syntax */
-	static public C_get_option parse(Parser p) throws ParserException {
-		IKeyword key = p.parseKeyword();
-		return new C_get_option(key);
-	}
-	
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.get_option(option);
-	}
+    /** The keyword for the option to fetch */
+    protected IKeyword option;
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    /** The keyword for the option to fetch */
+    @Override
+    public IKeyword option() {
+        return option;
+    }
+
+    /** Constructs a command instance for the given keyword */
+    public C_get_option(IKeyword keyword) { 
+        super();
+        this.option = keyword;
+    }
+
+    /** Creates a command instance by parsing the concrete S-expression syntax */
+    static public C_get_option parse(Parser p) throws ParserException {
+        IKeyword key = p.parseKeyword();
+        return new C_get_option(key);
+    }
+
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.get_option(option);
+    }
+
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 }

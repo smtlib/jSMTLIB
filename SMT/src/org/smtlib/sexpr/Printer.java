@@ -29,1016 +29,1016 @@ import org.smtlib.ISort.IParameter;
  * between tokens it should simply reverse what the Parser class does.  */
 public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void> {
 
-	/** The Configuration whose rules (e.g. string-literal quoting -- see {@link
-	 *  #visit(IStringLiteral)} -- which is version-dependent) this Printer instance
-	 *  follows. Issue #22: used to be a single static field shared by every Printer
-	 *  instance process-wide, so constructing a second Configuration anywhere in the
-	 *  process silently repointed every other Printer's quoting rules at the new
-	 *  instance's settings. Now set once per instance, at construction, like the
-	 *  writer itself. */
-	protected final SMT.Configuration smtConfig;
-
-	/** The writer to write text to */
-	/*@Nullable*/ protected Writer w;
-
-	/** The writer to write text to */
-	public Writer writer() { return w; }
-
-	/** The system-dependent line termination */
-	static public final String eol = System.getProperty("line.separator");
-
-	/** Creates a printer object that follows the given Configuration's rules. */
-	public Printer(SMT.Configuration smtConfig, Writer w) {
-		this.smtConfig = smtConfig;
-		this.w = w;
-	}
-
-	/** Appends a string to the writer, converting any IOException to VisitorException. */
-	protected void append(String s) throws IVisitor.VisitorException {
-		try { w.append(s); } catch (IOException ex) { throw new IVisitor.VisitorException(ex); }
-	}
-
-	/** Flushes the writer, converting any IOException to VisitorException. */
-	protected void flush() throws IVisitor.VisitorException {
-		try { w.flush(); } catch (IOException ex) { throw new IVisitor.VisitorException(ex); }
-	}
-
-	@Override
-	public Printer newPrinter(Writer w) {
-		return new Printer(smtConfig, w);
-	}
-
-	/** Prints the argument to the receiver */
-	@Override
-	public <T extends INode> void print(T expr) throws IVisitor.VisitorException {
-		expr.accept(this);
-	}
-
-	/** Returns the argument as a String using a Printer of the same type as the receiver,
-	 * but does not modify the receiver.
-	 */
-	@Override
-	public <T extends INode> String toString(T expr) {
-		try {
-			StringWriter sw = new StringWriter();
-			expr.accept(new Printer(smtConfig, sw)); // FIXME = should be same type as receiver
-			return sw.toString();
-		} catch (IVisitor.VisitorException e) {
-			return "<<ERROR: " + e.getMessage() + ">>";
-		}
-	}
-
-	/** Writes the given expression and outputs as a String, following the given
-	 *  Configuration's rules (e.g. string-literal quoting). */
-	static public <T extends INode> String write(SMT.Configuration smtConfig, T e) {
-		try {
-			StringWriter w = new StringWriter();
-			e.accept(new Printer(smtConfig, w));
-			return w.toString();
-		} catch (IVisitor.VisitorException ex) {
-			return "<<ERROR: " + ex.getMessage() + ">>";
-		}
-	}
-
-	/** Writes the given expression to the given writer, following the given
-	 *  Configuration's rules. */
-	static public <T extends INode> void write(SMT.Configuration smtConfig, Writer w, T e) throws IVisitor.VisitorException {
-		Printer p = new Printer(smtConfig, w);
-		e.accept(p);
-		p.flush();
-	}
-
-	/** Writes the given expression to the given stream, following the given
-	 *  Configuration's rules. */
-	static public <T extends INode> void write(SMT.Configuration smtConfig, PrintStream w, T e) throws IVisitor.VisitorException {
-		Writer wr = new OutputStreamWriter(w);
-		Printer p = new Printer(smtConfig, wr);
-		e.accept(p);
-		p.flush();
-	}
-
-	/*@Nullable*/
-	@Override
-	public Void visit(INumeral e) throws IVisitor.VisitorException {
-		append(e.value().toString());
-		return null;
-	}
-
-	/*@Nullable*/
-	@Override
-	public Void visit(ISymbol e) throws IVisitor.VisitorException {
-		// toString()/originalString is trusted whenever it's already valid, re-parseable
-		// syntax: either it's already bar-quoted (from parsing bar-quoted source text --
-		// preserved as-is even if the bars weren't strictly necessary, e.g. a deliberately
-		// quoted |a|), or it needs no quoting at all. Only synthesized fresh from value()
-		// when neither holds: a symbol built programmatically from a raw string with a
-		// space or other symbol-breaking character has no bars in originalString at all
-		// (originalString == value() unquoted), which would otherwise print unparseable
-		// output.
-		String orig = e.toString();
-		if ((orig.length() > 0 && orig.charAt(0) == '|') || !needsBarQuoting(e.value())) {
-			append(orig);
-		} else {
-			append("|");
-			append(e.value());
-			append("|");
-		}
-		return null;
-	}
-
-	/** True if a bare (unquoted) symbol cannot represent this value: it's empty, starts
-	 *  with a digit, or contains a character outside the simple-symbol charset (letters,
-	 *  digits, and {@code ~!@$%^&*_-+=<>.?/}) -- per the SMT-LIB grammar for
-	 *  {@code <simple_symbol>}, such a value needs {@code |...|} bar-quoting to print as
-	 *  valid, re-parseable syntax. */
-	private static boolean needsBarQuoting(String v) {
-		if (v.isEmpty()) return true;
-		if (Character.isDigit(v.charAt(0))) return true;
-		for (int i = 0; i < v.length(); i++) {
-			char c = v.charAt(i);
-			if (Character.isLetterOrDigit(c)) continue;
-			if ("~!@$%^&*_-+=<>.?/".indexOf(c) >= 0) continue;
-			return true;
-		}
-		return false;
-	}
-
-	/*@Nullable*/
-	@Override
-	public Void visit(IDecimal e) throws IVisitor.VisitorException {
-		append(e.value().toPlainString());
-		return null;
-	}
-
-	@Override
-	public Void visit(IBinaryLiteral e) throws IVisitor.VisitorException {
-		append("#b");
-		append(e.value());
-		return null;
-	}
-
-	@Override
-	public Void visit(IHexLiteral e) throws IVisitor.VisitorException {
-		append("#x");
-		append(e.value());
-		return null;
-	}
-
-	/*@Nullable*/
-	@Override
-	public Void visit(IStringLiteral e) throws IVisitor.VisitorException {
-		append(smtConfig.utils.quote(e.value()));
-		return null;
-	}
-
-	/*@Nullable*/
-	@Override
-	public Void visit(IKeyword e) throws IVisitor.VisitorException {
-		append(e.value());
-		return null;
-	}
-
-	/*@Nullable*/
-	@Override
-	public Void visit(org.smtlib.IExpr.IError e) throws IVisitor.VisitorException {
-		append("(error ");
-		append(smtConfig.utils.quote(e.value()));
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
-		append("(" + Utils.PARAM + " ");
-		e.headSymbol().accept(this);
-		for (IExpr.IIndex idx: e.indices()) {
-			append(" ");
-			idx.accept(this);
-		}
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IAsIdentifier e) throws IVisitor.VisitorException {
-		append("(" + Utils.AS + " ");
-		e.head().accept(this);
-		append(" ");
-		e.qualifier().accept(this);
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IFcnExpr e) throws IVisitor.VisitorException {
-		append("(");
-		e.head().accept(this);
-		for (IExpr a: e.args()) {
-			append(" ");
-			if (a != null) a.accept(this);
-			else append("???");
-		}
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IForall e) throws IVisitor.VisitorException {
-		append("(" + Utils.FORALL + " (");
-		for (IDeclaration a: e.parameters()) {
-			a.accept(this);
-			append(" ");
-		}
-		append(") ");
-		e.expr().accept(this);
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IExists e) throws IVisitor.VisitorException {
-		append("(" + Utils.EXISTS + " (");
-		for (IDeclaration a: e.parameters()) {
-			a.accept(this);
-			append(" ");
-		}
-		append(") ");
-		e.expr().accept(this);
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(ILet e) throws IVisitor.VisitorException {
-		append("(" + Utils.LET + " (");
-		for (IBinding a: e.bindings()) {
-			a.accept(this);
-			append(" ");
-		}
-		append(") ");
-		e.expr().accept(this);
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IExpr.IMatch e) throws IVisitor.VisitorException {
-		append("(match ");
-		e.expr().accept(this);
-		append(" (");
-		for (IExpr.IMatchCase mc : e.cases()) {
-			append(" ");
-			mc.accept(this);
-		}
-		append("))");
-		return null;
-	}
-
-	@Override
-	public Void visit(IExpr.IMatchCase e) throws IVisitor.VisitorException {
-		append("(");
-		e.pattern().accept(this);
-		append(" ");
-		e.body().accept(this);
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IExpr.IPattern e) throws IVisitor.VisitorException {
-		if (e.params().isEmpty()) {
-			e.constructor().accept(this);
-		} else {
-			append("(");
-			e.constructor().accept(this);
-			for (IExpr.ISymbol v : e.params()) {
-				append(" ");
-				v.accept(this);
-			}
-			append(")");
-		}
-		return null;
-	}
-
-	@Override
-	public Void visit(IExpr.IPatternTerms e) throws IVisitor.VisitorException {
-		append("(");
-		boolean first = true;
-		for (IExpr t: e.terms()) {
-			if (!first) append(" ");
-			first = false;
-			t.accept(this);
-		}
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IAttribute<? extends IAttributeValue> e) throws IVisitor.VisitorException {
-		/*@Nullable*/IAttributeValue o;
-		e.keyword().accept(this);
-		if ((o=e.attrValue()) != null) {
-			append(" ");
-			o.accept(this);
-		}
-		return null;
-	}
-
-	@Override
-	public Void visit(IAttributedExpr e) throws IVisitor.VisitorException {
-		append("(" + Utils.ATTRIBUTE + " ");
-		e.expr().accept(this);
-		for (IAttribute<?> a: e.attributes()) {
-			append(" ");
-			a.accept(this);
-		}
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IDeclaration e) throws IVisitor.VisitorException {
-		append("(");
-		e.parameter().accept(this);
-		append(" ");
-		e.sort().accept(this);
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IExpr.IFunctionDeclaration e) throws IVisitor.VisitorException {
-		append("(");
-		e.symbol().accept(this);
-		append(" (");
-		for (IExpr.IDeclaration d : e.parameters()) { d.accept(this); append(" "); }
-		append(") ");
-		e.sort().accept(this);
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IExpr.ISortDeclaration e) throws IVisitor.VisitorException {
-		append("(");
-		e.symbol().accept(this);
-		append(" ");
-		e.arity().accept(this);
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IExpr.ISelector e) throws IVisitor.VisitorException {
-		append("(");
-		e.symbol().accept(this);
-		append(" ");
-		e.sort().accept(this);
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IExpr.IConstructor e) throws IVisitor.VisitorException {
-		append("(");
-		e.symbol().accept(this);
-		for (IExpr.ISelector s : e.selectors()) { append(" "); s.accept(this); }
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IBinding e) throws IVisitor.VisitorException {
-		append("(");
-		e.parameter().accept(this);
-		append(" ");
-		e.expr().accept(this);
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IScript e) throws IVisitor.VisitorException {
-		IStringLiteral filename = e.filename();
-		List<ICommand> commands = e.commands();
-		if (filename != null) {
-			filename.accept(this);
-		} else if (commands != null) {
-			append("(");
-			append(eol);
-			for (ICommand c: commands) {
-				c.accept(this);
-				append(eol);
-				flush();
-			}
-			append(")");
-		} else {
-			append("\"<ERROR: Script has no content>\"");
-		}
-		return null;
-	}
-
-	public static class WithLines extends Printer {
-
-		/** Creates a printer object that follows the given Configuration's rules. */
-		public WithLines(SMT.Configuration smtConfig, Writer w) {
-			super(smtConfig, w);
-		}
-
-		@Override
-		public WithLines newPrinter(Writer w) {
-			return new WithLines(smtConfig, w);
-		}
-
-		/** Writes the given expression to the given writer, following the given
-		 *  Configuration's rules. */
-		static public <T extends INode> void write(SMT.Configuration smtConfig, Writer w, T e) throws IVisitor.VisitorException {
-			WithLines p = new WithLines(smtConfig, w);
-			e.accept(p);
-			p.flush();
-		}
-
-		/** Writes the given expression to the given stream, following the given
-		 *  Configuration's rules. */
-		static public <T extends INode> void write(SMT.Configuration smtConfig, PrintStream w, T e) throws IVisitor.VisitorException {
-			write(smtConfig, new OutputStreamWriter(w), e);
-		}
-
-		@Override
-		public Void visit(IScript e) throws IVisitor.VisitorException {
-			int n = 0;
-			IStringLiteral filename = e.filename();
-			List<ICommand> commands = e.commands();
-			if (filename != null) {
-				filename.accept(this);
-			} else if (commands != null) {
-				append("(");
-				append(eol);
-				for (ICommand c: commands) {
-					append((++n) + ": ");
-					c.accept(this);
-					append(eol);
-					flush();
-				}
-				append(")");
-			} else {
-				append("\"<ERROR: Script has no content>\"");
-			}
-			return null;
-		}
-
-
-	}
-
-	/** Functional interface for the argument-printing lambda passed to {@link #printCommand}. */
-	@FunctionalInterface
-	protected interface PrintArgs {
-		void run() throws IVisitor.VisitorException;
-	}
-
-	/** Prints {@code (commandName() args)} — the space between name and args is emitted here,
-	 *  so the {@code args} lambda should not prepend one. Subclasses may override to
-	 *  change the overall command format. */
-	protected Void printCommand(ICommand e, PrintArgs args) throws IVisitor.VisitorException {
-		append("(" + e.commandName() + " ");
-		args.run();
-		append(")");
-		return null;
-	}
-
-	/** Prints a no-argument command: {@code (commandName())}. Subclasses may override to change format. */
-	protected Void printCommand(ICommand e) throws IVisitor.VisitorException {
-		append("(" + e.commandName() + ")");
-		return null;
-	}
-
-	/** Fallback for extension command types not covered by a specific visit method;
-	 *  uses reflection to invoke {@code write(Printer)} on the command object. */
-	@Override
-	public Void visit(ICommand e) throws IVisitor.VisitorException {
-		Class<?> clazz = e.getClass();
-		try {
-			Method m = clazz.getMethod("write", Printer.class);
-			m.invoke(e, this);
-		} catch (IllegalAccessException ex) {
-			throw new IVisitor.VisitorException(ex,
-					e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null);
-		} catch (InvocationTargetException ex) {
-			throw new IVisitor.VisitorException(ex.getTargetException(),
-					e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null);
-		} catch (NoSuchMethodException ex) {
-			throw new IVisitor.VisitorException(
-					"No write method for " + clazz + " and " + this.getClass(), null);
-		}
-		return null;
-	}
-
-	@Override
-	public Void visit(ICommand.Iassert e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> e.expr().accept(this));
-	}
-
-	@Override
-	public Void visit(ICommand.Icheck_sat e) throws IVisitor.VisitorException {
-		return printCommand(e);
-	}
-
-	@Override
-	public Void visit(ICommand.Icheck_sat_assuming e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> {
-			append("(");
-			for (IExpr x : e.terms()) { append(" "); x.accept(this); }
-			append(")");
-		});
-	}
-
-	@Override
-	public Void visit(ICommand.Ideclare_const e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> {
-			e.symbol().accept(this);
-			append(" ");
-			e.resultSort().accept(this);
-		});
-	}
-
-	@Override
-	public Void visit(ICommand.Ideclare_datatype e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> {
-			e.sortDeclaration().symbol().accept(this);
-			append(" ");
-			e.datatype().accept(this);
-		});
-	}
-
-	@Override
-	public Void visit(ICommand.Ideclare_datatypes e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> {
-			append("(");
-			for (IExpr.ISortDeclaration sd : e.sortDeclarations()) { append(" "); sd.accept(this); }
-			append(") (");
-			for (ISort.IDatatype dt : e.datatypes()) { append(" "); dt.accept(this); }
-			append(")");
-		});
-	}
-
-	@Override
-	public Void visit(ICommand.Ideclare_fun e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> {
-			e.symbol().accept(this);
-			append(" (");
-			for (ISort s : e.argSorts()) { s.accept(this); append(" "); }
-			append(") ");
-			e.resultSort().accept(this);
-		});
-	}
-
-	@Override
-	public Void visit(ICommand.Ideclare_sort e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> {
-			e.sortSymbol().accept(this);
-			append(" ");
-			e.arity().accept(this);
-		});
-	}
-
-	@Override
-	public Void visit(ICommand.Ideclare_sort_parameter e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> e.sortSymbol().accept(this));
-	}
-
-	@Override
-	public Void visit(ICommand.Idefine_const e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> {
-			e.symbol().accept(this);
-			append(" ");
-			e.resultSort().accept(this);
-			append(" ");
-			e.expression().accept(this);
-		});
-	}
-
-	@Override
-	public Void visit(ICommand.Idefine_fun e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> {
-			e.symbol().accept(this);
-			append(" (");
-			for (IExpr.IDeclaration d : e.parameters()) d.accept(this);
-			append(") ");
-			e.resultSort().accept(this);
-			append(" ");
-			e.expression().accept(this);
-		});
-	}
-
-	@Override
-	public Void visit(ICommand.Idefine_fun_rec e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> {
-			e.symbol().accept(this);
-			append(" (");
-			for (IExpr.IDeclaration d : e.parameters()) d.accept(this);
-			append(") ");
-			e.resultSort().accept(this);
-			append(" ");
-			e.expression().accept(this);
-		});
-	}
-
-	@Override
-	public Void visit(ICommand.Idefine_funs_rec e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> {
-			append("(");
-			for (IExpr.IFunctionDeclaration d : e.declarations()) { d.accept(this); append(" "); }
-			append(") (");
-			for (IExpr body : e.bodies()) { body.accept(this); append(" "); }
-			append(")");
-		});
-	}
-
-	@Override
-	public Void visit(ICommand.Idefine_sort e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> {
-			e.sortSymbol().accept(this);
-			append(" (");
-			for (ISort.IParameter d : e.parameters()) { d.accept(this); append(" "); }
-			append(") ");
-			e.expression().accept(this);
-		});
-	}
-
-	@Override
-	public Void visit(ICommand.Iecho e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> e.arg().accept(this));
-	}
-
-	/** A comment is never "(commandName args)" S-expression syntax to begin with, so this
-	 *  doesn't go through {@code printCommand()} like every other command here -- instead
-	 *  it's printed directly, now that Comment is a real, typed command rather than going
-	 *  through the generic {@code visit(ICommand)} fallback's reflection-based {@code
-	 *  write()} lookup (see issue #115; this logic used to live in a {@code write()}
-	 *  override on {@code C_comment} itself, invoked only via that reflection call --
-	 *  moved here instead, so printing for every command, including this one, lives in
-	 *  exactly one place: Printer's own typed {@code visit()} methods).
-	 *  <p>
-	 *  Text parsed from a real script is always already well-formed this way (every line,
-	 *  including a multi-line block's continuation lines, already carries its own leading
-	 *  {@code ;} in the source, so it prints back out verbatim, byte for byte) -- but text
-	 *  supplied directly via the public API might have an embedded newline with no {@code
-	 *  ;} on the continuation line, which would silently end the comment there and let the
-	 *  continuation be re-parsed as code. So each line is checked, and given its own {@code
-	 *  ;} if it doesn't already have one and isn't just blank. A comment parsed immediately
-	 *  before a real command always already ends with a newline in the captured source
-	 *  text (a {@code ;} comment can't share a line with whatever follows it, so there's
-	 *  necessarily at least one newline swept into the capture) -- but a trailing comment
-	 *  at true end-of-file, or text supplied directly via the public API, might not.
-	 *  Printing without a final newline would risk whatever gets printed right after
-	 *  landing on the same line and being silently swallowed by this comment (since {@code
-	 *  ;} consumes to end of line), so one is always guaranteed here regardless. */
-	@Override
-	public Void visit(ICommand.Icomment e) throws IVisitor.VisitorException {
-		String text = e.text();
-		try {
-			String[] lines = text.split("\r\n|\n", -1);
-			for (int i = 0; i < lines.length; i++) {
-				if (i > 0) writer().append("\n");
-				String line = lines[i];
-				String trimmed = line.trim();
-				if (!trimmed.isEmpty() && !trimmed.startsWith(";")) writer().append(";");
-				writer().append(line);
-			}
-			if (!text.endsWith("\n")) writer().append("\n");
-		} catch (java.io.IOException ex) {
-			throw new IVisitor.VisitorException(ex, e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null);
-		}
-		return null;
-	}
-
-	@Override
-	public Void visit(ICommand.Iexit e) throws IVisitor.VisitorException {
-		return printCommand(e);
-	}
-
-	@Override
-	public Void visit(ICommand.Iget_assertions e) throws IVisitor.VisitorException {
-		return printCommand(e);
-	}
-
-	@Override
-	public Void visit(ICommand.Iget_assignment e) throws IVisitor.VisitorException {
-		return printCommand(e);
-	}
-
-	@Override
-	public Void visit(ICommand.Iget_info e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> e.infoflag().accept(this));
-	}
-
-	@Override
-	public Void visit(ICommand.Iget_model e) throws IVisitor.VisitorException {
-		return printCommand(e);
-	}
-
-	@Override
-	public Void visit(ICommand.Iget_option e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> e.option().accept(this));
-	}
-
-	@Override
-	public Void visit(ICommand.Iget_proof e) throws IVisitor.VisitorException {
-		return printCommand(e);
-	}
-
-	@Override
-	public Void visit(ICommand.Iget_unsat_assumptions e) throws IVisitor.VisitorException {
-		return printCommand(e);
-	}
-
-	@Override
-	public Void visit(ICommand.Iget_unsat_core e) throws IVisitor.VisitorException {
-		return printCommand(e);
-	}
-
-	@Override
-	public Void visit(ICommand.Iget_value e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> {
-			append("(");
-			for (IExpr x : e.exprs()) { append(" "); x.accept(this); }
-			append(")");
-		});
-	}
-
-	@Override
-	public Void visit(ICommand.Ipop e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> e.number().accept(this));
-	}
-
-	@Override
-	public Void visit(ICommand.Ipush e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> e.number().accept(this));
-	}
-
-	@Override
-	public Void visit(ICommand.Ireset e) throws IVisitor.VisitorException {
-		return printCommand(e);
-	}
-
-	@Override
-	public Void visit(ICommand.Ireset_assertions e) throws IVisitor.VisitorException {
-		return printCommand(e);
-	}
-
-	@Override
-	public Void visit(ICommand.Iset_info e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> {
-			e.infoflag().accept(this);
-			append(" ");
-			e.value().accept(this);
-		});
-	}
-
-	@Override
-	public Void visit(ICommand.Iset_logic e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> e.logic().accept(this));
-	}
-
-	@Override
-	public Void visit(ICommand.Iset_option e) throws IVisitor.VisitorException {
-		return printCommand(e, () -> {
-			e.option().accept(this);
-			append(" ");
-			e.value().accept(this);
-		});
-	}
-
-	@Override
-	public Void visit(IFamily s) throws IVisitor.VisitorException {
-		// A sort family is referenced by its bare identifier; the full
-		// (declare-sort name arity) syntax is printed separately by
-		// visit(ICommand.Ideclare_sort), never by way of an IFamily.
-		s.identifier().accept(this);
-		return null;
-	}
-
-	@Override
-	public Void visit(IAbbreviation s) throws IVisitor.VisitorException {
-		append("(");
-		s.identifier().accept(this);
-		append(" (");
-		boolean first = true;
-		for (ISort.IParameter p: s.parameters()) {
-			if (!first) append(" ");
-			p.accept(this);
-			first = false;
-		}
-		append(") ");
-		s.sortExpression().accept(this);
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IApplication s) throws IVisitor.VisitorException {
-		if (s.parameters().size() == 0) {
-			s.family().accept(this);
-		} else {
-			append("(");
-			s.family().accept(this);
-			for (ISort ss: s.parameters()) {
-				append(" ");
-				ss.accept(this);
-			}
-			append(")");
-		}
-		return null;
-	}
-
-	@Override
-	public Void visit(IFcnSort s) throws IVisitor.VisitorException {
-		// Not real SMT-LIB syntax (function sorts aren't first-class there) - an
-		// internal diagnostic form only; see e.g. Utils.java's symbol-table error messages.
-		append("(");
-		boolean first = true;
-		for (ISort ss: s.argSorts()) {
-			if (!first) append(" ");
-			ss.accept(this);
-			first = false;
-		}
-		append(") -> ");
-		s.resultSort().accept(this);
-		return null;
-	}
-
-	@Override
-	public Void visit(IParameter s) throws IVisitor.VisitorException {
-		s.symbol().accept(this);
-		return null;
-	}
-
-	@Override
-	public Void visit(ILogic s) throws IVisitor.VisitorException {
-		append("(logic ");
-		s.logicName().accept(this);
-		for (IAttribute<?> attr: s.attributes().values()) {
-			append(" ");
-			attr.accept(this);
-		}
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(ITheory s) throws IVisitor.VisitorException {
-		append("(theory ");
-		s.theoryName().accept(this);
-		for (IAttribute<?> attr: s.attributes().values()) {
-			append(" ");
-			attr.accept(this);
-		}
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IResponse e) throws IVisitor.VisitorException {
-		// ISexpr.ISeq/IToken now dispatch directly to their own visit() overloads below;
-		// anything reaching here is a genuinely unexpected kind of IResponse.
-		throw new VisitorException("Undelegated IResponse in Printer for " + e.getClass(),null);
-	}
-
-	/** Utility function to create an exception using the message from the first argument and the
-	 * position from the second, if it is IPosable.
-	 */
-	public IVisitor.VisitorException exc(Exception ex, Object possiblePos) {
-		return new IVisitor.VisitorException(ex,
-			possiblePos instanceof IPos.IPosable ? ((IPos.IPosable)possiblePos).pos() : null);
-	}
-
-	/** Utility function to print error messages in this printer's format */
-	public String error(String message) {
-		return "(error " + smtConfig.utils.quote(message) + ")";
-	}
-
-	@Override
-	public Void visit(IResponse.IError e) throws IVisitor.VisitorException {
-		append(error(e.errorMsg()));
-		return null;
-	}
-
-	@Override
-	public Void visit(IAssertionsResponse e) throws IVisitor.VisitorException {
-		append("(");
-		append(eol);
-		for (IExpr n : e.assertions()) {
-			n.accept(this);
-			append(eol);
-		}
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IAssignmentResponse e) throws IVisitor.VisitorException {
-		append("(");
-		for (IResponse.IPair<ISymbol,Boolean> p : e.assignments()) {
-			append("(");
-			p.first().accept(this);
-			append(" ");
-			append(p.second().toString()); // FIXME - change when we do not use Boolean
-			append(")");
-		}
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IProofResponse e) throws IVisitor.VisitorException {
-		// TODO when proofs are defined
-		append("PROOF");
-		return null;
-	}
-
-	@Override
-	public Void visit(IValueResponse e) throws IVisitor.VisitorException {
-		append("(");
-		for (IResponse.IPair<IExpr,IExpr> p : e.values()) {
-			append("(");
-			p.first().accept(this);
-			append(" ");
-			p.second().accept(this);
-			append(")");
-		}
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IUnsatCoreResponse e) throws IVisitor.VisitorException {
-		append("(");
-		for (ISymbol n : e.names()) {
-			n.accept(this);
-			append(" ");
-		}
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IResponse.IUnsatAssumptionsResponse e) throws IVisitor.VisitorException {
-		append("(");
-		for (ISymbol n : e.names()) {
-			n.accept(this);
-			append(" ");
-		}
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(IAttributeList e) throws IVisitor.VisitorException {
-		append("(");
-		for (IAttribute<?> n : e.attributes()) {
-			n.accept(this);
-			append(" ");
-		}
-		append(")");
-		return null;
-	}
-
-	@Override
-	public Void visit(ISexpr.IToken<?> e) throws IVisitor.VisitorException {
-		Object v = e.value();
-		// A generic token's raw value is meant to be printed as-is when that's already
-		// safe (e.g. "hello" -- PrinterCoverageTest.sexprToken() depends on this staying
-		// bare, unlike visit(IStringLiteral), which always quotes since a string literal
-		// is never valid unquoted). Only a String value containing a character that would
-		// break tokenization if left bare (whitespace, a parenthesis, an embedded double
-		// quote, or a comment-starting ';') needs the same quoting visit(IStringLiteral)
-		// uses, to remain valid, re-parseable SMT-LIB syntax.
-		if (v instanceof String && needsStringQuoting((String) v)) {
-			append(smtConfig.utils.quote((String) v));
-		} else {
-			append(String.valueOf(v));
-		}
-		return null;
-	}
-
-	private static boolean needsStringQuoting(String s) {
-		for (int i = 0; i < s.length(); i++) {
-			char c = s.charAt(i);
-			if (Character.isWhitespace(c) || c == '(' || c == ')' || c == '"' || c == ';') return true;
-		}
-		return false;
-	}
-
-	@Override
-	public Void visit(ISexpr.ISeq e) throws IVisitor.VisitorException {
-		append("(");
-		for (ISexpr expr: e.sexprs()) {
-			append(" ");
-			expr.accept(this);
-		}
-		append(" )");
-		return null;
-	}
+    /** The Configuration whose rules (e.g. string-literal quoting -- see {@link
+     *  #visit(IStringLiteral)} -- which is version-dependent) this Printer instance
+     *  follows. Issue #22: used to be a single static field shared by every Printer
+     *  instance process-wide, so constructing a second Configuration anywhere in the
+     *  process silently repointed every other Printer's quoting rules at the new
+     *  instance's settings. Now set once per instance, at construction, like the
+     *  writer itself. */
+    protected final SMT.Configuration smtConfig;
+
+    /** The writer to write text to */
+    /*@Nullable*/ protected Writer w;
+
+    /** The writer to write text to */
+    public Writer writer() { return w; }
+
+    /** The system-dependent line termination */
+    static public final String eol = System.getProperty("line.separator");
+
+    /** Creates a printer object that follows the given Configuration's rules. */
+    public Printer(SMT.Configuration smtConfig, Writer w) {
+        this.smtConfig = smtConfig;
+        this.w = w;
+    }
+
+    /** Appends a string to the writer, converting any IOException to VisitorException. */
+    protected void append(String s) throws IVisitor.VisitorException {
+        try { w.append(s); } catch (IOException ex) { throw new IVisitor.VisitorException(ex); }
+    }
+
+    /** Flushes the writer, converting any IOException to VisitorException. */
+    protected void flush() throws IVisitor.VisitorException {
+        try { w.flush(); } catch (IOException ex) { throw new IVisitor.VisitorException(ex); }
+    }
+
+    @Override
+    public Printer newPrinter(Writer w) {
+        return new Printer(smtConfig, w);
+    }
+
+    /** Prints the argument to the receiver */
+    @Override
+    public <T extends INode> void print(T expr) throws IVisitor.VisitorException {
+        expr.accept(this);
+    }
+
+    /** Returns the argument as a String using a Printer of the same type as the receiver,
+     * but does not modify the receiver.
+     */
+    @Override
+    public <T extends INode> String toString(T expr) {
+        try {
+            StringWriter sw = new StringWriter();
+            expr.accept(new Printer(smtConfig, sw)); // FIXME = should be same type as receiver
+            return sw.toString();
+        } catch (IVisitor.VisitorException e) {
+            return "<<ERROR: " + e.getMessage() + ">>";
+        }
+    }
+
+    /** Writes the given expression and outputs as a String, following the given
+     *  Configuration's rules (e.g. string-literal quoting). */
+    static public <T extends INode> String write(SMT.Configuration smtConfig, T e) {
+        try {
+            StringWriter w = new StringWriter();
+            e.accept(new Printer(smtConfig, w));
+            return w.toString();
+        } catch (IVisitor.VisitorException ex) {
+            return "<<ERROR: " + ex.getMessage() + ">>";
+        }
+    }
+
+    /** Writes the given expression to the given writer, following the given
+     *  Configuration's rules. */
+    static public <T extends INode> void write(SMT.Configuration smtConfig, Writer w, T e) throws IVisitor.VisitorException {
+        Printer p = new Printer(smtConfig, w);
+        e.accept(p);
+        p.flush();
+    }
+
+    /** Writes the given expression to the given stream, following the given
+     *  Configuration's rules. */
+    static public <T extends INode> void write(SMT.Configuration smtConfig, PrintStream w, T e) throws IVisitor.VisitorException {
+        Writer wr = new OutputStreamWriter(w);
+        Printer p = new Printer(smtConfig, wr);
+        e.accept(p);
+        p.flush();
+    }
+
+    /*@Nullable*/
+    @Override
+    public Void visit(INumeral e) throws IVisitor.VisitorException {
+        append(e.value().toString());
+        return null;
+    }
+
+    /*@Nullable*/
+    @Override
+    public Void visit(ISymbol e) throws IVisitor.VisitorException {
+        // toString()/originalString is trusted whenever it's already valid, re-parseable
+        // syntax: either it's already bar-quoted (from parsing bar-quoted source text --
+        // preserved as-is even if the bars weren't strictly necessary, e.g. a deliberately
+        // quoted |a|), or it needs no quoting at all. Only synthesized fresh from value()
+        // when neither holds: a symbol built programmatically from a raw string with a
+        // space or other symbol-breaking character has no bars in originalString at all
+        // (originalString == value() unquoted), which would otherwise print unparseable
+        // output.
+        String orig = e.toString();
+        if ((orig.length() > 0 && orig.charAt(0) == '|') || !needsBarQuoting(e.value())) {
+            append(orig);
+        } else {
+            append("|");
+            append(e.value());
+            append("|");
+        }
+        return null;
+    }
+
+    /** True if a bare (unquoted) symbol cannot represent this value: it's empty, starts
+     *  with a digit, or contains a character outside the simple-symbol charset (letters,
+     *  digits, and {@code ~!@$%^&*_-+=<>.?/}) -- per the SMT-LIB grammar for
+     *  {@code <simple_symbol>}, such a value needs {@code |...|} bar-quoting to print as
+     *  valid, re-parseable syntax. */
+    private static boolean needsBarQuoting(String v) {
+        if (v.isEmpty()) return true;
+        if (Character.isDigit(v.charAt(0))) return true;
+        for (int i = 0; i < v.length(); i++) {
+            char c = v.charAt(i);
+            if (Character.isLetterOrDigit(c)) continue;
+            if ("~!@$%^&*_-+=<>.?/".indexOf(c) >= 0) continue;
+            return true;
+        }
+        return false;
+    }
+
+    /*@Nullable*/
+    @Override
+    public Void visit(IDecimal e) throws IVisitor.VisitorException {
+        append(e.value().toPlainString());
+        return null;
+    }
+
+    @Override
+    public Void visit(IBinaryLiteral e) throws IVisitor.VisitorException {
+        append("#b");
+        append(e.value());
+        return null;
+    }
+
+    @Override
+    public Void visit(IHexLiteral e) throws IVisitor.VisitorException {
+        append("#x");
+        append(e.value());
+        return null;
+    }
+
+    /*@Nullable*/
+    @Override
+    public Void visit(IStringLiteral e) throws IVisitor.VisitorException {
+        append(smtConfig.utils.quote(e.value()));
+        return null;
+    }
+
+    /*@Nullable*/
+    @Override
+    public Void visit(IKeyword e) throws IVisitor.VisitorException {
+        append(e.value());
+        return null;
+    }
+
+    /*@Nullable*/
+    @Override
+    public Void visit(org.smtlib.IExpr.IError e) throws IVisitor.VisitorException {
+        append("(error ");
+        append(smtConfig.utils.quote(e.value()));
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
+        append("(" + Utils.PARAM + " ");
+        e.headSymbol().accept(this);
+        for (IExpr.IIndex idx: e.indices()) {
+            append(" ");
+            idx.accept(this);
+        }
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IAsIdentifier e) throws IVisitor.VisitorException {
+        append("(" + Utils.AS + " ");
+        e.head().accept(this);
+        append(" ");
+        e.qualifier().accept(this);
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IFcnExpr e) throws IVisitor.VisitorException {
+        append("(");
+        e.head().accept(this);
+        for (IExpr a: e.args()) {
+            append(" ");
+            if (a != null) a.accept(this);
+            else append("???");
+        }
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IForall e) throws IVisitor.VisitorException {
+        append("(" + Utils.FORALL + " (");
+        for (IDeclaration a: e.parameters()) {
+            a.accept(this);
+            append(" ");
+        }
+        append(") ");
+        e.expr().accept(this);
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IExists e) throws IVisitor.VisitorException {
+        append("(" + Utils.EXISTS + " (");
+        for (IDeclaration a: e.parameters()) {
+            a.accept(this);
+            append(" ");
+        }
+        append(") ");
+        e.expr().accept(this);
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(ILet e) throws IVisitor.VisitorException {
+        append("(" + Utils.LET + " (");
+        for (IBinding a: e.bindings()) {
+            a.accept(this);
+            append(" ");
+        }
+        append(") ");
+        e.expr().accept(this);
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IExpr.IMatch e) throws IVisitor.VisitorException {
+        append("(match ");
+        e.expr().accept(this);
+        append(" (");
+        for (IExpr.IMatchCase mc : e.cases()) {
+            append(" ");
+            mc.accept(this);
+        }
+        append("))");
+        return null;
+    }
+
+    @Override
+    public Void visit(IExpr.IMatchCase e) throws IVisitor.VisitorException {
+        append("(");
+        e.pattern().accept(this);
+        append(" ");
+        e.body().accept(this);
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IExpr.IPattern e) throws IVisitor.VisitorException {
+        if (e.params().isEmpty()) {
+            e.constructor().accept(this);
+        } else {
+            append("(");
+            e.constructor().accept(this);
+            for (IExpr.ISymbol v : e.params()) {
+                append(" ");
+                v.accept(this);
+            }
+            append(")");
+        }
+        return null;
+    }
+
+    @Override
+    public Void visit(IExpr.IPatternTerms e) throws IVisitor.VisitorException {
+        append("(");
+        boolean first = true;
+        for (IExpr t: e.terms()) {
+            if (!first) append(" ");
+            first = false;
+            t.accept(this);
+        }
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IAttribute<? extends IAttributeValue> e) throws IVisitor.VisitorException {
+        /*@Nullable*/IAttributeValue o;
+        e.keyword().accept(this);
+        if ((o=e.attrValue()) != null) {
+            append(" ");
+            o.accept(this);
+        }
+        return null;
+    }
+
+    @Override
+    public Void visit(IAttributedExpr e) throws IVisitor.VisitorException {
+        append("(" + Utils.ATTRIBUTE + " ");
+        e.expr().accept(this);
+        for (IAttribute<?> a: e.attributes()) {
+            append(" ");
+            a.accept(this);
+        }
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IDeclaration e) throws IVisitor.VisitorException {
+        append("(");
+        e.parameter().accept(this);
+        append(" ");
+        e.sort().accept(this);
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IExpr.IFunctionDeclaration e) throws IVisitor.VisitorException {
+        append("(");
+        e.symbol().accept(this);
+        append(" (");
+        for (IExpr.IDeclaration d : e.parameters()) { d.accept(this); append(" "); }
+        append(") ");
+        e.sort().accept(this);
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IExpr.ISortDeclaration e) throws IVisitor.VisitorException {
+        append("(");
+        e.symbol().accept(this);
+        append(" ");
+        e.arity().accept(this);
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IExpr.ISelector e) throws IVisitor.VisitorException {
+        append("(");
+        e.symbol().accept(this);
+        append(" ");
+        e.sort().accept(this);
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IExpr.IConstructor e) throws IVisitor.VisitorException {
+        append("(");
+        e.symbol().accept(this);
+        for (IExpr.ISelector s : e.selectors()) { append(" "); s.accept(this); }
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IBinding e) throws IVisitor.VisitorException {
+        append("(");
+        e.parameter().accept(this);
+        append(" ");
+        e.expr().accept(this);
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IScript e) throws IVisitor.VisitorException {
+        IStringLiteral filename = e.filename();
+        List<ICommand> commands = e.commands();
+        if (filename != null) {
+            filename.accept(this);
+        } else if (commands != null) {
+            append("(");
+            append(eol);
+            for (ICommand c: commands) {
+                c.accept(this);
+                append(eol);
+                flush();
+            }
+            append(")");
+        } else {
+            append("\"<ERROR: Script has no content>\"");
+        }
+        return null;
+    }
+
+    public static class WithLines extends Printer {
+
+        /** Creates a printer object that follows the given Configuration's rules. */
+        public WithLines(SMT.Configuration smtConfig, Writer w) {
+            super(smtConfig, w);
+        }
+
+        @Override
+        public WithLines newPrinter(Writer w) {
+            return new WithLines(smtConfig, w);
+        }
+
+        /** Writes the given expression to the given writer, following the given
+         *  Configuration's rules. */
+        static public <T extends INode> void write(SMT.Configuration smtConfig, Writer w, T e) throws IVisitor.VisitorException {
+            WithLines p = new WithLines(smtConfig, w);
+            e.accept(p);
+            p.flush();
+        }
+
+        /** Writes the given expression to the given stream, following the given
+         *  Configuration's rules. */
+        static public <T extends INode> void write(SMT.Configuration smtConfig, PrintStream w, T e) throws IVisitor.VisitorException {
+            write(smtConfig, new OutputStreamWriter(w), e);
+        }
+
+        @Override
+        public Void visit(IScript e) throws IVisitor.VisitorException {
+            int n = 0;
+            IStringLiteral filename = e.filename();
+            List<ICommand> commands = e.commands();
+            if (filename != null) {
+                filename.accept(this);
+            } else if (commands != null) {
+                append("(");
+                append(eol);
+                for (ICommand c: commands) {
+                    append((++n) + ": ");
+                    c.accept(this);
+                    append(eol);
+                    flush();
+                }
+                append(")");
+            } else {
+                append("\"<ERROR: Script has no content>\"");
+            }
+            return null;
+        }
+
+
+    }
+
+    /** Functional interface for the argument-printing lambda passed to {@link #printCommand}. */
+    @FunctionalInterface
+    protected interface PrintArgs {
+        void run() throws IVisitor.VisitorException;
+    }
+
+    /** Prints {@code (commandName() args)} — the space between name and args is emitted here,
+     *  so the {@code args} lambda should not prepend one. Subclasses may override to
+     *  change the overall command format. */
+    protected Void printCommand(ICommand e, PrintArgs args) throws IVisitor.VisitorException {
+        append("(" + e.commandName() + " ");
+        args.run();
+        append(")");
+        return null;
+    }
+
+    /** Prints a no-argument command: {@code (commandName())}. Subclasses may override to change format. */
+    protected Void printCommand(ICommand e) throws IVisitor.VisitorException {
+        append("(" + e.commandName() + ")");
+        return null;
+    }
+
+    /** Fallback for extension command types not covered by a specific visit method;
+     *  uses reflection to invoke {@code write(Printer)} on the command object. */
+    @Override
+    public Void visit(ICommand e) throws IVisitor.VisitorException {
+        Class<?> clazz = e.getClass();
+        try {
+            Method m = clazz.getMethod("write", Printer.class);
+            m.invoke(e, this);
+        } catch (IllegalAccessException ex) {
+            throw new IVisitor.VisitorException(ex,
+                    e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null);
+        } catch (InvocationTargetException ex) {
+            throw new IVisitor.VisitorException(ex.getTargetException(),
+                    e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null);
+        } catch (NoSuchMethodException ex) {
+            throw new IVisitor.VisitorException(
+                    "No write method for " + clazz + " and " + this.getClass(), null);
+        }
+        return null;
+    }
+
+    @Override
+    public Void visit(ICommand.Iassert e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> e.expr().accept(this));
+    }
+
+    @Override
+    public Void visit(ICommand.Icheck_sat e) throws IVisitor.VisitorException {
+        return printCommand(e);
+    }
+
+    @Override
+    public Void visit(ICommand.Icheck_sat_assuming e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> {
+            append("(");
+            for (IExpr x : e.terms()) { append(" "); x.accept(this); }
+            append(")");
+        });
+    }
+
+    @Override
+    public Void visit(ICommand.Ideclare_const e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> {
+            e.symbol().accept(this);
+            append(" ");
+            e.resultSort().accept(this);
+        });
+    }
+
+    @Override
+    public Void visit(ICommand.Ideclare_datatype e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> {
+            e.sortDeclaration().symbol().accept(this);
+            append(" ");
+            e.datatype().accept(this);
+        });
+    }
+
+    @Override
+    public Void visit(ICommand.Ideclare_datatypes e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> {
+            append("(");
+            for (IExpr.ISortDeclaration sd : e.sortDeclarations()) { append(" "); sd.accept(this); }
+            append(") (");
+            for (ISort.IDatatype dt : e.datatypes()) { append(" "); dt.accept(this); }
+            append(")");
+        });
+    }
+
+    @Override
+    public Void visit(ICommand.Ideclare_fun e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> {
+            e.symbol().accept(this);
+            append(" (");
+            for (ISort s : e.argSorts()) { s.accept(this); append(" "); }
+            append(") ");
+            e.resultSort().accept(this);
+        });
+    }
+
+    @Override
+    public Void visit(ICommand.Ideclare_sort e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> {
+            e.sortSymbol().accept(this);
+            append(" ");
+            e.arity().accept(this);
+        });
+    }
+
+    @Override
+    public Void visit(ICommand.Ideclare_sort_parameter e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> e.sortSymbol().accept(this));
+    }
+
+    @Override
+    public Void visit(ICommand.Idefine_const e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> {
+            e.symbol().accept(this);
+            append(" ");
+            e.resultSort().accept(this);
+            append(" ");
+            e.expression().accept(this);
+        });
+    }
+
+    @Override
+    public Void visit(ICommand.Idefine_fun e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> {
+            e.symbol().accept(this);
+            append(" (");
+            for (IExpr.IDeclaration d : e.parameters()) d.accept(this);
+            append(") ");
+            e.resultSort().accept(this);
+            append(" ");
+            e.expression().accept(this);
+        });
+    }
+
+    @Override
+    public Void visit(ICommand.Idefine_fun_rec e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> {
+            e.symbol().accept(this);
+            append(" (");
+            for (IExpr.IDeclaration d : e.parameters()) d.accept(this);
+            append(") ");
+            e.resultSort().accept(this);
+            append(" ");
+            e.expression().accept(this);
+        });
+    }
+
+    @Override
+    public Void visit(ICommand.Idefine_funs_rec e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> {
+            append("(");
+            for (IExpr.IFunctionDeclaration d : e.declarations()) { d.accept(this); append(" "); }
+            append(") (");
+            for (IExpr body : e.bodies()) { body.accept(this); append(" "); }
+            append(")");
+        });
+    }
+
+    @Override
+    public Void visit(ICommand.Idefine_sort e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> {
+            e.sortSymbol().accept(this);
+            append(" (");
+            for (ISort.IParameter d : e.parameters()) { d.accept(this); append(" "); }
+            append(") ");
+            e.expression().accept(this);
+        });
+    }
+
+    @Override
+    public Void visit(ICommand.Iecho e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> e.arg().accept(this));
+    }
+
+    /** A comment is never "(commandName args)" S-expression syntax to begin with, so this
+     *  doesn't go through {@code printCommand()} like every other command here -- instead
+     *  it's printed directly, now that Comment is a real, typed command rather than going
+     *  through the generic {@code visit(ICommand)} fallback's reflection-based {@code
+     *  write()} lookup (see issue #115; this logic used to live in a {@code write()}
+     *  override on {@code C_comment} itself, invoked only via that reflection call --
+     *  moved here instead, so printing for every command, including this one, lives in
+     *  exactly one place: Printer's own typed {@code visit()} methods).
+     *  <p>
+     *  Text parsed from a real script is always already well-formed this way (every line,
+     *  including a multi-line block's continuation lines, already carries its own leading
+     *  {@code ;} in the source, so it prints back out verbatim, byte for byte) -- but text
+     *  supplied directly via the public API might have an embedded newline with no {@code
+     *  ;} on the continuation line, which would silently end the comment there and let the
+     *  continuation be re-parsed as code. So each line is checked, and given its own {@code
+     *  ;} if it doesn't already have one and isn't just blank. A comment parsed immediately
+     *  before a real command always already ends with a newline in the captured source
+     *  text (a {@code ;} comment can't share a line with whatever follows it, so there's
+     *  necessarily at least one newline swept into the capture) -- but a trailing comment
+     *  at true end-of-file, or text supplied directly via the public API, might not.
+     *  Printing without a final newline would risk whatever gets printed right after
+     *  landing on the same line and being silently swallowed by this comment (since {@code
+     *  ;} consumes to end of line), so one is always guaranteed here regardless. */
+    @Override
+    public Void visit(ICommand.Icomment e) throws IVisitor.VisitorException {
+        String text = e.text();
+        try {
+            String[] lines = text.split("\r\n|\n", -1);
+            for (int i = 0; i < lines.length; i++) {
+                if (i > 0) writer().append("\n");
+                String line = lines[i];
+                String trimmed = line.trim();
+                if (!trimmed.isEmpty() && !trimmed.startsWith(";")) writer().append(";");
+                writer().append(line);
+            }
+            if (!text.endsWith("\n")) writer().append("\n");
+        } catch (java.io.IOException ex) {
+            throw new IVisitor.VisitorException(ex, e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null);
+        }
+        return null;
+    }
+
+    @Override
+    public Void visit(ICommand.Iexit e) throws IVisitor.VisitorException {
+        return printCommand(e);
+    }
+
+    @Override
+    public Void visit(ICommand.Iget_assertions e) throws IVisitor.VisitorException {
+        return printCommand(e);
+    }
+
+    @Override
+    public Void visit(ICommand.Iget_assignment e) throws IVisitor.VisitorException {
+        return printCommand(e);
+    }
+
+    @Override
+    public Void visit(ICommand.Iget_info e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> e.infoflag().accept(this));
+    }
+
+    @Override
+    public Void visit(ICommand.Iget_model e) throws IVisitor.VisitorException {
+        return printCommand(e);
+    }
+
+    @Override
+    public Void visit(ICommand.Iget_option e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> e.option().accept(this));
+    }
+
+    @Override
+    public Void visit(ICommand.Iget_proof e) throws IVisitor.VisitorException {
+        return printCommand(e);
+    }
+
+    @Override
+    public Void visit(ICommand.Iget_unsat_assumptions e) throws IVisitor.VisitorException {
+        return printCommand(e);
+    }
+
+    @Override
+    public Void visit(ICommand.Iget_unsat_core e) throws IVisitor.VisitorException {
+        return printCommand(e);
+    }
+
+    @Override
+    public Void visit(ICommand.Iget_value e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> {
+            append("(");
+            for (IExpr x : e.exprs()) { append(" "); x.accept(this); }
+            append(")");
+        });
+    }
+
+    @Override
+    public Void visit(ICommand.Ipop e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> e.number().accept(this));
+    }
+
+    @Override
+    public Void visit(ICommand.Ipush e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> e.number().accept(this));
+    }
+
+    @Override
+    public Void visit(ICommand.Ireset e) throws IVisitor.VisitorException {
+        return printCommand(e);
+    }
+
+    @Override
+    public Void visit(ICommand.Ireset_assertions e) throws IVisitor.VisitorException {
+        return printCommand(e);
+    }
+
+    @Override
+    public Void visit(ICommand.Iset_info e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> {
+            e.infoflag().accept(this);
+            append(" ");
+            e.value().accept(this);
+        });
+    }
+
+    @Override
+    public Void visit(ICommand.Iset_logic e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> e.logic().accept(this));
+    }
+
+    @Override
+    public Void visit(ICommand.Iset_option e) throws IVisitor.VisitorException {
+        return printCommand(e, () -> {
+            e.option().accept(this);
+            append(" ");
+            e.value().accept(this);
+        });
+    }
+
+    @Override
+    public Void visit(IFamily s) throws IVisitor.VisitorException {
+        // A sort family is referenced by its bare identifier; the full
+        // (declare-sort name arity) syntax is printed separately by
+        // visit(ICommand.Ideclare_sort), never by way of an IFamily.
+        s.identifier().accept(this);
+        return null;
+    }
+
+    @Override
+    public Void visit(IAbbreviation s) throws IVisitor.VisitorException {
+        append("(");
+        s.identifier().accept(this);
+        append(" (");
+        boolean first = true;
+        for (ISort.IParameter p: s.parameters()) {
+            if (!first) append(" ");
+            p.accept(this);
+            first = false;
+        }
+        append(") ");
+        s.sortExpression().accept(this);
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IApplication s) throws IVisitor.VisitorException {
+        if (s.parameters().size() == 0) {
+            s.family().accept(this);
+        } else {
+            append("(");
+            s.family().accept(this);
+            for (ISort ss: s.parameters()) {
+                append(" ");
+                ss.accept(this);
+            }
+            append(")");
+        }
+        return null;
+    }
+
+    @Override
+    public Void visit(IFcnSort s) throws IVisitor.VisitorException {
+        // Not real SMT-LIB syntax (function sorts aren't first-class there) - an
+        // internal diagnostic form only; see e.g. Utils.java's symbol-table error messages.
+        append("(");
+        boolean first = true;
+        for (ISort ss: s.argSorts()) {
+            if (!first) append(" ");
+            ss.accept(this);
+            first = false;
+        }
+        append(") -> ");
+        s.resultSort().accept(this);
+        return null;
+    }
+
+    @Override
+    public Void visit(IParameter s) throws IVisitor.VisitorException {
+        s.symbol().accept(this);
+        return null;
+    }
+
+    @Override
+    public Void visit(ILogic s) throws IVisitor.VisitorException {
+        append("(logic ");
+        s.logicName().accept(this);
+        for (IAttribute<?> attr: s.attributes().values()) {
+            append(" ");
+            attr.accept(this);
+        }
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(ITheory s) throws IVisitor.VisitorException {
+        append("(theory ");
+        s.theoryName().accept(this);
+        for (IAttribute<?> attr: s.attributes().values()) {
+            append(" ");
+            attr.accept(this);
+        }
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IResponse e) throws IVisitor.VisitorException {
+        // ISexpr.ISeq/IToken now dispatch directly to their own visit() overloads below;
+        // anything reaching here is a genuinely unexpected kind of IResponse.
+        throw new VisitorException("Undelegated IResponse in Printer for " + e.getClass(),null);
+    }
+
+    /** Utility function to create an exception using the message from the first argument and the
+     * position from the second, if it is IPosable.
+     */
+    public IVisitor.VisitorException exc(Exception ex, Object possiblePos) {
+        return new IVisitor.VisitorException(ex,
+            possiblePos instanceof IPos.IPosable ? ((IPos.IPosable)possiblePos).pos() : null);
+    }
+
+    /** Utility function to print error messages in this printer's format */
+    public String error(String message) {
+        return "(error " + smtConfig.utils.quote(message) + ")";
+    }
+
+    @Override
+    public Void visit(IResponse.IError e) throws IVisitor.VisitorException {
+        append(error(e.errorMsg()));
+        return null;
+    }
+
+    @Override
+    public Void visit(IAssertionsResponse e) throws IVisitor.VisitorException {
+        append("(");
+        append(eol);
+        for (IExpr n : e.assertions()) {
+            n.accept(this);
+            append(eol);
+        }
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IAssignmentResponse e) throws IVisitor.VisitorException {
+        append("(");
+        for (IResponse.IPair<ISymbol,Boolean> p : e.assignments()) {
+            append("(");
+            p.first().accept(this);
+            append(" ");
+            append(p.second().toString()); // FIXME - change when we do not use Boolean
+            append(")");
+        }
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IProofResponse e) throws IVisitor.VisitorException {
+        // TODO when proofs are defined
+        append("PROOF");
+        return null;
+    }
+
+    @Override
+    public Void visit(IValueResponse e) throws IVisitor.VisitorException {
+        append("(");
+        for (IResponse.IPair<IExpr,IExpr> p : e.values()) {
+            append("(");
+            p.first().accept(this);
+            append(" ");
+            p.second().accept(this);
+            append(")");
+        }
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IUnsatCoreResponse e) throws IVisitor.VisitorException {
+        append("(");
+        for (ISymbol n : e.names()) {
+            n.accept(this);
+            append(" ");
+        }
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IResponse.IUnsatAssumptionsResponse e) throws IVisitor.VisitorException {
+        append("(");
+        for (ISymbol n : e.names()) {
+            n.accept(this);
+            append(" ");
+        }
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(IAttributeList e) throws IVisitor.VisitorException {
+        append("(");
+        for (IAttribute<?> n : e.attributes()) {
+            n.accept(this);
+            append(" ");
+        }
+        append(")");
+        return null;
+    }
+
+    @Override
+    public Void visit(ISexpr.IToken<?> e) throws IVisitor.VisitorException {
+        Object v = e.value();
+        // A generic token's raw value is meant to be printed as-is when that's already
+        // safe (e.g. "hello" -- PrinterCoverageTest.sexprToken() depends on this staying
+        // bare, unlike visit(IStringLiteral), which always quotes since a string literal
+        // is never valid unquoted). Only a String value containing a character that would
+        // break tokenization if left bare (whitespace, a parenthesis, an embedded double
+        // quote, or a comment-starting ';') needs the same quoting visit(IStringLiteral)
+        // uses, to remain valid, re-parseable SMT-LIB syntax.
+        if (v instanceof String && needsStringQuoting((String) v)) {
+            append(smtConfig.utils.quote((String) v));
+        } else {
+            append(String.valueOf(v));
+        }
+        return null;
+    }
+
+    private static boolean needsStringQuoting(String s) {
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (Character.isWhitespace(c) || c == '(' || c == ')' || c == '"' || c == ';') return true;
+        }
+        return false;
+    }
+
+    @Override
+    public Void visit(ISexpr.ISeq e) throws IVisitor.VisitorException {
+        append("(");
+        for (ISexpr expr: e.sexprs()) {
+            append(" ");
+            expr.accept(this);
+        }
+        append(" )");
+        return null;
+    }
 
     @Override
     public Void visit(ISort.IDatatype e) throws VisitorException {

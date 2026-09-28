@@ -16,28 +16,28 @@ import org.smtlib.sexpr.Parser;
 
 /** Implements the reset command */
 public class C_reset extends Command implements Ireset {
-	/** Constructs an instance of the command */
-	public C_reset() {
-	}
-	
-	/** Parses the arguments of the command, producing a new command instance */
-	static public /*@Nullable*/ C_reset parse(Parser p) throws ParserException {
-		return p.checkNoArg() ? new C_reset() : null;
-	}
+    /** Constructs an instance of the command */
+    public C_reset() {
+    }
 
-	public static final String commandName = "reset";
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
-	
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.reset();
-	}
+    /** Parses the arguments of the command, producing a new command instance */
+    static public /*@Nullable*/ C_reset parse(Parser p) throws ParserException {
+        return p.checkNoArg() ? new C_reset() : null;
+    }
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
-	
+    public static final String commandName = "reset";
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
+
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.reset();
+    }
+
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
+
 }

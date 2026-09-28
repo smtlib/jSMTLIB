@@ -18,43 +18,43 @@ import org.smtlib.sexpr.Parser;
 
 /** Implements the assert command */
 public class C_assert extends Command implements Iassert {
-	
-	/** Constructs a command object given the expression to assert */
-	public C_assert(IExpr expr) {
-		formula = expr;
-	}
-	
-	/** Returns the asserted formula */
-	@Override
-	public IExpr expr() {
-		return formula;
-	}
-	
-	/** The command name */
-	public static final String commandName = "assert";
-	
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
 
-	/** The formula to assert */
-	protected IExpr formula;
+    /** Constructs a command object given the expression to assert */
+    public C_assert(IExpr expr) {
+        formula = expr;
+    }
 
-	/** Parses the arguments of the command, producing a new command instance */
-	static public C_assert parse(Parser p) throws IOException, ParserException {
-		IExpr expr = p.parseExpr();
-		return new C_assert(expr);
-	}
+    /** Returns the asserted formula */
+    @Override
+    public IExpr expr() {
+        return formula;
+    }
 
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.assertExpr(formula);
-	}
-	
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    /** The command name */
+    public static final String commandName = "assert";
+
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
+
+    /** The formula to assert */
+    protected IExpr formula;
+
+    /** Parses the arguments of the command, producing a new command instance */
+    static public C_assert parse(Parser p) throws IOException, ParserException {
+        IExpr expr = p.parseExpr();
+        return new C_assert(expr);
+    }
+
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.assertExpr(formula);
+    }
+
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 
 
 }

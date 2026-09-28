@@ -14,18 +14,18 @@ import org.smtlib.IExpr.ISymbol;
 
 public class QF_UFNRA extends QF_NRA {
 
-	public QF_UFNRA(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(smtConfig,name,attributes);
-	}
+    public QF_UFNRA(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+        super(smtConfig,name,attributes);
+    }
 
-	@Override
-	public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
-		// May declare constants or uninterpreted functions
-	}
+    @Override
+    public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
+        // May declare constants or uninterpreted functions
+    }
 
-	@Override
-	public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
-		// new sorts permitted
-	}
+    @Override
+    public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
+        // new sorts permitted
+    }
 
 }

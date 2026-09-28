@@ -10,9 +10,9 @@ import org.smtlib.IExpr.ISymbol;
 /** This logic does not allow quantifiers */
 public class QF_AUFBV extends QF_UF {
 
-	public QF_AUFBV(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
-		super(smtConfig,name,attributes);
-	}
-	
-	// FIXME - needs restriction on parameters of Array Sorts
+    public QF_AUFBV(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
+        super(smtConfig,name,attributes);
+    }
+
+    // FIXME - needs restriction on parameters of Array Sorts
 }

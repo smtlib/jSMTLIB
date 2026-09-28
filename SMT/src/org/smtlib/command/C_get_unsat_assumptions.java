@@ -16,28 +16,28 @@ import org.smtlib.sexpr.Parser;
 
 /** Implements the get-unsat-assumptions command */
 public class C_get_unsat_assumptions extends Command implements Iget_unsat_assumptions {
-	/** Constructs a command instance */
-	public C_get_unsat_assumptions() {
-	}
-	
-	/** Parses the command, producing a new command instance */
-	static public /*@Nullable*/ C_get_unsat_assumptions parse(Parser p) throws ParserException {
-		return p.checkNoArg() ? new C_get_unsat_assumptions() : null;
-	}
+    /** Constructs a command instance */
+    public C_get_unsat_assumptions() {
+    }
 
-	/** The command name */
-	public static final String commandName = "get-unsat-assumptions";
-	/** The command name */
-	@Override
-	public String commandName() { return commandName; }
-	
-	@Override
-	public IResponse execute(ISolver solver) {
-		return solver.get_unsat_assumptions();
-	}
+    /** Parses the command, producing a new command instance */
+    static public /*@Nullable*/ C_get_unsat_assumptions parse(Parser p) throws ParserException {
+        return p.checkNoArg() ? new C_get_unsat_assumptions() : null;
+    }
 
-	@Override
-	public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-		return v.visit(this);
-	}
+    /** The command name */
+    public static final String commandName = "get-unsat-assumptions";
+    /** The command name */
+    @Override
+    public String commandName() { return commandName; }
+
+    @Override
+    public IResponse execute(ISolver solver) {
+        return solver.get_unsat_assumptions();
+    }
+
+    @Override
+    public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+        return v.visit(this);
+    }
 }

@@ -33,57 +33,57 @@ import org.smtlib.*;
  *  fully-compliant-by-default adapter should assume. */
 public class Solver_smt extends AbstractSolver implements ISolver {
 
-	/** The command-line arguments for launching the solver */
-	String cmds[];
+    /** The command-line arguments for launching the solver */
+    String cmds[];
 
-	/** Creates an instance of the adapter */
-	public Solver_smt(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
-		this.smtConfig = smtConfig;
-		cmds = cmd(executable);
-		// prompt() returns "\n": Solver_z3_recent's own class doc independently confirms
-		// this is the right end marker for a solver that (like every adapter this class
-		// still supports) doesn't print an interactive prompt.
-		solverProcess = new SolverProcess(cmds,prompt(),smtConfig.logfile,StandardCharsets.UTF_8);
-	}
+    /** Creates an instance of the adapter */
+    public Solver_smt(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
+        this.smtConfig = smtConfig;
+        cmds = cmd(executable);
+        // prompt() returns "\n": Solver_z3_recent's own class doc independently confirms
+        // this is the right end marker for a solver that (like every adapter this class
+        // still supports) doesn't print an interactive prompt.
+        solverProcess = new SolverProcess(cmds,prompt(),smtConfig.logfile,StandardCharsets.UTF_8);
+    }
 
-	public Solver_smt(SMT.Configuration smtConfig, /*@NonNull*/ String[] args) {
-		this.smtConfig = smtConfig;
-		cmds = args;
-		solverProcess = new SolverProcess(cmds,prompt(),smtConfig.logfile,StandardCharsets.UTF_8);
-	}
+    public Solver_smt(SMT.Configuration smtConfig, /*@NonNull*/ String[] args) {
+        this.smtConfig = smtConfig;
+        cmds = args;
+        solverProcess = new SolverProcess(cmds,prompt(),smtConfig.logfile,StandardCharsets.UTF_8);
+    }
 
-	public String[] cmd(String exec) {
-		return new String[] { exec };
-	}
+    public String[] cmd(String exec) {
+        return new String[] { exec };
+    }
 
-	public String prompt() {
-		return "\n";
-	}
+    public String prompt() {
+        return "\n";
+    }
 
-	@Override
-	public IResponse start() {
-		try {
-			solverProcess.start(false);
-			if (smtConfig.solverVerbosity > 0) solverProcess.sendNoListen("(set-option :verbosity ",Integer.toString(smtConfig.solverVerbosity),")");
-			//if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
-			// Can't turn off printing success, or we get no feedback
-			//if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
-			solverProcess.sendAndListen("(set-option :print-success true)");
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
-			return smtConfig.responseFactory.success();
-		} catch (Exception e) {
-			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
-		}
-	}
+    @Override
+    public IResponse start() {
+        try {
+            solverProcess.start(false);
+            if (smtConfig.solverVerbosity > 0) solverProcess.sendNoListen("(set-option :verbosity ",Integer.toString(smtConfig.solverVerbosity),")");
+            //if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
+            // Can't turn off printing success, or we get no feedback
+            //if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
+            solverProcess.sendAndListen("(set-option :print-success true)");
+            if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
+            return smtConfig.responseFactory.success();
+        } catch (Exception e) {
+            return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
+        }
+    }
 
-	/** Translates an S-expression into SMT syntax; this solver uses the standard
-	 *  S-expression concrete syntax except for a Bool-quantifier workaround (see
-	 *  {@link org.smtlib.solvers.Printer}). */
-	@Override
-	protected String translate(INode sexpr) throws IVisitor.VisitorException {
-		StringWriter sw = new StringWriter();
-		org.smtlib.solvers.Printer.write(smtConfig,sw,sexpr);
-		return sw.toString();
-	}
+    /** Translates an S-expression into SMT syntax; this solver uses the standard
+     *  S-expression concrete syntax except for a Bool-quantifier workaround (see
+     *  {@link org.smtlib.solvers.Printer}). */
+    @Override
+    protected String translate(INode sexpr) throws IVisitor.VisitorException {
+        StringWriter sw = new StringWriter();
+        org.smtlib.solvers.Printer.write(smtConfig,sw,sexpr);
+        return sw.toString();
+    }
 
 }

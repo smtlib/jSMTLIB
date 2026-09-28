@@ -31,46 +31,46 @@ import org.smtlib.*;
  *  the source rather than relying on that heuristic guessing right. */
 public class Solver_smtinterpol extends AbstractSolver implements ISolver {
 
-	/** The command-line arguments for launching the solver. */
-	protected String cmds[];
+    /** The command-line arguments for launching the solver. */
+    protected String cmds[];
 
-	/** Creates an instance of the solver. The base launch command ("java -jar
-	 *  &lt;jar&gt; -q") comes from the org.smtlib.solver_smtinterpol-2.5.command
-	 *  property; only the timeout flag, which is conditional on smtConfig and so
-	 *  can't be expressed in that static property, is still added here. */
-	public Solver_smtinterpol(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
-		this.smtConfig = smtConfig;
-		// SMTInterpol has exactly one timeout flag, -t <milliseconds>, applying per
-		// check-sat call -- there is no separate whole-run option at all. If only the
-		// whole-run smtConfig.timeoutTotal was requested, it is applied here via -t as the
-		// closest available approximation, since that's the only lever SMTInterpol offers.
-		double effective = smtConfig.timeout > 0 ? smtConfig.timeout : smtConfig.timeoutTotal;
-		if (effective > 0) {
-			if (smtConfig.timeout <= 0) {
-				smtConfig.log.logDiag("#smtinterpol has no whole-run timeout option; approximating with a per-query -t of " + smtConfig.timeoutTotal + "s (the requested whole-run value)");
-			} else if (smtConfig.timeoutTotal > 0) {
-				smtConfig.log.logDiag("#smtinterpol has no whole-run timeout option; only the per-query -t (" + smtConfig.timeout + "s) is applied, the whole-run --timeout-total (" + smtConfig.timeoutTotal + "s) is ignored");
-			}
-			java.util.List<String> args = new java.util.ArrayList<String>(java.util.Arrays.asList(command));
-			args.add("-t");
-			args.add(Integer.toString((int)Math.ceil(effective * 1000)));
-			cmds = args.toArray(new String[args.size()]);
-		} else {
-			cmds = command;
-		}
-		// SMTInterpol prints no interactive prompt, so "\n" is the right end marker.
-		solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
-	}
+    /** Creates an instance of the solver. The base launch command ("java -jar
+     *  &lt;jar&gt; -q") comes from the org.smtlib.solver_smtinterpol-2.5.command
+     *  property; only the timeout flag, which is conditional on smtConfig and so
+     *  can't be expressed in that static property, is still added here. */
+    public Solver_smtinterpol(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
+        this.smtConfig = smtConfig;
+        // SMTInterpol has exactly one timeout flag, -t <milliseconds>, applying per
+        // check-sat call -- there is no separate whole-run option at all. If only the
+        // whole-run smtConfig.timeoutTotal was requested, it is applied here via -t as the
+        // closest available approximation, since that's the only lever SMTInterpol offers.
+        double effective = smtConfig.timeout > 0 ? smtConfig.timeout : smtConfig.timeoutTotal;
+        if (effective > 0) {
+            if (smtConfig.timeout <= 0) {
+                smtConfig.log.logDiag("#smtinterpol has no whole-run timeout option; approximating with a per-query -t of " + smtConfig.timeoutTotal + "s (the requested whole-run value)");
+            } else if (smtConfig.timeoutTotal > 0) {
+                smtConfig.log.logDiag("#smtinterpol has no whole-run timeout option; only the per-query -t (" + smtConfig.timeout + "s) is applied, the whole-run --timeout-total (" + smtConfig.timeoutTotal + "s) is ignored");
+            }
+            java.util.List<String> args = new java.util.ArrayList<String>(java.util.Arrays.asList(command));
+            args.add("-t");
+            args.add(Integer.toString((int)Math.ceil(effective * 1000)));
+            cmds = args.toArray(new String[args.size()]);
+        } else {
+            cmds = command;
+        }
+        // SMTInterpol prints no interactive prompt, so "\n" is the right end marker.
+        solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
+    }
 
-	@Override
-	public IResponse start() {
-		try {
-			solverProcess.start(false);
-			if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
-			return smtConfig.responseFactory.success();
-		} catch (Exception e) {
-			return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
-		}
-	}
+    @Override
+    public IResponse start() {
+        try {
+            solverProcess.start(false);
+            if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
+            return smtConfig.responseFactory.success();
+        } catch (Exception e) {
+            return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
+        }
+    }
 
 }
