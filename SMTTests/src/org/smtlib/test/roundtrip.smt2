@@ -142,8 +142,10 @@
 ; parseAttribute branch: keyword followed by '(' — parseSexpr path (line 816)
 (assert (! true :x ( a b c )))
 
-; :pattern attribute: value is a sequence of terms (ISexpr.ISeq printed with spaces)
-(assert (forall ((x Int) ) (! (> x 0) :pattern ( ( > x 0 ) ))))
+; :pattern attribute: value is a list of terms (IExpr.IPatternTerms)
+(assert (forall ((x Int) ) (! (> x 0) :pattern ((> x 0)))))
+; :pattern attribute with a multi-pattern of two terms
+(assert (forall ((x Int) ) (! (> x 0) :pattern ((> x 0) (< x 10)))))
 
 ; let with two bindings: covers the multi-binding loop in visit(ILet)
 (assert (let ((x true) (y false) ) (and x y)))

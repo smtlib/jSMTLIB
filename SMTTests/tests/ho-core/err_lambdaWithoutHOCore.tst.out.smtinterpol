@@ -1,0 +1,4 @@
+success
+success
+(error "<stdin>:10:9: Builtin function = does not support argument sorts ()")
+sat

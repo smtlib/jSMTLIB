@@ -41,4 +41,26 @@ if [ -n "${COV++}" ]; then
             ;;
     esac
     export COV_AGENT="-javaagent:${AGENT_JAR}=destfile=${DEST_FILE}"
+
+    ## Per-test mode (make cov-test-by-test sets COV_BY_TEST): instead of one destfile for
+    ## the whole run, each test's coverage goes to its own cov/by-test/<test>.exec (see
+    ## PerTestCoverageListener.java). Two different agent strings are needed:
+    ##  - COV_MAIN_AGENT, for runjunits' own JVM: its destfile only ever receives what runs
+    ##    OUTSIDE any test (class init, @Parameters, @BeforeClass) -- the listener reads out
+    ##    and resets each test's own counters itself, through JaCoCo's runtime API.
+    ##  - COV_AGENT, for child JVMs (setup bakes it into SMT_CMD/SMT_DRIVER): its destfile
+    ##    holds a literal @COV_TEST@ placeholder, which runscript replaces with the current
+    ##    test's file stem (read from cov/by-test/.current-test, written by the listener),
+    ##    so a child JVM's coverage lands in the file of the test that spawned it (and its
+    ##    JaCoCo session is named after that test, like the main JVM's own session).
+    if [ -n "${COV_BY_TEST++}" ]; then
+        BY_TEST_DIR="$TEST/cov/by-test"
+        mkdir -p "$BY_TEST_DIR"
+        case "$(uname -s | tr '[:upper:]' '[:lower:]')" in
+            mingw*|msys*|cygwin*) BY_TEST_DIR=$(cygpath -w "$BY_TEST_DIR") ;;
+        esac
+        export COV_BY_TEST_DIR="$BY_TEST_DIR"
+        export COV_MAIN_AGENT="-javaagent:${AGENT_JAR}=destfile=${BY_TEST_DIR}/_outside-tests.exec"
+        export COV_AGENT="-javaagent:${AGENT_JAR}=destfile=${BY_TEST_DIR}/@COV_TEST@.exec,sessionid=@COV_TEST@"
+    fi
 fi

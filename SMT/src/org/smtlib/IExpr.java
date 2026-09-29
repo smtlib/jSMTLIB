@@ -57,6 +57,8 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
         IAttributedExpr attributedExpr(IExpr e, List<IAttribute<?>> attributes);
         /** Creates an attributed expression with just one attribute. */
         <T extends IAttributeValue> IAttributedExpr attributedExpr(IExpr e, IKeyword key, /*@Nullable*/T value);
+        /** Creates the value of a {@code :pattern} attribute: the given terms as one (multi-)pattern. */
+        IPatternTerms patternTerms(List<IExpr> terms);
         /** Creates a function expression (perhaps with an empty argument list). */
         IFcnExpr fcn(IQualifiedIdentifier id, List<IExpr> args);
         /** Creates a function expression (perhaps with an empty argument list). */
@@ -76,15 +78,21 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
         /** Creates a Forall expression. */
         //@ requires params.size() > 0;
         IForall forall(List<IDeclaration> params, IExpr e);
-        /** Creates a Forall expression with trigger patterns. */
+        /** Creates a Forall expression with trigger patterns: each element of patterns is a
+         *  separate single-term pattern, emitted as {@code :pattern (p)}. */
         //@ requires params.size() > 0;
         IForall forall(List<IDeclaration> params, IExpr e, List<IExpr> patterns);
         /** Creates an Exists expression. */
         //@ requires params.size() > 0;
         IExists exists(List<IDeclaration> params, IExpr e);
-        /** Creates an Exists expression with trigger patterns. */
+        /** Creates an Exists expression with trigger patterns: each element of patterns is a
+         *  separate single-term pattern, emitted as {@code :pattern (p)}. */
         //@ requires params.size() > 0;
         IExists exists(List<IDeclaration> params, IExpr e, List<IExpr> patterns);
+
+        /** Creates a Lambda expression (SMT-LIB 2.7ff, HO-Core theory). */
+        //@ requires params.size() > 0;
+        ILambda lambda(List<IDeclaration> params, IExpr e);
 
         /** Creates an error expression. */
         IError error(String text);
@@ -302,6 +310,14 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
         List<IAttribute<?>> attributes();
     }
 
+    /** This interface represents the value of a {@code :pattern} attribute: a list of terms
+     *  (a multi-pattern), written in the concrete syntax as {@code ( t1 ... tn )}. SMT-LIB 2.7
+     *  (Section 3.6.5) allows the list to be empty. */
+    static public interface IPatternTerms extends IAttributeValue, INode {
+        //@ pure
+        List<IExpr> terms();
+    }
+
     /** This interface represents an SMT-LIB attribute-value pair; the value may be null (keyword-only attribute). */
     static public interface IAttribute<TT extends IAttributeValue> extends INode, IPosable, IResponse {
         //@ pure
@@ -347,6 +363,24 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
 
     /** This interface represents an SMT-LIB quantified exists expression */
     static public interface IExists extends IExpr {
+        //@ ensures \result.size() > 0;
+        List<IDeclaration> parameters();
+        IExpr expr();
+    }
+
+    /** This interface represents an SMT-LIB lambda expression: {@code (lambda (sorted_var+) term)}.
+     *  Lambda is only available as of SMT-LIB version 2.7 and later ("2.7ff") -- it was added to
+     *  the {@code <term>} grammar as part of the optional {@code HO-Core} theory (see
+     *  {@code SMT/logics/HO-Core.smt2}), the same way the non-standard {@code par}-polymorphic
+     *  {@code declare-fun} extension documents its own version/scope restrictions elsewhere.
+     *  jSMTLIB has no general runtime mechanism that would reject this node under an older
+     *  configured version merely for existing; {@link org.smtlib.TypeChecker#visit(ILambda)}
+     *  does check the configured SMT-LIB version explicitly, the same way it already does for
+     *  {@link IMatch}. A lambda's own sort is the function/array sort mapping its parameters'
+     *  sorts to its body's sort -- see {@code TypeChecker.visit(ILambda)} for exactly how (and
+     *  under what conditions) that result sort is computed, using the SMT-LIB 2.7 {@code
+     *  (-> sort+ sort)} function-sort constructor that HO-Core also declares. */
+    static public interface ILambda extends IExpr {
         //@ ensures \result.size() > 0;
         List<IDeclaration> parameters();
         IExpr expr();

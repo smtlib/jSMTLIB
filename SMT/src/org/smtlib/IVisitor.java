@@ -25,6 +25,8 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
     public /*@Nullable*/T visit(IAttribute<?> e) throws VisitorException;
     //public /*@Nullable*/T visit(IAttributeValue e) throws VisitorException;
     public /*@Nullable*/T visit(IAttributedExpr e) throws VisitorException;
+    /** Visits the value of a programmatically built {@code :pattern} attribute; by default does nothing. */
+    default public /*@Nullable*/T visit(IPatternTerms e) throws VisitorException { return null; }
     public /*@Nullable*/T visit(IBinaryLiteral e) throws VisitorException;
     public /*@Nullable*/T visit(IBinding e) throws VisitorException;
     public /*@Nullable*/T visit(IDecimal e) throws VisitorException;
@@ -35,6 +37,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
     public /*@Nullable*/T visit(IHexLiteral e) throws VisitorException;
     //public /*@Nullable*/T visit(IIdentifier e) throws VisitorException;
     public /*@Nullable*/T visit(IKeyword e) throws VisitorException;
+    public /*@Nullable*/T visit(ILambda e) throws VisitorException;
     public /*@Nullable*/T visit(ILet e) throws VisitorException;
     //public /*@Nullable*/T visit(ILiteral e) throws VisitorException;
     public /*@Nullable*/T visit(INumeral e) throws VisitorException;
@@ -140,6 +143,12 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
         }
 
         @Override
+        public /*@Nullable*/T visit(IPatternTerms e) throws VisitorException {
+            for (IExpr t: e.terms()) t.accept(this);
+            return null;
+        }
+
+        @Override
         public /*@Nullable*/T visit(IBinaryLiteral e) throws VisitorException {
             return null;
         }
@@ -182,6 +191,13 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 
         @Override
         public /*@Nullable*/T visit(IForall e) throws VisitorException {
+            for (IDeclaration d: e.parameters()) d.accept(this);
+            e.expr().accept(this);
+            return null;
+        }
+
+        @Override
+        public /*@Nullable*/T visit(ILambda e) throws VisitorException {
             for (IDeclaration d: e.parameters()) d.accept(this);
             e.expr().accept(this);
             return null;

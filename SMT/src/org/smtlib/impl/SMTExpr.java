@@ -449,6 +449,28 @@ public abstract class SMTExpr implements IExpr {
 
     }
 
+    /** Represents an SMT-LIB lambda expression (SMT-LIB 2.7ff, HO-Core theory). */
+    static public class Lambda extends Pos.AbstractExpr implements ILambda {
+        protected List<IDeclaration> parameters;
+        protected IExpr expression;
+
+        /** Creates a lambda expression with the given bound variable declarations and body. */
+        public Lambda(List<IDeclaration> parameters, IExpr expr) {
+            this.parameters = parameters;
+            this.expression = expr;
+        }
+
+        @Override
+        public List<IDeclaration> parameters() { return parameters; }
+
+        @Override
+        public IExpr expr() { return expression; }
+
+        @Override
+        public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+
+    }
+
     /** Represents a sort declaration (symbol and arity) used in declare-datatype and declare-datatypes. */
     static public class SortDeclaration extends Pos.Printable implements IExpr.ISortDeclaration {
         protected ISymbol symbol;
@@ -609,6 +631,22 @@ public abstract class SMTExpr implements IExpr {
 
         @Override public boolean isOK() { return false; }
         @Override public boolean isError() { return false; }
+
+        @Override
+        public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
+    }
+
+    /** Represents the value of a {@code :pattern} attribute: a list of trigger terms. */
+    static public class PatternTerms extends Pos.Printable implements IExpr.IPatternTerms {
+        protected List<IExpr> terms;
+
+        /** Creates a pattern from the given (possibly empty) list of terms. */
+        public PatternTerms(List<IExpr> terms) {
+            this.terms = terms;
+        }
+
+        @Override
+        public List<IExpr> terms() { return terms; }
 
         @Override
         public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }

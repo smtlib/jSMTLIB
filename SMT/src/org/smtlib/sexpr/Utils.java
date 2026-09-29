@@ -11,6 +11,8 @@ public class Utils {
 
     /** Concrete syntax for the match token */
     public static final String MATCH      = "match";
+    /** Concrete syntax for the lambda token (SMT-LIB 2.7ff, HO-Core theory) */
+    public static final String LAMBDA     = "lambda";
     /** Concrete syntax for the special NUMERAL token */
     public static final String NUMERAL    = "NUMERAL";
     /** Concrete syntax for the special DECIMAL token */
@@ -23,6 +25,9 @@ public class Utils {
     public static final String WILDCARD = org.smtlib.Utils.WILDCARD;
     /** Concrete syntax for the token that starts an attributed expression */
     public static final String ATTRIBUTE = "!";
+
+    /** The keyword for a quantifier trigger pattern attribute */
+    public static final String PATTERN = ":pattern";
 
     // SMT-LIB keyword strings used by the sexpr parser and printer; values
     // match org.smtlib.Utils but are held here so Parser/Printer need only one Utils import.
@@ -46,6 +51,7 @@ public class Utils {
         notCmds.add(DECIMAL);
         notCmds.add(EXISTS);
         notCmds.add(FORALL);
+        notCmds.add(LAMBDA);
         notCmds.add(LET);
         notCmds.add(MATCH);
         notCmds.add(NUMERAL);

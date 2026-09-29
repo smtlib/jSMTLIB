@@ -1,0 +1,5 @@
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:13:20: expected '_' or 'Array'
+")
+(error "The get-assertions command is only valid if :produce-assertions has been enabled")

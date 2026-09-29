@@ -269,6 +269,19 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     }
 
     @Override
+    public Void visit(ILambda e) throws IVisitor.VisitorException {
+        append("(" + Utils.LAMBDA + " (");
+        for (IDeclaration a: e.parameters()) {
+            a.accept(this);
+            append(" ");
+        }
+        append(") ");
+        e.expr().accept(this);
+        append(")");
+        return null;
+    }
+
+    @Override
     public Void visit(ILet e) throws IVisitor.VisitorException {
         append("(" + Utils.LET + " (");
         for (IBinding a: e.bindings()) {
@@ -317,6 +330,19 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
             }
             append(")");
         }
+        return null;
+    }
+
+    @Override
+    public Void visit(IExpr.IPatternTerms e) throws IVisitor.VisitorException {
+        append("(");
+        boolean first = true;
+        for (IExpr t: e.terms()) {
+            if (!first) append(" ");
+            first = false;
+            t.accept(this);
+        }
+        append(")");
         return null;
     }
 

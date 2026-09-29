@@ -1,0 +1,2 @@
+success
+(error "line 3 column 37: expecting two integer parameters to floating point sort")

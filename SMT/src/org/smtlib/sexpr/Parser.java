@@ -91,6 +91,14 @@ public class Parser extends Lexer implements IParser {
                 parseLP();
                 boolean anyError = false;
                 while (!isRP()) {
+                    // Without this, a script lacking its closing parenthesis (e.g. one written
+                    // without the enclosing ( ... ), whose first command's '(' was taken as the
+                    // script's) loops forever at the end of input: parseCommand() returns null
+                    // there without consuming anything.
+                    if (isEOD()) {
+                        throw new ParserException("Unexpected end of input: the script is missing its closing parenthesis",
+                                pos(currentPos()-1, currentPos()));
+                    }
                     s = parseCommand();
                     if (s != null) res.add(s);
                     else anyError = true;
@@ -507,6 +515,7 @@ public class Parser extends Lexer implements IParser {
         //        ( ! ...
         //        ( forall ...
         //        ( exists ...
+        //        ( lambda ...
         //        ( let ...
         //        ( symbol ...
         //        ( ( _ symbol ...
@@ -537,6 +546,11 @@ public class Parser extends Lexer implements IParser {
                 IExpr expr = parseExpr();
                 ILexToken rp = parseRP();
                 return setPos(smtConfig.exprFactory.exists(decls, expr), pos(lp.pos(), rp.pos()));
+            } else if (Utils.LAMBDA.equals(s)) {
+                List<IDeclaration> decls = parseDeclarations();
+                IExpr expr = parseExpr();
+                ILexToken rp = parseRP();
+                return setPos(smtConfig.exprFactory.lambda(decls, expr), pos(lp.pos(), rp.pos()));
             } else if (Utils.LET.equals(s)) {
                 List<IBinding> decls = parseBindings();
                 IExpr expr = parseExpr();
@@ -553,7 +567,7 @@ public class Parser extends Lexer implements IParser {
                 return parseIdentifierRest(lp);
             } else if (Utils.ATTRIBUTE.equals(s)) {
                 IExpr expr = parseExpr();
-                List<IAttribute<?>> list = parseAttributeSequence();
+                List<IAttribute<?>> list = parseTermAttributeSequence();
                 ILexToken rp = parseRP();
                 return setPos(smtConfig.exprFactory.attributedExpr(expr,list),pos(lp.pos(), rp.pos()));
             }
@@ -869,7 +883,11 @@ public class Parser extends Lexer implements IParser {
      */
     @Override
     public /*@Nullable*/IExpr.IAttribute<?> parseAttribute() throws ParserException {
-        IKeyword keyword = parseKeyword();
+        return parseAttributeRest(parseKeyword());
+    }
+
+    /** Parses the (optional) value of an attribute whose keyword has already been parsed. */
+    protected /*@Nullable*/IExpr.IAttribute<?> parseAttributeRest(IKeyword keyword) throws ParserException {
         if (isRP() || isEOD()) {
             return setPos(smtConfig.exprFactory.attribute(keyword),keyword.pos());
         }
@@ -905,6 +923,45 @@ public class Parser extends Lexer implements IParser {
             }
             IExpr.IAttribute<?> attr = parseAttribute();
             list.add(attr);
+        }
+        return list;
+    }
+
+    /** Parses the attributes of an annotated term {@code (! t attr+)} up to the right parenthesis.
+     * Like {@link #parseAttributeSequence()}, except that a {@code :pattern} value is parsed as
+     * what SMT-LIB defines it to be, a parenthesized (possibly empty, per SMT-LIB 2.7) list of terms, giving an
+     * {@link IExpr.IPatternTerms} -- the same representation the expression factory builds.
+     * A {@code :pattern} value that is not a list is left for the TypeChecker to report.
+     */
+    public /*@Nullable*/List<IExpr.IAttribute<?>> parseTermAttributeSequence() throws ParserException {
+        List<IExpr.IAttribute<?>> list = new LinkedList<IExpr.IAttribute<?>>();
+        while (!isRP()) {
+            if (isEOD()) {
+                throw new ParserException("Unexpected end of data while parsing attributes",
+                        pos(currentPos()-1, currentPos()));
+            }
+            ILexToken n = peekToken();
+            if (!(n instanceof IKeyword) || !Utils.PATTERN.equals(((IKeyword)n).value())) {
+                list.add(parseAttribute());
+                continue;
+            }
+            IKeyword keyword = parseKeyword();
+            if (!isLP()) {
+                list.add(parseAttributeRest(keyword));
+                continue;
+            }
+            ILexToken lp = parseLP();
+            List<IExpr> terms = new LinkedList<IExpr>();
+            while (!isRP()) {
+                if (isEOD()) {
+                    throw new ParserException("Unexpected end of data while parsing a pattern",
+                            pos(currentPos()-1, currentPos()));
+                }
+                terms.add(parseExpr());
+            }
+            ILexToken rp = parseRP();
+            IExpr.IPatternTerms value = setPos(smtConfig.exprFactory.patternTerms(terms), pos(lp.pos(), rp.pos()));
+            list.add(setPos(smtConfig.exprFactory.attribute(keyword, value), pos(keyword.pos(), rp.pos())));
         }
         return list;
     }
