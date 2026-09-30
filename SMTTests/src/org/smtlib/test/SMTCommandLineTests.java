@@ -14,6 +14,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
+import org.smtlib.IParser;
 import org.smtlib.ISolver;
 import org.smtlib.SMT;
 
@@ -660,5 +661,116 @@ public class SMTCommandLineTests {
         s.cleanup();
 
         Assert.assertNull("cleanup() should null the solver field", f.get(s));
+    }
+
+    // -----------------------------------------------------------------------
+    // Multiple input files on the command line.
+    //
+    // exec()'s per-file loop is "for each file, run doParser(); if its return code is
+    // non-zero, overwrite retcode with it" -- so the final exit code is the *most recent*
+    // non-zero per-file code, not the first, not a worst-of-all-files combination, and a
+    // later success does not reset an earlier failure back to 0. No prior test exercised
+    // more than one input file at a time, so these pin that behavior down directly.
+    // -----------------------------------------------------------------------
+
+    private File writeTempSmt2(String content) throws Exception {
+        File f = File.createTempFile("smtmulti", ".smt2");
+        f.deleteOnExit();
+        try (java.io.PrintWriter pw = new java.io.PrintWriter(f)) {
+            pw.println(content);
+        }
+        return f;
+    }
+
+    @Test public void multipleFilesAllSucceed() throws Exception {
+        File a = writeTempSmt2("(set-logic QF_UF)(exit)");
+        File b = writeTempSmt2("(set-logic QF_LIA)(exit)");
+        int ret = run("--solver", "test", a.getAbsolutePath(), b.getAbsolutePath());
+        Assert.assertEquals("expected 0 when every file succeeds", 0, ret);
+        Assert.assertFalse("expected no error in output", output().contains("(error"));
+    }
+
+    @Test public void multipleFilesAllError() throws Exception {
+        // A type error (retcode 1 via the per-command result.isError() path) and a
+        // malformed/unbalanced script (retcode 1 via the command == null parse-error path)
+        // -- deliberately two different ways of reaching the same code, not the same bug hit twice.
+        File a = writeTempSmt2("(set-logic QF_LIA)(declare-fun x () Bool)(assert (> x 0))");
+        File b = writeTempSmt2("(set-logic QF_UF");
+        int ret = run("--solver", "test", a.getAbsolutePath(), b.getAbsolutePath());
+        Assert.assertEquals("expected 1 when every file errors", 1, ret);
+    }
+
+    @Test public void secondFileErrorAfterFirstFileSucceeds() throws Exception {
+        File a = writeTempSmt2("(set-logic QF_UF)(exit)");
+        File b = writeTempSmt2("(set-logic QF_LIA)(declare-fun x () Bool)(assert (> x 0))");
+        int ret = run("--solver", "test", a.getAbsolutePath(), b.getAbsolutePath());
+        Assert.assertEquals("expected the second file's error code to surface", 1, ret);
+    }
+
+    @Test public void firstFileErrorSurvivesALaterSucceedingFile() throws Exception {
+        // Confirms retcode is not reset to 0 by a later file's success: exec() only ever
+        // overwrites it when a file's own code is non-zero ("if (e != 0) retcode = e;").
+        File a = writeTempSmt2("(set-logic QF_LIA)(declare-fun x () Bool)(assert (> x 0))");
+        File b = writeTempSmt2("(set-logic QF_UF)(exit)");
+        int ret = run("--solver", "test", a.getAbsolutePath(), b.getAbsolutePath());
+        Assert.assertEquals("expected the first file's error code to survive a later success", 1, ret);
+    }
+
+    // -----------------------------------------------------------------------
+    // Exit code 2 (an unrecoverable/internal failure) must survive being followed by a
+    // later file's lesser code (0 or 1), unlike the ordinary "last non-zero wins" rule
+    // above. No SMT-LIB input was found that reaches doParser's own IOException/
+    // ParserException/StackOverflowError/OutOfMemoryError catches -- Parser.java's own
+    // internal recovery (its blanket catch(Exception) in parseCommand(), and its
+    // StackOverflowError/OutOfMemoryError-to-ParserException conversion around each
+    // reflectively-invoked command parse) absorbs all of those into an ordinary
+    // (error ...) response first, i.e. exit code 1. (Confirmed directly: a 200,000-deep
+    // nested expression genuinely overflows the stack, but still exits 1, not 2.) So these
+    // tests drive the aggregation logic directly via a doParser() override rather than
+    // trying to manufacture a real crash.
+    // -----------------------------------------------------------------------
+
+    @Test public void exitCode2SurvivesALaterLesserFile() throws Exception {
+        File a = writeTempSmt2("(exit)");
+        File b = writeTempSmt2("(exit)");
+        SMT s = new SMT() {
+            private int call = 0;
+            @Override protected int doParser(IParser p) {
+                call++;
+                return call == 1 ? 2 : 1;
+            }
+        };
+        s.smtConfig.log.setChannels(outPs, outPs);
+        int ret = s.exec(new String[]{"--solver", "test", a.getAbsolutePath(), b.getAbsolutePath()});
+        s.cleanup();
+        Assert.assertEquals("expected exit code 2 to survive a later file's lesser code", 2, ret);
+    }
+
+    @Test public void exitCode2SurvivesEvenWhenItIsTheLastFile() throws Exception {
+        File a = writeTempSmt2("(exit)");
+        File b = writeTempSmt2("(exit)");
+        SMT s = new SMT() {
+            private int call = 0;
+            @Override protected int doParser(IParser p) {
+                call++;
+                return call == 1 ? 1 : 2;
+            }
+        };
+        s.smtConfig.log.setChannels(outPs, outPs);
+        int ret = s.exec(new String[]{"--solver", "test", a.getAbsolutePath(), b.getAbsolutePath()});
+        s.cleanup();
+        Assert.assertEquals("expected exit code 2 as the final file's own result to still be 2", 2, ret);
+    }
+
+    @Test public void exitCode2SurvivesAMissingSecondFile() throws Exception {
+        File a = writeTempSmt2("(exit)");
+        SMT s = new SMT() {
+            @Override protected int doParser(IParser p) { return 2; }
+        };
+        s.smtConfig.log.setChannels(outPs, outPs);
+        int ret = s.exec(new String[]{"--solver", "test", a.getAbsolutePath(),
+            "/nonexistent/definitely-missing-" + System.nanoTime() + ".smt2"});
+        s.cleanup();
+        Assert.assertEquals("expected exit code 2 to survive a later missing-file error", 2, ret);
     }
 }

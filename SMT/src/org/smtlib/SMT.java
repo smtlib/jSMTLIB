@@ -612,6 +612,7 @@ public class SMT {
             exitValue = smt.exec(args);
         } catch (Throwable t) {
             System.err.println("jSMTLIB: unexpected error: " + t);
+            exitValue = 2;
         } finally {
             smt.cleanup();
         }
@@ -699,10 +700,13 @@ public class SMT {
                         p = smtConfig.smtFactory.createParser(smtConfig,src);
                         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Starting file " + file);
                         int e = doParser(p);
-                        if (e != 0) retcode = e;
+                        // Exit code 2 (an unrecoverable/internal failure) always survives a
+                        // later file's lesser code -- once set, no subsequent file's result
+                        // (0 or 1) is allowed to downgrade it back.
+                        if (e != 0 && retcode != 2) retcode = e;
                     } catch (FileNotFoundException e) {
                         smtConfig.log.logError("Could not find file: " + file + " Exception: " + e);
-                        retcode = 1;
+                        if (retcode != 2) retcode = 1;
                     }
                 }
                 return retcode;
