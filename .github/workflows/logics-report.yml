@@ -1,0 +1,203 @@
+name: Logics report (all platforms)
+
+## Probes every SMT solver binary on every platform for which SMT-LIB logic names
+## it accepts from (set-logic ...), then combines the five runs into one report and
+## checks them against each other for cross-platform consistency.
+##
+## MANUAL ONLY -- there is deliberately no `push:` or `schedule:` trigger. The
+## answers only change when the Solvers repository ships new or rebuilt binaries,
+## or when SMT/logics/ gains a logic, so running this on every push would spend
+## five runners' worth of solver launches to reproduce the same table. Run it from
+## the Actions tab when either of those changes, or when refreshing the tutorial's
+## "SMT-LIB Logics supported by solvers" appendix.
+##
+## Outputs, all as artifacts (nothing is committed):
+##   logics-report-<platform>   per-platform Markdown, LaTeX and JSON
+##   logics-report-combined     the all-platform Markdown report
+## The combined report is also written to the workflow run summary, so the
+## consistency verdict is visible without downloading anything.
+
+on:
+  workflow_dispatch:
+    inputs:
+      solvers:
+        description: 'Comma-separated solver families to probe (e.g. "z3,cvc5"). Blank = every family found for the platform.'
+        required: false
+        default: ''
+      timeout:
+        description: 'Per-probe timeout in seconds. Raise it if slow runners are producing spurious "ambiguous/timeout" verdicts.'
+        required: false
+        default: '10'
+      fail_on_inconsistency:
+        description: 'Fail the run if the same solver version disagrees across platforms. Off by default -- a disagreement is usually worth reading, not a build break.'
+        required: false
+        default: 'false'
+
+jobs:
+  probe:
+    runs-on: ${{ matrix.os }}
+    # A probe is two commands against an already-running binary, but there are
+    # ~45 logics x up to 18 binaries per platform, and a solver that hangs costs
+    # the full per-probe timeout each time. This is a safety net against a hung
+    # binary burning the 6-hour default, not a target.
+    timeout-minutes: 45
+    strategy:
+      matrix:
+        include:
+          - os: macos-14
+            label: macos-arm64
+          - os: macos-15-intel
+            label: macos-x86_64
+          - os: ubuntu-24.04
+            label: linux-x86_64
+          - os: ubuntu-24.04-arm
+            label: linux-arm64
+          - os: windows-2022
+            label: windows
+      fail-fast: false
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v6
+      with:
+        sparse-checkout: ./.github
+        path: ACTIONS
+
+    # smtinterpol is a .jar, so every platform needs a JVM even though the other
+    # solvers are native binaries.
+    - name: Set up JDK 21
+      uses: actions/setup-java@v5
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    # Installs Rosetta 2, builds libcudd (yices2's MCSAT support) and brew-installs
+    # gmp/mpfr (bitwuzla). Without this those binaries fail to launch and would be
+    # graded "rejected" for every logic -- a wrong answer, not a missing one.
+    - name: OS setup
+      uses: ./ACTIONS/.github/actions/os-setup/
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Determine Solvers subdirectory
+      shell: bash
+      run: |
+        case "${{ runner.os }}-${{ runner.arch }}" in
+          macOS-ARM64)  SOLVERS_SUBDIR=Solvers-macos-arm64 ;;
+          macOS-X64)    SOLVERS_SUBDIR=Solvers-macos ;;
+          Linux-ARM64)  SOLVERS_SUBDIR=Solvers-linux-arm64 ;;
+          Linux-X64)    SOLVERS_SUBDIR=Solvers-linux ;;
+          Windows-X64)  SOLVERS_SUBDIR=Solvers-windows ;;
+          *) echo "ERROR: unsupported runner OS/arch: ${{ runner.os }}-${{ runner.arch }}"; exit 1 ;;
+        esac
+        echo "SOLVERS_SUBDIR=$SOLVERS_SUBDIR" >> "$GITHUB_ENV"
+
+    - name: Download Solvers for this platform
+      id: solvers
+      uses: smtlib/Solvers/.github/actions/download-solvers@download-solvers-v1
+      with:
+        subdir: ${{ env.SOLVERS_SUBDIR }}
+
+    # The logic definitions under SMT/logics/ are read at run time to build the row
+    # list, so the working tree is needed as well as the solver binaries.
+    - name: Checkout jSMTLIB
+      uses: ./ACTIONS/.github/actions/jsmtlib-checkout/
+      with:
+        branch: ${{ github.ref_name }}
+
+    - name: Probe logics
+      shell: bash
+      run: |
+        set -euo pipefail
+        SOLVER_DIR="${{ steps.solvers.outputs.dir }}"
+        SOLVER_DIR="${SOLVER_DIR//\\//}"      # forward slashes, for Windows
+        mkdir -p out
+
+        args=(--solver-dir "$SOLVER_DIR"
+              --logics-dir jSMTLIB/SMT/logics
+              --timeout "${{ inputs.timeout }}"
+              --platform-label "${{ matrix.label }}"
+              --out  "out/Logics-${{ matrix.label }}.md"
+              --tex  "out/Logics-${{ matrix.label }}.tex"
+              --json "out/Logics-${{ matrix.label }}.json")
+        if [ -n "${{ inputs.solvers }}" ]; then
+          args+=(--solvers "${{ inputs.solvers }}")
+        fi
+
+        python jSMTLIB/SMTTests/reports/logics-report.py "${args[@]}"
+
+    - name: Upload per-platform results
+      uses: actions/upload-artifact@v7
+      with:
+        name: logics-report-${{ matrix.label }}
+        path: out/
+        if-no-files-found: error
+
+  combine:
+    needs: probe
+    # `always()` so the combine still runs when one platform failed: a report
+    # covering four platforms is far more useful than none, and the missing
+    # platform is visible in the "Solver availability" table.
+    if: always()
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v6
+      with:
+        sparse-checkout: SMTTests/reports
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Download all per-platform results
+      uses: actions/download-artifact@v8
+      with:
+        pattern: logics-report-*
+        path: results
+        merge-multiple: true
+
+    - name: Combine and check consistency
+      id: combine
+      shell: bash
+      run: |
+        set -euo pipefail
+        shopt -s nullglob
+        files=(results/*.json)
+        if [ ${#files[@]} -eq 0 ]; then
+          echo "::error::No per-platform JSON found -- every probe leg must have failed."
+          exit 1
+        fi
+        echo "Combining ${#files[@]} platform result file(s)."
+
+        flag=""
+        if [ "${{ inputs.fail_on_inconsistency }}" = "true" ]; then
+          flag="--fail-on-inconsistency"
+        fi
+        python SMTTests/reports/combine-logics-reports.py \
+          "${files[@]}" --out Logics-all-platforms.md $flag
+
+    - name: Publish report to the run summary
+      # Runs even when the previous step failed the job on an inconsistency --
+      # the report is exactly what is needed to investigate one.
+      if: always()
+      shell: bash
+      run: |
+        if [ -f Logics-all-platforms.md ]; then
+          cat Logics-all-platforms.md >> "$GITHUB_STEP_SUMMARY"
+        else
+          echo "No combined report was produced." >> "$GITHUB_STEP_SUMMARY"
+        fi
+
+    - name: Upload combined report
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: logics-report-combined
+        path: Logics-all-platforms.md
+        if-no-files-found: warn
