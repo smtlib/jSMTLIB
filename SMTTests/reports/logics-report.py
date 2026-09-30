@@ -350,23 +350,45 @@ def run_row(family: str, path: Path, is_jar: bool, row: Row, timeout: float, wor
         tmpname = f.name
     try:
         cmd = solver_command(family, path, is_jar, Path(tmpname))
+        # Popen rather than subprocess.run(timeout=...): run() only attaches the
+        # partial output to TimeoutExpired on Windows -- on POSIX it kills the
+        # process and re-raises with nothing -- so a timeout there would report no
+        # detail at all. Collecting it explicitly after the kill works everywhere,
+        # and the difference matters: "timed out having already printed success" and
+        # "timed out having printed nothing" are completely different diagnoses.
+        #
+        # stdin is closed deliberately. The script is passed as a file argument, so
+        # nothing should be read from stdin; a solver that reads it anyway would
+        # block forever rather than fail visibly.
         try:
-            # stdin is closed deliberately. The script is passed as a file argument,
-            # so nothing should be read from stdin -- but a solver built to read
-            # stdin by default will ignore the argument and block there forever,
-            # timing out on every single row rather than failing visibly. Closing
-            # stdin turns that into an immediate EOF and a real answer. (Suspected
-            # in the first all-platform run: z3 4.3.1/4.3.2 timed out on all 45 rows
-            # on linux-arm64 only, while `z3 -version` ran fine there.)
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout,
-                                  cwd=workdir, stdin=subprocess.DEVNULL)
-        except subprocess.TimeoutExpired:
-            return Result("P", "timeout")
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                    stdin=subprocess.DEVNULL, text=True, cwd=workdir)
         except OSError as e:
             return Result("N", f"exec failed: {e}")
 
-        stdout_lines = [ln.strip() for ln in proc.stdout.splitlines() if ln.strip()]
-        stderr_lines = [ln.strip() for ln in proc.stderr.splitlines() if ln.strip()]
+        try:
+            out, err = proc.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            try:
+                # Bounded: kill() reaches the solver, but any grandchild it spawned
+                # survives holding the pipe open, and an unbounded communicate() then
+                # blocks forever -- trading a timed-out probe for a hung report.
+                out, err = proc.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                out, err = "", ""
+            def _first(stream: str) -> str:
+                lines = [ln.strip() for ln in (stream or "").splitlines() if ln.strip()]
+                return " / ".join(lines[:3])
+            o, e2 = _first(out), _first(err)
+            if o or e2:
+                where = "; ".join(x for x in (f"stdout: {o}" if o else "",
+                                              f"stderr: {e2}" if e2 else "") if x)
+                return Result("P", truncate(f"timeout after {timeout}s ({where})", 200))
+            return Result("P", f"timeout after {timeout}s, no output")
+
+        stdout_lines = [ln.strip() for ln in out.splitlines() if ln.strip()]
+        stderr_lines = [ln.strip() for ln in err.splitlines() if ln.strip()]
 
         if not stdout_lines:
             reason = "no output"
