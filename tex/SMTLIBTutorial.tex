@@ -150,14 +150,14 @@ A tutorial is only as useful as its subject.  This tutorial owes its debt to two
 The first is the distributed group of SMT solver implementors.  These researchers have pushed the
 capabilities of SMT solvers, making them a significantly useful tool for model checking and software verification, and making great strides in solver performance over recent years.  Without good SMT solvers we would have no need for a standard language, nor a tutorial.
 
-The second and more specific acknowledgment is to Cesare Tinelli, Clark Barett and Aaron Stump, the authors of the SMT-LIB version 2 specification.
+The second and more specific acknowledgment is to Cesare Tinelli, Clark Barrett and Aaron Stump, the authors of the SMT-LIB version 2 specification.
 In addition, Tinelli and Silvio Ranise pioneered the SMT-LIB language, and Barrett and Stump, with Leonardo DeMoura, initiated the SMT-COMP solver competition. 
 
 \section*{Version History}
 \addcontentsline{toc}{chapter}{Version History}
 
 \begin{tabular}{llp{4in}}
-2026-09-30 & Verison 2.0 & Rewritten for SMTLIB v2.7 \\
+2026-09-30 & Version 2.0 & Rewritten for SMTLIB v2.7 \\
 2011-02-13 & Version 1.1 & Reported typos corrected \\
 2011-01-24 & Version 1.0 & First round comments incorporated \\
 2010-12-25 & Version 0.2.draft & Updated to 12/21/2010 version of the standard \\
@@ -196,14 +196,15 @@ wider use of SMT solvers, in application areas in which SMT solvers may currentl
 This document consists of two parts:
 \begin{itemize}
 \item Part I is a tutorial on understanding and using the SMT-LIB language for expressing logical problems that are to be solved by SMT solvers.
-\item Part II documents the jsmtlib.jar library, which provides these capabilities:
+\item Part II documents the jSMTLIB.jar library, which provides these capabilities:
 \begin{itemize}
-\item parsing and validating smt-lb command scripts
+\item parsing and validating smt-lib command scripts
 \item the ability to programmatically form smt-lib commands and scripts,  in program memory
 \item manipulating ASTs derived from parsing or direct construction
 \item pretty-printing ASTs as smt-lib text
 \item applying SMT solvers to command script ASTs
 \item as a command-line tool,  reading smt-lib text and submitting it to an SMT solver
+\end{itemize}
 \end{itemize}
 
 Part of the purpose of the library is to provide the ability to construct and manipulate SMT-LIB material in memory.
@@ -301,11 +302,11 @@ understanding of the components.
 First, you need an SMT-LIB conforming solver with which to work.  Unfortunately, most solvers, though they may be excellent at solving constraints, are not yet fully SMT-LIB compliant.  Various options for solvers are described in chapter \ref{Solvers}, from which you may choose.
 Some of them can act as SMT-LIB solvers through a Java adapter interface.  The adapter interface is SMT-LIB conforming, but you still need a back-end SMT solver.  Or you can simply use the adapter interface as a command and type checker, without doing any actual constraint solving.
 To be specific, here is the command line for the adapter+simplify solver (where "{\it <path>}" is replaced by an absolute file-system path to the Simplify executable on your system):\\
-\centerline{{\tt java -jar jSMTLIB.jar --solver simplify -exec} {\it <path>}}
+\centerline{{\tt java -jar jSMTLIB.jar --solver simplify --exec} {\it <path>}}
 
 The command above will respond with a prompt (\verb|> |). If you like, you can type commands directly at the prompt. However, most users may
 prefer to edit a script in a file, both to save the script and to conveniently correct or change the script. In that case, the command would be (here {\it <file>} is the file-system path to the script file---either absolute or relative to the current working directory):\\
-\centerline{{\tt java -jar jsmtlib.jar --echo --solver simplify -exec} {\it <path>} {\it <file>}}
+\centerline{{\tt java -jar jSMTLIB.jar --echo --solver simplify --exec} {\it <path>} {\it <file>}}
 
 \subsubsection*{Basic Boolean example}
 
@@ -666,7 +667,7 @@ Token type & Format & Regular Expression (POSIX)
 
 Reserved words 
 & character sequences that would otherwise be symbols but are reserved for special purposes and may not be used as symbols 
-& {\tt (let|par|\_|!|as|forall|exists|
+& {\tt (let|par|\_|!|as|forall|exists|match|lambda|
 NUMERAL|DECIMAL|STRING)} \hspace*{.5in}
 {\it and all command names}
 %%|assert|
@@ -714,13 +715,16 @@ terminator characters, an omitted closing {\tt "} will not be noticed until the 
 {\bf Reserved words.} Some character sequences are reserved words in SMT-LIB.  They may only be used in specific contexts and 
 may not be used as symbols.  Hence they may not be declared by the user to represent user-defined quantities. The reserved
 words are \\
-\centerline{\bf \tt par NUMERAL DECIMAL STRING \_ ! as let forall exists} 
-and all the commands of the script language.  Note particularly that {\bf \tt \_} and {\bf \tt !} are 
-reserved; their use is described in section \ref{Expressions}.
+\centerline{\bf \tt par NUMERAL DECIMAL STRING \_ ! as let forall exists match lambda}
+and all the commands of the script language.  Note particularly that {\bf \tt \_} and {\bf \tt !} are
+reserved; their use is described in section \ref{Expressions}.  ({\tt match} was added in SMT-LIB 2.6 and {\tt lambda} in SMT-LIB 2.7, as part of the optional {\tt HO-Core} theory; both are reserved words regardless of which theories are active.)
 The currently defined commands are
-\begin{center}{\bf \tt assert check-sat declare-fun declare-sort define-fun define-sort \\
-exit get-assertions get-assignment get-info get-option get-proof \\
-get-unsat-core get-value pop push set-info set-logic set-option }.\end{center}
+\begin{center}{\bf \tt assert check-sat check-sat-assuming \\
+declare-const declare-datatype declare-datatypes declare-fun declare-sort declare-sort-parameter \\
+define-const define-fun define-fun-rec define-funs-rec define-sort \\
+echo exit get-assertions get-assignment get-info get-model get-option get-proof \\
+get-unsat-assumptions get-unsat-core get-value \\
+pop push reset reset-assertions set-info set-logic set-option }.\end{center}
   Though technically there is no need to identify
 reserved words and disallow their use as symbols, SMT-LIB does so as a convenience for (some kinds of) parsers. Thus a {\bf caution:} future
 versions of SMT-LIB might possibly define new commands, which presumably would then disallow their use as symbols, potentially invalidating old
@@ -898,7 +902,7 @@ Attributes and attribute values are used in these circumstances:
 \item as part of a {\tt !} expression (cf. section \ref{Expressions})
 \item to declare the various aspects of a theory or logic (cf. section \ref{LogicsTheories})
 \item to describe associativity characteristics of functions defined in theories (cf. sections \ref{Theories} and \ref{Expressions})
-\item to describe characteristics of a sort symbols defined in a theory (though no such attributes are 
+\item to describe characteristics of sort symbols defined in a theory (though no such attributes are
 currently defined)
 \end{itemize}
 
@@ -1009,8 +1013,8 @@ arguments, independently. So one can write (responses are omitted)
 \boxedexampleB{
 > (set-logic AUFLIRA) \\
 > (assert (= (+ 1 2) 3))  ; adding two Ints \\
-> (assert (= (+ 1.0 2.0) 3.0)  ; adding two Reals \\
-> (assert (= (+ 1 2.0) 3.0)    ; ILLEGAL - mixed sorts
+> (assert (= (+ 1.0 2.0) 3.0))  ; adding two Reals \\
+> (assert (= (+ 1 2.0) 3.0))    ; ILLEGAL - mixed sorts
 }
 
 As the last line of the example above demonstrates, there is no implicit conversion between {\tt Int} values and {\tt Real} values, nor between any other combination of sorts. The only connections between {\tt Int} and {\tt Real} values is through explicit conversion 
@@ -1048,7 +1052,7 @@ Then that function might be used as follows (responses are omitted):
 
 {\bf Quantified expressions.} The SMT-LIB language allows the two conventional quantified expressions ---
 universal ({\it for all}) and existential ({\it there exists}). There is no syntax for the occasionally used
-quantifier meaning "there exists uniquely". Note that quantified expressions are not permitted in
+quantifier meaning ``there exists uniquely''. Note that quantified expressions are not permitted in
 quantifier-free logics (e.g. {\tt QF\_UF}).
 
 Both kinds of quantified expressions provide syntax to specify the names and sorts of parameters over which the
@@ -1056,7 +1060,7 @@ expression quantifies. For example, the expression \\
 \centerline{\tt ( forall ((x Int)) (> (p x) 0) )}
 is true under the {\tt AUFNIRA} logic and an assignment for {\tt p} in which 
 the sub-expression {\tt (p x)} is positive for any {\tt Int} value of {\tt x}.
-Note the double pair of parentheses around ``{\tt x Int}".  The outer pair encloses the whole list of
+Note the double pair of parentheses around ``{\tt x Int}''.  The outer pair encloses the whole list of
 parameters; each name-sort pair is enclosed in its own pair of parentheses.  So if there are two
 quantification variables, we would write\\
 \centerline{\tt ( exists ((x Int)(y Int)) (and (> (+ x y) 0) (< (- x y) 0)))}
@@ -1078,7 +1082,7 @@ equivalent to replacing each new parameter by its expression in the target expre
 eliminating the new symbols completely (renaming functions as needed to avoid name capture by variable bindings).
 
 As with quantified expressions, the new symbol is in scope only within the target expression
-and can shadow previously declared variables and functions within that scope. Also, the new symbols are not in scope in any of the bound expressions --- it is a "parallel let".
+and can shadow previously declared variables and functions within that scope. Also, the new symbols are not in scope in any of the bound expressions --- it is a ``parallel let''.
 For example, presuming {\tt x} and {\tt y} are already defined prior to these {\tt let} expressions
 in the context of the {\tt QF\_LIA} logic,\\
 \centerline{\tt ( let ( (a (+ x y)) (b (- x y)) ) (+ a b))}
@@ -1110,7 +1114,7 @@ is equivalent to the pair of commands\\
 \centerline{\tt (assert (> sum 0))}
 
 This implicit use of {\tt define-fun} may only be used to introduce new function symbols that do not have arguments. Also, the sub-expression being abbreviated may not refer to any parameters of a let or quantified expression (that is, the sub-expression must be {\it closed}).  The new 
-symbol may be used within the same larger expression, as long as it occurs "after" its introduction.  So we can write\\
+symbol may be used within the same larger expression, as long as it occurs ``after'' its introduction.  So we can write\\
 \centerline{\tt (assert (>= (! (+ x y) :named sum) sum))}
 but we cannot use {\tt sum} before it is introduced:\\
 \centerline{\tt (assert (>= sum (! (+ x y) :named sum)))\ \ \ \ ; ILLEGAL}
@@ -1359,7 +1363,7 @@ For example, \\
 \centerline{\tt (define-sort I () Int)}
 defines {\tt I} to be an abbreviation for {\tt Int}.  A use of {\tt I} is then fully equivalent to a use of {\tt Int}.  The empty parentheses are required to indicate that {\tt I} has no parameters.
 
-To demonstrate a parameterized definition, assume that {\tt Int} and {\tt Real} are already defined sorts and that {\tt Pair} is a sort symbol taking two parameters.  The we can define sort symbol {\tt P} with one parameter by\\
+To demonstrate a parameterized definition, assume that {\tt Int} and {\tt Real} are already defined sorts and that {\tt Pair} is a sort symbol taking two parameters.  Then we can define a sort symbol {\tt P} with one parameter by\\
 \centerline{\tt (define-sort P (X) (Pair X X))}
 Then {\tt (P Int)} is equivalent to {\tt (Pair Int Int)} and {\tt (P Real)} is equivalent to {\tt (Pair Real Real)}.
 
@@ -1630,7 +1634,7 @@ proof; if so, the proof can be obtained using the {\tt (get-proof)} command.
 The {\tt (get-proof)} capability is optional.  If it is supported, then
 to obtain proofs, the following conditions must hold:
 \begin{itemize} \nospace
-\item the {\tt :produce-proofs} option must be {\tt true} (which is not the default); the option may only set before the 
+\item the {\tt :produce-proofs} option must be {\tt true} (which is not the default); the option may only be set before the
 {\tt set-logic} command;
 \item a {\tt (check-sat)} command must have been given to the solver, and the most
 recent such command must have returned {\tt unsat};
@@ -1657,7 +1661,7 @@ The response to the command is one of these:
 \end{itemize}
 \end{itemize}
 
-Here is an example of using a solver to check the truth of $((p \imp q) \logand q \imp r)) \imp (p \imp r)$
+Here is an example of using a solver to check the truth of $((p \imp q) \logand (q \imp r)) \imp (p \imp r)$
 (presuming the solver supports proof generation):
 \boxedexample{
 > (set-option :produce-proofs true)\\
@@ -1694,7 +1698,7 @@ provide the unhelpful result of listing all of the named formulae.
 The command takes no arguments and so has the simple form\\
 \centerline{\tt (get-unsat-core)}
 It is subject to similar restrictions as
-the {\tt (get-proofs)} command.  If it is supported, then
+the {\tt (get-proof)} command.  If it is supported, then
 to obtain an unsatisfiable core, the following conditions must hold:
 \begin{itemize} \nospace
 \item the {\tt :produce-unsat-cores} option must be {\tt true} (which is not the default); the option may only be set before the 
@@ -1758,7 +1762,7 @@ The names of the formulae in the unsatisfiable core may be in any order, and may
 
 \subsection{Adding scope: the {\tt push} and {\tt pop} commands}
 
-The {\tt push} and {\tt pop} commands enable some scoping of sort and function declarations and of assertions. In effect, a solver \
+The {\tt push} and {\tt pop} commands enable some scoping of sort and function declarations and of assertions. In effect, a solver
 maintains a single, global
 stack of sets of assertions.  The stack is initialized with one empty assertion set; that assertion set is, initially, the top set on the stack.
 Declaration, definition and assert commands add new declarations, definitions and assertions to the top assertion set of the stack.
@@ -2116,7 +2120,7 @@ success \\
 
 For the most part,  an SMT-LIB user need only know about logics in order to choose the appropriate one
 for the problem to be solved and to know the symbols defined in that logic.  Each logic (and accompanying
-theories) have a definition and description given in a corresponding file.  Inspecting that definition
+theories) has a definition and description given in a corresponding file.  Inspecting that definition
 can be instructive.
 
 A theory defines a vocabulary of sorts and functions, and it associates a sort with relevant literals.
@@ -2133,7 +2137,7 @@ The interested reader can find a wealth of literature on decision procedures rel
 The reader may also wish to consult the text files that define the logics and theories; these are available from the
 SMT-LIB website\cite{smtlibweb}.
 
-Not all of a logic or theory definition is machine-interpretable.  Consequently. logics are actually built-in
+Not all of a logic or theory definition is machine-interpretable.  Consequently, logics are actually built-in
 to solvers rather than the solvers acting only on the contents of the definitions in the logic and theory files.
 Nevertheless the textual description serves as a standard definition of a logic or theory's symbols that all SMT-LIB
 solvers will uniformly implement.
@@ -2359,7 +2363,7 @@ multiplication is permitted only if one multiplicand is a \Real~literal (either 
 \paragraph{QF\_AUFLIA} extends the {\tt QF\_LIA} linear arithmetic logic, with the addition of arrays and arbitrary
 uninterpreted sorts and functions.
 
-\paragraph{AUFLIA} extends {QF\_AUFLIA} by allowing quantifiers.
+\paragraph{AUFLIA} extends {\tt QF\_AUFLIA} by allowing quantifiers.
 
 \paragraph{AUFLIRA} allows quantifiers and includes \Int\ and \Real\ sorts, but is
 limited to linear arithmetic.
@@ -2409,9 +2413,9 @@ FIXME
 \chapter{Installing jSMTLIB}
 
 \begin{itemize}
-\item Current versions of the jSMTLIB library/command-line tool are available at \url{https://github.com/SMTLIB/jSMTLIB/releases.html}.
-\item The source code for the (open-source) project is also in github: \url{https://github.com/SMTLIB/jSMTLIB/}.
-\item Cached copies of the various SMT solvers are available at \url{https://github.com/SMTLIB/Solvers/}
+\item Current versions of the jSMTLIB library/command-line tool are available at \url{https://github.com/smtlib/jSMTLIB/releases}.
+\item The source code for the (open-source) project is also in github: \url{https://github.com/smtlib/jSMTLIB/}.
+\item Cached copies of the various SMT solvers are available at \url{https://github.com/smtlib/Solvers/}
 \end{itemize}
 
 The release is a .zip file, which is to be unzipped in an empty folder of the user's choice; here we will call that folder \texttt{INSTALL}.
@@ -2539,7 +2543,7 @@ When used as a conventional command-line tool, jSMTLIB terminates with conventio
 \item 2 -- an unrecoverable failure while reading input: an I/O error, a parser exception that escaped normal error recovery, a stack overflow, or an out-of-memory condition
 \end{itemize}
 
-A compliant SMT solver, given legitimate input, will emit a standardized response (cf. section TBD) The jSMTLIB tool will pass that on to its caller through the normal output channel.  It is that response that tells the caller what the solver determined concerning the input SMT problem.
+A compliant SMT solver, given legitimate input, will emit a standardized response (cf. section TBD). The jSMTLIB tool will pass that on to its caller through the normal output channel.  It is that response that tells the caller what the solver determined concerning the input SMT problem.
 
 \section{Solvers}
 
@@ -2617,7 +2621,7 @@ It is executed with the command line \\*
 \centerline{\tt java -jar jSMTLIB.jar {\it <file>}}
 where {\it <file>} is the path to the script file to check.
 Information about the command-line options can be obtained using \\*
-\centerline{\tt java -jar jSMTLIB.jar -help}
+\centerline{\tt java -jar jSMTLIB.jar --help}
 
 The tool is available from \url{http://www.grammatech.com/resources/smt/jSMTLIB.tar}. The current version is an alpha release, since some details of the SMT-LIB language are still under discussion and some aspects of theories and logics are not yet implemented. 
 
@@ -2625,9 +2629,14 @@ The tool is available from \url{http://www.grammatech.com/resources/smt/jSMTLIB.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{The SMT-LIB adapters}
-The {\tt jSMTLIB.jar} tool discussed in subsection \ref{validator} also contains adapters that convert standard SMT-LIB input into input specific to some non-SMT-LIB solvers. The Windows versions of Simplify, CVC3 2.2, Yices 1.0.28, and Z3 2.11 are currently supported. To use this feature, you must have an 
+%% FIXME: this whole subsection describes the ~2010-2011 solver lineup (Simplify, CVC3 2.2,
+%% Yices 1.0.28, Z3 2.11). jSMTLIB's actual solver matrix has long since moved on --
+%% current adapters cover many z3 versions (4.3 through 5.1.0), cvc5, yices2, smtinterpol,
+%% and bitwuzla, with Simplify kept only as a legacy adapter. Rewrite this subsection (and
+%% the solver names/versions in the example command line just below) to match.
+The {\tt jSMTLIB.jar} tool discussed in subsection \ref{validator} also contains adapters that convert standard SMT-LIB input into input specific to some non-SMT-LIB solvers. The Windows versions of Simplify, CVC3 2.2, Yices 1.0.28, and Z3 2.11 are currently supported. To use this feature, you must have an
 executable copy of the solver you wish to use. It is then executed by this command-line:
-\centerline{{\tt java -jar jSMTLIB.jar --solver {\it <solvername>} -exec} {\it <path> <file>}}
+\centerline{{\tt java -jar jSMTLIB.jar --solver {\it <solvername>} --exec} {\it <path> <file>}}
 Here {\it <solvername>} is one of {\tt cvc}, {\tt simplify}, {\tt yices}, or {\tt z3} and 
 {\it <path>} is the file system path to the corresponding executable.
 
@@ -2729,7 +2738,7 @@ The SMT-LIB web site (\url{www.smt-lib.org}) lists other tools that process SMT-
 
 \chapter{Supported SMT solvers}
 
-There are a variety of SMT solvers.  In fact there is an annual competition (\url{https://smt-comp.github.io}) to evaluate the capabilities and performance of publicly available solvers.  The jSMTLIB tool works with the solvers contained in the \url{https://github.com/SMTLIB/Solvers} GitHub repository.  The supported solvers are listed here by platform (as of this writing).  There are more solvers than listed here or supported by this tool.  Note that solvers have varying capabilities, from specific to certain logics to very general.
+There are a variety of SMT solvers.  In fact there is an annual competition (\url{https://smt-comp.github.io}) to evaluate the capabilities and performance of publicly available solvers.  The jSMTLIB tool works with the solvers contained in the \url{https://github.com/smtlib/Solvers} GitHub repository.  The supported solvers are listed here by platform (as of this writing).  There are more solvers than listed here or supported by this tool.  Note that solvers have varying capabilities, from specific to certain logics to very general.
 
 %% Table generated by ../gen-supported-solvers from the Solvers repository -- rerun
 %% that script (or `make solver-table`) after the repository changes.
