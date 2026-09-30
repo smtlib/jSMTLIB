@@ -37,7 +37,7 @@ def load(paths: list[Path]) -> list[dict]:
     out = []
     for p in paths:
         try:
-            out.append(json.loads(p.read_text()))
+            out.append(json.loads(p.read_text(encoding="utf-8")))
         except (OSError, ValueError) as e:
             sys.exit(f"error: cannot read {p}: {e}")
     if not out:
@@ -167,6 +167,15 @@ def render(reports: list[dict], bad: list[dict]) -> str:
 
 
 def main() -> int:
+    # Windows consoles default to a legacy code page (cp1252 on the CI runners),
+    # which cannot encode the report's grade symbols. Writing files is handled by
+    # explicit encoding= arguments; this covers --out - and the progress output.
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8")
+        except (AttributeError, OSError):
+            pass
+
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("inputs", nargs="+", type=Path, help="per-platform JSON files")
@@ -184,7 +193,7 @@ def main() -> int:
     if str(args.out) == "-":
         print(text)
     else:
-        args.out.write_text(text)
+        args.out.write_text(text, encoding="utf-8")
         print(f"Wrote {args.out}", file=sys.stderr)
 
     print(f"Platforms: {len(reports)}; solver versions: {len(solver_order(reports))}; "

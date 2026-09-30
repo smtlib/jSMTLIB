@@ -683,6 +683,15 @@ def _wrap_heading(label: str) -> str:
 
 
 def main() -> int:
+    # Windows consoles default to a legacy code page (cp1252 on the CI runners),
+    # which cannot encode the report's grade symbols. Writing files is handled by
+    # explicit encoding= arguments; this covers --out - and the progress output.
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8")
+        except (AttributeError, OSError):
+            pass
+
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--solver-dir", type=Path, default=None, help="Directory containing solver binaries (default: auto-detected Solvers-<platform> next to this checkout)")
     ap.add_argument("--solvers", type=str, default=None, help="Comma-separated subset of solver names to test (default: all discovered)")
@@ -742,11 +751,11 @@ def main() -> int:
     if str(args.out) == "-":
         print(md)
     else:
-        args.out.write_text(md)
+        args.out.write_text(md, encoding="utf-8")
         print(f"Wrote {args.out}", file=sys.stderr)
 
     if args.tex:
-        args.tex.write_text(render_latex(columns, results, rows))
+        args.tex.write_text(render_latex(columns, results, rows), encoding="utf-8")
         print(f"Wrote {args.tex}", file=sys.stderr)
 
     if args.json:
@@ -768,7 +777,7 @@ def main() -> int:
                 for family, version, _p, _j in all_instances
             },
         }
-        args.json.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+        args.json.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         print(f"Wrote {args.json}", file=sys.stderr)
     return 0
 
