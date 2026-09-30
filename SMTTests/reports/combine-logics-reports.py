@@ -40,6 +40,23 @@ GRADE_WORD = {"Y": "accepted", "P": "ambiguous/timeout", "N": "rejected"}
 GROUP_ORDER = ["Baseline", "Official", "Unofficial", "Control"]
 
 
+UNUSABLE = "x"          # binary present but unusable on this platform
+
+
+def unusable_pairs(reports: list[dict]) -> set[tuple[str, str]]:
+    """(platform, solver) pairs where the binary is present but produced no
+    usable verdict on any row -- it timed out (and was then abandoned by
+    logics-report.py). That is one fact about the binary, not 45 logic
+    verdicts, and letting it through as a per-row disagreement is what buried
+    the genuine findings in the first all-platform run."""
+    bad = set()
+    for r in reports:
+        for solver, rows in r["results"].items():
+            if rows and all(c["grade"] == "P" for c in rows.values()):
+                bad.add((r["platform"], solver))
+    return bad
+
+
 def load(paths: list[Path]) -> list[dict]:
     out = []
     for p in paths:
@@ -85,6 +102,7 @@ def find_inconsistencies(reports: list[dict]) -> list[dict]:
     bad = []
     solvers = solver_order(reports)
     rows = row_order(reports)
+    dead = unusable_pairs(reports)
     for solver in solvers:
         for _group, logic in rows:
             by_grade: dict[str, list[str]] = {}
@@ -92,6 +110,8 @@ def find_inconsistencies(reports: list[dict]) -> list[dict]:
                 cell = r["results"].get(solver, {}).get(logic)
                 if cell is None:
                     continue           # this platform doesn't ship this binary
+                if (r["platform"], solver) in dead:
+                    continue           # reported once, under "Unusable binaries"
                 by_grade.setdefault(cell["grade"], []).append(r["platform"])
             if len(by_grade) > 1:
                 bad.append({"solver": solver, "logic": logic, "by_grade": by_grade})
@@ -120,6 +140,7 @@ def render(reports: list[dict], bad: list[dict]) -> str:
     L.append("| `?` | ambiguous response, or the probe timed out |")
     L.append("| `-` | this platform ships no such solver binary |")
     L.append("| `!` | platforms disagree; see the consistency section |")
+    L.append("| `x` | binary present but unusable on every platform that has it |")
     L.append("")
 
     # --- consistency -------------------------------------------------------
@@ -141,6 +162,22 @@ def render(reports: list[dict], bad: list[dict]) -> str:
                      for g, ps in sorted(b["by_grade"].items())]
             L.append(f"| `{b['solver']}` | `{b['logic']}` | " + "; ".join(parts) + " |")
     L.append("")
+
+    # --- unusable binaries -------------------------------------------------
+    dead = unusable_pairs(reports)
+    if dead:
+        L.append("## Unusable binaries")
+        L.append("")
+        L.append("These binaries are present but produced no usable verdict on any row: "
+                 "every probe timed out. That is one fact about the binary on that "
+                 "platform, not a per-logic result, so these are excluded from the "
+                 "consistency check above and shown as `x` below.")
+        L.append("")
+        L.append("| Solver | Platform |")
+        L.append("|:---|:---|")
+        for solver, plat in sorted((s2, p2) for p2, s2 in dead):
+            L.append(f"| `{solver}` | {plat} |")
+        L.append("")
 
     # --- coverage ----------------------------------------------------------
     L.append("## Solver availability")
@@ -168,7 +205,11 @@ def render(reports: list[dict], bad: list[dict]) -> str:
         for s in solvers:
             grades = {r["results"][s][logic]["grade"]
                       for r in reports
-                      if s in r["results"] and logic in r["results"][s]}
+                      if s in r["results"] and logic in r["results"][s]
+                      and (r["platform"], s) not in dead}
+            if not grades and any(s in r["results"] for r in reports):
+                cells.append(UNUSABLE)
+                continue
             if not grades:
                 cells.append(NOT_PRESENT)
             elif len(grades) == 1:
