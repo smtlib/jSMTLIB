@@ -1,0 +1,93 @@
+<title>jSMTLIB: SMT-LIB logics accepted by each solver</title>
+<meta name="keywords" content="SMT solvers, SMT-LIB logics, set-logic">
+<meta name="description" content="Which SMT-LIB logic names each solver accepts, across platforms.">
+<link href="book.css" rel="STYLESHEET" type="text/css" />
+
+<div id="Breadcrumb">
+   <a href="/">Home</a> /
+   <a href="index.html">jSMTLIB project and SMT-LIB resources</a> /
+   <strong>SMT-LIB logics accepted by each solver</strong>
+</div>
+
+<h1>SMT-LIB logics accepted by each solver</h1>
+
+<p>For every logic name jSMTLIB knows about, this records whether <tt>(set-logic L)</tt> gets a plain <tt>success</tt> response -- not whether the solver can actually do anything useful in that logic. Combined from runs on: <tt>linux-arm64</tt>, <tt>linux-x86_64</tt>, <tt>macos-arm64</tt>, <tt>macos-x86_64</tt>, <tt>windows</tt>.</p>
+<p>Versions of one solver that answered every row identically share a column.</p>
+<table>
+<tr><th>&nbsp;</th><th>meaning</th></tr>
+<tr><td align="center"><tt>Y</tt></td><td>accepted -- the solver answered <tt>success</tt></td></tr>
+<tr><td align="center"><tt>A</tt></td><td>accepted, but this solver accepts any string, valid logic or not</td></tr>
+<tr><td align="center"><tt>n</tt></td><td>rejected -- <tt>unsupported</tt>, an error, or no response</td></tr>
+<tr><td align="center"><tt>?</tt></td><td>ambiguous response, or the probe timed out</td></tr>
+<tr><td align="center"><tt>-</tt></td><td>this platform ships no such solver binary</td></tr>
+<tr><td align="center"><tt>x</tt></td><td>binary present but unusable on every platform that has it</td></tr>
+<tr><td align="center"><tt>!</tt></td><td>platforms disagree; see the consistency section</td></tr>
+</table>
+<h2>Cross-platform consistency</h2>
+<p><strong>7 disagreement(s)</strong> -- the same solver version reached different verdicts on different platforms.</p>
+<table><tr><th>Solver</th><th>Logic</th><th>Verdicts by platform</th></tr>
+<tr><td><tt>yices2 2.6.5</tt></td><td><tt>QF_NIA</tt></td><td>rejected on windows; accepted on linux-x86_64, macos-arm64, macos-x86_64</td></tr>
+<tr><td><tt>yices2 2.6.5</tt></td><td><tt>QF_NRA</tt></td><td>rejected on windows; accepted on linux-x86_64, macos-arm64, macos-x86_64</td></tr>
+<tr><td><tt>yices2 2.6.5</tt></td><td><tt>QF_UFNRA</tt></td><td>rejected on windows; accepted on linux-x86_64, macos-arm64, macos-x86_64</td></tr>
+<tr><td><tt>yices2 2.6.5</tt></td><td><tt>QF_ANIA</tt></td><td>rejected on windows; accepted on linux-x86_64, macos-arm64, macos-x86_64</td></tr>
+<tr><td><tt>yices2 2.6.5</tt></td><td><tt>QF_AUFNIA</tt></td><td>rejected on windows; accepted on linux-x86_64, macos-arm64, macos-x86_64</td></tr>
+<tr><td><tt>yices2 2.6.5</tt></td><td><tt>QF_NIRA</tt></td><td>rejected on windows; accepted on linux-x86_64, macos-arm64, macos-x86_64</td></tr>
+<tr><td><tt>yices2 2.6.5</tt></td><td><tt>QF_UFNIA</tt></td><td>rejected on windows; accepted on linux-x86_64, macos-arm64, macos-x86_64</td></tr>
+</table>
+<h2>Unusable binaries</h2>
+<p>Present, but every probe timed out. That is one fact about the binary on that platform, not a per-logic result, so these are excluded from the consistency check and shown as <tt>x</tt> below.</p>
+<table><tr><th>Solver</th><th>Platform</th></tr>
+<tr><td><tt>z3 4.3.1</tt></td><td>linux-arm64</td></tr>
+<tr><td><tt>z3 4.3.2</tt></td><td>linux-arm64</td></tr>
+</table>
+<h2>Logic acceptance</h2>
+<p><tt>A</tt> marks <tt>bitwuzla 0.9.1</tt>, <tt>z3 4.3.0</tt>, <tt>z3 4.3.1</tt>, <tt>z3 4.3.2</tt>: these accept the invalid control logic too, so they do not validate the <tt>set-logic</tt> argument at all.</p>
+<table>
+<tr><th>Group</th><th>Logic</th><th>alt-ergo<br/>2.6.3</th><th>bitwuzla<br/>0.9.1</th><th>cvc5<br/>1.3.2</th><th>smtinterpol<br/>2.5</th><th>yices2<br/>2.6.5</th><th>yices2<br/>2.7.0</th><th>z3<br/>4.3.0-4.3.2</th><th>z3<br/>4.5.0-5.1.0</th></tr>
+<tr><td>Baseline</td><td><tt>(default)</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>ALL</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>Official</td><td><tt>AUFLIA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>AUFLIRA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>AUFNIRA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>LIA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>LRA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_ABV</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_AUFBV</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_AUFLIA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_AX</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_BV</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_EIA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>n</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_FP</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_IDL</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_LIA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_LRA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_NIA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>!</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_NRA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>!</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_RDL</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_UF</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_UFBV</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_UFIDL</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_UFLIA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_UFLRA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_UFNRA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>!</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>UFLRA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>UFNIA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>Unofficial</td><td><tt>ALIA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>BV</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>NIA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>NRA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_ALIA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_ANIA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>!</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_AUFNIA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>!</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_BVFP</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_LIRA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_NIRA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>!</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>QF_UFNIA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>!</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>UF</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>UFBV</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>UFIDL</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>UFLIA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>&nbsp;</td><td><tt>UFNRA</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>Y</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>Y</tt></td></tr>
+<tr><td>Control</td><td><tt>ZZZ</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>n</tt></td><td align="center"><tt>A</tt></td><td align="center"><tt>n</tt></td></tr>
+</table>
+<p><em>Generated by <tt>SMTTests/reports/combine-logics-reports.py</tt> in the jSMTLIB repository.</em></p>

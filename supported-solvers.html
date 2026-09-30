@@ -1,0 +1,49 @@
+<title>jSMTLIB: Supported SMT solvers</title>
+<meta name="keywords" content="SMT solvers, SMT-LIB, platforms">
+<meta name="description" content="Which SMT solvers jSMTLIB supports on each platform.">
+<link href="book.css" rel="STYLESHEET" type="text/css" />
+
+<div id="Breadcrumb">
+   <a href="/">Home</a> /
+   <a href="index.html">jSMTLIB project and SMT-LIB resources</a> /
+   <strong>Supported SMT solvers</strong>
+</div>
+
+<h1>Supported SMT solvers</h1>
+
+<p>
+There are a variety of SMT solvers. In fact there is an annual competition
+(<a href="https://smt-comp.github.io">SMT-COMP</a>) to evaluate the capabilities
+and performance of publicly available solvers. The jSMTLIB tool works with the
+solvers contained in the <a href="https://github.com/SMTLIB/Solvers">SMTLIB/Solvers</a>
+GitHub repository. The supported solvers are listed here by platform (as of this
+writing). There are more solvers than listed here or supported by this tool. Note
+that solvers have varying capabilities, from specific to certain logics to very
+general.
+</p>
+<p><tt>smtinterpol</tt> is a Java archive and so runs on every platform. The
+Windows builds are supplied as <tt>.exe</tt> files.</p>
+<table>
+<tr><th>Solver</th><th>Linux x86-64</th><th>Linux arm64</th><th>macOS x86-64</th><th>macOS arm64</th><th>Windows</th></tr>
+<tr><td><tt>alt-ergo-2.6.3</tt></td><td align="center">&#10003;</td><td align="center"></td><td align="center"></td><td align="center">&#10003;</td><td align="center"></td></tr>
+<tr><td><tt>bitwuzla-0.9.1</tt></td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center"></td><td align="center">&#10003;</td><td align="center">&#10003;</td></tr>
+<tr><td><tt>cvc5-1.3.2</tt></td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td></tr>
+<tr><td><tt>Simplify-1.5.4</tt></td><td align="center">&#10003;</td><td align="center"></td><td align="center"></td><td align="center"></td><td align="center">&#10003;</td></tr>
+<tr><td><tt>smtinterpol-2.5</tt></td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td></tr>
+<tr><td><tt>yices2-2.6.5</tt></td><td align="center">&#10003;</td><td align="center"></td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td></tr>
+<tr><td><tt>yices2-2.7.0</tt></td><td align="center">&#10003;</td><td align="center"></td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center"></td></tr>
+<tr><td><tt>z3-5.1.0</tt></td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td></tr>
+<tr><td><tt>z3-4.16.0</tt></td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td></tr>
+<tr><td><tt>z3-4.14.1</tt></td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td></tr>
+<tr><td><tt>z3-4.12.6</tt></td><td align="center">&#10003;</td><td align="center"></td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td></tr>
+<tr><td><tt>z3-4.10.2</tt></td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td></tr>
+<tr><td><tt>z3-4.8.12</tt></td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td></tr>
+<tr><td><tt>z3-4.7.1</tt></td><td align="center">&#10003;</td><td align="center"></td><td align="center">&#10003;</td><td align="center"></td><td align="center">&#10003;</td></tr>
+<tr><td><tt>z3-4.6.0</tt></td><td align="center">&#10003;</td><td align="center"></td><td align="center">&#10003;</td><td align="center"></td><td align="center"></td></tr>
+<tr><td><tt>z3-4.5.0</tt></td><td align="center">&#10003;</td><td align="center"></td><td align="center">&#10003;</td><td align="center"></td><td align="center"></td></tr>
+<tr><td><tt>z3-4.3.2</tt></td><td align="center"></td><td align="center">&#10003;</td><td align="center"></td><td align="center"></td><td align="center">&#10003;</td></tr>
+<tr><td><tt>z3-4.3.1</tt></td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center">&#10003;</td><td align="center"></td></tr>
+<tr><td><tt>z3-4.3.0</tt></td><td align="center">&#10003;</td><td align="center"></td><td align="center"></td><td align="center"></td><td align="center"></td></tr>
+</table>
+<p><em>This page is generated from the contents of the Solvers repository;
+see <tt>gen-supported-solvers</tt> in the gh-pages branch.</em></p>

@@ -5,9 +5,11 @@ Writes two files, both fully generated -- edit this script, not them:
 
   tex/supported-solvers.tex   a bare LaTeX tabular, \input by the "Supported SMT
                               solvers" appendix of tex/SMTLIBTutorial.tex
-  supported-solvers.md        the same table plus the appendix's prose, published
+  supported-solvers.html      the same table plus the appendix's prose, published
                               at https://smtlib.github.io/jSMTLIB/ and linked
-                              from index.html
+                              from index.html. HTML rather than Markdown: GitHub
+                              Pages runs Jekyll, and Jekyll serves a .md file
+                              without YAML front matter as raw text.
 
 Usage:  ./gen-supported-solvers [path-to-Solvers-repo]
 
@@ -95,7 +97,7 @@ def order(found):
     return sorted(found, key=key)
 
 
-def cells(found, key):
+def cells_for(found, key):
     return [key in found and pdir in found[key] for pdir, _ in PLATFORMS]
 
 
@@ -125,7 +127,7 @@ def write_tex(path, found, rows, solvers_dir):
     for key in rows:
         name, version = key
         label = "%s-%s" % (name, version)
-        marks = ["$\\bullet$" if c else "" for c in cells(found, key)]
+        marks = ["$\\bullet$" if c else "" for c in cells_for(found, key)]
         out.append("{\\tt %s} & " % label.replace("_", "\\_") +
                    " & ".join(marks) + " \\\\")
     out.append("\\hline")
@@ -161,7 +163,7 @@ def write_md(path, found, rows):
     out.append("|:---|" + ":---:|" * len(PLATFORMS))
     for key in rows:
         name, version = key
-        marks = ["✓" if c else "" for c in cells(found, key)]
+        marks = ["✓" if c else "" for c in cells_for(found, key)]
         out.append("| `%s-%s` | " % (name, version) + " | ".join(marks) + " |")
     out.append("")
     out.append("*This table is generated from the contents of the Solvers repository;")
@@ -171,6 +173,56 @@ def write_md(path, found, rows):
         f.write("\n".join(out))
 
 
+HTML_HEAD = """<title>jSMTLIB: %(title)s</title>
+<meta name="keywords" content="SMT solvers, SMT-LIB, platforms">
+<meta name="description" content="%(desc)s">
+<link href="book.css" rel="STYLESHEET" type="text/css" />
+
+<div id="Breadcrumb">
+   <a href="/">Home</a> /
+   <a href="index.html">jSMTLIB project and SMT-LIB resources</a> /
+   <strong>%(title)s</strong>
+</div>
+
+<h1>%(title)s</h1>
+"""
+
+
+def write_html(path, found, rows):
+    """A plain HTML page, not Markdown. GitHub Pages runs Jekyll, but Jekyll only
+    converts .md files that carry YAML front matter -- one without it is copied
+    through and served as raw text. Emitting HTML sidesteps that entirely, keeps
+    the link in index.html valid (Jekyll would have renamed the output to .html
+    anyway), and picks up book.css like the rest of the site."""
+    out = [HTML_HEAD % {"title": "Supported SMT solvers",
+                        "desc": "Which SMT solvers jSMTLIB supports on each platform."}]
+    out.append("<p>")
+    out.append("There are a variety of SMT solvers. In fact there is an annual competition")
+    out.append('(<a href="https://smt-comp.github.io">SMT-COMP</a>) to evaluate the capabilities')
+    out.append("and performance of publicly available solvers. The jSMTLIB tool works with the")
+    out.append('solvers contained in the <a href="https://github.com/SMTLIB/Solvers">SMTLIB/Solvers</a>')
+    out.append("GitHub repository. The supported solvers are listed here by platform (as of this")
+    out.append("writing). There are more solvers than listed here or supported by this tool. Note")
+    out.append("that solvers have varying capabilities, from specific to certain logics to very")
+    out.append("general.")
+    out.append("</p>")
+    out.append("<p><tt>smtinterpol</tt> is a Java archive and so runs on every platform. The")
+    out.append("Windows builds are supplied as <tt>.exe</tt> files.</p>")
+    out.append("<table>")
+    out.append("<tr><th>Solver</th>" +
+               "".join("<th>%s</th>" % h for _, h in PLATFORMS) + "</tr>")
+    for key in rows:
+        name, version = key
+        cells = "".join("<td align=\"center\">%s</td>" % ("&#10003;" if c else "")
+                        for c in cells_for(found, key))
+        out.append("<tr><td><tt>%s-%s</tt></td>%s</tr>" % (name, version, cells))
+    out.append("</table>")
+    out.append("<p><em>This page is generated from the contents of the Solvers repository;")
+    out.append("see <tt>gen-supported-solvers</tt> in the gh-pages branch.</em></p>")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(out) + "\n")
+
+
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     solvers_dir = find_solvers_dir(sys.argv)
@@ -178,14 +230,14 @@ def main():
     rows = order(found)
 
     tex = os.path.join(here, "tex", "supported-solvers.tex")
-    md = os.path.join(here, "supported-solvers.md")
+    html = os.path.join(here, "supported-solvers.html")
     write_tex(tex, found, rows, solvers_dir)
-    write_md(md, found, rows)
+    write_html(html, found, rows)
 
     print("Solvers repo: %s" % solvers_dir)
     print("%d solver versions across %d platforms" % (len(rows), len(PLATFORMS)))
     print("wrote %s" % tex)
-    print("wrote %s" % md)
+    print("wrote %s" % html)
 
 
 if __name__ == "__main__":
