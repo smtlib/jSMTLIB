@@ -323,6 +323,14 @@ Z3_PRE_4_5_QUIRK_TEX = (
 # ---------------------------------------------------------------------------
 
 
+# A binary that times out on this many consecutive rows is treated as unusable on
+# this platform and not probed further. The verdicts would all be the same, and at
+# a realistic timeout the wasted wall time is enough to exceed the CI job limit.
+ABANDON_AFTER = 3
+ABANDONED_DETAIL = ("not probed: the solver timed out on the first "
+                    f"{ABANDON_AFTER} rows, so the binary appears unusable on this platform")
+
+
 @dataclass
 class Result:
     grade: str  # "Y", "P", "N"
@@ -782,9 +790,29 @@ def main() -> int:
         total = len(all_instances) * len(rows)
         done = 0
         for family, version, path, is_jar in all_instances:
+            consecutive_timeouts = 0
+            abandoned = False
             for row in rows:
+                if abandoned:
+                    results[((family, version), row.name)] = Result("P", ABANDONED_DETAIL)
+                    done += 1
+                    continue
                 res = run_row(family, path, is_jar, row, args.timeout, workdir_path)
                 results[((family, version), row.name)] = res
+                if res.grade == "P" and res.detail.startswith("timeout"):
+                    consecutive_timeouts += 1
+                else:
+                    consecutive_timeouts = 0
+                if consecutive_timeouts >= ABANDON_AFTER:
+                    # Nothing is learned by timing out another 40-odd times, and the
+                    # cost is real: on linux-arm64 the two z3 4.3.x binaries hang on
+                    # every row, and at a 30s timeout that alone is 45 minutes --
+                    # enough to blow the CI job limit (run 36739244137 was cancelled
+                    # for exactly this). Record the rest as not probed, and let the
+                    # combined report say "unusable here" once instead of 45 times.
+                    abandoned = True
+                    print(f"  abandoning {family} {version}: timed out on "
+                          f"{ABANDON_AFTER} consecutive rows", file=sys.stderr)
                 done += 1
                 if done % 25 == 0 or done == total:
                     print(f"  {done}/{total}", file=sys.stderr)
