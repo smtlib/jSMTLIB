@@ -351,7 +351,15 @@ def run_row(family: str, path: Path, is_jar: bool, row: Row, timeout: float, wor
     try:
         cmd = solver_command(family, path, is_jar, Path(tmpname))
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=workdir)
+            # stdin is closed deliberately. The script is passed as a file argument,
+            # so nothing should be read from stdin -- but a solver built to read
+            # stdin by default will ignore the argument and block there forever,
+            # timing out on every single row rather than failing visibly. Closing
+            # stdin turns that into an immediate EOF and a real answer. (Suspected
+            # in the first all-platform run: z3 4.3.1/4.3.2 timed out on all 45 rows
+            # on linux-arm64 only, while `z3 -version` ran fine there.)
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout,
+                                  cwd=workdir, stdin=subprocess.DEVNULL)
         except subprocess.TimeoutExpired:
             return Result("P", "timeout")
         except OSError as e:
