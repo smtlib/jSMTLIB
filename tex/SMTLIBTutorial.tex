@@ -193,6 +193,25 @@ wider use of SMT solvers, in application areas in which SMT solvers may currentl
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Purpose and Content}
 
+This document consists of two parts:
+\begin{itemize}
+\item Part I is a tutorial on understanding and using the SMT-LIB language for expressing logical problems that are to be solved by SMT solvers.
+\item Part II documents the jsmtlib.jar library, which provides these capabilities:
+\begin{itemize}
+\item parsing and validating smt-lb command scripts
+\item the ability to programmatically form smt-lib commands and scripts,  in program memory
+\item manipulating ASTs derived from parsing or direct construction
+\item pretty-printing ASTs as smt-lib text
+\item applying SMT solvers to command script ASTs
+\item as a command-line tool,  reading smt-lib text and submitting it to an SMT solver
+\end{itemize}
+
+Part of the purpose of the library is to provide the ability to construct and manipulate SMT-LIB material in memory.
+
+A second part is to provide a uniform interface to SMT solvers.  SMT solvers have progressed greatly in the past decades but they each have their own quirks and some are not completely SMT-LIB-compliant.  This library provides a uniform way to interact with all the supported solvers.
+
+\section{The tutorial}
+
 
 This tutorial is intended for two audiences.  The primary audience is individuals somewhat new to SMT solvers, or at least to the particular input and output format that is SMT-LIB v.2. 
 This tutorial will provide these readers
@@ -2095,7 +2114,7 @@ success \\
 \chapter{Logics and Theories}
 \label{LogicsTheories}
 
-For the most part, an SMT-LIB user need only know about logics in order to choose the appropriate one
+For the most part,  an SMT-LIB user need only know about logics in order to choose the appropriate one
 for the problem to be solved and to know the symbols defined in that logic.  Each logic (and accompanying
 theories) have a definition and description given in a corresponding file.  Inspecting that definition
 can be instructive.
@@ -2407,21 +2426,126 @@ The jSMTLIB command-line tool is a classic command-line tool: it takes space-sep
 \item options begin with two hyphens, with some abbreviations beginning with just one hyphen
 \item if an option takes a value, the value follows the option on the command-line, separated by white space (e.g. \texttt{--verbose 1})
 \item if an option is repeated, typically the later instance simply overrides the earlier one
-\item options typically have a default value; if a boolean option is turned on by, say \texttt{--zzz}, it may be able to be turned off by \texttt{--no-zzz}
+\item options typically have a default value; a handful of boolean options (e.g. {\tt -{}-abort}, {\tt -{}-relax}) simply turn a behavior on when present --- there is no corresponding {\tt -{}-no-...} form to turn such a setting back off within the same command line
 \item file paths are either absolute or relative to the current working directory of the shell in which the command is executed
+\item any non-file-path arguments that are not files and begin with a single or double hyphen but are not among the recognized options listed below cause the tool to print an error and a short usage message, and to exit without processing any input
 \end{itemize}
 
-The tool recognizes these command-line options:
-\begin{itemize}
-\item zzz
-\end{itemize}
+\section{Summary of options}
 
-\chapter{jSMTLIB as a command-line tool: SMT validation}
+\begin{tabular}{|l|l|l|l|}
+\hline
+Option & Short & Argument & Default\\
+\hline
+\hyperref[opt:help]{\tt -{}-help} & {\tt -h} & --- & --- \\
+\hyperref[opt:version]{\tt -{}-version} & & --- & ---  \\
+\hyperref[opt:verbose]{\tt -{}-verbose} & {\tt -v} & \numeral\ ({\tt -v} means 1) & 0 \\
+\hyperref[opt:solver]{\tt -{}-solver} & {\tt -s} & solver name & {\tt test} (or a configured default) \\
+\hyperref[opt:exec]{\tt -{}-exec} & {\tt -e} & path & none (looked up by name) \\
+\hyperref[opt:logics]{\tt -{}-logics} & {\tt -L} & path & built-in definitions \\
+\hyperref[opt:out]{\tt -{}-out} & & filename, {\tt stdout}, or {\tt stderr} & {\tt stdout} \\
+\hyperref[opt:diag]{\tt -{}-diag} & & filename, {\tt stdout}, or {\tt stderr} & {\tt stderr} \\
+\hyperref[opt:port]{\tt -{}-port} & & \numeral & disabled \\
+\hyperref[opt:text]{\tt -{}-text} & & \strng & disabled \\
+\hyperref[opt:timeout]{\tt -{}-timeout} & {\tt -t} & seconds (fractional allowed) & no timeout \\
+\hyperref[opt:timeouttotal]{\tt -{}-timeout-total} & {\tt -T} & seconds (fractional allowed) & no timeout \\
+\hyperref[opt:seed]{\tt -{}-seed} & & \numeral & 0 \\
+\hyperref[opt:echo]{\tt -{}-echo} & & --- & off \\
+\hyperref[opt:abort]{\tt -{}-abort} & & --- & off \\
+\hyperref[opt:noshow]{\tt -{}-noshow} & & --- & off \\
+\hyperref[opt:nosuccess]{\tt -{}-nosuccess} & {\tt -q} & --- & off \\
+\hyperref[opt:relax]{\tt -{}-relax} & {\tt -r} & --- & off \\
+\hyperref[opt:testing]{\tt -{}-testing} & & --- & off \\
+\hline
+\end{tabular}
+
+\bigskip
+The following sections describe each of these options in more detail, grouped by the aspect of the tool's behavior that they affect.
+
+\section{General options}
+
+\paragraph{\tt -h, -{}-help}\label{opt:help} --Prints a summary of the command-line options (an abbreviated version of this chapter) and exits immediately, without reading or processing any input.
+
+\paragraph{\tt -{}-version}\label{opt:version} --Prints the version identifier of the jSMTLIB tool and exits immediately, without reading or processing any input.
+
+\section{Solver selection}
+
+\paragraph{\tt -s, -{}-solver \it <name>}\label{opt:solver} --Selects the SMT solver that jSMTLIB is to drive. The {\it <name>} both identifies the Java adapter class that translates between the SMT-LIB protocol and that solver's own input/output conventions, and, unless {\tt -{}-exec} is also given, is used to locate the solver's executable (either from an entry in the tool's {\tt jsmtlib.properties} configuration file, or, failing that, by using {\it <name>} itself as the executable to be found on the system {\tt PATH} or in the directory named by the {\tt SMT\_SOLVER\_DIR} environment variable). The special name {\tt test} selects a built-in mock solver, implemented entirely in Java with no external executable, which is chiefly useful for testing jSMTLIB itself or for checking a script's syntax and typing without doing any actual constraint solving. If {\tt -{}-solver} is not given, jSMTLIB uses a default configured in {\tt jsmtlib.properties}, or, if none is configured, {\tt test}.
+
+\paragraph{\tt -e, -{}-exec \it <path>}\label{opt:exec} --Gives the file-system path of the executable to run for the solver named by {\tt -{}-solver}, overriding whatever path or command jSMTLIB would otherwise have looked up for that solver. This option requires that {\tt --solver} also be given explicitly on the same command line; naming an executable without also stating which adapter should talk to it is an error.
+
+\section{Input, output, and communication}
+
+By default jSMTLIB reads SMT-LIB commands from standard input (prompting for each command, and terminated by an end-of-file, e.g.\ control-D) and writes its responses to standard output, with the options below providing alternatives to that default behavior. Any command-line arguments that are not options (and not values consumed by an option) are taken to be paths to script files, which are read and executed, in the order listed, after all options have been processed; if any files are listed, they are used instead of standard input.
+
+\paragraph{\tt -L, -{}-logics \it <path>}\label{opt:logics} --Gives the file-system path of a directory containing SMT-LIB logic and theory definitions, to be used instead of the definitions built into the jSMTLIB jar file. This is useful when experimenting with a new or modified logic or theory definition, or with definitions for a logic that is not yet built in.
+
+\paragraph{\tt -{}-out \it <destination>}\label{opt:out} --Sets the destination for jSMTLIB's regular output (command responses, including error messages) --- the same channel that a running script can itself redirect using the {\tt :regular-output-channel} option (Section~\ref{Options}). The {\it <destination>} is either the literal string {\tt stdout} or {\tt stderr}, or otherwise a file-system path to which the output is written (created if it does not exist, appended to if it does). The default, absent this option, is {\tt stdout}.
+
+\paragraph{\tt -{}-diag \it <destination>}\label{opt:diag} --Sets the destination for jSMTLIB's diagnostic output (verbose/tracing information, controlled by {\tt --verbose} and by a script's own {\tt :verbosity} option), analogous to {\tt --out} above but for the channel a script can redirect using {\tt :diagnostic-output-channel} (Section~\ref{Options}). The {\it <destination>} is interpreted the same way as for {\tt --out}. The default, absent this option, is {\tt stderr}.
+
+\paragraph{\tt -{}-port \it <number>}\label{opt:port} --Instead of reading commands from files or from standard input, jSMTLIB opens a server socket on the given TCP port and reads a single client's commands from that socket, sending responses back over the same connection; this is intended for driving jSMTLIB from another program (such as an IDE) rather than from a terminal. This option may not be combined with file arguments on the command line, and is ignored if {\tt --text} is also given.
+
+\paragraph{\tt -{}-text \it <string>}\label{opt:text} --Supplies the entire script of SMT-LIB commands to execute as a single string, given directly on the command line, instead of reading it from a file, from standard input, or from a socket. This is mainly useful when jSMTLIB is invoked programmatically by another tool that already has the script text in hand (for example, an editor plug-in acting on unsaved buffer contents); it takes precedence over both {\tt --port} and any file arguments, which are ignored if {\tt --text} is given.
+
+\section{Execution control}
+
+\paragraph{\tt -{}-echo}\label{opt:echo} --When enabled, each command is echoed to the diagnostic output channel (see {\tt --diag}) as soon as it is successfully parsed, immediately before it is executed. This is useful when running a script from a file: normally only the responses are shown, so echoing lets the log also show which command produced each response.
+
+\paragraph{\tt -{}-abort}\label{opt:abort} --When enabled, jSMTLIB stops as soon as any command produces an error (a parsing error, a type-checking error, or an error response from the solver), rather than continuing on to the remaining commands. When reading from a file, from {\tt -{}-text}, or from a socket, this ends processing of that input entirely; when reading interactively from a terminal, only the remainder of the current input line is discarded, after which jSMTLIB resumes prompting for further commands. When this option is not given (the default), jSMTLIB reports each error but continues on to subsequent commands, in keeping with normal SMT-LIB semantics.
+
+\paragraph{\tt -{}-noshow}\label{opt:noshow} --When enabled, error messages are reported without the source-position (line and column) information that jSMTLIB would otherwise attach to them. This can be useful when comparing output across runs or across solvers where exact positions are not of interest, or where a difference of position would obscure some other, wanted, comparison.
+
+\paragraph{\tt -q, -{}-nosuccess}\label{opt:nosuccess} --When enabled, sets the initial value of the solver's {\tt :print-success} option (Section~\ref{Options}) to {\tt false}, so that the {\tt success} response is suppressed after each command that completes without error, just as if the script itself began with {\tt (set-option :print-success false)}. Error messages and other, non-empty responses are still printed regardless of this option. This is convenient for batch use, where a stream of {\tt success} lines is only noise, or for scripts that later re-enable {\tt :print-success} explicitly.
+
+\paragraph{\tt -r, -{}-relax}\label{opt:relax} --When enabled, permits some convenience relaxations of the strict SMT-LIB standard, including the recognition of jSMTLIB's own non-standard command extensions (in addition to the standard SMT-LIB commands). When this option is not given (the default), only strictly standard-conforming syntax and commands are accepted.
+
+\section{Timeouts}
+
+\paragraph{\tt -t, -{}-timeout \it <seconds>}\label{opt:timeout} --Sets a soft, per-query timeout, expressed in seconds (fractional values, such as {\tt 0.5}, are allowed); a value of zero or less (also the default, if this option is not given) means no timeout. jSMTLIB always expresses this value in seconds regardless of which solver is in use; each solver adapter is responsible for converting it into whatever unit, command-line flag, or protocol option that particular solver actually supports (which may, for example, be milliseconds rather than seconds). For a solver that has no way to limit an individual query, the adapter applies this value as a best-effort whole-run limit instead.
+
+\paragraph{\tt -T, -{}-timeout-total \it <seconds>}\label{opt:timeouttotal} --Sets a timeout on the entire lifetime of the solver process, expressed in seconds (fractional values allowed); a value of zero or less (the default) means no timeout. As with {\tt -{}-timeout}, the value is always given here in seconds and is converted by each solver's adapter into that solver's own unit and mechanism; for a solver with no whole-run limit of its own, the adapter applies this value as a best-effort per-query limit instead.
+
+\section{Verbosity, logging, and testing aids}
+
+\paragraph{\tt -v, -{}-verbose \it <int>}\label{opt:verbose} --Sets jSMTLIB's own internal verbosity level to the given non-negative integer ({\tt -v} alone is shorthand for {\tt -{}-verbose 1}); a negative or non-numeric argument is rejected as an error. At the default level, 0, jSMTLIB produces only the normal command responses; at higher levels it also writes diagnostic tracing --- such as which properties files were read, which file is currently being processed, and which command is about to be executed --- to the diagnostic output channel (see {\tt -{}-diag}). This is distinct from a solver's own verbosity (some solvers have a command-line verbosity setting of their own) and from the SMT-LIB {\tt :verbosity} option (Section~\ref{Options}), which controls diagnostic output requested from within a script rather than from jSMTLIB itself.
+
+\paragraph{\tt -{}-seed \it <int>}\label{opt:seed} --If non-zero, a seed value that jSMTLIB passes on to the solver to initialize its internal random-number generator (where the underlying solver adapter supports doing so), analogous in intent to the SMT-LIB {\tt :random-seed} option (Section~\ref{Options}) but supplied once, up front, from the command line rather than by a script command. The default, 0, leaves the choice of seed to the solver's own internal logic.
+
+\paragraph{\tt -{}-testing}\label{opt:testing} --When enabled, known sources of non-deterministic content in a solver's response to {\tt get-info} --- such as elapsed-time figures or memory-usage statistics --- are replaced with a fixed placeholder before being reported, so that otherwise-identical output is reproducible byte-for-byte across runs and across machines. This is a testing aid for jSMTLIB's own test suite rather than a normal end-user option, and, as of this writing, only affects statistics- and memory-related {\tt get-info} responses.
+
+\chapter{jSMTLIB as a command-line tool: SMT validation and satisfiability checking}
 
 jSMTLIB is a pure Java library, released as a \texttt{.jar} file. It can be run using 
 \texttt{java -jar INSTALL/jSMTLIB.jar } .
 
-\chapter{jSMTLIB as a command-line tool: interface to solvers}
+\section{SMT validation}
+When no files are given on the command-line, the tool takes input from the standard input; otherwise it processes each file in turn.
+When no solver is specified,  the tool parses and type-checks the input file,  validating that the input is a valid smt-lib
+script.  It does not attempt to check satisfiability (execute \texttt{(check-sat)}), so it cannot check that any commands given after a \texttt{(check-sat)} 
+are appropriate to the state of the solver (\texttt{sat} or \texttt{unsat}) after the \texttt{(check-sat)}.
+
+\section{Satisfiability checking}
+If a solver is specified, using the \texttt{-{}-solver} option, then the SMT-LIB commands are forwarded on to the solver and the result is emitted on to
+the output channel, as specified by the SMT-LIB standard.
+
+
+\section{Exit codes}
+
+When used as a conventional command-line tool, jSMTLIB terminates with conventional exit codes:
+\begin{itemize}
+\item 0 -- every file parsed and type-checked without error, and, if a solver was specified, every solver command completed without an \texttt{(error ...)} response. This includes \texttt{sat}, \texttt{unsat}, and \texttt{unknown} results alike -- the exit code does not reflect satisfiability.
+\item 1 -- a command-line option error, a parsing or type-checking error in an input file, or a solver \texttt{(error ...)} response
+\item 2 -- an unrecoverable failure while reading input: an I/O error, a parser exception that escaped normal error recovery, a stack overflow, or an out-of-memory condition
+\end{itemize}
+
+A compliant SMT solver, given legitimate input, will emit a standardized response (cf. section TBD) The jSMTLIB tool will pass that on to its caller through the normal output channel.  It is that response that tells the caller what the solver determined concerning the input SMT problem.
+
+\section{Solvers}
+
+TBD
+
+\chapter{jSMTLIB as a library: interface to solvers}
 
 FIXME
 
@@ -2598,6 +2722,29 @@ The SMT-LIB web site (\url{www.smt-lib.org}) lists other tools that process SMT-
 \item A Haskell parser by Tom Hawkins: \url{http://hackage.haskell.org/package/smt-lib}
 \end{itemize}
 
+%% \appendix is a declaration that takes no argument: it switches \chapter to
+%% lettered appendix numbering. It is issued once, here, and each appendix is
+%% then an ordinary \chapter.
+\appendix
+
+\chapter{Supported SMT solvers}
+
+There are a variety of SMT solvers.  In fact there is an annual competition (\url{https://smt-comp.github.io}) to evaluate the capabilities and performance of publicly available solvers.  The jSMTLIB tool works with the solvers contained in the \url{https://github.com/SMTLIB/Solvers} GitHub repository.  The supported solvers are listed here by platform (as of this writing).  There are more solvers than listed here or supported by this tool.  Note that solvers have varying capabilities, from specific to certain logics to very general.
+
+%% Table generated by ../gen-supported-solvers from the Solvers repository -- rerun
+%% that script (or `make solver-table`) after the repository changes.
+\input{supported-solvers}
+
+\chapter{SMT-LIB Logics supported by solvers}
+
+The various SMT solvers support different sets of SMT-LIB logics.  The following table lists that support, as measured by presenting each logic name to each solver in turn.
+The first block issues no \texttt{set-logic} command at all and then the catch-all \texttt{ALL} logic; the second block is the current, official SMT-LIB logic set; the third is logic names carried over from SMT-LIB 2.0 that are no longer official; and the last is a deliberately invalid name, included as a control.
+Note that this records only whether a solver \emph{accepts} the name, not whether it can usefully solve anything in that logic.
+
+%% Table generated by SMTTests/reports/logics-report.py in the jSMTLIB repository:
+%%   python3 logics-report.py --out supported-logics.md --tex supported-logics.tex
+%% Both forms come from the same probe run, so they cannot disagree.
+\input{supported-logics}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% TBD: Better description of sort expressions
