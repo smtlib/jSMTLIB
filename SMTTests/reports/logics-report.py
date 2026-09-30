@@ -77,6 +77,11 @@ SOLVER_FAMILIES = {
 
 SOLVER_EXTRA_ARGS = {
     "cvc5": ["--quiet"],
+    # Alt-Ergo's native input language is its own, not SMT-LIB: without these it
+    # parses an .smt2 file with the wrong front end and answers `unsupported` to
+    # every command, which reads as "supports no logic at all". Same flags
+    # jSMTLIB's own Solver_altergo adapter uses.
+    "alt-ergo": ["--input", "smtlib2", "--output", "smtlib2"],
 }
 
 
@@ -399,16 +404,29 @@ def run_row(family: str, path: Path, is_jar: bool, row: Row, timeout: float, wor
                 reason = f"exit code {proc.returncode}"
             return Result("N", truncate(reason, 200))
 
-        last = stdout_lines[-1]
-        if last.lower() == "unsupported":
+        # Grade the response to set-logic specifically, which is the *second*
+        # response: (set-option :print-success true) is acknowledged first, and
+        # set-logic answers next. (For a legacy row the leading set-info precedes
+        # print-success and so is silent; for the "(default)" row the second
+        # command is the declare-fun. Both still land at index 1.)
+        #
+        # Taking the last line instead -- as this did originally -- misreads any
+        # solver that emits something *after* its verdict. z3 4.3.1/4.3.2 on ARM64
+        # answer both commands correctly and then fail to stop at end of input,
+        # emitting a spurious `(error "line 3 ...: unexpected character")` and
+        # hanging; the real verdict was already on line 2. A solver that does not
+        # acknowledge set-option produces only one line, and then last and second
+        # are the same thing, so this is never worse than the old rule.
+        verdict = stdout_lines[1] if len(stdout_lines) >= 2 else stdout_lines[-1]
+        if verdict.lower() == "unsupported":
             return Result("N", "unsupported")
         # Match the actual SMT-LIB error response shape, `(error "...")`, not
         # a bare "error" substring.
-        if re.match(r"^\(\s*error\b", last, re.IGNORECASE):
-            return Result("N", truncate(last, 200))
-        if last == "success":
+        if re.match(r"^\(\s*error\b", verdict, re.IGNORECASE):
+            return Result("N", truncate(verdict, 200))
+        if verdict == "success":
             return Result("Y")
-        return Result("P", truncate(last, 200))
+        return Result("P", truncate(verdict, 200))
     finally:
         try:
             os.unlink(tmpname)
