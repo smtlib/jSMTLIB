@@ -49,6 +49,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import platform
 import re
@@ -195,9 +196,26 @@ def column_label(family: str, versions: list[str]) -> str:
 
 @dataclass
 class Row:
-    group: str  # "Current", "V2.0", or "Illegal"
+    group: str  # one of GROUP_ORDER
     name: str   # the logic name, as passed to (set-logic ...)
     footnote: str = ""
+    legacy: bool = False    # prefix the probe with (set-info :smt-lib-version 2.0)
+    no_logic: bool = False  # issue no set-logic command at all (the "(default)" row)
+
+
+# The first row of the report: no (set-logic ...) command at all, establishing
+# what a solver does with no logic selected. There is nothing to grade in a
+# script that only sets an option, so the probe declares a symbol instead: a
+# solver with a usable default logic answers `success`, one that insists on an
+# explicit set-logic first answers with an error.
+DEFAULT_ROW_NAME = "(default)"
+DEFAULT_ROW_NOTE = (
+    "No `set-logic` command is issued at all. Since a script that only sets "
+    "an option would report `success` from that option alone, this row's "
+    "probe declares a Boolean constant instead -- so it reports whether the "
+    "solver has a usable default logic, rather than requiring an explicit "
+    "`set-logic` before anything else."
+)
 
 
 # A negative control: ZZZ isn't a real SMT-LIB logic name, so the *correct*
@@ -229,10 +247,12 @@ def _logic_name(path: Path) -> str | None:
 
 def discover_logics(logics_dir: Path) -> list[Row]:
     current: dict[str, Path] = {}
+    have_all = False
     for p in sorted(logics_dir.glob("*.smt2")):
-        if p.stem == "ALL":
-            continue
         name = _logic_name(p)
+        if p.stem == "ALL":
+            have_all = have_all or bool(name)
+            continue
         if name:
             current[name] = p
 
@@ -243,13 +263,29 @@ def discover_logics(logics_dir: Path) -> list[Row]:
         if name and name not in current:
             legacy[name] = p
 
-    rows = [Row("Current", name) for name in sorted(current)]
-    rows += [Row("V2.0", name) for name in sorted(legacy)]
-    rows += [Row("Illegal", ILLEGAL_LOGIC_NAME, ILLEGAL_LOGIC_NOTE)]
+    # Baseline first -- no logic at all, then ALL -- then the official logics,
+    # then the unofficial (2.0-era) ones, each block separated by a heavy rule
+    # in the LaTeX rendering.
+    rows = [Row("Baseline", DEFAULT_ROW_NAME, DEFAULT_ROW_NOTE, no_logic=True)]
+    if have_all:
+        rows.append(Row("Baseline", "ALL"))
+    rows += [Row("Official", name) for name in sorted(current)]
+    rows += [Row("Unofficial", name, legacy=True) for name in sorted(legacy)]
+    rows += [Row("Control", ILLEGAL_LOGIC_NAME, ILLEGAL_LOGIC_NOTE)]
     return rows
 
 
-GROUP_ORDER = ["Current", "V2.0", "Illegal"]
+GROUP_ORDER = ["Baseline", "Official", "Unofficial", "Control"]
+
+# How each group is labelled in the rendered tables. In the LaTeX rendering a
+# heavy (double) rule is drawn between consecutive groups; Markdown has no
+# equivalent, so there the Group column is what separates the blocks.
+GROUP_LABEL = {
+    "Baseline": "Baseline",
+    "Official": "Official",
+    "Unofficial": "Unofficial",
+    "Control": "Control",
+}
 
 LOGICS_URL = "https://smt-lib.org/logics.shtml"
 V2_LOGICS_URL_NOTE = (
@@ -265,6 +301,16 @@ Z3_PRE_4_5_QUIRK = (
     "`unsupported` for anything not in it. So every row is ✅ in a "
     "pre-4.5.0 z3 column for this reason alone -- treat ✅ there as "
     "\"accepted some string\", not \"recognized this specific logic\"."
+)
+# The printed table has room for a note, but not for that one: a shorter
+# statement of the same fact.
+Z3_PRE_4_5_QUIRK_TEX = (
+    "z3 before 4.5.0 does not validate the set-logic argument at all: any "
+    "string, even a nonsense one, returns success (with only a warning on the "
+    "diagnostic channel). Every row is therefore marked in this column for "
+    "that reason alone -- read it as \"accepted some string\", not "
+    "\"recognized this logic\". From 4.5.0 z3 validates the name and answers "
+    "unsupported for anything it does not know."
 )
 
 # ---------------------------------------------------------------------------
@@ -289,8 +335,13 @@ def truncate(text: str, limit: int) -> str:
 
 
 def run_row(family: str, path: Path, is_jar: bool, row: Row, timeout: float, workdir: Path) -> Result:
-    preamble = "(set-info :smt-lib-version 2.0)\n" if row.group == "V2.0" else ""
-    script = f"{preamble}(set-option :print-success true)\n(set-logic {row.name})\n"
+    if row.no_logic:
+        # See DEFAULT_ROW_NOTE: no set-logic, and a declaration rather than a
+        # bare option so there is something meaningful to grade.
+        script = "(set-option :print-success true)\n(declare-fun jsmtlib_probe () Bool)\n"
+    else:
+        preamble = "(set-info :smt-lib-version 2.0)\n" if row.legacy else ""
+        script = f"{preamble}(set-option :print-success true)\n(set-logic {row.name})\n"
 
     with tempfile.NamedTemporaryFile(
         mode="w", suffix=".smt2", dir=workdir, delete=False
@@ -394,13 +445,15 @@ def render_markdown(
     )
     lines.append("")
     lines.append(
-        "\"Current\" rows are every logic under `SMT/logics/` in this repo "
-        "(the current, SMT-LIB-2.7-era set). \"V2.0 (legacy)\" rows are "
-        "logic names found only under `SMT/logics/V2.0/` -- names that "
-        "existed in the SMT-LIB 2.0 logic set but have since been renamed, "
-        "folded into a newer logic, or dropped; included here since some "
-        "solvers (or scripts written against older solvers) may still use "
-        "them."
+        "The first two rows are a baseline: `(default)` issues no `set-logic` "
+        "at all, and `ALL` selects the catch-all logic. \"Official\" rows are "
+        "every logic under `SMT/logics/` in this repo (the current, "
+        "SMT-LIB-2.7-era set). \"Unofficial\" rows are logic names found only "
+        "under `SMT/logics/V2.0/` -- names that existed in the SMT-LIB 2.0 "
+        "logic set but have since been renamed, folded into a newer logic, or "
+        "dropped; included here since some solvers (or scripts written against "
+        "older solvers) may still use them. The final \"Control\" row is a "
+        "deliberately invalid name."
     )
     lines.append("")
     lines.append(
@@ -453,8 +506,8 @@ def render_markdown(
 
     table_rows: list[list[str]] = []
     for group in GROUP_ORDER:
-        group_label = group
-        if group == "V2.0":
+        group_label = GROUP_LABEL[group]
+        if group == "Unofficial":
             group_label += footnote_marker(V2_LOGICS_URL_NOTE)
         for row in [r for r in rows if r.group == group]:
             logic_label = row.name
@@ -468,7 +521,7 @@ def render_markdown(
                 if res is None:
                     cells.append("—")
                     continue
-                symbol = ILLEGAL_SYMBOL[res.grade] if group == "Illegal" else GRADE_SYMBOL[res.grade]
+                symbol = ILLEGAL_SYMBOL[res.grade] if group == "Control" else GRADE_SYMBOL[res.grade]
                 if res.detail:
                     note_text = f"**{label} / {row.name}**: {res.detail}"
                     symbol += footnote_marker(note_text)
@@ -489,6 +542,142 @@ def render_markdown(
 
 
 # ---------------------------------------------------------------------------
+# LaTeX rendering
+# ---------------------------------------------------------------------------
+
+# A bullet for "accepted", an open circle for the ambiguous/timeout case, and
+# an empty cell for "rejected" -- print wants a quiet table, and an empty cell
+# reads as "no" without adding ink. $\bullet$/$\circ$ need no extra packages.
+LATEX_GRADE = {"Y": r"$\bullet$", "P": r"$\circ$", "N": ""}
+
+LATEX_SPECIAL = {
+    "\\": r"\textbackslash{}", "&": r"\&", "%": r"\%", "$": r"\$", "#": r"\#",
+    "_": r"\_", "{": r"\{", "}": r"\}", "~": r"\textasciitilde{}",
+    "^": r"\textasciicircum{}",
+}
+
+
+# Note text is written for the Markdown report, so it contains things that are
+# meaningless or actively broken in print: the grade emoji, typographic dashes
+# and quotes (which the tutorial's inputenc/fontenc setup renders as mojibake).
+LATEX_TEXT_SUBS = {
+    "✅": "an accepted cell", "❌": "a rejected cell", "⚠️": "an ambiguous cell",
+    "⚠": "an ambiguous cell", "️": "",
+    "–": "--", "—": "---", "“": "``", "”": "''", "‘": "`", "’": "'",
+}
+
+
+def latex_escape(s: str) -> str:
+    """Escape LaTeX specials, and turn the notes' Markdown-isms (backtick code
+    spans, emoji, typographic punctuation) into something sane in print."""
+    for k, v in LATEX_TEXT_SUBS.items():
+        s = s.replace(k, v)
+    s = s.replace("`", "'")
+    out = []
+    for ch in s:
+        if ord(ch) > 127:          # anything else non-ASCII would be mojibake
+            continue
+        out.append(LATEX_SPECIAL.get(ch, ch))
+    return "".join(out)
+
+
+def render_latex(
+    columns: list[dict],
+    results: dict[tuple[tuple[str, str], str], Result],
+    rows: list[Row],
+) -> str:
+    """An upright table. It is deliberately *not* a sidewaystable: merging
+    same-behaviour solver versions collapses the columns to about seven, so the
+    table comes out tall and narrow (roughly 200pt wide against a 390pt text
+    width), and rotating it would push the ~45 rows off the page edge.
+    \\scriptsize keeps table, caption and notes together on one page.
+
+    threeparttable is deliberately not used either: it constrains the caption
+    and notes to the *table's* width, which here is about half the text width,
+    leaving them in an unreadable ribbon. The notes are set full width instead.
+
+    Per-cell detail notes from the Markdown report are dropped -- there are far
+    too many to print -- but column-level notes (the pre-4.5.0 z3 quirk, and
+    which versions a merged column covers) are kept, since without them a
+    merged column heading is misleading.
+    """
+    notes: list[tuple[str, str]] = []
+    seen: dict[str, str] = {}
+
+    def note_mark(text: str) -> str:
+        if text not in seen:
+            seen[text] = chr(ord("a") + len(seen))
+            notes.append((seen[text], text))
+        return "$^{\\rm %s}$" % seen[text]
+
+    header = ["{\\bf Group}", "{\\bf Logic}"]
+    for c in columns:
+        label = latex_escape(column_label(c["family"], c["versions"]))
+        if c["family"] == "z3" and _version_key(c["versions"][0]) < [4, 5, 0]:
+            label += note_mark(Z3_PRE_4_5_QUIRK_TEX)
+        if len(c["versions"]) > 2:
+            label += note_mark("Versions tested: %s." % ", ".join(c["versions"]))
+        # A short column heading would collide with its neighbours at this
+        # width, so each is set in a narrow ragged-right box.
+        header.append("\\begin{tabular}{@{}c@{}}%s\\end{tabular}" % _wrap_heading(label))
+
+    body: list[str] = []
+    body.append("\\hline")
+    body.append(" & ".join(header) + " \\\\")
+    for group in GROUP_ORDER:
+        grows = [r for r in rows if r.group == group]
+        if not grows:
+            continue
+        # A heavy (double) rule separates the blocks: (default)+ALL, the
+        # official logics, the unofficial ones, then the control row.
+        body.append("\\hline\\hline")
+        first = True
+        for row in grows:
+            cells = [GROUP_LABEL[group] if first else "",
+                     "{\\tt %s}" % latex_escape(row.name)]
+            first = False
+            for c in columns:
+                res = results.get(((c["family"], c["versions"][0]), row.name))
+                cells.append("--" if res is None else LATEX_GRADE[res.grade])
+            body.append(" & ".join(cells) + " \\\\")
+
+    n = len(columns)
+    out = []
+    out.append("%% Generated by SMTTests/reports/logics-report.py --tex -- do not edit by hand.")
+    out.append("")
+    out.append("\\begin{table}[p]")
+    out.append("\\centering")
+    out.append("\\scriptsize")
+    out.append("\\renewcommand{\\arraystretch}{0.9}")
+    out.append("\\begin{tabular}{|l|l|" + "c|" * n + "}")
+    out += body
+    out.append("\\hline")
+    out.append("\\end{tabular}")
+    # The blocks and caveats are explained in the appendix text, so the caption
+    # is just the legend -- a long caption plus the notes would not fit here.
+    out.append("\\caption{Logic names accepted by each solver. $\\bullet$ marks a {\\tt success} "
+               "response, $\\circ$ an ambiguous response or a timeout, and an empty cell an "
+               "{\\tt unsupported} or error response. For the {\\tt ZZZ} control row an empty "
+               "cell is the {\\em correct} outcome.}")
+    out.append("\\label{tab:supported-logics}")
+    if notes:
+        out.append("\\begin{flushleft}\\scriptsize")
+        for mark, text in notes:
+            out.append("$^{\\rm %s}$ %s\\par" % (mark, latex_escape(text)))
+        out.append("\\end{flushleft}")
+    out.append("\\end{table}")
+    out.append("")
+    return "\n".join(out)
+
+
+def _wrap_heading(label: str) -> str:
+    """Break a column heading such as "z3 4.5.0--5.1.0" onto its own lines, so
+    the narrow numeric columns are not forced wide by their headings."""
+    return "\\\\".join(label.split(" ", 1)) if " " in label else label
+
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -499,7 +688,10 @@ def main() -> int:
     ap.add_argument("--solvers", type=str, default=None, help="Comma-separated subset of solver names to test (default: all discovered)")
     ap.add_argument("--logics-dir", type=Path, default=None, help="Directory containing logic .smt2 definitions with a V2.0/ subdirectory (default: ../../SMT/logics next to this checkout)")
     ap.add_argument("--timeout", type=float, default=10.0, help="Per-row timeout in seconds (default: 10)")
-    ap.add_argument("--out", type=Path, default=Path("Logics.md"), help="Output file (default: Logics.md; pass - for stdout)")
+    ap.add_argument("--out", type=Path, default=Path("Logics.md"), help="Markdown output file (default: Logics.md; pass - for stdout)")
+    ap.add_argument("--tex", type=Path, default=None, help="Also write a LaTeX table to this file (for the tutorial's 'SMT-LIB Logics supported by solvers' appendix). Written from the same probe run as --out, so the two cannot disagree.")
+    ap.add_argument("--json", type=Path, default=None, help="Also write raw, per-solver-version results as JSON. Unlike the tables, nothing is merged or collapsed, so results from several platforms can be compared version-by-version (see combine-logics-reports.py).")
+    ap.add_argument("--platform-label", type=str, default=None, help="Name recorded as the platform in --json output (default: auto-detected from the solver directory).")
     args = ap.parse_args()
 
     solver_dir = args.solver_dir or default_solver_dir()
@@ -552,6 +744,32 @@ def main() -> int:
     else:
         args.out.write_text(md)
         print(f"Wrote {args.out}", file=sys.stderr)
+
+    if args.tex:
+        args.tex.write_text(render_latex(columns, results, rows))
+        print(f"Wrote {args.tex}", file=sys.stderr)
+
+    if args.json:
+        # Deliberately *not* the merged columns the tables use: which versions
+        # merge is itself platform-dependent, so a cross-platform comparison has
+        # to be made version by version.
+        payload = {
+            "platform": args.platform_label or solver_dir.name,
+            "solver_dir": str(solver_dir),
+            "logics_dir": str(logics_dir),
+            "rows": [{"group": r.group, "name": r.name} for r in rows],
+            "solvers": [f"{f} {v}" for f, v, _p, _j in all_instances],
+            "results": {
+                f"{family} {version}": {
+                    row.name: {"grade": res.grade, "detail": res.detail}
+                    for row in rows
+                    if (res := results.get(((family, version), row.name))) is not None
+                }
+                for family, version, _p, _j in all_instances
+            },
+        }
+        args.json.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+        print(f"Wrote {args.json}", file=sys.stderr)
     return 0
 
 
