@@ -111,6 +111,13 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
         }
     }
 
+    /** z3 answers 'timeout' (instead of a result) when its whole-run limit, -T:, ends it, and then exits
+     *  (checked with z3 4.16.0 and 5.1.0) */
+    @Override
+    protected boolean isTimeLimitResponse(String rawResponse) {
+        return rawResponse.trim().equals("timeout");
+    }
+
     @Override
     protected IResponse parseResponse(String response) {
         // Scoped to responses that actually carry an error message: z3 only ever reports a

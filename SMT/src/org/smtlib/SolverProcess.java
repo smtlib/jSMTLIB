@@ -278,6 +278,25 @@ public class SolverProcess {
         }
     }
 
+    /** The text the solver wrote, on stdout and stderr, that has not been read as a response: e.g. a report it wrote
+     *  just before exiting on its own, such as when its whole-run time limit ended it between commands. Meant for use
+     *  after the process has exited, when both streams reach EOF and this returns promptly; it does not wait for a
+     *  response to a command. */
+    public String unreadOutput() {
+        StringBuilder text = new StringBuilder();
+        try {
+            if (standardOut != null) text.append(standardOut.drain(errorSettleMillis));
+        } catch (IOException e) {
+            // nothing more to read
+        }
+        try {
+            if (errorOut != null) text.append(errorOut.drain(errorSettleMillis));
+        } catch (IOException e) {
+            // nothing more to read
+        }
+        return text.toString();
+    }
+
     /** Returns true if the process is still running; this relies on exceptions
      * for control flow and may be a bit expensive.
      */

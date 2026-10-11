@@ -50,6 +50,10 @@ public interface IResponse extends INode {
         IResponse immediate_exit();
         IResponse continued_execution();
         IResponse memout();
+        /** The response when the solver's whole-run time limit (SMT.Configuration#timeoutTotal) ended it, normalized
+         *  across solvers (z3 answers 'timeout' and exits; cvc5 reports the timeout on stderr and aborts); every later
+         *  command to that solver gets the same response. Not standard SMT-LIB. */
+        IResponse timeout();
         IResponse incomplete();
         /** Returns a constant response with the given canonical name */
         IResponse constant(String id); // FIXME - use abstract keyword?

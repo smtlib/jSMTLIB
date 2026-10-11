@@ -140,12 +140,23 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         return args.toArray(new String[args.size()]);
     }
 
+    /** z3 answers 'timeout' (instead of a result) when its whole-run limit, -T, ends it, and then exits */
+    @Override
+    protected boolean isTimeLimitResponse(String rawResponse) {
+        return rawResponse.trim().equals("timeout");
+    }
+
     public IResponse sendCommand(ICommand cmd) {
+        if (endedByTimeLimit) return smtConfig.responseFactory.timeout();
         String translatedCmd = null;
         try {
             translatedCmd = translate(cmd);
-            return parseResponse(solverProcess.sendAndListen(translatedCmd,"\n"));
+            String response = solverProcess.sendAndListen(translatedCmd,"\n");
+            IResponse timedOut = timeLimitResponse(response);
+            return timedOut != null ? timedOut : parseResponse(response);
         } catch (IOException e) {
+            IResponse timedOut = timeLimitResponseAfterExit();
+            if (timedOut != null) return timedOut;
             return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
@@ -153,9 +164,14 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     }
 
     public IResponse sendCommand(String cmd) {
+        if (endedByTimeLimit) return smtConfig.responseFactory.timeout();
         try {
-            return parseResponse(solverProcess.sendAndListen(cmd,"\n"));
+            String response = solverProcess.sendAndListen(cmd,"\n");
+            IResponse timedOut = timeLimitResponse(response);
+            return timedOut != null ? timedOut : parseResponse(response);
         } catch (IOException e) {
+            IResponse timedOut = timeLimitResponseAfterExit();
+            if (timedOut != null) return timedOut;
             return smtConfig.responseFactory.error("Error writing to solver: " + cmd + " " + e);
         }
     }
@@ -244,7 +260,12 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         return response;
     }
 
+    /** Every command this adapter sends directly to the process ends here, so the solver's report that its
+     *  whole-run limit ended it is recognized for all of them (see AbstractSolver#timeLimitResponse). A command sent
+     *  directly after that finds the process gone and gets an error; sendCommand returns the timeout response. */
     protected IResponse parseResponse(String response) {
+        IResponse timedOut = timeLimitResponse(response);
+        if (timedOut != null) return timedOut;
         try {
             response = rewriteOldBitVectors(response);
             if (isMac && response.startsWith("success")) return smtConfig.responseFactory.success(); // FIXME - this is just to avoid a problem with the Mac Z3 implementation
