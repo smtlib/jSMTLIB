@@ -36,7 +36,7 @@ public abstract class Response {
     final static public SMTExpr.Symbol IMMEDIATE_EXIT = new SMTExpr.Symbol(Utils.IMMEDIATE_EXIT);
     final static public SMTExpr.Symbol CONTINUED_EXECUTION = new SMTExpr.Symbol(Utils.CONTINUED_EXECUTION);
     final static public SMTExpr.Symbol MEMOUT = new SMTExpr.Symbol(Utils.MEMOUT);
-    final static public SMTExpr.Symbol TIMEOUT = new SMTExpr.Symbol("timeout"); // TODO - timeout is not standard SMTLIB
+    final static public SMTExpr.Symbol TIMEOUT = new SMTExpr.Symbol("timeout"); // not standard SMT-LIB: see IResponse.IFactory#timeout
     final static public SMTExpr.Symbol INCOMPLETE = new SMTExpr.Symbol(Utils.INCOMPLETE); // TODO - incomplete is not standard SMTLIB
 
     /** Implements the IResponse.IPair interface */
@@ -89,6 +89,9 @@ public abstract class Response {
 
         @Override
         public IResponse memout() { return MEMOUT; }
+
+        @Override
+        public IResponse timeout() { return TIMEOUT; }
 
         @Override
         public IResponse incomplete() { return INCOMPLETE; }

@@ -140,12 +140,23 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         return args.toArray(new String[args.size()]);
     }
 
+    /** z3 answers 'timeout' (instead of a result) when its whole-run limit, -T, ends it, and then exits */
+    @Override
+    protected boolean isTimeLimitResponse(String rawResponse) {
+        return rawResponse.trim().equals("timeout");
+    }
+
     public IResponse sendCommand(ICommand cmd) {
+        if (endedByTimeLimit) return smtConfig.responseFactory.timeout();
         String translatedCmd = null;
         try {
             translatedCmd = translate(cmd);
-            return parseResponse(solverProcess.sendAndListen(translatedCmd,"\n"));
+            String response = solverProcess.sendAndListen(translatedCmd,"\n");
+            IResponse timedOut = timeLimitResponse(response);
+            return timedOut != null ? timedOut : parseResponse(response);
         } catch (IOException e) {
+            IResponse timedOut = timeLimitResponseAfterExit();
+            if (timedOut != null) return timedOut;
             return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
@@ -153,9 +164,14 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     }
 
     public IResponse sendCommand(String cmd) {
+        if (endedByTimeLimit) return smtConfig.responseFactory.timeout();
         try {
-            return parseResponse(solverProcess.sendAndListen(cmd,"\n"));
+            String response = solverProcess.sendAndListen(cmd,"\n");
+            IResponse timedOut = timeLimitResponse(response);
+            return timedOut != null ? timedOut : parseResponse(response);
         } catch (IOException e) {
+            IResponse timedOut = timeLimitResponseAfterExit();
+            if (timedOut != null) return timedOut;
             return smtConfig.responseFactory.error("Error writing to solver: " + cmd + " " + e);
         }
     }
@@ -229,18 +245,29 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     // "plain printing for a single node with no override" correctly; only a whole-subtree
     // bypass was ever the problem. See issue #65.
 
+    /** Rewrites z3 4.3's legacy bit-vector literals (bvVALUE[WIDTH]) as standard #b... literals */
+    protected String rewriteOldBitVectors(String response) {
+        Pattern oldbv = Pattern.compile("bv([0-9]+)\\[([0-9]+)\\]");
+        Matcher mm = oldbv.matcher(response);
+        while (mm.find()) {
+            long val = Long.parseLong(mm.group(1));
+            int base = Integer.parseInt(mm.group(2));
+            String bits = "";
+            for (int i=0; i<base; i++) { bits = ((val&1)==0 ? "0" : "1") + bits; val = val >>> 1; }
+            response = response.substring(0,mm.start()) + "#b" + bits + response.substring(mm.end(),response.length());
+            mm = oldbv.matcher(response);
+        }
+        return response;
+    }
+
+    /** Every command this adapter sends directly to the process ends here, so the solver's report that its
+     *  whole-run limit ended it is recognized for all of them (see AbstractSolver#timeLimitResponse). A command sent
+     *  directly after that finds the process gone and gets an error; sendCommand returns the timeout response. */
     protected IResponse parseResponse(String response) {
+        IResponse timedOut = timeLimitResponse(response);
+        if (timedOut != null) return timedOut;
         try {
-            Pattern oldbv = Pattern.compile("bv([0-9]+)\\[([0-9]+)\\]");
-            Matcher mm = oldbv.matcher(response);
-            while (mm.find()) {
-                long val = Long.parseLong(mm.group(1));
-                int base = Integer.parseInt(mm.group(2));
-                String bits = "";
-                for (int i=0; i<base; i++) { bits = ((val&1)==0 ? "0" : "1") + bits; val = val >>> 1; }
-                response = response.substring(0,mm.start()) + "#b" + bits + response.substring(mm.end(),response.length());
-                mm = oldbv.matcher(response);
-            }
+            response = rewriteOldBitVectors(response);
             if (isMac && response.startsWith("success")) return smtConfig.responseFactory.success(); // FIXME - this is just to avoid a problem with the Mac Z3 implementation
             if (response.contains("error")) {
                 // Z3 returns an s-expr (always?)
@@ -674,7 +701,18 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             for (IExpr e: terms) {
                 solverProcess.sendNoListen(" ",translate(e));
             }
-            String r = solverProcess.sendAndListen("))\n");
+            String r = rewriteOldBitVectors(solverProcess.sendAndListen("))\n"));
+            // Values are returned structured, as by the other adapters (AbstractSolver.get_value),
+            // so that they print the same way (e.g. (- 1), not the s-expression form ( - 1 )).
+            // Errors -- including z3 4.3's value-then-error responses -- keep the existing handling.
+            if (!isFlatResponse(r) && !r.contains("(error")) {
+                try {
+                    List<IResponse.IPair<IExpr,IExpr>> values = new org.smtlib.sexpr.Parser(smtConfig, new Pos.Source(r, null)).parseValueList();
+                    return smtConfig.responseFactory.get_value_response(values);
+                } catch (ParserException e) {
+                    // fall through to the generic handling below
+                }
+            }
             IResponse response = parseResponse(r);
 //            if (response instanceof ISeq) {
 //                List<ISexpr> valueslist = new LinkedList<ISexpr>();

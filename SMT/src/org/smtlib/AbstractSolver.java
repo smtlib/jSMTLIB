@@ -103,6 +103,32 @@ public class AbstractSolver implements ISolver {
      *  guessing from the error's content whether the process will actually exit. */
     protected boolean selfReportsImmediateExit() { return false; }
 
+    /** Called with each response parsed from the solver. After an error response from a
+     *  {@link #selfReportsImmediateExit()} solver, gives its process a moment to finish exiting
+     *  (see {@link #IMMEDIATE_EXIT_SETTLE_MILLIS}). If the error is one after which the solver
+     *  no longer processes input ({@link #errorStopsSolver(IResponse)}) and the process is
+     *  still alive, it is stopped, since a later command -- or exit() -- would otherwise wait
+     *  forever for a reply. Only the OS process is stopped; the adapter is left as it is, so
+     *  later commands fail fast as "Solver process has already exited" and exit() cleans up
+     *  normally. */
+    protected /*@Nullable*/ IResponse checkImmediateExit(/*@Nullable*/ IResponse result) {
+        if (result != null && result.isError() && selfReportsImmediateExit()) {
+            try {
+                Thread.sleep(IMMEDIATE_EXIT_SETTLE_MILLIS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            if (solverProcess != null && errorStopsSolver(result)) solverProcess.stopIfRunning();
+        }
+        return result;
+    }
+
+    /** Whether, after the given error response, the solver stops processing input (whether or
+     *  not its process actually exits). False by default; see Solver_cvc5. */
+    protected boolean errorStopsSolver(IResponse error) {
+        return false;
+    }
+
     /** How long to pause after an error response from a {@link #selfReportsImmediateExit()}
      *  solver, before letting the next command reach {@link SolverProcess}'s liveness check
      *  -- long enough that a process which is genuinely exiting has, in practice, finished
@@ -218,7 +244,39 @@ public class AbstractSolver implements ISolver {
         return s;
     }
 
+    /** True once the solver's whole-run time limit (smtConfig.timeoutTotal) has ended it; every later command then
+     *  gets responseFactory.timeout() (exit tolerates it), rather than an error about the process having exited. */
+    protected boolean endedByTimeLimit = false;
+
+    /** Whether the raw response text is this solver's report that its whole-run time limit (smtConfig.timeoutTotal)
+     *  ended it; consulted only when that limit is set. Solvers report this in their own ways, so an adapter whose
+     *  solver has such a limit overrides this; the default recognizes nothing. */
+    protected boolean isTimeLimitResponse(String rawResponse) {
+        return false;
+    }
+
+    /** Returns responseFactory.timeout(), recording that the solver has ended, if the raw response reports that the
+     *  solver's whole-run time limit ended it; otherwise null. For adapters that send commands by their own means. */
+    protected /*@Nullable*/ IResponse timeLimitResponse(/*@Nullable*/ String rawResponse) {
+        if (smtConfig.timeoutTotal > 0 && rawResponse != null && isTimeLimitResponse(rawResponse)) {
+            endedByTimeLimit = true;
+            return smtConfig.responseFactory.timeout();
+        }
+        return null;
+    }
+
+    /** For when a send has found the solver process gone: the timeout response if the process left this solver's
+     *  report that its whole-run time limit ended it unread (that limit runs on the wall clock, so it can end the
+     *  solver between commands, and its report then answers no command); otherwise null */
+    protected /*@Nullable*/ IResponse timeLimitResponseAfterExit() {
+        if (!(smtConfig.timeoutTotal > 0) || solverProcess == null) return null;
+        return timeLimitResponse(solverProcess.unreadOutput());
+    }
+
     private IResponse sendCommand(ICommand cmd, boolean tolerateSilentExit, boolean scrubNonDeterminism) {
+        if (endedByTimeLimit) {
+            return tolerateSilentExit ? smtConfig.responseFactory.empty() : smtConfig.responseFactory.timeout();
+        }
         String translatedCmd = null;
         try {
             translatedCmd = translate(cmd);
@@ -230,6 +288,8 @@ public class AbstractSolver implements ISolver {
             if (response == null) {
                 return smtConfig.responseFactory.error("No response received from the solver for: " + translatedCmd);
             }
+            IResponse timedOut = timeLimitResponse(response);
+            if (timedOut != null) return timedOut;
             if (scrubNonDeterminism && smtConfig.testing) response = normalizeForTesting(response);
             IResponse result = parseResponse(response);
             // parseResponse() (or a subclass override) can itself return null for some
@@ -239,16 +299,11 @@ public class AbstractSolver implements ISolver {
             if (result == null) {
                 return smtConfig.responseFactory.error("Could not parse response from the solver for: " + translatedCmd + " -- raw response: " + response);
             }
-            if (result.isError() && selfReportsImmediateExit()) {
-                try {
-                    Thread.sleep(IMMEDIATE_EXIT_SETTLE_MILLIS);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-            return result;
+            return checkImmediateExit(result);
         } catch (SolverProcess.NoResponseException e) {
             if (tolerateSilentExit) return smtConfig.responseFactory.empty();
+            IResponse timedOut = timeLimitResponseAfterExit();
+            if (timedOut != null) return timedOut;
             return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
@@ -467,7 +522,11 @@ public class AbstractSolver implements ISolver {
     /** Returns an error response if the given option has not been enabled (per
      *  {@link #get_option(IKeyword)}), else null. */
     protected /*@Nullable*/ IResponse requireOptionEnabled(String commandName, String option) {
-        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(option)))) {
+        IResponse value = get_option(smtConfig.exprFactory.keyword(option));
+        // If asking failed (e.g. the solver has exited), report that rather than claim the option is off
+        if (value != null && value.isError()) return value;
+        if (smtConfig.responseFactory.timeout().equals(value)) return value; // the solver's whole-run limit ended it
+        if (!Utils.TRUE.equals(value)) {
             return smtConfig.responseFactory.error("The " + commandName + " command is only valid if " + option + " has been enabled");
         }
         return null;
@@ -533,7 +592,7 @@ public class AbstractSolver implements ISolver {
                 sb.append(s.replace('\n',' ').replace("\r",""));
             } while (parens > 0);
             response = sb.toString();
-            if (isFlatResponse(response)) return parseResponse(response);
+            if (isFlatResponse(response)) return checkImmediateExit(parseResponse(response));
             List<IExpr> exprs = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseAssertionList();
             return smtConfig.responseFactory.get_assertions_response(exprs);
         } catch (IOException e) {
@@ -568,6 +627,7 @@ public class AbstractSolver implements ISolver {
     /** @see org.smtlib.ISolver#get_unsat_assumptions()*/
     @Override
     public IResponse get_unsat_assumptions(){
+        if (endedByTimeLimit) return smtConfig.responseFactory.timeout();
         IResponse err = requireOptionEnabled("get-unsat-assumptions", Utils.PRODUCE_UNSAT_ASSUMPTIONS);
         if (err != null) return err;
         err = requireUnsat("get-unsat-assumptions", "check-sat-assumptions");
@@ -575,10 +635,14 @@ public class AbstractSolver implements ISolver {
         String response = null;
         try {
             response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_unsat_assumptions()), "\n");
-            if (isFlatResponse(response)) return parseResponse(response);
+            IResponse timedOut = timeLimitResponse(response);
+            if (timedOut != null) return timedOut;
+            if (isFlatResponse(response)) return checkImmediateExit(parseResponse(response));
             List<ISymbol> names = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseSymbolList();
             return smtConfig.responseFactory.get_unsat_assumptions_response(names);
         } catch (IOException e) {
+            IResponse timedOut = timeLimitResponseAfterExit();
+            if (timedOut != null) return timedOut;
             return smtConfig.responseFactory.error("Error writing to solver: " + e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to solver: " + e);
@@ -590,6 +654,7 @@ public class AbstractSolver implements ISolver {
     /** @see org.smtlib.ISolver#get_unsat_core()*/
     @Override
     public IResponse get_unsat_core(){
+        if (endedByTimeLimit) return smtConfig.responseFactory.timeout();
         IResponse err = requireOptionEnabled("get-unsat-core", Utils.PRODUCE_UNSAT_CORES);
         if (err != null) return err;
         err = requireUnsat("get-unsat-core", "check-sat");
@@ -597,10 +662,14 @@ public class AbstractSolver implements ISolver {
         String response = null;
         try {
             response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_unsat_core()), "\n");
-            if (isFlatResponse(response)) return parseResponse(response);
+            IResponse timedOut = timeLimitResponse(response);
+            if (timedOut != null) return timedOut;
+            if (isFlatResponse(response)) return checkImmediateExit(parseResponse(response));
             List<ISymbol> names = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseSymbolList();
             return smtConfig.responseFactory.get_unsat_core_response(names);
         } catch (IOException e) {
+            IResponse timedOut = timeLimitResponseAfterExit();
+            if (timedOut != null) return timedOut;
             return smtConfig.responseFactory.error("Error writing to solver: " + e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to solver: " + e);
@@ -612,6 +681,7 @@ public class AbstractSolver implements ISolver {
     /** @see org.smtlib.ISolver#get_value(IExpr... )*/
     @Override
     public IResponse get_value(IExpr... terms){
+        if (endedByTimeLimit) return smtConfig.responseFactory.timeout();
         IResponse err = requireOptionEnabled("get-value", Utils.PRODUCE_MODELS);
         if (err != null) return err;
         err = requireSatOrUnknown("get-value");
@@ -619,10 +689,14 @@ public class AbstractSolver implements ISolver {
         String response = null;
         try {
             response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_value(java.util.Arrays.asList(terms))), "\n");
-            if (isFlatResponse(response)) return parseResponse(response);
+            IResponse timedOut = timeLimitResponse(response);
+            if (timedOut != null) return timedOut;
+            if (isFlatResponse(response)) return checkImmediateExit(parseResponse(response));
             List<IResponse.IPair<IExpr,IExpr>> values = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseValueList();
             return smtConfig.responseFactory.get_value_response(values);
         } catch (IOException e) {
+            IResponse timedOut = timeLimitResponseAfterExit();
+            if (timedOut != null) return timedOut;
             return smtConfig.responseFactory.error("Error writing to solver: " + e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to solver: " + e);
@@ -634,6 +708,7 @@ public class AbstractSolver implements ISolver {
     /** @see org.smtlib.ISolver#get_assignment()*/
     @Override
     public IResponse get_assignment(){
+        if (endedByTimeLimit) return smtConfig.responseFactory.timeout();
         IResponse err = requireOptionEnabled("get-assignment", Utils.PRODUCE_ASSIGNMENTS);
         if (err != null) return err;
         err = requireSatOrUnknown("get-assignment");
@@ -641,10 +716,14 @@ public class AbstractSolver implements ISolver {
         String response = null;
         try {
             response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_assignment()), "\n");
-            if (isFlatResponse(response)) return parseResponse(response);
+            IResponse timedOut = timeLimitResponse(response);
+            if (timedOut != null) return timedOut;
+            if (isFlatResponse(response)) return checkImmediateExit(parseResponse(response));
             List<IResponse.IPair<ISymbol,Boolean>> assignments = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseAssignmentList();
             return smtConfig.responseFactory.get_assignment_response(assignments);
         } catch (IOException e) {
+            IResponse timedOut = timeLimitResponseAfterExit();
+            if (timedOut != null) return timedOut;
             return smtConfig.responseFactory.error("Error writing to solver: " + e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to solver: " + e);

@@ -91,6 +91,14 @@ public class Parser extends Lexer implements IParser {
                 parseLP();
                 boolean anyError = false;
                 while (!isRP()) {
+                    // Without this, a script lacking its closing parenthesis (e.g. one written
+                    // without the enclosing ( ... ), whose first command's '(' was taken as the
+                    // script's) loops forever at the end of input: parseCommand() returns null
+                    // there without consuming anything.
+                    if (isEOD()) {
+                        throw new ParserException("Unexpected end of input: the script is missing its closing parenthesis",
+                                pos(currentPos()-1, currentPos()));
+                    }
                     s = parseCommand();
                     if (s != null) res.add(s);
                     else anyError = true;

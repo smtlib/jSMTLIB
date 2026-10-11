@@ -25,9 +25,9 @@ on:
         required: false
         default: ''
       timeout:
-        description: 'Per-probe timeout in seconds. Raise it if slow runners are producing spurious "ambiguous/timeout" verdicts.'
+        description: 'Per-probe timeout in seconds. Generous on purpose: old solver binaries can take seconds of wall time just to start (z3-4.3.1 measured at 2-5s wall against 0.85s CPU on an idle macOS box), and a probe that tips over the limit does not fail loudly -- it grades as ambiguous and then shows up as a spurious cross-platform disagreement.'
         required: false
-        default: '10'
+        default: '30'
       fail_on_inconsistency:
         description: 'Fail the run if the same solver version disagrees across platforms. Off by default -- a disagreement is usually worth reading, not a build break.'
         required: false
@@ -36,11 +36,13 @@ on:
 jobs:
   probe:
     runs-on: ${{ matrix.os }}
-    # A probe is two commands against an already-running binary, but there are
-    # ~45 logics x up to 18 binaries per platform, and a solver that hangs costs
-    # the full per-probe timeout each time. This is a safety net against a hung
-    # binary burning the 6-hour default, not a target.
-    timeout-minutes: 45
+    # Headroom, not a target. ~45 logics x up to 18 binaries per platform, and a
+    # binary that hangs costs the full per-probe timeout on every row. That is no
+    # longer unbounded -- logics-report.py abandons a solver after 3 consecutive
+    # timeouts -- but 45 minutes proved too tight once the per-probe timeout rose
+    # to 30s (run 36739244137: the linux-arm64 leg was cancelled at exactly 45
+    # minutes, with the two hanging z3 4.3.x binaries accounting for all of it).
+    timeout-minutes: 75
     strategy:
       matrix:
         include:

@@ -77,6 +77,11 @@ SOLVER_FAMILIES = {
 
 SOLVER_EXTRA_ARGS = {
     "cvc5": ["--quiet"],
+    # Alt-Ergo's native input language is its own, not SMT-LIB: without these it
+    # parses an .smt2 file with the wrong front end and answers `unsupported` to
+    # every command, which reads as "supports no logic at all". Same flags
+    # jSMTLIB's own Solver_altergo adapter uses.
+    "alt-ergo": ["--input", "smtlib2", "--output", "smtlib2"],
 }
 
 
@@ -318,6 +323,14 @@ Z3_PRE_4_5_QUIRK_TEX = (
 # ---------------------------------------------------------------------------
 
 
+# A binary that times out on this many consecutive rows is treated as unusable on
+# this platform and not probed further. The verdicts would all be the same, and at
+# a realistic timeout the wasted wall time is enough to exceed the CI job limit.
+ABANDON_AFTER = 3
+ABANDONED_DETAIL = ("not probed: the solver timed out on the first "
+                    f"{ABANDON_AFTER} rows, so the binary appears unusable on this platform")
+
+
 @dataclass
 class Result:
     grade: str  # "Y", "P", "N"
@@ -350,15 +363,45 @@ def run_row(family: str, path: Path, is_jar: bool, row: Row, timeout: float, wor
         tmpname = f.name
     try:
         cmd = solver_command(family, path, is_jar, Path(tmpname))
+        # Popen rather than subprocess.run(timeout=...): run() only attaches the
+        # partial output to TimeoutExpired on Windows -- on POSIX it kills the
+        # process and re-raises with nothing -- so a timeout there would report no
+        # detail at all. Collecting it explicitly after the kill works everywhere,
+        # and the difference matters: "timed out having already printed success" and
+        # "timed out having printed nothing" are completely different diagnoses.
+        #
+        # stdin is closed deliberately. The script is passed as a file argument, so
+        # nothing should be read from stdin; a solver that reads it anyway would
+        # block forever rather than fail visibly.
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=workdir)
-        except subprocess.TimeoutExpired:
-            return Result("P", "timeout")
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                    stdin=subprocess.DEVNULL, text=True, cwd=workdir)
         except OSError as e:
             return Result("N", f"exec failed: {e}")
 
-        stdout_lines = [ln.strip() for ln in proc.stdout.splitlines() if ln.strip()]
-        stderr_lines = [ln.strip() for ln in proc.stderr.splitlines() if ln.strip()]
+        try:
+            out, err = proc.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            try:
+                # Bounded: kill() reaches the solver, but any grandchild it spawned
+                # survives holding the pipe open, and an unbounded communicate() then
+                # blocks forever -- trading a timed-out probe for a hung report.
+                out, err = proc.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                out, err = "", ""
+            def _first(stream: str) -> str:
+                lines = [ln.strip() for ln in (stream or "").splitlines() if ln.strip()]
+                return " / ".join(lines[:3])
+            o, e2 = _first(out), _first(err)
+            if o or e2:
+                where = "; ".join(x for x in (f"stdout: {o}" if o else "",
+                                              f"stderr: {e2}" if e2 else "") if x)
+                return Result("P", truncate(f"timeout after {timeout}s ({where})", 200))
+            return Result("P", f"timeout after {timeout}s, no output")
+
+        stdout_lines = [ln.strip() for ln in out.splitlines() if ln.strip()]
+        stderr_lines = [ln.strip() for ln in err.splitlines() if ln.strip()]
 
         if not stdout_lines:
             reason = "no output"
@@ -369,16 +412,29 @@ def run_row(family: str, path: Path, is_jar: bool, row: Row, timeout: float, wor
                 reason = f"exit code {proc.returncode}"
             return Result("N", truncate(reason, 200))
 
-        last = stdout_lines[-1]
-        if last.lower() == "unsupported":
+        # Grade the response to set-logic specifically, which is the *second*
+        # response: (set-option :print-success true) is acknowledged first, and
+        # set-logic answers next. (For a legacy row the leading set-info precedes
+        # print-success and so is silent; for the "(default)" row the second
+        # command is the declare-fun. Both still land at index 1.)
+        #
+        # Taking the last line instead -- as this did originally -- misreads any
+        # solver that emits something *after* its verdict. z3 4.3.1/4.3.2 on ARM64
+        # answer both commands correctly and then fail to stop at end of input,
+        # emitting a spurious `(error "line 3 ...: unexpected character")` and
+        # hanging; the real verdict was already on line 2. A solver that does not
+        # acknowledge set-option produces only one line, and then last and second
+        # are the same thing, so this is never worse than the old rule.
+        verdict = stdout_lines[1] if len(stdout_lines) >= 2 else stdout_lines[-1]
+        if verdict.lower() == "unsupported":
             return Result("N", "unsupported")
         # Match the actual SMT-LIB error response shape, `(error "...")`, not
         # a bare "error" substring.
-        if re.match(r"^\(\s*error\b", last, re.IGNORECASE):
-            return Result("N", truncate(last, 200))
-        if last == "success":
+        if re.match(r"^\(\s*error\b", verdict, re.IGNORECASE):
+            return Result("N", truncate(verdict, 200))
+        if verdict == "success":
             return Result("Y")
-        return Result("P", truncate(last, 200))
+        return Result("P", truncate(verdict, 200))
     finally:
         try:
             os.unlink(tmpname)
@@ -683,6 +739,15 @@ def _wrap_heading(label: str) -> str:
 
 
 def main() -> int:
+    # Windows consoles default to a legacy code page (cp1252 on the CI runners),
+    # which cannot encode the report's grade symbols. Writing files is handled by
+    # explicit encoding= arguments; this covers --out - and the progress output.
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8")
+        except (AttributeError, OSError):
+            pass
+
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--solver-dir", type=Path, default=None, help="Directory containing solver binaries (default: auto-detected Solvers-<platform> next to this checkout)")
     ap.add_argument("--solvers", type=str, default=None, help="Comma-separated subset of solver names to test (default: all discovered)")
@@ -725,9 +790,29 @@ def main() -> int:
         total = len(all_instances) * len(rows)
         done = 0
         for family, version, path, is_jar in all_instances:
+            consecutive_timeouts = 0
+            abandoned = False
             for row in rows:
+                if abandoned:
+                    results[((family, version), row.name)] = Result("P", ABANDONED_DETAIL)
+                    done += 1
+                    continue
                 res = run_row(family, path, is_jar, row, args.timeout, workdir_path)
                 results[((family, version), row.name)] = res
+                if res.grade == "P" and res.detail.startswith("timeout"):
+                    consecutive_timeouts += 1
+                else:
+                    consecutive_timeouts = 0
+                if consecutive_timeouts >= ABANDON_AFTER:
+                    # Nothing is learned by timing out another 40-odd times, and the
+                    # cost is real: on linux-arm64 the two z3 4.3.x binaries hang on
+                    # every row, and at a 30s timeout that alone is 45 minutes --
+                    # enough to blow the CI job limit (run 36739244137 was cancelled
+                    # for exactly this). Record the rest as not probed, and let the
+                    # combined report say "unusable here" once instead of 45 times.
+                    abandoned = True
+                    print(f"  abandoning {family} {version}: timed out on "
+                          f"{ABANDON_AFTER} consecutive rows", file=sys.stderr)
                 done += 1
                 if done % 25 == 0 or done == total:
                     print(f"  {done}/{total}", file=sys.stderr)
@@ -742,11 +827,11 @@ def main() -> int:
     if str(args.out) == "-":
         print(md)
     else:
-        args.out.write_text(md)
+        args.out.write_text(md, encoding="utf-8")
         print(f"Wrote {args.out}", file=sys.stderr)
 
     if args.tex:
-        args.tex.write_text(render_latex(columns, results, rows))
+        args.tex.write_text(render_latex(columns, results, rows), encoding="utf-8")
         print(f"Wrote {args.tex}", file=sys.stderr)
 
     if args.json:
@@ -768,7 +853,7 @@ def main() -> int:
                 for family, version, _p, _j in all_instances
             },
         }
-        args.json.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+        args.json.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         print(f"Wrote {args.json}", file=sys.stderr)
     return 0
 
