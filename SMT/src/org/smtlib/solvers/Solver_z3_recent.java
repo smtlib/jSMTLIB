@@ -111,6 +111,27 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
         }
     }
 
+    /** z3 reports a query stopped by its per-query time limit, -t:, with :reason-unknown "canceled" in incremental
+     *  mode (after a push; checked with z3 4.16.0 and 5.1.0, while 4.8.12 and 4.12.6 give up first, as incomplete),
+     *  and in every mode in 4.6 and 4.7; one-shot queries in newer versions, and other solvers such as cvc5, report
+     *  "timeout". jSMTLIB sets no other limit that cancels a query, so when the per-query limit is set, "canceled" is
+     *  reported as "timeout" (OpenJML#1022). */
+    @Override
+    public IResponse get_info(org.smtlib.IExpr.IKeyword key) {
+        IResponse response = super.get_info(key);
+        if (smtConfig.timeout > 0 && ":reason-unknown".equals(key.value())
+                && response instanceof IResponse.IAttributeList list && list.attributes().size() == 1
+                && "canceled".equals(stripQuotes(list.attributes().get(0).attrValue().toString()))) {
+            return smtConfig.responseFactory.get_info_response(
+                    smtConfig.exprFactory.attribute(key, smtConfig.exprFactory.symbol("timeout"))); // as cvc5 reports it
+        }
+        return response;
+    }
+
+    private static String stripQuotes(String s) {
+        return s.length() >= 2 && s.startsWith("\"") && s.endsWith("\"") ? s.substring(1, s.length() - 1) : s;
+    }
+
     /** z3 answers 'timeout' (instead of a result) when its whole-run limit, -T:, ends it, and then exits
      *  (checked with z3 4.16.0 and 5.1.0) */
     @Override

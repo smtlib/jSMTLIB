@@ -16,7 +16,7 @@ import org.smtlib.SMT;
 
 /**
  * Covers the two kinds of solver time limit. A per-query limit (SMT.Configuration#timeout) makes check-sat answer
- * 'unknown' and leaves the solver usable. A whole-run limit (SMT.Configuration#timeoutTotal) ends the solver, which
+ * 'unknown', with reason 'timeout', and leaves the solver usable. A whole-run limit (SMT.Configuration#timeoutTotal) ends the solver, which
  * each solver reports in its own way (z3 answers 'timeout' and exits; cvc5 reports the timeout on stderr and
  * aborts); jSMTLIB normalizes that to responseFactory.timeout(), for check-sat and for every later command.
  *
@@ -107,13 +107,17 @@ public class WholeRunTimeoutTests {
         }
     }
 
+    /** The per-query limit, in incremental mode (after a push), as OpenJML uses a solver; the reason for 'unknown' is
+     *  'timeout' (z3 4.16.0 itself answers "canceled" there, which the adapter reports as "timeout") */
     private static void checkPerQueryLimit(String solverName) throws Exception {
         SMT.Configuration config = new SMT.Configuration();
         config.timeout = 1;
         ISolver solver = start(config, solverName);
         try {
-            IResponse r = run(config, solver, HARD_QUERY);
+            IResponse r = run(config, solver, HARD_QUERY.replace("(assert (= (+", "(push 1)\n(assert (= (+"));
             Assert.assertEquals("check-sat at the per-query limit", config.responseFactory.unknown(), r);
+            IResponse reason = solver.get_info(config.exprFactory.keyword(":reason-unknown"));
+            Assert.assertTrue("reason for unknown: " + reason, reason.toString().contains("timeout"));
             // The solver is still running: another query gets an answer of its own
             Assert.assertEquals("a later check-sat", config.responseFactory.unknown(), solver.check_sat());
         } finally {
