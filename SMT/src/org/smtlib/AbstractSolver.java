@@ -312,6 +312,87 @@ public class AbstractSolver implements ISolver {
         }
     }
 
+    /** Whether {@link #sendCommands(List)} may send its commands as one block, framed by
+     *  {@code (set-option :print-success false)} and {@code (set-option :print-success true)},
+     *  so that the solver acknowledges the block once. A subclass whose solver does not take
+     *  SMT-LIB commands as they are translated, or does not honor :print-success, returns
+     *  false, and then the commands are executed one at a time. */
+    protected boolean acceptsBlocks() {
+        return true;
+    }
+
+    /** Sends the commands as one block (see {@link #acceptsBlocks()}). The commands and their
+     *  translation are what executing them one at a time would send. A compliant solver writes
+     *  nothing for a block but the final 'success', and an {@code (error ...)} for each
+     *  command that fails; after an error, some solvers (z3) go on with the rest of the block,
+     *  while others (cvc5, yices2) stop reading input, so the block's output is read until the
+     *  final 'success' or until the solver stops. The first error is returned.
+     *  @see org.smtlib.ISolver#sendCommands(List) */
+    @Override
+    public IResponse sendCommands(List<ICommand> commands) {
+        if (!acceptsBlocks()) return ISolver.super.sendCommands(commands);
+        for (ICommand c: commands) {
+            if (!ISolver.isBlockCommand(c)) return ISolver.blockCommandError(smtConfig, c);
+        }
+        if (endedByTimeLimit) return smtConfig.responseFactory.timeout();
+        if (commands.isEmpty()) return successOrEmpty(smtConfig);
+        checkSatStatus = null;
+        StringBuilder text = new StringBuilder("(set-option :print-success false)\n");
+        try {
+            for (ICommand c: commands) {
+                if (c instanceof Ideclare_const dc) {
+                    // as declare_const() sends it
+                    c = smtConfig.commandFactory.declare_fun(dc.symbol(), new java.util.ArrayList<>(), dc.resultSort());
+                }
+                text.append(translate(c)).append('\n');
+            }
+        } catch (IVisitor.VisitorException e) {
+            return smtConfig.responseFactory.error("Error writing to solver: " + e);
+        }
+        text.append("(set-option :print-success true)\n");
+        // The two framing lines have no counterpart in the user's script (see linesOffset);
+        // an error reported from inside the block comes after the first of them
+        linesOffset++;
+        /*@Nullable*/ IResponse firstError = null;
+        try {
+            StringBuilder out = new StringBuilder();
+            String chunk = solverProcess.sendAndListen(text.toString());
+            while (true) {
+                if (chunk == null) {
+                    return firstError != null ? firstError : smtConfig.responseFactory.error("No response received from the solver for a block of commands");
+                }
+                IResponse timedOut = timeLimitResponse(chunk);
+                if (timedOut != null) return timedOut;
+                out.append(chunk).append('\n'); // listen() strips the end of each response
+                String t = out.toString().trim();
+                boolean done = t.equals("success") || t.endsWith("\nsuccess");
+                if (done) t = t.substring(0, t.length() - "success".length()).trim();
+                if (firstError == null && !t.isEmpty()) {
+                    IResponse r = parseResponse(t);
+                    if (r == null || !r.isError()) {
+                        r = smtConfig.responseFactory.error("Unexpected output from the solver for a block of commands: " + t);
+                    }
+                    firstError = checkImmediateExit(r);
+                }
+                if (done) break;
+                // Only an error has been read: wait for the rest unless the solver has stopped
+                if (!solverProcess.isRunning(true)) break;
+                chunk = solverProcess.listen();
+            }
+            return firstError != null ? firstError : successOrEmpty(smtConfig);
+        } catch (SolverProcess.NoResponseException e) {
+            if (firstError != null) return firstError;
+            IResponse timedOut = timeLimitResponseAfterExit();
+            if (timedOut != null) return timedOut;
+            return smtConfig.responseFactory.error("Error writing to solver: a block of commands: " + e);
+        } catch (IOException e) {
+            if (firstError != null) return firstError;
+            return smtConfig.responseFactory.error("Error writing to solver: a block of commands: " + e);
+        } finally {
+            linesOffset++;
+        }
+    }
+
     /** @see org.smtlib.ISolver#start() */
     @Override
     public IResponse start() {

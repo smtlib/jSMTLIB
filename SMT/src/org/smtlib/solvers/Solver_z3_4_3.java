@@ -69,12 +69,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     /** Set to true once a set-logic command has been executed */
     protected boolean logicSet = false;
 
-    /** The checkSatStatus returned by check-sat, if sufficiently recent, otherwise null */
-    protected /*@Nullable*/ IResponse checkSatStatus = null;
-
-    @Override
-    public /*@Nullable*/IResponse checkSatStatus() { return checkSatStatus; }
-
     /** The number of pushes less the number of pops so far -- i.e. the real depth of the
      *  solver's own assertion stack. 0 immediately after set_logic(), before any push (not
      *  1: set_logic() does not itself push anything). Used to know how much to pop for
@@ -302,6 +296,15 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         } catch (ParserException e) {
             return smtConfig.responseFactory.error("ParserException while parsing response: " + response + " " + e);
         }
+    }
+
+    /** Like the individual commands, a block of them requires the logic to be set */
+    @Override
+    public IResponse sendCommands(List<ICommand> commands) {
+        if (!logicSet && !commands.isEmpty()) {
+            return smtConfig.responseFactory.error("The logic must be set before declarations, definitions or assertions are issued");
+        }
+        return super.sendCommands(commands);
     }
 
     @Override
