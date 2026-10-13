@@ -1,0 +1,6 @@
+success
+success
+success
+(error "A name is duplicated in the parameter list: a")
+success
+unknown

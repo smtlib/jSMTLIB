@@ -155,6 +155,11 @@ public class FileTests extends LogicTests {
         // on disk; see SMT.java's text field and its one other setter, LogicTests#doScript().
         List<String> args = new ArrayList<String>();
         args.add("--solver"); args.add(solvername);
+        // Options for the whole run (e.g. SMT_TEST_OPTIONS=--pipeline), before a file's own
+        String runOptions = System.getenv("SMT_TEST_OPTIONS");
+        if (runOptions != null && !runOptions.isBlank()) {
+            args.addAll(java.util.Arrays.asList(runOptions.trim().split("\\s+")));
+        }
         args.addAll(optionsDirectiveArgs(text));
         args.add("--text"); args.add(text);
         smt.exec(args.toArray(new String[0]));

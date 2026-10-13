@@ -1,0 +1,6 @@
+success
+success
+success
+(error "cannot pop beyond first pushed context")
+success
+sat

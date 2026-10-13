@@ -1,0 +1,16 @@
+success
+success
+"after declare-fun"
+success
+(:error-behavior immediate-exit )
+success
+false
+success
+success
+success
+(
+(> x 0)
+(< x 5)
+(> y x)
+)
+sat

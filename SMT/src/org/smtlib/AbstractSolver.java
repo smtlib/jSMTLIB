@@ -279,7 +279,9 @@ public class AbstractSolver implements ISolver {
         }
         String translatedCmd = null;
         try {
+            if (!capturing) readPipelined(true);
             translatedCmd = translate(cmd);
+            if (capturing) return sendWithoutWaiting(translatedCmd);
             String response = solverProcess.sendAndListen(translatedCmd, "\n");
             // A null response (observed rarely, likely a SolverProcess read-timing race)
             // would otherwise reach parseResponse() and surface as an uncaught
@@ -309,6 +311,290 @@ public class AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
+        }
+    }
+
+    // Pipelining: a pipelined command is sent without waiting for its response, which is read later
+    // and matched to it by position, since the solver writes one response per command in order
+    // (the solver is always at :print-success true; were that ever not so, commands acknowledged
+    // with 'success' would write nothing and the matching below would need to know which do).
+
+    /** The response returned for a command sent by {@link #sendPipelined(ICommand)} whose actual
+     *  response has not yet been read; {@link #isReady()} tells when it has (see
+     *  {@link #readPipelined(boolean)}), and {@link #response()} then gives it. */
+    public static final class Pending implements IResponse {
+        /** The text sent to the solver */
+        final String sent;
+        private /*@Nullable*/ IResponse response = null;
+
+        Pending(String sent) {
+            this.sent = sent;
+        }
+
+        public boolean isReady() { return response != null; }
+
+        /** The response read for the command, or null if not yet read */
+        public /*@Nullable*/ IResponse response() { return response; }
+
+        @Override public boolean isOK() { return false; }
+        @Override public boolean isError() { return false; }
+        @Override public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
+            throw new IVisitor.VisitorException("A pipelined response has not been read yet", null);
+        }
+        @Override public String toString() { return response == null ? "<pending>" : response.toString(); }
+    }
+
+    /** True while {@link #sendPipelined(ICommand)} executes a command, so that
+     *  {@link #sendCommand(ICommand)} sends it without waiting */
+    private boolean capturing = false;
+
+    /** Commands sent without waiting whose responses have not yet been read, oldest first */
+    private final java.util.ArrayDeque<Pending> pending = new java.util.ArrayDeque<>();
+
+    /** Text read from the solver's standard output not yet matched to a command */
+    private final StringBuilder unread = new StringBuilder();
+
+    /** Text read from the solver's standard error not yet reported */
+    private final StringBuilder unreadErrorOutput = new StringBuilder();
+
+    /** The most recent response read for a pipelined command */
+    private /*@Nullable*/ IResponse lastPipelined = null;
+
+    /** Whether {@link #sendPipelined(ICommand)} may send the command without waiting for its
+     *  response. True for the commands whose execution here sends the command (once) and has
+     *  nothing to do with its response beyond returning it -- except check-sat, whose response
+     *  becomes {@link #checkSatStatus} when it is read. A subclass returns false for a command
+     *  whose solver response needs correcting before it is compliant, or that it executes
+     *  otherwise, and for all commands if it does not send them through sendCommand. */
+    public boolean pipelines(ICommand cmd) {
+        return cmd instanceof Ideclare_fun || cmd instanceof Ideclare_const
+                || cmd instanceof Ideclare_sort || cmd instanceof Ideclare_sort_parameter
+                || cmd instanceof Idefine_fun || cmd instanceof Idefine_fun_rec
+                || cmd instanceof Idefine_funs_rec || cmd instanceof Idefine_sort
+                || cmd instanceof Ideclare_datatype || cmd instanceof Ideclare_datatypes
+                || cmd instanceof Iassert || cmd instanceof Ipush || cmd instanceof Ipop
+                || cmd instanceof Icheck_sat || cmd instanceof Icheck_sat_assuming
+                || cmd instanceof Iset_logic || cmd instanceof Iset_info
+                || cmd instanceof Ireset || cmd instanceof Ireset_assertions;
+    }
+
+    /** Executes a command for which {@link #pipelines(ICommand)} is true, sending it to the solver
+     *  without waiting for the response. Returns a {@link Pending} response if the command was
+     *  sent, or the actual response if it was not (e.g. an error found before sending). Any other
+     *  request to this solver first waits for the pending responses, but a caller must call
+     *  {@link #readPipelined(boolean)} with true itself before executing a command that is checked
+     *  against an earlier response (such as get-value against check-sat). */
+    public IResponse sendPipelined(ICommand cmd) {
+        capturing = true;
+        try {
+            return cmd.execute(this);
+        } finally {
+            capturing = false;
+        }
+    }
+
+    /** Whether some pipelined command's response has not yet been read */
+    public boolean hasPending() {
+        return !pending.isEmpty();
+    }
+
+    private IResponse sendWithoutWaiting(String translatedCmd) {
+        Pending p = new Pending(translatedCmd);
+        try {
+            solverProcess.sendNoListen(translatedCmd, "\n");
+            pending.add(p);
+        } catch (IOException e) {
+            // The solver has stopped: report it as for any command sent after that
+            IResponse timedOut = timeLimitResponseAfterExit();
+            p.response = timedOut != null ? timedOut : alreadyExited(translatedCmd);
+        }
+        return p;
+    }
+
+    private IResponse alreadyExited(String translatedCmd) {
+        return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " "
+                + new SolverProcess.NoResponseException("Solver process has already exited"));
+    }
+
+    /** How often (ms) reading that waits for a response also checks standard error */
+    private static final long PIPELINE_POLL_MILLIS = 100;
+
+    /** Reads what the solver has written for pipelined commands, matching each response to its
+     *  command in order; with wait, until every pending command has its response (or the solver
+     *  has stopped), else only what has already arrived. Standard error is checked each time
+     *  output is read. Which command its text belongs to is not known while the solver runs, so
+     *  it is kept until either the solver stops, when it becomes the response of the first
+     *  command without one (as listen() would return it), or every pending response has been
+     *  read, when it is logged as diagnostic output. */
+    public void readPipelined(boolean wait) {
+        // Without pending commands, leave everything to listen(), as without pipelining
+        if (pending.isEmpty()) return;
+        while (!pending.isEmpty()) {
+            checkErrorOutput(0);
+            if (matchUnread()) continue;
+            if (solverProcess == null || solverProcess.outputEnded()) {
+                resolveAfterEnd();
+                break;
+            }
+            String out;
+            try {
+                out = solverProcess.readOutput(wait ? PIPELINE_POLL_MILLIS : 0);
+            } catch (IOException e) {
+                resolveAfterEnd();
+                break;
+            }
+            if (out != null) unread.append(out);
+            else if (!wait) break;
+        }
+        if (pending.isEmpty()) {
+            checkErrorOutput(0);
+            String extra = unread.toString().trim();
+            unread.setLength(0);
+            if (!extra.isEmpty()) {
+                smtConfig.log.logDiag("#Unexpected output from the solver: " + extra);
+            }
+            String err = takeErrorOutput(false);
+            if (!err.isEmpty()) smtConfig.log.logDiag(err);
+        }
+    }
+
+    private void checkErrorOutput(long waitMillis) {
+        if (solverProcess == null) return;
+        try {
+            unreadErrorOutput.append(solverProcess.readErrorOutput(waitMillis));
+        } catch (IOException e) {
+            // nothing more to read
+        }
+    }
+
+    /** The standard-error text read and not yet reported, less comment lines (z3 writes some),
+     *  which listen() ignores too. The text arrives in pieces, so only whole lines are judged:
+     *  unless all is true (the solver has stopped), an unfinished last line is left for later. */
+    private String takeErrorOutput(boolean all) {
+        int end = all ? unreadErrorOutput.length() : unreadErrorOutput.lastIndexOf("\n") + 1;
+        StringBuilder text = new StringBuilder();
+        for (String line : unreadErrorOutput.substring(0, end).split("\n")) {
+            if (!line.startsWith(";")) text.append(line).append('\n');
+        }
+        unreadErrorOutput.delete(0, end);
+        return text.toString().trim();
+    }
+
+    /** Matches the next complete response in the unread text, if any, to the oldest pending
+     *  command; returns whether it did */
+    private boolean matchUnread() {
+        int start = 0;
+        int end;
+        while (true) {
+            while (start < unread.length() && Character.isWhitespace(unread.charAt(start))) start++;
+            if (start < unread.length() && unread.charAt(start) == ';') {
+                // a comment line (z3 writes some): not a response
+                int eol = unread.indexOf("\n", start);
+                if (eol < 0) return false;
+                start = eol + 1;
+                continue;
+            }
+            end = responseEnd(unread, start);
+            if (end < 0) return false;
+            break;
+        }
+        String text = unread.substring(start, end);
+        unread.delete(0, end);
+        Pending p = pending.poll();
+        resolve(p, toResponse(p, text));
+        return true;
+    }
+
+    /** The index just past the response that starts at start (an atom, a string literal, a quoted
+     *  symbol, or one balanced S-expression), or -1 if that response is not yet complete */
+    public static int responseEnd(CharSequence s, int start) {
+        int n = s.length();
+        if (start >= n) return -1;
+        int depth = 0;
+        int i = start;
+        while (i < n) {
+            char c = s.charAt(i);
+            if (c == '"') {
+                // a string literal; "" within it is an escaped quote
+                i++;
+                while (true) {
+                    if (i >= n) return -1;
+                    if (s.charAt(i) == '"') {
+                        if (i + 1 >= n) return -1; // cannot yet tell whether this is ""
+                        if (s.charAt(i + 1) != '"') break;
+                        i++;
+                    }
+                    i++;
+                }
+                i++;
+            } else if (c == '|') {
+                int close = i + 1;
+                while (close < n && s.charAt(close) != '|') close++;
+                if (close >= n) return -1;
+                i = close + 1;
+            } else if (c == '(') {
+                depth++;
+                i++;
+            } else if (c == ')') {
+                depth--;
+                i++;
+            } else if (depth > 0) {
+                i++;
+                continue;
+            } else {
+                // an atom: ends at whitespace or a delimiter
+                while (i < n && !Character.isWhitespace(s.charAt(i)) && "()\";|".indexOf(s.charAt(i)) < 0) i++;
+                if (i >= n) return -1; // it may continue
+                return i;
+            }
+            if (depth <= 0) return i;
+        }
+        return -1;
+    }
+
+    private IResponse toResponse(Pending p, String text) {
+        IResponse timedOut = timeLimitResponse(text);
+        if (timedOut != null) return timedOut;
+        IResponse result = parseResponse(text);
+        if (result == null) {
+            return smtConfig.responseFactory.error("Could not parse response from the solver for: " + p.sent + " -- raw response: " + text);
+        }
+        return checkImmediateExit(result);
+    }
+
+    private void resolve(Pending p, IResponse r) {
+        p.response = r;
+        if (checkSatStatus == p) checkSatStatus = r;
+        lastPipelined = r;
+    }
+
+    /** Gives every pending command a response once the solver's output has ended, as sending the
+     *  commands one at a time would: the first gets what the solver wrote on standard error, if
+     *  anything, or else, unless the solver stopped after an error response, the error for a solver
+     *  that wrote no response; the rest get the error for a solver that has exited. */
+    private void resolveAfterEnd() {
+        checkErrorOutput(solverProcess == null ? 0 : solverProcess.errorSettleMillis);
+        String err = takeErrorOutput(true);
+        String extra = unread.toString().trim();
+        unread.setLength(0);
+        if (!extra.isEmpty()) err = err.isEmpty() ? extra : extra + "\n" + err;
+        IResponse timedOut = err.isEmpty() ? null : timeLimitResponse(err);
+        boolean first = !err.isEmpty() || lastPipelined == null || !lastPipelined.isError();
+        Pending p;
+        while ((p = pending.poll()) != null) {
+            IResponse r;
+            if (endedByTimeLimit || timedOut != null) {
+                r = smtConfig.responseFactory.timeout();
+            } else if (first && !err.isEmpty()) {
+                r = toResponse(p, err);
+            } else if (first) {
+                r = smtConfig.responseFactory.error("Error writing to solver: " + p.sent + " "
+                        + new SolverProcess.NoResponseException("Solver process closed its output stream without a response"));
+            } else {
+                r = alreadyExited(p.sent);
+            }
+            first = false;
+            resolve(p, r);
         }
     }
 
@@ -356,6 +642,7 @@ public class AbstractSolver implements ISolver {
         /*@Nullable*/ IResponse firstError = null;
         try {
             StringBuilder out = new StringBuilder();
+            readPipelined(true);
             String chunk = solverProcess.sendAndListen(text.toString());
             while (true) {
                 if (chunk == null) {
@@ -651,6 +938,7 @@ public class AbstractSolver implements ISolver {
             // (paren-balance tracked across all reads so far) until it's complete.
             String cmdText = translate(smtConfig.commandFactory.get_assertions());
             StringBuilder sb = new StringBuilder();
+            readPipelined(true);
             solverProcess.sendNoListen(cmdText, "\n");
             int parens = 0;
             // Tracks whether the scan is currently inside a double-quoted string literal,
@@ -715,6 +1003,7 @@ public class AbstractSolver implements ISolver {
         if (err != null) return err;
         String response = null;
         try {
+            readPipelined(true);
             response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_unsat_assumptions()), "\n");
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;
@@ -742,6 +1031,7 @@ public class AbstractSolver implements ISolver {
         if (err != null) return err;
         String response = null;
         try {
+            readPipelined(true);
             response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_unsat_core()), "\n");
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;
@@ -769,6 +1059,7 @@ public class AbstractSolver implements ISolver {
         if (err != null) return err;
         String response = null;
         try {
+            readPipelined(true);
             response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_value(java.util.Arrays.asList(terms))), "\n");
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;
@@ -796,6 +1087,7 @@ public class AbstractSolver implements ISolver {
         if (err != null) return err;
         String response = null;
         try {
+            readPipelined(true);
             response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_assignment()), "\n");
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;

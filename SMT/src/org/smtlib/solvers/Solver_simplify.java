@@ -140,6 +140,12 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         return arg;
     }
 
+    /** Never pipelined: commands are executed here, not sent to a process */
+    @Override
+    public boolean pipelines(ICommand cmd) {
+        return false;
+    }
+
     /** Simplify does not take SMT-LIB commands, and its commands are type-checked and translated one at a time */
     @Override
     protected boolean acceptsBlocks() {

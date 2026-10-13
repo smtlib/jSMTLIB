@@ -1,0 +1,3 @@
+(define-fun f ((a Int) (a Int)) Int a)
+                        ^
+Aborting because of a validation error

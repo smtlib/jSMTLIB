@@ -219,8 +219,68 @@ public class Log {
         setChannels(this.out, this.outOwned, newDiag, owned);
     }
 
+    /** Output whose content is not yet known, e.g. the response to a command sent to a solver
+     *  without waiting for it (pipelining); see {@link #hold(IPendingOutput)} */
+    public static interface IPendingOutput {
+        /** Whether the content is known, so that {@link #print()} may be called */
+        boolean isReady();
+        /** Logs the content, through this Log as usual */
+        void print();
+    }
+
+    /** Output not yet logged, in order: pending outputs and the logging calls made after them */
+    private final java.util.ArrayDeque<Object> held = new java.util.ArrayDeque<>();
+
+    /** True while {@link #flush()} logs held output */
+    private boolean flushing = false;
+
+    /** Holds a place in the output for content not yet known: until it is printed (see
+     *  {@link #flush()}), later logging calls are held behind it, so that output stays in order. */
+    public void hold(IPendingOutput output) {
+        held.add(output);
+    }
+
+    /** Logs held output, in order, up to the first pending output that is not yet ready */
+    public void flush() {
+        if (flushing) return;
+        flushing = true;
+        try {
+            while (!held.isEmpty()) {
+                Object o = held.peek();
+                if (o instanceof IPendingOutput po) {
+                    if (!po.isReady()) break;
+                    held.poll();
+                    po.print();
+                } else {
+                    held.poll();
+                    ((Runnable)o).run();
+                }
+            }
+        } finally {
+            flushing = false;
+        }
+    }
+
+    /** Discards held output, e.g. when a run is aborted at an error in a pending response */
+    public void discardHeld() {
+        held.clear();
+    }
+
+    /** Whether output is held (see {@link #hold(IPendingOutput)}) */
+    public boolean isHolding() {
+        return !held.isEmpty();
+    }
+
+    /** Holds the logging call if output is being held; returns whether it did */
+    private boolean hold(Runnable call) {
+        if (flushing || held.isEmpty()) return false;
+        held.add(call);
+        return true;
+    }
+
     /** Prints the argument on the regular output stream and to any listeners */
     public void logOut(/*@NonNull*/ IResponse r) {
+        if (hold(() -> logOut(r))) return;
         for (IListener listener: listeners) {
             listener.logOut(r);
         }
@@ -229,6 +289,7 @@ public class Log {
     /** Prints the argument on the regular output stream, with a line termination added, and
      *  notifies any listeners. */
     public void logOut(/*@NonNull*/ String message) {
+        if (hold(() -> logOut(message))) return;
         for (IListener listener: listeners) {
             listener.logOut(message);
         }
@@ -236,6 +297,7 @@ public class Log {
 
     /** Prints the argument on the regular output stream with no newline appended, and notifies any listeners. */
     public void logOutNoln(/*@NonNull*/ String message) {
+        if (hold(() -> logOutNoln(message))) return;
         for (IListener listener: listeners) {
             listener.logOutNoln(message);
         }
@@ -243,6 +305,7 @@ public class Log {
 
     /** Reports the error to any listeners, returning the input. */
     public IResponse.IError logError(/*@NonNull*//*@ReadOnly*/ IResponse.IError r) {
+        if (hold(() -> logError(r))) return r;
         numErrors++;
         for (IListener listener: listeners) {
             listener.logError(r);
@@ -252,6 +315,7 @@ public class Log {
 
     /** Reports the error to any listeners. */
     public void logError(/*@NonNull*/String r) {
+        if (hold(() -> logError(r))) return;
         numErrors++;
         for (IListener listener: listeners) {
             listener.logError(r);
@@ -260,6 +324,7 @@ public class Log {
 
     /** Prints the argument to any listeners (adds a line terminator). */
     public void logDiag(/*@NonNull*/ String message) {
+        if (hold(() -> logDiag(message))) return;
         for (IListener listener: listeners) {
             listener.logDiag(message);
         }
@@ -267,6 +332,7 @@ public class Log {
 
     /** Sends the call to any listeners. */
     public void indent(/*@NonNull*/ String prompt) {
+        if (hold(() -> indent(prompt))) return;
         for (IListener listener: listeners) {
             listener.indent(prompt);
         }

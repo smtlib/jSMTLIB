@@ -443,6 +443,43 @@ public class SolverProcess {
         send(false, args);
     }
 
+    /** Set once pipelined reading ({@link #readOutput(long)}) has reached the end of standard output */
+    private boolean outputEnded = false;
+
+    /** Whether pipelined reading has reached the end of standard output: the process has exited
+     *  or closed it */
+    public boolean outputEnded() {
+        return outputEnded;
+    }
+
+    /** For pipelined reading, which, unlike {@link #listen()}, does not pair the text with one
+     *  command: the next text the solver wrote on standard output, waiting up to waitMillis for it
+     *  (not at all if 0; until some arrives or the output ends if negative). Returns null if none
+     *  arrived in that time, or if the output has ended (see {@link #outputEnded()}). */
+    public /*@Nullable*/ String readOutput(long waitMillis) throws IOException {
+        if (outputEnded || standardOut == null) return null;
+        String out;
+        try {
+            out = standardOut.poll(waitMillis);
+        } catch (IOException e) {
+            outputEnded = true;
+            throw e;
+        }
+        if (out == null) return null;
+        if (standardOut.lastTakeWasForcedEof()) outputEnded = true;
+        if (log != null && !out.isEmpty()) { log.write(";OUT: "); log.write(out); log.write(eol); log.flush(); }
+        return out;
+    }
+
+    /** For pipelined reading: the text that has arrived on standard error, waiting up to
+     *  waitMillis for some (see StreamGobbler.drain) */
+    public String readErrorOutput(long waitMillis) throws IOException {
+        if (errorOut == null) return "";
+        String err = errorOut.drain(waitMillis);
+        if (log != null && !err.isEmpty()) { log.write(";ERR: "); log.write(err); log.flush(); }
+        return err;
+    }
+
 // TODO - combine listen and noListen versions of send?
 
     /** Continuously drains one of the process's output streams (stdout or stderr) on a
@@ -528,6 +565,22 @@ public class SolverProcess {
         String take() throws IOException {
             try {
                 Chunk c = queue.take();
+                if (c.error != null) throw c.error;
+                lastTakeWasForcedEof = c.eof;
+                return c.text;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Interrupted while waiting for solver output", e);
+            }
+        }
+
+        /** Like take(), but waits at most waitMillis (not at all if 0; without limit if
+         * negative); returns null if no chunk arrived in that time. */
+        /*@Nullable*/ String poll(long waitMillis) throws IOException {
+            if (waitMillis < 0) return take();
+            try {
+                Chunk c = queue.poll(waitMillis, TimeUnit.MILLISECONDS);
+                if (c == null) return null;
                 if (c.error != null) throw c.error;
                 lastTakeWasForcedEof = c.eof;
                 return c.text;

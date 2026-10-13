@@ -140,6 +140,12 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         return rawResponse.trim().equals("timeout");
     }
 
+    /** Never pipelined: this adapter sends and corrects commands by its own means */
+    @Override
+    public boolean pipelines(ICommand cmd) {
+        return false;
+    }
+
     public IResponse sendCommand(ICommand cmd) {
         if (endedByTimeLimit) return smtConfig.responseFactory.timeout();
         String translatedCmd = null;
