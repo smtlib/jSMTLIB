@@ -984,7 +984,14 @@ public class AbstractSolver implements ISolver {
         if (err != null) return err;
         err = requireUnsat("get-proof", "check-sat");
         if (err != null) return err;
-        return sendCommand(smtConfig.commandFactory.get_proof());
+        return proofResponse(sendCommand(smtConfig.commandFactory.get_proof()));
+    }
+
+    /** Wraps a parsed get-proof answer as an IProofResponse; anything else (an error,
+     *  unsupported) is returned unchanged. */
+    protected IResponse proofResponse(IResponse r) {
+        return r instanceof org.smtlib.sexpr.ISexpr
+                ? smtConfig.responseFactory.get_proof_response((org.smtlib.sexpr.ISexpr)r) : r;
     }
 
     /** @see org.smtlib.ISolver#get_model()*/

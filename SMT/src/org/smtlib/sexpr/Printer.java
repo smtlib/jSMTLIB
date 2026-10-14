@@ -962,11 +962,54 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
         return null;
     }
 
+    /** Prints the proof s-expression compactly; a proof that is a list of lists (e.g. cvc5's
+     *  steps, z3's (set-logic) and (proof)) gets one element per line, as get-assertions does. */
     @Override
     public Void visit(IProofResponse e) throws IVisitor.VisitorException {
-        // TODO when proofs are defined
-        append("PROOF");
+        ISexpr proof = e.proof();
+        if (proof instanceof ISexpr.ISeq && !((ISexpr.ISeq)proof).sexprs().isEmpty()
+                && ((ISexpr.ISeq)proof).sexprs().stream().allMatch(x -> x instanceof ISexpr.ISeq)) {
+            append("(");
+            append(eol);
+            for (ISexpr x : ((ISexpr.ISeq)proof).sexprs()) {
+                printCompact(x);
+                append(eol);
+            }
+            append(")");
+        } else {
+            printCompact(proof);
+        }
         return null;
+    }
+
+    /** Prints a list without the padding visit(ISeq) adds inside its parentheses; iterative,
+     *  since a proof can nest deeper than the Java stack allows. */
+    private void printCompact(ISexpr e) throws IVisitor.VisitorException {
+        java.util.ArrayDeque<List<ISexpr>> lists = new java.util.ArrayDeque<>();
+        java.util.ArrayDeque<Integer> indexes = new java.util.ArrayDeque<>();
+        ISexpr next = e;
+        while (true) {
+            if (next instanceof ISexpr.ISeq) {
+                append("(");
+                lists.push(((ISexpr.ISeq)next).sexprs());
+                indexes.push(0);
+            } else {
+                next.accept(this);
+            }
+            next = null;
+            while (next == null && !lists.isEmpty()) {
+                int i = indexes.pop();
+                if (i < lists.peek().size()) {
+                    if (i > 0) append(" ");
+                    next = lists.peek().get(i);
+                    indexes.push(i + 1);
+                } else {
+                    append(")");
+                    lists.pop();
+                }
+            }
+            if (next == null) return;
+        }
     }
 
     @Override

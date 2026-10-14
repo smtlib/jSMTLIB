@@ -1,0 +1,15 @@
+success
+success
+success
+success
+success
+success
+unsat
+(
+(declare-const p Bool)
+(declare-const q Bool)
+(assume @p1 (and p q))
+(assume @p2 (not p))
+(step @p3 :rule and_elim :premises (@p1) :args (0))
+(step @p4 false :rule contra :premises (@p3 @p2))
+)

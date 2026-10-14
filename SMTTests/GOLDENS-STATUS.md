@@ -98,7 +98,8 @@ classified each. **39 confirmed accurate.** 7 open findings below.
   `(error "...")`, but jSMTLIB's own checker returns the generic `unsupported`
   token instead. Accurate finding, worth an eventual jSMTLIB fix. (1)
 
-**Open findings (7)** — not reclassified (no edits made), flagged for your review:
+**Open findings (7)** — not reclassified (no edits made), flagged for your review.
+*Status as of 2026-10-14 is noted on each item; the rest of this report is unchanged.*
 
 1. **Likely misclassified as non-compliant (6 files)** — each shows a solver
    *honestly* declining an unimplemented optional feature via a
@@ -109,18 +110,21 @@ classified each. **39 confirmed accurate.** 7 open findings below.
    legitimate (c) elsewhere in this suite (e.g. the 13 "identical to bare"
    files, or `ok_setOptionalOptions.tst.out.z3-4.3`). Candidates:
    - `ok_getProof.tst.out.yices2.bad` — declares `produce-proofs` unsupported,
-     then consistently refuses `get-proof`.
+     then consistently refuses `get-proof`. *Resolved: now the plain golden
+     `ok_getProof.tst.out.yices2` (`365c2b6b`).*
    - `ok_getAssignment.tst.out.z3-4.3.bad` — same shape for `produce-assignments`.
+     *A plain `ok_getAssignment.tst.out.z3-4.3` now exists and takes precedence,
+     so this `.bad` is unreachable.*
    - `ok_reproducibleResourceLimit.tst.out.z3.bad` — same shape for the
      `:reproducible-resource-limit` option; this is also one of the 13 family-shadow
      files and already tracked as task #29 (invert-polarity fix, deferred
-     until your test run finishes).
+     until your test run finishes). *Still `.bad`.*
    - `ok_setLogic_{AUFLIA,AUFLIRA,AUFNIRA,LRA}.tst.out.yices2.bad` (4 files) —
      yices2 honestly errors `"logic X is not supported"` for four standard
-     logic names it doesn't implement.
+     logic names it doesn't implement. *Resolved: now plain goldens (`365c2b6b`).*
    - `ok_unsupportedInfo.tst.out.yices2.bad` — responds `(error "no info for
      :zzz")` instead of jSMTLIB's own `unsupported` token; same meaning,
-     different (also-valid) response type.
+     different (also-valid) response type. *Resolved: now a plain golden (`365c2b6b`).*
 
    *(Note: `ok_reproducibleResourceLimit.tst.out.z3.bad` is counted once, in
    the task #29 total of 13, not double-counted in the "6" above — 5 new +
@@ -131,9 +135,11 @@ classified each. **39 confirmed accurate.** 7 open findings below.
    Neither `ok_ALL2_logic.tst` nor `ok_ALL_logic.tst` exist in the current
    tree (only `ok_ALL2_logic_8.tst` does, likely their intended successor/
    consolidation). These two `.bad` files are unreachable dead weight and
-   should simply be deleted.
+   should simply be deleted. *Still present; the tests exist only as disabled
+   `ok_ALL_logic.tst-skip` / `ok_ALL2_logic.tst-skip`.*
 
-3. **Likely stale (1 file)**: `ok_quant.tst.out.z3.bad` — documents z3 emitting
+3. **Likely stale (1 file)**: *Resolved: the file has since been deleted.*
+   `ok_quant.tst.out.z3.bad` — documents z3 emitting
    a bare `WARNING` line that gets misread as the response to the last
    command (`success` expected, `WARNING` seen instead of it). This exact bug
    was fixed **this session** (`Solver_z3_4_5.java`/`Solver_z3_recent.java`
@@ -309,6 +315,11 @@ on these.
 ---
 
 ## Recommended next steps (not acted on — no edits made)
+
+*Status as of 2026-10-14: step 2 is done (`ok_quant.tst.out.z3.bad` deleted); of step 3's
+candidates, `ok_getProof`, the four `ok_setLogic_*` and `ok_unsupportedInfo` became plain
+goldens (`365c2b6b`), `ok_getAssignment.tst.out.z3-4.3.bad` is shadowed by a plain golden,
+and `ok_reproducibleResourceLimit.tst.out.z3.bad` is still `.bad`; step 1 is not done.*
 
 **`ok_` tests:**
 1. Delete the 2 orphaned `.bad` files with no corresponding `.tst` source

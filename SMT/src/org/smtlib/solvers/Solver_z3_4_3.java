@@ -659,7 +659,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The get-proof command is only valid immediately after check-sat returned unsat");
         }
         try {
-            return parseResponse(solverProcess.sendAndListen("(get-proof)\n"));
+            return proofResponse(parseResponse(solverProcess.sendAndListen("(get-proof)\n")));
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }

@@ -17,6 +17,7 @@ import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IPos.IPosable;
 import org.smtlib.IResponse.*;
+import org.smtlib.sexpr.ISexpr;
 
 /** This class holds subclasses that are implementations of the various IResponse interfaces.
  *  It is never itself instantiated -- only its nested classes and the constants below are used. */
@@ -127,7 +128,7 @@ public abstract class Response {
         }
 
         @Override
-        public ProofResponse get_proof_response() { return new ProofResponse(); }
+        public ProofResponse get_proof_response(ISexpr proof) { return new ProofResponse(proof); }
 
         @Override
         public ValueResponse get_value_response(List<IPair<IExpr,IExpr>> values) {
@@ -297,9 +298,9 @@ public abstract class Response {
 
     /** Implements the IResponse.IProofResponse interface */
     static public class ProofResponse extends Pos.Printable implements IResponse.IProofResponse {
-        // TODO - no implementation for proofs as yet
-        public ProofResponse() {}
-        @Override public Object proof() { return null; }
+        private final ISexpr proof;
+        public ProofResponse(ISexpr proof) { this.proof = proof; }
+        @Override public ISexpr proof() { return proof; }
         @Override public boolean isOK() { return false; }
         @Override public boolean isError() { return false; }
 
