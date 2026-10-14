@@ -178,6 +178,11 @@ public class SMT {
         /** True if the application is to echo commands as it executes them; only applies in interactiveMode mode */
         public boolean echo = false;
 
+        /** If true, the command-line tool sends commands in a file or --text input to the solver
+         *  without waiting for each response where it can (AbstractSolver.sendPipelined), reading
+         *  the responses as they arrive */
+        public boolean pipeline = false;
+
         /** This field is set from the command-line; if set, then sets the logic used by the solver,
          * as if the first command were the corresponding set-logic command.
          */
@@ -656,6 +661,7 @@ public class SMT {
                 src = smtConfig.smtFactory.createSource(new CharSequenceReader(rdr,100000,0,2),
                         (smtConfig.files == null || smtConfig.files.isEmpty())? null : smtConfig.files.get(0)); // FIXME - use factory
                 p = smtConfig.smtFactory.createParser(smtConfig,src);
+                pipelineInput = true;
                 return doParser(p);
 
             } else if (smtConfig.port >= 0) {
@@ -699,6 +705,7 @@ public class SMT {
                         src = smtConfig.smtFactory.createSource(csr, file);
                         p = smtConfig.smtFactory.createParser(smtConfig,src);
                         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Starting file " + file);
+                        pipelineInput = true;
                         int e = doParser(p);
                         // Exit code 2 (an unrecoverable/internal failure) always survives a
                         // later file's lesser code -- once set, no subsequent file's result
@@ -712,9 +719,14 @@ public class SMT {
                 return retcode;
             }
         } finally {
+            pipelineInput = false;
             cleanup();
         }
     }
+
+    /** Whether the input being processed may be pipelined (with --pipeline): file and --text input,
+     *  not the socket or standard input, whose client needs each command's response at once */
+    protected boolean pipelineInput = false;
 
     protected int doParser(IParser p) { 
         return doParser(p,true);
@@ -764,6 +776,11 @@ public class SMT {
         // the solver itself, since this is about script structure, not solver state, and
         // applies uniformly regardless of which solver backend is in use.
         boolean smtlibVersionAllowed = true;
+        // With --pipeline, the solver that sends commands without waiting; their responses are
+        // printed, in order, as they are read (see Log.hold)
+        AbstractSolver pipeliner = smtConfig.pipeline && pipelineInput && solver instanceof AbstractSolver as ? as : null;
+        pipelineFailed = false;
+        pipelineAborted = false;
         try {
             IResponse result = null;
             ICommand command = null;
@@ -813,7 +830,16 @@ public class SMT {
                             command instanceof IPosable ? ((IPosable)command).pos() : null);
                     } else {
                         try {
-                            result = command.execute(solver);
+                            if (pipeliner != null && pipeliner.pipelines(command) && !isSmtlibVersionInfo) {
+                                result = pipeliner.sendPipelined(command);
+                            } else {
+                                // A comment has no response; anything else may depend on earlier ones
+                                if (pipeliner != null && !(command instanceof ICommand.Icomment)) {
+                                    if (readPipelined(pipeliner, true)) break;
+                                    if (pipelineFailed) retcode = 1;
+                                }
+                                result = command.execute(solver);
+                            }
                         } catch (UnsupportedOperationException e) {
                             result = smtConfig.responseFactory.error(
                                 "The " + smtConfig.solvername + " solver does not support this operation: " + e.getMessage(),
@@ -835,15 +861,13 @@ public class SMT {
                         smtlibVersionAllowed = (command instanceof ICommand.Ireset)
                                 || (isSmtlibVersionInfo && !result.isError());
                     }
-                    if (result.isError()) {
-                        IResponse.IError eresult = (IResponse.IError)result;
-                        if (eresult.pos() == null && command instanceof IPosable) {
-                            // This is in case we omitted setting the position when the error
-                            // was generated - we set it to the whole command.  However, we ought
-                            // to root out all such omissions and correct them where possible.
-                            eresult.setPos(((IPosable)command).pos());
-                        }
-                        smtConfig.log.logError(eresult);
+                    if (result instanceof AbstractSolver.Pending pending) {
+                        holdResponse(command, pending);
+                        if (readPipelined(pipeliner, false)) break;
+                        if (pipelineFailed) retcode = 1;
+                        continue;
+                    }
+                    if (report(command, result)) {
                         retcode = 1;
                         if (abortMode) {
                             if (!smtConfig.interactive) {
@@ -852,10 +876,6 @@ public class SMT {
                             }
                             p.abortLine();
                         }
-                    } else if (result.toString().equals("success")) {  // FIXME need a better way to do this
-                        if (!smtConfig.nosuccess) smtConfig.log.logOut(result);
-                    } else if (!result.toString().isEmpty()) { // FIXME - is there a more abstract way to do this?
-                        smtConfig.log.logOut(result);
                     }
                     lastResponse = result;
                 } catch (AbortInputException e) {
@@ -869,6 +889,7 @@ public class SMT {
                     }
                 }
             }
+            finishPipelined(pipeliner);
             checkSatStatus = solver.checkSatStatus();
         } catch (IOException e) {
             error("IOException reading input: " + e);
@@ -883,10 +904,78 @@ public class SMT {
             error("Out of memory while processing input");
             retcode = 2;
         }
+        finishPipelined(pipeliner);
+        if (pipelineFailed && retcode == 0) retcode = 1;
         solver.forceExit();  // Just in case the solver was not explicitly exited
         solver = null;
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Exiting program");
         return retcode;
+    }
+
+    /** Prints a command's response: an error with its location, 'success' unless suppressed, or
+     *  any other non-empty response; returns whether it is an error */
+    private boolean report(ICommand command, IResponse result) {
+        if (result.isError()) {
+            IResponse.IError eresult = (IResponse.IError)result;
+            if (eresult.pos() == null && command instanceof IPosable) {
+                // This is in case we omitted setting the position when the error
+                // was generated - we set it to the whole command.  However, we ought
+                // to root out all such omissions and correct them where possible.
+                eresult.setPos(((IPosable)command).pos());
+            }
+            smtConfig.log.logError(eresult);
+            return true;
+        } else if (result.toString().equals("success")) {  // FIXME need a better way to do this
+            if (!smtConfig.nosuccess) smtConfig.log.logOut(result);
+        } else if (!result.toString().isEmpty()) { // FIXME - is there a more abstract way to do this?
+            smtConfig.log.logOut(result);
+        }
+        return false;
+    }
+
+    /** Set when a pipelined command's response, printed once read, is an error */
+    private boolean pipelineFailed = false;
+
+    /** Set when, with --abort, a pipelined command's response is an error: the run stops there */
+    private boolean pipelineAborted = false;
+
+    /** Holds the place in the output of a pipelined command's response, which is printed (as
+     *  {@link #report} prints a response) once it has been read */
+    private void holdResponse(ICommand command, AbstractSolver.Pending pending) {
+        smtConfig.log.hold(new Log.IPendingOutput() {
+            @Override public boolean isReady() { return pending.isReady(); }
+            @Override public void print() {
+                IResponse result = pending.response();
+                if (pipelineAborted) return;
+                if (report(command, result)) {
+                    pipelineFailed = true;
+                    if (smtConfig.abort) {
+                        smtConfig.log.logDiag("Aborting because of a type-checking error");
+                        smtConfig.log.discardHeld();
+                        pipelineAborted = true;
+                        return;
+                    }
+                }
+                lastResponse = result;
+            }
+        });
+    }
+
+    /** Reads the responses to pipelined commands that have arrived (with wait, all of them) and
+     *  prints what is ready; returns whether the run is aborted */
+    private boolean readPipelined(/*@Nullable*/ AbstractSolver pipeliner, boolean wait) {
+        if (pipeliner == null) return false;
+        pipeliner.readPipelined(wait);
+        smtConfig.log.flush();
+        return pipelineAborted;
+    }
+
+    /** At the end of the input, waits for and prints the remaining pipelined responses, unless the
+     *  run was aborted */
+    private void finishPipelined(/*@Nullable*/ AbstractSolver pipeliner) {
+        if (pipeliner != null && !pipelineAborted) pipeliner.readPipelined(true);
+        smtConfig.log.flush();
+        smtConfig.log.discardHeld();
     }
 
     /** Parses the command-line, setting any option in the given configuration argument. */
@@ -985,6 +1074,10 @@ public class SMT {
                 options.nosuccess = true;
             } else if ("--abort".equals(s)) {
                 options.abort = true;
+            } else if ("--pipeline".equals(s)) {
+                options.pipeline = true;
+            } else if ("--no-pipeline".equals(s)) {
+                options.pipeline = false;
             } else if ("--relax".equals(s) || "-r".equals(s)) {
                 options.relax = true;
             } else if ("--testing".equals(s)) {
@@ -1280,6 +1373,9 @@ public class SMT {
                 "applied as a best-effort per-query limit instead"),
         new Opt("--echo", null, null, "if enabled, commands are echoed to diagnostic output when successfully parsed"),
         new Opt("--abort", null, null, "if enabled, an error causes immediate exit"),
+        new Opt("--pipeline", null, null, "if enabled, commands in file or --text input are sent to the solver without",
+                "waiting for each response where possible; the output is the same"),
+        new Opt("--no-pipeline", null, null, "each command waits for its response before the next is sent (the default)"),
         new Opt("--noshow", null, null, "if enabled, error location information is not shown"),
         new Opt("--nosuccess", "-q", null, "if enabled, 'success' responses are suppressed"),
         new Opt("--relax", "-r", null, "if enabled, extensions to strict SMT-LIB are permitted"),

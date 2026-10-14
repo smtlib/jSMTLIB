@@ -1,0 +1,9 @@
+success
+success
+success
+(error "line 8 column 13: unknown constant undeclared")
+success
+after
+success
+sat
+((y 1))

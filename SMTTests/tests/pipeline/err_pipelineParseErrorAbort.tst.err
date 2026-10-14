@@ -1,0 +1,3 @@
+(assert (> x #z1))
+             ^^^
+Aborting because of a parsing error
