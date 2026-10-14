@@ -985,27 +985,27 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     /** Prints a list without the padding visit(ISeq) adds inside its parentheses; iterative,
      *  since a proof can nest deeper than the Java stack allows. */
     private void printCompact(ISexpr e) throws IVisitor.VisitorException {
-        java.util.ArrayDeque<List<ISexpr>> lists = new java.util.ArrayDeque<>();
-        java.util.ArrayDeque<Integer> indexes = new java.util.ArrayDeque<>();
+        // Iterators, not indexes: a parsed list is a LinkedList
+        java.util.ArrayDeque<java.util.Iterator<ISexpr>> open = new java.util.ArrayDeque<>();
         ISexpr next = e;
         while (true) {
             if (next instanceof ISexpr.ISeq) {
                 append("(");
-                lists.push(((ISexpr.ISeq)next).sexprs());
-                indexes.push(0);
+                java.util.Iterator<ISexpr> it = ((ISexpr.ISeq)next).sexprs().iterator();
+                next = it.hasNext() ? it.next() : null;
+                open.push(it);
+                if (next != null) continue;
             } else {
                 next.accept(this);
             }
             next = null;
-            while (next == null && !lists.isEmpty()) {
-                int i = indexes.pop();
-                if (i < lists.peek().size()) {
-                    if (i > 0) append(" ");
-                    next = lists.peek().get(i);
-                    indexes.push(i + 1);
+            while (next == null && !open.isEmpty()) {
+                if (open.peek().hasNext()) {
+                    append(" ");
+                    next = open.peek().next();
                 } else {
                     append(")");
-                    lists.pop();
+                    open.pop();
                 }
             }
             if (next == null) return;

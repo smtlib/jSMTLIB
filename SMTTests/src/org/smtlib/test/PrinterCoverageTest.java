@@ -198,6 +198,16 @@ public class PrinterCoverageTest {
         Assert.assertEquals(text, proof(text).toString());
     }
 
+    @Test(timeout = 10000)
+    public void proofResponseLong() throws Exception {
+        // A long flat list (cvc5 writes one element per step); quadratic printing would time out
+        int n = 200000;
+        StringBuilder sb = new StringBuilder("(! a");
+        for (int i = 0; i < n; i++) sb.append(" a").append(i);
+        String text = sb.append(")").toString();
+        Assert.assertEquals(text, proof(text).toString());
+    }
+
     @Test
     public void proofResponseSteps() throws Exception {
         // cvc5 and z3 style: a list of lists, one element per line
