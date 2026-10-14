@@ -1,0 +1,3 @@
+bitwuzla supports no integer logic, so this QF_LIA script stops at set-logic; pipelining with
+bitwuzla is checked by ok_pipelineBoolean.tst and by PipelineEquivalenceTests, which compares
+this script's output with and without --pipeline.

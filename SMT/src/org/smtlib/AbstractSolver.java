@@ -454,7 +454,7 @@ public class AbstractSolver implements ISolver {
                 smtConfig.log.logDiag("#Unexpected output from the solver: " + extra);
             }
             String err = takeErrorOutput(false);
-            if (!err.isEmpty()) smtConfig.log.logDiag(err);
+            if (!err.isEmpty()) smtConfig.log.logDiag(err.trim());
         }
     }
 
@@ -467,17 +467,20 @@ public class AbstractSolver implements ISolver {
         }
     }
 
-    /** The standard-error text read and not yet reported, less comment lines (z3 writes some),
-     *  which listen() ignores too. The text arrives in pieces, so only whole lines are judged:
-     *  unless all is true (the solver has stopped), an unfinished last line is left for later. */
+    /** The standard-error text read and not yet reported, as written but for comment lines (z3
+     *  writes some), which listen() ignores too. The text arrives in pieces, so only whole lines are
+     *  judged: unless all is true (the solver has stopped), an unfinished last line is left for later. */
     private String takeErrorOutput(boolean all) {
         int end = all ? unreadErrorOutput.length() : unreadErrorOutput.lastIndexOf("\n") + 1;
-        StringBuilder text = new StringBuilder();
-        for (String line : unreadErrorOutput.substring(0, end).split("\n")) {
-            if (!line.startsWith(";")) text.append(line).append('\n');
-        }
+        String[] lines = unreadErrorOutput.substring(0, end).split("\n", -1);
         unreadErrorOutput.delete(0, end);
-        return text.toString().trim();
+        StringBuilder text = new StringBuilder();
+        for (int i = 0; i < lines.length; i++) {
+            if (lines[i].startsWith(";")) continue;
+            text.append(lines[i]);
+            if (i < lines.length - 1) text.append('\n');
+        }
+        return text.toString().trim().isEmpty() ? "" : text.toString();
     }
 
     /** Matches the next complete response in the unread text, if any, to the oldest pending
@@ -555,7 +558,8 @@ public class AbstractSolver implements ISolver {
     private IResponse toResponse(Pending p, String text) {
         IResponse timedOut = timeLimitResponse(text);
         if (timedOut != null) return timedOut;
-        IResponse result = parseResponse(text);
+        // Logged at once, as when not pipelining: an adapter may parse with the output redirected
+        IResponse result = smtConfig.log.unheld(() -> parseResponse(text));
         if (result == null) {
             return smtConfig.responseFactory.error("Could not parse response from the solver for: " + p.sent + " -- raw response: " + text);
         }

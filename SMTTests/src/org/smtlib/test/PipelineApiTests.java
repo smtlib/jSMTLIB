@@ -94,7 +94,7 @@ public class PipelineApiTests {
 
     @Test
     public void responsesAreReadLater() throws Exception {
-        List<IResponse> rs = pipeline("(set-logic QF_LIA)(declare-fun x () Int)(assert (> x 0))");
+        List<IResponse> rs = pipeline("(set-logic QF_UF)(declare-fun x () Bool)(assert x)");
         solver.readPipelined(true);
         Assert.assertFalse(solver.hasPending());
         for (IResponse r : rs) Assert.assertEquals("success", read(r).toString());
@@ -102,7 +102,7 @@ public class PipelineApiTests {
 
     @Test
     public void checkSatStatusIsSetWhenRead() throws Exception {
-        List<IResponse> rs = pipeline("(set-logic QF_LIA)(declare-fun x () Int)(assert (> x 0))(check-sat)");
+        List<IResponse> rs = pipeline("(set-logic QF_UF)(declare-fun x () Bool)(assert x)(check-sat)");
         IResponse checkSat = rs.get(3);
         solver.readPipelined(true);
         Assert.assertEquals("sat", read(checkSat).toString());
@@ -111,11 +111,11 @@ public class PipelineApiTests {
 
     @Test
     public void answersAreMatchedInOrder() throws Exception {
-        StringBuilder text = new StringBuilder("(set-logic QF_LIA)(declare-fun x () Int)");
+        StringBuilder text = new StringBuilder("(set-logic QF_UF)(declare-fun x () Bool)");
         List<String> expected = new ArrayList<>(List.of("success", "success"));
         for (int i = 0; i < 50; i++) {
             boolean sat = i % 3 != 0;
-            text.append("(push 1)(assert ").append(sat ? "(= x " + i + ")" : "(< x x)").append(")(check-sat)(pop 1)");
+            text.append("(push 1)(assert ").append(sat ? "x" : "(and x (not x))").append(")(check-sat)(pop 1)");
             expected.addAll(List.of("success", "success", sat ? "sat" : "unsat", "success"));
         }
         List<IResponse> rs = pipeline(text.toString());
@@ -125,7 +125,7 @@ public class PipelineApiTests {
 
     @Test
     public void readingWithoutWaitingLeavesTheRest() throws Exception {
-        List<IResponse> rs = pipeline("(set-logic QF_LIA)(declare-fun x () Int)");
+        List<IResponse> rs = pipeline("(set-logic QF_UF)(declare-fun x () Bool)");
         solver.readPipelined(false); // whatever has arrived, perhaps nothing
         solver.readPipelined(true);
         for (IResponse r : rs) Assert.assertEquals("success", read(r).toString());
@@ -133,7 +133,7 @@ public class PipelineApiTests {
 
     @Test
     public void aWaitingRequestReadsThePendingResponsesFirst() throws Exception {
-        List<IResponse> rs = pipeline("(set-logic QF_LIA)(declare-fun x () Int)(assert (> x 0))(check-sat)");
+        List<IResponse> rs = pipeline("(set-logic QF_UF)(declare-fun x () Bool)(assert x)(check-sat)");
         // executed as usual, so it waits for its own response
         IResponse push = parse("(push 1)").get(0).execute(solver);
         Assert.assertEquals("success", push.toString());
@@ -143,8 +143,8 @@ public class PipelineApiTests {
 
     @Test
     public void sendCommandsReadsThePendingResponsesFirst() throws Exception {
-        List<IResponse> rs = pipeline("(set-logic QF_LIA)(declare-fun x () Int)");
-        IResponse block = solver.sendCommands(parse("(declare-fun y () Int)(assert (> x y))"));
+        List<IResponse> rs = pipeline("(set-logic QF_UF)(declare-fun x () Bool)");
+        IResponse block = solver.sendCommands(parse("(declare-fun y () Bool)(assert (or x y))"));
         Assert.assertEquals("success", block.toString());
         for (IResponse r : rs) Assert.assertEquals("success", read(r).toString());
         Assert.assertEquals("sat", parse("(check-sat)").get(0).execute(solver).toString());
@@ -152,11 +152,11 @@ public class PipelineApiTests {
 
     @Test
     public void anErrorIsMatchedToItsCommand() throws Exception {
-        List<IResponse> rs = pipeline("(set-logic QF_LIA)(declare-fun x () Int)(assert (> x undeclared))(declare-fun y () Int)(check-sat)");
+        List<IResponse> rs = pipeline("(set-logic QF_UF)(declare-fun x () Bool)(assert (and x undeclared))(declare-fun y () Bool)(check-sat)");
         solver.readPipelined(true);
         Assert.assertEquals("success", read(rs.get(1)).toString());
         Assert.assertTrue("an error: " + read(rs.get(2)), read(rs.get(2)).isError());
-        // z3 and smtinterpol go on after the error; cvc5 and yices2 stop, as for every later command
+        // z3 and smtinterpol go on after the error; cvc5, yices2 and bitwuzla stop, as for every later command
         IResponse after = read(rs.get(3));
         if (after.isError()) {
             Assert.assertTrue(after.toString(), after.toString().contains("Solver process has already exited"));

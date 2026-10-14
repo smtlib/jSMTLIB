@@ -43,10 +43,11 @@ public class PipelinePerformanceTests {
     }
 
     private static String script(int declarations) {
-        StringBuilder sb = new StringBuilder("(set-logic QF_LIA)\n");
+        // QF_UF, which every solver supports
+        StringBuilder sb = new StringBuilder("(set-logic QF_UF)\n");
         for (int i = 0; i < declarations; i++) {
-            sb.append("(declare-fun x").append(i).append(" () Int)\n");
-            sb.append("(assert (> x").append(i).append(' ').append(i).append("))\n");
+            sb.append("(declare-fun p").append(i).append(" () Bool)\n");
+            sb.append("(assert (or p").append(i).append(" (not p").append(i / 2).append(")))\n");
         }
         sb.append("(check-sat)\n");
         return sb.toString();
@@ -69,7 +70,7 @@ public class PipelinePerformanceTests {
         smt.cleanup();
         out.flush();
         err.flush();
-        return new Object[]{outBuf.toString() + errBuf.toString(), elapsed};
+        return new Object[]{(outBuf.toString() + errBuf.toString()).replace("\r\n", "\n"), elapsed};
     }
 
     @Test

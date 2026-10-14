@@ -261,6 +261,18 @@ public class Log {
         }
     }
 
+    /** Returns the computation's result, logging what it logs at once rather than holding it (e.g.
+     *  while a solver's response is parsed, which an adapter may do with the channels redirected) */
+    public <T> T unheld(java.util.function.Supplier<T> computation) {
+        boolean wasFlushing = flushing;
+        flushing = true;
+        try {
+            return computation.get();
+        } finally {
+            flushing = wasFlushing;
+        }
+    }
+
     /** Discards held output, e.g. when a run is aborted at an error in a pending response */
     public void discardHeld() {
         held.clear();
