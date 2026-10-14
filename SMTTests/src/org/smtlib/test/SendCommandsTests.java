@@ -146,6 +146,11 @@ public class SendCommandsTests {
 
     @Test
     public void z3_4_3Block() throws Exception {
+        // The Linux ARM64 build of z3-4.3.1 answers the final check-sat 'unknown' (see issue #101)
+        String arch = System.getProperty("os.arch").toLowerCase();
+        Assume.assumeFalse("z3-4.3.1 on Linux ARM64 (issue #101)",
+                System.getProperty("os.name").toLowerCase().contains("linux")
+                && (arch.contains("aarch64") || arch.contains("arm64")));
         checkBlock("z3-4.3", "z3-4.3.1");
     }
 
