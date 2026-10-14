@@ -1,0 +1,11 @@
+success
+success
+success
+success
+success
+success
+unsat
+(
+(set-logic QF_UF)
+(proof (let ((@x37 (monotonicity (iff-true (and-elim (asserted (and p q)) p) (= p true)) (= (not p) (not true))))) (let ((@x41 (trans @x37 (rewrite (= (not true) false)) (= (not p) false)))) (mp (asserted (not p)) @x41 false))))
+)

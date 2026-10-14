@@ -10,6 +10,7 @@ import java.util.List;
 import org.smtlib.IExpr.IAttribute;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IPos.IPosable;
+import org.smtlib.sexpr.ISexpr;
 
 /** This interface represents responses that can be received from SMT-LIB commands. */
 public interface IResponse extends INode {
@@ -63,7 +64,7 @@ public interface IResponse extends INode {
         IResponse get_option_response(IAttributeValue v);
         IResponse.IAttributeList get_info_response(IAttribute<?> attr);
         IResponse.IAttributeList get_info_response(List<IAttribute<?>> attrList);
-        IResponse.IProofResponse get_proof_response();
+        IResponse.IProofResponse get_proof_response(ISexpr proof);
         IResponse.IValueResponse get_value_response(List<IPair<IExpr,IExpr>> values);
         <T1,T2> IPair<T1,T2> pair(T1 first, T2 second);
         IResponse.IAssignmentResponse get_assignment_response(List<IPair<IExpr.ISymbol,Boolean>> assignments);
@@ -102,8 +103,9 @@ public interface IResponse extends INode {
         public List<IExpr> assertions();
     }
 
-    /** Response type for get-proof, carrying an opaque proof object. */
+    /** Response type for get-proof. SMT-LIB leaves the proof format to the solver, so the
+     *  proof is the solver's s-expression, uninterpreted. */
     static public interface IProofResponse extends IResponse {
-        public Object proof();
+        public ISexpr proof();
     }
 }

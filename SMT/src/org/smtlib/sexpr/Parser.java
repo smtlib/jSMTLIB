@@ -405,18 +405,28 @@ public class Parser extends Lexer implements IParser {
      * @throws ParserException FIXME - no more of these?
      */
     public Sexpr.Seq parseSeq(ILexToken lp) throws ParserException {
+        // Iterative, with explicit stacks of open lists and their left parentheses, since
+        // solver output such as a z3 proof can nest deeper than the Java stack allows
+        java.util.ArrayDeque<Sexpr.Seq> open = new java.util.ArrayDeque<>();
+        java.util.ArrayDeque<ILexToken> lps = new java.util.ArrayDeque<>();
         Sexpr.Seq seq = new Sexpr.Seq(); // deliberate direct construction -- see ISexpr's class comment
 
         while (true) {
             ILexToken token = getToken();
             if (token.toString() == IPLexToken.RP) {
                 seq.setPos(pos(lp.pos(),token.pos()));
-                return seq;
+                if (open.isEmpty()) return seq;
+                Sexpr.Seq done = seq;
+                seq = open.pop();
+                lp = lps.pop();
+                seq.sexprs().add(done);
             } else if (token.toString() == IPLexToken.EMPTY) {
                 throw new IParser.ParserException("Unbalanced parentheses at end of input",pos(lp.pos(),lp.pos()));
             } else if (token.toString() == IPLexToken.LP) {
-                ISexpr sexpr = parseSeq(token);
-                seq.sexprs().add(sexpr);
+                open.push(seq);
+                lps.push(lp);
+                seq = new Sexpr.Seq();
+                lp = token;
             } else if (token instanceof ISexpr) {
                 seq.sexprs().add((ISexpr)token);
             } else {
