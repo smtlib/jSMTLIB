@@ -52,7 +52,7 @@ public class PipelineApiTests {
         SMT smt = new SMT();
         config = smt.smtConfig;
         config.props = config.readProperties();
-        ISolver s = config.createSolver(solvername, smt.resolveExecutableForSolver(solvername));
+        ISolver s = config.createSolver(solvername, LogicTests.executable(smt, solvername));
         Assume.assumeTrue("not run as a process", s instanceof AbstractSolver);
         solver = (AbstractSolver)s;
         Assume.assumeTrue("does not pipeline", solver.pipelines(parse("(check-sat)").get(0)));
