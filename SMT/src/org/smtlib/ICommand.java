@@ -57,6 +57,10 @@ public interface ICommand extends INode {
         /** Creates a check-sat-assuming command object. */
         Icheck_sat_assuming check_sat_assuming(List<IExpr> terms);
 
+        /** Creates a comment pseudo-command object, carrying the given raw comment text
+         *  (see {@link Icomment}). */
+        Icomment comment(String text);
+
         /** Creates a declare-const command object. */
         Ideclare_const declare_const(ISymbol symbol, ISort resultSort);
 
@@ -92,10 +96,6 @@ public interface ICommand extends INode {
 
         /** Creates an echo command object. */
         Iecho echo(IStringLiteral arg);
-
-        /** Creates a comment pseudo-command object, carrying the given raw comment text
-         *  (see {@link Icomment}). */
-        Icomment comment(String text);
 
         /** Creates an exit command object. */
         Iexit exit();
@@ -149,11 +149,11 @@ public interface ICommand extends INode {
         Iset_option set_option(IKeyword option, IAttributeValue value);
     }
 
-    /** Interface to be implemented by all objects representing SMT-LIB scripts. A script may consist of a file or an explicit list of commands. */
+    /** Interface to be implemented by all objects representing SMT-LIB scripts. A script may consist of a file or an explicit list of commands. */ // FIXME - Or both?
     // FIXME - move to org.smtlib?
     static public interface IScript extends INode {
-        /*@Nullable*/ IStringLiteral filename();
-        /*@Nullable*/ List<ICommand> commands();
+        /*@Nullable*/ IStringLiteral filename(); 
+        /*@Nullable*/ List<ICommand> commands(); // FIXME - is the list mutable
         /** Adds a command to the end of the script's command list. */
         void add(ICommand command);
         IResponse execute(ISolver solver);
@@ -212,7 +212,7 @@ public interface ICommand extends INode {
          * accepting one at all is unconditional at parse time, but the command is rejected at
          * type-checking time unless --relax is set. Never null; empty if none were given --
          * unlike {@link #parameters()}, null-vs-empty has no real distinction to encode here
-         * (the concrete syntax has no way to write an explicit-but-empty attribute clause). */
+         * (the concrete syntax has no way to write an explicit-but-empty attribute clause). */ // FIXME - still experimental?
         default List<IExpr.IAttribute<?>> attributes() { return java.util.Collections.emptyList(); }
         /** Returns the par-polymorphic type parameters, for the experimental, non-standard
          * "(declare-fun par (param+) (name sort+ attribute*))" form -- mirrors exactly the
@@ -223,7 +223,7 @@ public interface ICommand extends INode {
          * org.smtlib.solvers.Solver_test#declare_fun} branches on null-vs-non-null directly to
          * decide whether --relax is required, and a par-form's parameter list is never actually
          * empty in practice (the grammar requires {@code param+}), so there is no "empty
-         * par-form" state this could be confused with. */
+         * par-form" state this could be confused with. */   // FIXME - still experimental?
         default List<ISort.IParameter> parameters() { return null; }
     }
 

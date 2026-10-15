@@ -222,32 +222,32 @@ public class Lexer {
      * match, it is the textually earlier one in the regex that is reported as matching
      * via matcher.group(int).  Thus we include a catch-all error token as the last element of
      * the set of alternatives, so that there is always something that matches.
-     * 3) The regex for a SMT-LIB string literal is accurate, but causes stack overflow on 
+     * 3) The regex for a SMT-LIB string literal (rgxStringLiteral) is accurate, but causes stack overflow on 
      * long (>~1000 characters) strings.  One would not think that there was a recursive call
      * for each character, but it appears that there is.  It may be that a redesign of the regex 
      * would help, but instead, I just changed the regex to match the opening quote - then we
-     * scan the string by hand and adjust the matcher position afterwards.
+     * scan the string by hand and adjust the matcher position afterwards (cf. code at about line 488 -- matcher.group(k=7)).
      */
     public static final Pattern combined = Pattern.compile(
-            "((?:" + rgxWhiteSpace + "|" + rgxComment + ")*)((" // first skip all whitespace and comments
-                + "\\(" + ")|("         // group 3: left parenthesis
-                + "\\)" + ")|("        // group 4: right parenthesis
-                + rgxNumeral + ")" + trailer + "|(" // group 5: numeral
-                + rgxSymbol  + ")|("    // group 6: symbol
-                //+ rgxStringLiteral + ")|("    // group 7: string literal
-                + "\""        + ")|("   // group 7: string  - just matches the opening character - see code below and comment above
-                + rgxQuotedSymbol + ")|("   // group 8: quoted symbol
-                + rgxKeyword + ")|("    // group 9: keyword
-                + rgxDecimal + ")" + trailer + "|(" // group 10: decimal
-                + rgxBinary  + ")" + trailer + "|("                 // group 11,12: binary literal
-                + rgxHex  + ")" + trailer + "|("                    // group 13,14: hex literal
-                + rgxEndOfInput + ")|("          // group 15: end of input
-                + rgxNonTermQuotedSymbol + ")|("    // group 16: error - non terminated quoted symbol
-                + rgxLeadingZero + ")" + trailer + "|"  // group 17: invalid leading zero
-                + "\"(" + rgxInvalidString + ")\"" + "|("     // group 18: invalid string // NO LONGER MATCHES SINCE CHANGING THE STRING MATCHING
-                + "\\030" + ")|("     // group 19: the control-X character to kill input
-                + rgxAnyNonWS + ")"     // group 20: error symbol
-                + "|([ \t\r\n]+)"          // group 21: stop-gap whitespace
+            "((?:" + rgxWhiteSpace + "|" + rgxComment + ")*)((" // group 1: first skip all whitespace and comments // group 2: the whole token
+                + "\\(" + ")|("                                 // group 3: left parenthesis
+                + "\\)" + ")|("                                 // group 4: right parenthesis
+                + rgxNumeral + ")" + trailer + "|("             // group 5: numeral
+                + rgxSymbol  + ")|("                            // group 6: symbol
+                //+ rgxStringLiteral + ")|("                    // group 7: string literal -- see point (3) in the javadoc comment
+                + "\""        + ")|("                           // group 7: string  - just matches the opening character - see code below and comment above
+                + rgxQuotedSymbol + ")|("                       // group 8: quoted symbol
+                + rgxKeyword + ")|("                            // group 9: keyword
+                + rgxDecimal + ")" + trailer + "|("             // group 10: decimal
+                + rgxBinary  + ")" + trailer + "|("             // group 11,12: binary literal
+                + rgxHex  + ")" + trailer + "|("                // group 13,14: hex literal
+                + rgxEndOfInput + ")|("                         // group 15: end of input
+                + rgxNonTermQuotedSymbol + ")|("                // group 16: error - non terminated quoted symbol
+                + rgxLeadingZero + ")" + trailer + "|"          // group 17: invalid leading zero
+                + "\"(" + rgxInvalidString + ")\"" + "|("       // group 18: invalid string // NO LONGER MATCHES SINCE CHANGING THE STRING MATCHING
+                + "\\030" + ")|("                               // group 19: the control-X character to kill input
+                + rgxAnyNonWS + ")"                             // group 20: error symbol
+                + "|([ \t\r\n]+)"                               // group 21: stop-gap whitespace
         +   ")"  );
 
     /** A pattern to skip up to the end of the line */
