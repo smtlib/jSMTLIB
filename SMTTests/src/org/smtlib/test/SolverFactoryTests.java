@@ -51,4 +51,72 @@ public class SolverFactoryTests {
             solver.exit();
         }
     }
+
+    // SMT.resolveExecutablePath: simple names are found in the solver folder (else on the PATH);
+    // relative paths with a directory part are relative to the current directory.
+
+    private static boolean onWindows() {
+        return System.getProperty("os.name", "").toLowerCase().contains("win");
+    }
+
+    /** A new temporary folder containing an empty file with each of the given names */
+    private static File folderWith(String... names) throws Exception {
+        File dir = java.nio.file.Files.createTempDirectory("solverdir").toFile();
+        dir.deleteOnExit();
+        for (String n: names) {
+            File f = new File(dir, n);
+            Assert.assertTrue(f.createNewFile());
+            f.deleteOnExit();
+        }
+        return dir;
+    }
+
+    @Test
+    public void resolveSimpleNameInSolverDir() throws Exception {
+        File dir = folderWith("fake-solver-1.0");
+        Assert.assertEquals(dir.getPath() + "/fake-solver-1.0", SMT.resolveExecutablePath("fake-solver-1.0", dir.getPath()));
+    }
+
+    @Test
+    public void resolveSimpleNameWithExeInSolverDirOnWindows() throws Exception {
+        Assume.assumeTrue("only on Windows", onWindows());
+        File dir = folderWith("fake-solver-1.0.exe");
+        Assert.assertEquals(dir.getPath() + "/fake-solver-1.0", SMT.resolveExecutablePath("fake-solver-1.0", dir.getPath()));
+    }
+
+    @Test
+    public void resolveSimpleNameOnPath() throws Exception {
+        // a program that is on the PATH but not in the solver folder is left to the PATH lookup
+        String onPath = onWindows() ? "cmd" : "sh";
+        File dir = folderWith();
+        Assert.assertEquals(onPath, SMT.resolveExecutablePath(onPath, dir.getPath()));
+    }
+
+    @Test
+    public void resolveSimpleNameFoundNowhere() throws Exception {
+        // not found: the solver-folder path, so that the error names the expected file
+        File dir = folderWith();
+        String name = "no-such-solver-9.9.9";
+        Assert.assertEquals(dir.getPath() + "/" + name, SMT.resolveExecutablePath(name, dir.getPath()));
+        Assert.assertEquals(name, SMT.resolveExecutablePath(name, null));
+    }
+
+    @Test
+    public void resolveRelativePathIsRelativeToCurrentDirectory() throws Exception {
+        // even with a solver folder, and even if that folder has a file at the same relative path
+        File dir = folderWith();
+        Assert.assertTrue(new File(dir, "sub").mkdir());
+        Assert.assertTrue(new File(dir, "sub/z3").createNewFile());
+        String rel = "sub" + File.separator + "z3";
+        Assert.assertEquals(new File(rel).getAbsolutePath(), SMT.resolveExecutablePath(rel, dir.getPath()));
+        Assert.assertEquals(new File("../x/z3").getAbsolutePath(), SMT.resolveExecutablePath("../x/z3", dir.getPath()));
+        new File(dir, "sub/z3").delete(); new File(dir, "sub").delete();
+    }
+
+    @Test
+    public void resolveAbsolutePathUnchanged() throws Exception {
+        String abs = new File("some/solver").getAbsolutePath();
+        Assert.assertEquals(abs, SMT.resolveExecutablePath(abs, "/elsewhere"));
+        Assert.assertNull(SMT.resolveExecutablePath(null, "/elsewhere"));
+    }
 }

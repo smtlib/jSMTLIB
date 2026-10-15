@@ -1193,16 +1193,37 @@ public class SMT {
     }
 
     /**
-     * Resolves an executable path read from properties.
-     * If exec is null or already absolute it is returned unchanged.
-     * If exec is relative and solverDir is non-null, returns solverDir + separator + exec.
-     * If exec is relative and solverDir is null, returns exec unchanged so ProcessBuilder can search PATH.
+     * Resolves the path of a solver executable, whether from the properties (.exec or the solver name)
+     * or supplied by the caller:
+     * <ul>
+     * <li>null, or an absolute path: returned unchanged;</li>
+     * <li>a relative path with a directory part (e.g. {@code ../bin/z3}): relative to the current
+     *     directory, as a shell would take it; returned as an absolute path;</li>
+     * <li>a simple file name (e.g. {@code z3-5.1.0}): {@code solverDir/name} if that file exists (on
+     *     Windows, also as {@code name.exe}); else the name unchanged if it is found on the PATH, so that
+     *     the process launch finds it there; else {@code solverDir/name} (so an error names the
+     *     expected file), or the name unchanged if there is no solverDir.</li>
+     * </ul>
      * Pass {@code System.getenv("SMT_SOLVER_DIR")} as solverDir in production; pass a literal in tests.
      */
-    static /*@Nullable*/ String resolveExecutablePath(/*@Nullable*/ String exec, /*@Nullable*/ String solverDir) {
+    public static /*@Nullable*/ String resolveExecutablePath(/*@Nullable*/ String exec, /*@Nullable*/ String solverDir) {
         if (exec == null || new File(exec).isAbsolute()) return exec;
-        if (solverDir != null && !solverDir.isEmpty()) return solverDir + "/" + exec;
-        return exec; // rely on PATH
+        boolean simpleName = exec.indexOf('/') < 0 && exec.indexOf(File.separatorChar) < 0;
+        if (!simpleName) return new File(exec).getAbsolutePath();
+        boolean haveDir = solverDir != null && !solverDir.isEmpty();
+        if (haveDir && isExecutableFile(new File(solverDir, exec))) return solverDir + "/" + exec;
+        String path = System.getenv("PATH");
+        if (path != null) {
+            for (String d: path.split(File.pathSeparator)) {
+                if (!d.isEmpty() && isExecutableFile(new File(d, exec))) return exec;
+            }
+        }
+        return haveDir ? solverDir + "/" + exec : exec;
+    }
+
+    /** Whether f is an existing file (or, on Windows, f.exe is), as a process launch would find it */
+    private static boolean isExecutableFile(File f) {
+        return f.isFile() || (platformName().equals("windows") && new File(f.getPath() + ".exe").isFile());
     }
 
     /** Resolves the executable path {@link #startSolver} would use for the given solver
@@ -1273,7 +1294,8 @@ public class SMT {
     /** Starts the solver with the given name and executable, preset according to the given configuration.
      * If executable is null, the path is resolved from jsmtlib.properties -- the
      * org.smtlib.solver_&lt;name&gt;.exec.&lt;platform&gt; entry, then org.smtlib.solver_&lt;name&gt;.exec,
-     * then the solver name itself -- with any relative result taken against $SMT_SOLVER_DIR
+     * then the solver name itself. A simple file name is looked for in $SMT_SOLVER_DIR (else on the PATH);
+     * a relative path with a directory part is relative to the current directory
      * (see {@link SMT.Configuration#createSolver} and {@link #resolveExecutablePath}).
      * <p>
      * This is a thin, CLI-flavored wrapper around {@link SMT.Configuration#createSolver}: it resolves

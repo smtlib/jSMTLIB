@@ -85,6 +85,7 @@ _cmp_golden() {
             -e "s@\$INSTALL@$INSTALL@g" \
             -e "s@\$HOME@$HOME@g" \
             -e "s@\$SOLVERS@$SMT_SOLVER_DIR@g" \
+            -e "s@\$TESTS@$PWD@g" \
             < "$golden" | diff "$actual" -
         if [ $? -eq 0 ]; then rm -f "$actual"; else (( fail++ )); fi
     else
