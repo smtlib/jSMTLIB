@@ -304,15 +304,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         }
     }
 
-    /** Like the individual commands, a block of them requires the logic to be set */
-    @Override
-    public IResponse sendCommands(List<ICommand> commands) {
-        if (!logicSet && !commands.isEmpty()) {
-            return smtConfig.responseFactory.error("The logic must be set before declarations, definitions or assertions are issued");
-        }
-        return super.sendCommands(commands);
-    }
-
     @Override
     public IResponse assertExpr(IExpr sexpr) {
         IResponse response;

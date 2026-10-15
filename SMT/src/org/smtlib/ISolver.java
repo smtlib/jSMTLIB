@@ -219,48 +219,6 @@ public interface ISolver {
      */
     IResponse get_info(IKeyword option);
 
-    /** Whether the given command may be sent with {@link #sendCommands(java.util.List)}: a
-     *  declaration, a definition or an assertion, whose only response from a compliant solver
-     *  is success or an error. */
-    static boolean isBlockCommand(ICommand c) {
-        return c instanceof Iassert
-            || c instanceof Ideclare_fun
-            || c instanceof Ideclare_const
-            || c instanceof Ideclare_sort
-            || c instanceof Ideclare_sort_parameter
-            || c instanceof Ideclare_datatype
-            || c instanceof Ideclare_datatypes
-            || c instanceof Idefine_fun // includes define-const
-            || c instanceof Idefine_fun_rec
-            || c instanceof Idefine_funs_rec
-            || c instanceof Idefine_sort;
-    }
-
-    /** Executes the given commands, each of which must satisfy {@link #isBlockCommand(ICommand)},
-     *  in order. Returns the first error, or else success. An implementation may send them to the
-     *  solver as one block that the solver acknowledges once, saving a round trip per command;
-     *  then, after an error, whether the solver processed the later commands of the block
-     *  depends on the solver. This default executes them one at a time, stopping at the first
-     *  error. */
-    default IResponse sendCommands(java.util.List<ICommand> commands) {
-        IResponse response = smt().responseFactory.success();
-        for (ICommand c: commands) {
-            if (!isBlockCommand(c)) return blockCommandError(smt(), c);
-        }
-        for (ICommand c: commands) {
-            response = c.execute(this);
-            if (response.isError()) break;
-        }
-        return response;
-    }
-
-    /** The error response for a command given to {@link #sendCommands(java.util.List)} that is
-     *  not a {@link #isBlockCommand(ICommand)} */
-    static IResponse blockCommandError(SMT.Configuration smtConfig, ICommand c) {
-        return smtConfig.responseFactory.error("sendCommands accepts only declarations, definitions and assertions, not: "
-                + smtConfig.defaultPrinter.toString(c));
-    }
-
     /** Thrown by {@link SMT.Configuration#createSolver} when a solver adapter cannot be
      *  resolved, constructed, or fails to launch. Checked (unlike, say, an unchecked
      *  reflection failure) so that a library caller of {@code createSolver} must

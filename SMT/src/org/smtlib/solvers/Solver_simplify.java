@@ -146,12 +146,6 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         return false;
     }
 
-    /** Simplify does not take SMT-LIB commands, and its commands are type-checked and translated one at a time */
-    @Override
-    protected boolean acceptsBlocks() {
-        return false;
-    }
-
     @Override
     public IResponse assertExpr(IExpr expr) {
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#assert " + expr);

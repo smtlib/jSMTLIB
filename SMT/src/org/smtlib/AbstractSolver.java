@@ -393,6 +393,51 @@ public class AbstractSolver implements ISolver {
         }
     }
 
+    /** Executes the commands in order, as a script does: returns the first error, or else the last
+     *  command's response. Commands that {@link #pipelines(ICommand)} allows are sent without waiting
+     *  for their responses; check-sat, check-sat-assuming and every other command first wait for the
+     *  pending responses, so that none is executed after an error. Used by IScript.execute when
+     *  {@link SMT.Configuration#pipeline} is set. */
+    public IResponse executePipelined(List<ICommand> commands) {
+        List<Pending> sent = new java.util.ArrayList<>();
+        IResponse response = smtConfig.responseFactory.success();
+        for (ICommand c: commands) {
+            if (pipelines(c) && !(c instanceof Icheck_sat) && !(c instanceof Icheck_sat_assuming)) {
+                response = sendPipelined(c);
+                if (response instanceof Pending p) {
+                    sent.add(p);
+                    continue;
+                }
+            } else {
+                IResponse err = firstError(sent);
+                if (err != null) return err;
+                response = c.execute(this);
+            }
+            if (response.isError()) {
+                IResponse err = firstError(sent);
+                return err != null ? err : response;
+            }
+        }
+        IResponse err = firstError(sent);
+        if (err != null) return err;
+        return response instanceof Pending p ? p.response() : response;
+    }
+
+    /** Waits for the responses to the sent commands and returns the first error among them, or null */
+    private /*@Nullable*/ IResponse firstError(List<Pending> sent) {
+        if (sent.isEmpty()) return null;
+        readPipelined(true);
+        IResponse err = null;
+        for (Pending p: sent) {
+            if (p.response().isError()) {
+                err = p.response();
+                break;
+            }
+        }
+        sent.clear();
+        return err;
+    }
+
     /** Whether some pipelined command's response has not yet been read */
     public boolean hasPending() {
         return !pending.isEmpty();
@@ -599,88 +644,6 @@ public class AbstractSolver implements ISolver {
             }
             first = false;
             resolve(p, r);
-        }
-    }
-
-    /** Whether {@link #sendCommands(List)} may send its commands as one block, framed by
-     *  {@code (set-option :print-success false)} and {@code (set-option :print-success true)},
-     *  so that the solver acknowledges the block once. A subclass whose solver does not take
-     *  SMT-LIB commands as they are translated, or does not honor :print-success, returns
-     *  false, and then the commands are executed one at a time. */
-    protected boolean acceptsBlocks() {
-        return true;
-    }
-
-    /** Sends the commands as one block (see {@link #acceptsBlocks()}). The commands and their
-     *  translation are what executing them one at a time would send. A compliant solver writes
-     *  nothing for a block but the final 'success', and an {@code (error ...)} for each
-     *  command that fails; after an error, some solvers (z3) go on with the rest of the block,
-     *  while others (cvc5, yices2) stop reading input, so the block's output is read until the
-     *  final 'success' or until the solver stops. The first error is returned.
-     *  @see org.smtlib.ISolver#sendCommands(List) */
-    @Override
-    public IResponse sendCommands(List<ICommand> commands) {
-        if (!acceptsBlocks()) return ISolver.super.sendCommands(commands);
-        for (ICommand c: commands) {
-            if (!ISolver.isBlockCommand(c)) return ISolver.blockCommandError(smtConfig, c);
-        }
-        if (endedByTimeLimit) return smtConfig.responseFactory.timeout();
-        if (commands.isEmpty()) return successOrEmpty(smtConfig);
-        checkSatStatus = null;
-        StringBuilder text = new StringBuilder("(set-option :print-success false)\n");
-        try {
-            for (ICommand c: commands) {
-                if (c instanceof Ideclare_const dc) {
-                    // as declare_const() sends it
-                    c = smtConfig.commandFactory.declare_fun(dc.symbol(), new java.util.ArrayList<>(), dc.resultSort());
-                }
-                text.append(translate(c)).append('\n');
-            }
-        } catch (IVisitor.VisitorException e) {
-            return smtConfig.responseFactory.error("Error writing to solver: " + e);
-        }
-        text.append("(set-option :print-success true)\n");
-        // The two framing lines have no counterpart in the user's script (see linesOffset);
-        // an error reported from inside the block comes after the first of them
-        linesOffset++;
-        /*@Nullable*/ IResponse firstError = null;
-        try {
-            StringBuilder out = new StringBuilder();
-            readPipelined(true);
-            String chunk = solverProcess.sendAndListen(text.toString());
-            while (true) {
-                if (chunk == null) {
-                    return firstError != null ? firstError : smtConfig.responseFactory.error("No response received from the solver for a block of commands");
-                }
-                IResponse timedOut = timeLimitResponse(chunk);
-                if (timedOut != null) return timedOut;
-                out.append(chunk).append('\n'); // listen() strips the end of each response
-                String t = out.toString().trim();
-                boolean done = t.equals("success") || t.endsWith("\nsuccess");
-                if (done) t = t.substring(0, t.length() - "success".length()).trim();
-                if (firstError == null && !t.isEmpty()) {
-                    IResponse r = parseResponse(t);
-                    if (r == null || !r.isError()) {
-                        r = smtConfig.responseFactory.error("Unexpected output from the solver for a block of commands: " + t);
-                    }
-                    firstError = checkImmediateExit(r);
-                }
-                if (done) break;
-                // Only an error has been read: wait for the rest unless the solver has stopped
-                if (!solverProcess.isRunning(true)) break;
-                chunk = solverProcess.listen();
-            }
-            return firstError != null ? firstError : successOrEmpty(smtConfig);
-        } catch (SolverProcess.NoResponseException e) {
-            if (firstError != null) return firstError;
-            IResponse timedOut = timeLimitResponseAfterExit();
-            if (timedOut != null) return timedOut;
-            return smtConfig.responseFactory.error("Error writing to solver: a block of commands: " + e);
-        } catch (IOException e) {
-            if (firstError != null) return firstError;
-            return smtConfig.responseFactory.error("Error writing to solver: a block of commands: " + e);
-        } finally {
-            linesOffset++;
         }
     }
 
