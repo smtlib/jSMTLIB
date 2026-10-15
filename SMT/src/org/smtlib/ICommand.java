@@ -152,7 +152,7 @@ public interface ICommand extends INode {
     /** Interface to be implemented by all objects representing SMT-LIB scripts. A script may consist of a file or an explicit list of commands. */ // FIXME - Or both?
     // FIXME - move to org.smtlib?
     static public interface IScript extends INode {
-        /*@Nullable*/ IStringLiteral filename(); 
+        /*@Nullable*/ IStringLiteral filename();
         /*@Nullable*/ List<ICommand> commands(); // FIXME - is the list mutable
         /** Adds a command to the end of the script's command list. */
         void add(ICommand command);
