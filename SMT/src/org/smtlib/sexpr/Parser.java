@@ -1110,6 +1110,11 @@ public class Parser extends Lexer implements IParser {
         // FIXME - more - iterate over a list?
 
         ISexpr sexpr = parseSexpr();
+        // Text that is not SMT-LIB (e.g. bitwuzla's "[error] ...") lexes to an error token, which
+        // is not an IResponse.IError (#118)
+        if (sexpr.isError() && !(sexpr instanceof IResponse.IError)) {
+            return f.error("Unexpected response from the solver: " + response);
+        }
         if (sexpr instanceof ISexpr.ISeq) {
             List<ISexpr> list = ((ISexpr.ISeq)sexpr).sexprs();
             if (list.size() >= 2) {
