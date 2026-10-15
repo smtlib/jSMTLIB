@@ -66,7 +66,7 @@ jobs:
           echo "Version $ver has an existing draft release — it will be reused and any existing assets overwritten"
         else
           echo "No prior release found for version $ver — creating draft"
-          gh release create "$ver" --draft \
+          gh release create "$ver" --draft --target "${{ github.sha }}" \
             --title "jSMTLIB $ver" \
             --notes "Publishing release $ver"
         fi
@@ -269,3 +269,5 @@ jobs:
           exit 1
         fi
         gh release upload "$ver" jSMTLIB.jar jSMTLIB-sources.jar --clobber
+        ## The draft's target is the commit just built; publishing creates the tag there
+        gh release edit "$ver" --target "${{ github.sha }}"
