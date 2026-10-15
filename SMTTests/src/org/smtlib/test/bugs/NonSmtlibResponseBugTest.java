@@ -30,6 +30,24 @@ public class NonSmtlibResponseBugTest {
         Assert.assertTrue(((IResponse.IError)r).errorMsg(), ((IResponse.IError)r).errorMsg().contains(TEXT));
     }
 
+    /** The bitwuzla adapter still gives its own message for such text, with the line number
+     *  corrected for its start-up command (the bitwuzla goldens expect it) */
+    @Test
+    public void bitwuzlaKeepsItsMessage() throws Exception {
+        SMT smt = new SMT();
+        smt.smtConfig.log.setChannels(new PrintStream(new ByteArrayOutputStream()), new PrintStream(new ByteArrayOutputStream()));
+        org.smtlib.AbstractSolver solver = new org.smtlib.solvers.Solver_bitwuzla(smt.smtConfig, "bitwuzla");
+        java.lang.reflect.Field offset = org.smtlib.AbstractSolver.class.getDeclaredField("linesOffset");
+        offset.setAccessible(true);
+        offset.setInt(solver, 1);
+        java.lang.reflect.Method parse = org.smtlib.solvers.Solver_bitwuzla.class.getDeclaredMethod("parseResponse", String.class);
+        parse.setAccessible(true);
+        IResponse r = (IResponse)parse.invoke(solver, TEXT);
+        Assert.assertTrue(String.valueOf(r), r instanceof IResponse.IError);
+        Assert.assertEquals("Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:1:9: expected Bool term",
+                ((IResponse.IError)r).errorMsg());
+    }
+
     /** Through the command-line tool, with a solver (NonSmtlibErrorProcess) that answers the
      *  assert with that text */
     @Test
