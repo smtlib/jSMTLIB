@@ -178,9 +178,10 @@ public class SMT {
         /** True if the application is to echo commands as it executes them; only applies in interactiveMode mode */
         public boolean echo = false;
 
-        /** If true, the command-line tool sends commands in a file or --text input to the solver
-         *  without waiting for each response where it can (AbstractSolver.sendPipelined), reading
-         *  the responses as they arrive */
+        /** If true, commands are sent to the solver without waiting for each response where that is
+         *  possible (AbstractSolver.sendPipelined), and the responses are read as they arrive: by the
+         *  command-line tool for file or --text input (--pipeline), and by IScript.execute
+         *  (AbstractSolver.executePipelined) */
         public boolean pipeline = false;
 
         /** This field is set from the command-line; if set, then sets the logic used by the solver,

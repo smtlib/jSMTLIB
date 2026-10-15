@@ -393,6 +393,51 @@ public class AbstractSolver implements ISolver {
         }
     }
 
+    /** Executes the commands in order, as a script does: returns the first error, or else the last
+     *  command's response. Commands that {@link #pipelines(ICommand)} allows are sent without waiting
+     *  for their responses; check-sat, check-sat-assuming and every other command first wait for the
+     *  pending responses, so that none is executed after an error. Used by IScript.execute when
+     *  {@link SMT.Configuration#pipeline} is set. */
+    public IResponse executePipelined(List<ICommand> commands) {
+        List<Pending> sent = new java.util.ArrayList<>();
+        IResponse response = smtConfig.responseFactory.success();
+        for (ICommand c: commands) {
+            if (pipelines(c) && !(c instanceof Icheck_sat) && !(c instanceof Icheck_sat_assuming)) {
+                response = sendPipelined(c);
+                if (response instanceof Pending p) {
+                    sent.add(p);
+                    continue;
+                }
+            } else {
+                IResponse err = firstError(sent);
+                if (err != null) return err;
+                response = c.execute(this);
+            }
+            if (response.isError()) {
+                IResponse err = firstError(sent);
+                return err != null ? err : response;
+            }
+        }
+        IResponse err = firstError(sent);
+        if (err != null) return err;
+        return response instanceof Pending p ? p.response() : response;
+    }
+
+    /** Waits for the responses to the sent commands and returns the first error among them, or null */
+    private /*@Nullable*/ IResponse firstError(List<Pending> sent) {
+        if (sent.isEmpty()) return null;
+        readPipelined(true);
+        IResponse err = null;
+        for (Pending p: sent) {
+            if (p.response().isError()) {
+                err = p.response();
+                break;
+            }
+        }
+        sent.clear();
+        return err;
+    }
+
     /** Whether some pipelined command's response has not yet been read */
     public boolean hasPending() {
         return !pending.isEmpty();
