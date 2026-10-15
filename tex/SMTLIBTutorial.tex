@@ -2430,7 +2430,7 @@ The jSMTLIB command-line tool is a classic command-line tool: it takes space-sep
 \item options begin with two hyphens, with some abbreviations beginning with just one hyphen
 \item if an option takes a value, the value follows the option on the command-line, separated by white space (e.g. \texttt{--verbose 1})
 \item if an option is repeated, typically the later instance simply overrides the earlier one
-\item options typically have a default value; a handful of boolean options (e.g. {\tt -{}-abort}, {\tt -{}-relax}) simply turn a behavior on when present --- apart from {\tt -{}-no-pipeline}, there is no corresponding {\tt -{}-no-...} form to turn such a setting back off within the same command line
+\item options typically have a default value; boolean options (e.g. {\tt -{}-abort}, {\tt -{}-relax}) turn a behavior on when present, and some also have a {\tt -{}-no-...} form that turns it off, as documented for each option
 \item file paths are either absolute or relative to the current working directory of the shell in which the command is executed
 \item any non-file-path arguments that are not files and begin with a single or double hyphen but are not among the recognized options listed below cause the tool to print an error and a short usage message, and to exit without processing any input
 \end{itemize}
