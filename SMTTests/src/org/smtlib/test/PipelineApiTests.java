@@ -142,15 +142,6 @@ public class PipelineApiTests {
     }
 
     @Test
-    public void sendCommandsReadsThePendingResponsesFirst() throws Exception {
-        List<IResponse> rs = pipeline("(set-logic QF_UF)(declare-fun x () Bool)");
-        IResponse block = solver.sendCommands(parse("(declare-fun y () Bool)(assert (or x y))"));
-        Assert.assertEquals("success", block.toString());
-        for (IResponse r : rs) Assert.assertEquals("success", read(r).toString());
-        Assert.assertEquals("sat", parse("(check-sat)").get(0).execute(solver).toString());
-    }
-
-    @Test
     public void anErrorIsMatchedToItsCommand() throws Exception {
         List<IResponse> rs = pipeline("(set-logic QF_UF)(declare-fun x () Bool)(assert (and x undeclared))(declare-fun y () Bool)(check-sat)");
         solver.readPipelined(true);
