@@ -132,8 +132,10 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
         // but is NOT actually an IResponse.IError -- callers that safely narrow any
         // isError()==true response to IResponse.IError (e.g. SMT.java's own script
         // loop) get a ClassCastException instead of a clean error message. Catch that
-        // shape here and manufacture a real one.
-        if (result != null && result.isError() && !(result instanceof IResponse.IError)) {
+        // shape here and manufacture a real one. Parser.parseResponse now reports such text itself
+        // (#118), with a generic message and bitwuzla's own line number, so that is replaced too.
+        if (result != null && result.isError() && (!(result instanceof IResponse.IError)
+                || ((IResponse.IError)result).errorMsg().startsWith(org.smtlib.sexpr.Parser.UNEXPECTED_RESPONSE))) {
             return smtConfig.responseFactory.error("Unexpected (non-SMT-LIB) response from bitwuzla: " + rewriteStdinLine(response));
         }
         return result;

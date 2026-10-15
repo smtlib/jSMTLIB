@@ -1095,6 +1095,9 @@ public class Parser extends Lexer implements IParser {
         return parseList(this::parseAssignmentPair, "assignment", true);
     }
 
+    /** The start of the error message for solver text that is not SMT-LIB (see parseResponse) */
+    public static final String UNEXPECTED_RESPONSE = "Unexpected response from the solver: ";
+
     //@Override // FIXME - put this in the interface
     public /*@Nullable*/ IResponse parseResponse(String response) throws ParserException {
         IResponse.IFactory f = smtConfig.responseFactory;
@@ -1113,7 +1116,7 @@ public class Parser extends Lexer implements IParser {
         // Text that is not SMT-LIB (e.g. bitwuzla's "[error] ...") lexes to an error token, which
         // is not an IResponse.IError (#118)
         if (sexpr.isError() && !(sexpr instanceof IResponse.IError)) {
-            return f.error("Unexpected response from the solver: " + response);
+            return f.error(UNEXPECTED_RESPONSE + response);
         }
         if (sexpr instanceof ISexpr.ISeq) {
             List<ISexpr> list = ((ISexpr.ISeq)sexpr).sexprs();
