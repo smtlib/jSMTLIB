@@ -226,7 +226,7 @@ public class Lexer {
      * long (>~1000 characters) strings.  One would not think that there was a recursive call
      * for each character, but it appears that there is.  It may be that a redesign of the regex 
      * would help, but instead, I just changed the regex to match the opening quote - then we
-     * scan the string by hand and adjust the matcher position afterwards (cf. code at about line 488 -- matcher.group(k=7)).
+     * scan the string by hand and adjust the matcher position afterwards (see the matcher.group(k=7) case in getToken(Matcher)).
      */
     public static final Pattern combined = Pattern.compile(
             "((?:" + rgxWhiteSpace + "|" + rgxComment + ")*)((" // group 1: first skip all whitespace and comments // group 2: the whole token
