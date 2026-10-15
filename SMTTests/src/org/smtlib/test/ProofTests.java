@@ -48,7 +48,7 @@ public class ProofTests {
         SMT smt = new SMT();
         config = smt.smtConfig;
         config.props = config.readProperties();
-        solver = config.createSolver(solvername, smt.resolveExecutableForSolver(solvername));
+        solver = config.createSolver(solvername, LogicTests.executable(smt, solvername));
         IResponse r = solver.start();
         Assert.assertFalse("start: " + r, r.isError());
     }

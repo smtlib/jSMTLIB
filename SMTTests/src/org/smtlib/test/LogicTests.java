@@ -45,6 +45,14 @@ public class LogicTests {
      * per-file failures indistinguishable from a real bug. */
     public static final String[] solvers = solversFromEnv();
 
+    /** The solver's executable as an absolute path, or null if a configured command starts it
+     *  (or it is the test solver). Absolute, since createSolver would otherwise resolve a relative
+     *  path against SMT_SOLVER_DIR a second time. */
+    public static String executable(SMT smt, String solvername) {
+        String exec = smt.resolveExecutableForSolver(solvername);
+        return exec == null ? null : new File(exec).getAbsolutePath();
+    }
+
     private static String[] solversFromEnv() {
         String env = System.getenv("SMT_TEST_SOLVERS");
         String[] candidates = (env == null || env.trim().isEmpty())
