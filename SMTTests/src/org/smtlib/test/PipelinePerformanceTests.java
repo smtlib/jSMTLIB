@@ -38,10 +38,11 @@ public class PipelinePerformanceTests {
 
     private static final boolean VERBOSE_TIMING = System.getenv("SMT_TEST_VERBOSE_TIMING") != null;
 
-    /** Prints a timing, if verbose or the speedup is small */
-    static void reportTiming(String message, long pipelinedMillis, long syncMillis) {
+    /** Prints the timing of the script through the given path, if verbose or the speedup is small */
+    private void reportTiming(String path, long pipelinedMillis, long syncMillis) {
         if (VERBOSE_TIMING || REPORTED_SPEEDUP * pipelinedMillis > syncMillis) {
-            System.out.println(message + ": " + pipelinedMillis + " ms instead of " + syncMillis + " ms");
+            System.out.println("Pipelining " + (2 * DECLARATIONS + 2) + " commands with " + solvername
+                    + " (" + path + "): " + pipelinedMillis + " ms instead of " + syncMillis + " ms");
         }
     }
 
@@ -105,8 +106,7 @@ public class PipelinePerformanceTests {
         Assert.assertTrue("unexpected output: " + sync[0], ((String)sync[0]).endsWith("sat\n"));
         long syncMillis = (Long)sync[1] / 1_000_000;
         long pipelinedMillis = (Long)pipelined[1] / 1_000_000;
-        reportTiming("Pipelining " + (2 * DECLARATIONS + 2) + " commands with " + solvername,
-                pipelinedMillis, syncMillis);
+        reportTiming("command line", pipelinedMillis, syncMillis);
         Assert.assertTrue("pipelined " + pipelinedMillis + " ms vs. " + syncMillis + " ms unpipelined",
                 2 * pipelinedMillis < syncMillis);
     }
@@ -149,8 +149,7 @@ public class PipelinePerformanceTests {
         Assert.assertEquals("sat", sync[0]);
         long syncMillis = (Long)sync[1] / 1_000_000;
         long pipelinedMillis = (Long)pipelined[1] / 1_000_000;
-        reportTiming("Executing a script of " + (2 * DECLARATIONS + 2) + " commands with " + solvername
-                + ", pipelined", pipelinedMillis, syncMillis);
+        reportTiming("IScript.execute", pipelinedMillis, syncMillis);
         Assert.assertTrue("pipelined " + pipelinedMillis + " ms vs. " + syncMillis + " ms unpipelined",
                 2 * pipelinedMillis < syncMillis);
     }
