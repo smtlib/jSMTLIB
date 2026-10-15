@@ -20,7 +20,8 @@ import org.smtlib.SMT;
 /** Measures what --pipeline saves: a script of many declarations and assertions is run with and
  *  without it, for each solver in SMT_TEST_SOLVERS that pipelines. The output must be the same,
  *  and pipelining must take at most half the time (about a fifteenth was measured on macOS, so
- *  the bound leaves room for a loaded machine). The timings are printed. */
+ *  the bound leaves room for a loaded machine). The timings are printed when the speedup is
+ *  under REPORTED_SPEEDUP, or always if the environment variable SMT_TEST_VERBOSE_TIMING is set. */
 @RunWith(ParameterizedWithNames.class)
 public class PipelinePerformanceTests {
 
@@ -28,6 +29,18 @@ public class PipelinePerformanceTests {
 
     /** Declarations in the script, each followed by an assertion */
     private static final int DECLARATIONS = 1000;
+
+    /** Speedups below this are printed even without SMT_TEST_VERBOSE_TIMING */
+    private static final int REPORTED_SPEEDUP = 40;
+
+    private static final boolean VERBOSE_TIMING = System.getenv("SMT_TEST_VERBOSE_TIMING") != null;
+
+    /** Prints a timing, if verbose or the speedup is small */
+    static void reportTiming(String message, long pipelinedMillis, long syncMillis) {
+        if (VERBOSE_TIMING || REPORTED_SPEEDUP * pipelinedMillis > syncMillis) {
+            System.out.println(message + ": " + pipelinedMillis + " ms instead of " + syncMillis + " ms");
+        }
+    }
 
     private final String solvername;
 
@@ -89,8 +102,8 @@ public class PipelinePerformanceTests {
         Assert.assertTrue("unexpected output: " + sync[0], ((String)sync[0]).endsWith("sat\n"));
         long syncMillis = (Long)sync[1] / 1_000_000;
         long pipelinedMillis = (Long)pipelined[1] / 1_000_000;
-        System.out.println("Pipelining " + (2 * DECLARATIONS + 2) + " commands with " + solvername + ": "
-                + pipelinedMillis + " ms instead of " + syncMillis + " ms");
+        reportTiming("Pipelining " + (2 * DECLARATIONS + 2) + " commands with " + solvername,
+                pipelinedMillis, syncMillis);
         Assert.assertTrue("pipelined " + pipelinedMillis + " ms vs. " + syncMillis + " ms unpipelined",
                 2 * pipelinedMillis < syncMillis);
     }
