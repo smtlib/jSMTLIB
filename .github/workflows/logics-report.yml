@@ -46,7 +46,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-14
+          - os: macos-15
             label: macos-arm64
           - os: macos-15-intel
             label: macos-x86_64
