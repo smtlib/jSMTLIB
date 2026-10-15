@@ -1,0 +1,12 @@
+(assert (> x undeclared))
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun y () Int)
+^^^^^^^^^^^^^^^^^^^^^^
+(echo "after the error")
+^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (= y 1))
+^^^^^^^^^^^^^^^^
+(check-sat)
+^^^^^^^^^^^
+(get-value (y))
+^^^^^^^^^^^^^^^

@@ -1,49 +1,46 @@
 #!/usr/bin/env python3
 """Probe each configured SMT solver for which named SMT-LIB logics it accepts
-via (set-logic L), for every logic other than ALL (ALL's own internal
-capabilities are covered separately by ALL-logic-report.py), and emit a
-GitHub-flavored markdown table -- Logics.md.
+via (set-logic L), and emit a table of the results: Markdown (--out), and
+optionally a LaTeX table for the tutorial (--tex) and raw per-version JSON
+for combining platforms (--json; see combine-logics-reports.py). What ALL
+can actually do is covered separately by ALL-logic-report.py.
 
-The logic list isn't hardcoded: it's read straight from jSMTLIB's own logic
-definitions under SMT/logics/ at run time, so it can't go stale.
-  - "Current" rows are every `(logic ...)` file directly under SMT/logics/
-    (the current, SMT-LIB-2.7-era set; the `(theory ...)` files there --
-    Core, ArraysEx, Reals_Ints, etc. -- are theory definitions, not logics,
-    and aren't valid set-logic arguments, so they're skipped).
-  - "V2.0" rows are logic names found only under SMT/logics/V2.0/ and not
-    already covered by a "Current" row -- logics that existed in the
-    SMT-LIB 2.0 logic set but have since been renamed, folded into a newer
-    logic, or dropped (e.g. ALIA, BV, NIA, NRA, UF, UFBV). A footnote on
-    the group label explains this; it isn't repeated in every row.
+The logic list isn't hardcoded: it's read from jSMTLIB's own logic
+definitions under SMT/logics/ at run time. The rows, in groups:
+  - "Baseline": "(default)", with no set-logic at all, then ALL.
+  - "Official": every `(logic ...)` file directly under SMT/logics/ (the
+    SMT-LIB-2.7-era set; the `(theory ...)` files there are theories, not
+    logics, and are skipped).
+  - "Unofficial": logic names found only under SMT/logics/V2.0/ -- logics
+    of the SMT-LIB 2.0 set since renamed, folded into another logic, or
+    dropped (e.g. ALIA, BV, NIA, NRA, UF, UFBV). Their probe begins with
+    (set-info :smt-lib-version 2.0), which must be the first command, as a
+    real SMT-LIB 2.0 script would declare itself.
+  - "Control": ZZZ, which is not a logic, so rejecting it is correct.
 
-Each row is a minimal two-command script:
+Each probe is a two-command script:
   (set-option :print-success true)
   (set-logic L)
-and the grade is purely "did the solver's response to set-logic say
-success" -- not whether it can actually do anything useful in that logic.
-(That's a different question, answered for ALL by ALL-logic-report.py's
-capability probes; this script only checks whether the *name* is
-recognized.)
+except the "(default)" row, which declares a Bool constant instead of
+setting a logic, so that it reports whether the solver has a usable default
+logic. The grade is the response to that second command -- whether the
+solver recognizes the *name*, not what it can do in that logic.
 
-"V2.0" rows are preceded by (set-info :smt-lib-version 2.0) -- per the
-SMT-LIB spec this attribute may only be set as the very first command of a
-script, so it goes before even :print-success -- to declare the script as
-targeting that older logic set, the way a real SMT-LIB 2.0 script would.
-
-Every probe here runs directly against the raw solver binary
-(subprocess.run on e.g. z3-4.16.0 with the .smt2 file as its argument) --
-jSMTLIB itself is never invoked, so nothing about jSMTLIB's own set-logic
-handling or logic-path resolution is being tested.
+Every probe runs directly against the raw solver binary, with the .smt2
+file as its argument and stdin closed; jSMTLIB itself is never invoked.
 
 Grading:
-  Y (yes)     - solver responded `success`.
-  ~ (partial) - timed out, or produced an ambiguous/unparseable response.
-  N (no)      - explicit `unsupported`, an `(error ...)` response, or no
-                output at all.
+  Y (yes)     - the second response is `success`.
+  P (partial) - timed out, or the response is ambiguous or unparseable.
+  N (no)      - `unsupported`, an `(error ...)` response, or no output.
+After 3 consecutive timeouts a solver is not probed further; its remaining
+rows are recorded as P, "not probed".
 
 Usage:
   python3 logics-report.py [--solver-dir DIR] [--solvers NAME[,NAME...]]
-                            [--logics-dir DIR] [--timeout SECONDS] [--out FILE]
+                            [--logics-dir DIR] [--timeout SECONDS]
+                            [--out FILE] [--tex FILE] [--json FILE]
+                            [--platform-label NAME]
 """
 
 from __future__ import annotations

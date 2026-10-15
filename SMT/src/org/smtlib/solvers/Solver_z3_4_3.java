@@ -69,12 +69,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     /** Set to true once a set-logic command has been executed */
     protected boolean logicSet = false;
 
-    /** The checkSatStatus returned by check-sat, if sufficiently recent, otherwise null */
-    protected /*@Nullable*/ IResponse checkSatStatus = null;
-
-    @Override
-    public /*@Nullable*/IResponse checkSatStatus() { return checkSatStatus; }
-
     /** The number of pushes less the number of pops so far -- i.e. the real depth of the
      *  solver's own assertion stack. 0 immediately after set_logic(), before any push (not
      *  1: set_logic() does not itself push anything). Used to know how much to pop for
@@ -144,6 +138,12 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     protected boolean isTimeLimitResponse(String rawResponse) {
         return rawResponse.trim().equals("timeout");
+    }
+
+    /** Never pipelined: this adapter sends and corrects commands by its own means */
+    @Override
+    public boolean pipelines(ICommand cmd) {
+        return false;
     }
 
     public IResponse sendCommand(ICommand cmd) {
@@ -650,7 +650,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The get-proof command is only valid immediately after check-sat returned unsat");
         }
         try {
-            return parseResponse(solverProcess.sendAndListen("(get-proof)\n"));
+            return proofResponse(parseResponse(solverProcess.sendAndListen("(get-proof)\n")));
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }

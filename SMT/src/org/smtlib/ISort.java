@@ -22,6 +22,7 @@ import org.smtlib.IPos.IPosable;
  * <LI> an ISort.IFamily, which defines a new sort symbol of a given arity
  * <LI> an ISort.IAbbreviation, which defines a (possibly parameterized) abbreviation for a sort expression.
  * <LI> an ISort.IParameter, which defines a sort name used as a parameter in an abbreviation definition
+ * <LI> an ISort.IDatatype - a datatype sort
  * <LI> The ISort.ErrorDefinition class, which is used as a definition place holder for ill-formed definitions, to avoid excessive redundant errors
  * </UL>
  * Second, Sort expressions themselves, modeled by ISort:
@@ -29,16 +30,15 @@ import org.smtlib.IPos.IPosable;
  * <LI>A ISort.IApplication, which is the application of an IDefinition to the appropriate number
  * (possibly 0) of Sort expressions
  * <LI>A ISort.IParameter, which is a simple symbol designating the parameter of a parameterized abbreviation
- * <LI>A ISort.IFcnSort, an expression designating a function sort; this is not expressible in SMT-LIBv2, but is 
- * useful internally within jSMTLIB.
+ * <LI>A ISort.IFcnSort, an expression designating a function sort.
  * </UL>
  */
 public interface ISort extends INode, IPosable {
 
     /** Structural equality after expansion of abbreviations (an alias and its literal
      *  expansion are equal), but without any substitution of free parameters. The general-
-     *  purpose equality method -- use this unless a caller specifically needs one of the two
-     *  narrower comparisons below.
+     *  purpose equality method -- use this unless a caller specifically needs a
+     *  narrower comparison below.
      *  @see #equalsNoExpand(ISort) */
     //@ pure
     @Override
@@ -161,7 +161,6 @@ public interface ISort extends INode, IPosable {
 
         @Override
         boolean equalsNoExpand(ISort sort);
-
     }
 
     /** The interface for a sort parameter, as used in sort abbreviations
@@ -176,7 +175,6 @@ public interface ISort extends INode, IPosable {
 
         @Override
         boolean equalsNoExpand(ISort sort);
-
     }
 
     /** An interface to represent the Sort of a function; this is

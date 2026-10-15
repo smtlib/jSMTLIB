@@ -1,0 +1,2 @@
+The ARM64 build of z3-4.3.1 answers some unsatisfiable check-sats wrongly (see
+https://github.com/smtlib/jSMTLIB/issues/101); z3-4.3 does not pipeline in any case.

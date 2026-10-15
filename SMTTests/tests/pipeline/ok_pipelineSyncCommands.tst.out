@@ -1,0 +1,12 @@
+success
+success
+"after declare-fun"
+success
+(:error-behavior continued-execution )
+success
+true
+success
+success
+success
+(error "The get-assertions command is only valid if :produce-assertions has been enabled")
+sat

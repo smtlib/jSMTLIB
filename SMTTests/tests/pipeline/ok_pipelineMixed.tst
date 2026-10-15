@@ -1,0 +1,17 @@
+; OPTIONS: --pipeline
+(set-option :produce-models true)
+(set-logic QF_LIA)
+; a comment between commands
+(declare-const x Int)
+(declare-fun y () Int)
+(define-fun f ((a Int)) Int (+ a 1))
+(assert (= (f x) y))
+(push 1)
+(assert (> y 5))
+(check-sat)
+(get-value ((f 1)))
+(pop 1)
+(set-info :status sat)
+(assert (< y 0))
+(check-sat)
+(get-option :print-success)

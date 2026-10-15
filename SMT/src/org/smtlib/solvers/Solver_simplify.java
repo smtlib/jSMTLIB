@@ -140,6 +140,12 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         return arg;
     }
 
+    /** Never pipelined: commands are executed here, not sent to a process */
+    @Override
+    public boolean pipelines(ICommand cmd) {
+        return false;
+    }
+
     @Override
     public IResponse assertExpr(IExpr expr) {
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#assert " + expr);

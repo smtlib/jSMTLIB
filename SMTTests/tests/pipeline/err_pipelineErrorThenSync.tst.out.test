@@ -1,0 +1,9 @@
+success
+success
+success
+(error "Unknown constant symbol undeclared")
+success
+"after the error"
+success
+unknown
+unsupported

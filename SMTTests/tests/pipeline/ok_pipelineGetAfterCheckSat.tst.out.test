@@ -1,0 +1,16 @@
+success
+success
+success
+success
+success
+success
+unknown
+unsupported
+unsupported
+success
+success
+unknown
+(error "The get-unsat-core command is only valid immediately after check-sat returned unsat")
+success
+unknown
+unsupported

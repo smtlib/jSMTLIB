@@ -87,6 +87,7 @@ public class Script extends Pos.Printable implements IScript {
         if (commands == null) {
             return smtConfig.responseFactory.error("INTERNAL ERROR: Unexpected null command list in a script");
         }
+        if (smtConfig.pipeline && solver instanceof AbstractSolver as) return as.executePipelined(commands);
         Iterator<ICommand> iter = commands.iterator();
         IResponse response = smtConfig.responseFactory.success();
         ICommand s;

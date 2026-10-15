@@ -174,11 +174,46 @@ public class PrinterCoverageTest {
         Assert.assertEquals("((p true)(q false))", r.toString());
     }
 
+    private IResponse.IProofResponse proof(String text) throws Exception {
+        ISource source = config.smtFactory.createSource(text, "proof");
+        return config.responseFactory.get_proof_response(new org.smtlib.sexpr.Parser(config, source).parseSexpr());
+    }
+
     @Test
     public void proofResponse() throws Exception {
-        IResponse.IProofResponse r = config.responseFactory.get_proof_response();
-        // Proofs are not yet implemented (Printer.visit(IProofResponse) is a placeholder).
-        Assert.assertEquals("PROOF", r.toString());
+        // smtinterpol style: not a list of lists, so one line
+        String text = "(! (res p (assume |weird name|) (and- 0 .cse0)) :proves () :rup)";
+        Assert.assertEquals(text, proof(text).toString());
+    }
+
+    @Test
+    public void proofResponseDeep() throws Exception {
+        // Deeper than a recursive parser or printer could handle
+        int n = 50000;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < n; i++) sb.append("(a ");
+        sb.append("b");
+        for (int i = 0; i < n; i++) sb.append(")");
+        String text = sb.toString();
+        Assert.assertEquals(text, proof(text).toString());
+    }
+
+    @Test(timeout = 10000)
+    public void proofResponseLong() throws Exception {
+        // A long flat list (cvc5 writes one element per step); quadratic printing would time out
+        int n = 200000;
+        StringBuilder sb = new StringBuilder("(! a");
+        for (int i = 0; i < n; i++) sb.append(" a").append(i);
+        String text = sb.append(")").toString();
+        Assert.assertEquals(text, proof(text).toString());
+    }
+
+    @Test
+    public void proofResponseSteps() throws Exception {
+        // cvc5 and z3 style: a list of lists, one element per line
+        IResponse.IProofResponse r = proof("((assume @p1 false)\n  (step @p2 :rule (_ th-lemma 1) :premises (@p1)))");
+        Assert.assertEquals("(" + Printer.eol + "(assume @p1 false)" + Printer.eol
+                + "(step @p2 :rule (_ th-lemma 1) :premises (@p1))" + Printer.eol + ")", r.toString());
     }
 
     @Test

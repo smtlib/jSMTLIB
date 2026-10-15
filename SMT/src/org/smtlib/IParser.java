@@ -21,6 +21,7 @@ import org.smtlib.sexpr.Parser;
  * will implement a specific concrete syntax for the SMT-LIB abstract syntax.
  */
 public interface IParser {
+    // FIXME - where are errors logged? or are they in the ParserException
 
     /** Returns the configuration with which the parser was instantiated. */
     SMT.Configuration smt();
@@ -29,7 +30,7 @@ public interface IParser {
     boolean isEOD() throws IOException, ParserException;
 
     /** Returns the most recent error, or null */
-    IResponse.IError lastError();
+    IResponse.IError lastError(); // FIXME - is this used?
 
     /** Skips remainder of current line */
     void abortLine();
@@ -100,13 +101,12 @@ public interface IParser {
      */
     /*@Nullable*/ IIdentifier parseIdentifier() throws ParserException;
 
-
     /** Parses a sort, returning null with error messages if a valid sort is not in the 
      * next parser tokens.
      */
     /*@Nullable*/ ISort parseSort(List<ISort.IParameter> parameters) throws ParserException;
 
-        /** Parse an SMT-LIB logic; return null and log an error response if there is no valid logic definition */
+    /** Parse an SMT-LIB logic; return null and log an error response if there is no valid logic definition */
     /*@Nullable*/ ILogic parseLogic() throws ParserException;
 
     /** Parse an SMT-LIB theory; return null and log an error response if there is no valid theory definition */

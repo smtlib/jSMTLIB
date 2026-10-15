@@ -1,0 +1,16 @@
+success
+success
+success
+success
+success
+success
+sat
+((x 3))
+((a true))
+success
+success
+unsat
+(a b )
+success
+sat
+((x 3))

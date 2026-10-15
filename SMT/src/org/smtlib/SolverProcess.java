@@ -37,6 +37,10 @@ public class SolverProcess {
      * value buys little extra safety at a real per-command cost on long scripts. */
     public long errorSettleMillis = 1;
 
+    /** The start of a comment line read from stderr whose end has not yet arrived; it is
+     *  judged once it has (see listen()) */
+    private String unfinishedErrorComment = "";
+
     /** Set true by a caller for the duration of a single command whose expected response
      * text may contain literal, non-SMT-LIB unbalanced parentheses (e.g. some z3
      * :reason-unknown text), so the end-marker recognizer does not wait forever for
@@ -240,11 +244,19 @@ public class SolverProcess {
     public String listen() throws IOException {
         String out = standardOut.take(); // blocks until the end marker is recognized, or the process dies
         boolean outWasForcedEof = standardOut.lastTakeWasForcedEof();
+        // Comment lines alone are no response: z3 writes some after a response, and when they
+        // are read on their own they belong to an earlier command (#99)
+        while (!outWasForcedEof && isOnlyComments(out)) {
+            if (log != null) { log.write(";OUT: "); log.write(out); log.flush(); }
+            out = standardOut.take();
+            outWasForcedEof = standardOut.lastTakeWasForcedEof();
+        }
         // errorOut has no end marker of its own -- there is no OS-level guarantee that error
         // text for this command has already been fully written and read by the time
         // standardOut's end marker shows up, so this is a bounded best-effort drain of
         // whatever has arrived, not a proof of completeness.
-        String err = errorOut.drain(errorSettleMillis);
+        String rawErr = errorOut.drain(errorSettleMillis);
+        String err = withoutComments(rawErr, outWasForcedEof);
         // A forced EOF (stdout closed before ever matching the end marker) with nothing
         // recovered from *either* stream means the solver died without producing any
         // response at all for this command. Left unhandled, that's otherwise
@@ -267,15 +279,46 @@ public class SolverProcess {
         }
         if (log != null) {
             if (!out.isEmpty()) { log.write(";OUT: "); log.write(out); log.write(eol); log.flush(); } // input usually ends with a prompt and no line terminator
-            if (!err.isEmpty()) { log.write(";ERR: "); log.write(err); } // input usually ends with a line terminator, we think
+            if (!rawErr.isEmpty()) { log.write(";ERR: "); log.write(rawErr); } // input usually ends with a line terminator, we think
         }
         // In some cases (yices2) the prompt is on the error stream. Our heuristic is that then there is no line-termination
         if (err.endsWith("\n") || out.isEmpty()) {
-            return err.isEmpty() || err.charAt(0) == ';' ? out : err; // Note: the guard against comments (starting with ;) is for Z3
+            return err.isEmpty() ? out : err;
         } else {
             if (out.endsWith(endMarker)) out = out.substring(0,out.length()-endMarker.length());
             return out;
         }
+    }
+
+    /** Whether the text has a comment line and nothing else but whitespace */
+    static boolean isOnlyComments(String text) {
+        boolean comment = false;
+        for (String line: text.split("\n")) {
+            String s = line.trim();
+            if (s.isEmpty()) continue;
+            if (s.charAt(0) != ';') return false;
+            comment = true;
+        }
+        return comment;
+    }
+
+    /** The stderr text but for its comment lines (z3 writes some). A comment line that has not
+     *  yet ended, unless the solver has stopped, is kept to be judged with the text that ends it,
+     *  since it may arrive in pieces, read for different commands (#99). */
+    private String withoutComments(String err, boolean ended) {
+        err = unfinishedErrorComment + err;
+        unfinishedErrorComment = "";
+        int lastLine = err.lastIndexOf('\n') + 1;
+        if (!ended && lastLine < err.length() && err.substring(lastLine).trim().startsWith(";")) {
+            unfinishedErrorComment = err.substring(lastLine);
+            err = err.substring(0, lastLine);
+        }
+        if (err.indexOf(';') < 0) return err;
+        StringBuilder sb = new StringBuilder();
+        for (String line: err.split("(?<=\n)")) {
+            if (!line.trim().startsWith(";")) sb.append(line);
+        }
+        return sb.toString();
     }
 
     /** The text the solver wrote, on stdout and stderr, that has not been read as a response: e.g. a report it wrote
@@ -443,6 +486,43 @@ public class SolverProcess {
         send(false, args);
     }
 
+    /** Set once pipelined reading ({@link #readOutput(long)}) has reached the end of standard output */
+    private boolean outputEnded = false;
+
+    /** Whether pipelined reading has reached the end of standard output: the process has exited
+     *  or closed it */
+    public boolean outputEnded() {
+        return outputEnded;
+    }
+
+    /** For pipelined reading, which, unlike {@link #listen()}, does not pair the text with one
+     *  command: the next text the solver wrote on standard output, waiting up to waitMillis for it
+     *  (not at all if 0; until some arrives or the output ends if negative). Returns null if none
+     *  arrived in that time, or if the output has ended (see {@link #outputEnded()}). */
+    public /*@Nullable*/ String readOutput(long waitMillis) throws IOException {
+        if (outputEnded || standardOut == null) return null;
+        String out;
+        try {
+            out = standardOut.poll(waitMillis);
+        } catch (IOException e) {
+            outputEnded = true;
+            throw e;
+        }
+        if (out == null) return null;
+        if (standardOut.lastTakeWasForcedEof()) outputEnded = true;
+        if (log != null && !out.isEmpty()) { log.write(";OUT: "); log.write(out); log.write(eol); log.flush(); }
+        return out;
+    }
+
+    /** For pipelined reading: the text that has arrived on standard error, waiting up to
+     *  waitMillis for some (see StreamGobbler.drain) */
+    public String readErrorOutput(long waitMillis) throws IOException {
+        if (errorOut == null) return "";
+        String err = errorOut.drain(waitMillis);
+        if (log != null && !err.isEmpty()) { log.write(";ERR: "); log.write(err); log.flush(); }
+        return err;
+    }
+
 // TODO - combine listen and noListen versions of send?
 
     /** Continuously drains one of the process's output streams (stdout or stderr) on a
@@ -528,6 +608,22 @@ public class SolverProcess {
         String take() throws IOException {
             try {
                 Chunk c = queue.take();
+                if (c.error != null) throw c.error;
+                lastTakeWasForcedEof = c.eof;
+                return c.text;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Interrupted while waiting for solver output", e);
+            }
+        }
+
+        /** Like take(), but waits at most waitMillis (not at all if 0; without limit if
+         * negative); returns null if no chunk arrived in that time. */
+        /*@Nullable*/ String poll(long waitMillis) throws IOException {
+            if (waitMillis < 0) return take();
+            try {
+                Chunk c = queue.poll(waitMillis, TimeUnit.MILLISECONDS);
+                if (c == null) return null;
                 if (c.error != null) throw c.error;
                 lastTakeWasForcedEof = c.eof;
                 return c.text;

@@ -32,6 +32,9 @@ The recognized options are these:
         applied as a best-effort per-query limit instead
     --echo : if enabled, commands are echoed to diagnostic output when successfully parsed
     --abort : if enabled, an error causes immediate exit
+    --pipeline : if enabled, commands in file or --text input are sent to the solver without
+        waiting for each response where possible; the output is the same
+    --no-pipeline : each command waits for its response before the next is sent (the default)
     --noshow : if enabled, error location information is not shown
     -q, --nosuccess : if enabled, 'success' responses are suppressed
     -r, --relax : if enabled, extensions to strict SMT-LIB are permitted

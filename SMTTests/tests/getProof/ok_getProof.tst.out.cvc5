@@ -2,4 +2,6 @@ success
 success
 success
 unsat
-( ( assume @p1 false ) )
+(
+(assume @p1 false)
+)

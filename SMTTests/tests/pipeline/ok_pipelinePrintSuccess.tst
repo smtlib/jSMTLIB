@@ -1,0 +1,10 @@
+; OPTIONS: --pipeline
+(set-logic QF_LIA)
+(declare-fun x () Int)
+(set-option :print-success false)
+(declare-fun y () Int)
+(assert (> x y))
+(check-sat)
+(set-option :print-success true)
+(assert (< y 0))
+(check-sat)

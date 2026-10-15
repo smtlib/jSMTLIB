@@ -493,7 +493,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 
         @Override
         public T visit(IProofResponse e) throws VisitorException {
-            // TODO - add content to a proof object
+            e.proof().accept(this);
             return null;
         }
 

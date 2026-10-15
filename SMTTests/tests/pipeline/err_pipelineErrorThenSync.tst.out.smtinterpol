@@ -1,0 +1,9 @@
+success
+success
+success
+(error "<stdin>:8:13: Unknown function symbol undeclared.")
+success
+"after the error"
+success
+sat
+((y 1))

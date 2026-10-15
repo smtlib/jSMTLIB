@@ -30,6 +30,4 @@ public interface ITheory extends INode {
         IAttributeValue v = value(keyword);
         return v == null ? Collections.emptyList() : Collections.singletonList(v);
     }
-
-    // TODO - do we export the pre-defined symbols?
 }
