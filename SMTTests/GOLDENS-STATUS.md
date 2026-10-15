@@ -319,7 +319,9 @@ on these.
 *Status as of 2026-10-14: step 2 is done (`ok_quant.tst.out.z3.bad` deleted); of step 3's
 candidates, `ok_getProof`, the four `ok_setLogic_*` and `ok_unsupportedInfo` became plain
 goldens (`365c2b6b`), `ok_getAssignment.tst.out.z3-4.3.bad` is shadowed by a plain golden,
-and `ok_reproducibleResourceLimit.tst.out.z3.bad` is still `.bad`; step 1 is not done.*
+and `ok_reproducibleResourceLimit.tst.out.z3.bad` is still `.bad`.*
+
+*Status as of 2026-10-15: step 1 is done (`ok_ALL_logic.tst.out.z3-4.3.bad` and `ok_ALL2_logic.tst.out.z3-4.3.bad` deleted; their tests exist only as `.tst-skip`), and the shadowed `ok_getAssignment.tst.out.z3-4.3.bad` is deleted too.*
 
 **`ok_` tests:**
 1. Delete the 2 orphaned `.bad` files with no corresponding `.tst` source
