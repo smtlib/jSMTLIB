@@ -2430,7 +2430,7 @@ The jSMTLIB command-line tool is a classic command-line tool: it takes space-sep
 \item options begin with two hyphens, with some abbreviations beginning with just one hyphen
 \item if an option takes a value, the value follows the option on the command-line, separated by white space (e.g. \texttt{--verbose 1})
 \item if an option is repeated, typically the later instance simply overrides the earlier one
-\item options typically have a default value; a handful of boolean options (e.g. {\tt -{}-abort}, {\tt -{}-relax}) simply turn a behavior on when present --- there is no corresponding {\tt -{}-no-...} form to turn such a setting back off within the same command line
+\item options typically have a default value; a handful of boolean options (e.g. {\tt -{}-abort}, {\tt -{}-relax}) simply turn a behavior on when present --- apart from {\tt -{}-no-pipeline}, there is no corresponding {\tt -{}-no-...} form to turn such a setting back off within the same command line
 \item file paths are either absolute or relative to the current working directory of the shell in which the command is executed
 \item any non-file-path arguments that are not files and begin with a single or double hyphen but are not among the recognized options listed below cause the tool to print an error and a short usage message, and to exit without processing any input
 \end{itemize}
@@ -2456,6 +2456,7 @@ Option & Short & Argument & Default\\
 \hyperref[opt:seed]{\tt -{}-seed} & & \numeral & 0 \\
 \hyperref[opt:echo]{\tt -{}-echo} & & --- & off \\
 \hyperref[opt:abort]{\tt -{}-abort} & & --- & off \\
+\hyperref[opt:pipeline]{\tt -{}-pipeline}, {\tt -{}-no-pipeline} & & --- & {\tt -{}-no-pipeline} \\
 \hyperref[opt:noshow]{\tt -{}-noshow} & & --- & off \\
 \hyperref[opt:nosuccess]{\tt -{}-nosuccess} & {\tt -q} & --- & off \\
 \hyperref[opt:relax]{\tt -{}-relax} & {\tt -r} & --- & off \\
@@ -2497,6 +2498,8 @@ By default jSMTLIB reads SMT-LIB commands from standard input (prompting for eac
 \paragraph{\tt -{}-echo}\label{opt:echo} --When enabled, each command is echoed to the diagnostic output channel (see {\tt --diag}) as soon as it is successfully parsed, immediately before it is executed. This is useful when running a script from a file: normally only the responses are shown, so echoing lets the log also show which command produced each response.
 
 \paragraph{\tt -{}-abort}\label{opt:abort} --When enabled, jSMTLIB stops as soon as any command produces an error (a parsing error, a type-checking error, or an error response from the solver), rather than continuing on to the remaining commands. When reading from a file, from {\tt -{}-text}, or from a socket, this ends processing of that input entirely; when reading interactively from a terminal, only the remainder of the current input line is discarded, after which jSMTLIB resumes prompting for further commands. When this option is not given (the default), jSMTLIB reports each error but continues on to subsequent commands, in keeping with normal SMT-LIB semantics.
+
+\paragraph{\tt -{}-pipeline, -{}-no-pipeline}\label{opt:pipeline} --With {\tt -{}-pipeline}, commands read from a file or given with {\tt -{}-text} are sent to the solver without waiting for each one's response where possible: declarations, definitions, assertions, {\tt push}, {\tt pop}, {\tt check-sat}, {\tt set-logic}, {\tt set-info} and {\tt reset}. jSMTLIB reads the responses as they arrive and matches each to its command in order, so the output, including error messages and their source positions, is the same as without pipelining. Other commands, such as {\tt set-option} and the {\tt get-} commands, first wait for all earlier responses. For a long script of declarations and assertions this can make the run many times faster (ten to a hundred times, depending on the solver), since jSMTLIB no longer waits for a round trip to the solver after each command. With {\tt -{}-abort}, processing still stops at the first error, but the solver may already have received some of the commands that follow it. Input read interactively from a terminal or from {\tt -{}-port} is never pipelined. {\tt -{}-no-pipeline}, the default, sends each command only after the previous command's response has been read. A program using the jSMTLIB library gets the same behavior from {\tt IScript.execute} by setting the {\tt pipeline} field of its {\tt SMT.Configuration}.
 
 \paragraph{\tt -{}-noshow}\label{opt:noshow} --When enabled, error messages are reported without the source-position (line and column) information that jSMTLIB would otherwise attach to them. This can be useful when comparing output across runs or across solvers where exact positions are not of interest, or where a difference of position would obscure some other, wanted, comparison.
 
