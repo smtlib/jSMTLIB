@@ -9,6 +9,7 @@ on:
 
 jobs:
   release:
+    if: false
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
@@ -67,7 +68,7 @@ jobs:
     steps:
     - name: Build bitwuzla main
       run: |
-        sudo apt-get update -q && sudo apt-get install -y -q libgmp-dev ninja-build
+        sudo apt-get update -q && sudo apt-get install -y -q libgmp-dev libmpfr-dev ninja-build
         pip install meson
         git clone --depth 1 https://github.com/bitwuzla/bitwuzla
         cd bitwuzla && git log -1 --format='commit %H %cd'
