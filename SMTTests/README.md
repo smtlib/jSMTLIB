@@ -100,8 +100,8 @@ routes the file through the real `SMT.exec(String[])`/`processCommandLine()`
 argument parser (passing the file's own path, unmodified) instead of the
 default `smtConfig.text` path, so the test exercises the same parsing a real
 invocation would. Two things to know before using it:
-- **Flags are split on whitespace, with shell-style quoting.** Text in single
-  or double quotes is part of one argument, without the quotes (no escapes), so
+- **Flags are split on whitespace; a quoted argument may contain spaces.** Text in single
+  or double quotes is one argument, passed without the quotes (no escapes), so
   `; OPTIONS: -L "some dir"` passes `some dir` as one argument (#109;
   `miscCommands/err_optionsQuotedArg.tst`).
 - **Avoid `--verbose`/`-v`.** It works mechanically, but `processCommandLine()`
