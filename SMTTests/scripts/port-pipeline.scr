@@ -1,0 +1,14 @@
+##EXITCODE 0
+# Issue #138: --pipeline does not apply to --port input; the server says so with a warning.
+PORT=8781
+_err=$(mktemp)
+
+$SMT_CMD --port ${PORT} --pipeline 2> "$_err" &
+SERVER_PID=$!
+trap 'kill $SERVER_PID 2>/dev/null; wait $SERVER_PID 2>/dev/null; rm -f "$_err"' EXIT
+sleep 1
+
+$SMT_DRIVER --port ${PORT} "(set-logic QF_UF)"
+$SMT_DRIVER --port ${PORT} "(exit)"
+wait $SERVER_PID 2>/dev/null
+grep '^WARNING: --pipeline' "$_err"
