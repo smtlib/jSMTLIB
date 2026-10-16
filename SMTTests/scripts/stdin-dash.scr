@@ -40,6 +40,15 @@ same "a second '-' reads nothing more" \
 same "--verbose names the input <stdin>" \
     "$($SMT_CMD --solver test --verbose 1 - < "$_tmpdir/a.smt2" 2>&1 | grep '^#Starting file')" "#Starting file <stdin>"
 
+# --pipeline is ignored for interactive standard input (no files), with a warning
+warn() { grep -c '^WARNING: --pipeline' ; }
+same "--pipeline with plain standard input warns" \
+    "$($SMT_CMD --solver test --pipeline < "$_tmpdir/a.smt2" 2>&1 >/dev/null | warn)" "1"
+same "--pipeline with - does not warn" \
+    "$($SMT_CMD --solver test --pipeline - < "$_tmpdir/a.smt2" 2>&1 >/dev/null | warn)" "0"
+same "--pipeline with --text does not warn" \
+    "$($SMT_CMD --solver test --pipeline --text "(set-logic QF_UF)" 2>&1 >/dev/null | warn)" "0"
+
 # --pipeline matters only with a real solver (the test solver does not pipeline)
 if ls "$SMT_SOLVER_DIR"/z3-4.16.0* >/dev/null 2>&1; then
     same "--pipeline with a real solver gives the file's output" \

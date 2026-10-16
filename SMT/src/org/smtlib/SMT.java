@@ -678,6 +678,7 @@ public class SMT {
                     return 1;
                 }
 
+                warnPipelineIgnored("--port input");
                 CharSequenceSocket csq = new CharSequenceSocket(smtConfig,serverSocket,100000,0,2);
                 csq.prompter = new Prompter(smtConfig);
                 if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Start parsing");
@@ -688,6 +689,7 @@ public class SMT {
             } else if (smtConfig.files == null || smtConfig.files.isEmpty()) {
                 // No files listed - use standard input
                 smtConfig.interactive = true;
+                warnPipelineIgnored("interactive standard input");
                 Reader rdr = new BufferedReader(new InputStreamReader(System.in));
                 if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Start parsing standard input");
                 CharSequenceReader csr = new CharSequenceReader(rdr,100000,0,2);
@@ -730,6 +732,14 @@ public class SMT {
         } finally {
             pipelineInput = false;
             cleanup();
+        }
+    }
+
+    /** Warns, with --pipeline, that it does not apply to the given input */
+    private void warnPipelineIgnored(String input) {
+        if (smtConfig.pipeline) {
+            smtConfig.log.logDiag("WARNING: --pipeline applies only to files (including - for standard input)"
+                    + " and --text input; it is ignored for " + input);
         }
     }
 
