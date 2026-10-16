@@ -6,6 +6,8 @@ If no files are present, commands are read from standard input
     until a control-D is read, indicating end of input.
 If files are listed on the command-line they are processed
     after all options are read and in the order the files are listed.
+A file named - is standard input, read as a file: no prompts, and pipelined
+    with --pipeline; only its first mention reads anything.
 Option names have a long version, beginning with --
     and an abbreviated version, beginning with a single -.
 The recognized options are these:
@@ -32,7 +34,7 @@ The recognized options are these:
         applied as a best-effort per-query limit instead
     --echo : if enabled, commands are echoed to diagnostic output when successfully parsed
     --abort : if enabled, an error causes immediate exit
-    --pipeline : if enabled, commands in file or --text input are sent to the solver without
+    --pipeline : if enabled, commands in file (including -) or --text input are sent to the solver without
         waiting for each response where possible; the output is the same
     --no-pipeline : each command waits for its response before the next is sent (the default)
     --noshow : if enabled, error location information is not shown

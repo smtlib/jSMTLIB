@@ -1,0 +1,8 @@
+PASS: a piped script gives the file's output
+PASS: a here-doc gives the file's output
+PASS: an error echoes the source line, as for a file
+PASS: --abort stops at the error, as for a file
+PASS: '-' between files runs in order
+PASS: a second '-' reads nothing more
+PASS: --verbose names the input <stdin>
+PASS: --pipeline with a real solver gives the file's output

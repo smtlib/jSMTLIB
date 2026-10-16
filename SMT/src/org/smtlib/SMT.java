@@ -699,9 +699,17 @@ public class SMT {
             } else {
                 // Otherwise, iterate over all the files
                 smtConfig.interactive = false;
+                boolean stdinRead = false;
                 for (String file: smtConfig.files) {
                     try {
-                        Reader rdr = new BufferedReader(new FileReader(file));
+                        // "-" reads standard input as a file (#138); only its first mention reads anything
+                        boolean stdin = file.equals("-");
+                        if (stdin) {
+                            if (stdinRead) continue;
+                            stdinRead = true;
+                            file = "<stdin>";
+                        }
+                        Reader rdr = new BufferedReader(stdin ? new InputStreamReader(System.in) : new FileReader(file));
                         CharSequenceReader csr = new CharSequenceReader(rdr,100000,0,2);
                         src = smtConfig.smtFactory.createSource(csr, file);
                         p = smtConfig.smtFactory.createParser(smtConfig,src);
@@ -1131,7 +1139,7 @@ public class SMT {
                     usage();
                     return 1;
                 }
-            } else if (s.startsWith("-")) {
+            } else if (s.startsWith("-") && !s.equals("-")) { // "-" is standard input, as a file
                 error("Unknown option: " + s);
                 usage();
                 return 1;
@@ -1396,7 +1404,7 @@ public class SMT {
                 "applied as a best-effort per-query limit instead"),
         new Opt("--echo", null, null, "if enabled, commands are echoed to diagnostic output when successfully parsed"),
         new Opt("--abort", null, null, "if enabled, an error causes immediate exit"),
-        new Opt("--pipeline", null, null, "if enabled, commands in file or --text input are sent to the solver without",
+        new Opt("--pipeline", null, null, "if enabled, commands in file (including -) or --text input are sent to the solver without",
                 "waiting for each response where possible; the output is the same"),
         new Opt("--no-pipeline", null, null, "each command waits for its response before the next is sent (the default)"),
         new Opt("--noshow", null, null, "if enabled, error location information is not shown"),
@@ -1430,6 +1438,8 @@ public class SMT {
         out.println("    until a control-D is read, indicating end of input.");
         out.println("If files are listed on the command-line they are processed");
         out.println("    after all options are read and in the order the files are listed.");
+        out.println("A file named - is standard input, read as a file: no prompts, and pipelined");
+        out.println("    with --pipeline; only its first mention reads anything.");
         out.println("Option names have a long version, beginning with --");
         out.println("    and an abbreviated version, beginning with a single -.");
         out.println("The recognized options are these:");

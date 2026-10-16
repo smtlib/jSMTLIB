@@ -1,0 +1,51 @@
+##EXITCODE 0
+# Issue #138: a file argument of '-' reads standard input as a file -- no prompts, errors
+# echo the source line, --abort stops the run, and --pipeline applies. A repeated '-' reads
+# nothing more. Each check compares with the same script given as a file.
+_tmpdir=$(mktemp -d)
+trap 'rm -rf "$_tmpdir"' EXIT
+
+PASS=0
+FAIL=0
+pass() { echo "PASS: $1"; PASS=$((PASS + 1)); }
+fail() { echo "FAIL: $1"; FAIL=$((FAIL + 1)); if [ -n "$2" ]; then echo "  $2"; fi; }
+same() {
+    if [ "$2" = "$3" ]; then pass "$1"; else fail "$1" "got: $2 | expected: $3"; fi
+}
+
+printf '(set-logic QF_UF)\n(declare-fun p () Bool)\n(assert p)\n(check-sat)\n' > "$_tmpdir/a.smt2"
+printf '(set-logic QF_UF)\n(assert q)\n(check-sat)\n' > "$_tmpdir/err.smt2"
+printf '(echo "first")\n' > "$_tmpdir/first.smt2"
+printf '(echo "last")\n' > "$_tmpdir/last.smt2"
+
+file=$($SMT_CMD --solver test "$_tmpdir/a.smt2" 2>&1)
+same "a piped script gives the file's output" \
+    "$($SMT_CMD --solver test - < "$_tmpdir/a.smt2" 2>&1)" "$file"
+same "a here-doc gives the file's output" "$($SMT_CMD --solver test - 2>&1 <<'EOF'
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(assert p)
+(check-sat)
+EOF
+)" "$file"
+same "an error echoes the source line, as for a file" \
+    "$($SMT_CMD --solver test - < "$_tmpdir/err.smt2" 2>&1)" "$($SMT_CMD --solver test "$_tmpdir/err.smt2" 2>&1)"
+same "--abort stops at the error, as for a file" \
+    "$($SMT_CMD --solver test --abort - < "$_tmpdir/err.smt2" 2>&1)" "$($SMT_CMD --solver test --abort "$_tmpdir/err.smt2" 2>&1)"
+same "'-' between files runs in order" \
+    "$($SMT_CMD --solver test "$_tmpdir/first.smt2" - "$_tmpdir/last.smt2" < "$_tmpdir/a.smt2" 2>&1)" \
+    "$($SMT_CMD --solver test "$_tmpdir/first.smt2" "$_tmpdir/a.smt2" "$_tmpdir/last.smt2" 2>&1)"
+same "a second '-' reads nothing more" \
+    "$($SMT_CMD --solver test - - < "$_tmpdir/a.smt2" 2>&1)" "$file"
+same "--verbose names the input <stdin>" \
+    "$($SMT_CMD --solver test --verbose 1 - < "$_tmpdir/a.smt2" 2>&1 | grep '^#Starting file')" "#Starting file <stdin>"
+
+# --pipeline matters only with a real solver (the test solver does not pipeline)
+if ls "$SMT_SOLVER_DIR"/z3-4.16.0* >/dev/null 2>&1; then
+    same "--pipeline with a real solver gives the file's output" \
+        "$($SMT_CMD --solver z3-4.16.0 --pipeline - < "$_tmpdir/a.smt2" 2>&1)" "$($SMT_CMD --solver z3-4.16.0 "$_tmpdir/a.smt2" 2>&1)"
+else
+    pass "--pipeline with a real solver gives the file's output"
+fi
+
+[ "$FAIL" -eq 0 ]
