@@ -93,7 +93,7 @@ done
 if [ ${#_Z3_SOLVERS[@]} -eq 0 ] && [ ${#_CVC5_SOLVERS[@]} -eq 0 ] \
    && [ ${#_YICES2_SOLVERS[@]} -eq 0 ] && [ ${#_SMTINTERPOL_SOLVERS[@]} -eq 0 ]; then
     echo "SKIP: no solver executables found in $SMT_SOLVER_DIR"
-    exit 0
+    exit 77
 fi
 
 _fail=0
