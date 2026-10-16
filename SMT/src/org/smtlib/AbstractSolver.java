@@ -620,9 +620,10 @@ public class AbstractSolver implements ISolver {
         return cmd instanceof Iget_option || cmd instanceof Iecho;
     }
 
-    /** The bare symbols that are responses in themselves; any other answers only get-option and echo */
+    /** The bare symbols that are responses in themselves, including the empty response; any
+     *  other answers only get-option and echo */
     private static final java.util.Set<String> SYMBOL_RESPONSES = java.util.Set.of(
-            "success", "unsupported", "sat", "unsat", "unknown", "timeout", "memout", "incomplete");
+            "", "success", "unsupported", "sat", "unsat", "unknown", "timeout", "memout", "incomplete");
 
     /** How long a solver that wrote something other than a response is given to finish exiting,
      *  before it is judged to be still running (only paid on that abnormal path) */
