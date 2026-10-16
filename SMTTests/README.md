@@ -107,8 +107,8 @@ a real invocation would. To know before using it:
   flags apply and `processCommandLine()` does not read them again, so no
   "#reading properties" line (which embeds the jar's absolute path) appears
   (#110; `miscCommands/ok_optionsVerbose.tst`).
-- **The bash `runtest` script ignores the directive**, so such a test is
-  checked only by `FileTests` (#137).
+- **The bash `runtest` script honors the directive too** (#137), except that it
+  skips a test whose directive has `--verbose`/`-v`: that output differs by runner.
 
 | Subdirectory | Covers |
 |---|---|
