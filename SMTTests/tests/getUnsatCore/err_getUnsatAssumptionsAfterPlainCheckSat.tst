@@ -11,8 +11,8 @@
 ; applies to them (each forwards straight to its native process): yices2/smtinterpol
 ; both reject setting :produce-unsat-assumptions after set-logic outright (a
 ; genuine, unrelated solver-native restriction) and so never even get to try;
-; cvc5 natively supports get-unsat-assumptions after a plain check-sat and answers
-; "()"; bitwuzla's behavior is not captured here -- see the .skip.bitwuzla file.
+; cvc5 and bitwuzla natively support get-unsat-assumptions after a plain check-sat
+; and answer "()".
 (set-logic QF_UF)
 (set-info :status unsat)
 (set-option :produce-unsat-assumptions true)
