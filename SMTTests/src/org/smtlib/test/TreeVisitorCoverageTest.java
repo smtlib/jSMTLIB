@@ -112,4 +112,36 @@ public class TreeVisitorCoverageTest {
         IVisitor.TreeVisitor<Object> visitor = new IVisitor.TreeVisitor<Object>();
         script.accept(visitor);
     }
+
+    /** A list nested deeper than the Java stack (#132): every atom is still visited */
+    @Test
+    public void walkDeepSeq() throws Exception {
+        SMT.Configuration config = new SMT.Configuration();
+        org.smtlib.sexpr.ISexpr seq = deep(config, 50000);
+        Assert.assertEquals(50001, countSymbols(seq));
+        Assert.assertEquals(50001, countSymbols(config.responseFactory.get_proof_response(seq)));
+    }
+
+    /** (a (a ... (a b) ...)), n deep */
+    private static org.smtlib.sexpr.ISexpr deep(SMT.Configuration config, int n) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < n; i++) sb.append("(a ");
+        sb.append("b");
+        for (int i = 0; i < n; i++) sb.append(")");
+        ISource source = config.smtFactory.createSource(sb.toString(), "deep");
+        return new org.smtlib.sexpr.Parser(config, source).parseSexpr();
+    }
+
+    /** The number of symbols visited (the parser makes a list's atoms symbols) */
+    private static int countSymbols(org.smtlib.INode node) throws Exception {
+        int[] count = {0};
+        node.accept(new IVisitor.TreeVisitor<Object>() {
+            @Override
+            public Object visit(org.smtlib.IExpr.ISymbol e) {
+                count[0]++;
+                return null;
+            }
+        });
+        return count[0];
+    }
 }

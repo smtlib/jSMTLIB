@@ -972,19 +972,20 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
             append("(");
             append(eol);
             for (ISexpr x : ((ISexpr.ISeq)proof).sexprs()) {
-                printCompact(x);
+                printList(x, false);
                 append(eol);
             }
             append(")");
         } else {
-            printCompact(proof);
+            printList(proof, false);
         }
         return null;
     }
 
-    /** Prints a list without the padding visit(ISeq) adds inside its parentheses; iterative,
-     *  since a proof can nest deeper than the Java stack allows. */
-    private void printCompact(ISexpr e) throws IVisitor.VisitorException {
+    /** Prints a list, padded as visit(ISeq) does ("( a b )") or compactly ("(a b)"); iterative,
+     *  since solver output such as a proof can nest deeper than the Java stack allows (#132).
+     *  Nested lists are printed here, not through visit(ISeq). */
+    private void printList(ISexpr e, boolean padded) throws IVisitor.VisitorException {
         // Iterators, not indexes: a parsed list is a LinkedList
         java.util.ArrayDeque<java.util.Iterator<ISexpr>> open = new java.util.ArrayDeque<>();
         ISexpr next = e;
@@ -994,7 +995,10 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
                 java.util.Iterator<ISexpr> it = ((ISexpr.ISeq)next).sexprs().iterator();
                 next = it.hasNext() ? it.next() : null;
                 open.push(it);
-                if (next != null) continue;
+                if (next != null) {
+                    if (padded) append(" ");
+                    continue;
+                }
             } else {
                 next.accept(this);
             }
@@ -1004,7 +1008,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
                     append(" ");
                     next = open.peek().next();
                 } else {
-                    append(")");
+                    append(padded ? " )" : ")");
                     open.pop();
                 }
             }
@@ -1087,12 +1091,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
     @Override
     public Void visit(ISexpr.ISeq e) throws IVisitor.VisitorException {
-        append("(");
-        for (ISexpr expr: e.sexprs()) {
-            append(" ");
-            expr.accept(this);
-        }
-        append(" )");
+        printList(e, true);
         return null;
     }
 

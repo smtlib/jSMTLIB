@@ -530,10 +530,20 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
             return null;
         }
 
+        /** Iterative, since a list (e.g. a proof) can nest deeper than the Java stack allows
+         *  (#132); nested lists are walked here, not through visit(ISeq). */
         @Override
         public T visit(ISexpr.ISeq e) throws VisitorException {
-            for (ISexpr expr : e.sexprs()) {
-                expr.accept(this);
+            java.util.ArrayDeque<java.util.Iterator<ISexpr>> open = new java.util.ArrayDeque<>();
+            open.push(e.sexprs().iterator());
+            while (!open.isEmpty()) {
+                if (!open.peek().hasNext()) {
+                    open.pop();
+                    continue;
+                }
+                ISexpr x = open.peek().next();
+                if (x instanceof ISexpr.ISeq) open.push(((ISexpr.ISeq)x).sexprs().iterator());
+                else x.accept(this);
             }
             return null;
         }
