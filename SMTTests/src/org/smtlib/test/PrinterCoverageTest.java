@@ -198,6 +198,29 @@ public class PrinterCoverageTest {
         Assert.assertEquals(text, proof(text).toString());
     }
 
+    @Test
+    public void seqDeep() throws Exception {
+        // visit(ISeq) at a depth beyond the Java stack (#132); it pads inside the parentheses
+        int n = 50000;
+        StringBuilder text = new StringBuilder();
+        StringBuilder expected = new StringBuilder();
+        for (int i = 0; i < n; i++) {
+            text.append("(a ");
+            expected.append("( a ");
+        }
+        text.append("b");
+        expected.append("b");
+        for (int i = 0; i < n; i++) {
+            text.append(")");
+            expected.append(" )");
+        }
+        ISource source = config.smtFactory.createSource(text.toString(), "seq");
+        org.smtlib.sexpr.ISexpr seq = new org.smtlib.sexpr.Parser(config, source).parseSexpr();
+        StringWriter sw = new StringWriter();
+        Printer.write(config, sw, seq);
+        Assert.assertEquals(expected.toString(), sw.toString());
+    }
+
     @Test(timeout = 10000)
     public void proofResponseLong() throws Exception {
         // A long flat list (cvc5 writes one element per step); quadratic printing would time out
