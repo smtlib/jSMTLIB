@@ -96,23 +96,19 @@ A `.tst` file can optionally start with a `; OPTIONS: <flags>` line (an ordinary
 SMT-LIB comment, so it's harmless even if something reads the file some other
 way) to request a command-line-only setting a plain `.tst` has no way to ask
 for, e.g. `; OPTIONS: --relax` or `; OPTIONS: --echo`. When present, `FileTests`
-routes the file through the real `SMT.exec(String[])`/`processCommandLine()`
-argument parser (passing the file's own path, unmodified) instead of the
-default `smtConfig.text` path, so the test exercises the same parsing a real
-invocation would. Two things to know before using it:
+passes its flags to the real `SMT.exec(String[])`/`processCommandLine()`
+argument parser, ahead of the file's text, so the test exercises the same parsing
+a real invocation would. To know before using it:
 - **Flags are split on whitespace; a quoted argument may contain spaces.** Text in single
   or double quotes is one argument, passed without the quotes (no escapes), so
   `; OPTIONS: -L "some dir"` passes `some dir` as one argument (#109;
   `miscCommands/err_optionsQuotedArg.tst`).
-- **Avoid `--verbose`/`-v`.** It works mechanically, but `processCommandLine()`
-  always calls `readProperties()` itself, and `FileTests`' own per-test setup
-  already called it once before the file was even read — so a `; OPTIONS:
-  --verbose ...` test's second `readProperties()` call emits its own
-  "#reading properties ..." diagnostic, which embeds this checkout's absolute
-  jar path and makes an exact-match golden non-portable across machines. A
-  test needing `--verbose` belongs as a `.scr` script instead, where
-  `runscript`'s `$INSTALL` substitution already handles this. See issue #110
-  for the full analysis of why this double `readProperties()` call happens.
+- **`--verbose`/`-v` is safe.** `FileTests` reads the properties before the
+  flags apply and `processCommandLine()` does not read them again, so no
+  "#reading properties" line (which embeds the jar's absolute path) appears
+  (#110; `miscCommands/ok_optionsVerbose.tst`).
+- **The bash `runtest` script ignores the directive**, so such a test is
+  checked only by `FileTests` (#137).
 
 | Subdirectory | Covers |
 |---|---|

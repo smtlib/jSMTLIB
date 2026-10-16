@@ -64,6 +64,12 @@ for f in "${files[@]}" ; do
 
     ( source "$f" ) 2> "$f.err.actual" > "$f.out.actual"
     actualret=$?
+    # A script exits 77 to skip itself (e.g. no solver it checks is available)
+    if [ $actualret -eq 77 ]; then
+        echo "SKIP $f: $(grep '^SKIP:' "$f.out.actual" | head -1 | sed 's/^SKIP: //')"
+        rm -f "$f.out.actual" "$f.err.actual"
+        continue
+    fi
     ### Strip Windows CR so Unix golden files match
     if [[ "$PLATFORM" == "windows" ]]; then
         tr -d '\r' < "$f.out.actual" > "$f.out.actual.tmp" && mv "$f.out.actual.tmp" "$f.out.actual"

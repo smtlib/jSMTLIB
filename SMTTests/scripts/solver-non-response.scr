@@ -1,0 +1,61 @@
+##EXITCODE 0
+# Issue #134 (and #112): text from the solver that is not a response -- e.g. the first word
+# of a crash banner -- must not be accepted as the response to a command. A stub solver,
+# run through the bitwuzla adapter, stands in for the real one.
+_tmpdir=$(mktemp -d)
+trap 'rm -rf "$_tmpdir"' EXIT
+
+# Acknowledges every command, but on a define-fun writes a C++ abort banner to stderr and
+# dies (as bitwuzla 0.9.1 does on an ill-sorted define-fun, #112), and on a declare-fun
+# writes a line that is not a response and carries on.
+cat > "$_tmpdir/stub" <<'EOF'
+#!/bin/bash
+while IFS= read -r line; do
+    case "$line" in
+        ";"*|"") ;;
+        "(define-fun"*)
+            echo "terminate called after throwing an instance of 'std::runtime_error'" >&2
+            echo "  what():  stub crash" >&2
+            exit 134 ;;
+        "(declare-fun"*) echo "garbage from the stub" ;;
+        "(check-sat)") echo "sat" ;;
+        *) echo "success" ;;
+    esac
+done
+EOF
+chmod +x "$_tmpdir/stub"
+
+PASS=0
+FAIL=0
+pass() { echo "PASS: $1"; PASS=$((PASS + 1)); }
+fail() { echo "FAIL: $1"; FAIL=$((FAIL + 1)); if [ -n "$2" ]; then echo "  $2"; fi; }
+
+out=$($SMT_CMD --solver bitwuzla --exec "$_tmpdir/stub" \
+    --text "(set-logic QF_UF) (define-fun f () Bool 5) (set-logic QF_UF)" 2>/dev/null)
+second=$(echo "$out" | sed -n 2p)
+if echo "$second" | grep -q '^(error "The solver stopped without a response'; then
+    pass "a crash is reported as an error"
+else
+    fail "a crash is reported as an error" "got: $second"
+fi
+if echo "$out" | sed -n 3p | grep -q '^(error "Error writing to solver'; then
+    pass "the command after a crash reports the stopped solver"
+else
+    fail "the command after a crash reports the stopped solver" "got: $(echo "$out" | sed -n 3p)"
+fi
+
+out=$($SMT_CMD --solver bitwuzla --exec "$_tmpdir/stub" \
+    --text "(set-logic QF_UF) (declare-fun p () Bool) (check-sat)" 2>/dev/null)
+second=$(echo "$out" | sed -n 2p)
+if [ "$second" = '(error "Unexpected response from the solver: garbage from the stub")' ]; then
+    pass "a word that is not a response is an error"
+else
+    fail "a word that is not a response is an error" "got: $second"
+fi
+if [ "$(echo "$out" | sed -n 3p)" = "sat" ]; then
+    pass "check-sat's answer is still accepted"
+else
+    fail "check-sat's answer is still accepted" "got: $(echo "$out" | sed -n 3p)"
+fi
+
+[ "$FAIL" -eq 0 ]

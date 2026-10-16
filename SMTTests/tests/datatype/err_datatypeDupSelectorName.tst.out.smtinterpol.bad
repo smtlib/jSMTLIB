@@ -1,2 +1,2 @@
 success
-Unexpected
+(error "The solver stopped without a response to: (declare-datatype D ((c1 (a Bool)) (c2 (a Bool)) ))")

@@ -1,4 +1,4 @@
 success
 success
 success
-Unexpected
+(error "The solver stopped without a response to: (assert (= b ((_ fp.to_ubv 0) RNE x)))")

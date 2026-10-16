@@ -66,6 +66,12 @@ fi
 
 ( source "$f" ) 2> "$f.err.actual" > "$f.out.actual"
 actualret=$?
+# A script exits 77 to skip itself (e.g. no solver it checks is available)
+if [ $actualret -eq 77 ]; then
+    grep '^SKIP:' "$f.out.actual" | head -1
+    rm -f "$f.out.actual" "$f.err.actual"
+    exit 77
+fi
 
 if [[ "$PLATFORM" == "windows" ]]; then
     tr -d '\r' < "$f.out.actual" > "$f.out.actual.tmp" && mv "$f.out.actual.tmp" "$f.out.actual"

@@ -1,0 +1,4 @@
+PASS: a crash is reported as an error
+PASS: the command after a crash reports the stopped solver
+PASS: a word that is not a response is an error
+PASS: check-sat's answer is still accepted

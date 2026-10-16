@@ -1,2 +1,2 @@
 success
-Unexpected
+(error "The solver stopped without a response to: (assert (= (_ +oo 8) (_ +oo 8)))")
