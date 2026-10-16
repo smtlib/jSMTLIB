@@ -469,117 +469,12 @@ public class SMT {
          *         resolved, or construction otherwise fails
          */
         public ISolver createSolver(/*@NonNull*/ String solvername, /*@Nullable*/ String executable) throws ISolver.CreationException {
-            Class<? extends Object> adapterClass = null;
-            String[] command = null;
-            String adapterClassName = null;
-
-            // Find the adapter, executable, command
-            if (!solvername.equals(Utils.TEST_SOLVER)) {
-                String solvernameNormalized = solvername.replace('-','_').replace('.', '_');
-                // A platform-specific override (.adapter.<platform>) is checked before the bare
-                // .adapter, for solvers whose behavior genuinely differs by platform (not just
-                // their executable's filename) -- e.g. the Windows z3-4.3.2 binary has its own
-                // push-command bug that the Unix/macOS z3-4.3.1 binary doesn't, needing its own
-                // adapter subclass. Mirrors the same convention used for .exec.<platform>.
-                if (props != null) {
-                    adapterClassName = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_ADAPTER_SUFFIX + "." + SMT.platformName());
-                    if (adapterClassName == null) {
-                        adapterClassName = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_ADAPTER_SUFFIX);
-                    }
-                    if (adapterClassName != null) try {
-                        adapterClass = Class.forName(adapterClassName);
-                    } catch (ClassNotFoundException e) {
-                        adapterClass = null;
-                    }
-                }
-
-                if (adapterClass == null) {
-                    adapterClassName = "org.smtlib.solvers.Solver_" + solvernameNormalized;
-                    try {
-                        adapterClass = Class.forName(adapterClassName);
-                    } catch (ClassNotFoundException e) {
-                        adapterClass = null;
-                    }
-                }
-
-                // No Solver_z3 class exists (see the matching comment in jsmtlib.properties),
-                // so a z3 solver name with neither a configured .adapter property nor a
-                // version-specific adapter class of its own (e.g. an untested/future z3
-                // version) would otherwise fall through to the fully generic Solver_smt below,
-                // losing z3-specific handling that any current z3 build still needs. Default
-                // such names to Solver_z3_recent instead.
-                if (adapterClass == null && solvername.startsWith("z3")) {
-                    adapterClassName = "org.smtlib.solvers.Solver_z3_recent";
-                    try {
-                        adapterClass = Class.forName(adapterClassName);
-                    } catch (ClassNotFoundException e) {
-                        adapterClass = null;
-                    }
-                }
-
-                // But otherwise presume the solver is a standard smt solver
-                if (adapterClass == null) {
-                    adapterClass = org.smtlib.solvers.Solver_smt.class;
-                    adapterClassName = "org.smtlib.solvers.Solver_smt";
-                }
-
-                String propName = Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_COMMAND_SUFFIX;
-                String commandString = null;
-                if (props != null) {
-                    commandString = props.getProperty(propName);
-                    if (commandString != null && !commandString.isEmpty()) {
-                        command = commandString.split(",");
-                        if (command.length == 0) {
-                            throw new ISolver.CreationException("The command specified for " + propName + " appears to have no content");
-                        }
-                    }
-                }
-
-                if (executable == null && props != null) {
-                    // A platform-specific override (.exec.<platform>) is checked before the bare
-                    // .exec, for solvers whose executable filename itself differs by platform
-                    // (not just its directory) -- e.g. z3-4.3 ships as z3-4.3.1 on Unix/macOS but
-                    // z3-4.3.2 on Windows. Mirrors the platform-suffix convention already used
-                    // throughout the test suite's golden files.
-                    executable = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX + "." + SMT.platformName());
-                    if (executable == null) {
-                        executable = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX);
-                    }
-                    if (executable != null && executable.trim().isEmpty()) executable = null;
-                }
-
-                if (executable != null) {
-                    executable = SMT.resolveExecutablePath(executable, System.getenv("SMT_SOLVER_DIR"));
-                }
-
-                if (command != null && executable != null) {
-                    // %exec% lets a .command entry place the resolved executable at any
-                    // position, not just the front -- needed for launchers like
-                    // "java,-jar,%exec%,-q" where the resolvable path isn't argv[0].
-                    // If no placeholder appears, fall back to substituting argv[0], so a
-                    // plain "EXE,arg1,arg2"-style command (executable genuinely first)
-                    // still works without needing the placeholder spelled out.
-                    boolean substituted = false;
-                    for (int i = 0; i < command.length; i++) {
-                        if (command[i].equals("%exec%")) {
-                            command[i] = executable;
-                            substituted = true;
-                        }
-                    }
-                    if (!substituted) command[0] = executable;
-                }
-
-                if (executable == null && command == null) {
-                    // No jsmtlib.properties entry for this solver name at all: default to
-                    // treating the solver name itself as the executable, resolved against
-                    // SMT_SOLVER_DIR like any configured .exec value would be. This lets a
-                    // solver be used just by name (e.g. --solver cvc5-1.3.2) without requiring
-                    // a properties entry.
-                    executable = SMT.resolveExecutablePath(solvername, System.getenv("SMT_SOLVER_DIR"));
-                }
-            } else {
-                adapterClass = org.smtlib.solvers.Solver_test.class;
-            }
+            SolverResolver.Resolution r = SolverResolver.resolve(props, solvername, executable,
+                    SMT.platformName(), System.getenv("SMT_SOLVER_DIR"), SolverResolver::forName);
+            Class<?> adapterClass = r.adapterClass();
+            String adapterClassName = r.adapterClassName();
+            String[] command = r.command();
+            executable = r.executable();
 
             try {
                 Constructor<?> constructor;
@@ -1251,14 +1146,7 @@ public class SMT {
             String commandString = smtConfig.props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_COMMAND_SUFFIX);
             if (commandString != null && !commandString.isEmpty()) return null;
         }
-        String executable = null;
-        if (smtConfig.props != null) {
-            executable = smtConfig.props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX + "." + platformName());
-            if (executable == null) {
-                executable = smtConfig.props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_EXEC_SUFFIX);
-            }
-            if (executable != null && executable.trim().isEmpty()) executable = null;
-        }
+        String executable = SolverResolver.configuredExecutable(smtConfig.props, solvername, platformName());
         if (executable == null) {
             // No jsmtlib.properties entry for this solver name at all: same fallback
             // startSolver uses -- treat the solver name itself as the executable.
