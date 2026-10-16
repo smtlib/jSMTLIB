@@ -94,8 +94,10 @@ public class SolverResolverTests {
         Properties p = props("s.exec.linux", "s-linux", "s.exec", "s-plain");
         Assert.assertEquals(DIR + "/s-linux", resolve(p, "s", null, known()).executable());
         Assert.assertEquals(DIR + "/s-plain", SolverResolver.resolve(p, "s", null, "windows", DIR, known()).executable());
-        // the caller's executable wins, and an absolute path is used as given
-        Assert.assertEquals("/abs/solver", resolve(p, "s", "/abs/solver", known()).executable());
+        // the caller's executable wins, and an absolute path is used as given ("/abs" is not
+        // absolute on Windows, so make one that is everywhere)
+        String abs = new java.io.File("abs-solver").getAbsolutePath();
+        Assert.assertEquals(abs, resolve(p, "s", abs, known()).executable());
         // a blank .exec counts as none: the solver name is the executable
         Assert.assertEquals(DIR + "/s", resolve(props("s.exec", "  "), "s", null, known()).executable());
     }
