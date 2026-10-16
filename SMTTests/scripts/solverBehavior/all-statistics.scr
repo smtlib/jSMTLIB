@@ -56,10 +56,10 @@
 # confirmed per-family breakdown. Runs B and C pass for all of them.
 
 # Resolves an SMT_TEST_SOLVERS entry (e.g. "z3-4.3", "cvc5-1.3.2", "test") to the
-# executable path jsmtlib.properties would actually launch for it. "z3-4.3" is the one
-# entry whose exec name doesn't match the solvername verbatim -- it means z3-4.3.1 on
-# every platform except Windows, which ships 4.3.2 under that same solver name (see
-# SMT/jsmtlib.properties). Every other entry's exec name is identical to the solvername
+# executable path jsmtlib.properties would actually launch for it. "z3-4.3" and "yices2"
+# are the entries whose exec name doesn't match the solvername verbatim -- z3-4.3 means
+# z3-4.3.1 on every platform except Windows, which ships 4.3.2 under that same solver name,
+# and yices2 means yices2-2.7.0, or 2.6.5 on Windows (see SMT/jsmtlib.properties). Every other entry's exec name is identical to the solvername
 # (e.g. "z3-4.16.0" launches a binary literally named z3-4.16.0). "test" has no real
 # executable at all -- resolves to nothing, so test-only runs (SMT_TEST_SOLVERS=test)
 # correctly exercise zero real solvers here, matching what "no real solvers" promises.
@@ -69,6 +69,9 @@ _resolve_exec() {
         test) return ;;
         z3-4.3)
             [[ "$PLATFORM" == "windows" ]] && _base="z3-4.3.2" || _base="z3-4.3.1" ;;
+        yices2)
+            # as in jsmtlib.properties: Windows ships only 2.6.5
+            [[ "$PLATFORM" == "windows" ]] && _base="yices2-2.6.5" || _base="yices2-2.7.0" ;;
         smtinterpol-*)
             echo "$SMT_SOLVER_DIR/$_n.jar"; return ;;
         *)
@@ -85,7 +88,7 @@ for _n in ${SMT_TEST_SOLVERS:-test}; do
     case "$_n" in
         z3-*)          [ -x "$_exe" ] && _Z3_SOLVERS+=("$_exe") ;;
         cvc5-*)        [ -x "$_exe" ] && _CVC5_SOLVERS+=("$_exe") ;;
-        yices2-*)      [ -x "$_exe" ] && _YICES2_SOLVERS+=("$_exe") ;;
+        yices*)        [ -x "$_exe" ] && _YICES2_SOLVERS+=("$_exe") ;;
         smtinterpol-*) [ -e "$_exe" ] && _SMTINTERPOL_SOLVERS+=("$_exe") ;;
     esac
 done
