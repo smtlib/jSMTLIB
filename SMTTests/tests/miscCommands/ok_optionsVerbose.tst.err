@@ -1,0 +1,26 @@
+#Start parsing text input
+#start test
+#Command to execute: ; OPTIONS: --verbose 1 --solver test
+; Issue #110: --verbose in an OPTIONS directive gives portable output. FileTests reads
+; the properties before the directive's flags apply, and processCommandLine() does not
+; read them again, so no "#reading properties" line (which embeds this checkout's jar
+; path) is logged.
+
+#Command to execute: (set-logic QF_UF)
+#set-logic QF_UF
+#Installing theory Core
+#Added sort Bool
+#Added symbol true
+#Added symbol false
+#Added symbol not
+#Added symbol =>
+#Added symbol and
+#Added symbol or
+#Added symbol xor
+#Added symbol =
+#Added symbol distinct
+#Added symbol ite
+#Command to execute: (check-sat)
+#check-sat
+#forceexit test
+#Exiting program
