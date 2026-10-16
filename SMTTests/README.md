@@ -99,16 +99,16 @@ for, e.g. `; OPTIONS: --relax` or `; OPTIONS: --echo`. When present, `FileTests`
 passes its flags to the real `SMT.exec(String[])`/`processCommandLine()`
 argument parser, ahead of the file's text, so the test exercises the same parsing
 a real invocation would. To know before using it:
-- **Flags are split on whitespace only — no quoted-argument support.** `;
-  OPTIONS: --out "some file"` will NOT work as a single quoted argument; each
-  flag's own argument (if it takes one) must itself contain no spaces. See
-  issue #109.
+- **Flags are split on whitespace; a quoted argument may contain spaces.** Text in single
+  or double quotes is one argument, passed without the quotes (no escapes), so
+  `; OPTIONS: -L "some dir"` passes `some dir` as one argument (#109;
+  `miscCommands/err_optionsQuotedArg.tst`).
 - **`--verbose`/`-v` is safe.** `FileTests` reads the properties before the
   flags apply and `processCommandLine()` does not read them again, so no
   "#reading properties" line (which embeds the jar's absolute path) appears
   (#110; `miscCommands/ok_optionsVerbose.tst`).
 - **The bash `runtest` script ignores the directive**, so such a test is
-  checked only by `FileTests`.
+  checked only by `FileTests` (#137).
 
 | Subdirectory | Covers |
 |---|---|

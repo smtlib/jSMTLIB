@@ -178,7 +178,8 @@ public class FileTests extends LogicTests {
      *  command-line flags -- e.g. --relax -- beyond the --solver/--testing/--text checkFile()
      *  always passes. Returns an empty list (never null) if there's no directive. This is a
      *  plain splitter with no per-flag knowledge -- every flag is just handed to the real
-     *  parser unexamined.
+     *  parser unexamined. Arguments are separated by whitespace; an argument in single or
+     *  double quotes may contain whitespace, and is passed without the quotes (no escapes).
      *  <p>
      *  A directive's own --solver, if given, overrides checkFile()'s default of the
      *  parameterized solvername, since it's inserted later in the argument vector and
@@ -195,11 +196,16 @@ public class FileTests extends LogicTests {
         if (!text.startsWith("; OPTIONS:")) return args;
         int eol = text.indexOf('\n');
         String directiveLine = eol < 0 ? text : text.substring(0, eol);
-        for (String flag : directiveLine.substring("; OPTIONS:".length()).trim().split("\\s+")) {
-            if (!flag.isEmpty()) args.add(flag);
+        java.util.regex.Matcher m = OPTIONS_ARG.matcher(directiveLine.substring("; OPTIONS:".length()));
+        while (m.find()) {
+            args.add(m.group(1) != null ? m.group(1) : m.group(2) != null ? m.group(2) : m.group(3));
         }
         return args;
     }
+
+    /** One ; OPTIONS: argument: double-quoted, single-quoted, or unquoted */
+    private static final java.util.regex.Pattern OPTIONS_ARG =
+            java.util.regex.Pattern.compile("\"([^\"]*)\"|'([^']*)'|(\\S+)");
 
     // -----------------------------------------------------------------------
     // Skip logic
