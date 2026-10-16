@@ -1,0 +1,86 @@
+name: bitwuzla define-fun crash banner
+
+## Temporary: captures bitwuzla's full output for a bug report on #112's crash. Delete with the branch.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ ci/bitwuzla-banner ]
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        os: [ macos-15, ubuntu-24.04, ubuntu-24.04-arm, windows-2022 ]
+      fail-fast: false
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v6
+      with:
+        sparse-checkout: ./.github
+        path: ACTIONS
+    - name: OS setup
+      uses: ./ACTIONS/.github/actions/os-setup/
+    - name: Determine Solvers subdirectory
+      shell: bash
+      run: |
+        case "${{ runner.os }}-${{ runner.arch }}" in
+          macOS-ARM64)  d=Solvers-macos-arm64 ;;
+          Linux-ARM64)  d=Solvers-linux-arm64 ;;
+          Linux-X64)    d=Solvers-linux ;;
+          Windows-X64)  d=Solvers-windows ;;
+        esac
+        echo "SOLVERS_SUBDIR=$d" >> "$GITHUB_ENV"
+    - name: Download Solvers
+      id: solvers
+      uses: smtlib/Solvers/.github/actions/download-solvers@download-solvers-v1
+      with:
+        subdir: ${{ env.SOLVERS_SUBDIR }}
+    - name: Run cases
+      shell: bash
+      run: |
+        set +e
+        D="${{ steps.solvers.outputs.dir }}"; D="${D//\\/\/}"
+        BW=$(ls "$D"/bitwuzla* | head -1)
+        "$BW" --version
+        run() {
+          echo "=================== $1"
+          printf '%b' "$2" | sed 's/^/IN : /'
+          printf '%b' "$2" | "$BW" --lang smt2 > out.txt 2> err.txt
+          echo "exit=$?"
+          sed 's/^/OUT: /' out.txt
+          sed 's/^/ERR: /' err.txt
+        }
+        run "A: the reported input" '(set-logic QF_UF)\n(define-fun f () Bool 5)\n'
+        run "B: no set-logic" '(define-fun f () Bool 5)\n'
+        run "C: numeral in assert" '(set-logic QF_UF)\n(assert 5)\n'
+        run "D: numeral in define-const" '(set-logic QF_UF)\n(define-const c Bool 5)\n'
+        run "E: decimal" '(set-logic QF_UF)\n(define-fun f () Bool 5.0)\n'
+        run "F: well-sorted, for contrast" '(set-logic QF_UF)\n(define-fun f () Bool (not true))\n(check-sat)\n'
+        exit 0
+
+  main:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+    - name: Build bitwuzla main
+      run: |
+        sudo apt-get update -q && sudo apt-get install -y -q libgmp-dev ninja-build
+        pip install meson
+        git clone --depth 1 https://github.com/bitwuzla/bitwuzla
+        cd bitwuzla && git log -1 --format='commit %H %cd'
+        ./configure.py && cd build && ninja
+    - name: Run cases
+      shell: bash
+      run: |
+        set +e
+        BW=bitwuzla/build/src/main/bitwuzla
+        "$BW" --version
+        for input in '(set-logic QF_UF)\n(define-fun f () Bool 5)\n' '(set-logic QF_UF)\n(assert 5)\n'; do
+          echo "==================="; printf '%b' "$input" | sed 's/^/IN : /'
+          printf '%b' "$input" | "$BW" --lang smt2 > out.txt 2> err.txt; echo "exit=$?"
+          sed 's/^/OUT: /' out.txt; sed 's/^/ERR: /' err.txt
+        done
+        exit 0
