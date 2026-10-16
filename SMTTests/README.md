@@ -100,10 +100,10 @@ routes the file through the real `SMT.exec(String[])`/`processCommandLine()`
 argument parser (passing the file's own path, unmodified) instead of the
 default `smtConfig.text` path, so the test exercises the same parsing a real
 invocation would. Two things to know before using it:
-- **Flags are split on whitespace only — no quoted-argument support.** `;
-  OPTIONS: --out "some file"` will NOT work as a single quoted argument; each
-  flag's own argument (if it takes one) must itself contain no spaces. See
-  issue #109.
+- **Flags are split on whitespace, with shell-style quoting.** Text in single
+  or double quotes is part of one argument, without the quotes (no escapes), so
+  `; OPTIONS: -L "some dir"` passes `some dir` as one argument (#109;
+  `miscCommands/err_optionsQuotedArg.tst`).
 - **Avoid `--verbose`/`-v`.** It works mechanically, but `processCommandLine()`
   always calls `readProperties()` itself, and `FileTests`' own per-test setup
   already called it once before the file was even read — so a `; OPTIONS:

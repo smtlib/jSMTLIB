@@ -178,7 +178,8 @@ public class FileTests extends LogicTests {
      *  command-line flags -- e.g. --relax -- beyond the --solver/--testing/--text checkFile()
      *  always passes. Returns an empty list (never null) if there's no directive. This is a
      *  plain splitter with no per-flag knowledge -- every flag is just handed to the real
-     *  parser unexamined.
+     *  parser unexamined. Arguments are separated by whitespace; text in single or double
+     *  quotes is part of one argument, without the quotes, as in a shell (no escapes).
      *  <p>
      *  A directive's own --solver, if given, overrides checkFile()'s default of the
      *  parameterized solvername, since it's inserted later in the argument vector and
@@ -195,9 +196,25 @@ public class FileTests extends LogicTests {
         if (!text.startsWith("; OPTIONS:")) return args;
         int eol = text.indexOf('\n');
         String directiveLine = eol < 0 ? text : text.substring(0, eol);
-        for (String flag : directiveLine.substring("; OPTIONS:".length()).trim().split("\\s+")) {
-            if (!flag.isEmpty()) args.add(flag);
+        String flags = directiveLine.substring("; OPTIONS:".length());
+        StringBuilder arg = null;
+        char quote = 0;
+        for (char c : flags.toCharArray()) {
+            if (quote != 0) {
+                if (c == quote) quote = 0;
+                else arg.append(c);
+            } else if (c == '"' || c == '\'') {
+                quote = c;
+                if (arg == null) arg = new StringBuilder();
+            } else if (Character.isWhitespace(c)) {
+                if (arg != null) args.add(arg.toString());
+                arg = null;
+            } else {
+                if (arg == null) arg = new StringBuilder();
+                arg.append(c);
+            }
         }
+        if (arg != null) args.add(arg.toString());
         return args;
     }
 
