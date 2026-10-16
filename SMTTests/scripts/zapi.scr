@@ -1,4 +1,4 @@
 #!/bin/bash
 ##EXITCODE 0
 
-java -cp $SMT_JAR APIExample
+java ${COV_AGENT:-} -cp $SMT_JAR APIExample

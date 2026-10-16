@@ -162,6 +162,7 @@ _run() {
     case "$_mode" in
         z3)          _timeout 30 "$_exe" -smt2 -in > "$_outfile" 2>/dev/null ;;
         cvc5|yices2) _timeout 30 "$_exe" > "$_outfile" 2>/dev/null ;;
+        # No ${COV_AGENT}: SMTInterpol is a solver, not jSMTLIB code
         smtinterpol) _timeout 30 java -jar "$_exe" -q > "$_outfile" 2>/dev/null ;;
     esac
 }
