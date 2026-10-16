@@ -119,4 +119,11 @@ public class SolverFactoryTests {
         Assert.assertEquals(abs, SMT.resolveExecutablePath(abs, "/elsewhere"));
         Assert.assertNull(SMT.resolveExecutablePath(null, "/elsewhere"));
     }
+
+    /** An adapter that does not name itself is named by its class (#140); creating it starts nothing */
+    @Test
+    public void defaultSolverNameIsTheAdapterClass() throws Exception {
+        org.smtlib.ISolver solver = new SMT.Configuration().createSolver("no-such-solver", "/no/such/solver");
+        Assert.assertEquals("org.smtlib.solvers.Solver_smt", solver.solverName());
+    }
 }

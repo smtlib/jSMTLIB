@@ -1,0 +1,28 @@
+##EXITCODE 0
+# Issue #140: (exec "file") under --relax runs the script in a file (impl/Script.execute's
+# file branch): its last response is printed; it stops at the first error; a file that does
+# not parse, or does not exist, gives an error.
+_tmpdir=$(mktemp -d)
+trap 'rm -rf "$_tmpdir"' EXIT
+printf '(\n(set-logic QF_UF)\n(declare-fun p () Bool)\n(assert p)\n(check-sat)\n)\n' > "$_tmpdir/ok.smt2"
+printf '(\n(set-logic QF_UF)\n(assert q)\n(check-sat)\n)\n' > "$_tmpdir/err.smt2"
+printf '(\n(set-logic QF_UF)\n(assert (and p\n' > "$_tmpdir/bad.smt2"
+
+PASS=0
+FAIL=0
+pass() { echo "PASS: $1"; PASS=$((PASS + 1)); }
+fail() { echo "FAIL: $1"; FAIL=$((FAIL + 1)); if [ -n "$2" ]; then echo "  $2"; fi; }
+run() { $SMT_CMD --solver test --relax --text "(exec \"$_tmpdir/$1.smt2\")" 2>/dev/null; }
+
+out=$(run ok); st=$?
+[ "$out" = "unknown" ] && [ $st -eq 0 ] && pass "a script file runs, giving its last response" || fail "a script file runs" "got ($st): $out"
+out=$(run err)
+[ "$out" = '(error "Unknown constant symbol q")' ] && pass "it stops at the first error" || fail "it stops at the first error" "got: $out"
+out=$(run bad); st=$?
+echo "$out" | grep -q '^(error "Failed to parse the command script: ' && [ $st -eq 1 ] \
+    && pass "a file that does not parse is an error" || fail "a file that does not parse is an error" "got ($st): $out"
+out=$(run missing); st=$?
+echo "$out" | grep -q '^(error "java.io.FileNotFoundException: ' && [ $st -eq 1 ] \
+    && pass "a missing file is an error" || fail "a missing file is an error" "got ($st): $out"
+
+[ "$FAIL" -eq 0 ]
