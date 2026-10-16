@@ -1,3 +1,5 @@
+(declare-datatype D ((f (x Bool))))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (declare-fun g (Bool) Bool)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (declare-datatype E ((ctor (g Bool))))

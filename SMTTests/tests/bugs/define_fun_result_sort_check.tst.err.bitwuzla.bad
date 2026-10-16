@@ -1,3 +1,5 @@
+(define-fun f () Bool 5)
+^^^^^^^^^^^^^^^^^^^^^^^^
 (reset)
 ^^^^^^^
 (set-logic QF_UF)
