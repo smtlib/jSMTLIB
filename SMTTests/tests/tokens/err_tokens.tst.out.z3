@@ -11,11 +11,9 @@ success
 (error "line 3 column 13: invalid assert command, term is not Boolean")
 (error "line 4 column 11: invalid assert command, term is not Boolean")
 (error "Invalid token: 0.")
-(error "Invalid token: :[]")
 (error "Too many arguments or extraneous material after the command or missing right parenthesis")
 (error "Invalid token: []")
 (error "Bar(|)-enclosed symbol is not terminated: |a")
-(error "Invalid token: \b|")
 success
 (error "Invalid token: 0a")
 (error "line 6 column 8: unknown constant .123")

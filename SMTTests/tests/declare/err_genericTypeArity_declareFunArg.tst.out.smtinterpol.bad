@@ -5,4 +5,4 @@ success
 success
 success
 success
-Unexpected
+(error "The solver stopped without a response to: (declare-fun f (Y X ) Bool)")

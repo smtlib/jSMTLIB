@@ -1,0 +1,8 @@
+success
+(error "The solver stopped without a response to: (define-fun f () Bool 5)")
+(error "Error writing to solver: (reset) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (set-logic QF_UF) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (define-fun-rec f () Bool 5) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (reset) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (set-logic QF_UF) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (define-fun f () Bool true) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

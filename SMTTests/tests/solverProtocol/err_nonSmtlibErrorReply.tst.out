@@ -1,0 +1,3 @@
+success
+(error "Unexpected response from the solver: [error] <stdin>:2:9: expected Bool term")
+sat

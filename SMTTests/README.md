@@ -96,23 +96,29 @@ A `.tst` file can optionally start with a `; OPTIONS: <flags>` line (an ordinary
 SMT-LIB comment, so it's harmless even if something reads the file some other
 way) to request a command-line-only setting a plain `.tst` has no way to ask
 for, e.g. `; OPTIONS: --relax` or `; OPTIONS: --echo`. When present, `FileTests`
-routes the file through the real `SMT.exec(String[])`/`processCommandLine()`
-argument parser (passing the file's own path, unmodified) instead of the
-default `smtConfig.text` path, so the test exercises the same parsing a real
-invocation would. Two things to know before using it:
-- **Flags are split on whitespace only — no quoted-argument support.** `;
-  OPTIONS: --out "some file"` will NOT work as a single quoted argument; each
-  flag's own argument (if it takes one) must itself contain no spaces. See
-  issue #109.
-- **Avoid `--verbose`/`-v`.** It works mechanically, but `processCommandLine()`
-  always calls `readProperties()` itself, and `FileTests`' own per-test setup
-  already called it once before the file was even read — so a `; OPTIONS:
-  --verbose ...` test's second `readProperties()` call emits its own
-  "#reading properties ..." diagnostic, which embeds this checkout's absolute
-  jar path and makes an exact-match golden non-portable across machines. A
-  test needing `--verbose` belongs as a `.scr` script instead, where
-  `runscript`'s `$INSTALL` substitution already handles this. See issue #110
-  for the full analysis of why this double `readProperties()` call happens.
+passes its flags to the real `SMT.exec(String[])`/`processCommandLine()`
+argument parser, ahead of the file's text, so the test exercises the same parsing
+a real invocation would. To know before using it:
+- **Flags are split on whitespace; a quoted argument may contain spaces.** Text in single
+  or double quotes is one argument, passed without the quotes (no escapes), so
+  `; OPTIONS: -L "some dir"` passes `some dir` as one argument (#109;
+  `miscCommands/err_optionsQuotedArg.tst`).
+- **`--verbose`/`-v` is safe.** `FileTests` reads the properties before the
+  flags apply and `processCommandLine()` does not read them again, so no
+  "#reading properties" line (which embeds the jar's absolute path) appears
+  (#110; `miscCommands/ok_optionsVerbose.tst`).
+- **The bash `runtest` script honors the directive too** (#137), except that it
+  skips a test whose directive has `--verbose`/`-v`: that output differs by runner.
+
+A `.tst` file may have a `Name.tst.stub` beside it, for solver behavior a real solver
+cannot be made to show on demand (#145). `StubSolver` then stands in for the solver named by
+the file's `; OPTIONS: --solver <name>` directive (through that solver's real adapter), with
+the `.stub` file's lines as its replies, one per command received in order, including any
+priming command the adapter sends first (e.g. `(set-option :print-success true)`). An empty
+line is an empty reply; `<<stderr>> text` writes the text to standard error; `<<exit N>>`
+ends the process with code N right after the reply before it. Such a test runs only in the
+`test`-solver variant of `FileTests`, and `runtest` skips it. Examples are in
+`tests/solverProtocol/`.
 
 | Subdirectory | Covers |
 |---|---|

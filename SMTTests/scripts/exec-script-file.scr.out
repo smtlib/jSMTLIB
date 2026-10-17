@@ -1,0 +1,4 @@
+PASS: a script file runs, giving its last response
+PASS: it stops at the first error
+PASS: a file that does not parse is an error
+PASS: a missing file is an error

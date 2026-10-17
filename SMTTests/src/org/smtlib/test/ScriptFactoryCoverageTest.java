@@ -61,4 +61,13 @@ public class ScriptFactoryCoverageTest {
         IResponse response = script.execute(solver);
         Assert.assertFalse(config.defaultPrinter.toString(response), response.isError());
     }
+
+    /** A script with neither commands nor a file name, which its constructor's contract excludes,
+     *  is an internal error rather than a crash (#140) */
+    @Test
+    public void scriptWithNeitherFileNorCommands() {
+        IResponse r = config.commandFactory.script(null, null).execute(solver);
+        Assert.assertTrue(String.valueOf(r), r.isError());
+        Assert.assertEquals("INTERNAL ERROR: Unexpected null command list in a script", ((IResponse.IError)r).errorMsg());
+    }
 }

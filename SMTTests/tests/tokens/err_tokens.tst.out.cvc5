@@ -11,11 +11,9 @@ success
 (error "Expected term with sort Bool")
 (error "Expected term with sort Bool")
 (error "Invalid token: 0.")
-(error "Invalid token: :[]")
 (error "Too many arguments or extraneous material after the command or missing right parenthesis")
 (error "Invalid token: []")
 (error "Bar(|)-enclosed symbol is not terminated: |a")
-(error "Invalid token: \b|")
 success
 (error "Invalid token: 0a")
 (error "Parse Error: <shell>:1.9: Symbol '.123' not declared as a variable")

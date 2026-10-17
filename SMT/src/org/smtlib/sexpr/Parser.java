@@ -393,6 +393,7 @@ public class Parser extends Lexer implements IParser {
             smtConfig.topLevel = saved; // FIXME - use a try-finally block?
             return res;
         } 
+        if (t.isError()) throw new ParserException(lexMessage(t), t.pos());
         if (!(t instanceof ISexpr)) {
             throw new ParserException("Token is not an S-expression token: " + t.getClass(),t.pos());
         }
@@ -427,6 +428,8 @@ public class Parser extends Lexer implements IParser {
                 lps.push(lp);
                 seq = new Sexpr.Seq();
                 lp = token;
+            } else if (token.isError()) {
+                throw new ParserException(lexMessage(token), token.pos());
             } else if (token instanceof ISexpr) {
                 seq.sexprs().add((ISexpr)token);
             } else {
@@ -532,7 +535,7 @@ public class Parser extends Lexer implements IParser {
         //        ( ( as ...
         if (!isLP()) {
             ILexToken token = getToken();
-            if (token instanceof SMTExpr.Error) throw new ParserException(null, token.pos());
+            if (token instanceof SMTExpr.Error) throw new ParserException(lexMessage(token), token.pos());
             if (token instanceof IExpr) return (IExpr)token; // FIXME - do we need to check that this is just a literal or symbol
             throw error("Expected an expression here", token.pos());
         }
@@ -723,7 +726,7 @@ public class Parser extends Lexer implements IParser {
             token = getToken();
             return (Symbol)token;
         }
-        if (token instanceof SMTExpr.Error) throw new ParserException(null, token.pos());
+        if (token instanceof SMTExpr.Error) throw new ParserException(lexMessage(token), token.pos());
         if (msg != null) throw error(msg, token);
         throw new ParserException(null, token.pos());
     }
@@ -871,7 +874,7 @@ public class Parser extends Lexer implements IParser {
             }
             ILexToken t = getToken();
             if (t.isError()) {
-                throw new ParserException(null, t.pos());
+                throw new ParserException(lexMessage(t), t.pos());
             }
             if (t instanceof IKeyword) {
                 throw new ParserException("Expected an attribute value here, instead of a " + t.kind(), t.pos());
@@ -907,6 +910,7 @@ public class Parser extends Lexer implements IParser {
         } else {
             if (!isLP()) {
                 ILexToken t = getToken();
+                if (t.isError()) throw new ParserException(lexMessage(t), t.pos());
                 if (t instanceof IAttributeValue) {
                     IAttributeValue v = (IAttributeValue)t;
                     return setPos(smtConfig.exprFactory.attribute(keyword,v),pos(keyword.pos(),v.pos()));
@@ -1112,10 +1116,12 @@ public class Parser extends Lexer implements IParser {
         if ("false".equals(response)) return smtConfig.exprFactory.symbol("false");
         // FIXME - more - iterate over a list?
 
-        ISexpr sexpr = parseSexpr();
-        // Text that is not SMT-LIB (e.g. bitwuzla's "[error] ...") lexes to an error token, which
-        // is not an IResponse.IError (#118)
-        if (sexpr.isError() && !(sexpr instanceof IResponse.IError)) {
+        // Text that is not SMT-LIB (e.g. bitwuzla's "[error] ...") does not parse (#118); the
+        // whole reply is then the error (#148)
+        ISexpr sexpr;
+        try {
+            sexpr = parseSexpr();
+        } catch (ParserException e) {
             return f.error(UNEXPECTED_RESPONSE + response);
         }
         if (sexpr instanceof ISexpr.ISeq) {
@@ -1152,15 +1158,20 @@ public class Parser extends Lexer implements IParser {
         throw error("Expected a right parenthesis here, instead of a #", token);
     }
 
+    /** The message of a lexical error token (the Lexer reports nothing itself, #148) */
+    static String lexMessage(ILexToken token) {
+        return token instanceof org.smtlib.IExpr.IError ? ((org.smtlib.IExpr.IError)token).value() : "Invalid token";
+    }
+
     /** Creates a ParserException with the given message and position; callers should throw the result. */
     public ParserException error(String msg, /*@Nullable*//*@ReadOnly*/IPos pos) {
         return new ParserException(msg, pos);
     }
 
     /** Creates a ParserException from the given message and token; callers should throw the result.
-     *  If the token is already an error token, returns an exception with null message (already reported by lexer). */
+     *  If the token is a lexical error token, the exception carries the lexer's message instead. */
     public ParserException error(String msg, ILexToken token) {
-        if (token.isError()) return new ParserException(null, token.pos());
+        if (token.isError()) return new ParserException(lexMessage(token), token.pos());
         return new ParserException(msg.replace("#", token.kind()), token.pos());
     }
 

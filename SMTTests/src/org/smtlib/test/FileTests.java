@@ -132,6 +132,15 @@ public class FileTests extends LogicTests {
             return;
         }
 
+        // A Name.tst.stub file gives StubSolver's canned replies, standing in for the
+        // directive's solver (#145). The output does not depend on the parameterized solver,
+        // so such a test runs only once, in the test-solver variant.
+        File stub = new File(tstFile.getPath() + ".stub");
+        if (stub.exists()) {
+            Assume.assumeTrue("a .stub test runs only for the test solver", solvername.equals("test"));
+            useStub(stub, text);
+        }
+
         // Scrubs known non-deterministic content (elapsed-time, memory usage) out of
         // get-info responses -- see AbstractSolver#normalizeForTesting() -- so goldens are
         // reproducible across machines and runs. Set directly rather than via a --testing
@@ -178,7 +187,8 @@ public class FileTests extends LogicTests {
      *  command-line flags -- e.g. --relax -- beyond the --solver/--testing/--text checkFile()
      *  always passes. Returns an empty list (never null) if there's no directive. This is a
      *  plain splitter with no per-flag knowledge -- every flag is just handed to the real
-     *  parser unexamined.
+     *  parser unexamined. Arguments are separated by whitespace; an argument in single or
+     *  double quotes may contain whitespace, and is passed without the quotes (no escapes).
      *  <p>
      *  A directive's own --solver, if given, overrides checkFile()'s default of the
      *  parameterized solvername, since it's inserted later in the argument vector and
@@ -195,10 +205,36 @@ public class FileTests extends LogicTests {
         if (!text.startsWith("; OPTIONS:")) return args;
         int eol = text.indexOf('\n');
         String directiveLine = eol < 0 ? text : text.substring(0, eol);
-        for (String flag : directiveLine.substring("; OPTIONS:".length()).trim().split("\\s+")) {
-            if (!flag.isEmpty()) args.add(flag);
+        java.util.regex.Matcher m = OPTIONS_ARG.matcher(directiveLine.substring("; OPTIONS:".length()));
+        while (m.find()) {
+            args.add(m.group(1) != null ? m.group(1) : m.group(2) != null ? m.group(2) : m.group(3));
         }
         return args;
+    }
+
+    /** One ; OPTIONS: argument: double-quoted, single-quoted, or unquoted */
+    private static final java.util.regex.Pattern OPTIONS_ARG =
+            java.util.regex.Pattern.compile("\"([^\"]*)\"|'([^']*)'|(\\S+)");
+
+    /** Launches the directive's --solver as StubSolver with the given replies: sets that
+     *  solver's .command, and its .exec, which createSolver would otherwise put in place of the
+     *  command's first element */
+    private void useStub(File stub, String text) {
+        String name = null;
+        List<String> args = optionsDirectiveArgs(text);
+        for (int i = 0; i < args.size() - 1; i++) {
+            if (args.get(i).equals("--solver")) name = args.get(i + 1);
+        }
+        Assert.assertNotNull("a .stub test needs a '; OPTIONS: --solver <name>' directive", name);
+        String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+        String prefix = "org.smtlib.solver_" + name;
+        java.util.Properties props = smt.smtConfig.props;
+        for (String k: props.stringPropertyNames()) {
+            if (k.startsWith(prefix + ".exec")) props.remove(k);
+        }
+        props.setProperty(prefix + ".exec", javaBin);
+        props.setProperty(prefix + ".command", String.join(",", javaBin, "-cp",
+                System.getProperty("java.class.path"), "org.smtlib.test.StubSolver", stub.getAbsolutePath()));
     }
 
     // -----------------------------------------------------------------------

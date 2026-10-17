@@ -11,11 +11,9 @@ success
 (error "No sort specified for decimal literal")
 (error "No sort specified for decimal literal")
 (error "Invalid token: 0.")
-(error "Invalid token: :[]")
 (error "Too many arguments or extraneous material after the command or missing right parenthesis")
 (error "Invalid token: []")
 (error "Bar(|)-enclosed symbol is not terminated: |a")
-(error "Invalid token: \b|")
 success
 (error "Invalid token: 0a")
 (error "Unknown constant symbol .123")

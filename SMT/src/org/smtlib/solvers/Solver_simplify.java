@@ -106,6 +106,16 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         solverProcess = new SolverProcess(cmds,">\t",smtConfig.logfile,StandardCharsets.UTF_8);
     }
 
+    /** Launches the given command as is (a .command property, #147), without adding the flags
+     *  the executable form adds */
+    public Solver_simplify(SMT.Configuration smtConfig, String[] command) {
+        this.smtConfig = smtConfig;
+        options.putAll(smt().utils.defaults);
+        this.symTable = new SymbolTable(smtConfig);
+        cmds = command;
+        solverProcess = new SolverProcess(cmds,">\t",smtConfig.logfile,StandardCharsets.UTF_8);
+    }
+
     @Override
     public IResponse start() {
         assertionSetStack.add(0,new LinkedList<IExpr>());

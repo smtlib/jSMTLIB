@@ -281,7 +281,7 @@ public class AbstractSolver implements ISolver {
         try {
             if (!capturing) readPipelined(true);
             translatedCmd = translate(cmd);
-            if (capturing) return sendWithoutWaiting(translatedCmd);
+            if (capturing) return sendWithoutWaiting(translatedCmd, answersWithAnySymbol(cmd));
             String response = solverProcess.sendAndListen(translatedCmd, "\n");
             // A null response (observed rarely, likely a SolverProcess read-timing race)
             // would otherwise reach parseResponse() and surface as an uncaught
@@ -301,7 +301,7 @@ public class AbstractSolver implements ISolver {
             if (result == null) {
                 return smtConfig.responseFactory.error("Could not parse response from the solver for: " + translatedCmd + " -- raw response: " + response);
             }
-            return checkImmediateExit(result);
+            return checkImmediateExit(checkNonResponse(result, answersWithAnySymbol(cmd), translatedCmd, response));
         } catch (SolverProcess.NoResponseException e) {
             if (tolerateSilentExit) return smtConfig.responseFactory.empty();
             IResponse timedOut = timeLimitResponseAfterExit();
@@ -325,10 +325,13 @@ public class AbstractSolver implements ISolver {
     public static final class Pending implements IResponse {
         /** The text sent to the solver */
         final String sent;
+        /** Whether any symbol may answer the command (see checkNonResponse) */
+        final boolean anySymbol;
         private /*@Nullable*/ IResponse response = null;
 
-        Pending(String sent) {
+        Pending(String sent, boolean anySymbol) {
             this.sent = sent;
+            this.anySymbol = anySymbol;
         }
 
         public boolean isReady() { return response != null; }
@@ -443,8 +446,8 @@ public class AbstractSolver implements ISolver {
         return !pending.isEmpty();
     }
 
-    private IResponse sendWithoutWaiting(String translatedCmd) {
-        Pending p = new Pending(translatedCmd);
+    private IResponse sendWithoutWaiting(String translatedCmd, boolean anySymbol) {
+        Pending p = new Pending(translatedCmd, anySymbol);
         try {
             solverProcess.sendNoListen(translatedCmd, "\n");
             pending.add(p);
@@ -608,7 +611,51 @@ public class AbstractSolver implements ISolver {
         if (result == null) {
             return smtConfig.responseFactory.error("Could not parse response from the solver for: " + p.sent + " -- raw response: " + text);
         }
-        return checkImmediateExit(result);
+        return checkImmediateExit(checkNonResponse(result, p.anySymbol, p.sent, text));
+    }
+
+    /** Whether any bare symbol may answer cmd: get-option's value, and echo's text, which some
+     *  solvers (e.g. yices2, older z3) write unquoted */
+    private static boolean answersWithAnySymbol(ICommand cmd) {
+        return cmd instanceof Iget_option || cmd instanceof Iecho;
+    }
+
+    /** The bare symbols that are responses in themselves, including the empty response; any
+     *  other answers only get-option and echo */
+    private static final java.util.Set<String> SYMBOL_RESPONSES = java.util.Set.of(
+            "", "success", "unsupported", "sat", "unsat", "unknown", "timeout", "memout", "incomplete");
+
+    /** How long a solver that wrote something other than a response is given to finish exiting,
+     *  before it is judged to be still running (only paid on that abnormal path) */
+    private static final long NON_RESPONSE_SETTLE_MILLIS = 500;
+
+    /** Rejects a bare symbol that cannot answer the command sent (#134), such as the first word of
+     *  a crash message: an error saying the solver stopped, if it did, or else one giving the text.
+     *  anySymbol says whether the command may be answered by any symbol (see answersWithAnySymbol). */
+    private IResponse checkNonResponse(IResponse result, boolean anySymbol, String sent, String raw) {
+        if (anySymbol || !(result instanceof ISymbol) || SYMBOL_RESPONSES.contains(((ISymbol)result).value())) {
+            return result;
+        }
+        if (solverProcess != null && hasStopped()) {
+            if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Solver output: " + raw.trim());
+            return smtConfig.responseFactory.error("The solver stopped without a response to: " + sent.trim());
+        }
+        return smtConfig.responseFactory.error(Parser.UNEXPECTED_RESPONSE + raw.trim());
+    }
+
+    /** Whether the solver process has exited, waiting up to NON_RESPONSE_SETTLE_MILLIS for it */
+    private boolean hasStopped() {
+        long deadline = System.currentTimeMillis() + NON_RESPONSE_SETTLE_MILLIS;
+        while (solverProcess.isRunning(true)) {
+            if (System.currentTimeMillis() >= deadline) return false;
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+        }
+        return true;
     }
 
     private void resolve(Pending p, IResponse r) {

@@ -23,6 +23,12 @@ public class Solver_z3_4_3_2 extends Solver_z3_4_3 {
         super(smtConfig, executable);
     }
 
+    /** Launches the given command as is (a .command property, #147), without adding the flags
+     *  the executable form adds */
+    public Solver_z3_4_3_2(Configuration smtConfig, String[] command) {
+        super(smtConfig, command);
+    }
+
     @Override
     public IResponse push(int number) {
         if (!logicSet) {

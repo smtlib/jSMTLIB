@@ -119,4 +119,29 @@ public class SolverFactoryTests {
         Assert.assertEquals(abs, SMT.resolveExecutablePath(abs, "/elsewhere"));
         Assert.assertNull(SMT.resolveExecutablePath(null, "/elsewhere"));
     }
+
+    /** A .command property works with every adapter (#147): each has a command-array constructor */
+    @Test
+    public void commandPropertyWorksForEveryAdapter() throws Exception {
+        String[][] cases = {
+            {"cvc5-1.3.2", "Solver_cvc5"}, {"bitwuzla", "Solver_bitwuzla"}, {"z3-4.16.0", "Solver_z3_recent"},
+            {"z3-4.3.2", "Solver_z3_4_3_2"}, {"simplify", "Solver_simplify"}, {"altergo", "Solver_altergo"},
+            {"yices2", "Solver_yices2"}, {"smtinterpol-2.5", "Solver_smtinterpol"},
+            {"no-such-solver", "Solver_smt"},
+        };
+        for (String[] c: cases) {
+            SMT.Configuration config = new SMT.Configuration();
+            config.props = config.readProperties();
+            config.props.setProperty("org.smtlib.solver_" + c[0] + ".command", "/no/such/solver,--some-flag");
+            ISolver solver = config.createSolver(c[0], null);
+            Assert.assertEquals(c[0], "org.smtlib.solvers." + c[1], solver.getClass().getName());
+        }
+    }
+
+    /** An adapter that does not name itself is named by its class (#140); creating it starts nothing */
+    @Test
+    public void defaultSolverNameIsTheAdapterClass() throws Exception {
+        org.smtlib.ISolver solver = new SMT.Configuration().createSolver("no-such-solver", "/no/such/solver");
+        Assert.assertEquals("org.smtlib.solvers.Solver_smt", solver.solverName());
+    }
 }

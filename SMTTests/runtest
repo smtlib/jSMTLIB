@@ -34,6 +34,28 @@ if [ ! -e "$test" ]; then
 fi
 SMT_EXE="$SMT_CMD --solver $solver"
 
+### A leading "; OPTIONS: <flags>" line adds command-line flags after --solver, as FileTests
+### does (see FileTests.optionsDirectiveArgs): each is double-quoted, single-quoted (passed
+### without the quotes) or unquoted.
+opts=()
+first=$(head -1 "$test" | tr -d '\r')
+if [[ "$first" == "; OPTIONS:"* ]]; then
+    rest=${first#"; OPTIONS:"}
+    re='^[[:space:]]*("([^"]*)"|'"'"'([^'"'"']*)'"'"'|([^[:space:]]+))'
+    while [[ $rest =~ $re ]]; do
+        opts+=("${BASH_REMATCH[2]}${BASH_REMATCH[3]}${BASH_REMATCH[4]}")
+        rest=${rest:${#BASH_REMATCH[0]}}
+    done
+fi
+### Verbose output differs by runner (FileTests has read the properties and passes --text),
+### so such a test is FileTests' alone
+for o in ${opts[@]+"${opts[@]}"}; do
+    if [ "$o" = "--verbose" ] || [ "$o" = "-v" ]; then
+        echo "SKIP $solver $test: its ; OPTIONS: --verbose output is checked by FileTests only"
+        exit 77
+    fi
+done
+
 ### Portable per-test timeout (exit 124 = timed out)
 ### On Windows the system 'timeout' has incompatible syntax; use the bash fallback there.
 TEST_TIMEOUT=${TEST_TIMEOUT:-30}
@@ -52,6 +74,12 @@ else
         kill "$wdpid" 2>/dev/null; wait "$wdpid" 2>/dev/null
         return $st
     }
+fi
+
+### A test with a .stub file runs only under FileTests, which sets up the stub solver (#145)
+if [ -e "${test}.stub" ]; then
+    echo "SKIP $solver $test: a .stub test runs only under FileTests"
+    exit 77
 fi
 
 ### Check for skip marker (exit 77 = skipped, not a failure)
@@ -89,7 +117,7 @@ erractual="${test}.err.${solver}.actual"
 rm -f "$outactual" "$erractual"
 echo Running $solver "	" $test
 
-_timeout "$TEST_TIMEOUT" $SMT_EXE "$test" > "$outactual" 2> "$erractual"
+_timeout "$TEST_TIMEOUT" $SMT_EXE ${opts[@]+"${opts[@]}"} "$test" > "$outactual" 2> "$erractual"
 _exit=$?
 if [ $_exit -eq 124 ]; then
     echo "TIMEOUT (${TEST_TIMEOUT}s) $solver $test"
