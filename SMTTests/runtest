@@ -76,6 +76,12 @@ else
     }
 fi
 
+### A test with a .stub file runs only under FileTests, which sets up the stub solver (#145)
+if [ -e "${test}.stub" ]; then
+    echo "SKIP $solver $test: a .stub test runs only under FileTests"
+    exit 77
+fi
+
 ### Check for skip marker (exit 77 = skipped, not a failure)
 if [ -e "${test}.skip.$solver.$PLATFORM_ARCH" ]; then
     echo "SKIP $solver $test: $(cat "${test}.skip.$solver.$PLATFORM_ARCH")"

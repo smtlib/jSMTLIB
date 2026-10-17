@@ -110,6 +110,16 @@ a real invocation would. To know before using it:
 - **The bash `runtest` script honors the directive too** (#137), except that it
   skips a test whose directive has `--verbose`/`-v`: that output differs by runner.
 
+A `.tst` file may have a `Name.tst.stub` beside it, for solver behavior a real solver
+cannot be made to show on demand (#145). `StubSolver` then stands in for the solver named by
+the file's `; OPTIONS: --solver <name>` directive (through that solver's real adapter), with
+the `.stub` file's lines as its replies, one per command received in order, including any
+priming command the adapter sends first (e.g. `(set-option :print-success true)`). An empty
+line is an empty reply; `<<stderr>> text` writes the text to standard error; `<<exit N>>`
+ends the process with code N right after the reply before it. Such a test runs only in the
+`test`-solver variant of `FileTests`, and `runtest` skips it. Examples are in
+`tests/solverProtocol/`.
+
 | Subdirectory | Covers |
 |---|---|
 | `tests/` (top level, ~34 files) | Miscellaneous: echo, ite, quantifier/pattern parsing, misc error cases |
