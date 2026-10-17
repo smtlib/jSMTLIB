@@ -24,14 +24,10 @@
         ^^
 (assert true :[] a) ; FIXME - bad error message
              ^^^
-(assert true :[] a) ; FIXME - bad error message
-             ^^^
 (assert (! true :named a[] )) ; FIXME - needs a better error message
                         ^^
 (assert (! true :named |a\b| )) ; FIXME - needs a better error message
                        ^^
-(assert (! true :named |a\b| )) ; FIXME - needs a better error message
-                         ^^^
 (set-info :x "as\d" ); OK
 ^^^^^^^^^^^^^^^^^^^^^
 (set-info :x 0a); 

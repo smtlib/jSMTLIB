@@ -484,6 +484,9 @@ public class Lexer {
                 // The match is just to the initial quote
                 int begin = matcher.start(k); // position of the initial quote
                 int p = begin;
+                // The first invalid character, if any: the string is then a LexError at it
+                String invalid = null;
+                IPos invalidPos = null;
                 try {
                     if (smtConfig.atLeastVersion(SMT.Configuration.SMTLIB.V25)) { // Version 2.5ff
                         while (true) {
@@ -496,7 +499,8 @@ public class Lexer {
                                     end = p+1;
                                     matched = csr.subSequence(begin,end).toString();
                                     pos = pos(begin,end);
-                                    token = setPos(new LexStringLiteral(smtConfig,matched,true),pos);
+                                    token = invalid == null ? setPos(new LexStringLiteral(smtConfig,matched,true),pos)
+                                            : setPos(new LexError(invalid),invalidPos);
                                     break;
                                 }
                             } else {
@@ -507,12 +511,13 @@ public class Lexer {
                                     end = p;
                                     matched = csr.subSequence(begin,end).toString();
                                     pos = pos(begin,end);
-                                    smtConfig.log.logError(smtConfig.responseFactory.error("String literal is not terminated: " + matched,pos));
-                                    token = setPos(new LexError(matched),pos);
+                                    token = setPos(new LexError("String literal is not terminated: " + matched),pos);
                                     break; // End of data - no closing right paren
                                 }
-                                smtConfig.log.logError(smtConfig.responseFactory.error("Invalid character: ASCII(decimal) = " + (int)c,
-                                        pos(p,p+1)));
+                                if (invalid == null) {
+                                    invalid = "Invalid character: ASCII(decimal) = " + (int)c;
+                                    invalidPos = pos(p,p+1);
+                                }
                                 continue;
                             }
                         }
@@ -533,7 +538,8 @@ public class Lexer {
                                 end = p+1;
                                 matched = csr.subSequence(begin,end).toString();
                                 pos = pos(begin,end);
-                                token = setPos(new LexStringLiteral(smtConfig,matched,true),pos);
+                                token = invalid == null ? setPos(new LexStringLiteral(smtConfig,matched,true),pos)
+                                        : setPos(new LexError(invalid),invalidPos);
                                 break;
                             } else {
                                 if (c >= ' ' && c <= '~') continue;
@@ -542,12 +548,13 @@ public class Lexer {
                                     end = p;
                                     matched = csr.subSequence(begin,end).toString();
                                     pos = pos(begin,end);
-                                    smtConfig.log.logError(smtConfig.responseFactory.error("String literal is not terminated: " + matched,pos));
-                                    token = setPos(new LexError(matched),pos);
+                                    token = setPos(new LexError("String literal is not terminated: " + matched),pos);
                                     break; // End of data - no closing right paren
                                 }
-                                smtConfig.log.logError(smtConfig.responseFactory.error("Invalid character: ASCII(decimal) = " + (int)c,
-                                        pos(p,p+1)));
+                                if (invalid == null) {
+                                    invalid = "Invalid character: ASCII(decimal) = " + (int)c;
+                                    invalidPos = pos(p,p+1);
+                                }
                                 continue;
                             }
                         }
@@ -559,8 +566,7 @@ public class Lexer {
                     end = p;
                     matched = csr.subSequence(begin,end).toString();
                     pos = pos(begin,end);
-                    token = setPos(new LexError(matched),pos);
-                    smtConfig.log.logError(smtConfig.responseFactory.error("String literal is not terminated: " + matched,token.pos()));
+                    token = setPos(new LexError("String literal is not terminated: " + matched),pos);
                 }
             } else if ((matched = matcher.group(k=9)) != null) { // colon-initiated keyword
                 pos = pos(matcher.start(k),matcher.end(k));
@@ -586,7 +592,6 @@ public class Lexer {
                 pos = pos(matcher.start(k),matcher.end(k));
                 //token = factory.error(matched,pos);
                 token = setPos(new LexError("Bar(|)-enclosed symbol is not terminated: " + matched),pos);
-                smtConfig.log.logError(smtConfig.responseFactory.error("Bar(|)-enclosed symbol is not terminated: " + matched,token.pos()));
 //                matcher.region(end,csr.length());
 //                throw new SyntaxException("Invalid token: " + matched,token.pos());
             } else if ((matched = matcher.group(k=17)) != null) {
@@ -594,7 +599,6 @@ public class Lexer {
                 //token = factory.error(matched,pos);
                 String msg = "Incorrect format for a number - no leading zeros allowed: ";
                 token = setPos(new LexError(msg + matched),pos);
-                smtConfig.log.logError(smtConfig.responseFactory.error(msg + matched,token.pos()));
                 end = matcher.end(k);
 //                matcher.region(end,csr.length());
 //                throw new SyntaxException("Leading zeros are not allowed: " + matched,token.pos());
@@ -616,8 +620,6 @@ public class Lexer {
                 //token = factory.error(matched,pos);
                 if (matched.charAt(0) < ' ') matched = "(ASCII char " + (int)matched.charAt(0) + " (decimal))";
                 token = setPos(new LexError("Invalid token: " + matched),pos);
-                smtConfig.log.logError(smtConfig.responseFactory.error("Invalid token: " + matched,
-                        pos));
 //                matcher.region(end,csr.length());
 //                throw new SyntaxException("Invalid token: " + matched,token.pos());
                 //SMT.out.println(smtConfig.responseFactory.error("Invalid token: " + matched));
