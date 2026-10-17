@@ -137,4 +137,11 @@ public class SolverFactoryTests {
             Assert.assertEquals(c[0], "org.smtlib.solvers." + c[1], solver.getClass().getName());
         }
     }
+
+    /** An adapter that does not name itself is named by its class (#140); creating it starts nothing */
+    @Test
+    public void defaultSolverNameIsTheAdapterClass() throws Exception {
+        org.smtlib.ISolver solver = new SMT.Configuration().createSolver("no-such-solver", "/no/such/solver");
+        Assert.assertEquals("org.smtlib.solvers.Solver_smt", solver.solverName());
+    }
 }

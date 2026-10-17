@@ -61,6 +61,46 @@ public class SortFactoryCoverageTest {
         Assert.assertEquals(explicit.resultSort(), nullary.resultSort());
     }
 
+    /** The sort U, resolved (given its definition) as the type checker would, since comparing
+     *  sorts expands them */
+    private ISort sortU() {
+        ISymbol name = config.exprFactory.symbol("U");
+        ISort.IApplication u = config.sortFactory.createSortExpression(name);
+        ((Sort.Application)u).definition(config.sortFactory.createSortFamily(name, config.exprFactory.numeral(0), null));
+        return u;
+    }
+
+    /** FcnSort's equality, hashing, expansion and parameter substitution (#140) */
+    @Test
+    public void fcnSortEqualityAndSubstitution() {
+        ISort b = Sort.Bool();
+        ISort u = sortU();
+        ISort.IFcnSort bu = config.sortFactory.createFcnSort(new ISort[]{b}, u);
+        ISort.IFcnSort same = config.sortFactory.createFcnSort(new ISort[]{Sort.Bool()}, sortU());
+        Assert.assertEquals(bu, bu);
+        Assert.assertEquals(bu, same);
+        Assert.assertEquals(bu.hashCode(), same.hashCode());
+        Assert.assertTrue(bu.equalsNoExpand(bu));
+        Assert.assertTrue(bu.equalsNoExpand(same));
+        ISort[] others = {
+            config.sortFactory.createFcnSort(new ISort[]{b}, b),      // another result sort
+            config.sortFactory.createFcnSort(new ISort[]{b, b}, u),   // another arity
+            config.sortFactory.createFcnSort(new ISort[]{u}, u),      // another argument sort
+            u,                                                        // not a function sort
+        };
+        for (ISort o: others) {
+            Assert.assertNotEquals(o.toString(), bu, o);
+            Assert.assertFalse(o.toString(), bu.equalsNoExpand(o));
+        }
+        Assert.assertSame(bu, bu.expand());
+        // (T) T with T := U is (U) U
+        ISort.IParameter t = config.sortFactory.createSortParameter(config.exprFactory.symbol("T"));
+        Sort.FcnSort tt = (Sort.FcnSort)config.sortFactory.createFcnSort(new ISort[]{t}, t);
+        java.util.Map<ISort.IParameter, ISort> map = new java.util.HashMap<>();
+        map.put(t, u);
+        Assert.assertEquals(config.sortFactory.createFcnSort(new ISort[]{u}, u), tt.substitute(map));
+    }
+
     @Test
     public void declareConstViaCommandFactory() throws Exception {
         ISymbol x = config.exprFactory.symbol("x");
