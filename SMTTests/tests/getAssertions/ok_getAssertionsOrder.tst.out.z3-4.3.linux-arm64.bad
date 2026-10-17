@@ -15,5 +15,4 @@ m
 success
 success
 success
-(error "Invalid token: �")
 (error "Unexpected output from the Z3 solver: (�  x  m  q  (not z))")

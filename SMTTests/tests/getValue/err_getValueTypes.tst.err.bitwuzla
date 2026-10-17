@@ -1,4 +1,2 @@
-[error] <stdin>:10:23: expected Boolean term at index 0 as argument to 'and'
-^^^^^^^
 (get-value (x y (and x y) ))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

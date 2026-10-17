@@ -38,8 +38,8 @@ public class ParseExpressionErrors {
         try {
             e = p.parseExpr();
         } catch (ParserException ex) {
-            // A null message means the error was already logged (e.g. by the lexer);
-            // a non-null message is reported here, at the top level, as parseCommand() does.
+            // Reported here, at the top level, as parseCommand() does; the lexer reports
+            // nothing itself (#148).
             if (ex.getMessage() != null) config.log.logError(config.responseFactory.error(ex.getMessage(),ex.pos()));
         }
         Assert.assertTrue("Response was not an error",listener.msgs.get(0) instanceof IResponse.IError);
@@ -67,8 +67,8 @@ public class ParseExpressionErrors {
         try {
             e = p.parseAttributeValue();
         } catch (ParserException ex) {
-            // A null message means the error was already logged (e.g. by the lexer);
-            // a non-null message is reported here, at the top level, as parseCommand() does.
+            // Reported here, at the top level, as parseCommand() does; the lexer reports
+            // nothing itself (#148).
             if (ex.getMessage() != null) config.log.logError(config.responseFactory.error(ex.getMessage(),ex.pos()));
         }
         StringWriter sw = new StringWriter();

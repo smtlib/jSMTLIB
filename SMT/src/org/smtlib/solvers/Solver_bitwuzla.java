@@ -108,29 +108,11 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
 
     @Override
     protected IResponse parseResponse(String response) {
-        // The shared Lexer (org.smtlib.sexpr.Lexer, ~line 550) has a side effect on an
-        // invalid token wholly separate from what it returns: it calls
-        // smtConfig.log.logError(...) directly, printing an echoed-source-line-plus-caret
-        // diagnostic immediately, unconditionally -- fine for its usual job (parsing
-        // script INPUT, where an immediate diagnostic is exactly right) but wrong here,
-        // where it's parsing solver RESPONSE text instead. For bitwuzla's non-SMT-LIB
-        // "[error] ..." diagnostic lines, that produces an extra, uncontrolled printout
-        // ("(error \"Invalid token: [error]\")" plus its own echo/caret) *in addition to*
-        // this method's own clean, correctly-worded error below -- not a crash, but
-        // visibly duplicated/garbled output. Discarding log.out/log.diag for the
-        // duration of the parse attempt suppresses that side effect without touching the
-        // shared Lexer/Parser code (which other, fully-compliant solvers also rely on).
-        java.io.PrintStream savedOut = smtConfig.log.getOut();
-        java.io.PrintStream savedDiag = smtConfig.log.getDiag();
-        java.io.PrintStream sink = new java.io.PrintStream(java.io.OutputStream.nullOutputStream());
-        smtConfig.log.setChannels(sink, sink);
         IResponse result;
         try {
             result = super.parseResponse(response);
         } catch (RuntimeException e) {
             return smtConfig.responseFactory.error("Unexpected (non-SMT-LIB) response from bitwuzla: " + rewriteStdinLine(response));
-        } finally {
-            smtConfig.log.setChannels(savedOut, savedDiag);
         }
         // Parser.parseResponse's fallback for response text that doesn't match any
         // recognized shape (success/sat/error/.../get-info attribute list) just returns
