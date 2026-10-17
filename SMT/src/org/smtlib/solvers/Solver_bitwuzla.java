@@ -77,6 +77,14 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
         solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
     }
 
+    /** Launches the given command as is (a .command property, #147), without adding the flags
+     *  the executable form adds */
+    public Solver_bitwuzla(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
+        this.smtConfig = smtConfig;
+        cmds = command;
+        solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
+    }
+
     @Override
     public IResponse start() {
         try {
