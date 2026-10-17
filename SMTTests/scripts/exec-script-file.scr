@@ -12,7 +12,11 @@ PASS=0
 FAIL=0
 pass() { echo "PASS: $1"; PASS=$((PASS + 1)); }
 fail() { echo "FAIL: $1"; FAIL=$((FAIL + 1)); if [ -n "$2" ]; then echo "  $2"; fi; }
-run() { $SMT_CMD --solver test --relax --text "(exec \"$_tmpdir/$1.smt2\")" 2>/dev/null; }
+# The path goes inside SMT-LIB text, which Git Bash does not translate for Windows programs
+# (it does so only for command-line arguments), so it is given in Windows form there
+_dir=$_tmpdir
+[[ "$PLATFORM" == "windows" ]] && _dir=$(cygpath -m "$_tmpdir")
+run() { $SMT_CMD --solver test --relax --text "(exec \"$_dir/$1.smt2\")" 2>/dev/null; }
 
 out=$(run ok); st=$?
 [ "$out" = "unknown" ] && [ $st -eq 0 ] && pass "a script file runs, giving its last response" || fail "a script file runs" "got ($st): $out"
