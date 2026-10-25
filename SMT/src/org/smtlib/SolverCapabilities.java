@@ -8,9 +8,10 @@ import java.util.Properties;
 
 /** Whether a solver supports a capability, as recorded per solver name in jsmtlib.properties (#157):
  *  {@code org.smtlib.solver_<name>.capabilities=strings,-proofs,...} -- a name records a supported
- *  capability, a {@code -}name an unsupported one. A solver with no such property uses its family's,
- *  the family being the name before the first {@code -<digit>} ({@code z3-4.12.6} uses {@code z3}).
- *  A capability the entry does not mention, or a solver with no entry, is {@link Support#UNKNOWN}. */
+ *  capability, a {@code -}name an unsupported one. A capability the solver's entry does not mention
+ *  (or every capability, if it has no entry) is taken from its family's entry, the family being the
+ *  name before the first {@code -<digit>} ({@code z3-4.12.6} uses {@code z3}). A capability neither
+ *  records is {@link Support#UNKNOWN}. */
 public final class SolverCapabilities {
 
     private SolverCapabilities() {}
@@ -68,15 +69,18 @@ public final class SolverCapabilities {
     /** Whether the solver supports the capability, according to the given properties
      * @throws IllegalArgumentException if the solver's entry has an unknown or contradictory token */
     public static Support supports(Properties props, String solvername, Capability capability) {
+        Support result = recorded(props, solvername, capability);
+        String family = family(solvername);
+        if (result == Support.UNKNOWN && family != null) result = recorded(props, family, capability);
+        return result;
+    }
+
+    /** What the solver's own entry records for the capability; UNKNOWN if there is no entry or it
+     *  does not mention the capability */
+    private static Support recorded(Properties props, String solvername, Capability capability) {
         String propName = Utils.PROPS_SOLVER_PREFIX + solvername + PROPS_CAPABILITIES_SUFFIX;
         String entry = props.getProperty(propName);
-        if (entry == null) {
-            String family = family(solvername);
-            if (family == null) return Support.UNKNOWN;
-            propName = Utils.PROPS_SOLVER_PREFIX + family + PROPS_CAPABILITIES_SUFFIX;
-            entry = props.getProperty(propName);
-            if (entry == null) return Support.UNKNOWN;
-        }
+        if (entry == null) return Support.UNKNOWN;
         Support result = Support.UNKNOWN;
         for (String token : entry.split(",")) {
             token = token.trim();

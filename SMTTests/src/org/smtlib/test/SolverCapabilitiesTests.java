@@ -15,7 +15,8 @@ public class SolverCapabilitiesTests {
     private static final String P = "org.smtlib.solver_";
 
     /** The solver names configured in jsmtlib.properties, each of which must record every capability */
-    private static final String[] BUILT_IN = { "z3", "z3-4.3", "z3-4.8.12", "z3-4.16.0", "cvc5", "cvc5-1.3.2",
+    private static final String[] BUILT_IN = { "z3", "z3-4.3", "z3-4.5.0", "z3-4.6.0", "z3-4.7.1", "z3-4.8.12",
+        "z3-4.16.0", "cvc5", "cvc5-1.3.2",
         "yices2", "yices2-2.6.5", "yices2-2.7.0", "smtinterpol-2.5", "bitwuzla", "simplify" };
 
     private static Properties props(String... keyValues) {
@@ -47,9 +48,11 @@ public class SolverCapabilitiesTests {
         Properties p = props("s.capabilities", "strings", "s-1.0.capabilities", "-strings");
         Assert.assertEquals(Support.NO, q(p, "s-1.0", Capability.STRINGS));
         Assert.assertEquals(Support.YES, q(p, "s-2.0", Capability.STRINGS));
-        // An exact entry is the whole answer: what it does not mention is not taken from the family
-        Assert.assertEquals(Support.UNKNOWN, q(props("s.capabilities", "proofs", "s-1.0.capabilities", "strings"),
-                "s-1.0", Capability.PROOFS));
+        // What an exact entry does not mention is taken from the family, capability by capability
+        Properties p2 = props("s.capabilities", "proofs,-strings", "s-1.0.capabilities", "strings");
+        Assert.assertEquals(Support.YES, q(p2, "s-1.0", Capability.PROOFS));
+        Assert.assertEquals(Support.YES, q(p2, "s-1.0", Capability.STRINGS));
+        Assert.assertEquals(Support.UNKNOWN, q(p2, "s-1.0", Capability.DATATYPES));
     }
 
     @Test
@@ -99,6 +102,9 @@ public class SolverCapabilitiesTests {
         Assert.assertEquals(Support.YES, SolverCapabilities.supports("cvc5", "strings"));
         Assert.assertEquals(Support.YES, SolverCapabilities.supports("z3-4.12.6", Capability.FLOATING_POINT));
         Assert.assertEquals(Support.NO, SolverCapabilities.supports("z3-4.3", Capability.FLOATING_POINT));
+        Assert.assertEquals(Support.NO, SolverCapabilities.supports("z3-4.7.1", Capability.STRINGS));
+        Assert.assertEquals(Support.YES, SolverCapabilities.supports("z3-4.7.1", Capability.DATATYPES));
+        Assert.assertEquals(Support.NO, SolverCapabilities.supports("z3-4.6.0", Capability.DATATYPES));
         Assert.assertEquals(Support.NO, SolverCapabilities.supports("yices2", Capability.DATATYPES));
         Assert.assertEquals(Support.YES, SolverCapabilities.supports("bitwuzla", Capability.FLOATING_POINT));
         Assert.assertEquals(Support.NO, SolverCapabilities.supports("bitwuzla", Capability.PROOFS));
