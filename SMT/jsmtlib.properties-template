@@ -29,6 +29,15 @@ org.smtlib.logic_path=
 # (Replace ZZZ with the solver name)
 ##org.smtlib.solver_ZZZ.adapter=
 
+# The capabilities a solver supports, as a comma-separated list, queried by
+# org.smtlib.SolverCapabilities: a name records a supported capability, a
+# -name an unsupported one, and an unmentioned one is unknown. The names are
+# strings, floating-point, datatypes and proofs. A capability a solver's entry
+# does not mention is taken from its family's entry (the name before the first
+# -<digit>: z3-4.12.6 uses z3), so a version's entry need record only how that
+# version differs from the family.
+##org.smtlib.solver_ZZZ.capabilities=strings,-floating-point,datatypes,-proofs
+
 # A solver must have either an executable or a whole command-line specified.
 # The absolute path to the executable for each solver. This value is
 # overridden by any value specified on the command-line (--exec option). A
