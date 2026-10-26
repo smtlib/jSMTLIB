@@ -18,6 +18,10 @@
 # This value can also be set on the command-line by the --logics option.
 org.smtlib.logic_path=
 
+# Solvers are identified by name (here 'ZZZ').
+# There is a solver 'test' that does type-checking but no actual solving.
+# Otherwise a ZZZ solver must be associated with an 'adapter' and an executable.
+
 # The default solver to use. This can be overridden on the command-line with
 # the --solver option. If not set the default is to type-check only.
 ##org.smtlib.default-solver=
@@ -66,8 +70,9 @@ org.smtlib.logic_path=
 ##org.smtlib.solver_z3-4.3.adapter.windows=org.smtlib.solvers.Solver_z3_4_3_2
 
 # Real adapter classes exist for these solver families: yices2 (Solver_yices2),
-# cvc5 (Solver_cvc5), smtinterpol (Solver_smtinterpol), simplify
-# (Solver_simplify, legacy), and z3 (several version-specific adapters --
+# cvc5 (Solver_cvc5), bitwuzla (Solver_bitwuzla), smtinterpol
+# (Solver_smtinterpol), simplify (Solver_simplify, legacy), altergo
+# (Solver_altergo, untested), and z3 (several version-specific adapters --
 # Solver_z3_recent covers current z3 releases). A solver name with no
 # matching adapter class and no .adapter override still works, using the
 # generic Solver_smt text-protocol adapter, but won't get that solver's
