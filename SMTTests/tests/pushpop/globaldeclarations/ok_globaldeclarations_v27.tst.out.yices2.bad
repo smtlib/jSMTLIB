@@ -1,0 +1,12 @@
+(error "unsupported :smt-lib-version")
+success
+success
+success
+success
+(error "at line 8, column 24: syntax error: declare-sort-parameter is not a command")
+(error "at line 9, column 17: undefined sort: X")
+(error "Error writing to solver: (pop 1) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun x () X) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (and m (= (f x) x))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (reset-assertions) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (and m (= (f (f x)) x))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

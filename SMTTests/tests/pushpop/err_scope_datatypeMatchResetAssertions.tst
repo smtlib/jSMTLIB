@@ -1,0 +1,7 @@
+; after reset-assertions, a sort that reuses a removed datatype's name is not a datatype for match (#166)
+(set-logic ALL)
+(declare-datatype D ((c) (e)))
+(reset-assertions)
+(declare-sort D 0)
+(declare-fun x () D)
+(assert (match x ((c true) (e false))))

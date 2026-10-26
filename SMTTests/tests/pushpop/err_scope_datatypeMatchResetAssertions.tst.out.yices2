@@ -1,0 +1,6 @@
+success
+(error "at line 3, column 18: syntax error: declare-datatype is not a command")
+success
+success
+success
+(error "at line 7, column 10: undefined term: match")

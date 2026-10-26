@@ -34,9 +34,11 @@ public class Solver_test implements ISolver {
 
     /** The solver's assertion set stack, one frame per push level, top first. Once the logic
      *  is set it always has at least one frame: start() and reset() add the base frame and
-     *  pop() cannot remove it. The base frame holds the assertions made outside any push; the
-     *  declarations live in symTable, whose bottom frame holds the logic's symbols and the
-     *  global declarations. */
+     *  pop() cannot remove it. The base frame holds the assertions made outside any push.
+     *  Declarations live in symTable, which has one more frame: each frame here pairs with
+     *  the symTable frame of the same level (the base frame with its primary frame), and
+     *  symTable's bottom, background frame holds the logic's symbols and the global
+     *  declarations. */
     protected List<List<IExpr>> assertionSetStack = new LinkedList<List<IExpr>>();
 
     /** Internal state variable - set non-null once the logic is set. */
@@ -723,7 +725,7 @@ public class Solver_test implements ISolver {
                 symTable.add(new SymbolTable.Entry(sel.symbol(), selSort, null, null), isGlobal(), false);
             }
         }
-        symTable.datatypeConstructors.put(sortName.value(), ctorList);
+        symTable.addDatatypeConstructors(sortName.value(), ctorList, isGlobal());
         return null;
     }
 

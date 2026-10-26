@@ -1,0 +1,14 @@
+(declare-fun f (X) X)
+^^^^^^^^^^^^^^^^^^^^^
+(declare-const m Int)
+^^^^^^^^^^^^^^^^^^^^^
+(declare-sort X 0)
+^^^^^^^^^^^^^^^^^^
+(declare-fun f (X) Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-const m Real)
+^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort X 1)
+^^^^^^^^^^^^^^^^^^
+(declare-fun f ((X Int)) Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
