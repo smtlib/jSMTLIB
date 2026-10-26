@@ -1,4 +1,4 @@
-; allowed to set pre-defined info
+; set-info accepts any attribute, including get-info keywords, and does not change what get-info reports
 (set-info :name "x")
 (get-info :name)
 (set-info :authors "x")

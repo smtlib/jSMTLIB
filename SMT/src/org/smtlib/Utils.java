@@ -370,6 +370,40 @@ public class Utils {
 
     }
 
+    /** The reason value is not a valid value for the standard set-info attribute key,
+     *  or null if it is valid or key is not a standard set-info attribute */
+    static public /*@Nullable*/ String invalidSetInfoValue(IKeyword key, IAttributeValue value) {
+        String k = key.value();
+        boolean ok;
+        String expected;
+        if (k.equals(":smt-lib-version")) {
+            ok = value instanceof IExpr.IDecimal; expected = "a decimal";
+        } else if (k.equals(":source")) {
+            ok = value instanceof IExpr.IStringLiteral || (value instanceof IExpr.ISymbol && value.toString().startsWith("|"));
+            expected = "a string or a quoted symbol";
+        } else if (k.equals(":category")) {
+            ok = value instanceof IExpr.IStringLiteral && java.util.Arrays.asList("crafted","random","industrial").contains(((IExpr.IStringLiteral)value).value());
+            expected = "\"crafted\", \"random\" or \"industrial\"";
+        } else if (k.equals(":license")) {
+            ok = value instanceof IExpr.IStringLiteral; expected = "a string";
+        } else if (k.equals(":status")) {
+            ok = value instanceof IExpr.ISymbol && java.util.Arrays.asList("sat","unsat","unknown").contains(((IExpr.ISymbol)value).value())
+                    && !value.toString().startsWith("|");
+            expected = "sat, unsat or unknown";
+        } else {
+            return null;
+        }
+        return ok ? null : "The value of " + k + " must be " + expected;
+    }
+
+    /** The attributes the standard defines for set-info (any other is allowed, but not standard) */
+    static final public HashSet<IKeyword> setInfoKeywords = new HashSet<IKeyword>();
+    static {
+        for (String k : new String[] { ":smt-lib-version", ":source", ":category", ":license", ":status" }) {
+            setInfoKeywords.add(new org.smtlib.impl.SMTExpr.Keyword(k));
+        }
+    }
+
     // /** The values for info characteristics as used for the test solver */
     // public final static Map<String,IAttributeValue> stringInfo = new
     // HashMap<String,IAttributeValue>();

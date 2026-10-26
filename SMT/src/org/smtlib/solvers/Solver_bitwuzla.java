@@ -167,22 +167,6 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
         return sendCommand(smtConfig.commandFactory.set_option(key, value));
     }
 
-    /** Bitwuzla's own set-info silently accepts anything, including the reserved,
-     *  implementation-defined keys (:name/:authors/:version/:error-behavior/etc.) that
-     *  {@link #get_info} always answers from its own hardcoded values regardless of
-     *  what a script tries to set -- forwarding a set-info for one of those to the
-     *  process would come back "success", which is misleading (it looks like it took
-     *  effect; get-info would still report the fixed value right after). Reject those
-     *  up front instead, matching the convention {@link Solver_test}/{@link
-     *  Solver_z3_4_3} already use for the same {@link Utils#infoKeywords} set. */
-    @Override
-    public IResponse set_info(IKeyword key, IAttributeValue value) {
-        if (Utils.infoKeywords.contains(key)) {
-            return smtConfig.responseFactory.error("Setting the value of a pre-defined keyword is not permitted: "
-                    + smtConfig.defaultPrinter.toString(key), key.pos());
-        }
-        return super.set_info(key, value);
-    }
 
     /** Answered entirely client-side (never forwarded -- see class comment point 1):
      *  from whatever this run has set via {@link #set_option_impl}, falling back to the
