@@ -39,8 +39,7 @@ public class PipelineEquivalenceTests {
 
     @Parameters
     public static Collection<String[]> data() {
-        File dir = new File("tests/pipeline");
-        if (!dir.isDirectory()) dir = new File("SMTTests/tests/pipeline");
+        File dir = new File(SMTTestsFolders.find("tests"), "pipeline");
         File[] files = dir.listFiles((d, name) -> name.endsWith(".tst"));
         List<String[]> list = new ArrayList<>();
         if (files == null) return list;

@@ -1,2 +1,0 @@
-(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:2:12: unsupported logic 'AUFLIA'
-")

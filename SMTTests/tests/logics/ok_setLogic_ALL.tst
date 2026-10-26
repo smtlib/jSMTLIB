@@ -1,2 +1,2 @@
-; testing loading  AUFLIA
-(set-logic AUFLIA )
+; testing loading ALL
+(set-logic ALL )

@@ -57,12 +57,7 @@ public class FileTests extends LogicTests {
     }
 
     private static File findTestsFolder() {
-        try {
-            String resource = FileTests.class.getClassLoader().getResource("err_array.tst").getPath();
-            return new File(resource).getParentFile();
-        } catch (Exception e) {
-            return new File("tests");
-        }
+        return SMTTestsFolders.find("tests");
     }
 
     private static void collectTstFiles(File dir, List<File> result) {
