@@ -7,7 +7,7 @@
 #
 # Previously marked .skip: an earlier cross-platform CI run showed the exact PASS/FAIL
 # content -- and even the overall exit code -- genuinely differing by platform, the same
-# trap scripts/solverBehavior/all-statistics.scr hit for its own reasons. Re-verified
+# trap the former scripts/solverBehavior/all-statistics.scr hit. Re-verified
 # locally (macOS-arm64) before un-skipping: the actual TIMEOUT MECHANISM (does -t 1 make
 # check-sat return well before the unbounded workload would finish) is 100% robust --
 # every one of the 6 solvers below passed that check cleanly. Only the :reason-unknown
@@ -57,8 +57,7 @@
 # note SMT/src/org/smtlib/SolverProcess.java's own `badFormat` field, whose doc comment
 # describes exactly this z3 :reason-unknown scenario, is declared but never actually
 # set true anywhere, so the handling it implies never engages. Left FAILing here (exit
-# code 1 above, matching scripts/solverBehavior/all-statistics.scr's and
-# print-success.scr's convention for a confirmed, known, pre-existing non-conformance)
+# code 1 above, matching print-success.scr's convention for a confirmed, known, pre-existing non-conformance)
 # rather than quietly excluded or accepted, so this doesn't regress further unnoticed;
 # worth its own follow-up issue rather than a fix bundled into #60.
 #
@@ -71,8 +70,8 @@
 # distinct code path in the -t/-T translation. Deliberately excludes: bitwuzla and
 # alt-ergo (availability varies per platform -- e.g. bitwuzla is on macos-arm64/linux/
 # linux-arm64/windows but NOT macos-x64 -- which would make this script's own output
-# vary by platform, the same portability trap scripts/solverBehavior/all-statistics.scr
-# hit); "test" (the mock solver ignores timeout, nothing to bound); "simplify" (its
+# vary by platform, the same portability trap the former
+# scripts/solverBehavior/all-statistics.scr hit); "test" (the mock solver ignores timeout, nothing to bound); "simplify" (its
 # adapter implements no timeout support at all -- a pre-existing, separate gap, not in
 # scope for issue #60). A solver from this fixed list that still somehow isn't
 # installed reports INFO and is not counted as a failure.
