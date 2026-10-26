@@ -442,7 +442,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         try {
             while (--number >= 0) { 
                 conjunction = pushesStack.remove(0);
-                String s = solverProcess.sendAndListen("(BG_POP)");
+                String s = solverProcess.sendAndListen("(BG_POP)", "\n");
                 // s (the raw response) intentionally not inspected -- see class doc.
             }
             return smtConfig.responseFactory.success();
