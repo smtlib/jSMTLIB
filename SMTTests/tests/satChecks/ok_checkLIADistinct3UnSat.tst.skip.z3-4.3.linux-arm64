@@ -1,0 +1,14 @@
+Known non-deterministic corruption in the ARM64 build of z3-4.3.1: on
+this test the solver process sometimes closes its output stream
+mid-check-sat with no response at all ("Error writing to solver: ...
+NoResponseException: Solver process closed its output stream without a
+response"), rather than the "unexpected character" truncation seen on
+other tests affected by this bug. An earlier CI capture instead produced
+a clean-looking "Failed to check-sat" error, captured in the now-
+superseded .tst.out.z3-4.3.linux-arm64.bad / .tst.err.z3-4.3.linux-arm64.bad
+goldens -- the difference between the two captures against the identical
+binary confirms the non-determinism, so a .bad golden (exact-match) can
+never stay in sync with this output and this test is skipped instead.
+Never seen on x64.
+See https://github.com/smtlib/jSMTLIB/issues/101 for the broader ARM64
+z3-4.3.1 correctness-bug tracking issue.

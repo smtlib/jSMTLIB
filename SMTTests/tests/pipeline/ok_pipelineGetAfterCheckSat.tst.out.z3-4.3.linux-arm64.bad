@@ -1,0 +1,16 @@
+success
+unsupported
+unsupported
+success
+success
+success
+sat
+((x 3))
+(error "The get-assignment command is only valid if :produce-assignments has been enabled")
+success
+success
+sat
+(error "The get-unsat-core command is only valid if :produce-unsat-cores has been enabled")
+success
+sat
+((x 3))

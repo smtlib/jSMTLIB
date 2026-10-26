@@ -1,0 +1,18 @@
+success
+success
+success
+success
+success
+success
+success
+success
+(
+true
+p
+(or p p)
+false
+)
+free
+(error "IOException while reading Z3 reponse")
+(error "Failed to assert expression: org.smtlib.SolverProcess$NoResponseException: Solver process has already exited (not p)")
+(error "IOException while reading Z3 reponse")
