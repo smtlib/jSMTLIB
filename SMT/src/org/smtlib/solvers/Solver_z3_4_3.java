@@ -538,10 +538,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
     @Override
     public IResponse set_info(IKeyword key, IAttributeValue value) {
-        if (Utils.infoKeywords.contains(key)) {
-            return smtConfig.responseFactory.error("Setting the value of a pre-defined keyword is not permitted: "+
-                    smtConfig.defaultPrinter.toString(key),key.pos());
-        }
         return sendCommand(new org.smtlib.command.C_set_info(key,value));
     }
 

@@ -370,6 +370,14 @@ public class Utils {
 
     }
 
+    /** The attributes the standard defines for set-info (any other is allowed, but not standard) */
+    static final public HashSet<IKeyword> setInfoKeywords = new HashSet<IKeyword>();
+    static {
+        for (String k : new String[] { ":smt-lib-version", ":source", ":category", ":license", ":status" }) {
+            setInfoKeywords.add(new org.smtlib.impl.SMTExpr.Keyword(k));
+        }
+    }
+
     // /** The values for info characteristics as used for the test solver */
     // public final static Map<String,IAttributeValue> stringInfo = new
     // HashMap<String,IAttributeValue>();

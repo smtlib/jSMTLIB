@@ -1,0 +1,8 @@
+success
+(:name "simplify" )
+success
+(:authors "David Detlefs and Greg Nelson and James B. Saxe" )
+success
+(:version "1.5.4" )
+success
+(:error-behavior continued-execution )

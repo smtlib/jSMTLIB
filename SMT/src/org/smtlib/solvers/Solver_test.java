@@ -425,9 +425,9 @@ public class Solver_test implements ISolver {
 
     @Override
     public IResponse set_info(IKeyword key, IAttributeValue value) {
-        if (Utils.infoKeywords.contains(key)) {
-            return smtConfig.responseFactory.error("Setting the value of a pre-defined keyword is not permitted: "+ 
-                    smtConfig.defaultPrinter.toString(key),key.pos());
+        // set-info takes any attribute and does not affect get-info
+        if (!Utils.setInfoKeywords.contains(key)) {
+            smtConfig.log.logDiag("WARNING: " + smtConfig.defaultPrinter.toString(key) + " is not a standard set-info attribute");
         }
         options.put(key.value(),value);
         return smtConfig.responseFactory.success();
