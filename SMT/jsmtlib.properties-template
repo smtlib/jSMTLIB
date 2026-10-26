@@ -18,6 +18,10 @@
 # This value can also be set on the command-line by the --logics option.
 org.smtlib.logic_path=
 
+# Solvers are identified by name (here 'ZZZ').
+# There is a solver 'test' that does type-checking but no actual solving.
+# Otherwise a ZZZ solver must be associated with an 'adapter' and an executable.
+
 # The default solver to use. This can be overridden on the command-line with
 # the --solver option. If not set the default is to type-check only.
 ##org.smtlib.default-solver=
@@ -39,10 +43,11 @@ org.smtlib.logic_path=
 ##org.smtlib.solver_ZZZ.capabilities=strings,-floating-point,datatypes,-proofs
 
 # A solver must have either an executable or a whole command-line specified.
-# The absolute path to the executable for each solver. This value is
-# overridden by any value specified on the command-line (--exec option). A
-# relative path is resolved against the SMT_SOLVER_DIR environment variable
-# if that's set, and left as-is (so the OS searches PATH) otherwise.
+# The executable for each solver. This value is overridden by any value
+# specified on the command-line (--exec option). An absolute path is used as
+# is; a relative path with a directory part is relative to the current
+# directory; a simple file name is looked for in the SMT_SOLVER_DIR directory,
+# then on the PATH.
 ##org.smtlib.solver_ZZZ.exec=
 
 # A command (executable + arguments) is specified by a comma-separated list
@@ -66,8 +71,9 @@ org.smtlib.logic_path=
 ##org.smtlib.solver_z3-4.3.adapter.windows=org.smtlib.solvers.Solver_z3_4_3_2
 
 # Real adapter classes exist for these solver families: yices2 (Solver_yices2),
-# cvc5 (Solver_cvc5), smtinterpol (Solver_smtinterpol), simplify
-# (Solver_simplify, legacy), and z3 (several version-specific adapters --
+# cvc5 (Solver_cvc5), bitwuzla (Solver_bitwuzla), smtinterpol
+# (Solver_smtinterpol), simplify (Solver_simplify, legacy), altergo
+# (Solver_altergo, untested), and z3 (several version-specific adapters --
 # Solver_z3_recent covers current z3 releases). A solver name with no
 # matching adapter class and no .adapter override still works, using the
 # generic Solver_smt text-protocol adapter, but won't get that solver's

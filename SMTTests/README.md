@@ -421,6 +421,10 @@ foo.tst.out                      <- bare default, used by any solver without its
   bare default), so the test still passes deterministically against the
   known-bad output instead of failing every run; promote real conforming
   output to a normal golden instead of `.bad`.
+- A trailing `.lenient` variant, looked up exactly where `.bad` is, records a
+  solver accepting what jSMTLIB rejects where the standard permits it (an
+  extension, or a check the standard does not require of a solver), so that
+  leniency is identifiable apart from non-conformance.
 
 ---
 

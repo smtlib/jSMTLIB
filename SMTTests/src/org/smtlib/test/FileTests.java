@@ -293,17 +293,23 @@ public class FileTests extends LogicTests {
         // platform's binary (e.g. a Windows-only miscompiled sort width), and should not
         // be silently shadowed by a same-tier plain file that isn't expected to coexist
         // with it for the same test/solver/platform anyway.
+        // A .lenient golden (the solver accepts what jSMTLIB rejects, but the standard
+        // allows it) is looked up exactly where .bad is.
         List<String> candidates = new ArrayList<String>(Arrays.asList(
             base + ext + "." + solvername + "." + PLATFORM_ARCH + ".bad",
+            base + ext + "." + solvername + "." + PLATFORM_ARCH + ".lenient",
             base + ext + "." + solvername + "." + PLATFORM_ARCH,
             base + ext + "." + solvername + "." + PLATFORM + ".bad",
+            base + ext + "." + solvername + "." + PLATFORM + ".lenient",
             base + ext + "." + solvername + "." + PLATFORM,
             base + ext + "." + solvername,
-            base + ext + "." + solvername + ".bad"
+            base + ext + "." + solvername + ".bad",
+            base + ext + "." + solvername + ".lenient"
         ));
         if (family != null) {
             candidates.add(base + ext + "." + family);
             candidates.add(base + ext + "." + family + ".bad");
+            candidates.add(base + ext + "." + family + ".lenient");
         }
         candidates.add(base + ext + "." + PLATFORM_ARCH);
         candidates.add(base + ext + "." + PLATFORM);
