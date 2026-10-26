@@ -378,7 +378,6 @@ migration rationale and status.
 |---|---|
 | **UnitTests** | `Log` listener add/remove/clear lifecycle; `Utils.quote`/`Utils.unescape` string-escaping rules (V2.0 vs V2.5), called directly as Java methods. |
 | **PrinterCoverageTest** | Directly constructs internal objects that can never arise from parsing SMT-LIB text (`ISort.IFamily`/`IAbbreviation`/`IFcnSort`, structured `IResponse` subtypes built via factory calls, `Sexpr.Token`/`Expr`) and checks their `toString()`. |
-| **RunTests** | Spawns `bash api.sh` (the standalone Java API usage example) via `ProcessBuilder`, checking it runs without throwing. |
 | **LogicsCoverageTest** | Infrastructure self-check: every logic `SMT/logics/*.smt2` ships (searched recursively, but deliberately excluding the `V2.0/` subfolder — those logics have no `tests/logics/` coverage yet, a known, self-acknowledged gap) must have matching `(set-logic ...)` coverage somewhere under `tests/logics/`. |
 
 ### Infrastructure / base classes (no `@Test` methods, not run directly)
