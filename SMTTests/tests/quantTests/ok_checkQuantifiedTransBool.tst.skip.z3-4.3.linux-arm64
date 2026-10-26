@@ -1,0 +1,10 @@
+Known non-deterministic corruption in the ARM64 build of z3-4.3.1 in
+OpenJML/Solvers: the response to one of this test's commands contains
+spurious "unexpected character" errors whose exact text (column ranges,
+count) differs from run to run against the identical binary -- confirmed
+by comparing two separate CI captures. A .bad golden (exact-match) can
+never stay in sync with genuinely non-deterministic output, so this is
+skipped rather than pinned to one observed variant. Never seen on x64.
+See the jsmtlib_ci_cross_platform_verification memory for the broader
+ARM64 z3-4.3.1 correctness-bug writeup (also includes confirmed sat/unsat
+flips on other tests, which ARE deterministic and remain .bad goldens).

@@ -173,8 +173,20 @@ public class FileTests extends LogicTests {
         String actualOut = outBuf.toString().replace("\r\n", "\n");
         String actualErr = errBuf.toString().replace("\r\n", "\n");
 
-        compareOutput(".out", findGoldenFile(".out"), actualOut);
-        compareOutput(".err", findGoldenFile(".err"), actualErr);
+        // Both are compared (and a mismatch's .actual written) before failing, so a failure
+        // shows stdout and stderr together
+        AssertionError failure = null;
+        try {
+            compareOutput(".out", findGoldenFile(".out"), actualOut);
+        } catch (AssertionError e) {
+            failure = e;
+        }
+        try {
+            compareOutput(".err", findGoldenFile(".err"), actualErr);
+        } catch (AssertionError e) {
+            if (failure == null) failure = e;
+        }
+        if (failure != null) throw failure;
     }
 
     /** A leading "; OPTIONS: &lt;flags&gt;" line (an ordinary SMT-LIB comment, so the parser

@@ -60,8 +60,11 @@ fi
 INSTALL=$(cd ../SMT && pwd)
 if [[ "$PLATFORM" == "windows" ]]; then
     JAR_INSTALL="/$INSTALL"
+    # Goldens' $HOME stands for a path Java printed, which on Windows is C:/Users/..., not /c/Users/...
+    GOLDEN_HOME=$(cygpath -m "$HOME")
 else
     JAR_INSTALL="$INSTALL"
+    GOLDEN_HOME="$HOME"
 fi
 
 ( source "$f" ) 2> "$f.err.actual" > "$f.out.actual"
@@ -89,7 +92,7 @@ _cmp_golden() {
     if [ -n "$golden" ]; then
         sed -e "s@\$JAR_INSTALL@$JAR_INSTALL@g" \
             -e "s@\$INSTALL@$INSTALL@g" \
-            -e "s@\$HOME@$HOME@g" \
+            -e "s@\$HOME@$GOLDEN_HOME@g" \
             -e "s@\$SOLVERS@$SMT_SOLVER_DIR@g" \
             -e "s@\$TESTS@$PWD@g" \
             < "$golden" | diff "$actual" -

@@ -1,0 +1,3 @@
+success
+(error "Have not yet implemented parameterized bit-vector functions")
+(error "has result sort Int, expected Bool (from the `as` qualifier)")
