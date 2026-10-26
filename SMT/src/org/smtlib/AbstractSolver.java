@@ -221,7 +221,24 @@ public class AbstractSolver implements ISolver {
      *  is needed here. A subclass's exit() should call this instead of
      *  sendCommand(commandFactory.exit()) directly. */
     protected IResponse sendExitCommand() {
-        return sendCommand(smtConfig.commandFactory.exit(), true);
+        IResponse r = sendCommand(smtConfig.commandFactory.exit(), true);
+        // exit answers success (nothing is tolerated); anything else is not conformant, and in a
+        // pipelined run may be a response out of step (#149)
+        if (!r.isError() && !(r instanceof ISymbol sym && (sym.value().equals("success") || sym.value().isEmpty()))) {
+            if (pipelinedEver) outOfStep = true;
+            r = smtConfig.responseFactory.error("Unexpected response to exit: " + smtConfig.defaultPrinter.toString(r));
+        }
+        if (pipelinedEver && solverProcess != null) {
+            // The solver stops after exit; whatever else it wrote is out of step
+            try {
+                String out;
+                while (!solverProcess.outputEnded() && (out = solverProcess.readOutput(PIPELINE_POLL_MILLIS)) != null) unread.append(out);
+            } catch (IOException e) {
+                // nothing more to read
+            }
+            reportLeftover();
+        }
+        return r;
     }
 
     private IResponse sendCommand(ICommand cmd, boolean tolerateSilentExit) {
@@ -459,8 +476,12 @@ public class AbstractSolver implements ISolver {
     /** Whether a command has been pipelined since finishPipelined last ran */
     private boolean pipelinedSinceFinish = false;
 
+    /** Whether a command has been pipelined at all */
+    private boolean pipelinedEver = false;
+
     private IResponse sendWithoutWaiting(String translatedCmd, boolean anySymbol, boolean checkSat) {
         pipelinedSinceFinish = true;
+        pipelinedEver = true;
         Pending p = new Pending(translatedCmd, anySymbol, checkSat, null);
         try {
             solverProcess.sendNoListen(translatedCmd, "\n");
