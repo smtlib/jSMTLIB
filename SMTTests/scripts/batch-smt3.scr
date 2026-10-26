@@ -1,3 +1,4 @@
 ##EXITCODE 1
-## This test is platform-dependent - it has my path for simplify hard-coded
+## --exec naming a missing executable with a directory part: absolute on Windows,
+## relative to the working directory elsewhere (hence the per-platform goldens)
 $SMT_CMD --solver simplify --exec "C:/cygwin/home/dcok/mybin/simplify.exe" $SCRIPTS/ok_sat.smt2
