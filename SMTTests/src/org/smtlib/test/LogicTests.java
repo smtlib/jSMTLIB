@@ -154,7 +154,7 @@ public class LogicTests {
         // parameterized instance across the whole suite would overwrite the same file,
         // making the suite thread-unsafe and unable to run in parallel.
         // smt.smtConfig.logfile = "solver.out";
-        smt.smtConfig.smtlib = version;
+        smt.smtConfig.smtlib = SMTLIB.find(version);
         ISolver s = smt.startSolver(smt.smtConfig,solvername,null);
         if (s == null) throw new RuntimeException("Failed to create or start solver");
         solver = s;

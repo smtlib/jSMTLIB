@@ -113,7 +113,7 @@ public class SMT {
         public Set<String> reservedWords = new HashSet<String>();
 
         /** The version of SMT-LIB to be supported; null means the default (most recent version) */
-        public String smtlib = null;
+        public /*@Nullable*/ SMTLIB smtlib = null;
         /** Enumeration of the supported SMT-LIB versions, in declaration order from oldest to newest. */
         public static enum SMTLIB {
             V20("V2.0"),
@@ -132,9 +132,7 @@ public class SMT {
         private SMTLIB currentVersion() {
             SMTLIB[] values = SMTLIB.values();
             SMTLIB latest = values[values.length - 1];
-            if (smtlib == null) return latest;
-            SMTLIB v = SMTLIB.find(smtlib);
-            return (v != null) ? v : latest;
+            return smtlib == null ? latest : smtlib;
         }
 
         /** Returns true if the configured version equals the given version. */
@@ -362,6 +360,14 @@ public class SMT {
          *  3. Utils.PROPS_FILE in the user's home directory.
          *  4. Utils.PROPS_FILE in the current working directory.
          */
+        /** Reports a properties file that exists but could not be read; reading goes on without it */
+        private void reportPropertiesError(String path, Exception e) {
+            String reason = String.valueOf(e.getMessage());
+            // A FileNotFoundException's message starts with the file's (platform-separator) path
+            if (reason.replace('\\', '/').startsWith(path)) reason = reason.substring(path.length()).trim();
+            log.logDiag("Error reading properties file " + path + ": " + reason);
+        }
+
         public Properties readProperties() {
             Properties p = new Properties();
             File f;
@@ -407,7 +413,7 @@ public class SMT {
                         if (verbose > 0) log.logDiag("#reading properties (class path) from " + url);
                         p.load(rdr);
                     } catch (IOException|IllegalArgumentException e) {
-                        log.logDiag("IOException reading properties from classpath: " + e);
+                        reportPropertiesError(url.toString(), e);
                     }
                 }
             }
@@ -424,6 +430,7 @@ public class SMT {
                         if (verbose > 0) log.logDiag("#reading properties (jar sibling) from " + f.getPath().replace('\\', '/'));
                         p.load(rdr);
                     } catch (IOException|IllegalArgumentException e) {
+                        reportPropertiesError(f.getPath().replace('\\', '/'), e);
                     }
                 }
             }
@@ -435,6 +442,7 @@ public class SMT {
                     if (verbose > 0) log.logDiag("#reading properties (user home) from " + f.getPath().replace('\\', '/'));
                     p.load(rdr);
                 } catch (IOException|IllegalArgumentException e) {
+                    reportPropertiesError(f.getPath().replace('\\', '/'), e);
                 }
             }
             // Find and read file in current working directory
@@ -444,6 +452,7 @@ public class SMT {
                     if (verbose > 0) log.logDiag("#reading properties (current dir) from " + f.getPath().replace('\\', '/'));
                     p.load(rdr);
                 } catch (IOException|IllegalArgumentException e) {
+                    reportPropertiesError(f.getPath().replace('\\', '/'), e);
                 }
             }
             return p;
@@ -762,7 +771,12 @@ public class SMT {
                         if (!result.isError() && isSmtlibVersionInfo) {
                             ICommand.Iset_info si = (ICommand.Iset_info) command;
                             if (si.value() instanceof IExpr.IDecimal) {
-                                smtConfig.smtlib = "V" + si.value().toString();
+                                String v = si.value().toString();
+                                smtConfig.smtlib = SMT.Configuration.SMTLIB.find("V" + v);
+                                if (smtConfig.smtlib == null) {
+                                    SMT.Configuration.SMTLIB[] all = SMT.Configuration.SMTLIB.values();
+                                    smtConfig.log.logDiag("WARNING: SMT-LIB version " + v + " is not one jSMTLIB knows; using " + all[all.length-1]);
+                                }
                             }
                         }
                     }
