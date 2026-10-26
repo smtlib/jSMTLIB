@@ -1,0 +1,11 @@
+; valid values for each standard set-info attribute
+(set-info :smt-lib-version 2.7)
+(set-info :source "a string")
+(set-info :source |a quoted symbol|)
+(set-info :category "crafted")
+(set-info :category "random")
+(set-info :category "industrial")
+(set-info :license "a license")
+(set-info :status sat)
+(set-info :status unsat)
+(set-info :status unknown)

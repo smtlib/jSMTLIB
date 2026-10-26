@@ -1,0 +1,8 @@
+(error "invalid argument '""2.7""' for 'value', expected '2.0', '2.5', '2.6', '2.7'")
+success
+success
+success
+success
+success
+(error "invalid argument 'maybe' for 'value', expected 'sat', 'unsat' or 'unknown'")
+(error "invalid argument '""sat""' for 'value', expected 'sat', 'unsat' or 'unknown'")

@@ -426,6 +426,8 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse set_info(IKeyword key, IAttributeValue value) {
         // set-info takes any attribute and does not affect get-info
+        String invalid = Utils.invalidSetInfoValue(key, value);
+        if (invalid != null) return smtConfig.responseFactory.error(invalid, value.pos());
         if (!Utils.setInfoKeywords.contains(key)) {
             smtConfig.log.logDiag("WARNING: " + smtConfig.defaultPrinter.toString(key) + " is not a standard set-info attribute");
         }
