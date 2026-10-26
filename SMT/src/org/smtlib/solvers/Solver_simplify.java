@@ -422,9 +422,29 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             } else {
                 res = smtConfig.responseFactory.success();
             }
+            // Define by an axiom: (= f body) for a constant,
+            // (forall (params) (= (f params) body)) otherwise.
+            // FIXME - inline definitions instead (#164)
             IExpr.IFactory f = smtConfig.exprFactory;
-            IResponse assertRes = assertExpr(f.fcn(f.symbol("="),cmd.symbol(),cmd.expression()));
-            if (!assertRes.isOK()) res = assertRes;
+            IExpr axiom;
+            if (cmd.parameters().isEmpty()) {
+                axiom = f.fcn(f.symbol("="),cmd.symbol(),cmd.expression());
+            } else {
+                List<IExpr> args = new LinkedList<IExpr>();
+                for (IExpr.IDeclaration d: cmd.parameters()) args.add(d.parameter());
+                axiom = f.forall(cmd.parameters(), f.fcn(f.symbol("="),f.fcn(cmd.symbol(),args),cmd.expression()));
+            }
+            // Not via assertExpr: the axiom is internal, so neither restricted by the logic
+            // (it may be quantified in a QF logic) nor reported by get-assertions
+            TypeChecker tc = new TypeChecker(symTable);
+            try {
+                axiom.accept(tc);
+                if (!tc.result.isEmpty()) return tc.result.get(0);
+                conjunction = conjunction + " \n" + translate(axiom);
+            } catch (VisitorException e) {
+                return smtConfig.responseFactory.error(e.getMessage(),e.pos);
+            }
+            checkSatStatus = null;
 
         } catch (IOException e) {
             res = smtConfig.responseFactory.error("Failed to define-fun: " + e.getMessage(),null); // FIXME - position?

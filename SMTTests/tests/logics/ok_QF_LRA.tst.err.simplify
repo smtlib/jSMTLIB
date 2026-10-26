@@ -4,6 +4,8 @@
                 ^^^
 (assert (>= x 0.0))
               ^^^
+(define-fun scale ((r Real)) Real (* 2.0 r))
+                                     ^^^
 (assert (= y (/ 1.0 2.0)))
                 ^^^
 (assert (= y (* (- 3.0) x)))
