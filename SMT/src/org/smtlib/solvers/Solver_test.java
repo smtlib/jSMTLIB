@@ -100,6 +100,8 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse reset_assertions() {
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#reset-assertions");
+        // Before set-logic there are no assertions to reset
+        if (logicSet == null) return smtConfig.responseFactory.success();
         // Remove all pushed frames
         IResponse r = pop(assertionSetStack.size()-1);
         // Remove assertions, but not necessarily global declarations
@@ -545,7 +547,7 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse define_fun(Idefine_fun cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a define-fun command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a " + cmd.commandName() + " command is issued");
         }
         String encodedName = encode(cmd.symbol());
         List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.parameters(),cmd.resultSort(),cmd.expression());

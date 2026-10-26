@@ -599,7 +599,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     public IResponse define_fun(Idefine_fun cmd) {
         if (!logicSet) {
-            return smtConfig.responseFactory.error("The logic must be set before a define-fun command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a " + cmd.commandName() + " command is issued");
         }
         try {
             checkSatStatus = null;

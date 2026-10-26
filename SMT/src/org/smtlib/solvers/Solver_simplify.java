@@ -219,6 +219,8 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     @Override
     public IResponse reset_assertions() {
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#reset-assertions");
+        // Before set-logic there are no assertions to reset
+        if (logicSet == null) return smtConfig.responseFactory.success();
         IResponse r = pop(assertionSetStack.size()-1);
         try {
             for (IExpr e: assertionSetStack.get(0)) TypeChecker.clearSorts(e);
@@ -704,7 +706,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
      *  as {@link #declareFunLocal}, for the same reason. */
     private IResponse defineFunLocal(Idefine_fun cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a define-fun command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a " + cmd.commandName() + " command is issued");
         }
         String encodedName = encode(cmd.symbol());
         List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.parameters(),cmd.resultSort(),cmd.expression());
