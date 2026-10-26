@@ -57,7 +57,7 @@ public interface IResponse extends INode {
         IResponse timeout();
         IResponse incomplete();
         /** Returns a constant response with the given canonical name */
-        IResponse constant(String id); // FIXME - use abstract keyword?
+        ISymbol constant(String id); // FIXME - use abstract keyword?
         /** The argument has no SMT-LIB escapes and no enclosing quotes */
         IResponse stringLiteral(String value);
         IResponse numericLiteral(int value);
