@@ -436,7 +436,6 @@ public class SymbolTable {
             // We have a name match. First check for an exact match on arity.
             Entry found = null;
             ISort foundResult = null;
-            boolean foundMatchButNotOnResult = false;
             List<Entry> tried = new LinkedList<Entry>();
             List<String> failures = new LinkedList<String>();
             for (Entry entry: entrylist) {
@@ -450,7 +449,8 @@ public class SymbolTable {
                     continue;
                 }
                 // Cases to consider
-                //   resultSort != null & just one argument sort match -> error - not supposed to use a qualifier
+                //   resultSort != null & just one argument sort match -> return it if the result sort matches
+                //       ((as f S) is allowed for a non-overloaded f: SMT-LIB Remark 8)
                 //   resultSort != null & multiple argument sort matches -> pick the one that matches on result sort
                 //   resultSort == null & and just one argument sort match -> return it
                 //   resultSort == null & multiple argument sort matches -> ambiguous
@@ -463,7 +463,6 @@ public class SymbolTable {
                         found = entry;
                         foundResult = candidateResult;
                     } else {
-                        foundMatchButNotOnResult = true;
                         failures.add("has result sort " + smtConfig.defaultPrinter.toString(candidateResult)
                                 + ", expected " + smtConfig.defaultPrinter.toString(resultSort) + " (from the `as` qualifier)");
                     }
@@ -479,10 +478,6 @@ public class SymbolTable {
                     // Otherwise have just one match - keep checking the rest of the list
                 }
             }
-            if (resultSort != null && found != null && !foundMatchButNotOnResult) {
-                // FIXME - should report unneeded disambiguation
-                return null;
-            }
             if (found != null) return foundResult;
 
             // Check for left-assoc etc.
@@ -494,7 +489,10 @@ public class SymbolTable {
                 if (entry.sort.argSorts().length != 2) continue;
                 tried.add(entry);
                 try {
-                    return matchAssociative(entry, argSorts);
+                    ISort assocResult = matchAssociative(entry, argSorts);
+                    if (resultSort == null || resultSort.equals(assocResult)) return assocResult;
+                    failures.add("has result sort " + smtConfig.defaultPrinter.toString(assocResult)
+                            + ", expected " + smtConfig.defaultPrinter.toString(resultSort) + " (from the `as` qualifier)");
                 } catch (NoMatch nm) {
                     failures.add(nm.getMessage());
                 }
