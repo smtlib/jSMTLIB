@@ -1,1 +1,6 @@
-(error "Problem in starting or running simplify: Cannot run program ""$TESTS/C:/cygwin/home/dcok/mybin/simplify.exe"": error=2, No such file or directory")
+success
+success
+success
+success
+success
+sat
