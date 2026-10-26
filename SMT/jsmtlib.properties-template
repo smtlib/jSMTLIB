@@ -43,10 +43,11 @@ org.smtlib.logic_path=
 ##org.smtlib.solver_ZZZ.capabilities=strings,-floating-point,datatypes,-proofs
 
 # A solver must have either an executable or a whole command-line specified.
-# The absolute path to the executable for each solver. This value is
-# overridden by any value specified on the command-line (--exec option). A
-# relative path is resolved against the SMT_SOLVER_DIR environment variable
-# if that's set, and left as-is (so the OS searches PATH) otherwise.
+# The executable for each solver. This value is overridden by any value
+# specified on the command-line (--exec option). An absolute path is used as
+# is; a relative path with a directory part is relative to the current
+# directory; a simple file name is looked for in the SMT_SOLVER_DIR directory,
+# then on the PATH.
 ##org.smtlib.solver_ZZZ.exec=
 
 # A command (executable + arguments) is specified by a comma-separated list
