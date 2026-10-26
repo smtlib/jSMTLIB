@@ -108,24 +108,4 @@ public class TypeCheckerCoverageTest {
         Assert.assertNull(tc.visit(fcnSort));
         Assert.assertTrue(soleErrorMessage(tc).contains("unexpected type-checking of a ISort.IFcnSort"));
     }
-
-    /** convert() turns an s-expression of symbols, as a :pattern value built through the API may
-     *  be, into a term; it handles nothing else (#140) */
-    @Test
-    public void convertSexprToTerm() throws Exception {
-        TypeChecker tc = new TypeChecker(symTable);
-        IExpr e = tc.convert(sexpr("(f x (g y))"));
-        Assert.assertEquals("(f x (g y))", config.defaultPrinter.toString(e));
-        Assert.assertTrue(tc.convert(sexpr("x")) instanceof ISymbol);
-        try {
-            tc.convert(sexpr("5"));
-            Assert.fail("a numeral is not converted");
-        } catch (RuntimeException expected) {
-            // the current behavior: a bare RuntimeException
-        }
-    }
-
-    private org.smtlib.sexpr.ISexpr sexpr(String text) throws Exception {
-        return new org.smtlib.sexpr.Parser(config, config.smtFactory.createSource(text, null)).parseSexpr();
-    }
 }

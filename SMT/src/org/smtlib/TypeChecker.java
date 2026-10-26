@@ -13,7 +13,6 @@ import org.smtlib.IExpr.*;
 import org.smtlib.ISort.*;
 import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.impl.SMTExpr;
-import org.smtlib.sexpr.ISexpr;
 import org.smtlib.sexpr.ISexpr.ISeq;
 
 /** This class is a visitor that type-checks a formula */
@@ -1256,14 +1255,12 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                         for (IExpr ex: ((IExpr.IPatternTerms)v).terms()) {
                             if (checkPatternTerm(ex)) ex.accept(this); else errors = true;
                         }
-                    } else if (!(v instanceof ISeq)) {
-                        result.add(smtConfig.responseFactory.error("Expected a sequence after :pattern",v==null?a.keyword().pos():v.pos()));
+                    } else if (v instanceof ISeq) {
+                        result.add(smtConfig.responseFactory.error("A :pattern value must be a list of terms (IExpr.IFactory.patternTerms), not an s-expression",v.pos()));
                         errors = true;
                     } else {
-                        for (ISexpr ee: ((ISeq)v).sexprs()) {
-                            IExpr ex = convert(ee);
-                            ex.accept(this);
-                        }
+                        result.add(smtConfig.responseFactory.error("Expected a sequence after :pattern",v==null?a.keyword().pos():v.pos()));
+                        errors = true;
                     }
                 }
             }
@@ -1272,24 +1269,6 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         }
         if (errors) return null;
         return resultSort;
-    }
-
-    public IExpr convert(ISexpr s) { // FIXME - use a factory? do typechecking here?
-        if (s instanceof ISexpr.ISeq) {
-            Iterator<ISexpr> sexprs = ((ISeq)s).sexprs().iterator();
-            ISexpr first = sexprs.next();
-            List<IExpr> args = new LinkedList<IExpr>();
-            while (sexprs.hasNext()) {
-                IExpr arg = convert(sexprs.next());
-                args.add(arg);
-            }
-            ISymbol id = (ISymbol)first;
-            return new SMTExpr.FcnExpr(id,args);
-        } else if (s instanceof ISymbol) {
-            return (ISymbol)s;
-        } else {
-            throw new RuntimeException();
-        }
     }
 
     protected Map<ISymbol,Variable> currentScope = new HashMap<ISymbol,Variable>();
