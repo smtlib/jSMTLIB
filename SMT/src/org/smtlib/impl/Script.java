@@ -1,7 +1,6 @@
 package org.smtlib.impl;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Iterator;
@@ -70,18 +69,19 @@ public class Script extends Pos.Printable implements IScript {
         List<ICommand> commands = this.commands;
         if (filename != null) {
             String filename = this.filename.value();
+            if (!new File(filename).isFile()) {
+                return smtConfig.responseFactory.error("The script file " + filename + " does not exist",this.filename.pos());
+            }
             try (FileReader fileReader = new FileReader(new File(filename))) {
                 ISource source = smtConfig.smtFactory.createSource(new CharSequenceReader(fileReader),filename);
                 IParser p = smtConfig.smtFactory.createParser(smtConfig,source);
                 IScript script = p.parseScript();
                 if (script == null) return smtConfig.responseFactory.error("Failed to parse the command script: " + filename,this.filename.pos());
                 commands = script.commands();
-            } catch (FileNotFoundException e) {
-                return smtConfig.responseFactory.error(e.toString(),this.filename.pos());
             } catch (IOException e) {
-                return smtConfig.responseFactory.error(e.toString(),this.filename.pos());
+                return smtConfig.responseFactory.error("Could not read the script file " + filename + ": " + e.getMessage(),this.filename.pos());
             } catch (ParserException e) {
-                return smtConfig.responseFactory.error(e.toString(),e.pos());
+                return smtConfig.responseFactory.error(e.getMessage(),e.pos());
             }
         }
         if (commands == null) {
