@@ -1,0 +1,2 @@
+(assert (= ((as and Bool) true false) false))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
