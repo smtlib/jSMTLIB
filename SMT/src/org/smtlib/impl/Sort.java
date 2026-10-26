@@ -235,6 +235,9 @@ public abstract class Sort extends Pos.Printable implements ISort {
                         return result;
                     }
                     if (app.definition() instanceof IFamily) return ss;
+                    // Not yet resolved by the type checker: nothing to expand it by, and nothing
+                    // to cache, since a definition may still be attached (#141)
+                    if (definition() == null) return ss;
                     ss = definition().eval(sortParameters);
                 }
                 expanded = ss;
