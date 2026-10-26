@@ -49,6 +49,8 @@ public class SolverProcess {
 
     final static protected String eol = System.getProperty("line.separator");
 
+    // Set by start() and kept by exit(): a thread blocked in listen() when another thread calls
+    // exit() (e.g. through forceExit()) still reads them once it wakes (#156)
     protected StreamGobbler standardOut;
     protected StreamGobbler errorOut;
 
@@ -86,10 +88,10 @@ public class SolverProcess {
     protected String endMarker;
 
     /** The Java process object (initialized by start() )*/
-    protected Process process;
+    protected volatile Process process;
 
     /** The Writer object that writes to the spawned process (initialized by start() )*/
-    protected Writer toProcess;
+    protected volatile Writer toProcess;
 
     /** A place (e.g., log file), if non-null, to write all outbound communications for diagnostic purposes */
     public /*@Nullable*/Writer log;
@@ -344,9 +346,10 @@ public class SolverProcess {
      * for control flow and may be a bit expensive.
      */
     public boolean isRunning(boolean expectStopped) {
-        if (process == null) return false;
+        Process p = process;
+        if (p == null) return false;
         try {
-            process.exitValue();
+            p.exitValue();
             if (!expectStopped) {
                 if (log != null) {
                     try {
@@ -378,8 +381,9 @@ public class SolverProcess {
 
     /** Aborts the process; returns immediately if already stopped */
     public void exit() {
-        if (process == null) return;
-        process.destroyForcibly();
+        Process p = process;
+        if (p == null) return;
+        p.destroyForcibly();
         process = null;
         toProcess = null;
         // destroyForcibly() closes the process's pipes, which drives each gobbler's read()
@@ -387,8 +391,6 @@ public class SolverProcess {
         // start()/exit() cycles (e.g. across many tests) don't accumulate live threads.
         joinQuietly(standardOut);
         joinQuietly(errorOut);
-        standardOut = null;
-        errorOut = null;
         if (log != null) {
             try {
                 log.write(";;Exiting solver");
@@ -412,7 +414,10 @@ public class SolverProcess {
 
     /** Sends all the given text arguments, then (if listen is true) listens for the designated end marker text */
     public /*@Nullable*/ String send(boolean listen, String ... args) throws IOException {
-        if (toProcess == null) throw new ProverException("The solver has not been started");
+        // Read once: exit() on another thread may null them (#156)
+        Writer to = toProcess;
+        Process p = process;
+        if (to == null) throw new ProverException("The solver has not been started");
         // Check liveness *before* writing, rather than relying on the write/read to fail on
         // its own. Writes to an already-exited process's pipe are not reliably synchronous
         // with the process's death: the OS may buffer several KB before a write actually
@@ -429,7 +434,7 @@ public class SolverProcess {
         // for every command except exit (see tests/bugs/bug2.tst's golden, where several
         // commands after the one that actually killed the solver are each expected to
         // show up as a cascaded error, not go silently missing).
-        if (process != null && !process.isAlive()) {
+        if (p != null && !p.isAlive()) {
             throw new NoResponseException("Solver process has already exited");
         }
         // The pre-write isAlive() check above closes most of the race, but not all of it:
@@ -451,9 +456,9 @@ public class SolverProcess {
         }
         try {
             for (String arg: args) {
-                toProcess.write(arg);
+                to.write(arg);
             }
-            toProcess.flush();
+            to.flush();
         } catch (IOException e) {
             throw new NoResponseException("Solver process closed its input stream while writing: " + e.getMessage());
         }
