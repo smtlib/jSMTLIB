@@ -97,7 +97,7 @@ public class UnitTests {
      *  V2.5: only "" is an escape sequence; backslash is not special. */
     private Utils makeUtils(boolean v20) {
         SMT.Configuration cfg = new SMT.Configuration();
-        cfg.smtlib = v20 ? "V2.0" : null; // null → default V2.5
+        cfg.smtlib = v20 ? org.smtlib.SMT.Configuration.SMTLIB.V20 : null; // null → default V2.5
         return new Utils(cfg);
     }
 
@@ -105,7 +105,7 @@ public class UnitTests {
      *  Use this when the test needs to verify that errors are or are not reported. */
     private Utils makeUtilsWithListener(boolean v20, RecordingListener listener) {
         SMT.Configuration cfg = new SMT.Configuration();
-        cfg.smtlib = v20 ? "V2.0" : null;
+        cfg.smtlib = v20 ? org.smtlib.SMT.Configuration.SMTLIB.V20 : null;
         cfg.log.clearListeners();
         cfg.log.addListener(listener);
         return new Utils(cfg);

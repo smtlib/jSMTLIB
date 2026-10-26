@@ -604,7 +604,7 @@ public class Utils {
             // SMT-LIB version), then the top-level (latest-version) copy.
             List<String> candidates = new ArrayList<>();
             if (smtConfig.smtlib != null) {
-                SMTLIB cv = SMTLIB.find(smtConfig.smtlib);
+                SMTLIB cv = smtConfig.smtlib;
                 SMTLIB latest = SMTLIB.values()[SMTLIB.values().length - 1];
                 if (cv != null && cv != latest) candidates.add(cv.id + "/" + filename);
             }
@@ -804,7 +804,7 @@ public class Utils {
             if (CORE.equals(theoryName.value())) continue;
             if ("ALL".equals(logicName)) {
                 boolean savedRelax = smtConfig.relax;
-                String savedSmtlib = smtConfig.smtlib;
+                SMTLIB savedSmtlib = smtConfig.smtlib;
                 smtConfig.relax = true;
                 smtConfig.smtlib = null;
                 ITheory th;

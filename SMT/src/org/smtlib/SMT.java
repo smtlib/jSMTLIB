@@ -113,7 +113,7 @@ public class SMT {
         public Set<String> reservedWords = new HashSet<String>();
 
         /** The version of SMT-LIB to be supported; null means the default (most recent version) */
-        public String smtlib = null;
+        public /*@Nullable*/ SMTLIB smtlib = null;
         /** Enumeration of the supported SMT-LIB versions, in declaration order from oldest to newest. */
         public static enum SMTLIB {
             V20("V2.0"),
@@ -132,9 +132,7 @@ public class SMT {
         private SMTLIB currentVersion() {
             SMTLIB[] values = SMTLIB.values();
             SMTLIB latest = values[values.length - 1];
-            if (smtlib == null) return latest;
-            SMTLIB v = SMTLIB.find(smtlib);
-            return (v != null) ? v : latest;
+            return smtlib == null ? latest : smtlib;
         }
 
         /** Returns true if the configured version equals the given version. */
@@ -773,7 +771,12 @@ public class SMT {
                         if (!result.isError() && isSmtlibVersionInfo) {
                             ICommand.Iset_info si = (ICommand.Iset_info) command;
                             if (si.value() instanceof IExpr.IDecimal) {
-                                smtConfig.smtlib = "V" + si.value().toString();
+                                String v = si.value().toString();
+                                smtConfig.smtlib = SMT.Configuration.SMTLIB.find("V" + v);
+                                if (smtConfig.smtlib == null) {
+                                    SMT.Configuration.SMTLIB[] all = SMT.Configuration.SMTLIB.values();
+                                    smtConfig.log.logDiag("WARNING: SMT-LIB version " + v + " is not one jSMTLIB knows; using " + all[all.length-1]);
+                                }
                             }
                         }
                     }
