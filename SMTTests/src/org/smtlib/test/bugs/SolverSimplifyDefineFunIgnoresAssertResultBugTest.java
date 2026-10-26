@@ -21,14 +21,10 @@ import org.smtlib.solvers.Solver_simplify;
  * definition itself is ill-typed) is silently discarded and {@code define_fun()} reports
  * success regardless.
  * <p>
- * Reproduced with a parameterized (arity &gt; 0) function: {@code define_fun()} always builds
- * the internal assertion as {@code (= <name> <body>)} (never applying the parameters), which
- * is only sound for an arity-0 definition -- for arity &gt; 0, {@code <name>} denotes the
- * function itself (an arrow-sorted symbol), so comparing it via {@code =} against the
- * (value-sorted) body is a genuine sort mismatch that {@code assertExpr()} correctly rejects.
- * That's exactly the kind of failure this bug swallows.
+ * Reproduced with a body Simplify cannot translate (a decimal literal), which fails the
+ * internal recording step after jSMTLIB's own type check has passed.
  * <p>
- * Fixed by capturing {@code assertExpr()}'s result and propagating it when it isn't OK.
+ * Fixed by propagating a failure of the internal recording step.
  * <p>
  * See <a href="https://github.com/smtlib/jSMTLIB/issues/55">issue #55</a>.
  * <p>
@@ -53,15 +49,24 @@ public class SolverSimplifyDefineFunIgnoresAssertResultBugTest {
         SMT.Configuration config = new SMT.Configuration();
         Solver_simplify solver = new Solver_simplify(config, "simplify");
 
+        doCommand(config, solver, "(set-logic QF_LRA)");
+        IResponse r = doCommand(config, solver, "(define-fun g ((x Real)) Real 2.5)");
+
+        Assert.assertTrue("a failing internal definition step must not be reported as success",
+                r.isError());
+    }
+
+    /** Issue #95: a definition with parameters was recorded as (= f body), an ill-sorted
+     *  assertion; it is now a quantified axiom, accepted even in a QF logic. */
+    @Test
+    public void defineFunWithParametersSucceeds() throws Exception {
+        SMT.Configuration config = new SMT.Configuration();
+        Solver_simplify solver = new Solver_simplify(config, "simplify");
+
         doCommand(config, solver, "(set-logic QF_UF)");
         doCommand(config, solver, "(declare-sort S 0)");
-
-        // f : S -> S, defined as (define-fun f ((x S)) S x). The internal recording
-        // assertion becomes (= f x) -- comparing the function symbol f itself (sort S->S)
-        // against x (sort S) -- a sort mismatch assertExpr() must reject.
         IResponse r = doCommand(config, solver, "(define-fun f ((x S)) S x)");
 
-        Assert.assertTrue("a failing internal assertExpr() must not be reported as success",
-                r.isError());
+        Assert.assertTrue("define-fun with parameters: " + r, r.isOK());
     }
 }
