@@ -362,6 +362,14 @@ public class SMT {
          *  3. Utils.PROPS_FILE in the user's home directory.
          *  4. Utils.PROPS_FILE in the current working directory.
          */
+        /** Reports a properties file that exists but could not be read; reading goes on without it */
+        private void reportPropertiesError(String path, Exception e) {
+            String reason = String.valueOf(e.getMessage());
+            // A FileNotFoundException's message starts with the file's (platform-separator) path
+            if (reason.replace('\\', '/').startsWith(path)) reason = reason.substring(path.length()).trim();
+            log.logDiag("Error reading properties file " + path + ": " + reason);
+        }
+
         public Properties readProperties() {
             Properties p = new Properties();
             File f;
@@ -407,7 +415,7 @@ public class SMT {
                         if (verbose > 0) log.logDiag("#reading properties (class path) from " + url);
                         p.load(rdr);
                     } catch (IOException|IllegalArgumentException e) {
-                        log.logDiag("IOException reading properties from classpath: " + e);
+                        reportPropertiesError(url.toString(), e);
                     }
                 }
             }
@@ -424,6 +432,7 @@ public class SMT {
                         if (verbose > 0) log.logDiag("#reading properties (jar sibling) from " + f.getPath().replace('\\', '/'));
                         p.load(rdr);
                     } catch (IOException|IllegalArgumentException e) {
+                        reportPropertiesError(f.getPath().replace('\\', '/'), e);
                     }
                 }
             }
@@ -435,6 +444,7 @@ public class SMT {
                     if (verbose > 0) log.logDiag("#reading properties (user home) from " + f.getPath().replace('\\', '/'));
                     p.load(rdr);
                 } catch (IOException|IllegalArgumentException e) {
+                    reportPropertiesError(f.getPath().replace('\\', '/'), e);
                 }
             }
             // Find and read file in current working directory
@@ -444,6 +454,7 @@ public class SMT {
                     if (verbose > 0) log.logDiag("#reading properties (current dir) from " + f.getPath().replace('\\', '/'));
                     p.load(rdr);
                 } catch (IOException|IllegalArgumentException e) {
+                    reportPropertiesError(f.getPath().replace('\\', '/'), e);
                 }
             }
             return p;
