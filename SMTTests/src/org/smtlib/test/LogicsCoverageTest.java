@@ -29,12 +29,7 @@ public class LogicsCoverageTest {
     private static final Pattern SET_LOGIC = Pattern.compile("\\(set-logic\\s+(\\S+?)\\s*\\)");
 
     private static File testsFolder() {
-        try {
-            String resource = LogicsCoverageTest.class.getClassLoader().getResource("err_array.tst").getPath();
-            return new File(resource).getParentFile().getParentFile();
-        } catch (Exception e) {
-            return new File("tests");
-        }
+        return SMTTestsFolders.find("tests");
     }
 
     @Test
