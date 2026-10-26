@@ -833,6 +833,7 @@ public class SMT {
             retcode = 2;
         }
         finishPipelined(pipeliner);
+        if (pipeliner != null && pipeliner.outOfStep()) pipelineFailed = true;
         if (pipelineFailed && retcode == 0) retcode = 1;
         solver.forceExit();  // Just in case the solver was not explicitly exited
         solver = null;
@@ -901,7 +902,7 @@ public class SMT {
     /** At the end of the input, waits for and prints the remaining pipelined responses, unless the
      *  run was aborted */
     private void finishPipelined(/*@Nullable*/ AbstractSolver pipeliner) {
-        if (pipeliner != null && !pipelineAborted) pipeliner.readPipelined(true);
+        if (pipeliner != null && !pipelineAborted) pipeliner.finishPipelined();
         smtConfig.log.flush();
         smtConfig.log.discardHeld();
     }

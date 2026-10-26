@@ -1,0 +1,4 @@
+success
+success
+(error "Out of step: the response to (assert p) was sat")
+(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
