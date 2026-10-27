@@ -1,5 +1,5 @@
 (error "no logic set")
-(:num-terms 3 )
+(:num-terms VALUE :num-types VALUE :total-run-time VALUE :mem-usage VALUE )
 success
 (error "can't tell until you call (check-sat)")
-(:num-terms 3 )
+(:num-terms VALUE :num-types VALUE :total-run-time VALUE :mem-usage VALUE :boolean-variables VALUE :atoms VALUE :clauses VALUE :restarts VALUE :clause-db-reduce VALUE :clause-db-simplify VALUE :decisions VALUE :conflicts VALUE :theory-conflicts VALUE :boolean-propagations VALUE :theory-propagations VALUE :egraph-terms VALUE :egraph-atoms VALUE :egraph-conflicts VALUE :egraph-ackermann-lemmas VALUE :egraph-final-checks VALUE :egraph-interface-lemmas VALUE )
