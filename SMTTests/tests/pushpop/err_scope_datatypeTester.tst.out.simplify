@@ -1,0 +1,12 @@
+success
+success
+unsupported
+(error "No such sort symbol declared: Shape")
+(error "Unknown constant symbol s")
+success
+success
+success
+(error "Unknown predicate symbol (_ is circle) with argument types Shape")
+unsupported
+success
+(error "Unknown predicate symbol (_ is red) with argument types Int")

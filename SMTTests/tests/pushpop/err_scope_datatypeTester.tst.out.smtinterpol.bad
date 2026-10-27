@@ -1,0 +1,12 @@
+success
+success
+success
+success
+success
+success
+success
+success
+(error "The solver stopped without a response to: (assert ((_ is circle) s))")
+(error "Error writing to solver: (declare-datatype Color ((red) (green) )) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun x () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert ((_ is red) x)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

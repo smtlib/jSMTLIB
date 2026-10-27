@@ -711,8 +711,8 @@ public class Solver_test implements ISolver {
         return null;
     }
 
-    /** Adds the constructors and selectors of one datatype to the given frame; those of a
-     *  parametric datatype are par-polymorphic over its sort parameters. */
+    /** Adds the constructors, selectors and testers of one datatype to the given frame; those
+     *  of a parametric datatype are par-polymorphic over its sort parameters. */
     private /*@Nullable*/ IResponse addDatatypeConstructors(ISymbol sortName, ISort.IDatatype dt, boolean global) {
         List<SymbolTable.Entry> entries = new java.util.ArrayList<>();
         List<ISymbol> ctorList = new java.util.ArrayList<>();
@@ -737,6 +737,10 @@ public class Solver_test implements ISolver {
                 if (ctorSort == null) return errs.get(0);
                 entries.add(new SymbolTable.Entry(ctor.symbol(), ctorSort, null, params));
                 ctorList.add(ctor.symbol());
+                IExpr.IIdentifier tester = smtConfig.exprFactory.id(smtConfig.exprFactory.symbol(Utils.IS),
+                        Collections.<IExpr.IIndex>singletonList(ctor.symbol()));
+                ISort.IFcnSort testerSort = smtConfig.sortFactory.createFcnSort(new ISort[]{ ctorSort.resultSort() }, smtConfig.sortFactory.Bool());
+                entries.add(new SymbolTable.Entry(tester, testerSort, null, params));
                 for (ISelector sel : ctor.selectors()) {
                     ISort.IFcnSort selSort = TypeChecker.resolveFcnSort(symTable, sel.symbol(), Arrays.asList(declaredSort), sel.sort(), sel.symbol().pos(), errs);
                     if (selSort == null) return errs.get(0);
