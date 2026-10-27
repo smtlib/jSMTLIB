@@ -1,0 +1,1 @@
+bitwuzla supports no datatypes: it reports declare-datatype(s) in a non-SMT-LIB form and exits, so the rest of this script is not run.

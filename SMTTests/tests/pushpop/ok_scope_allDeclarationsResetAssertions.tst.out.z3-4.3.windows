@@ -1,0 +1,27 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+unsupported
+success
+success
+(error "line 15 column 22: invalid declaration, named expression already defined with this name g")
+(error "line 16 column 14: invalid sort declaration, sort already declared/defined")
+(error "line 17 column 13: invalid sort definition, sort already declared/defined")
+(error "line 18 column 24: invalid number of parameters to sort constructor")
+(error "line 19 column 19: invalid declaration, constant 't' (with the given signature) already declared")
+(error "line 20 column 13: ambiguous constant reference, more than one constant with the same sort, use a qualified expression (as <symbol> <sort>) to disumbiguate k")
+unsupported
+success
+success
+(error "line 24 column 22: invalid declaration, named expression already defined with this name g")
+(error "line 25 column 14: invalid sort declaration, sort already declared/defined")
+(error "line 26 column 13: invalid sort definition, sort already declared/defined")
+(error "line 27 column 28: invalid number of parameters to sort constructor")
+(error "line 28 column 19: invalid declaration, constant 't' (with the given signature) already declared")
+(error "line 29 column 14: ambiguous constant reference, more than one constant with the same sort, use a qualified expression (as <symbol> <sort>) to disumbiguate k")

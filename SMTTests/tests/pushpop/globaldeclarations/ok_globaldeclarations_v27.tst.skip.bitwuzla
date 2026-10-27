@@ -1,0 +1,1 @@
+bitwuzla does not support the SMT-LIB 2.7 declare-sort-parameter: it reports the command in a non-SMT-LIB form and exits, so the rest of this script is not run.

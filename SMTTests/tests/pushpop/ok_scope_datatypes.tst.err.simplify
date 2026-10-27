@@ -1,0 +1,14 @@
+(declare-fun c () Color)
+                  ^^^^^
+(declare-fun t () Tree)
+                  ^^^^
+(assert (= c red))
+           ^
+(assert (= (val t) 0))
+                ^
+(assert (match t ((leaf false) ((node v k) (= k fnil)))))
+               ^
+(declare-fun t () Tree)
+                  ^^^^
+(assert (match t ((leaf true) ((node v k) (= (head (fcons t k)) leaf)))))
+               ^

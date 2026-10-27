@@ -1,0 +1,1 @@
+bitwuzla supports no define-fun-rec/define-funs-rec: it reports the command in a non-SMT-LIB form and exits, so the rest of this script is not run.

@@ -1,0 +1,7 @@
+success
+success
+unsupported
+success
+success
+success
+(error "line 9 column 20: invalid qualified/indexed identifier, '_' or 'as' expected")
