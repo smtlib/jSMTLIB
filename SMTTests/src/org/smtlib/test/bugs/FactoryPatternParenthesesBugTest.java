@@ -202,4 +202,28 @@ public class FactoryPatternParenthesesBugTest {
         IResponse r = run(config, solver, "(assert (forall ((x Int)) (! (= (f x) x) :pattern f)))");
         Assert.assertTrue("a non-list :pattern value must be rejected: " + r, r.isError());
     }
+
+    /** A :pattern value built through the API as an s-expression rather than an IPatternTerms is
+     *  reported as an error, whatever it contains; it used to be converted, and threw on anything
+     *  but symbols and applications (#144). */
+    @Test
+    public void sexprPatternValueIsReported() throws Exception {
+        for (String pattern: new String[]{ "((f x))", "((f 1))", "(())", "((f (! x :named n)))" }) {
+            SMT.Configuration config = new SMT.Configuration();
+            Solver_test solver = new Solver_test(config, "test");
+            Assert.assertFalse(solver.start().isError());
+            Assert.assertFalse(run(config, solver, "(set-logic ALL)").isError());
+            Assert.assertFalse(run(config, solver, "(declare-fun f (Int) Int)").isError());
+            IExpr.IFactory f = config.exprFactory;
+            ISymbol x = f.symbol("x");
+            ISort intSort = config.sortFactory.createSortExpression(f.symbol("Int"), new ISort[0]);
+            org.smtlib.IAttributeValue seq = (org.smtlib.IAttributeValue)new org.smtlib.sexpr.Parser(config,
+                    config.smtFactory.createSource(pattern, null)).parseSexpr();
+            IExpr body = f.attributedExpr(f.fcn(f.symbol("="), f.fcn(f.symbol("f"), x), x), f.keyword(":pattern"), seq);
+            IResponse r = solver.assertExpr(f.forall(Arrays.asList(f.declaration(x, intSort)), body));
+            Assert.assertTrue(pattern + ": expected an error, got " + r, r.isError());
+            String msg = config.defaultPrinter.toString(r);
+            Assert.assertTrue(pattern + ": " + msg, msg.contains("patternTerms"));
+        }
+    }
 }
