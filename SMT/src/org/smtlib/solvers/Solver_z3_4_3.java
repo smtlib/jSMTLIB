@@ -710,18 +710,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
                 }
             }
             IResponse response = parseResponse(r);
-//            if (response instanceof ISeq) {
-//                List<ISexpr> valueslist = new LinkedList<ISexpr>();
-//                Iterator<ISexpr> iter = ((ISeq)response).sexprs().iterator();
-//                for (IExpr e: terms) {
-//                    if (!iter.hasNext()) break;
-//                    List<ISexpr> values = new LinkedList<ISexpr>();
-//                    values.add(new Sexpr.Expr(e));
-//                    values.add(iter.next());
-//                    valueslist.add(new Sexpr.Seq(values));
-//                } 
-//                return new Sexpr.Seq(valueslist);
-//            }
             return response;
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
