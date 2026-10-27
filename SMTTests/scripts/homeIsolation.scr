@@ -1,0 +1,10 @@
+##EXITCODE 0
+# runscript gives each script a private home directory, so a script that writes
+# ~/jsmtlib.properties cannot disturb the real one or a concurrent run (#171).
+# props6.scr checks that SMT_CMD's JVM reads that private directory too.
+_jvm_home=$(java -XshowSettings:properties -version 2>&1 | sed -n 's/^ *user\.home = //p' | tr -d '\r' | tr '\\' '/')
+_marker="jsmtlib-home-check.$$"
+: > "$HOME/$_marker"
+if [ -e "$_jvm_home/$_marker" ]; then _private=no; else _private=yes; fi
+rm -f "$HOME/$_marker"
+if [ $_private = yes ]; then echo "HOME is private"; else echo "HOME is the real home directory"; exit 1; fi

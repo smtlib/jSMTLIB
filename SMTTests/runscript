@@ -57,6 +57,18 @@ elif [ -e "$f.skip.$PLATFORM" ];      then echo "SKIP: $(cat "$f.skip.$PLATFORM"
 elif [ -e "$f.skip" ];                then echo "SKIP: $(cat "$f.skip")";                  exit 77
 fi
 
+### Each script gets a private home directory, for the shell and for the JVM (which takes
+### user.home from the passwd entry, not $HOME), so a script that writes
+### ~/jsmtlib.properties cannot disturb the real one or a concurrent run (#171). It is made
+### here rather than in the system temp directory, whose path may contain a space.
+_script_home=$(mktemp -d "$PWD/.home.XXXXXX") || exit 1
+trap 'rmdir "$_script_home" 2>/dev/null' EXIT
+export HOME="$_script_home"
+_java_home="$HOME"
+if [[ "$PLATFORM" == "windows" ]]; then _java_home=$(cygpath -m "$HOME"); fi
+SMT_CMD="${SMT_CMD/#java /java -Duser.home=$_java_home }"
+SMT_DRIVER="${SMT_DRIVER/#java /java -Duser.home=$_java_home }"
+
 INSTALL=$(cd ../SMT && pwd)
 if [[ "$PLATFORM" == "windows" ]]; then
     JAR_INSTALL="/$INSTALL"
