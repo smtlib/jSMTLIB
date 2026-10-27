@@ -71,3 +71,8 @@ else
     export SMT_CMD="java ${COV_AGENT:-} -cp ${COV_CLASSES:-$SMT_JAR} org.smtlib.SMT"
     export SMT_DRIVER="java ${COV_AGENT:-} -cp ${COV_CLASSES:-$SMT_JAR} org.smtlib.Driver"
 fi
+# SMT_CMD and SMT_DRIVER are used unquoted, so a space in a path they embed (the jar, or a
+# script's private home under SMTTests -- see runscript) breaks the tests
+if [[ "$SMT_DIR" == *" "* || "$PWD" == *" "* ]]; then
+    echo "WARNING: a path contains a space, which the tests do not support: $SMT_DIR, $PWD" >&2
+fi

@@ -32,12 +32,14 @@ if [ ! -e "$test" ]; then
     echo "ERROR: test file not found: $test"
     exit 1
 fi
-SMT_EXE="$SMT_CMD --solver $solver"
+### --testing scrubs timings and memory figures from get-info responses, as FileTests does
+SMT_EXE="$SMT_CMD --solver $solver --testing"
 
 ### A leading "; OPTIONS: <flags>" line adds command-line flags after --solver, as FileTests
 ### does (see FileTests.optionsDirectiveArgs): each is double-quoted, single-quoted (passed
-### without the quotes) or unquoted.
-opts=()
+### without the quotes) or unquoted. SMT_TEST_OPTIONS (flags for the whole run, e.g. --pipeline)
+### goes first, as in FileTests, so a file's own flags win.
+opts=( $SMT_TEST_OPTIONS )
 first=$(head -1 "$test" | tr -d '\r')
 if [[ "$first" == "; OPTIONS:"* ]]; then
     rest=${first#"; OPTIONS:"}
@@ -51,7 +53,7 @@ fi
 ### so such a test is FileTests' alone
 for o in ${opts[@]+"${opts[@]}"}; do
     if [ "$o" = "--verbose" ] || [ "$o" = "-v" ]; then
-        echo "SKIP $solver $test: its ; OPTIONS: --verbose output is checked by FileTests only"
+        echo "SKIP $solver $test: --verbose output is checked by FileTests only"
         exit 77
     fi
 done
@@ -130,6 +132,11 @@ if [[ "$PLATFORM" == "windows" ]]; then
     tr -d '\r' < "$erractual" > "$erractual.tmp" && mv "$erractual.tmp" "$erractual"
 fi
 
+### A command sent to a solver that has exited gets an "Error writing to solver" response
+### naming an exception that depends on timing, so both sides drop such lines before an
+### exact comparison, as FileTests.filterIOExceptionLines does (#150)
+_filtered() { grep -v -e 'java.io.IOException:' -e 'SolverProcess\$NoResponseException:' "$1"; }
+
 ### Check the error output
 ### IMPORTANT: the priority order in these two 'for f in' loops must stay in sync
 ### with the candidates array in FileTests.java (SMTTests/src/org/smtlib/test/FileTests.java).
@@ -142,7 +149,7 @@ errok=0
 while true; do ## The while true is just to allow a break from the inner test loop
     for f in "${err_candidates[@]}"; do
       if [ -e "$f" ]; then
-        diff -I 'java.io.IOException:' "$erractual" "$f"
+        diff <(_filtered "$erractual") <(_filtered "$f")
         errok=$?
         if [ $errok == 0 ]; then
           rm -f "$erractual"
@@ -181,7 +188,7 @@ comparison=""
 while true; do ## The while true is just to allow a break from the inner test loop
     for f in "${out_candidates[@]}"; do
       if [ -e "$f" ]; then
-        diff -b -I '[(]:memory' -I '[(]:max-memory' -I 'java.io.IOException:' "$outactual" "$f"
+        diff <(_filtered "$outactual") <(_filtered "$f")
         diffresult=$?
         comparison="$f"
         break 2

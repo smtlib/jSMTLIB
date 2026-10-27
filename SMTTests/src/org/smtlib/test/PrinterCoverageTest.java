@@ -43,7 +43,7 @@ import org.smtlib.sexpr.Sexpr;
  * are solver-side results, built via {@code IResponse.IFactory} in Java code (e.g. a
  * {@code get-value} command execution), never parsed from command/logic/theory text - so
  * they need direct construction too.
- * <li>{@code Sexpr.Token}/{@code Sexpr.Expr} (in {@code org.smtlib.sexpr.Sexpr}) are never
+ * <li>{@code Sexpr.Token} (in {@code org.smtlib.sexpr.Sexpr}) is never
  * constructed by the parser either - the parser builds the real typed leaf AST classes
  * directly instead of going through {@code ISexpr.IToken} (see issue #84, which removed
  * {@code ISexpr.IFactory} on this basis but kept {@code Sexpr.Token} itself as legitimate
@@ -300,12 +300,6 @@ public class PrinterCoverageTest {
     public void sexprToken() throws Exception {
         Sexpr.Token<String> token = new Sexpr.Token<>("hello");
         Assert.assertEquals("hello", token.toString());
-    }
-
-    @Test
-    public void sexprExpr() throws Exception {
-        Sexpr.Expr wrapped = new Sexpr.Expr(config.exprFactory.symbol("wrapped"));
-        Assert.assertEquals("wrapped", wrapped.toString());
     }
 
     /** {@link Printer.WithLines} has no callers anywhere in the codebase; this confirms it

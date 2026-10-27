@@ -32,7 +32,13 @@ public class Solver_test implements ISolver {
     /** The symbol table used by this solver */
     public SymbolTable symTable; // TODO - public for the sake of C_what - change to protected
 
-    /** The data structure that maintains the solver's assertion set stack */
+    /** The solver's assertion set stack, one frame per push level, top first. Once the logic
+     *  is set it always has at least one frame: start() and reset() add the base frame and
+     *  pop() cannot remove it. The base frame holds the assertions made outside any push.
+     *  Declarations live in symTable, which has one more frame: each frame here pairs with
+     *  the symTable frame of the same level (the base frame with its primary frame), and
+     *  symTable's bottom, background frame holds the logic's symbols and the global
+     *  declarations. */
     protected List<List<IExpr>> assertionSetStack = new LinkedList<List<IExpr>>();
 
     /** Internal state variable - set non-null once the logic is set. */
@@ -153,9 +159,6 @@ public class Solver_test implements ISolver {
             // rather than being a shortcut that should eventually return the rest -- there is
             // no wire format for "the rest" to be returned in.
             return errs.get(0);
-        }
-        if (assertionSetStack.isEmpty()) {
-            return smtConfig.responseFactory.error("All assertion sets have been popped from the stack");
         }
         assertionSetStack.get(0).add(expr);
         checkSatStatus = null;
@@ -722,7 +725,7 @@ public class Solver_test implements ISolver {
                 symTable.add(new SymbolTable.Entry(sel.symbol(), selSort, null, null), isGlobal(), false);
             }
         }
-        symTable.datatypeConstructors.put(sortName.value(), ctorList);
+        symTable.addDatatypeConstructors(sortName.value(), ctorList, isGlobal());
         return null;
     }
 

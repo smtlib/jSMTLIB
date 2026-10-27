@@ -115,7 +115,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         } catch (IVisitor.VisitorException e) {
             f.error("Error while checking sort abbreviation: " + e.getMessage(),id.pos());
         } catch (Exception e) {
-            f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(),expr.pos());
+            f.error("INTERNAL ERROR: Exception while checking a sort abbreviation: " + e,expr.pos());
         } finally {
             symTable.pop();
         }
@@ -135,9 +135,9 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 f.error(e.getMessage(), e.pos());
             }
         } catch (IVisitor.VisitorException e) {
-            f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(), pos);
+            f.error("INTERNAL ERROR: Exception while checking a function declaration: " + e.getMessage(), pos);
         } catch (Exception e) {
-            f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(), null);
+            f.error("INTERNAL ERROR: Exception while checking a function declaration: " + e, null);
         }
         return f.result;
 
@@ -174,9 +174,9 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 f.error(e.getMessage(), e.pos());
             }
         } catch (IVisitor.VisitorException e) {
-            f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(),expr.pos());
+            f.error("INTERNAL ERROR: Exception while checking a function definition: " + e.getMessage(),expr.pos());
         } catch (Exception e) {
-            f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(),expr.pos());
+            f.error("INTERNAL ERROR: Exception while checking a function definition: " + e,expr.pos());
         } finally {
             symTable.pop();
         }
@@ -263,7 +263,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         } catch (IVisitor.VisitorException e) {
             f.error("Visitor Exception: " + e.getMessage(), e.pos());
         } catch (Exception e) {
-            f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(),expr.pos());
+            f.error("INTERNAL ERROR: Exception while checking an expression: " + e,expr.pos());
         }
         return f.result;
     }
@@ -288,7 +288,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         } catch (IVisitor.VisitorException e) {
             f.error("Visitor Exception: " + e.getMessage(), e.pos());
         } catch (Exception e) {
-            f.error("INTERNAL ERROR: Exception while checking sort abbreviation: " + e.getMessage(),expr.pos());
+            f.error("INTERNAL ERROR: Exception while checking an assertion: " + e,expr.pos());
         } finally {
             if (!f.result.isEmpty()) symTable.pop();
         }
@@ -1465,7 +1465,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             scrutineeSortName = fam.toString();
         }
         List<ISymbol> allCtors = (scrutineeSortName != null)
-                ? symTable.datatypeConstructors.get(scrutineeSortName) : null;
+                ? symTable.datatypeConstructors(scrutineeSortName) : null;
         if (allCtors == null) {
             error("The scrutinee of a match expression must be of a datatype sort, but has sort "
                     + pr(scrutineeSort), e.expr().pos());

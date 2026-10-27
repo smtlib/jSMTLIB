@@ -108,4 +108,32 @@ public class TypeCheckerCoverageTest {
         Assert.assertNull(tc.visit(fcnSort));
         Assert.assertTrue(soleErrorMessage(tc).contains("unexpected type-checking of a ISort.IFcnSort"));
     }
+
+    /** An object whose every method but pos() throws, standing in for an API-built node that crashes the
+     *  TypeChecker; the static check methods must report it under their own name. */
+    @SuppressWarnings("unchecked")
+    private <T> T crashing(Class<T> c) {
+        return (T)java.lang.reflect.Proxy.newProxyInstance(c.getClassLoader(), new Class<?>[]{c},
+                (proxy, method, args) -> {
+                    if (method.getName().equals("pos")) return null;
+                    throw new IllegalStateException("boom");
+                });
+    }
+
+    private void assertReported(List<IResponse> errs, String what) {
+        Assert.assertEquals(errs.toString(), 1, errs.size());
+        String msg = config.defaultPrinter.toString(errs.get(0));
+        Assert.assertTrue(msg, msg.contains("while checking " + what + ": java.lang.IllegalStateException: boom"));
+    }
+
+    @Test
+    public void internalErrorsNameTheirCheck() throws Exception {
+        ISymbol f = config.exprFactory.symbol("f");
+        assertReported(TypeChecker.checkAssertion(symTable, crashing(IExpr.class)), "an assertion");
+        assertReported(TypeChecker.check(symTable, crashing(IExpr.class)), "an expression");
+        assertReported(TypeChecker.checkFcn(symTable, f, Collections.singletonList(crashing(ISort.class)),
+                config.sortFactory.Bool(), (org.smtlib.IPos)null), "a function declaration");
+        assertReported(TypeChecker.checkFcn(symTable, f, Collections.<IExpr.IDeclaration>emptyList(),
+                crashing(ISort.class), f), "a function definition");
+    }
 }
