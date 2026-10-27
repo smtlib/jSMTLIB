@@ -252,12 +252,14 @@ public class AbstractSolver implements ISolver {
      *  elapsed-time figures (e.g. cvc5's :all-statistics response embeds these as bare,
      *  unquoted "NNNms" tokens, which aren't valid SMT-LIB syntax at all and would
      *  otherwise cascade into a wall of "Invalid token" parse errors that also differ
-     *  every run) and :memory/:max-memory usage figures. */
-    protected static String normalizeForTesting(String raw) {
+     *  every run), and, in a reply to {@code get-info :all-statistics}, every number: statistics
+     *  are run-dependent by nature, and solvers name them as they please. Their names are kept. */
+    protected static String normalizeForTesting(String raw, IKeyword infoflag) {
         String s = raw;
         s = s.replaceAll("\\d+(\\.\\d+)?ms", "TIME");
-        s = s.replaceAll("(\\(:memory\\s+)[\\d.]+", "$1VALUE");
-        s = s.replaceAll("(\\(:max-memory\\s+)[\\d.]+", "$1VALUE");
+        if (Utils.ALL_STATISTICS.value().equals(infoflag.value())) {
+            s = s.replaceAll("(?<=[\\s(])-?\\d+(\\.\\d+)?(?=[\\s)])", "VALUE");
+        }
         return s;
     }
 
@@ -310,7 +312,7 @@ public class AbstractSolver implements ISolver {
             }
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;
-            if (scrubNonDeterminism && smtConfig.testing) response = normalizeForTesting(response);
+            if (scrubNonDeterminism && smtConfig.testing && cmd instanceof Iget_info g) response = normalizeForTesting(response, g.infoflag());
             IResponse result = parseResponse(response);
             // parseResponse() (or a subclass override) can itself return null for some
             // malformed/edge-case response text without throwing -- same defensive

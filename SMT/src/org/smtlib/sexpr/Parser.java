@@ -1130,14 +1130,29 @@ public class Parser extends Lexer implements IParser {
                 if (list.get(0) instanceof ISymbol && ((ISymbol)list.get(0)).value().equals("error") && list.get(1) instanceof IStringLiteral) {
                     return f.error(((IStringLiteral)list.get(1)).value());
                 }
-                if (list.get(0) instanceof IKeyword) {
-                    IAttribute<?> attr = smtConfig.exprFactory.attribute((IKeyword)list.get(0),list.get(1));
-                    return f.get_info_response(attr);
-                }
             }
+            List<IAttribute<?>> attributes = attributeList(list);
+            if (attributes != null) return f.get_info_response(attributes);
         }
         return sexpr;
         //return f.error("Could not translate response: " + response);
+    }
+
+    /** The attributes of a get-info reply, each a keyword with an optional value, or null if the
+     *  list is not of that form */
+    private /*@Nullable*/ List<IAttribute<?>> attributeList(List<ISexpr> list) {
+        if (list.isEmpty()) return null;
+        List<IAttribute<?>> attributes = new LinkedList<IAttribute<?>>();
+        for (int i = 0; i < list.size(); i++) {
+            if (!(list.get(i) instanceof IKeyword)) return null;
+            IKeyword key = (IKeyword)list.get(i);
+            if (i + 1 < list.size() && !(list.get(i + 1) instanceof IKeyword)) {
+                attributes.add(smtConfig.exprFactory.attribute(key, list.get(++i)));
+            } else {
+                attributes.add(smtConfig.exprFactory.attribute(key));
+            }
+        }
+        return attributes;
     }
 
     /** Parses a left parenthesis, returning null and emitting an error message
