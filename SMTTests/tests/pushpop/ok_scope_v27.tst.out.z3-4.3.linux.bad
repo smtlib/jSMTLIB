@@ -1,0 +1,22 @@
+success
+success
+success
+success
+unsupported
+(error "line 8 column 16: unknown sort 'X'")
+success
+(error "line 10 column 20: invalid declaration, named expression already defined with this name m")
+success
+success
+unsupported
+(error "line 14 column 25: named expression already defined")
+unsupported
+success
+unsupported
+(error "line 18 column 20: invalid declaration, named expression already defined with this name m")
+(error "line 19 column 14: invalid sort declaration, sort already declared/defined")
+(error "line 20 column 24: invalid declaration, function 'f' (whith the given signature) already declared")
+unsupported
+(error "line 22 column 21: invalid declaration, named expression already defined with this name m")
+(error "line 23 column 14: invalid sort declaration, sort already declared/defined")
+(error "line 24 column 22: invalid number of parameters to sort constructor")

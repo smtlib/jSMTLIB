@@ -1,0 +1,20 @@
+(define-fun-rec size ((t Tree)) Int (match t ((leaf 0) ((node v k) 1))))
+                         ^^^^
+(declare-fun c () Color)
+                  ^^^^^
+(declare-fun r () Tree)
+                  ^^^^
+(assert (= c red))
+           ^
+(assert (match r ((leaf false) ((node v w) (= (val r) v)))))
+               ^
+(assert (p (size r)))
+                 ^
+(assert (= c green))
+           ^
+(assert (= (kids r) (fcons leaf fnil)))
+                 ^
+(assert (match r ((leaf false) ((node v w) (= w (rest w))))))
+               ^
+(assert (q (size (head (kids r)))))
+                             ^

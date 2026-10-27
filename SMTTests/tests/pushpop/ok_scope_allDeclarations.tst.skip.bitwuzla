@@ -1,0 +1,1 @@
+bitwuzla supports no Int sort: it reports the first use in a non-SMT-LIB form and exits, so the rest of this script is not run. Scoping with bitwuzla is checked by ok_scope_*/err_scope_* tests over its own theories and by err_scope_resetAssertionsTwice.tst.

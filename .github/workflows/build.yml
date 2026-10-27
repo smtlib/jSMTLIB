@@ -119,8 +119,9 @@ jobs:
     # runs; adding JaCoCo coverage instrumentation (see jsmtlib-test/action.yml) pushed
     # macos-15-x86_64 over 20 minutes and into this exact timeout (run 35530298789).
     # Raised to keep real headroom over the new, coverage-instrumented normal runtime
-    # rather than shrinking that headroom to nothing.
-    timeout-minutes: 35
+    # rather than shrinking that headroom to nothing. Raised from 35 when the windows leg,
+    # then ~34.5 minutes, crossed it (run 40435920011).
+    timeout-minutes: 45
     strategy:
       matrix:
         include:
