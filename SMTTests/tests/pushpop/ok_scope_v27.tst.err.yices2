@@ -1,0 +1,38 @@
+(set-info :smt-lib-version 2.7)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort-parameter X)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun f (X) X)
+^^^^^^^^^^^^^^^^^^^^^
+(pop 1)
+^^^^^^^
+(declare-const m Int)
+^^^^^^^^^^^^^^^^^^^^^
+(declare-sort X 0)
+^^^^^^^^^^^^^^^^^^
+(declare-fun f (X) Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^
+(reset-assertions)
+^^^^^^^^^^^^^^^^^^
+(define-const m Bool true)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort-parameter X)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun f (X) X)
+^^^^^^^^^^^^^^^^^^^^^
+(reset-assertions)
+^^^^^^^^^^^^^^^^^^
+(declare-const m Int)
+^^^^^^^^^^^^^^^^^^^^^
+(declare-sort X 0)
+^^^^^^^^^^^^^^^^^^
+(declare-fun f (X) Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^
+(reset-assertions)
+^^^^^^^^^^^^^^^^^^
+(declare-const m Real)
+^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort X 1)
+^^^^^^^^^^^^^^^^^^
+(declare-fun f ((X Int)) Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

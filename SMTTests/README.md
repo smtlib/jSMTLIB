@@ -109,6 +109,8 @@ a real invocation would. To know before using it:
   (#110; `miscCommands/ok_optionsVerbose.tst`).
 - **The bash `runtest` script honors the directive too** (#137), except that it
   skips a test whose directive has `--verbose`/`-v`: that output differs by runner.
+- **`SMT_TEST_OPTIONS` adds flags to every test** (e.g. `SMT_TEST_OPTIONS=--pipeline`),
+  in both runners, before the file's own flags.
 
 A `.tst` file may have a `Name.tst.stub` beside it, for solver behavior a real solver
 cannot be made to show on demand (#145). `StubSolver` then stands in for the solver named by

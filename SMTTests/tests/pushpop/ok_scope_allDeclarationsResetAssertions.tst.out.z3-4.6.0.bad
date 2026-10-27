@@ -1,0 +1,27 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "line 13 column 18: Invalid function declaration: unknown sort 'Bool'")
+success
+success
+success
+success
+success
+success
+(error "line 20 column 13: unknown constant k")
+success
+success
+success
+success
+success
+success
+success
+success
+success

@@ -1,0 +1,1 @@
+Non-deterministic in this z3 build: after reset-assertions, a later define-fun-rec or match sometimes gets an error response and sometimes kills the solver ("closed its output stream without a response"), differing between runs against the identical binary. A .bad golden (exact-match) cannot stay in sync with that, so this test is skipped instead (#166).

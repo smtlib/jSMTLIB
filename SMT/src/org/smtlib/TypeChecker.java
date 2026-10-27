@@ -1486,7 +1486,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             scrutineeSortName = fam.toString();
         }
         List<ISymbol> allCtors = (scrutineeSortName != null)
-                ? symTable.datatypeConstructors.get(scrutineeSortName) : null;
+                ? symTable.datatypeConstructors(scrutineeSortName) : null;
         if (allCtors == null) {
             error("The scrutinee of a match expression must be of a datatype sort, but has sort "
                     + pr(scrutineeSort), e.expr().pos());
