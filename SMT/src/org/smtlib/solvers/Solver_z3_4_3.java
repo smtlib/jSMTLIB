@@ -529,7 +529,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         String cmd = "(get-info " + key + ")";
         try {
             String response = solverProcess.sendAndListen(cmd, "\n");
-            if (smtConfig.testing) response = normalizeForTesting(response);
+            if (smtConfig.testing) response = normalizeForTesting(response, key);
             return parseResponse(response);
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to solver: " + cmd + " " + e);
