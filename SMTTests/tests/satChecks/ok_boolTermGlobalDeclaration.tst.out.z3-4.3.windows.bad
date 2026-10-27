@@ -1,0 +1,10 @@
+success
+success
+success
+success
+success
+success
+(error "line 9 column 17: unknown function/constant h")
+(error "line 10 column 17: unknown function/constant h")
+(error "line 11 column 23: unknown function/constant h")
+sat
