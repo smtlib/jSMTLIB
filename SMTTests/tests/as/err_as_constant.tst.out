@@ -1,0 +1,6 @@
+success
+success
+success
+success
+(error "Unknown constant symbol zzz")
+(error "has result sort Bool, expected U (from the `as` qualifier)")

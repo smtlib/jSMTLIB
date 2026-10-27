@@ -1,0 +1,6 @@
+success
+success
+success
+(error "<stdin>:5:8: Application of function (x Bool) does not type check.")
+(error "<stdin>:6:8: Unknown function symbol zzz.")
+(error "<stdin>:7:11: Application of function (x Bool) does not type check.")

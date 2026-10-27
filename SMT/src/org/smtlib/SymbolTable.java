@@ -462,7 +462,7 @@ public class SymbolTable {
                 tried.add(entry);
                 ISort candidateResult;
                 try {
-                    candidateResult = matchExact(entry, argSorts);
+                    candidateResult = matchExact(entry, argSorts, resultSort);
                 } catch (NoMatch nm) {
                     failures.add(nm.getMessage());
                     continue;
@@ -598,8 +598,10 @@ public class SymbolTable {
      * exact match: plain structural equality for a monomorphic entry, unification for a
      * par-polymorphic one (substituting any discovered parameter bindings into the declared
      * result sort). Returns the concrete result sort on success; throws NoMatch, naming the
-     * specific argument and sorts involved, on mismatch. */
-    private ISort matchExact(Entry entry, List<ISort> argSorts) {
+     * specific argument and sorts involved, on mismatch. A par entry's result sort is also
+     * unified with resultSort (from an `as` qualifier, or null), which is the only way to bind
+     * a parameter that no argument determines, e.g. E in (as nil (Lst E)). */
+    private ISort matchExact(Entry entry, List<ISort> argSorts, /*@Nullable*/ ISort resultSort) {
         ISort[] declaredArgs = entry.sort.argSorts();
         if (entry.parameters == null) {
             for (int i = 0; i < declaredArgs.length; i++) {
@@ -620,7 +622,19 @@ public class SymbolTable {
                         + " " + nm.getMessage());
             }
         }
-        return entry.sort.resultSort().substitute(bindings);
+        if (resultSort != null) {
+            try {
+                bindings = unify(entry.sort.resultSort(), resultSort, bindings);
+            } catch (NoMatch nm) {
+                // lookup() reports the result sort mismatch
+            }
+        }
+        ISort result = entry.sort.resultSort().substitute(bindings);
+        if (containsParameter(result)) {
+            throw new NoMatch("The sort of " + smtConfig.defaultPrinter.toString(entry.name)
+                    + " is not determined by its arguments; qualify it with as");
+        }
+        return result;
     }
 
     /** Tries a single 2-arg candidate entry, carrying an associativity attribute, against an
@@ -711,6 +725,42 @@ public class SymbolTable {
             }
         }
         throw new NoMatch(nm + " does not accept more than two arguments");
+    }
+
+    /** Whether the sort contains a sort parameter. */
+    public static boolean containsParameter(ISort sort) {
+        if (sort instanceof ISort.IParameter) return true;
+        if (sort instanceof ISort.IApplication) {
+            for (ISort p: ((ISort.IApplication) sort).parameters()) {
+                if (containsParameter(p)) return true;
+            }
+        }
+        return false;
+    }
+
+    /** The signature of the arity-n function name, instantiated so that its result sort is
+     * resultSort (a par entry's parameters are bound by unification), or null if there is no
+     * such function or its result sort cannot be resultSort. Used for constructor patterns,
+     * whose sort comes from the match scrutinee. */
+    public /*@Nullable*/ IFcnSort lookupInstance(int arity, IIdentifier name, ISort resultSort) {
+        for (Map<IIdentifier,List<Entry>> set: symStack) {
+            List<Entry> entrylist = set.get(name);
+            if (entrylist == null) continue;
+            for (Entry e: entrylist) {
+                if (e.sort.argSorts().length != arity) continue;
+                if (e.parameters == null) {
+                    if (resultSort.equals(e.sort.resultSort())) return e.sort;
+                    continue;
+                }
+                try {
+                    return (IFcnSort) e.sort.substitute(unify(e.sort.resultSort(), resultSort, new HashMap<ISort.IParameter,ISort>()));
+                } catch (NoMatch nm) {
+                    // try the next entry
+                }
+            }
+            return null;
+        }
+        return null;
     }
 
     /** Attempts to unify a (possibly parameter-containing) declared sort against a concrete
