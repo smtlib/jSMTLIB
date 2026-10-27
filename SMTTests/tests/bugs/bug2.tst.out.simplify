@@ -8,6 +8,6 @@ success
 success
 success
 (error "Unknown constant symbol f1")
-(error "Use of boolean in a term position is not yet implemented in the Simplify adapter")
-sat
+success
+unsat
 success

@@ -34,7 +34,5 @@
               ^^^^
 (assert (= (* (- 20.0) b) a))
                  ^^^^
-(assert (= a (ite true b b)))
-                  ^^^^
 (assert (= a (ite true 1.0 1)))
-                  ^^^^
+                       ^^^

@@ -1,4 +1,4 @@
 success
 success
-(error "Boolean quantifiers are not implemented in the Simplify adapter")
+success
 (error "Symbol R is already defined")

@@ -1,0 +1,11 @@
+; #160: a Bool define-fun and a Bool let binding, used as formulas and as terms
+(set-logic QF_UFLIA)
+(declare-fun g (Bool) Int)
+(define-fun pos ((y Int)) Bool (> y 0))
+(push 1)
+(assert (pos 3))
+(assert (not (= (g (pos 3)) (g true))))
+(check-sat)
+(pop 1)
+(assert (let ((b (pos 3))) (and b (= (g b) 7))))
+(check-sat)

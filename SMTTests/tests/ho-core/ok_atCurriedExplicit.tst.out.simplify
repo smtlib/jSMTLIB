@@ -5,6 +5,6 @@ success
 success
 success
 success
-(error "Bad input: Unknown predicate symbol: @.")
+sat
 success
-(error "Bad input: Unknown predicate symbol: @.")
+unsat
