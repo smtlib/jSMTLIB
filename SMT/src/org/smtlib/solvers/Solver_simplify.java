@@ -45,7 +45,7 @@ import org.smtlib.SMT.Configuration.SMTLIB;
  * optimize the implementation then.
  * <p>
  * Several methods (declare_fun, define_fun, pop, push) send an auxiliary command
- * (DEFPRED/BG_PUSH/BG_POP) to the Simplify process and don't inspect its raw response:
+ * (BG_PUSH/BG_POP) to the Simplify process and don't inspect its raw response:
  * unlike the main protocol commands (assert, check-sat, ...), nothing in this project's
  * test suite or documentation records what Simplify's failure response for one of these
  * auxiliary commands actually looks like, so there's no format to parse against without
@@ -54,7 +54,7 @@ import org.smtlib.SMT.Configuration.SMTLIB;
  * Extends {@link AbstractSolver} (for its real-process plumbing: the shared {@code
  * solverProcess} field, {@code options}/{@code checkSatStatus}), not {@link Solver_test}
  * (issue #97): Simplify's real process speaks its own bespoke, non-SMT-LIB Lisp-like
- * protocol (BG_PUSH/DEFPRED/an accumulated conjunction sent with check-sat -- see above),
+ * protocol (BG_PUSH/an accumulated conjunction sent with check-sat -- see above),
  * so {@code AbstractSolver}'s generic defaults (which translate a command to standard
  * SMT-LIB concrete syntax and send that directly) are not usable for Simplify at all --
  * every operation below is either genuinely Simplify-specific (talks to the real process
@@ -91,6 +91,9 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
      */
     private String conjunction = "";
 
+    /** Axioms of global declarations (:global-declarations), which pop does not remove */
+    private String globalAxioms = "";
+
     /** The stack on which to save instances of 'conjunction' */
     private List<String> pushesStack = new LinkedList<String>();
     {
@@ -125,6 +128,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started simplify");
             solverProcess.sendAndListen("(BG_PUSH (FORALL (B X Y) (IMPLIES (EQ B |@true|) (EQ (" + ite_term + " B X Y) X))))\n");
             solverProcess.sendAndListen("(BG_PUSH (FORALL (B X Y) (IMPLIES (NEQ B |@true|) (EQ (" + ite_term + " B X Y) Y))))\n");
+            for (String axiom: Translator.boolTermAxioms()) solverProcess.sendAndListen("(BG_PUSH " + axiom + ")\n");
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Failed to assert background formulae at start");
         }
@@ -206,6 +210,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         assertionSetStack.clear();
         assertionSetStack.add(0,new LinkedList<IExpr>());
         symTable.clear(false);
+        globalAxioms = "";
         logicSet = null;
         options.putAll(smt().utils.defaults);
         ((org.smtlib.impl.Response.Factory)smtConfig.responseFactory).printSuccess = true;
@@ -268,7 +273,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     }
 
     /** Recursive function definitions postdate Simplify (added in SMT-LIB 2.6) and its
-     *  BG_PUSH-based DEFPRED translation (see {@link #define_fun}/{@link #declare_fun})
+     *  axiom-based translation (see {@link #define_fun}/{@link #declare_fun})
      *  has no way to express recursion. Without an override, {@link Solver_test}'s
      *  version would register it in the local type-checking symbol table and report
      *  success without the real Simplify process ever learning about it -- misleading,
@@ -347,7 +352,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 //            else if (s.contains("Invalid.")) res = smtConfig.responseFactory.sat();
 //            else res = smtConfig.responseFactory.unknown();
 
-            String msg = "(NOT (AND TRUE " + conjunction + "\n))\n";
+            String msg = "(NOT (AND TRUE " + globalAxioms + conjunction + "\n))\n";
             String s = solverProcess.sendAndListen(msg);
             // Simplify's two real error shapes, confirmed empirically against a live
             // binary (issues #56/#58): "Bad input: <reason>." for a semantic/protocol
@@ -376,81 +381,54 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     public IResponse declare_fun(Ideclare_fun cmd) {
         IResponse res = declareFunLocal(cmd);
         if (res.isError()) return res;
-        try {
-            if (cmd.resultSort().isBool() && cmd.argSorts().size() > 0) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("(DEFPRED (");
-                sb.append(translate(cmd.symbol()));
-                int n = cmd.argSorts().size();
-                for (int i = 0; i<n; i++) {
-                    sb.append(" X");  // FIXME - fix this
-                    sb.append(i);
-                }
-                sb.append("))\n");
-                String s = solverProcess.sendAndListen(sb.toString());
-                // s (the raw response) intentionally not inspected -- see class doc.
-                res = smtConfig.responseFactory.success();
-            } else {
-                res = smtConfig.responseFactory.success();
-            }
-        } catch (IOException e) {
-            res = smtConfig.responseFactory.error("Failed to declare-fun: " + e.getMessage(),null); // FIXME - position?
-        } catch (IVisitor.VisitorException e) {
-            res = smtConfig.responseFactory.error("Failed to declare-fun: " + e.getMessage(),null);
-        }
+        if (cmd.resultSort().isBool()) addBoolRange(cmd.symbol(), cmd.argSorts().size());
         return res;
+    }
+
+    /** A Bool-valued function is a term function in Simplify, its values |@true| and |@false|; this
+     *  adds that constraint, which pop removes with the declaration unless declarations are global */
+    private void addBoolRange(ISymbol f, int arity) {
+        String name = new Translator(smtConfig).name(f);
+        String axiom;
+        if (arity == 0) {
+            axiom = Translator.boolRange(name);
+        } else {
+            StringBuilder vars = new StringBuilder();
+            for (int i = 0; i < arity; i++) vars.append(" X").append(i);
+            axiom = "(FORALL (" + vars.substring(1) + ") " + Translator.boolRange("(" + name + vars + ")") + ")";
+        }
+        if (isGlobal()) globalAxioms = globalAxioms + " \n" + axiom;
+        else conjunction = conjunction + " \n" + axiom;
     }
 
     @Override
     public IResponse define_fun(Idefine_fun cmd) {
         IResponse res = defineFunLocal(cmd);
         if (res.isError()) return res;
-        try {
-            if (cmd.resultSort().isBool() && cmd.parameters().size() > 0) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("(DEFPRED (");
-                sb.append(translate(cmd.symbol()));
-                int n = cmd.parameters().size();
-                for (int i = 0; i<n; i++) {
-                    sb.append(" X");
-                    sb.append(i);
-                }
-                sb.append("))\n");
-                String s = solverProcess.sendAndListen(sb.toString());
-                // s (the raw response) intentionally not inspected -- see class doc.
-                res = smtConfig.responseFactory.success();
-            } else {
-                res = smtConfig.responseFactory.success();
-            }
-            // Define by an axiom: (= f body) for a constant,
-            // (forall (params) (= (f params) body)) otherwise.
-            // FIXME - inline definitions instead (#164)
-            IExpr.IFactory f = smtConfig.exprFactory;
-            IExpr axiom;
-            if (cmd.parameters().isEmpty()) {
-                axiom = f.fcn(f.symbol("="),cmd.symbol(),cmd.expression());
-            } else {
-                List<IExpr> args = new LinkedList<IExpr>();
-                for (IExpr.IDeclaration d: cmd.parameters()) args.add(d.parameter());
-                axiom = f.forall(cmd.parameters(), f.fcn(f.symbol("="),f.fcn(cmd.symbol(),args),cmd.expression()));
-            }
-            // Not via assertExpr: the axiom is internal, so neither restricted by the logic
-            // (it may be quantified in a QF logic) nor reported by get-assertions
-            TypeChecker tc = new TypeChecker(symTable);
-            try {
-                axiom.accept(tc);
-                if (!tc.result.isEmpty()) return tc.result.get(0);
-                conjunction = conjunction + " \n" + translate(axiom);
-            } catch (VisitorException e) {
-                return smtConfig.responseFactory.error(e.getMessage(),e.pos);
-            }
-            checkSatStatus = null;
-
-        } catch (IOException e) {
-            res = smtConfig.responseFactory.error("Failed to define-fun: " + e.getMessage(),null); // FIXME - position?
-        } catch (IVisitor.VisitorException e) {
-            res = smtConfig.responseFactory.error("Failed to define-fun: " + e.getMessage(),null);
+        if (cmd.resultSort().isBool()) addBoolRange(cmd.symbol(), cmd.parameters().size());
+        // Define by an axiom: (= f body) for a constant,
+        // (forall (params) (= (f params) body)) otherwise.
+        // FIXME - inline definitions instead (#164)
+        IExpr.IFactory f = smtConfig.exprFactory;
+        IExpr axiom;
+        if (cmd.parameters().isEmpty()) {
+            axiom = f.fcn(f.symbol("="),cmd.symbol(),cmd.expression());
+        } else {
+            List<IExpr> args = new LinkedList<IExpr>();
+            for (IExpr.IDeclaration d: cmd.parameters()) args.add(d.parameter());
+            axiom = f.forall(cmd.parameters(), f.fcn(f.symbol("="),f.fcn(cmd.symbol(),args),cmd.expression()));
         }
+        // Not via assertExpr: the axiom is internal, so neither restricted by the logic
+        // (it may be quantified in a QF logic) nor reported by get-assertions
+        TypeChecker tc = new TypeChecker(symTable);
+        try {
+            axiom.accept(tc);
+            if (!tc.result.isEmpty()) return tc.result.get(0);
+            conjunction = conjunction + " \n" + translate(axiom);
+        } catch (VisitorException e) {
+            return smtConfig.responseFactory.error(e.getMessage(),e.pos);
+        }
+        checkSatStatus = null;
         return res;
     }
 
@@ -676,6 +654,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null,null);
             if (symTable.add(entry, isGlobal(), smtConfig.relax)) {
                 checkSatStatus = null;
+                if (cmd.resultSort().isBool()) addBoolRange(cmd.symbol(), 0);
                 return smtConfig.responseFactory.success();
             } else {
                 return smtConfig.responseFactory.error("Symbol " + encodedName + " is already defined",cmd.symbol().pos());
@@ -687,7 +666,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
     /** See {@link Solver_test#declare_fun(ICommand.Ideclare_fun)}: this class's own
      *  local type-check/registration step, extracted to a helper so {@link #declare_fun}
-     *  can still layer its real-process DEFPRED handling on top, the same way it always
+     *  can still layer its Simplify-specific handling on top, the same way it always
      *  called {@code super.declare_fun(cmd)} for this half of the work before this
      *  restructuring. */
     private IResponse declareFunLocal(Ideclare_fun cmd) {
@@ -932,7 +911,6 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
      *  It does not require declaring symbols before use - it presumes
      *  a symbol is a term or a predicate constant or a function when it
      *  first sees one.  
-     *  New predicates are defined with DEFPRED
      *  It has a strict distinction between terms and formulas, so
      *      - there are different symbols for equality (EQ and IFF)
      *      - there are different symbols for inequality (NEQ and (IFF p (NOT q)))
@@ -952,9 +930,9 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
      * (= p q r ...)    (AND (EQ p q ) ( EQ q r) ...)  -- terms
      * (distinct p q r) -- does not make sense for more than 2 arguments if the arguments are boolean 
      * (distinct x y z) (DISTINCT x y z)  -- x,y,z are terms, result is a formula
-     * true          TRUE - when used as a formula
-     * false         FALSE - when used as a formula
-     * (ite b p q)   _ITEB for formula arguments; _ITET for term arguments
+     * true          TRUE - when used as a formula; |@true| as a term
+     * false         FALSE - when used as a formula; |@false| as a term
+     * (ite b p q)   (AND (IMPLIES b p) (IMPLIES (NOT b) q)) for formulas; (_ITE b p q) for terms
      * 
      * < <= > >=       < <= > >= - arguments are terms, result is a formula
      *
@@ -963,7 +941,12 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
      *                     select store  - for arrays
      * 
      * In simplify EQ NEQ < <= > >= DISTINCT take terms as arguments, produce formulas
-     * how to handle boolean terms???
+     *
+     * BOOLEAN TERMS (#160)
+     * A Bool value used as a term is |@true| or |@false|. Bool-valued functions and constants
+     * are term functions, constrained to those two values; in a formula, such a term t is
+     * (EQ t |@true|). A Bool operator in term position is its term counterpart (|@and|, |@lt|,
+     * ...), axiomatized at start. Bool-bound variables are guarded to the two values.
      */
 
     /* Simplify ids:
@@ -1018,7 +1001,8 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             "FORALL","EXISTS","LET",
             "OR","AND","IMPLIES","EXPLIES","XOR","DISTINCT","IFF","NOT","TRUE","FALSE",
             "EQ","NEQ","DISTINCT","PATS",
-            "+","-","*",">",">=","<","<=","store","select","@true",
+            "+","-","*",">",">=","<","<=","store","select","@true","@false",
+            "@not","@and","@or","@xor","@implies","@eq","@lt","@le","@gt","@ge",
             "LBLPOS","LBLNEG","LBL","ORDER",
             "BG_PUSH","BG_POP","DEFPRED","DEFPREDMAP",
             ite_term
@@ -1038,6 +1022,37 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         public Translator(SMT.Configuration smtConfig) {
             this.smtConfig = smtConfig;
+        }
+
+        /** The constraint that term t, a Bool value, is |@true| or |@false| */
+        static String boolRange(String t) {
+            return "(OR (EQ " + t + " |@true|) (EQ " + t + " |@false|))";
+        }
+
+        /** Background axioms for Bool values as terms: |@false| differs from |@true|, and each term
+         *  counterpart of a Bool operator (see {@link #boolTerm}) is |@true| or |@false|, |@true|
+         *  exactly when the operator's formula holds */
+        static List<String> boolTermAxioms() {
+            String t = " |@true|)";
+            String[][] ops = {
+                {"|@not|", "A", "(NEQ A |@true|)"},
+                {"|@and|", "A B", "(AND (EQ A" + t + " (EQ B" + t + ")"},
+                {"|@or|", "A B", "(OR (EQ A" + t + " (EQ B" + t + ")"},
+                {"|@xor|", "A B", "(NOT (IFF (EQ A" + t + " (EQ B" + t + "))"},
+                {"|@implies|", "A B", "(IMPLIES (EQ A" + t + " (EQ B" + t + ")"},
+                {"|@eq|", "X Y", "(EQ X Y)"},
+                {"|@lt|", "X Y", "(< X Y)"},
+                {"|@le|", "X Y", "(<= X Y)"},
+                {"|@gt|", "X Y", "(> X Y)"},
+                {"|@ge|", "X Y", "(>= X Y)"},
+            };
+            List<String> axioms = new ArrayList<String>();
+            axioms.add("(NEQ |@false| |@true|)");
+            for (String[] op: ops) {
+                String app = "(" + op[0] + " " + op[1] + ")";
+                axioms.add("(FORALL (" + op[1] + ") (AND " + boolRange(app) + " (IFF (EQ " + app + t + " " + op[2] + ")))");
+            }
+            return axioms;
         }
 
         @Override
@@ -1076,41 +1091,42 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
                     throw new VisitorException("Have not yet implemented parameterized bit-vector functions",e.pos());
                 }
                 ISymbol fcn = (ISymbol)e.head();
-                String newName = fcn.accept(this);
-
-                // Determine if the arguments are formulas or terms
-                if (resultIsFormula) {
-                    if (newName != null && logicNames.contains(newName)) {
-                        // Propositional boolean item
-                        this.isFormula = true;
-                    } else if (e.args().size() <= 1) {
-                        this.isFormula = false;
-                    } else {
-                        IExpr arg = e.args().get(1); // Use argument 1 for ite's sake
-                        ISort sort = arg.sort();
-                        if (sort == null) {
-                            throw new VisitorException("INTERNAL ERROR: Encountered an un-sorted expression node: " + smtConfig.defaultPrinter.toString(arg),arg.pos());
-                        }
-                        if (sort.isBool()) {
-                            // Some functions can take both bool and non-bool arguments:
-                            //   EQ NEQ DISTINCT ite
-                            this.isFormula = resultIsFormula;
-                            if ("EQ".equals(newName)) newName = "IFF";
-                        } else {
-                            // Arguments must be terms
-                            this.isFormula = false;
-                        }
-                    }
-                } else {
-                    this.isFormula = false;
-                }
-
+                String newName = name(fcn);
                 ISort s = e.sort();
                 if (s == null) {
                     throw new VisitorException("INTERNAL ERROR: Encountered an un-sorted expression node: " + smtConfig.defaultPrinter.toString(e),e.pos());
                 }
-                if (s.isBool() && !resultIsFormula) {
-                    throw new VisitorException("Use of boolean in a term position is not yet implemented in the Simplify adapter",e.pos()); // FIXME - booleans as terms
+                // A function whose value Simplify holds as a term (an uninterpreted function, select):
+                // a Bool value is |@true| or |@false|
+                boolean termFunction = newName.startsWith("|") || newName.equals("select");
+
+                // Determine if the arguments are formulas or terms
+                if (resultIsFormula) {
+                    if (logicNames.contains(newName)) {
+                        // Propositional boolean item
+                        this.isFormula = true;
+                    } else if (newName.equals("EQ") || newName.equals("NEQ") || newName.equals("DISTINCT") || newName.equals(ite_term)) {
+                        IExpr arg = e.args().get(e.args().size() - 1); // the last argument, for ite's sake
+                        ISort sort = arg.sort();
+                        if (sort == null) {
+                            throw new VisitorException("INTERNAL ERROR: Encountered an un-sorted expression node: " + smtConfig.defaultPrinter.toString(arg),arg.pos());
+                        }
+                        // These take both formulas and terms
+                        this.isFormula = sort.isBool();
+                        if (sort.isBool() && "EQ".equals(newName)) newName = "IFF";
+                    } else {
+                        // Arguments must be terms
+                        this.isFormula = false;
+                        if (termFunction) {
+                            this.isFormula = true;
+                            return "(EQ " + termApplication(newName, e.args()) + " |@true|)";
+                        }
+                    }
+                } else {
+                    this.isFormula = false;
+                    if (s.isBool() && !termFunction && !newName.equals(ite_term)) {
+                        return boolTerm(fcn.value(), e.args());
+                    }
                 }
 
                 if (isFormula && newName.equals("NEQ")) {
@@ -1205,6 +1221,69 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             return sb.toString();
         }
 
+        /** (f a1 ... an), with the arguments as terms */
+        private String termApplication(String f, List<IExpr> args) throws IVisitor.VisitorException {
+            boolean saved = isFormula;
+            isFormula = false;
+            try {
+                StringBuilder sb = new StringBuilder("(").append(f);
+                for (IExpr a: args) sb.append(" ").append(a.accept(this));
+                return sb.append(")").toString();
+            } finally {
+                isFormula = saved;
+            }
+        }
+
+        /** A Bool-valued operator application in term position, as a term that is |@true| or |@false|:
+         *  each operator has a term counterpart, axiomatized in {@link #boolTermAxioms} */
+        private String boolTerm(String op, List<IExpr> args) throws IVisitor.VisitorException {
+            List<String> a = new ArrayList<String>();
+            for (IExpr x: args) a.add(x.accept(this));
+            switch (op) {
+                case "not": return "(|@not| " + a.get(0) + ")";
+                case "and": return leftFold("|@and|", a);
+                case "or": return leftFold("|@or|", a);
+                case "xor": return leftFold("|@xor|", a);
+                case "=>": return rightFold("|@implies|", a);
+                case "=": return chain("|@eq|", a);
+                case "<": return chain("|@lt|", a);
+                case "<=": return chain("|@le|", a);
+                case ">": return chain("|@gt|", a);
+                case ">=": return chain("|@ge|", a);
+                case "distinct":
+                    if (args.get(0).sort().isBool()) {
+                        return a.size() == 2 ? "(|@xor| " + a.get(0) + " " + a.get(1) + ")" : "|@false|";
+                    } else {
+                        List<String> ne = new ArrayList<String>();
+                        for (int i = 0; i < a.size(); i++) {
+                            for (int j = i + 1; j < a.size(); j++) ne.add("(|@not| (|@eq| " + a.get(i) + " " + a.get(j) + "))");
+                        }
+                        return leftFold("|@and|", ne);
+                    }
+                default:
+                    throw new VisitorException("Use of " + op + " as a Bool term is not implemented in the Simplify adapter",args.get(0).pos());
+            }
+        }
+
+        private String leftFold(String f, List<String> a) {
+            String r = a.get(0);
+            for (int i = 1; i < a.size(); i++) r = "(" + f + " " + r + " " + a.get(i) + ")";
+            return r;
+        }
+
+        private String rightFold(String f, List<String> a) {
+            String r = a.get(a.size() - 1);
+            for (int i = a.size() - 2; i >= 0; i--) r = "(" + f + " " + a.get(i) + " " + r + ")";
+            return r;
+        }
+
+        /** (op a1 a2 ... an) for a chainable op: the conjunction of (op ai ai+1) */
+        private String chain(String f, List<String> a) {
+            List<String> pairs = new ArrayList<String>();
+            for (int i = 0; i + 1 < a.size(); i++) pairs.add("(" + f + " " + a.get(i) + " " + a.get(i + 1) + ")");
+            return leftFold("|@and|", pairs);
+        }
+
         //@ requires iter.hasNext();
         private <T extends IExpr> String rightassoc(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
             T n = iter.next();
@@ -1243,11 +1322,17 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         @Override
         public String visit(ISymbol e) throws IVisitor.VisitorException {
-            // Symbols do not necessarily have sorts - e.g. if they are function names
+            if (!isFormula && e.value().equals("true")) return "|@true|";
+            if (!isFormula && e.value().equals("false")) return "|@false|";
+            String n = name(e);
+            // A Bool constant or variable is a term, |@true| or |@false|
             ISort sort = e.sort();
-            if (!isFormula && sort != null && sort.isBool()) {
-                throw new VisitorException("Use of boolean in a term position is not yet implemented in the Simplify adapter",e.pos()); // FIXME - booleans as terms
-            }
+            if (isFormula && sort != null && sort.isBool() && n.startsWith("|")) return "(EQ " + n + " |@true|)";
+            return n;
+        }
+
+        /** The Simplify name of a symbol, as a function name or a bound variable */
+        public String name(ISymbol e) {
             // Simplify does not allow tab, newline, cr in identifiers;
             // these are allowed by SMTLIB.
             // Note that neither simplify nor SMTLIB allows \ or |
@@ -1280,13 +1365,10 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         @Override
         public String visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
-            if (!isFormula && e.sort().isBool()) {
-                throw new VisitorException("Use of boolean in a term position is not yet implemented in the Simplify adapter",e.pos()); // FIXME - booleans as terms
-            }
             // Since there is no overloading, the head will be a new symbol
             // and we don't need to worry that it collides with a pre- or user-defined
             // function name
-            String v = e.headSymbol().accept(this); // This will come back with bars
+            String v = name(e.headSymbol()); // This will come back with bars
             if (v.charAt(0) != '|') {
                 throw new VisitorException("INTERNAL ERROR: Do not expect to ever have a pre-defined name within a parameterized identifier",e.headSymbol().pos());
             }
@@ -1294,25 +1376,24 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             for (IExpr.IIndex n: e.indices()) {
                 v = v + "?" + n.toString();
             }
-            return v + "|";
+            v = v + "|";
+            return isFormula && e.sort().isBool() ? "(EQ " + v + " |@true|)" : v;
         }
 
         @Override
         public String visit(IForall e) throws IVisitor.VisitorException {
             if (!isFormula) {
-                throw new VisitorException("Use of forall in a term position is not yet implemented in the Simplify adapter",e.pos()); // FIXME - booleans as terms
+                throw new VisitorException("Use of forall as a Bool term is not implemented in the Simplify adapter",e.pos());
             }
             StringBuilder sb = new StringBuilder();
             sb.append("(FORALL (");
             for (IDeclaration d: e.parameters()) {
-                if (d.sort().isBool()) {
-                    throw new VisitorException("Boolean quantifiers are not implemented in the Simplify adapter",e.pos()); // FIXME - booleans as terms
-                }
-                sb.append(d.parameter().accept(this));
+                sb.append(name(d.parameter()));
                 sb.append(" ");
             }
             sb.append(") ");
-            sb.append(e.expr().accept(this));
+            String guard = boolGuard(e.parameters());
+            sb.append(guard == null ? e.expr().accept(this) : "(IMPLIES " + guard + " " + e.expr().accept(this) + ")");
             sb.append(")");
             return sb.toString();
         }
@@ -1320,28 +1401,34 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         @Override
         public String visit(IExists e) throws IVisitor.VisitorException {
             if (!isFormula) {
-                throw new VisitorException("Use of exists in a term position is not yet implemented in the Simplify adapter",e.pos()); // FIXME - booleans as terms
+                throw new VisitorException("Use of exists as a Bool term is not implemented in the Simplify adapter",e.pos());
             }
             StringBuilder sb = new StringBuilder();
             sb.append("(EXISTS (");
             for (IDeclaration d: e.parameters()) {
-                if (d.sort().isBool()) {
-                    throw new VisitorException("Boolean quantifiers are not implemented in the Simplify adapter",e.pos()); // FIXME - booleans as terms
-                }
-                sb.append(d.accept(this));
+                sb.append(name(d.parameter()));
                 sb.append(" ");
             }
             sb.append(") ");
-            sb.append(e.expr().accept(this));
+            String guard = boolGuard(e.parameters());
+            sb.append(guard == null ? e.expr().accept(this) : "(AND " + guard + " " + e.expr().accept(this) + ")");
             sb.append(")");
             return sb.toString();
         }
 
+        /** The constraint that each Bool variable is |@true| or |@false|, or null if there are none:
+         *  Simplify's variables range over all terms */
+        private /*@Nullable*/ String boolGuard(List<IDeclaration> params) {
+            StringBuilder sb = new StringBuilder();
+            for (IDeclaration d: params) {
+                if (d.sort().isBool()) sb.append(" ").append(boolRange(name(d.parameter())));
+            }
+            return sb.length() == 0 ? null : "(AND" + sb + ")";
+        }
+
         @Override 
         public String visit(IDeclaration e) throws IVisitor.VisitorException {
-            StringBuilder sb = new StringBuilder();
-            sb.append(e.parameter().accept(this));
-            return sb.toString();
+            return name(e.parameter());
         }
 
         @Override
@@ -1382,13 +1469,14 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             // Simplify does not have let
             // We can create a new temp variable (or function of any quantified parameters)
             // and then use that.
+            boolean saved = isFormula;
+            isFormula = false;
             for (IBinding b : e.bindings()) {
-                String r = b.expr().accept(this);
-                ISort s = b.expr().sort();
+                // A Bool value is a term too (|@true| or |@false|)
                 // FIXME - don't use toString - also need to map to a unique new temporary
-                r = (s.isBool()? "(IFF " : "(EQ ") + b.parameter().accept(this) + " " + r + " )";
-                conjuncts.add(r);
+                conjuncts.add("(EQ " + name(b.parameter()) + " " + b.expr().accept(this) + " )");
             }
+            isFormula = saved;
             return e.expr().accept(this);
             //throw new VisitorException("Use of let is not yet implemented in the Simplify adapter",e.pos()); // FIXME - let in Simplify
         }

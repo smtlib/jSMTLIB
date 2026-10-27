@@ -1,0 +1,11 @@
+; #160: a global Bool function keeps its values true and false after the pop that ends its scope
+(set-option :global-declarations true)
+(set-logic QF_UFLIA)
+(push 1)
+(declare-fun h (Int) Bool)
+(pop 1)
+(declare-fun g (Bool) Int)
+(assert (not (h 1)))
+(assert (not (h 2)))
+(assert (not (= (g (h 1)) (g (h 2)))))
+(check-sat)

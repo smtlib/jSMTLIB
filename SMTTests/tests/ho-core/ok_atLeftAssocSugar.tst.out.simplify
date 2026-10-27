@@ -3,6 +3,6 @@ success
 success
 success
 success
-(error "Bad input: Unknown predicate symbol: @.")
+sat
 success
-(error "Bad input: Unknown predicate symbol: @.")
+(error "Bad input: @ used with different arities: 3 and 2.")

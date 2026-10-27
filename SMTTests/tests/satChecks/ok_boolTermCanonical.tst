@@ -1,0 +1,9 @@
+; #160: two false Bool values are the same value, also as function arguments
+(set-logic QF_UFLIA)
+(declare-fun p () Bool)
+(declare-fun q () Bool)
+(declare-fun g (Bool) Int)
+(assert (not p))
+(assert (not q))
+(assert (not (= (g p) (g q))))
+(check-sat)
