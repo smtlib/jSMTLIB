@@ -1,3 +1,0 @@
-Solver_simplify does not translate Bool-sorted terms in term positions, here the
-Bool parameters of y (the quantified axiom defining y binds Bool variables) --
-see https://github.com/smtlib/jSMTLIB/issues/160 (inlining, #164, would avoid it)
