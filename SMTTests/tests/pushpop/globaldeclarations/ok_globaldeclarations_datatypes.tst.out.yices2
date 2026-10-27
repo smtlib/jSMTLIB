@@ -1,0 +1,18 @@
+success
+success
+success
+(error "at line 6, column 18: syntax error: declare-datatype is not a command")
+(error "at line 7, column 19: syntax error: declare-datatypes is not a command")
+(error "at line 8, column 16: syntax error: define-fun-rec is not a command")
+(error "at line 9, column 17: syntax error: define-funs-rec is not a command")
+success
+(error "at line 11, column 19: undefined sort: Color")
+(error "Error writing to solver: (declare-fun r () Tree) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= c red)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (match r ( (leaf false) ((node v w) (= (val r) v))))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (p (size r))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (reset-assertions) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= c green)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (kids r) (fcons leaf fnil))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (match r ( (leaf false) ((node v w) (= w (rest w)))))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (q (size (head (kids r))))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

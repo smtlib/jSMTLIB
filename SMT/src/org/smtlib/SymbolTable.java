@@ -38,8 +38,6 @@ public class SymbolTable {
     public boolean floatingPointTheorySet = false;
 
 
-    /** Maps each datatype sort name to its constructors (in declaration order); populated by declare-datatype/declare-datatypes */
-    public Map<String, List<ISymbol>> datatypeConstructors = new HashMap<>();
 
     /** The logic that is being used - this value is used to check that
      * expressions, etc., conform to the language restrictions of the current
@@ -70,6 +68,10 @@ public class SymbolTable {
     private List<Map<IIdentifier,List<Entry>>> symStack;
     /** The top-most Symbol scope */
     private Map<IIdentifier,List<Entry>> names;
+
+    /** The stack of datatype scopes, parallel to sortStack: each maps a datatype sort name to
+     *  its constructors (in declaration order), in the frame holding the sort itself (#166) */
+    private List<Map<String,List<ISymbol>>> ctorStack;
 
     /** Thrown internally within lookup() to report, with a specific reason, why a single
      * candidate entry could not be matched against an actual call -- caught per candidate and
@@ -171,29 +173,45 @@ public class SymbolTable {
         return new Iterator(this);
     }
 
-    /** Initializes the symbol table with an empty background frame and one empty frame. */
+    /** Leaves the background frame and an empty primary frame, the state after set-logic;
+     *  keepBackground false empties the background frame too. */
     public void clear(boolean keepBackground) {
         if (keepBackground) {
-            while (sortStack.size() > 1) sortStack.remove(0);
-            while (symStack.size() > 1) symStack.remove(0);
-            // add()/addSortParameter() write through the sorts/names fields, not through
-            // symStack/sortStack directly -- without this they'd keep pointing at the
-            // frame Map just removed above, silently losing any subsequent declaration.
-            sorts = sortStack.get(0);
-            names = symStack.get(0);
+            while (symStack.size() > 1) {
+                sortStack.remove(0);
+                symStack.remove(0);
+                ctorStack.remove(0);
+            }
         } else {
             sortStack = new LinkedList<Map<IIdentifier,ISort.IDefinition>>();
             symStack = new LinkedList<Map<IIdentifier,List<Entry>>>();
-            datatypeConstructors = new HashMap<>();
+            ctorStack = new LinkedList<Map<String,List<ISymbol>>>();
             push(); // an empty background frame
-            push(); // an empty primary frame
         }
+        push(); // an empty primary frame
     }
 
     /** Adds a new empty frame on the top of the symbol table stack. */
     public void push() {
         sortStack.add(0,sorts=new HashMap<IIdentifier,ISort.IDefinition>());
         symStack.add(0,names=new HashMap<IIdentifier,List<Entry>>());
+        ctorStack.add(0,new HashMap<String,List<ISymbol>>());
+    }
+
+    /** Records a datatype's constructors, in the frame its sort was added to
+     *  (global = background, else current). */
+    public void addDatatypeConstructors(String sortName, List<ISymbol> ctors, boolean global) {
+        ctorStack.get(global ? ctorStack.size()-1 : 0).put(sortName, ctors);
+    }
+
+    /** The constructors of the datatype sort with the given name, or null if no datatype of
+     *  that name is in scope. */
+    public /*@Nullable*/ List<ISymbol> datatypeConstructors(String sortName) {
+        for (Map<String,List<ISymbol>> frame: ctorStack) {
+            List<ISymbol> ctors = frame.get(sortName);
+            if (ctors != null) return ctors;
+        }
+        return null;
     }
 
     /** Combines the top two symbol scopes, removing the current top scope; presumes that there
@@ -224,6 +242,7 @@ public class SymbolTable {
         }
         sortStack.remove(0);
         symStack.remove(0);
+        ctorStack.remove(0);
         sorts = sortStack.get(0);
         names = symStack.get(0);
     }

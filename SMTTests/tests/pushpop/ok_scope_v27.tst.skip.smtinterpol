@@ -1,0 +1,1 @@
+SMTInterpol 2.5 stops responding to the command that follows one it reports as a Syntax Error (here define-fun-rec or define-const, which it does not know) -- the same hang as declare/err_declareSortParameter_dup.tst.skip.smtinterpol. No golden captures a hang meaningfully; skip instead.
