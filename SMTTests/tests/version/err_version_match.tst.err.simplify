@@ -1,0 +1,6 @@
+(set-logic ALL)
+           ^^^
+(declare-fun x () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^
+(assert (match x ((y y))))
+^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -466,11 +466,15 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         }
     }
 
+    /** Names of the logics Simplify decides: uninterpreted functions, arrays and linear integer
+     *  arithmetic, with or without quantifiers. Simplify reasons over integers and treats other
+     *  operations (bit-vectors, nonlinear products, div) as uninterpreted, giving wrong answers. */
+    static final java.util.regex.Pattern supportedLogics = java.util.regex.Pattern.compile("(QF_)?(AX|A)?(UF)?(IDL|LIA)?");
+
     @Override
     public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
-        // FIXME - discrimninate among logics
-        if (logicName.contains("BV")) {
-            return smtConfig.responseFactory.error("The simplify solver does not yet support the bit-vector theory",pos);
+        if (!supportedLogics.matcher(logicName).matches()) {
+            return smtConfig.responseFactory.error("The simplify solver does not support the " + logicName + " logic",pos);
         }
         boolean lSet = logicSet != null;
         IResponse status = setLogicLocal(logicName,pos);

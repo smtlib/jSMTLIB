@@ -1,0 +1,6 @@
+(error "The simplify solver does not support the ALL logic")
+(error "User-defined symbols may not begin with . or @")
+(error "User-defined symbols may not begin with . or @")
+(error "User-defined symbols may not begin with . or @")
+(error "User-defined symbols may not begin with . or @")
+(error "User-defined symbols may not be empty strings")

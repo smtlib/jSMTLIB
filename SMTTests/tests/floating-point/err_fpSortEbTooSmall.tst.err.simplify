@@ -1,0 +1,4 @@
+(set-logic ALL)
+           ^^^
+(declare-fun x () (_ FloatingPoint 1 24))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

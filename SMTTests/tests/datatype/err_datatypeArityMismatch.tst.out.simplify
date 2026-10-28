@@ -1,0 +1,2 @@
+(error "The simplify solver does not support the ALL logic")
+(error "Arity 2 of sort Pair does not match the number of sort parameters (1)")

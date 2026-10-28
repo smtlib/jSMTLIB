@@ -1,35 +1,35 @@
+(error "The simplify solver does not support the ALL logic")
+(error "The logic must be set before a push command is issued")
+(error "The logic must be set before a declare-datatype command is issued")
+(error "The logic must be set before a declare-datatypes command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before a pop command is issued")
+(error "The logic must be set before a declare-sort command is issued")
+(error "The logic must be set before a declare-sort command is issued")
+(error "The logic must be set before a declare-sort command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-fun command is issued")
 success
+(error "The logic must be set before a declare-datatype command is issued")
+(error "The logic must be set before a declare-datatypes command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before an assert command is issued")
 success
-unsupported
-unsupported
-(error "No such sort symbol declared: Color")
-(error "No such sort symbol declared: Tree")
-(error "Unknown constant symbol c")
-(error "Unknown constant symbol t")
-(error "Unknown constant symbol t")
-success
-success
-success
-success
-success
-success
-success
-success
-success
-success
-success
-success
-success
-success
-success
-unsupported
-unsupported
-(error "No such sort symbol declared: Tree")
-(error "Unknown constant symbol t")
-success
-success
-success
-success
-success
-success
-success
+(error "The logic must be set before a declare-sort command is issued")
+(error "The logic must be set before a declare-sort command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-fun command is issued")

@@ -1,0 +1,10 @@
+(set-logic ALL)
+           ^^^
+(declare-datatype D ((c) (e)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort D 0)
+^^^^^^^^^^^^^^^^^^
+(declare-fun x () D)
+^^^^^^^^^^^^^^^^^^^^
+(assert (match x ((c true) (e false))))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

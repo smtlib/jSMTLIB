@@ -1,0 +1,4 @@
+(set-logic ALL)
+           ^^^
+(declare-datatypes ((D 1)) ((par (T) ())))
+                     ^

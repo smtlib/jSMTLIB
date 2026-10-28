@@ -1,14 +1,14 @@
-success
-success
-success
-success
-(error "The simplify solver cannot handle decimal literals")
-(error "The simplify solver cannot handle decimal literals")
-(error "The simplify solver cannot handle decimal literals")
-(error "differences must be difference of symbols: (>= (- x 1.0) y)")
-(error "differences must be difference of symbols: (>= (- x 1.0) y)")
-(error "The simplify solver cannot handle decimal literals")
-(error "lhs must be a symbol or a difference: (>= (* x y) 0.0)")
-(error "A quantified expression is not allowed in the QF_RDL logic")
-(error "Declarations of uninterpreted functions are not allowed in this logic")
-(error "Error while checking sort abbreviation: New sorts are not allowed in this logic")
+(error "The simplify solver does not support the QF_RDL logic")
+(error "The logic must be set before a declare-const command is issued")
+(error "The logic must be set before a declare-const command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-sort command is issued")

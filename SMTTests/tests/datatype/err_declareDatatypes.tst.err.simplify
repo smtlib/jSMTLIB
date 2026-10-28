@@ -1,0 +1,6 @@
+(set-logic ALL)
+           ^^^
+(declare-datatypes ((|.X| 0)) (((red) )))
+                     ^^^^
+
+^

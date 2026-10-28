@@ -3,9 +3,9 @@ success
 (error "Unknown predicate symbol undeclaredfun with argument types Int")
 sat
 success
-success
+(error "The simplify solver does not support the ALL logic")
 unsupported
-success
-(error "The simplify solver cannot handle string literals")
-sat
-(error "The get-value command is only valid if :produce-models has been enabled")
+(error "The logic must be set before a declare-const command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before a check-sat command is issued")
+(error "Unknown constant symbol s")

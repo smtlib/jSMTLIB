@@ -1,6 +1,12 @@
 (assert (undeclaredfun x))
         ^^^^^^^^^^^^^^^^^
+(set-logic ALL)
+           ^^^
+(declare-const s String)
+^^^^^^^^^^^^^^^^^^^^^^^^
 (assert (= s "line 5 of the report"))
-             ^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(check-sat)
+^^^^^^^^^^^
 (get-value (s))
-^^^^^^^^^^^^^^^
+            ^

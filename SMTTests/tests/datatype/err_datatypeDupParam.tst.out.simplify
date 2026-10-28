@@ -1,0 +1,2 @@
+(error "The simplify solver does not support the ALL logic")
+(error "Duplicate sort parameter in datatype declaration: X")

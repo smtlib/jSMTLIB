@@ -1,2 +1,2 @@
-success
-unsupported
+(error "The simplify solver does not support the ALL logic")
+(error "The logic must be set before a declare-datatype command is issued")
