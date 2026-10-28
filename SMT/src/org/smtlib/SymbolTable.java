@@ -482,7 +482,7 @@ public class SymbolTable {
                         found = entry;
                         foundResult = candidateResult;
                     } else {
-                        failures.add("has result sort " + smtConfig.defaultPrinter.toString(candidateResult)
+                        failures.add(smtConfig.defaultPrinter.toString(name) + " has result sort " + smtConfig.defaultPrinter.toString(candidateResult)
                                 + ", expected " + smtConfig.defaultPrinter.toString(resultSort) + " (from the `as` qualifier)");
                     }
                 } else {
@@ -510,7 +510,7 @@ public class SymbolTable {
                 try {
                     ISort assocResult = matchAssociative(entry, argSorts);
                     if (resultSort == null || resultSort.equals(assocResult)) return assocResult;
-                    failures.add("has result sort " + smtConfig.defaultPrinter.toString(assocResult)
+                    failures.add(smtConfig.defaultPrinter.toString(name) + " has result sort " + smtConfig.defaultPrinter.toString(assocResult)
                             + ", expected " + smtConfig.defaultPrinter.toString(resultSort) + " (from the `as` qualifier)");
                 } catch (NoMatch nm) {
                     failures.add(nm.getMessage());
