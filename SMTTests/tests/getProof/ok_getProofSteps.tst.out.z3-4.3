@@ -1,8 +1,11 @@
-unsupported
+success
 success
 success
 success
 success
 success
 unsat
-(error "The get-proof command is only valid if :produce-proofs has been enabled")
+(
+(set-logic QF_UF)
+(proof (|unit-resolution| (|and-elim| (asserted (and p q)) p) (asserted (not p)) false))
+)
