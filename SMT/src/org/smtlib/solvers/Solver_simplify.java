@@ -1092,6 +1092,33 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
                     throw new VisitorException("Have not yet implemented parameterized bit-vector functions",e.pos());
                 }
                 ISymbol fcn = (ISymbol)e.head();
+                ISort fs = fcn.sort();
+                if (fs != null && fs.expand() instanceof ISort.IApplication
+                        && Utils.ARROW.equals(((ISort.IApplication)fs.expand()).family().headSymbol())) {
+                    // The type checker sorts the head of (m t ...) only for a map m: translate it as (@ m t ...)
+                    List<IExpr> atArgs = new LinkedList<IExpr>(e.args());
+                    atArgs.add(0, fcn);
+                    IFcnExpr at = smtConfig.exprFactory.fcn(Utils.AT, atArgs);
+                    at.setSort(e.sort());
+                    this.isFormula = resultIsFormula;
+                    return at.accept(this);
+                }
+                if (fcn.equals(Utils.AT) && e.args().size() > 2) {
+                    // @ is left-assoc: (@ g a b) is (@ (@ g a) b), so |@| always has two arguments
+                    IExpr g = e.args().get(0);
+                    ISort gs = g.sort() == null ? null : g.sort().expand();
+                    if (!(gs instanceof ISort.IApplication)) {
+                        throw new VisitorException("INTERNAL ERROR: Encountered an un-sorted expression node: " + smtConfig.defaultPrinter.toString(g),g.pos());
+                    }
+                    IFcnExpr inner = smtConfig.exprFactory.fcn(Utils.AT, g, e.args().get(1));
+                    inner.setSort(((ISort.IApplication)gs).parameters().get(1));
+                    List<IExpr> rest = new LinkedList<IExpr>(e.args().subList(2, e.args().size()));
+                    rest.add(0, inner);
+                    IFcnExpr outer = smtConfig.exprFactory.fcn(Utils.AT, rest);
+                    outer.setSort(e.sort());
+                    this.isFormula = resultIsFormula;
+                    return outer.accept(this);
+                }
                 String newName = name(fcn);
                 ISort s = e.sort();
                 if (s == null) {

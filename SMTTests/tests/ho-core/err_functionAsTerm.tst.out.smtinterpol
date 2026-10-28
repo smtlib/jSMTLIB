@@ -1,0 +1,7 @@
+success
+success
+success
+success
+(error "<stdin>:7:11: Application of function null does not type check.")
+(error "<stdin>:8:11: Application of function null does not type check.")
+(error "The solver stopped without a response to: (assert (= (lambda ((x Int) ) (f x)) (lambda ((x Int) ) (g x))))")
