@@ -5,4 +5,4 @@ success
 success
 sat
 success
-(error "Bad input: @ used with different arities: 3 and 2.")
+unsat

@@ -1,0 +1,7 @@
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:20: expected '_' or 'Array'
+")
+(error "Error writing to solver: (declare-fun k () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (m true) 0)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (m 0 1) 0)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (k 0) 0)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

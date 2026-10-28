@@ -1,0 +1,4 @@
+(assert (= f g))
+           ^
+(assert (= h h))
+           ^

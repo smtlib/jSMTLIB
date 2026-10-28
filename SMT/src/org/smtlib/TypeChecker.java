@@ -917,6 +917,15 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             }
         }
 
+        // (m t ...) for a map m abbreviates (@ m t ...) (SMT-LIB 2.7 Sec. 3.9)
+        ISort mapSort = mapSort(head);
+        if (mapSort != null) {
+            save((ISymbol)head, mapSort);
+            List<ISort> atArgs = new LinkedList<ISort>(argSorts);
+            atArgs.add(0, mapSort);
+            argSorts = atArgs;
+            head = Utils.AT;
+        }
         StringBuilder reason = new StringBuilder();
         ISort matchedResultSort = symTable.lookup(head,argSorts,resultSort,reason);
         if (matchedResultSort == null && symTable.realsIntsTheorySet) {
@@ -966,11 +975,28 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                     msg = msg + " " + smtConfig.defaultPrinter.toString(s);
                 }
             }
+            if (mapSort != null) msg = "(" + name + " ...) is read as (@ " + name + " ...): " + msg;
             error(msg,e.pos());
             return null;
         } else {
             return save(e,matchedResultSort);
         }
+    }
+
+    /** The sort of head if it is a variable or constant of a -> sort, else null */
+    private /*@Nullable*/ ISort mapSort(IIdentifier head) {
+        if (!(head instanceof ISymbol)) return null;
+        ISort s;
+        Variable v = currentScope.get((ISymbol)head);
+        if (v != null) {
+            s = v.sort;
+        } else {
+            IFcnSort fs = symTable.lookup(0, head);
+            s = fs == null ? null : fs.resultSort();
+        }
+        if (s == null) return null;
+        ISort x = s.expand();
+        return (x instanceof ISort.IApplication && Utils.ARROW.equals(((ISort.IApplication)x).family().headSymbol())) ? s : null;
     }
 
     private boolean isBitVec(ISort s) {
@@ -1087,7 +1113,10 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 return save(e,v.sort);
             }
             if ((sort=symTable.lookup(0,e))==null) {
-                result.add(smtConfig.responseFactory.error("Unknown constant symbol " + value, e.pos()));
+                // A declared function is not a term (SMT-LIB 2.7 Remark 10); lookup's reason says so
+                StringBuilder reason = new StringBuilder();
+                symTable.lookup(e, new LinkedList<ISort>(), null, reason);
+                error(reason.length() > 0 ? reason.toString() : "Unknown constant symbol " + value, e.pos());
                 return null;
             } else if (SymbolTable.containsParameter(sort.resultSort())) {
                 error("The sort of " + value + " is not determined; qualify it with as", e.pos());

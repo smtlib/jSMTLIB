@@ -1,0 +1,7 @@
+success
+success
+success
+success
+(error "line 7 column 51: unknown constant @ ((Array Int Int) Int) ")
+(error "line 8 column 28: unknown constant @ ((Array Int Int) Int) ")
+sat
