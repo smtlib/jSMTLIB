@@ -1,0 +1,7 @@
+success
+success
+success
+(error "<stdin>:6:14: Builtin function cons does not support argument sorts ()")
+(error "<stdin>:7:9: Builtin function = does not support argument sorts ()")
+(error "<stdin>:8:9: Builtin function = does not support argument sorts ()")
+(error "<stdin>:9:13: Builtin function nil does not support argument sorts ()")

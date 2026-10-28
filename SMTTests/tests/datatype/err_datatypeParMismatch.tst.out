@@ -1,0 +1,7 @@
+success
+success
+success
+(error "Argument 2 of cons has sort Int, expected Bool (to match an earlier argument)")
+(error "Argument 2 of = has sort Bool, expected Int (to match an earlier argument)")
+(error "Argument 2 of = has sort (Lst Bool), expected (Lst Int) (to match an earlier argument)")
+(error "The sort of nil is not determined; qualify it with as")

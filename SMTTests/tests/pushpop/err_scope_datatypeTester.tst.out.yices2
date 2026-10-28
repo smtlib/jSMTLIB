@@ -1,0 +1,12 @@
+success
+success
+(error "at line 4, column 18: syntax error: declare-datatype is not a command")
+(error "at line 5, column 19: undefined sort: Shape")
+(error "Error writing to solver: (assert ((_ is circle) s)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (pop 1) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-sort Shape 0) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun s () Shape) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert ((_ is circle) s)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-datatype Color ((red) (green) )) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun x () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert ((_ is red) x)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

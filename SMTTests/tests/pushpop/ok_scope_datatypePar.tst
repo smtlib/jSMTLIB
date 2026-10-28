@@ -1,0 +1,13 @@
+; pop removes a parametric datatype's sort, constructors and selectors: each name is
+; declared again afterwards, which succeeds only if the first one is gone (#166, #168)
+(set-logic ALL)
+(push 1)
+(declare-datatypes ((Lst 1)) ((par (E) ((nil) (cons (hd E) (tl (Lst E)))))))
+(declare-fun l () (Lst Int))
+(assert (= (hd l) 1))
+(pop 1)
+(declare-sort Lst 0)
+(declare-fun nil () Int)
+(declare-fun cons () Int)
+(declare-fun hd () Int)
+(declare-fun tl () Int)

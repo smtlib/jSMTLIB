@@ -178,6 +178,9 @@ public class Utils {
     /** The String for the theory symbol */
     public static final String THEORY = "theory";
 
+    /** The String for the head of a datatype tester, (_ is C) */
+    public static final String IS = "is";
+
     /** The String for the par reserved word */
     public static final String PAR = "par";
 

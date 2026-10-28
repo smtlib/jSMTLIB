@@ -666,20 +666,7 @@ public class Solver_test implements ISolver {
         if (logicSet == null) {
             return smtConfig.responseFactory.error("The logic must be set before a declare-datatype command is issued");
         }
-        ISymbol sortName = cmd.sortDeclaration().symbol();
-        INumeral arity = cmd.sortDeclaration().arity();
-        ISort.IDatatype dt = cmd.datatype();
-        List<IResponse> nameErrors = TypeChecker.validateDatatypeNames(symTable, smtConfig,
-            Collections.singletonList(cmd.sortDeclaration()),
-            Collections.singletonList(dt));
-        if (!nameErrors.isEmpty()) return nameErrors.get(0);
-        if (!symTable.addSortDefinition(sortName, arity, null, isGlobal())) {
-            return smtConfig.responseFactory.error("The sort is already declared: " + smtConfig.defaultPrinter.toString(sortName), sortName.pos());
-        }
-        IResponse err = registerDatatypeConstructors(sortName, dt);
-        if (err != null) return err;
-        checkSatStatus = null;
-        return smtConfig.responseFactory.success();
+        return declareDatatypes(Collections.singletonList(cmd.sortDeclaration()), Collections.singletonList(cmd.datatype()));
     }
 
     @Override
@@ -687,45 +674,84 @@ public class Solver_test implements ISolver {
         if (logicSet == null) {
             return smtConfig.responseFactory.error("The logic must be set before a declare-datatypes command is issued");
         }
-        List<ISortDeclaration> sortDecls = cmd.sortDeclarations();
-        List<ISort.IDatatype> datatypes = cmd.datatypes();
+        return declareDatatypes(cmd.sortDeclarations(), cmd.datatypes());
+    }
+
+    /** Declares a group of datatypes. The group is first declared in a scratch scope, which is
+     *  then discarded, so that a failed declaration leaves nothing in the symbol table. */
+    private IResponse declareDatatypes(List<ISortDeclaration> sortDecls, List<ISort.IDatatype> datatypes) {
         List<IResponse> nameErrors = TypeChecker.validateDatatypeNames(symTable, smtConfig, sortDecls, datatypes);
         if (!nameErrors.isEmpty()) return nameErrors.get(0);
-        // Register all sort names first so constructors can cross-reference them
-        for (ISortDeclaration sd : sortDecls) {
-            if (!symTable.addSortDefinition(sd.symbol(), sd.arity(), null, isGlobal())) {
-                return smtConfig.responseFactory.error("The sort is already declared: " + smtConfig.defaultPrinter.toString(sd.symbol()), sd.symbol().pos());
-            }
+        IResponse err;
+        symTable.push();
+        try {
+            err = addDatatypes(sortDecls, datatypes, false);
+        } finally {
+            symTable.pop();
         }
-        for (int i = 0; i < sortDecls.size(); i++) {
-            IResponse err = registerDatatypeConstructors(sortDecls.get(i).symbol(), datatypes.get(i));
-            if (err != null) return err;
-        }
+        if (err == null) err = addDatatypes(sortDecls, datatypes, isGlobal());
+        if (err != null) return err;
         checkSatStatus = null;
         return smtConfig.responseFactory.success();
     }
 
-    /** Registers constructors and selectors for one datatype into the symbol table. */
-    private IResponse registerDatatypeConstructors(ISymbol sortName, ISort.IDatatype dt) {
-        ISort declaredSort = smtConfig.sortFactory.createSortExpression(sortName, new ISort[0]);
-        List<ISymbol> ctorList = new java.util.ArrayList<>();
-        for (IConstructor ctor : dt.constructors()) {
-            List<ISort> argSorts = new java.util.LinkedList<>();
-            for (ISelector sel : ctor.selectors()) argSorts.add(sel.sort());
-            List<IResponse> errs = TypeChecker.checkFcn(symTable, ctor.symbol(), argSorts, declaredSort, ctor.symbol().pos());
-            if (!errs.isEmpty()) return errs.get(0);
-            ISort.IFcnSort ctorSort = smtConfig.sortFactory.createFcnSort(argSorts.toArray(new ISort[0]), declaredSort);
-            symTable.add(new SymbolTable.Entry(ctor.symbol(), ctorSort, null, null), isGlobal(), false);
-            ctorList.add(ctor.symbol());
-            for (ISelector sel : ctor.selectors()) {
-                ISort[] selArgs = new ISort[]{ declaredSort };
-                List<IResponse> selErrs = TypeChecker.checkFcn(symTable, sel.symbol(), Arrays.asList(selArgs), sel.sort(), sel.symbol().pos());
-                if (!selErrs.isEmpty()) return selErrs.get(0);
-                ISort.IFcnSort selSort = smtConfig.sortFactory.createFcnSort(selArgs, sel.sort());
-                symTable.add(new SymbolTable.Entry(sel.symbol(), selSort, null, null), isGlobal(), false);
+    /** Adds the sorts of a datatype group, then each datatype's constructors and selectors, to
+     *  the given frame (global = background, else current); returns the first error, if any. */
+    private /*@Nullable*/ IResponse addDatatypes(List<ISortDeclaration> sortDecls, List<ISort.IDatatype> datatypes, boolean global) {
+        // All sort names first, so constructors can cross-reference them
+        for (ISortDeclaration sd : sortDecls) {
+            if (!symTable.addSortDefinition(sd.symbol(), sd.arity(), null, global)) {
+                return smtConfig.responseFactory.error("The sort is already declared: " + smtConfig.defaultPrinter.toString(sd.symbol()), sd.symbol().pos());
             }
         }
-        symTable.addDatatypeConstructors(sortName.value(), ctorList, isGlobal());
+        for (int i = 0; i < sortDecls.size(); i++) {
+            IResponse err = addDatatypeConstructors(sortDecls.get(i).symbol(), datatypes.get(i), global);
+            if (err != null) return err;
+        }
+        return null;
+    }
+
+    /** Adds the constructors, selectors and testers of one datatype to the given frame; those
+     *  of a parametric datatype are par-polymorphic over its sort parameters. */
+    private /*@Nullable*/ IResponse addDatatypeConstructors(ISymbol sortName, ISort.IDatatype dt, boolean global) {
+        List<SymbolTable.Entry> entries = new java.util.ArrayList<>();
+        List<ISymbol> ctorList = new java.util.ArrayList<>();
+        // A scope for the sort parameters; the entries are added after it is popped
+        symTable.push();
+        try {
+            List<ISort.IParameter> params = null;
+            if (dt.symbols() != null && !dt.symbols().isEmpty()) {
+                params = new java.util.ArrayList<>();
+                for (ISymbol p : dt.symbols()) {
+                    symTable.addSortParameter(p, false);
+                    params.add((ISort.IParameter) symTable.lookupSort(p));
+                }
+            }
+            ISort declaredSort = smtConfig.sortFactory.createSortExpression(sortName,
+                    params == null ? new ISort[0] : params.toArray(new ISort[0]));
+            List<IResponse> errs = new java.util.LinkedList<>();
+            for (IConstructor ctor : dt.constructors()) {
+                List<ISort> argSorts = new java.util.LinkedList<>();
+                for (ISelector sel : ctor.selectors()) argSorts.add(sel.sort());
+                ISort.IFcnSort ctorSort = TypeChecker.resolveFcnSort(symTable, ctor.symbol(), argSorts, declaredSort, ctor.symbol().pos(), errs);
+                if (ctorSort == null) return errs.get(0);
+                entries.add(new SymbolTable.Entry(ctor.symbol(), ctorSort, null, params));
+                ctorList.add(ctor.symbol());
+                IExpr.IIdentifier tester = smtConfig.exprFactory.id(smtConfig.exprFactory.symbol(Utils.IS),
+                        Collections.<IExpr.IIndex>singletonList(ctor.symbol()));
+                ISort.IFcnSort testerSort = smtConfig.sortFactory.createFcnSort(new ISort[]{ ctorSort.resultSort() }, smtConfig.sortFactory.Bool());
+                entries.add(new SymbolTable.Entry(tester, testerSort, null, params));
+                for (ISelector sel : ctor.selectors()) {
+                    ISort.IFcnSort selSort = TypeChecker.resolveFcnSort(symTable, sel.symbol(), Arrays.asList(declaredSort), sel.sort(), sel.symbol().pos(), errs);
+                    if (selSort == null) return errs.get(0);
+                    entries.add(new SymbolTable.Entry(sel.symbol(), selSort, null, params));
+                }
+            }
+        } finally {
+            symTable.pop();
+        }
+        for (SymbolTable.Entry entry : entries) symTable.add(entry, global, false);
+        symTable.addDatatypeConstructors(sortName.value(), ctorList, global);
         return null;
     }
 

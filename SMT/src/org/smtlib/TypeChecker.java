@@ -123,12 +123,23 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
     }
 
     public static List<IResponse> checkFcn(SymbolTable symTable, IIdentifier id, List<ISort> sorts, ISort result, IPos pos) {
+        List<IResponse> errors = new LinkedList<IResponse>();
+        resolveFcnSort(symTable, id, sorts, result, pos, errors);
+        return errors;
+    }
+
+    /** Checks a function signature as checkFcn does, adding any errors to errors; returns the
+     *  signature with its sorts resolved in the current scope (so a sort parameter in scope
+     *  becomes its IParameter), or null if there were errors. */
+    public static /*@Nullable*/ IFcnSort resolveFcnSort(SymbolTable symTable, IIdentifier id, List<ISort> sorts, ISort result, IPos pos, List<IResponse> errors) {
         TypeChecker f = new TypeChecker(symTable);
+        ISort[] newsorts = new ISort[sorts.size()];
+        ISort newresult = null;
         try {
-            for (ISort p : sorts) {
-                p.accept(f);
+            for (int i = 0; i < newsorts.length; i++) {
+                newsorts[i] = sorts.get(i).accept(f);
             }
-            ISort newresult = result.accept(f);
+            newresult = result.accept(f);
             try {
                 symTable.logicInUse.checkFcnDeclaration(id,sorts,newresult,null);
             } catch (IVisitor.VisitorException e) {
@@ -139,8 +150,9 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         } catch (Exception e) {
             f.error("INTERNAL ERROR: Exception while checking a function declaration: " + e, null);
         }
-        return f.result;
-
+        errors.addAll(f.result);
+        if (!f.result.isEmpty()) return null;
+        return symTable.smtConfig.sortFactory.createFcnSort(newsorts, newresult);
     }
 
     public static List<IResponse> checkFcn(SymbolTable symTable, IIdentifier id, List<IDeclaration> params, ISort result, IExpr expr) {
@@ -350,7 +362,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         IIdentifier head;
         ISort resultSort = null;
         if (qhead instanceof IAsIdentifier) {
-            resultSort = qhead.accept(this);
+            resultSort = ((IAsIdentifier)qhead).qualifier().accept(this);
             if (resultSort == null) return null;
             head = ((IAsIdentifier)qhead).head();
         } else {
@@ -1077,6 +1089,9 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             if ((sort=symTable.lookup(0,e))==null) {
                 result.add(smtConfig.responseFactory.error("Unknown constant symbol " + value, e.pos()));
                 return null;
+            } else if (SymbolTable.containsParameter(sort.resultSort())) {
+                error("The sort of " + value + " is not determined; qualify it with as", e.pos());
+                return null;
             } else {
                 return save(e,sort.resultSort());
             }
@@ -1192,10 +1207,28 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 
     @Override
     public /*@Nullable*/ ISort visit(IAsIdentifier e) throws IVisitor.VisitorException {
-        // Check the sort
+        // (as c S) as a term; in a function application visit(IFcnExpr) checks the qualifier
         ISort s = e.qualifier().accept(this);
-        // We do the rest of the checking in the parent (IFcnExpr)
-        return s;
+        if (s == null) return null;
+        IIdentifier head = e.head();
+        boolean isVariable = head instanceof ISymbol && currentScope.get(head) != null;
+        if (!isVariable && symTable.lookup(head) != null) {
+            // A declared constant, possibly overloaded or par-polymorphic: S selects the declaration
+            StringBuilder reason = new StringBuilder();
+            ISort r = symTable.lookup(head, Collections.<ISort>emptyList(), s, reason);
+            if (r == null) {
+                error(reason.length() > 0 ? reason.toString() : "Unknown constant symbol " + pr(head), e.pos());
+                return null;
+            }
+            return save(e,r);
+        }
+        ISort hs = head.accept(this);
+        if (hs == null) return null;
+        if (!hs.equals(s)) {
+            error(pr(head) + " has sort " + pr(hs) + ", expected " + pr(s) + " (from the `as` qualifier)", e.pos());
+            return null;
+        }
+        return save(e,s);
     }
 
     /** The body of the innermost quantifier being checked (the only place a :pattern may appear), or null. */
@@ -1497,8 +1530,8 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                         }
                         hasVariableOrWildcard = true;
                     } else {
-                        IFcnSort ctorSort = symTable.lookup(0, pat.constructor());
-                        if (ctorSort == null || !scrutineeSort.equals(ctorSort.resultSort())) {
+                        IFcnSort ctorSort = symTable.lookupInstance(0, pat.constructor(), scrutineeSort);
+                        if (ctorSort == null) {
                             // Not a nullary constructor of this sort — treat as variable binding
                             currentScope.put(pat.constructor(), new Variable(pat.constructor(), scrutineeSort, null, false));
                             hasVariableOrWildcard = true;
@@ -1509,17 +1542,18 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 } else {
                     int arity = pat.params().size();
                     IFcnSort ctorSort = symTable.lookup(arity, pat.constructor());
+                    IFcnSort instance = ctorSort == null ? null : symTable.lookupInstance(arity, pat.constructor(), scrutineeSort);
                     if (ctorSort == null) {
                         error("Unknown constructor: " + pat.constructor().value(), pat.constructor().pos());
                         anyErrors = true;
-                    } else if (!scrutineeSort.equals(ctorSort.resultSort())) {
+                    } else if (instance == null) {
                         error("Constructor " + pat.constructor().value() + " has result sort "
                                 + pr(ctorSort.resultSort()) + " but scrutinee has sort " + pr(scrutineeSort),
                                 pat.constructor().pos());
                         anyErrors = true;
                     } else {
                         coveredCtors.add(pat.constructor().value());
-                        ISort[] argSorts = ctorSort.argSorts();
+                        ISort[] argSorts = instance.argSorts();
                         List<IExpr.ISymbol> params = pat.params();
                         Set<String> patternVarsSeen = new HashSet<>();
                         for (int i = 0; i < params.size(); i++) {
