@@ -1,0 +1,5 @@
+success
+success
+success
+sat
+(error "The expression must be linear: (* x (/ 1 0))")

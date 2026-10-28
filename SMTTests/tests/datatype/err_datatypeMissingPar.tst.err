@@ -1,0 +1,2 @@
+(declare-datatype T (x (A)))
+                     ^

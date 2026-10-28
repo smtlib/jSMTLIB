@@ -1,0 +1,3 @@
+success
+(error "Expected an identifier or reserved word here, not a numeral")
+(error "Expected an identifier or reserved word here, not a string-literal")
