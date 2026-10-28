@@ -1,0 +1,5 @@
+success
+(declare-fun @p () Bool) (push 1)
+             ^^
+(error "User-defined symbols may not begin with . or @")
+Aborting because of a validation error

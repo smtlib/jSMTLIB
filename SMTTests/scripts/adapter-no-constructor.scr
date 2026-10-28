@@ -1,0 +1,3 @@
+### An adapter class without the constructor adapters need is reported
+##EXITCODE 1
+(cd $SCRIPTS/adapter-no-constructor && $SMT_CMD --solver noctor --text "(exit)")

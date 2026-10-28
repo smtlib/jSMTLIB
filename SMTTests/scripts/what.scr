@@ -1,0 +1,5 @@
+### The what command (an extension, so --relax): sorts, functions, constants, unknown names,
+### and an unterminated command
+##EXITCODE 1
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(declare-sort U 0)(declare-fun f (U) U)(declare-const c U)(what U f c g)"
+$SMT_CMD --relax --solver test --text "(set-logic QF_UF)(what U"
