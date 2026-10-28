@@ -1,0 +1,2 @@
+(error "line 2 column 21: invalid check-sat-assuming command, '(', expected")
+(error "line 3 column 11: logic must be set before initialization")

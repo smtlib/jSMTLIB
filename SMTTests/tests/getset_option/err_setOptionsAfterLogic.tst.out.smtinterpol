@@ -1,0 +1,4 @@
+success
+(error "<stdin>:3:12: Option :produce-assertions can only be changed before setting the logic")
+(error "<stdin>:4:12: Option :global-declarations can only be changed before setting the logic")
+(error "<stdin>:5:12: Option :produce-assertions can only be changed before setting the logic")

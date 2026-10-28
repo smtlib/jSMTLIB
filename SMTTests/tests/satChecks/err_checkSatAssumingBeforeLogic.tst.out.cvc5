@@ -1,0 +1,2 @@
+(error "Parse Error: <shell>:1.2: set-logic must appear before this point.")
+(error "Error writing to solver: (set-logic QF_UF) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
