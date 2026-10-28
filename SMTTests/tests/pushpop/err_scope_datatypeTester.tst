@@ -11,3 +11,4 @@
 (declare-datatype Color ((red) (green)))
 (declare-fun x () Int)
 (assert ((_ is red) x))
+; Solver bug (.bad golden): smtinterpol-2.5 crashes on (_ is circle) applied after the pop.

@@ -1322,11 +1322,15 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         @Override
         public String visit(ISymbol e) throws IVisitor.VisitorException {
+            return constant(e, e.sort());
+        }
+
+        /** Translates a constant or variable e whose sort, if known, is sort */
+        private String constant(ISymbol e, /*@Nullable*/ ISort sort) {
             if (!isFormula && e.value().equals("true")) return "|@true|";
             if (!isFormula && e.value().equals("false")) return "|@false|";
             String n = name(e);
             // A Bool constant or variable is a term, |@true| or |@false|
-            ISort sort = e.sort();
             if (isFormula && sort != null && sort.isBool() && n.startsWith("|")) return "(EQ " + n + " |@true|)";
             return n;
         }
@@ -1518,8 +1522,11 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         @Override
         public String visit(IAsIdentifier e) throws VisitorException {
-            // TODO Auto-generated method stub
-            return null;
+            // Simplify is unsorted, so (as c S) is just c; S says whether c is Bool
+            if (!(e.head() instanceof ISymbol)) {
+                throw new VisitorException("Have not yet implemented indexed identifiers",e.pos());
+            }
+            return constant(e.headSymbol(), e.qualifier());
         }
 
         @Override

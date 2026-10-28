@@ -10,3 +10,5 @@
 (declare-fun tl () Int)
 (declare-fun mk () Int)
 (declare-fun f () Int)
+; Solver bugs (.bad goldens): z3 and smtinterpol-2.5 leave the failed declaration's sorts
+; Lst and T declared, so redeclaring them fails.

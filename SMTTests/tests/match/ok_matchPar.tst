@@ -4,3 +4,4 @@
 (declare-datatypes ((Lst 1)) ((par (E) ((nil) (cons (hd E) (tl (Lst E)))))))
 (declare-fun l () (Lst Int))
 (assert (match l ((nil false) ((cons h t) (and (= h 1) (= t (as nil (Lst Int))))))))
+; Solver bug (.bad golden): smtinterpol-2.5 crashes on the match over a parametric datatype.

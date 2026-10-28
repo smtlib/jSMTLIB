@@ -11,3 +11,5 @@
 (assert (hd (cons true b)))
 (assert (= (fst (mk-pair 1 true)) (hd l)))
 (assert (snd (mk-pair l true)))
+; Solver bugs (.bad goldens): z3-4.7.1 and z3-4.8.12 reject the parametric constructor mk-pair
+; applied to arguments; smtinterpol-2.5 rejects the same terms ("Application of function null").
