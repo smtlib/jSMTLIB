@@ -1,0 +1,11 @@
+success
+success
+(error "line 6 column 21: invalid sort parameter, symbol or ')' expected")
+(error "line 7 column 19: unknown sort 'Lst'")
+(error "line 8 column 15: unknown constant l")
+success
+success
+success
+success
+success
+success
