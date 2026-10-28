@@ -568,6 +568,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
                 term.accept(tc);
             }
         } catch (IVisitor.VisitorException e) {
+            Utils.jacocoNeverExecuted(); // Defensive check against maintenance bugs, though not executed in current code
             tc.result.add(smtConfig.responseFactory.error(e.getMessage()));
         } finally {
             if (!tc.result.isEmpty()) return tc.result.get(0);
