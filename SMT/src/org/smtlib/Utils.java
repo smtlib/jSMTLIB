@@ -840,10 +840,10 @@ public class Utils {
             ISymbol theoryName = (IExpr.ISymbol) theory;
             if (CORE.equals(theoryName.value())) continue;
             if ("ALL".equals(logicName)) {
+                // ALL holds every theory of the configured version: take the versioned copy if
+                // there is one, and skip a theory that exists only in a newer version.
                 boolean savedRelax = smtConfig.relax;
-                SMTLIB savedSmtlib = smtConfig.smtlib;
                 smtConfig.relax = true;
-                smtConfig.smtlib = null;
                 ITheory th;
                 try {
                     th = findTheory(theoryName.value(), smtConfig.logicPath);
@@ -851,7 +851,6 @@ public class Utils {
                     return e.errorResponse;
                 } finally {
                     smtConfig.relax = savedRelax;
-                    smtConfig.smtlib = savedSmtlib;
                 }
                 IAttributeValue tv = th.value(SMTLIB_VERSION);
                 if (tv instanceof IDecimal) {

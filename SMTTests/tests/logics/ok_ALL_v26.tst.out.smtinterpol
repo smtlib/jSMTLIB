@@ -1,0 +1,13 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "<stdin>:13:23: Unsupported internal sort: (_ FloatingPoint 8 24)")
+(error "<stdin>:14:38: Unsupported internal sort: String")
