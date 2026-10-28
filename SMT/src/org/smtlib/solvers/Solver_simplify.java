@@ -445,7 +445,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             }
             return smtConfig.responseFactory.success();
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Failed to push");
+            return smtConfig.responseFactory.error("Failed to pop");
         }
     }
 
