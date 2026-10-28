@@ -1,0 +1,2 @@
+success
+(error "Datatype A is not well-founded (no finite base case)")
