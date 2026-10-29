@@ -33,7 +33,7 @@ The recognized options are these:
         likewise converted to each solver's own unit/flag, or, if that solver has no whole-run option,
         applied as a best-effort per-query limit instead
     --echo : if enabled, commands are echoed to diagnostic output when successfully parsed
-    --abort : if enabled, an error causes immediate exit
+    --abort : if enabled, an error causes immediate exit (on interactive standard input, the rest of its line is skipped)
     --pipeline : if enabled, commands in file (including -) or --text input are sent to the solver without
         waiting for each response where possible; the output is the same
     --no-pipeline : each command waits for its response before the next is sent (the default)
