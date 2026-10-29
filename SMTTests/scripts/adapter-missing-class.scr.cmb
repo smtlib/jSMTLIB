@@ -1,0 +1,23 @@
+(error "Could not find the adapter class org.smtlib.solvers.Solver_noSuchAdapter named by org.smtlib.solver_missing.adapter")
+Usage: java org.smtlib.SMT [args] [file]
+       --help [-h]
+       --version
+       --verbose <int>
+       --solver [-s] <solvername>
+       --exec [-e] <path>
+       --logics [-L] <path>
+       --out <filename or 'stdout' or 'stderr'>
+       --diag <filename or 'stdout' or 'stderr'>
+       --port <int>
+       --text <string>
+       --timeout [-t] <seconds>
+       --timeout-total [-T] <seconds>
+       --echo
+       --abort
+       --pipeline
+       --no-pipeline
+       --noshow
+       --nosuccess [-q]
+       --relax [-r]
+       --testing
+       -v is shorthand for --verbose 1
