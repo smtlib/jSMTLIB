@@ -585,6 +585,9 @@ public class Parser extends Lexer implements IParser {
                 IExpr expr = parseExpr();
                 List<IAttribute<?>> list = parseTermAttributeSequence();
                 ILexToken rp = parseRP();
+                if (list.isEmpty()) {
+                    throw new ParserException("An annotated term must have at least one attribute", pos(lp.pos(), rp.pos()));
+                }
                 return setPos(smtConfig.exprFactory.attributedExpr(expr,list),pos(lp.pos(), rp.pos()));
             }
         }
