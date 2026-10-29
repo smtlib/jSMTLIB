@@ -594,7 +594,7 @@ public class SMT {
                 // No files listed - use standard input
                 smtConfig.interactive = true;
                 warnPipelineIgnored("interactive standard input");
-                Reader rdr = new BufferedReader(new InputStreamReader(System.in));
+                Reader rdr = new BufferedReader(new InputStreamReader(watchForCtrlX(System.in)));
                 if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Start parsing standard input");
                 CharSequenceReader csr = new CharSequenceReader(rdr,100000,0,2);
                 csr.prompter = new Prompter(smtConfig);
@@ -615,7 +615,7 @@ public class SMT {
                             stdinRead = true;
                             file = "<stdin>";
                         }
-                        Reader rdr = new BufferedReader(stdin ? new InputStreamReader(System.in) : new FileReader(file));
+                        Reader rdr = new BufferedReader(stdin ? new InputStreamReader(watchForCtrlX(System.in)) : new FileReader(file));
                         CharSequenceReader csr = new CharSequenceReader(rdr,100000,0,2);
                         src = smtConfig.smtFactory.createSource(csr, file);
                         p = smtConfig.smtFactory.createParser(smtConfig,src);
@@ -653,6 +653,64 @@ public class SMT {
 
     protected int doParser(IParser p) { 
         return doParser(p,true);
+    }
+
+    /** Whether the input is exhausted; Ctrl-X met while looking ahead discards the partial input,
+     *  as it does inside parseCommand */
+    private boolean atEnd(IParser p) throws IOException, ParserException {
+        while (true) {
+            try {
+                return p.isEOD();
+            } catch (AbortInputException e) {
+                smtConfig.log.logOut("Input aborted");
+                smtConfig.topLevel = true;
+            }
+        }
+    }
+
+    /** The solver while it executes a command, else null */
+    private volatile /*@Nullable*/ ISolver executing = null;
+
+    /** Ctrl-X typed on standard input aborts the current command: one being read is discarded by
+     *  the lexer (so the character is passed on); one being executed is interrupted here, after
+     *  printing the main thread's stack (useful if something loops). Then the next command is read.
+     *  Returns standard input with the Ctrl-X watched for. */
+    private InputStream watchForCtrlX(InputStream in) {
+        PipedInputStream pin = new PipedInputStream(1 << 16);
+        PipedOutputStream pout;
+        try {
+            pout = new PipedOutputStream(pin);
+        } catch (IOException e) {
+            return in;
+        }
+        Thread main = Thread.currentThread();
+        Thread t = new Thread(() -> {
+            try (pout) {
+                int c;
+                while ((c = in.read()) != -1) {
+                    ISolver s = executing;
+                    if (c == '\030' && s != null) {
+                        interruptCommand(main, s);
+                        continue;
+                    }
+                    pout.write(c);
+                    if (in.available() == 0) pout.flush();
+                }
+            } catch (IOException e) {
+                // end of input as far as the parser is concerned
+            }
+        }, "jSMTLIB standard input");
+        t.setDaemon(true);
+        t.start();
+        return pin;
+    }
+
+    private void interruptCommand(Thread main, ISolver s) {
+        PrintStream err = System.err;
+        err.println("Ctrl-X: interrupting the command; the main thread is at");
+        for (StackTraceElement f: main.getStackTrace()) err.println("    at " + f);
+        err.flush();
+        if (s instanceof AbstractSolver a) a.interrupt();
     }
 
     protected /*@Nullable*/ ISolver solver = null;
@@ -707,7 +765,7 @@ public class SMT {
         try {
             IResponse result = null;
             ICommand command = null;
-            while (!(command instanceof ICommand.Iexit) && !p.isEOD()) {
+            while (!(command instanceof ICommand.Iexit) && !atEnd(p)) {
                 try {
                     command = p.parseCommand();
                     if (command == null) {
@@ -761,7 +819,12 @@ public class SMT {
                                     if (readPipelined(pipeliner, true)) break;
                                     if (pipelineFailed) retcode = 1;
                                 }
-                                result = command.execute(solver);
+                                executing = solver;
+                                try {
+                                    result = command.execute(solver);
+                                } finally {
+                                    executing = null;
+                                }
                             }
                         } catch (UnsupportedOperationException e) {
                             result = smtConfig.responseFactory.error(

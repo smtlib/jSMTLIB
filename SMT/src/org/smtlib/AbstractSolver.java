@@ -147,6 +147,11 @@ public class AbstractSolver implements ISolver {
         if (solverProcess != null) solverProcess.exit();
     }
 
+    /** Interrupts the command the solver is running (see {@link SolverProcess#interrupt()}) */
+    public void interrupt() {
+        if (solverProcess != null) solverProcess.interrupt();
+    }
+
 
     public AbstractSolver() {
         try {

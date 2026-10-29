@@ -342,6 +342,23 @@ public class SolverProcess {
         return text.toString();
     }
 
+    /** Interrupts the command the solver is running by sending it SIGINT: z3 then abandons the
+     *  command (check-sat answers unknown) and goes on; most other solvers exit. Windows has no
+     *  such signal, so there the process is ended. */
+    public void interrupt() {
+        Process p = process;
+        if (p == null) return;
+        if (SMT.platformName().equals("windows")) {
+            p.destroyForcibly();
+            return;
+        }
+        try {
+            new ProcessBuilder("kill", "-INT", Long.toString(p.pid())).start().waitFor();
+        } catch (IOException | InterruptedException e) {
+            // the solver is left running
+        }
+    }
+
     /** Returns true if the process is still running; this relies on exceptions
      * for control flow and may be a bit expensive.
      */
