@@ -2,12 +2,12 @@ success
 success
 success
 success
-success
-success
-success
+(error "rhs must be a symbol if the lhs is a symbol: (<= x 5.0)")
+(error "The rhs must be a numeral, a negated numeral, or (/ c n) with n a nonzero numeral: (>= (- x y) 3.0)")
+(error "The rhs must be a numeral, a negated numeral, or (/ c n) with n a nonzero numeral: (>= (- x y) (- 3.0))")
 (error "differences must be difference of symbols: (>= (- x 1.0) y)")
 (error "differences must be difference of symbols: (>= (- x 1.0) y)")
-success
+(error "The rhs must be a numeral, a negated numeral, or (/ c n) with n a nonzero numeral: (>= (- x y) 3.0)")
 (error "lhs must be a symbol or a difference: (>= (* x y) 0.0)")
 (error "A quantified expression is not allowed in the QF_RDL logic")
 (error "Declarations of uninterpreted functions are not allowed in this logic")

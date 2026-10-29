@@ -1,0 +1,15 @@
+; QF_IDL formulas may use every Core connective over IDL atoms (ite, xor, =>, and = and
+; distinct over Bool), and = and distinct atoms have the same shapes as < and the others
+(set-logic QF_IDL)
+(declare-const x Int)
+(declare-const y Int)
+(declare-const p Bool)
+(assert (ite p (< x y) (< y x)))
+(assert (xor p (< x y)))
+(assert (=> p (<= (- x y) 3)))
+(assert (= p (> x y)))
+(assert (distinct p (>= x y)))
+(assert (= x y))
+(assert (distinct x y))
+(assert (= (- x y) (- 2)))
+(assert (distinct (- x y) 0))

@@ -10,80 +10,77 @@ import org.smtlib.ISort;
 import org.smtlib.IVisitor;
 import org.smtlib.Utils;
 import org.smtlib.IExpr.IAttribute;
-import org.smtlib.IExpr.IDecimal;
 import org.smtlib.IExpr.IIdentifier;
-import org.smtlib.IExpr.IQualifiedIdentifier;
+import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.ISymbol;
 
-public class QF_RDL extends Logic {
+/** QF_RDL atoms (QF_RDL.smt2): (op x y), (op (- x y) c), (op (- (+ x ... x) (+ y ... y)) c)
+ *  with k &gt; 1 occurrences each of x and y, and the extension (op (- x y) (/ c n)); x, y are
+ *  free constants of sort Real, c is m or (- m), and m, n are numerals with n nonzero. */
+public class QF_RDL extends DifferenceLogic {
 
     public QF_RDL(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
         super(smtConfig,name,attributes);
     }
 
-    public void validExpression(IExpr expression) throws IVisitor.VisitorException {
-        noQuantifiers(expression);
-        IVisitor<Void> visitor = new IVisitor.TreeVisitor<Void>() {
-            public Void visit(IExpr.IFcnExpr e) throws IVisitor.VisitorException {
-                IQualifiedIdentifier fcn = e.head();
-                if (Utils.AND.equals(fcn) || Utils.OR.equals(fcn) || Utils.NOT.equals(fcn) || Utils.IMPLIES.equals(fcn)) {
-                    for (IExpr arg : e.args()) arg.accept(this);
-                    return (Void)null;
-                }
-                if (Utils.EQ.equals(fcn) || Utils.DISTINCT.equals(fcn)) return (Void)null;
-                // FIXME - need to restrict = and distinct for Real, mirroring QF_IDL's own FIXME
-                if (e.args().size() == 2 && (Utils.GE.equals(fcn) || Utils.GT.equals(fcn) || Utils.LT.equals(fcn) || Utils.LE.equals(fcn))) {
-                    IExpr lhs = e.args().get(0);
-                    IExpr rhs = e.args().get(1);
-                    if (lhs instanceof ISymbol) {
-                        // (op x y): both symbols, or (op x c): a symbol against a real
-                        // constant -- e.g. (<= x 5.0), a single-variable bound, which
-                        // tests/logics/ok_QF_RDL.tst already establishes as valid QF_RDL
-                        // input (unlike QF_IDL's own, stricter, separately-tested
-                        // symbol-vs-symbol-only quirk -- not touched here).
-                        if (rhs instanceof ISymbol || isRealConstant(rhs)) {
-                            return (Void)null;
-                        } else {
-                            throw restrictionError("rhs must be a symbol or a real constant if the lhs is a symbol", e);
-                        }
-                    }
-                    if (!(lhs instanceof IExpr.IFcnExpr)) {
-                        throw restrictionError("lhs must be a symbol or a difference", e);
-                    }
-                    IExpr.IFcnExpr f = (IExpr.IFcnExpr)lhs;
-                    if (!Utils.MINUS.equals(f.head())) {
-                        throw restrictionError("lhs must be a symbol or a difference", e);
-                    }
-                    if (f.args().size() == 2 && f.args().get(0) instanceof ISymbol && f.args().get(1) instanceof ISymbol) {
-                        // OK
-                    } else {
-                        throw restrictionError("differences must be difference of symbols", e);
-                    }
-                    if (!isRealConstant(rhs)) {
-                        throw restrictionError("The rhs must be a decimal or negation of a decimal", e);
-                    }
-                } else {
-                    throw restrictionError("Invalid operation in RDL logic", e);
-                }
-                return (Void)null;
-            }
+    @Override
+    protected String kind() { return "RDL"; }
 
-            /** True for a decimal literal, or the negation of one (e.g. 5.0 or (- 5.0)) --
-             *  the shape QF_RDL.smt2 allows as the constant "c" in a difference comparison. */
-            private boolean isRealConstant(IExpr expr) {
-                if (expr instanceof IDecimal) return true;
-                if (!(expr instanceof IExpr.IFcnExpr)) return false;
-                IExpr.IFcnExpr f = (IExpr.IFcnExpr) expr;
-                return f.args().size() == 1 && Utils.MINUS.equals(f.head()) && f.args().get(0) instanceof IDecimal;
-            }
-        };
-        expression.accept(visitor);
+    @Override
+    protected void checkAtom(IExpr.IFcnExpr e, IExpr lhs, IExpr rhs) throws IVisitor.VisitorException {
+        if (lhs instanceof ISymbol) {
+            if (rhs instanceof ISymbol) return;
+            throw restrictionError("rhs must be a symbol if the lhs is a symbol", e);
+        }
+        if (!(lhs instanceof IExpr.IFcnExpr) || !Utils.MINUS.equals(((IExpr.IFcnExpr)lhs).head())) {
+            throw restrictionError("lhs must be a symbol or a difference", e);
+        }
+        if (isDifferenceOfSymbols(lhs)) {
+            if (isInteger(rhs) || isQuotient(rhs)) return;
+            throw restrictionError("The rhs must be a numeral, a negated numeral, or (/ c n) with n a nonzero numeral", e);
+        }
+        if (!isDifferenceOfRepeatedSums((IExpr.IFcnExpr)lhs)) {
+            throw restrictionError("differences must be difference of symbols", e);
+        }
+        if (!isInteger(rhs)) {
+            throw restrictionError("The rhs must be a numeral or negation of numeral", e);
+        }
     }
 
+    /** True for (/ c n) with c a numeral or negated numeral and n a nonzero numeral */
+    private boolean isQuotient(IExpr e) {
+        if (!(e instanceof IExpr.IFcnExpr)) return false;
+        IExpr.IFcnExpr f = (IExpr.IFcnExpr) e;
+        return Utils.SLASH.equals(f.head()) && f.args().size() == 2 && isInteger(f.args().get(0))
+                && f.args().get(1) instanceof INumeral && ((INumeral)f.args().get(1)).value().signum() != 0;
+    }
+
+    /** True for (- (+ x ... x) (+ y ... y)), each sum having the same number (more than one) of a single symbol */
+    private static boolean isDifferenceOfRepeatedSums(IExpr.IFcnExpr diff) {
+        if (diff.args().size() != 2) return false;
+        int k = repeatedSumLength(diff.args().get(0));
+        return k > 1 && k == repeatedSumLength(diff.args().get(1));
+    }
+
+    /** The number of terms in (+ x ... x) for a single symbol x, or 0 if e has another form */
+    private static int repeatedSumLength(IExpr e) {
+        if (!(e instanceof IExpr.IFcnExpr)) return 0;
+        IExpr.IFcnExpr f = (IExpr.IFcnExpr) e;
+        if (!Utils.PLUS.equals(f.head())) return 0;
+        IExpr first = f.args().get(0);
+        if (!(first instanceof ISymbol)) return 0;
+        for (IExpr a : f.args()) {
+            if (!first.equals(a)) return 0;
+        }
+        return f.args().size();
+    }
+
+    @Override
     public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
         noFunctions(id,argSorts,resultSort,definition);
     }
 
+    @Override
     public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
         noSorts(id,params,expr);
     }

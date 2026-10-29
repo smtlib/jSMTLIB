@@ -1,6 +1,5 @@
 success
 success
 success
+(error "Arithmetic expressions must be linear in the AUFLIRA logic")
 (error "The simplify solver cannot handle decimal literals")
-(error "The simplify solver cannot handle decimal literals")
-success
