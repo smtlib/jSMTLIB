@@ -3,4 +3,4 @@ success
 success
 sat
 success
-(error "The get-assignment command is not valid once the assertion stack has changed since the last check command")
+(error "line 7 column 15: model is not available")

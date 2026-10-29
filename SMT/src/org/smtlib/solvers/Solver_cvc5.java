@@ -180,47 +180,54 @@ public class Solver_cvc5 extends AbstractSolver implements ISolver {
         return super.get_assertions();
     }
 
+    /** The kinds of command after which cvc5 still answers the get- commands about the last check
+     *  (probed with cvc5 1.3.2, 2026-10-29); after declare-fun, declare-const, declare-sort, push and
+     *  pop it reports the error itself */
+    private static final java.util.Set<StackChange> ANSWERED_AFTER = java.util.EnumSet.of(
+            StackChange.DEFINE_SORT, StackChange.DECLARE_DATATYPE, StackChange.DEFINE_FUN,
+            StackChange.DEFINE_FUN_REC, StackChange.ASSERT, StackChange.RESET_ASSERTIONS);
+
     /** cvc5 answers get-assignment with :produce-assignments off (if :produce-models is on), and in
      *  assert mode after a check */
     @Override
     public IResponse get_assignment() {
         IResponse err = inSatMode() ? requireOptionEnabled("get-assignment", Utils.PRODUCE_ASSIGNMENTS)
-                : requireUnchangedSinceCheck("get-assignment");
+                : requireNoChangeSinceCheck("get-assignment", ANSWERED_AFTER);
         return err != null ? err : super.get_assignment();
     }
 
     /** cvc5 answers get-model in assert mode after a check */
     @Override
     public IResponse get_model() {
-        IResponse err = requireUnchangedSinceCheck("get-model");
+        IResponse err = requireNoChangeSinceCheck("get-model", ANSWERED_AFTER);
         return err != null ? err : super.get_model();
     }
 
     /** cvc5 answers get-value in assert mode after a check */
     @Override
     public IResponse get_value(IExpr... terms) {
-        IResponse err = requireUnchangedSinceCheck("get-value");
+        IResponse err = requireNoChangeSinceCheck("get-value", ANSWERED_AFTER);
         return err != null ? err : super.get_value(terms);
     }
 
     /** cvc5 answers get-proof in assert mode after a check */
     @Override
     public IResponse get_proof() {
-        IResponse err = requireUnchangedSinceCheck("get-proof");
+        IResponse err = requireNoChangeSinceCheck("get-proof", ANSWERED_AFTER);
         return err != null ? err : super.get_proof();
     }
 
     /** cvc5 answers get-unsat-core in assert mode after a check */
     @Override
     public IResponse get_unsat_core() {
-        IResponse err = requireUnchangedSinceCheck("get-unsat-core");
+        IResponse err = requireNoChangeSinceCheck("get-unsat-core", ANSWERED_AFTER);
         return err != null ? err : super.get_unsat_core();
     }
 
     /** cvc5 aborts on get-unsat-assumptions in assert mode after a check */
     @Override
     public IResponse get_unsat_assumptions() {
-        IResponse err = requireUnchangedSinceCheck("get-unsat-assumptions");
+        IResponse err = requireNoChangeSinceCheck("get-unsat-assumptions", ANSWERED_AFTER);
         return err != null ? err : super.get_unsat_assumptions();
     }
 
