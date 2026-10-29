@@ -225,7 +225,9 @@ public class Utils {
     static public final ISymbol EQ = new SMTExpr.Symbol("=".intern());
     static public final ISymbol DISTINCT = new SMTExpr.Symbol("distinct".intern());
     static public final ISymbol ITE = new SMTExpr.Symbol("ite".intern());
+    static public final ISymbol XOR = new SMTExpr.Symbol("xor".intern());
 
+    static public final ISymbol PLUS = new SMTExpr.Symbol("+".intern());
     static public final ISymbol MINUS = new SMTExpr.Symbol("-".intern());
     static public final ISymbol MULT = new SMTExpr.Symbol("*".intern());
     static public final ISymbol SLASH = new SMTExpr.Symbol("/".intern());

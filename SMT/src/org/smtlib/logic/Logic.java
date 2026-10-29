@@ -157,16 +157,25 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
 //        return f.args().size() == 0;
     }
 
+    /** The arguments of an application (of * or /) that are not coefficients. A product, of
+     *  any arity, is linear when at most one of its factors is not a coefficient. */
+    protected static List<IExpr> nonCoefficients(IExpr.IFcnExpr e, java.util.function.Predicate<IExpr> isCoefficient) {
+        List<IExpr> result = new java.util.ArrayList<>();
+        for (IExpr a : e.args()) {
+            if (!isCoefficient.test(a)) result.add(a);
+        }
+        return result;
+    }
+
     public boolean isLinearInteger(IExpr expr) {
         try {
             IVisitor<Void> visitor = new IVisitor.TreeVisitor<Void>() {
                 @Override
                 public Void visit(IExpr.IFcnExpr e) throws IVisitor.VisitorException {
                     IQualifiedIdentifier fcn = e.head();
-                    if (Utils.MULT.equals(fcn) && e.args().size() == 2) {
-                        IExpr lhs = e.args().get(0);
-                        IExpr rhs = e.args().get(1);
-                        if (!((isInteger(lhs) && isFreeConstant(rhs)) || (isFreeConstant(lhs) && isInteger(rhs))))
+                    if (Utils.MULT.equals(fcn)) {
+                        List<IExpr> factors = nonCoefficients(e, Logic.this::isInteger);
+                        if (factors.size() > 1 || (factors.size() == 1 && !isFreeConstant(factors.get(0))))
                             throw new IVisitor.VisitorException("nonlinear", null);
                         return null;
                     } else if (Utils.DIV.equals(fcn) || Utils.MOD.equals(fcn) || Utils.ABS.equals(fcn)) {
@@ -188,14 +197,13 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
                 @Override
                 public Void visit(IExpr.IFcnExpr e) throws IVisitor.VisitorException {
                     IQualifiedIdentifier fcn = e.head();
-                    if (Utils.MULT.equals(fcn) && e.args().size() == 2) {
-                        IExpr lhs = e.args().get(0);
-                        IExpr rhs = e.args().get(1);
-                        if (!((isRealConst(lhs) && isFreeConstant(rhs)) || (isFreeConstant(lhs) && isRealConst(rhs))))
+                    if (Utils.MULT.equals(fcn)) {
+                        List<IExpr> factors = nonCoefficients(e, Logic.this::isRealConst);
+                        if (factors.size() > 1 || (factors.size() == 1 && !isFreeConstant(factors.get(0))))
                             throw new IVisitor.VisitorException("nonlinear", null);
                         return null;
-                    } else if (Utils.SLASH.equals(fcn) && e.args().size() == 2) {
-                        if (!(isRealConst(e.args().get(0)) && isRealConst(e.args().get(1))))
+                    } else if (Utils.SLASH.equals(fcn)) {
+                        if (!nonCoefficients(e, Logic.this::isRealConst).isEmpty())
                             throw new IVisitor.VisitorException("nonlinear", null);
                         return null;
                     }

@@ -1,0 +1,7 @@
+success
+success
+success
+(error "The expression must be linear: (* x y 2.0)")
+(error "The expression must be linear: (* 2.0 x y)")
+(error "The expression must be linear: (/ x 2 3)")
+success

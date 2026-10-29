@@ -1,0 +1,15 @@
+; QF_RDL formulas may use every Core connective over RDL atoms; = and distinct atoms have
+; the same shapes as < and the others, including (op (- (+ x .. x) (+ y .. y)) c) and the
+; :extensions form (op (- x y) (/ c n))
+(set-logic QF_RDL)
+(declare-const x Real)
+(declare-const y Real)
+(declare-const p Bool)
+(assert (ite p (< x y) (< y x)))
+(assert (xor p (< x y)))
+(assert (= p (> x y)))
+(assert (= x y))
+(assert (distinct (- x y) (- 3)))
+(assert (<= (- x y) (/ 1 3)))
+(assert (<= (- x y) (/ (- 1) 3)))
+(assert (<= (- (+ x x x) (+ y y y)) 1))
