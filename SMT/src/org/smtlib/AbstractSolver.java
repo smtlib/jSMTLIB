@@ -1274,8 +1274,8 @@ public class AbstractSolver implements ISolver {
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;
             if (isFlatResponse(response)) return checkShape(Shape.VALUE, sent, response, checkImmediateExit(parseResponse(response)));
-            List<ISymbol> names = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseSymbolList();
-            return smtConfig.responseFactory.get_unsat_assumptions_response(names);
+            List<IExpr> assumptions = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseTermList();
+            return smtConfig.responseFactory.get_unsat_assumptions_response(assumptions);
         } catch (IOException e) {
             IResponse timedOut = timeLimitResponseAfterExit();
             if (timedOut != null) return timedOut;

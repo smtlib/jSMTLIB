@@ -283,9 +283,19 @@ public class PrinterCoverageTest {
 
     @Test
     public void unsatAssumptionsResponse() throws Exception {
-        List<ISymbol> names = Collections.singletonList(config.exprFactory.symbol("a"));
-        IResponse.IUnsatAssumptionsResponse r = config.responseFactory.get_unsat_assumptions_response(names);
+        List<IExpr> assumptions = Collections.singletonList(config.exprFactory.symbol("a"));
+        IResponse.IUnsatAssumptionsResponse r = config.responseFactory.get_unsat_assumptions_response(assumptions);
         Assert.assertEquals("(a )", r.toString());
+    }
+
+    /** {@link org.smtlib.sexpr.Parser#parseTermList()}, for {@code AbstractSolver.get_unsat_assumptions()}:
+     *  an unsat assumption may be a negated symbol (A59). */
+    @Test
+    public void parseTermList() throws Exception {
+        ISource source = config.smtFactory.createSource("(p (not q))", "parseTermList");
+        List<IExpr> assumptions = new org.smtlib.sexpr.Parser(config, source).parseTermList();
+        IResponse.IUnsatAssumptionsResponse r = config.responseFactory.get_unsat_assumptions_response(assumptions);
+        Assert.assertEquals("(p (not q) )", r.toString());
     }
 
     @Test

@@ -68,7 +68,7 @@ public interface IResponse extends INode {
         IResponse.IValueResponse get_value_response(List<IPair<IExpr,IExpr>> values);
         <T1,T2> IPair<T1,T2> pair(T1 first, T2 second);
         IResponse.IAssignmentResponse get_assignment_response(List<IPair<IExpr.ISymbol,Boolean>> assignments);
-        IResponse.IUnsatAssumptionsResponse get_unsat_assumptions_response(List<ISymbol> names);
+        IResponse.IUnsatAssumptionsResponse get_unsat_assumptions_response(List<IExpr> assumptions);
         IResponse.IUnsatCoreResponse get_unsat_core_response(List<ISymbol> names);
         IResponse.IAssertionsResponse get_assertions_response(List<IExpr> exprs);
     }
@@ -93,9 +93,9 @@ public interface IResponse extends INode {
         public List<IExpr.ISymbol> names();
     }
 
-    /** Response type for get-unsat-assumptions, carrying the named assumptions in the unsat core. */
+    /** Response type for get-unsat-assumptions, carrying the assumptions (terms, e.g. (not q)) in the unsat core. */
     static public interface IUnsatAssumptionsResponse extends IResponse {
-        public List<IExpr.ISymbol> names();
+        public List<IExpr> assumptions();
     }
 
     /** Response type for get-assertions, carrying the list of currently asserted formulae. */
