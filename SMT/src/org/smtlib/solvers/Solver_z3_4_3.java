@@ -249,7 +249,20 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
     /** Sends the command text and parses its response, which must have the given shape */
     private IResponse send(Shape shape, String sent) throws IOException {
-        return parse(shape, sent, solverProcess.sendAndListen(sent, "\n"));
+        return parse(shape, sent, sendRaw(sent));
+    }
+
+    /** Sends the command text and returns the solver's raw response. z3 4.3 writes timeout and exits when its
+     *  whole-run limit ends it, also while idle between commands; the next command then finds the process gone,
+     *  and its response is that timeout (as AbstractSolver's sendCommand does). */
+    private String sendRaw(String sent) throws IOException {
+        if (endedByTimeLimit) return "timeout";
+        try {
+            return solverProcess.sendAndListen(sent, "\n");
+        } catch (IOException e) {
+            if (timeLimitResponseAfterExit() != null) return "timeout";
+            throw e;
+        }
     }
 
     /** Parses a list-valued response */
@@ -262,7 +275,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  s-expression forms ( ( T true ) ), ( - 1 )). Errors -- including z3 4.3's value-then-error
      *  responses -- keep the generic handling. */
     private IResponse sendList(String sent, ListParser lp) throws IOException {
-        String r = solverProcess.sendAndListen(sent, "\n");
+        String r = sendRaw(sent);
         if (!isFlatResponse(r) && !r.contains("(error")) {
             try {
                 return lp.parse(new org.smtlib.sexpr.Parser(smtConfig, new Pos.Source(r, null)));
@@ -275,6 +288,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
     /** Parses the response to the command text sent, which must have the given shape (#149) */
     private IResponse parse(Shape shape, String sent, String response) {
+        IResponse timedOut = timeLimitResponse(response);
+        if (timedOut != null) return timedOut;
         return checkShape(shape, sent, response, parseResponse(response));
     }
 
@@ -359,7 +374,9 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             String s;
             int parens = 0;
             do {
-                s = solverProcess.sendAndListen("(get-assertions)\n");
+                s = sendRaw("(get-assertions)");
+                IResponse timedOut = timeLimitResponse(s);
+                if (timedOut != null) return timedOut;
                 int p = -1;
                 while (( p = s.indexOf('(',p+1)) != -1) parens++;
                 p = -1;
@@ -548,7 +565,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     public IResponse get_info(IKeyword key) {
         String cmd = "(get-info " + key + ")";
         try {
-            String response = solverProcess.sendAndListen(cmd, "\n");
+            String response = sendRaw(cmd);
             if (smtConfig.testing) response = normalizeForTesting(response, key);
             return parse(Shape.VALUE, cmd, response);
         } catch (IOException e) {

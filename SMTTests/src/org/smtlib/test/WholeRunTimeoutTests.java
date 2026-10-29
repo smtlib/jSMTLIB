@@ -118,9 +118,13 @@ public class WholeRunTimeoutTests {
     /** The whole-run limit runs on the wall clock, so it can end the solver while it is idle, e.g. while a client
      *  is processing a counterexample; the next request of any kind (here get-value) then gets the timeout response */
     private static void checkWholeRunLimitWhileIdle(String solverName) throws Exception {
+        checkWholeRunLimitWhileIdle(solverName, solverName);
+    }
+
+    private static void checkWholeRunLimitWhileIdle(String solverName, String exeName) throws Exception {
         SMT.Configuration config = new SMT.Configuration();
         config.timeoutTotal = 1;
-        ISolver solver = start(config, solverName, solverName);
+        ISolver solver = start(config, solverName, exeName);
         try {
             IResponse r = run(config, solver, "(set-option :produce-models true)\n(set-logic ALL)\n"
                     + "(declare-fun x () Int)\n(assert (> x 3))\n(check-sat)\n");
@@ -171,6 +175,11 @@ public class WholeRunTimeoutTests {
     @Test
     public void z3_4_3WholeRunLimit() throws Exception {
         checkWholeRunLimit("z3-4.3", "z3-4.3.1", pigeonholeQuery());
+    }
+
+    @Test
+    public void z3_4_3WholeRunLimitWhileIdle() throws Exception {
+        checkWholeRunLimitWhileIdle("z3-4.3", "z3-4.3.1");
     }
 
     @Test
