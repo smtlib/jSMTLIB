@@ -125,6 +125,9 @@
   We refer to these literals as _string constants_.
  "
 
+; jSMTLIB: STRING gives string literals a sort, as in the top-level (2.7) copy.
+ :funs ((STRING String))
+
  :notes
  "The restriction to printable US ASCII characters in string constants is for 
   simplicity since that set is universally supported. Arbitrary Unicode characters 
@@ -326,12 +329,13 @@
        ; - ((_ re.^ n') e) = (re.++ e ((_ re.^ n) e))  where n' = n + 1
        ((_ re.^ n) RegLan RegLan)
 
-       ; Function symbol indexed by two numerals n₁ and n₂.
-       ; - ((_ re.loop n₁ n₂) e) = re.none                   if n₁ > n₂
-       ; - ((_ re.loop n₁ n₂) e) = ((_ re.^ n₁) e)           if n₁ = n₂
-       ; - ((_ re.loop n₁ n₂) e) = 
-       ;     (re.union ((_ re.^ n₁) e) ... ((_ re.^ n₂) e))  if n₁ < n₂
-       ((_ re.loop n₁ n₂) RegLan RegLan)
+       ; Function symbol indexed by two numerals n1 and n2.
+       ; (jSMTLIB: n1, n2 replace the original n₁, n₂, which are not valid symbols.)
+       ; - ((_ re.loop n1 n2) e) = re.none                   if n1 > n2
+       ; - ((_ re.loop n1 n2) e) = ((_ re.^ n1) e)           if n1 = n2
+       ; - ((_ re.loop n1 n2) e) = 
+       ;     (re.union ((_ re.^ n1) e) ... ((_ re.^ n2) e))  if n1 < n2
+       ((_ re.loop n1 n2) RegLan RegLan)
       )
 
  :notes

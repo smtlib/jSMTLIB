@@ -1,0 +1,4 @@
+(assert (= (bvadd b #x01) #x02))
+                    ^^^^
+(assert (= (str.len (str.++ s "a")) i))
+                              ^^^
