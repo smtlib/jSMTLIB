@@ -674,6 +674,9 @@ public class Utils {
         try (InputStream input = openLogicStream(name, pos)){
             SMT.Configuration config = smtConfig.clone();
             config.interactive = false;
+            // The file's text (e.g. non-ASCII names in descriptions) follows the current standard,
+            // whatever SMT-LIB version the script uses
+            config.smtlib = SMTLIB.values()[SMTLIB.values().length - 1];
             ISource source = config.smtFactory.createSource(config, input, null);
             IParser p = config.smtFactory.createParser(config, source);
             ILogic logic = p.parseLogic();
@@ -742,6 +745,9 @@ public class Utils {
         try (var input = openLogicStream(name, null)) {
             SMT.Configuration config = smtConfig.clone();
             config.interactive = false;
+            // The file's text (e.g. non-ASCII names in descriptions) follows the current standard,
+            // whatever SMT-LIB version the script uses
+            config.smtlib = SMTLIB.values()[SMTLIB.values().length - 1];
             source = config.smtFactory.createSource(config, input, null);
             IParser p = config.smtFactory.createParser(config, source);
             ITheory th = p.parseTheory();
