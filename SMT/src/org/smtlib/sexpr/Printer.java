@@ -147,16 +147,17 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     }
 
     /** True if a bare (unquoted) symbol cannot represent this value: it's empty, starts
-     *  with a digit, or contains a character outside the simple-symbol charset (letters,
+     *  with a digit, or contains a character outside the simple-symbol charset (ASCII letters,
      *  digits, and {@code ~!@$%^&*_-+=<>.?/}) -- per the SMT-LIB grammar for
      *  {@code <simple_symbol>}, such a value needs {@code |...|} bar-quoting to print as
      *  valid, re-parseable syntax. */
     private static boolean needsBarQuoting(String v) {
         if (v.isEmpty()) return true;
-        if (Character.isDigit(v.charAt(0))) return true;
+        if (v.charAt(0) >= '0' && v.charAt(0) <= '9') return true;
         for (int i = 0; i < v.length(); i++) {
             char c = v.charAt(i);
-            if (Character.isLetterOrDigit(c)) continue;
+            // ASCII only: non-ASCII letters and digits are not simple-symbol characters
+            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) continue;
             if ("~!@$%^&*_-+=<>.?/".indexOf(c) >= 0) continue;
             return true;
         }
