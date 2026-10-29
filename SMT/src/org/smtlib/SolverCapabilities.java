@@ -21,6 +21,7 @@ public final class SolverCapabilities {
         STRINGS("strings"),
         FLOATING_POINT("floating-point"),
         DATATYPES("datatypes"),
+        /** get-proof returns a parsable s-expression (SMT-LIB fixes no proof format) */
         PROOFS("proofs");
 
         public final String token;
