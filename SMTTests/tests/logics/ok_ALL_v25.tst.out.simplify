@@ -5,7 +5,7 @@ success
 success
 success
 success
+(error "The simplify solver does not support the Real sort")
 success
-success
-(error "Did not expect a Hex literal in an expression to be translated")
-success
+(error "The simplify solver does not support the BitVec sort")
+(error "The simplify solver does not support the FloatingPoint sort")

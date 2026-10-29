@@ -1,0 +1,11 @@
+success
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:7:17: expected Boolean term at index 2 as argument to '=>'
+")
+(error "Error writing to solver: (assert (=> p u p)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (=> u p p)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (and u p p)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (and p u p)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (and p p u)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

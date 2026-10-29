@@ -1,8 +1,12 @@
 (assert (= b #b00000101))
-             ^^^^^^^^^^
+           ^
 (assert (= b #x05))
-             ^^^^
+           ^
+(assert (= b (_ bv5 8)))
+           ^
 (assert (= r 1.5))
-             ^^^
+           ^
 (assert (= s "abc"))
-             ^^^^^
+           ^
+(assert (= (as r Real) r))
+           ^^^^^^^^^^^
