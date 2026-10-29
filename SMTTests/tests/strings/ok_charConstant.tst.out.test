@@ -1,0 +1,13 @@
+success
+success
+success
+success
+success
+unknown
+(
+(= "A" (_ char #x41))
+(= (_ char #x41) (_ char #x041) (_ char #x00041))
+(= (str.len (_ char #x2FFFF)) 1)
+)
+success
+unknown

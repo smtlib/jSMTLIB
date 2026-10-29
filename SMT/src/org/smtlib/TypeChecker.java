@@ -1196,6 +1196,24 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         }
     }
 
+    /** Checks a Strings-theory constant (_ char H): H is a hexadecimal of 1-5 digits, at most #x2FFFF. */
+    private /*@Nullable*/ ISort checkChar(IParameterizedIdentifier e, ISort stringSort) {
+        if (e.indices().size() != 1 || !(e.indices().get(0) instanceof IHexLiteral)) {
+            error("Expected exactly one hexadecimal index in a char identifier", e.pos());
+            return null;
+        }
+        IHexLiteral h = (IHexLiteral) e.indices().get(0);
+        if (h.length() > 5) {
+            error("The index of a char identifier has at most 5 hex digits", h.pos());
+            return null;
+        }
+        if (h.intValue().compareTo(BigInteger.valueOf(0x2FFFF)) > 0) {
+            error("The code point of a char identifier must be at most #x2FFFF", h.pos());
+            return null;
+        }
+        return save(e, stringSort);
+    }
+
     @Override
     public /*@Nullable*/ ISort visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
         requireVersionForSymbolIndex(e);
@@ -1226,6 +1244,11 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             return save(e,s);
         }
 
+        if (Utils.CHAR.equals(e.headSymbol())) {
+            if (stringSortSymbol == null) stringSortSymbol = smtConfig.exprFactory.symbol("STRING");
+            IFcnSort ssort = symTable.lookup(0,stringSortSymbol);
+            if (ssort != null) return checkChar(e, ssort.resultSort());
+        }
         if ((sort=symTable.lookup(0,e))==null) {
             result.add(smtConfig.responseFactory.error("No sort known for identifier: " + smtConfig.defaultPrinter.toString(e),e.pos()));
             return null;

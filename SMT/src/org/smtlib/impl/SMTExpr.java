@@ -214,12 +214,22 @@ public abstract class SMTExpr implements IExpr {
         @Override
         public List<IIndex> indices() { return indices; }
 
+        /** The code point of a (_ char H) identifier, or null if this is not one. Leading zeros in H don't
+         *  matter, so (_ char #x41) and (_ char #x041) are equal although their hex literals differ. */
+        static private /*@Nullable*/ BigInteger charCode(IParameterizedIdentifier p) {
+            if (!Utils.CHAR.equals(p.headSymbol()) || p.indices().size() != 1) return null;
+            IIndex idx = p.indices().get(0);
+            return idx instanceof IHexLiteral ? ((IHexLiteral)idx).intValue() : null;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof IParameterizedIdentifier)) return false;
             IParameterizedIdentifier p = (IParameterizedIdentifier)o;
             if (!this.headSymbol().equals(p.headSymbol())) return false;
+            BigInteger code = charCode(this);
+            if (code != null) return code.equals(charCode(p));
             if (this.indices().size() != p.indices().size()) return false;
             for (int i = 0; i < this.indices().size(); i++) {
                 if (!this.indices().get(i).equals(p.indices().get(i))) return false;
@@ -230,6 +240,8 @@ public abstract class SMTExpr implements IExpr {
         @Override
         public int hashCode() {
             int hash = headSymbol().hashCode();
+            BigInteger code = charCode(this);
+            if (code != null) return (hash << 1) + code.hashCode();
             for (IIndex idx : indices) hash = (hash << 1) + idx.hashCode();
             return hash;
         }
