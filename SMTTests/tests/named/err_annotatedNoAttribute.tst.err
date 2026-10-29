@@ -1,0 +1,4 @@
+(assert (! p))
+        ^^^^^
+(assert (and p (! p )))
+               ^^^^^^

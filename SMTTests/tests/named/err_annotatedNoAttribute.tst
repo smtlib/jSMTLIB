@@ -1,0 +1,6 @@
+; an annotated term needs at least one attribute: ( ! <term> <attribute>+ )
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(assert (! p))
+(assert (and p (! p )))
+(assert (! p :named n))
