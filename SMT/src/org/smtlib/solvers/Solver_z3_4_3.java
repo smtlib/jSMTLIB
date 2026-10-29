@@ -61,7 +61,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     // adapter -- z3-4.3 never got the same fix.
     protected String cmds_win[] = new String[]{ "", "/smt2","/in","SMTLIB2_COMPLIANT=true","WARNING=false"};//,"/rs:42"};
     protected String cmds_mac[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
-    protected String cmds_unix[] = new String[]{ "", "-smt2","-in","WARNING=false"};
+    protected String cmds_unix[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
 
     /** The parser that parses responses from the solver */
     protected org.smtlib.sexpr.Parser responseParser;

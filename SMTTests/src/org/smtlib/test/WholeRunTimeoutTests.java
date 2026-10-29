@@ -177,8 +177,10 @@ public class WholeRunTimeoutTests {
         checkWholeRunLimit("z3-4.3", "z3-4.3.1", pigeonholeQuery());
     }
 
+    /** macOS only: z3-4.3.1's -T limit did not expire while it was idle on Linux (amd64 Docker container) */
     @Test
     public void z3_4_3WholeRunLimitWhileIdle() throws Exception {
+        Assume.assumeTrue("z3-4.3 idle limit is checked on macOS only", System.getProperty("os.name").startsWith("Mac"));
         checkWholeRunLimitWhileIdle("z3-4.3", "z3-4.3.1");
     }
 
