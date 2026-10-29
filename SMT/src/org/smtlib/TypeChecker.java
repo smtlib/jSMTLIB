@@ -1949,10 +1949,11 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             }
         } while (changed);
 
-        for (String name : deltaNames) {
+        for (IExpr.ISortDeclaration sd : sortDecls) {
+            String name = sd.symbol().value();
             if (!wellFounded.contains(name)) {
                 errors.add(smtConfig.responseFactory.error(
-                    "Datatype " + name + " is not well-founded (no finite base case)", null));
+                    "Datatype " + name + " is not well-founded (no finite base case)", sd.symbol().pos()));
             }
         }
     }

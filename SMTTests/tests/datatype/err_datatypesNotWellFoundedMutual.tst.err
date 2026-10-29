@@ -1,0 +1,2 @@
+(declare-datatypes ((A 0) (B 0)) (((a (ab B))) ((b (ba A)))))
+                     ^

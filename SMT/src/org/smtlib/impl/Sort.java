@@ -397,6 +397,7 @@ public abstract class Sort extends Pos.Printable implements ISort {
         /** Creates a sort parameter for the given symbol name. */
         public Parameter(IExpr.ISymbol symbol) {
             this.symbol = symbol;
+            setPos(symbol.pos());
         }
 
         @Override
