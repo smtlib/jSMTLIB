@@ -3,7 +3,7 @@ success
 success
 (error "Parse Error: <shell>:1.14: Symbol 'undeclared' not declared as a variable")
 (error "Error writing to solver: (declare-fun y () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (echo ""after the error"") org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+"after the error"
 (error "Error writing to solver: (assert (= y 1)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Error writing to solver: (get-option :produce-models) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
