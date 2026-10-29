@@ -1,2 +1,6 @@
+(assert (= (to_real (+ i 1)) r))
+           ^^^^^^^^^^^^^^^^^
 (assert (= (bvadd b #x01) #x02))
-                    ^^^^
+           ^^^^^^^^^^^^^^
+(assert (fp.isNormal f))
+                     ^

@@ -1,0 +1,4 @@
+(set-logic QF_FP)
+           ^^^^^
+(declare-sort S 0)
+^^^^^^^^^^^^^^^^^^

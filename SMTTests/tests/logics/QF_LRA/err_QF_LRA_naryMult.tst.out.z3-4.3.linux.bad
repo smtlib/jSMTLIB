@@ -1,0 +1,7 @@
+success
+success
+success
+(error "line 6 column 25: logic does not support nonlinear arithmetic")
+(error "line 7 column 25: logic does not support nonlinear arithmetic")
+(error "Failed to assert expression: org.smtlib.SolverProcess$NoResponseException: Solver process closed its output stream without a response (= y (/ x 2 3))")
+(error "Failed to assert expression: org.smtlib.SolverProcess$NoResponseException: Solver process has already exited (= y (* 2.0 x 3))")
