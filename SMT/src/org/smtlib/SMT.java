@@ -1246,7 +1246,6 @@ public class SMT {
             IResponse res = solver.start();
             //if (smtConfig.verbose != 0) smtConfig.log.logDiag("#SMT RES " + res);
             if (res.isError()) {
-                smtConfig.log.logError((IResponse.IError)res);
                 error(solvername + " failed to start: " + ((IResponse.IError)res).errorMsg());
                 return null;
             }
