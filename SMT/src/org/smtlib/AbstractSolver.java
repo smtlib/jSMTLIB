@@ -221,13 +221,8 @@ public class AbstractSolver implements ISolver {
      *  is needed here. A subclass's exit() should call this instead of
      *  sendCommand(commandFactory.exit()) directly. */
     protected IResponse sendExitCommand() {
+        // exit answers success (nothing is tolerated); sendCommand reports anything else (#149)
         IResponse r = sendCommand(smtConfig.commandFactory.exit(), true);
-        // exit answers success (nothing is tolerated); anything else is not conformant, and in a
-        // pipelined run may be a response out of step (#149)
-        if (!r.isError() && !(r instanceof ISymbol sym && (sym.value().equals("success") || sym.value().isEmpty()))) {
-            if (pipelinedEver) outOfStep = true;
-            r = smtConfig.responseFactory.error("Unexpected response to exit: " + smtConfig.defaultPrinter.toString(r));
-        }
         if (pipelinedEver && solverProcess != null) {
             // The solver stops after exit; whatever else it wrote is out of step
             try {
@@ -300,8 +295,7 @@ public class AbstractSolver implements ISolver {
         try {
             if (!capturing) readPipelined(true);
             translatedCmd = translate(cmd);
-            if (capturing) return sendWithoutWaiting(translatedCmd, answersWithAnySymbol(cmd),
-                    cmd instanceof Icheck_sat || cmd instanceof Icheck_sat_assuming);
+            if (capturing) return sendWithoutWaiting(translatedCmd, shapeOf(cmd));
             String response = solverProcess.sendAndListen(translatedCmd, "\n");
             // A null response (observed rarely, likely a SolverProcess read-timing race)
             // would otherwise reach parseResponse() and surface as an uncaught
@@ -321,7 +315,9 @@ public class AbstractSolver implements ISolver {
             if (result == null) {
                 return smtConfig.responseFactory.error("Could not parse response from the solver for: " + translatedCmd + " -- raw response: " + response);
             }
-            return checkImmediateExit(checkNonResponse(result, answersWithAnySymbol(cmd), translatedCmd, response));
+            Shape shape = shapeOf(cmd);
+            return checkShape(shape, translatedCmd, response,
+                    checkImmediateExit(checkNonResponse(result, shape == Shape.ANY, translatedCmd, response)));
         } catch (SolverProcess.NoResponseException e) {
             if (tolerateSilentExit) return smtConfig.responseFactory.empty();
             IResponse timedOut = timeLimitResponseAfterExit();
@@ -347,19 +343,15 @@ public class AbstractSolver implements ISolver {
     public static final class Pending implements IResponse {
         /** The text sent to the solver */
         final String sent;
-        /** Whether any symbol may answer the command (see checkNonResponse) */
-        final boolean anySymbol;
-        /** Whether the command is check-sat or check-sat-assuming, answered by sat/unsat/unknown,
-         *  rather than one answered by success */
-        final boolean checkSat;
+        /** The kind of response the command has */
+        final Shape shape;
         /** For a barrier (see readPipelined), the text it echoes; else null */
         final /*@Nullable*/ String marker;
         private /*@Nullable*/ IResponse response = null;
 
-        Pending(String sent, boolean anySymbol, boolean checkSat, /*@Nullable*/ String marker) {
+        Pending(String sent, Shape shape, /*@Nullable*/ String marker) {
             this.sent = sent;
-            this.anySymbol = anySymbol;
-            this.checkSat = checkSat;
+            this.shape = shape;
             this.marker = marker;
         }
 
@@ -481,10 +473,10 @@ public class AbstractSolver implements ISolver {
     /** Whether a command has been pipelined at all */
     private boolean pipelinedEver = false;
 
-    private IResponse sendWithoutWaiting(String translatedCmd, boolean anySymbol, boolean checkSat) {
+    private IResponse sendWithoutWaiting(String translatedCmd, Shape shape) {
         pipelinedSinceFinish = true;
         pipelinedEver = true;
-        Pending p = new Pending(translatedCmd, anySymbol, checkSat, null);
+        Pending p = new Pending(translatedCmd, shape, null);
         try {
             solverProcess.sendNoListen(translatedCmd, "\n");
             pending.add(p);
@@ -646,7 +638,7 @@ public class AbstractSolver implements ISolver {
         String sent = "(echo \"" + marker + "\")";
         try {
             solverProcess.sendNoListen(sent, "\n");
-            pending.add(new Pending(sent, true, false, marker));
+            pending.add(new Pending(sent, Shape.ANY, marker));
         } catch (IOException e) {
             // The solver has stopped; the pending commands are resolved as its output ends
         }
@@ -662,7 +654,7 @@ public class AbstractSolver implements ISolver {
         if (isBarrierFor(t)) {
             Pending p;
             while ((p = pending.poll()) != null && p.marker == null) {
-                resolve(p, p.checkSat
+                resolve(p, p.shape == Shape.CHECK_SAT
                         ? smtConfig.responseFactory.error("No response from the solver to: " + p.sent.trim())
                         : successOrEmpty(smtConfig));
             }
@@ -671,7 +663,7 @@ public class AbstractSolver implements ISolver {
         IResponse parsed = smtConfig.log.unheld(() -> parseResponse(text));
         if (parsed instanceof ISymbol sym && CHECK_SAT_RESPONSES.contains(sym.value())) {
             Pending p;
-            while ((p = pending.peek()) != null && !p.checkSat && p.marker == null) {
+            while ((p = pending.peek()) != null && p.shape != Shape.CHECK_SAT && p.marker == null) {
                 resolve(pending.poll(), successOrEmpty(smtConfig));
             }
             if (p == null || p.marker != null) reportOutOfStep(text);
@@ -686,7 +678,7 @@ public class AbstractSolver implements ISolver {
         pending.poll();
         boolean errorLike = parsed != null && (parsed.isError()
                 || (parsed instanceof ISymbol sym && "unsupported".equals(sym.value())));
-        resolve(p, errorLike ? toResponse(p, text) : outOfStepResponse(p, text));
+        resolve(p, errorLike ? toResponse(p, text) : outOfStepResponse(p.sent, text));
         return true;
     }
 
@@ -711,20 +703,56 @@ public class AbstractSolver implements ISolver {
     private static final java.util.Set<String> CHECK_SAT_RESPONSES = java.util.Set.of(
             "sat", "unsat", "unknown", "timeout", "memout", "incomplete");
 
-    /** Whether the response has a bare shape the command can produce: an error or unsupported for any
-     *  command; sat, unsat, unknown (or timeout, memout, incomplete) for check-sat; success or nothing
-     *  for the others */
-    private static boolean fitsShape(Pending p, IResponse r) {
-        if (r.isError()) return true;
-        if (!(r instanceof ISymbol sym)) return false;
-        String v = sym.value();
-        if (v.equals("unsupported")) return true;
-        return p.checkSat ? CHECK_SAT_RESPONSES.contains(v) : (v.equals("success") || v.isEmpty());
+    /** The kinds of response a command has besides an error or unsupported (#149) */
+    protected enum Shape {
+        /** success, or nothing */
+        SUCCESS,
+        /** sat, unsat, unknown (or timeout, memout, incomplete): check-sat and check-sat-assuming */
+        CHECK_SAT,
+        /** a value other than a bare symbol, or nothing (yices2 2.6.5's answer to get-model for an empty
+         *  model): the get- commands but get-option */
+        VALUE,
+        /** any value, including a bare symbol: get-option's value, and echo's text, which some
+         *  solvers (e.g. yices2, older z3) write unquoted */
+        ANY
     }
 
-    private IResponse outOfStepResponse(Pending p, String text) {
+    /** The kind of response cmd has */
+    protected static Shape shapeOf(ICommand cmd) {
+        if (cmd instanceof Icheck_sat || cmd instanceof Icheck_sat_assuming) return Shape.CHECK_SAT;
+        if (cmd instanceof Iget_option || cmd instanceof Iecho) return Shape.ANY;
+        if (cmd instanceof Iget_assertions || cmd instanceof Iget_assignment || cmd instanceof Iget_info
+                || cmd instanceof Iget_model || cmd instanceof Iget_proof || cmd instanceof Iget_unsat_assumptions
+                || cmd instanceof Iget_unsat_core || cmd instanceof Iget_value) return Shape.VALUE;
+        return Shape.SUCCESS;
+    }
+
+    /** Whether the response has a bare shape the command can produce: an error or unsupported for any
+     *  command, else as the shape says */
+    private static boolean fitsShape(Shape shape, IResponse r) {
+        if (r.isError()) return true;
+        if (!(r instanceof ISymbol sym)) return shape == Shape.VALUE || shape == Shape.ANY;
+        String v = sym.value();
+        if (v.equals("unsupported")) return true;
+        return switch (shape) {
+            case SUCCESS -> v.equals("success") || v.isEmpty();
+            case CHECK_SAT -> CHECK_SAT_RESPONSES.contains(v);
+            case VALUE -> v.isEmpty();
+            case ANY -> true;
+        };
+    }
+
+    /** r, if it has the given shape; else the error for a response out of step with the command sent,
+     *  whose raw response was text */
+    protected IResponse checkShape(Shape shape, String sent, String text, IResponse r) {
+        return fitsShape(shape, r) ? r : outOfStepResponse(sent, text);
+    }
+
+    private IResponse outOfStepResponse(String sent, String text) {
         outOfStep = true;
-        return smtConfig.responseFactory.error("Out of step: the response to " + p.sent.trim() + " was " + text.trim());
+        String t = text.trim();
+        return smtConfig.responseFactory.error("Out of step: the response to " + sent.trim() + " was "
+                + (t.isEmpty() ? "empty" : t));
     }
 
     /** The index just past the response that starts at start (an atom, a string literal, a quoted
@@ -782,14 +810,8 @@ public class AbstractSolver implements ISolver {
         if (result == null) {
             return smtConfig.responseFactory.error("Could not parse response from the solver for: " + p.sent + " -- raw response: " + text);
         }
-        IResponse r = checkImmediateExit(checkNonResponse(result, p.anySymbol, p.sent, text));
-        return fitsShape(p, r) ? r : outOfStepResponse(p, text);
-    }
-
-    /** Whether any bare symbol may answer cmd: get-option's value, and echo's text, which some
-     *  solvers (e.g. yices2, older z3) write unquoted */
-    private static boolean answersWithAnySymbol(ICommand cmd) {
-        return cmd instanceof Iget_option || cmd instanceof Iecho;
+        return checkShape(p.shape, p.sent, text,
+                checkImmediateExit(checkNonResponse(result, p.shape == Shape.ANY, p.sent, text)));
     }
 
     /** The bare symbols that are responses in themselves, including the empty response; any
@@ -803,7 +825,7 @@ public class AbstractSolver implements ISolver {
 
     /** Rejects a bare symbol that cannot answer the command sent (#134), such as the first word of
      *  a crash message: an error saying the solver stopped, if it did, or else one giving the text.
-     *  anySymbol says whether the command may be answered by any symbol (see answersWithAnySymbol). */
+     *  anySymbol says whether the command may be answered by any symbol (see Shape.ANY). */
     private IResponse checkNonResponse(IResponse result, boolean anySymbol, String sent, String raw) {
         if (anySymbol || !(result instanceof ISymbol) || SYMBOL_RESPONSES.contains(((ISymbol)result).value())) {
             return result;
@@ -1123,10 +1145,10 @@ public class AbstractSolver implements ISolver {
         try {
             // A single read may not capture a multi-line response, so keep reading
             // (paren-balance tracked across all reads so far) until it's complete.
-            String cmdText = translate(smtConfig.commandFactory.get_assertions());
+            String sent = translate(smtConfig.commandFactory.get_assertions());
             StringBuilder sb = new StringBuilder();
             readPipelined(true);
-            solverProcess.sendNoListen(cmdText, "\n");
+            solverProcess.sendNoListen(sent, "\n");
             int parens = 0;
             // Tracks whether the scan is currently inside a double-quoted string literal,
             // carried across reads (a string can in principle straddle a chunk boundary),
@@ -1148,7 +1170,7 @@ public class AbstractSolver implements ISolver {
                 sb.append(s.replace('\n',' ').replace("\r",""));
             } while (parens > 0);
             response = sb.toString();
-            if (isFlatResponse(response)) return checkImmediateExit(parseResponse(response));
+            if (isFlatResponse(response)) return checkShape(Shape.VALUE, sent, response, checkImmediateExit(parseResponse(response)));
             List<IExpr> exprs = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseAssertionList();
             return smtConfig.responseFactory.get_assertions_response(exprs);
         } catch (IOException e) {
@@ -1198,10 +1220,11 @@ public class AbstractSolver implements ISolver {
         String response = null;
         try {
             readPipelined(true);
-            response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_unsat_assumptions()), "\n");
+            String sent = translate(smtConfig.commandFactory.get_unsat_assumptions());
+            response = solverProcess.sendAndListen(sent, "\n");
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;
-            if (isFlatResponse(response)) return checkImmediateExit(parseResponse(response));
+            if (isFlatResponse(response)) return checkShape(Shape.VALUE, sent, response, checkImmediateExit(parseResponse(response)));
             List<ISymbol> names = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseSymbolList();
             return smtConfig.responseFactory.get_unsat_assumptions_response(names);
         } catch (IOException e) {
@@ -1226,10 +1249,11 @@ public class AbstractSolver implements ISolver {
         String response = null;
         try {
             readPipelined(true);
-            response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_unsat_core()), "\n");
+            String sent = translate(smtConfig.commandFactory.get_unsat_core());
+            response = solverProcess.sendAndListen(sent, "\n");
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;
-            if (isFlatResponse(response)) return checkImmediateExit(parseResponse(response));
+            if (isFlatResponse(response)) return checkShape(Shape.VALUE, sent, response, checkImmediateExit(parseResponse(response)));
             List<ISymbol> names = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseSymbolList();
             return smtConfig.responseFactory.get_unsat_core_response(names);
         } catch (IOException e) {
@@ -1254,10 +1278,11 @@ public class AbstractSolver implements ISolver {
         String response = null;
         try {
             readPipelined(true);
-            response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_value(java.util.Arrays.asList(terms))), "\n");
+            String sent = translate(smtConfig.commandFactory.get_value(java.util.Arrays.asList(terms)));
+            response = solverProcess.sendAndListen(sent, "\n");
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;
-            if (isFlatResponse(response)) return checkImmediateExit(parseResponse(response));
+            if (isFlatResponse(response)) return checkShape(Shape.VALUE, sent, response, checkImmediateExit(parseResponse(response)));
             List<IResponse.IPair<IExpr,IExpr>> values = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseValueList();
             return smtConfig.responseFactory.get_value_response(values);
         } catch (IOException e) {
@@ -1282,10 +1307,11 @@ public class AbstractSolver implements ISolver {
         String response = null;
         try {
             readPipelined(true);
-            response = solverProcess.sendAndListen(translate(smtConfig.commandFactory.get_assignment()), "\n");
+            String sent = translate(smtConfig.commandFactory.get_assignment());
+            response = solverProcess.sendAndListen(sent, "\n");
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;
-            if (isFlatResponse(response)) return checkImmediateExit(parseResponse(response));
+            if (isFlatResponse(response)) return checkShape(Shape.VALUE, sent, response, checkImmediateExit(parseResponse(response)));
             List<IResponse.IPair<ISymbol,Boolean>> assignments = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseAssignmentList();
             return smtConfig.responseFactory.get_assignment_response(assignments);
         } catch (IOException e) {

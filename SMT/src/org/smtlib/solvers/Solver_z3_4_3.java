@@ -153,7 +153,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             translatedCmd = translate(cmd);
             String response = solverProcess.sendAndListen(translatedCmd,"\n");
             IResponse timedOut = timeLimitResponse(response);
-            return timedOut != null ? timedOut : parseResponse(response);
+            return timedOut != null ? timedOut : parse(shapeOf(cmd), translatedCmd, response);
         } catch (IOException e) {
             IResponse timedOut = timeLimitResponseAfterExit();
             if (timedOut != null) return timedOut;
@@ -168,7 +168,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         try {
             String response = solverProcess.sendAndListen(cmd,"\n");
             IResponse timedOut = timeLimitResponse(response);
-            return timedOut != null ? timedOut : parseResponse(response);
+            return timedOut != null ? timedOut : parse(Shape.SUCCESS, cmd, response);
         } catch (IOException e) {
             IResponse timedOut = timeLimitResponseAfterExit();
             if (timedOut != null) return timedOut;
@@ -245,6 +245,16 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     // "plain printing for a single node with no override" correctly; only a whole-subtree
     // bypass was ever the problem. See issue #65.
 
+    /** Sends the command text and parses its response, which must have the given shape */
+    private IResponse send(Shape shape, String sent) throws IOException {
+        return parse(shape, sent, solverProcess.sendAndListen(sent, "\n"));
+    }
+
+    /** Parses the response to the command text sent, which must have the given shape (#149) */
+    private IResponse parse(Shape shape, String sent, String response) {
+        return checkShape(shape, sent, response, parseResponse(response));
+    }
+
     /** Every command this adapter sends directly to the process ends here, so the solver's report that its
      *  whole-run limit ended it is recognized for all of them (see AbstractSolver#timeLimitResponse). A command sent
      *  directly after that finds the process gone and gets an error; sendCommand returns the timeout response. */
@@ -295,8 +305,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The logic must be set before an assert command is issued");
         }
         try {
-            String s = solverProcess.sendAndListen("(assert ",translate(sexpr),")\n");
-            response = parseResponse(s);
+            response = send(Shape.SUCCESS, "(assert " + translate(sexpr) + ")");
             checkSatStatus = null;
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Failed to assert expression: " + e + " " + sexpr);
@@ -404,7 +413,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             // so defer to it (see issue #53). Only update the local depth bookkeeping once
             // the solver actually accepted the pop; otherwise nothing was really popped and
             // pushesDepth must not drift from what the solver's real stack looks like.
-            IResponse response = parseResponse(solverProcess.sendAndListen("(pop ",Integer.toString(number),")\n"));
+            IResponse response = send(Shape.SUCCESS, "(pop " + number + ")");
             if (!response.isError()) pushesDepth -= number;
             return response;
         } catch (IOException e) {
@@ -430,7 +439,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             // reproducible case anywhere to justify masking it, and no evidence for the
             // Linux-only claim either, the honest, platform-independent behavior is to
             // return exactly what the solver said, uniformly.
-            return parseResponse(solverProcess.sendAndListen("(push ",Integer.toString(number),")\n"));
+            return send(Shape.SUCCESS, "(push " + number + ")");
         } catch (Exception e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -456,7 +465,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             linesOffset--;
             return smtConfig.responseFactory.success();
         } else try {
-            return parseResponse(solverProcess.sendAndListen("(set-logic ",logicName,")\n"));
+            return send(Shape.SUCCESS, "(set-logic " + logicName + ")");
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e,pos);
         }
@@ -511,7 +520,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         try {
             String response = solverProcess.sendAndListen(cmd, "\n");
             if (smtConfig.testing) response = normalizeForTesting(response, key);
-            return parseResponse(response);
+            return parse(Shape.VALUE, cmd, response);
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to solver: " + cmd + " " + e);
         }
@@ -536,7 +545,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The get-model command is only valid immediately after check-sat returned sat or unknown");
         }
         try {
-            return parseResponse(solverProcess.sendAndListen("(get-model)\n"));
+            return send(Shape.VALUE, "(get-model)");
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -549,7 +558,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         }
         try {
             checkSatStatus = null;
-            return parseResponse(solverProcess.sendAndListen(translate(cmd),"\n"));
+            return send(Shape.SUCCESS, translate(cmd));
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         } catch (IVisitor.VisitorException e) {
@@ -564,7 +573,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         }
         try {
             checkSatStatus = null;
-            return parseResponse(solverProcess.sendAndListen(translate(cmd),"\n"));
+            return send(Shape.SUCCESS, translate(cmd));
 
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
@@ -580,7 +589,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         }
         try {
             checkSatStatus = null;
-            return parseResponse(solverProcess.sendAndListen(translate(cmd),"\n"));
+            return send(Shape.SUCCESS, translate(cmd));
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         } catch (IVisitor.VisitorException e) {
@@ -595,7 +604,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         }
         try {
             checkSatStatus = null;
-            return parseResponse(solverProcess.sendAndListen(translate(cmd),"\n"));
+            return send(Shape.SUCCESS, translate(cmd));
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         } catch (IVisitor.VisitorException e) {
@@ -610,7 +619,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         }
         try {
             checkSatStatus = null;
-            return parseResponse(solverProcess.sendAndListen(translate(cmd),"\n"));
+            return send(Shape.SUCCESS, translate(cmd));
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         } catch (IVisitor.VisitorException e) {
@@ -627,7 +636,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The get-proof command is only valid immediately after check-sat returned unsat");
         }
         try {
-            return proofResponse(parseResponse(solverProcess.sendAndListen("(get-proof)\n")));
+            return proofResponse(send(Shape.VALUE, "(get-proof)"));
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -642,7 +651,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The get-unsat-core command is only valid immediately after check-sat returned unsat");
         }
         try {
-            return parseResponse(solverProcess.sendAndListen("(get-unsat-core)\n"));
+            return send(Shape.VALUE, "(get-unsat-core)");
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -658,7 +667,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The get-assignment command is only valid immediately after check-sat returned sat or unknown");
         }
         try {
-            return parseResponse(solverProcess.sendAndListen("(get-assignment)\n"));
+            return send(Shape.VALUE, "(get-assignment)");
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -674,11 +683,12 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("A get-value command is valid only after check-sat has returned sat or unknown");
         }
         try {
-            solverProcess.sendNoListen("(get-value (");
+            StringBuilder sent = new StringBuilder("(get-value (");
             for (IExpr e: terms) {
-                solverProcess.sendNoListen(" ",translate(e));
+                sent.append(" ").append(translate(e));
             }
-            String r = solverProcess.sendAndListen("))\n");
+            sent.append("))");
+            String r = solverProcess.sendAndListen(sent.toString(), "\n");
             // Values are returned structured, as by the other adapters (AbstractSolver.get_value),
             // so that they print the same way (e.g. (- 1), not the s-expression form ( - 1 )).
             // Errors -- including z3 4.3's value-then-error responses -- keep the existing handling.
@@ -690,8 +700,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
                     // fall through to the generic handling below
                 }
             }
-            IResponse response = parseResponse(r);
-            return response;
+            return parse(Shape.VALUE, sent.toString(), r);
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         } catch (IVisitor.VisitorException e) {
