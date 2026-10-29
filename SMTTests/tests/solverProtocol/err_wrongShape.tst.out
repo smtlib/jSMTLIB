@@ -6,5 +6,6 @@ success
 (error "Out of step: the response to (check-sat) was success")
 sat
 (error "Out of step: the response to (get-value ( p)) was success")
+(error "Out of step: the response to (get-value ( p)) was empty")
 (error "Out of step: the response to (get-model) was sat")
 ((p true))

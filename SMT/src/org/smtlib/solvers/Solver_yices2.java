@@ -71,6 +71,12 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
         }
     }
 
+    /** yices2 2.6.5 answers get-model with an empty line, not (), when the model is empty */
+    @Override
+    protected String correctResponse(ICommand cmd, String response) {
+        return cmd instanceof ICommand.Iget_model && response.trim().isEmpty() ? "()" : response;
+    }
+
     // parseResponse() used to be overridden here (pushed down from Solver_smt) for two
     // legacy-yices workarounds: converting old bvVALUE[WIDTH] bitvector literal syntax to
     // standard #bBITS, and a naive response.contains("error") check meant to catch

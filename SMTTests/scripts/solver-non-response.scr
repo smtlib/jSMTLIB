@@ -7,8 +7,9 @@ trap 'rm -rf "$_tmpdir"' EXIT
 
 # Acknowledges every command, but on a define-fun writes a C++ abort banner to stderr and
 # dies (as bitwuzla 0.9.1 does on an ill-sorted define-fun, #112), and on a declare-fun
-# writes a line that is not a response and carries on. A get-model gets an empty line, as
-# yices2 2.6.5 gives for an empty model.
+# writes a line that is not a response and carries on. A get-model or a push gets an empty
+# line, which is never a legal response (yices2 2.6.5 gives one for an empty model; its
+# adapter supplies the ()).
 cat > "$_tmpdir/stub" <<'EOF'
 #!/bin/bash
 while IFS= read -r line; do
@@ -20,7 +21,7 @@ while IFS= read -r line; do
             exit 134 ;;
         "(declare-fun"*) echo "garbage from the stub" ;;
         "(check-sat)") echo "sat" ;;
-        "(get-model)") echo "" ;;
+        "(get-model)"|"(push 1)") echo "" ;;
         *) echo "success" ;;
     esac
 done
@@ -62,10 +63,18 @@ fi
 
 out=$($SMT_CMD --solver bitwuzla --exec "$_tmpdir/stub" \
     --text "(set-option :produce-models true) (set-logic QF_UF) (check-sat) (get-model)" 2>/dev/null)
-if [ "$(echo "$out" | sed -n 4p)" = "" ]; then
-    pass "an empty response is still accepted"
+if [ "$(echo "$out" | sed -n 4p)" = '(error "Out of step: the response to (get-model) was empty")' ]; then
+    pass "an empty response to get-model is an error"
 else
-    fail "an empty response is still accepted" "got: $(echo "$out" | sed -n 4p)"
+    fail "an empty response to get-model is an error" "got: $(echo "$out" | sed -n 4p)"
+fi
+
+out=$($SMT_CMD --solver bitwuzla --exec "$_tmpdir/stub" \
+    --text "(set-logic QF_UF) (push 1)" 2>/dev/null)
+if [ "$(echo "$out" | sed -n 2p)" = '(error "Out of step: the response to (push 1) was empty")' ]; then
+    pass "an empty response to push is an error"
+else
+    fail "an empty response to push is an error" "got: $(echo "$out" | sed -n 2p)"
 fi
 
 [ "$FAIL" -eq 0 ]

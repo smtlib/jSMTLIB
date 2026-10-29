@@ -292,6 +292,12 @@ public class AbstractSolver implements ISolver {
         return timeLimitResponse(solverProcess.unreadOutput());
     }
 
+    /** The solver's raw response to cmd (sent by sendCommand and waited for), corrected where the solver departs
+     *  from SMT-LIB; an adapter overrides this to patch a specific non-conforming response */
+    protected String correctResponse(ICommand cmd, String response) {
+        return response;
+    }
+
     private IResponse sendCommand(ICommand cmd, boolean tolerateSilentExit, boolean scrubNonDeterminism) {
         if (endedByTimeLimit) {
             return tolerateSilentExit ? smtConfig.responseFactory.empty() : smtConfig.responseFactory.timeout();
@@ -311,6 +317,7 @@ public class AbstractSolver implements ISolver {
             }
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;
+            response = correctResponse(cmd, response);
             if (scrubNonDeterminism && smtConfig.testing && cmd instanceof Iget_info g) response = normalizeForTesting(response, g.infoflag());
             IResponse result = parseResponse(response);
             // parseResponse() (or a subclass override) can itself return null for some
@@ -710,12 +717,11 @@ public class AbstractSolver implements ISolver {
 
     /** The kinds of response a command has besides an error or unsupported (#149) */
     protected enum Shape {
-        /** success, or nothing */
+        /** success */
         SUCCESS,
         /** sat, unsat, unknown (or timeout, memout, incomplete): check-sat and check-sat-assuming */
         CHECK_SAT,
-        /** a value other than a bare symbol, or nothing (yices2 2.6.5's answer to get-model for an empty
-         *  model): the get- commands but get-option */
+        /** a value other than a bare symbol: the get- commands but get-option */
         VALUE,
         /** any value, including a bare symbol: get-option's value, and echo's text, which some
          *  solvers (e.g. yices2, older z3) write unquoted */
@@ -740,9 +746,9 @@ public class AbstractSolver implements ISolver {
         String v = sym.value();
         if (v.equals("unsupported")) return true;
         return switch (shape) {
-            case SUCCESS -> v.equals("success") || v.isEmpty();
+            case SUCCESS -> v.equals("success");
             case CHECK_SAT -> CHECK_SAT_RESPONSES.contains(v);
-            case VALUE -> v.isEmpty();
+            case VALUE -> false;
             case ANY -> true;
         };
     }
