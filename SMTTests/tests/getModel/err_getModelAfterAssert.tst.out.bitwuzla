@@ -1,0 +1,8 @@
+success
+success
+success
+success
+sat
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] cannot get value if input formula is not sat
+")

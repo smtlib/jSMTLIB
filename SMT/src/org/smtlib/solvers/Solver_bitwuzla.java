@@ -378,13 +378,18 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
     private static final java.util.Set<StackChange> ANSWERED_AFTER = java.util.EnumSet.of(
             StackChange.DECLARE_FUN, StackChange.DECLARE_SORT, StackChange.DEFINE_SORT, StackChange.DEFINE_FUN);
 
+    /** As {@link #ANSWERED_AFTER}, and reset-assertions, after which Bitwuzla crashes on get-model */
+    private static final java.util.Set<StackChange> GET_MODEL_GUARDED_AFTER = java.util.EnumSet.of(
+            StackChange.DECLARE_FUN, StackChange.DECLARE_SORT, StackChange.DEFINE_SORT, StackChange.DEFINE_FUN,
+            StackChange.RESET_ASSERTIONS);
+
     /** With :produce-models on, Bitwuzla writes nothing for get-model unless its last check
      *  returned sat (and crashes if a reset came since); after an assert, push, pop or
      *  reset-assertions, or with the option set after the check, it writes an ordinary error.
      *  Bitwuzla also answers it in assert mode, after a declare or define following the check. */
     @Override
     public IResponse get_model() {
-        IResponse unchanged = requireNoChangeSinceCheck("get-model", ANSWERED_AFTER);
+        IResponse unchanged = requireNoChangeSinceCheck("get-model", GET_MODEL_GUARDED_AFTER);
         if (unchanged != null) return unchanged;
         if (optionOn(Utils.PRODUCE_MODELS)) {
             IResponse r = lastResult();
