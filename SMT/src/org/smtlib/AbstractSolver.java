@@ -723,8 +723,8 @@ public class AbstractSolver implements ISolver {
         CHECK_SAT,
         /** a value other than a bare symbol: the get- commands but get-option */
         VALUE,
-        /** any non-empty value, including a bare symbol: get-option's value, and the text of the
-         *  echoes jSMTLIB sends itself (which some solvers write unquoted) */
+        /** any non-empty value, including a bare symbol: get-option's value, and echo's text, which
+         *  some solvers write unquoted (their adapters answer a user's echo themselves) */
         ANY
     }
 
@@ -917,11 +917,9 @@ public class AbstractSolver implements ISolver {
     }
 
 
-    /** The response to echo is its argument; it is answered here, since some solvers (yices2,
-     *  older z3) write the text unquoted, so the end of an echoed string cannot be found (#136) */
     @Override
     public IResponse echo(IStringLiteral arg) {
-        return arg;
+        return sendCommand(smtConfig.commandFactory.echo(arg));
     }
 
     /** Forwards a standalone comment (its own C_comment pseudo-command -- see issue #42) to

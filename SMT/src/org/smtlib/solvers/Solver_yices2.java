@@ -54,6 +54,13 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
     }
 
 
+    /** yices2 writes echo's text unquoted, so where it ends cannot be found (#136); the response
+     *  to echo is its argument */
+    @Override
+    public IResponse echo(IExpr.IStringLiteral arg) {
+        return arg;
+    }
+
     @Override
     public IResponse start() {
         try {
