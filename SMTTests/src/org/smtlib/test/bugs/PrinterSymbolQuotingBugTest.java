@@ -56,4 +56,30 @@ public class PrinterSymbolQuotingBugTest {
 
         Assert.assertEquals("|has space|", printed);
     }
+
+    private static String print(SMT.Configuration config, String value) throws Exception {
+        StringWriter sw = new StringWriter();
+        Printer.write(config, sw, config.exprFactory.symbol(value));
+        return sw.toString();
+    }
+
+    /** Non-ASCII letters and digits are not simple-symbol characters, so such a symbol needs bars */
+    @Test
+    public void programmaticallyBuiltNonAsciiSymbolIsBarQuotedWhenPrinted() throws Exception {
+        SMT.Configuration config = new SMT.Configuration();
+        Assert.assertEquals("|caf\u00e9|", print(config, "caf\u00e9"));
+        Assert.assertEquals("|\u03c0|", print(config, "\u03c0"));
+        Assert.assertEquals("|x\u0663|", print(config, "x\u0663"));
+        Assert.assertEquals("abc", print(config, "abc"));
+    }
+
+    /** Reserved words built as symbols are printed as they are (illegal API structures are #174's concern) */
+    @Test
+    public void programmaticallyBuiltReservedWordIsPrintedBare() throws Exception {
+        SMT.Configuration config = new SMT.Configuration();
+        Assert.assertEquals("let", print(config, "let"));
+        Assert.assertEquals("_", print(config, "_"));
+        Assert.assertEquals("!", print(config, "!"));
+        Assert.assertEquals("par", print(config, "par"));
+    }
 }
