@@ -1145,12 +1145,15 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
                     throw new VisitorException("INTERNAL ERROR: Encountered an un-sorted expression node: " + smtConfig.defaultPrinter.toString(e),e.pos());
                 }
                 checkSort(s, e.pos());
-                if (!(e.head() instanceof ISymbol)) {
-                    throw unsupported("qualified or indexed function symbols",e.pos());
+                // Simplify is unsorted, so a type-checked ((as f S) t ...) is just (f t ...)
+                IQualifiedIdentifier head = e.head();
+                if (head instanceof IAsIdentifier) head = ((IAsIdentifier)head).head();
+                if (!(head instanceof ISymbol)) {
+                    throw unsupported("indexed function symbols",e.pos());
                 }
-                ISymbol fcn = (ISymbol)e.head();
+                ISymbol fcn = (ISymbol)head;
                 // The type checker sorts the head of (m t ...) only for a map m
-                checkSort(fcn.sort(), e.pos());
+                checkSort(e.head().sort(), e.pos());
                 checkIntOp(fcn.value(), e.args(), e.pos());
                 String newName = name(fcn);
                 // A function whose value Simplify holds as a term (an uninterpreted function, select):
