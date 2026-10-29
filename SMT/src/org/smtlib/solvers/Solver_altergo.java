@@ -16,11 +16,11 @@ import org.smtlib.IExpr.IKeyword;
  *  --output smtlib2}, reading the script from standard input.
  *  <p>
  *  Alt-Ergo writes nothing for a successful command and answers {@code (set-option :print-success true)}
- *  with {@code unsupported}, so a command answered only on success cannot be waited for. Every command
- *  that {@link #pipelines} allows is therefore sent through the pipelined path even when not
- *  pipelining (see {@link #sendCommand}), where an echo sent after it marks the end of its response
- *  (see {@link #solverPrintsSuccess}). Alt-Ergo also writes {@code ;} comment lines (warnings, timings)
- *  on standard output, which are skipped as for other solvers.
+ *  with {@code unsupported}, so {@link #solverPrintsSuccess} is false: each command is followed by an
+ *  echo that marks the end of its response (see AbstractSolver). Alt-Ergo ignores, writing nothing,
+ *  get-option, get-value, get-assertions, get-unsat-core, get-unsat-assumptions, get-proof and
+ *  reset-assertions; those are answered here. It exits after any error, and in its default mode answers
+ *  check-sat with unsat or unknown, never sat.
  *  <p>
  *  Timeout: Alt-Ergo's {@code --timelimit=SECONDS} is one value, applied whole-run or, with
  *  {@code --timelimit-per-goal}, per goal; see the constructor for how jSMTLIB's two timeouts map
@@ -49,7 +49,16 @@ public class Solver_altergo extends AbstractSolver implements ISolver {
             args.add("--timelimit=" + (int)Math.ceil(smtConfig.timeoutTotal));
         }
         cmds = args.toArray(new String[args.size()]);
-        solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
+        solverProcess = newProcess(cmds);
+    }
+
+    /** Alt-Ergo's stderr holds only diagnostics: ; comment lines, which are ignored anyway, and, before an
+     *  error's, a bare location line, whose line number counts the echoes sent after commands and which
+     *  arrives at no fixed time relative to the error response; so it is discarded */
+    private SolverProcess newProcess(String[] command) {
+        SolverProcess p = new SolverProcess(command,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
+        p.discardErrorOutput = true;
+        return p;
     }
 
     /** Launches the given command as is (a .command property, #147), without adding the flags
@@ -57,7 +66,7 @@ public class Solver_altergo extends AbstractSolver implements ISolver {
     public Solver_altergo(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
         this.smtConfig = smtConfig;
         cmds = command;
-        solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
+        solverProcess = newProcess(cmds);
     }
 
     @Override
@@ -77,6 +86,13 @@ public class Solver_altergo extends AbstractSolver implements ISolver {
     @Override
     protected boolean solverPrintsSuccess() {
         return false;
+    }
+
+    /** Alt-Ergo exits without writing anything, as it does for any successful command; answered success */
+    @Override
+    public IResponse exit() {
+        IResponse r = super.exit();
+        return smtConfig.responseFactory.empty().equals(r) ? successOrEmpty(smtConfig) : r;
     }
 
     /** Alt-Ergo exits after any error (its :error-behavior is immediate-exit) */

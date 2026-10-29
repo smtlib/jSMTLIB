@@ -354,7 +354,7 @@ public class AbstractSolver implements ISolver {
     // Each response must have the bare shape its command can produce (#149); one that does not is an
     // error, as is output left over once every command is answered. A solver that writes nothing for
     // a successful command (see solverPrintsSuccess) is matched by shape instead, with an echo sent
-    // as a barrier before waiting.
+    // as a barrier after each command.
 
     /** The response returned for a command sent by {@link #sendPipelined(ICommand)} whose actual
      *  response has not yet been read; {@link #isReady()} tells when it has (see
@@ -502,6 +502,8 @@ public class AbstractSolver implements ISolver {
         try {
             solverProcess.sendNoListen(translatedCmd, "\n");
             pending.add(p);
+            // so that a response (e.g. an error) is matched to its own command
+            if (!solverPrintsSuccess()) sendBarrier();
         } catch (IOException e) {
             // The solver has stopped: report it as for any command sent after that
             IResponse timedOut = timeLimitResponseAfterExit();

@@ -47,6 +47,9 @@ public class SolverProcess {
      * parentheses to balance. */
     public boolean badFormat = false;
 
+    /** Set before start() by an adapter whose solver writes only diagnostics to stderr, to discard them */
+    public boolean discardErrorOutput = false;
+
     final static protected String eol = System.getProperty("line.separator");
 
     // Set by start() and kept by exit(): a thread blocked in listen() when another thread calls
@@ -161,7 +164,9 @@ public class SolverProcess {
     public void start(boolean listen) throws ProverException {
         if (process != null) throw new ProverException("SolverProcess.start() called on an already-started process");
         try {
-            process = Runtime.getRuntime().exec(app);
+            process = discardErrorOutput
+                    ? new ProcessBuilder(app).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+                    : Runtime.getRuntime().exec(app);
             // Captured into a local rather than reading the 'process' field from within run():
             // exit() nulls that field before this process has necessarily finished dying, and if
             // the hook fires (JVM shutdown racing ahead of the async removal below) after that

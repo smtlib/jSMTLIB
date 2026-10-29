@@ -22,8 +22,8 @@ import org.smtlib.SMT;
 import org.smtlib.solvers.Solver_smt;
 
 /** Pipelining with a solver that writes nothing for a successful command (#149): responses are
- *  matched by shape, and an echo sent before waiting marks the end of the pending responses.
- *  Uses StubSolver, whose replies include one for the priming command and one for the echo. */
+ *  matched by shape, and an echo sent after each command marks the end of its response.
+ *  Uses StubSolver, whose replies include one for the priming command and one for each echo. */
 public class PipelineSilentSolverTests {
 
     @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
@@ -69,29 +69,34 @@ public class PipelineSilentSolverTests {
         return sb.toString();
     }
 
+    /** The reply to the n-th echo sent as a barrier */
+    private static String sync(int n) {
+        return "\"jsmtlib-sync-" + n + "\"";
+    }
+
     private static final String SCRIPT = "(set-logic QF_UF)(declare-fun p () Bool)(assert p)(check-sat)(assert (not p))";
 
     @Test
     public void successfulCommandsAreSilent() throws Exception {
-        start("success", "", "", "", "sat", "", "\"jsmtlib-sync-1\"");
+        start("success", "", sync(1), "", sync(2), "", sync(3), "sat", sync(4), "", sync(5));
         Assert.assertEquals("success\nsuccess\nsuccess\nsat\nsuccess\n", print(run(SCRIPT)));
         Assert.assertFalse(solver.outOfStep());
     }
 
-    /** An error is matched to the oldest command without a response: which command it belongs to
-     *  cannot be known, but the error is reported */
+    /** An error is matched to its own command, the one before the echo that follows it */
     @Test
     public void anErrorIsReported() throws Exception {
-        start("success", "", "", "(error \"bad\")", "sat", "", "\"jsmtlib-sync-1\"");
+        start("success", "", sync(1), "", sync(2), "(error \"bad\")", sync(3), "sat", sync(4), "", sync(5));
         List<IResponse> responses = run(SCRIPT);
         long errors = responses.stream().filter(IResponse::isError).count();
         Assert.assertEquals(print(responses), 1, errors);
+        Assert.assertTrue(print(responses), responses.get(2).isError());
         Assert.assertEquals("sat", config.defaultPrinter.toString(responses.get(3)));
     }
 
     @Test
     public void outputAfterTheEchoIsOutOfStep() throws Exception {
-        start("success", "", "", "", "sat", "", "\"jsmtlib-sync-1\" success");
+        start("success", "", sync(1), "", sync(2), "", sync(3), "sat", sync(4), "", sync(5) + " success");
         run(SCRIPT);
         solver.readPipelined(true);
         Assert.assertTrue(solver.outOfStep());
@@ -99,7 +104,7 @@ public class PipelineSilentSolverTests {
 
     @Test
     public void aSuccessIsOutOfStep() throws Exception {
-        start("success", "success", "", "", "sat", "", "\"jsmtlib-sync-1\"");
+        start("success", "success", sync(1), "", sync(2), "", sync(3), "sat", sync(4), "", sync(5));
         List<IResponse> responses = run(SCRIPT);
         Assert.assertTrue(print(responses), responses.get(0).isError());
         Assert.assertTrue(solver.outOfStep());
