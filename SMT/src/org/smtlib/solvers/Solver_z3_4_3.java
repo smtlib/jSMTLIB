@@ -278,6 +278,9 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         return checkShape(shape, sent, response, parseResponse(response));
     }
 
+    /** An (error ...) response, at the start of a line of the solver's output */
+    private static final Pattern ERROR_RESPONSE = Pattern.compile("(?m)^\\s*\\(\\s*error\\s");
+
     /** Every command this adapter sends directly to the process ends here, so the solver's report that its
      *  whole-run limit ended it is recognized for all of them (see AbstractSolver#timeLimitResponse). A command sent
      *  directly after that finds the process gone and gets an error; sendCommand returns the timeout response. */
@@ -288,8 +291,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         IResponse timedOut = timeLimitResponse(response);
         if (timedOut != null) return timedOut;
         try {
-            if (isMac && response.startsWith("success")) return smtConfig.responseFactory.success(); // FIXME - this is just to avoid a problem with the Mac Z3 implementation
-            if (response.contains("error")) {
+            if (ERROR_RESPONSE.matcher(response).find()) {
                 // Z3 returns an s-expr (always?)
                 // FIXME - (1) the {Print} also needs {Space}; (2) err_getValueTypes.tst returns a non-error s-expr and then an error s-expr - this fails for that case
                 //Pattern p = Pattern.compile("\\p{Space}*\\(\\p{Blank}*error\\p{Blank}+\"(([\\p{Space}\\p{Print}^[\\\"\\\\]]|\\\\\")*)\"\\p{Blank}*\\)\\p{Space}*");
@@ -506,11 +508,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
         String option = key.value();
-        if (Utils.PRINT_SUCCESS.equals(option)) {
-            if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
-                return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
-            }
-        }
         if (logicSet && (Utils.INTERACTIVE_MODE.equals(option)||Utils.PRODUCE_ASSERTIONS.equals(option))) {
             return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
         }
@@ -529,12 +526,10 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         if (r != null) return r;
 
         try {
-            solverProcess.sendAndListen("(set-option ",option," ",value.toString(),")\n");// FIXME - detect errors
+            return send(Shape.SUCCESS, "(set-option " + option + " " + value + ")");
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
-
-        return successOrEmpty(smtConfig);
     }
 
     /** Answered from the values set here: z3 4.3 defaults :produce-models to true (SMT-LIB: false)
@@ -559,11 +554,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to solver: " + cmd + " " + e);
         }
-    }
-
-    @Override
-    public IResponse set_info(IKeyword key, IAttributeValue value) {
-        return sendCommand(new org.smtlib.command.C_set_info(key,value));
     }
 
     /** z3 4.3 writes echo's text unquoted, so where it ends cannot be found (#136); the response
