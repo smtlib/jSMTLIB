@@ -877,7 +877,13 @@ public class AbstractSolver implements ISolver {
      *  anything, or else, unless the solver stopped after an error response, the error for a solver
      *  that wrote no response; the rest get the error for a solver that has exited. */
     private void resolveAfterEnd() {
-        checkErrorOutput(solverProcess == null ? 0 : solverProcess.errorSettleMillis);
+        if (solverProcess != null) {
+            try {
+                unreadErrorOutput.append(solverProcess.readRemainingErrorOutput());
+            } catch (IOException e) {
+                // nothing more to read
+            }
+        }
         String err = takeErrorOutput(true);
         String extra = unread.toString().trim();
         unread.setLength(0);
