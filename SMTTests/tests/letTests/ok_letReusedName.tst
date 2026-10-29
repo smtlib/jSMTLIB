@@ -1,0 +1,4 @@
+(set-logic QF_LIA)
+(assert (let ((b 1)) (= b 1)))
+(assert (let ((b 2)) (= b 2)))
+(check-sat)

@@ -1,0 +1,10 @@
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:12: unsupported logic 'AUFLIA'
+")
+(error "Error writing to solver: (declare-fun a () (Array Int Int)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (push 1) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (! (= (select a 0) 1) :my-attr ( k ( 1 #x1F #b01 2.5 ) ""s"" :kw ))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (forall ((b (Array Int Int)) ) (= b b))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (pop 1) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (select a 0) 2)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
