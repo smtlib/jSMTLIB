@@ -16,7 +16,8 @@ import org.smtlib.IExpr.ISymbol;
 
 /** QF_RDL atoms (QF_RDL.smt2): (op x y), (op (- x y) c), (op (- (+ x ... x) (+ y ... y)) c)
  *  with k &gt; 1 occurrences each of x and y, and the extension (op (- x y) (/ c n)); x, y are
- *  free constants of sort Real, c is m or (- m), and m, n are numerals with n nonzero. */
+ *  free constants of sort Real, c is m or (- m), and m, n are numerals with n nonzero. Being real
+ *  difference logic, c may also be a decimal d or (- d). */
 public class QF_RDL extends DifferenceLogic {
 
     public QF_RDL(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
@@ -36,15 +37,23 @@ public class QF_RDL extends DifferenceLogic {
             throw restrictionError("lhs must be a symbol or a difference", e);
         }
         if (isDifferenceOfSymbols(lhs)) {
-            if (isInteger(rhs) || isQuotient(rhs)) return;
-            throw restrictionError("The rhs must be a numeral, a negated numeral, or (/ c n) with n a nonzero numeral", e);
+            if (isConstant(rhs) || isQuotient(rhs)) return;
+            throw restrictionError("The rhs must be a numeral or decimal, its negation, or (/ c n) with n a nonzero numeral", e);
         }
         if (!isDifferenceOfRepeatedSums((IExpr.IFcnExpr)lhs)) {
             throw restrictionError("differences must be difference of symbols", e);
         }
-        if (!isInteger(rhs)) {
-            throw restrictionError("The rhs must be a numeral or negation of numeral", e);
+        if (!isConstant(rhs)) {
+            throw restrictionError("The rhs must be a numeral or decimal, or its negation", e);
         }
+    }
+
+    /** True for a numeral or decimal, or its negation */
+    private boolean isConstant(IExpr e) {
+        if (isInteger(e) || e instanceof IExpr.IDecimal) return true;
+        if (!(e instanceof IExpr.IFcnExpr)) return false;
+        IExpr.IFcnExpr f = (IExpr.IFcnExpr) e;
+        return Utils.MINUS.equals(f.head()) && f.args().size() == 1 && f.args().get(0) instanceof IExpr.IDecimal;
     }
 
     /** True for (/ c n) with c a numeral or negated numeral and n a nonzero numeral */
