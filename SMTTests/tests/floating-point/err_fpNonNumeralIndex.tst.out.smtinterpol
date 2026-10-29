@@ -1,0 +1,6 @@
+success
+(error "<stdin>:3:18: Undeclared sort ((_ FloatingPoint [#b11, 5]) 0)")
+(error "<stdin>:4:18: Undeclared sort ((_ FloatingPoint [3, #x5]) 0)")
+success
+(error "The solver stopped without a response to: (assert (= z (_ +zero #b11 5)))")
+(error "Error writing to solver: (assert (= z ((_ to_fp 3 #x5) RNE z))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

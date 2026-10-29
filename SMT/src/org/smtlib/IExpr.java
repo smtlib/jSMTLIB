@@ -122,7 +122,8 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
     }
 
     /** Marker interface for the index types in a parameterized identifier: INumeral and ISymbol, plus
-     *  IHexLiteral, which the Strings theory's (_ char H) uses; each theory decides which kinds it accepts. */
+     *  IHexLiteral, which the Strings theory's (_ char H) uses, and IBinaryLiteral, which no theory uses
+     *  but which is parsed so that a solver reports it; each theory decides which kinds it accepts. */
     static public interface IIndex extends IExpr {
     }
 
@@ -205,7 +206,7 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
     }
 
     /** This interface represents SMT-LIB binary literals */
-    static public interface IBinaryLiteral extends ILiteral {
+    static public interface IBinaryLiteral extends ILiteral, IIndex {
         /** Returns a canonical value of the binary literal: 0 and 1 digits from MSB to LSB */
         String value();
 

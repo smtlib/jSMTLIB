@@ -1,5 +1,5 @@
 (declare-fun x () (_ BitVec #x8))
-                     ^^^^^^
+                            ^^^
 (assert (= #x0 ((_ extract #x3 0) y)))
                 ^^^^^^^^^^^^^^^^^
 (assert (= (_ bv1 #x8) y))

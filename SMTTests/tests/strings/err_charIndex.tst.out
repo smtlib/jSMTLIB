@@ -2,4 +2,4 @@ success
 (error "Expected exactly one hexadecimal index in a char identifier")
 (error "Expected exactly one hexadecimal index in a char identifier")
 (error "Expected exactly one hexadecimal index in a char identifier")
-(error "Expected a numeral here, instead of a binary")
+(error "Expected exactly one hexadecimal index in a char identifier")
