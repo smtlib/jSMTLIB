@@ -250,6 +250,27 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         return parse(shape, sent, solverProcess.sendAndListen(sent, "\n"));
     }
 
+    /** Parses a list-valued response */
+    private interface ListParser {
+        IResponse parse(org.smtlib.sexpr.Parser p) throws ParserException;
+    }
+
+    /** Sends a get- command whose answer is a list and returns it structured, as the other adapters do
+     *  (AbstractSolver.get_value etc.), so that it prints the same way (e.g. ((T true)), (- 1), not the
+     *  s-expression forms ( ( T true ) ), ( - 1 )). Errors -- including z3 4.3's value-then-error
+     *  responses -- keep the generic handling. */
+    private IResponse sendList(String sent, ListParser lp) throws IOException {
+        String r = solverProcess.sendAndListen(sent, "\n");
+        if (!isFlatResponse(r) && !r.contains("(error")) {
+            try {
+                return lp.parse(new org.smtlib.sexpr.Parser(smtConfig, new Pos.Source(r, null)));
+            } catch (ParserException e) {
+                // fall through to the generic handling below
+            }
+        }
+        return parse(Shape.VALUE, sent, r);
+    }
+
     /** Parses the response to the command text sent, which must have the given shape (#149) */
     private IResponse parse(Shape shape, String sent, String response) {
         return checkShape(shape, sent, response, parseResponse(response));
@@ -650,7 +671,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The get-unsat-core command is only valid immediately after check-sat returned unsat");
         }
         try {
-            return send(Shape.VALUE, "(get-unsat-core)");
+            return sendList("(get-unsat-core)", p -> smtConfig.responseFactory.get_unsat_core_response(p.parseSymbolList()));
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -666,7 +687,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The get-assignment command is only valid immediately after check-sat returned sat or unknown");
         }
         try {
-            return send(Shape.VALUE, "(get-assignment)");
+            return sendList("(get-assignment)", p -> smtConfig.responseFactory.get_assignment_response(p.parseAssignmentList()));
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -687,19 +708,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
                 sent.append(" ").append(translate(e));
             }
             sent.append("))");
-            String r = solverProcess.sendAndListen(sent.toString(), "\n");
-            // Values are returned structured, as by the other adapters (AbstractSolver.get_value),
-            // so that they print the same way (e.g. (- 1), not the s-expression form ( - 1 )).
-            // Errors -- including z3 4.3's value-then-error responses -- keep the existing handling.
-            if (!isFlatResponse(r) && !r.contains("(error")) {
-                try {
-                    List<IResponse.IPair<IExpr,IExpr>> values = new org.smtlib.sexpr.Parser(smtConfig, new Pos.Source(r, null)).parseValueList();
-                    return smtConfig.responseFactory.get_value_response(values);
-                } catch (ParserException e) {
-                    // fall through to the generic handling below
-                }
-            }
-            return parse(Shape.VALUE, sent.toString(), r);
+            return sendList(sent.toString(), p -> smtConfig.responseFactory.get_value_response(p.parseValueList()));
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         } catch (IVisitor.VisitorException e) {
