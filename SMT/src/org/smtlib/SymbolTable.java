@@ -656,9 +656,10 @@ public class SymbolTable {
         boolean isPar = entry.parameters != null;
         String nm = smtConfig.defaultPrinter.toString(entry.name);
         if (hasAttribute(entry,":left-assoc")) {
-            ISort acc = argSorts.get(0);
-            for (int i = 1; i < argSorts.size(); i++) {
-                ISort next = argSorts.get(i);
+            java.util.Iterator<ISort> it = argSorts.iterator();
+            ISort acc = it.next();
+            for (int i = 1; it.hasNext(); i++) {
+                ISort next = it.next();
                 // acc is argument 1 on the first step, then the application to arguments 1..i
                 String accWhere = i == 1 ? "argument 1" : "the application to arguments 1-" + i;
                 String nextWhere = "argument " + (i+1);
@@ -684,9 +685,10 @@ public class SymbolTable {
             return acc;
         } else if (hasAttribute(entry,":right-assoc")) {
             int n = argSorts.size();
-            ISort acc = argSorts.get(n - 1);
-            for (int i = n - 2; i >= 0; i--) {
-                ISort next = argSorts.get(i);
+            java.util.ListIterator<ISort> it = argSorts.listIterator(n);
+            ISort acc = it.previous();
+            for (int i = n - 2; it.hasPrevious(); i--) {
+                ISort next = it.previous();
                 // acc is argument n on the first step, then the application to arguments i+2..n
                 String accWhere = i == n - 2 ? "argument " + n : "the application to arguments " + (i+2) + "-" + n;
                 String nextWhere = "argument " + (i+1);

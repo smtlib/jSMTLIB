@@ -410,10 +410,15 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                     error("The argument must have a BitVec sort, not " + pr(s),e.args().get(0).pos());
                     return null;
                 }
-                for (int i = 1; i < argSorts.size(); i++) {
-                    ISort ss = argSorts.get(i);
+                java.util.Iterator<ISort> sorts = argSorts.iterator();
+                java.util.Iterator<IExpr> args = e.args().iterator();
+                sorts.next();
+                args.next();
+                while (sorts.hasNext()) {
+                    ISort ss = sorts.next();
+                    IExpr arg = args.next();
                     if (!isBitVec(ss)) {
-                        error("The argument must have a BitVec sort, not " + pr(ss),e.args().get(i).pos());
+                        error("The argument must have a BitVec sort, not " + pr(ss),arg.pos());
                         return null;
                     }
                     if (!s.equals(ss)) {
