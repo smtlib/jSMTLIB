@@ -392,7 +392,7 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
                     + Utils.PRODUCE_UNSAT_ASSUMPTIONS + " has been enabled");
         }
         // The same text as AbstractSolver.requireUnsat's
-        IResponse err = requireCurrentUnsat("get-unsat-assumptions", "check-sat-assumptions", Utils.PRODUCE_UNSAT_ASSUMPTIONS);
+        IResponse err = requireCurrentUnsat("get-unsat-assumptions", "check-sat-assuming", Utils.PRODUCE_UNSAT_ASSUMPTIONS);
         if (err != null) return err;
         return super.get_unsat_assumptions();
     }
