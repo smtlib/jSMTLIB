@@ -1391,7 +1391,7 @@ public class SMT {
                 "likewise converted to each solver's own unit/flag, or, if that solver has no whole-run option,",
                 "applied as a best-effort per-query limit instead"),
         new Opt("--echo", null, null, "if enabled, commands are echoed to diagnostic output when successfully parsed"),
-        new Opt("--abort", null, null, "if enabled, an error causes immediate exit"),
+        new Opt("--abort", null, null, "if enabled, an error causes immediate exit (on interactive standard input, the rest of its line is skipped)"),
         new Opt("--pipeline", null, null, "if enabled, commands in file (including -) or --text input are sent to the solver without",
                 "waiting for each response where possible; the output is the same"),
         new Opt("--no-pipeline", null, null, "each command waits for its response before the next is sent (the default)"),

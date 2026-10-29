@@ -1,0 +1,59 @@
+== invalid token after a command
+success
+success
+(error "Invalid token: #")
+success
+success
+>  [exit 1]
+== invalid token before a command
+success
+(error "Invalid token: #")
+success
+success
+>  [exit 1]
+== stray symbol before a command
+success
+(error "Expected a command (beginning with '(') or a comment (beginning with ';') here, not a symbol")
+success
+>  [exit 1]
+== parse error
+success
+(error "Expected a numeral here, instead of a symbol")
+success
+>  [exit 1]
+== extra argument
+success
+(error "Too many arguments or extraneous material after the command or missing right parenthesis")
+success
+>  [exit 1]
+== unknown command
+success
+(error "Unknown command: foo")
+success
+>  [exit 1]
+== parse error on the second line of a command
+success
+(error "Invalid token: #")
+success
+>  [exit 1]
+== parse error inside an unfinished command
+success
+(error "Invalid token: #")
+success
+success
+>  [exit 1]
+== validation error
+success
+(error "User-defined symbols may not begin with . or @")
+success
+>  [exit 1]
+== execution error
+success
+(error "The argument to a pop command is too large: 5 vs. a maximum of 0")
+success
+>  [exit 1]
+== standard input as a file
+success
+success
+(error "Invalid token: #")
+ [exit 1]
