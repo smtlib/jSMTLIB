@@ -1,0 +1,3 @@
+success
+(error "cannot get unsat assumptions unless explicitly enabled (try --produce-unsat-assumptions)")
+(error "A get-unsat-assumptions command takes no arguments")

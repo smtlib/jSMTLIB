@@ -6,6 +6,6 @@ success
 success
 success
 unsat
-(error "The get-model command is only valid immediately after check-sat returned sat or unknown")
-(error "The get-value command is only valid immediately after check-sat returned sat or unknown")
+(error "<stdin>:13:10: Context is inconsistent")
+(error "<stdin>:14:15: Context is inconsistent")
 (error "The get-assignment command is only valid immediately after check-sat returned sat or unknown")

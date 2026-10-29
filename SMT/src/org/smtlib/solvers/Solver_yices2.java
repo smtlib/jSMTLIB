@@ -117,4 +117,48 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
         }
         return r;
     }
+
+    // The checks below correct yices2 (2.6.5 and 2.7.0) answering get- commands that SMT-LIB makes
+    // errors; it reports the other cases itself. yices2 answers get-model, get-value and
+    // get-assignment with their enabling option off, though it reports the option as false. After
+    // declare-* or define-* following a check, where SMT-LIB returns to assert mode, it still answers
+    // from the earlier check (get-unsat-assumptions then names the new symbol for an assumption).
+
+    /** yices2 answers get-model with :produce-models off, and in assert mode after a check */
+    @Override
+    public IResponse get_model() {
+        IResponse err = inSatMode() ? requireOptionEnabled("get-model", Utils.PRODUCE_MODELS)
+                : requireUnchangedSinceCheck("get-model");
+        return err != null ? err : super.get_model();
+    }
+
+    /** yices2 answers get-value with :produce-models off, and in assert mode after a check */
+    @Override
+    public IResponse get_value(IExpr... terms) {
+        IResponse err = inSatMode() ? requireOptionEnabled("get-value", Utils.PRODUCE_MODELS)
+                : requireUnchangedSinceCheck("get-value");
+        return err != null ? err : super.get_value(terms);
+    }
+
+    /** yices2 answers get-assignment with :produce-assignments off, and in assert mode after a check */
+    @Override
+    public IResponse get_assignment() {
+        IResponse err = inSatMode() ? requireOptionEnabled("get-assignment", Utils.PRODUCE_ASSIGNMENTS)
+                : requireUnchangedSinceCheck("get-assignment");
+        return err != null ? err : super.get_assignment();
+    }
+
+    /** yices2 answers get-unsat-core in assert mode after a check */
+    @Override
+    public IResponse get_unsat_core() {
+        IResponse err = requireUnchangedSinceCheck("get-unsat-core");
+        return err != null ? err : super.get_unsat_core();
+    }
+
+    /** yices2 answers get-unsat-assumptions, wrongly, in assert mode after a check */
+    @Override
+    public IResponse get_unsat_assumptions() {
+        IResponse err = requireUnchangedSinceCheck("get-unsat-assumptions");
+        return err != null ? err : super.get_unsat_assumptions();
+    }
 }

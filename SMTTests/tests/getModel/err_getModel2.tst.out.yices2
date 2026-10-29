@@ -1,0 +1,4 @@
+success
+success
+success
+(error "can't build a model. Call (check-sat) first")

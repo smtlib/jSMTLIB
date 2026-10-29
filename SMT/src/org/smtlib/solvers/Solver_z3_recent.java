@@ -166,4 +166,55 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
         return super.parseResponse(response);
     }
 
+    // The checks below correct recent z3 answering get- commands that SMT-LIB makes errors; it
+    // reports the other cases itself. Every version answers get-assignment with
+    // :produce-assignments off, though it reports the option as false. From 4.6 on, after declare-*
+    // or define-* following a check, where SMT-LIB returns to assert mode, z3 still answers from the
+    // earlier check (4.5 reports these itself, so for it the check only changes the message). The
+    // :produce-models default of true (see the class Javadoc) is not checked: z3 reports the option
+    // as true.
+
+    /** z3 answers get-assignment with :produce-assignments off, and in assert mode after a check */
+    @Override
+    public IResponse get_assignment() {
+        IResponse err = inSatMode() ? requireOptionEnabled("get-assignment", Utils.PRODUCE_ASSIGNMENTS)
+                : requireUnchangedSinceCheck("get-assignment");
+        return err != null ? err : super.get_assignment();
+    }
+
+    /** z3 answers get-model in assert mode after a check */
+    @Override
+    public IResponse get_model() {
+        IResponse err = requireUnchangedSinceCheck("get-model");
+        return err != null ? err : super.get_model();
+    }
+
+    /** z3 answers get-value in assert mode after a check */
+    @Override
+    public IResponse get_value(IExpr... terms) {
+        IResponse err = requireUnchangedSinceCheck("get-value");
+        return err != null ? err : super.get_value(terms);
+    }
+
+    /** z3 answers get-proof in assert mode after a check */
+    @Override
+    public IResponse get_proof() {
+        IResponse err = requireUnchangedSinceCheck("get-proof");
+        return err != null ? err : super.get_proof();
+    }
+
+    /** z3 answers get-unsat-core in assert mode after a check */
+    @Override
+    public IResponse get_unsat_core() {
+        IResponse err = requireUnchangedSinceCheck("get-unsat-core");
+        return err != null ? err : super.get_unsat_core();
+    }
+
+    /** z3 answers get-unsat-assumptions in assert mode after a check */
+    @Override
+    public IResponse get_unsat_assumptions() {
+        IResponse err = requireUnchangedSinceCheck("get-unsat-assumptions");
+        return err != null ? err : super.get_unsat_assumptions();
+    }
+
 }
