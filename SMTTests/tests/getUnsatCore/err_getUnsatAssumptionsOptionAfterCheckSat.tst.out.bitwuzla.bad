@@ -1,0 +1,6 @@
+success
+success
+success
+unsat
+success
+(error "The get-unsat-assumptions command is only valid if :produce-unsat-assumptions was enabled before the last check")

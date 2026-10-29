@@ -1,0 +1,6 @@
+; :produce-unsat-cores set only after check-sat (and after set-logic, where SMT-LIB makes it an error)
+(set-logic QF_UF)
+(assert false)
+(check-sat)
+(set-option :produce-unsat-cores true)
+(get-unsat-core)

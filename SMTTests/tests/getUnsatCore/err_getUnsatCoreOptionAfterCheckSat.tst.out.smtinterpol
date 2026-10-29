@@ -1,0 +1,5 @@
+success
+success
+unsat
+(error "<stdin>:5:12: Option :produce-unsat-cores can only be changed before setting the logic")
+(error "The get-unsat-core command is only valid if :produce-unsat-cores has been enabled")

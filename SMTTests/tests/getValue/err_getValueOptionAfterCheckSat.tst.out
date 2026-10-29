@@ -1,0 +1,6 @@
+success
+success
+sat
+(error "invalid call to 'setOption' for option 'produce-models', solver is already fully initialized")
+(error "The get-value command is only valid if :produce-models has been enabled")
+(error "The get-model command is only valid if :produce-models has been enabled")

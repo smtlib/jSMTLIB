@@ -1,0 +1,6 @@
+success
+success
+sat
+(error "option :produce-models can't be set now. It must be set before (set-logic ...)")
+(error "The get-value command is only valid if :produce-models has been enabled")
+(error "The get-model command is only valid if :produce-models has been enabled")
