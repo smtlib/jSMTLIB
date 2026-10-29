@@ -1,3 +1,5 @@
 (error "z3-4.14.1 failed to start: Failed to start process nonexistent-solver-xyz : Cannot run program ""nonexistent-solver-xyz"": error=2, No such file or directory")
 (error "cvc5-1.3.2 failed to start: Failed to start process nonexistent-solver-xyz : Cannot run program ""nonexistent-solver-xyz"": error=2, No such file or directory")
 (error "bitwuzla failed to start: Failed to start process nonexistent-solver-xyz : Cannot run program ""nonexistent-solver-xyz"": error=2, No such file or directory")
+(error "yices2 failed to start: Failed to start process nonexistent-solver-xyz : Cannot run program ""nonexistent-solver-xyz"": error=2, No such file or directory")
+(error "smtinterpol-2.5 failed to start: Failed to start process nonexistent-solver-xyz : no such jar file")

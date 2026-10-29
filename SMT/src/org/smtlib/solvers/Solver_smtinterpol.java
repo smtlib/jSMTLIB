@@ -64,6 +64,12 @@ public class Solver_smtinterpol extends AbstractSolver implements ISolver {
 
     @Override
     public IResponse start() {
+        // smtinterpol runs as java -jar <jar>: java itself starts even when the jar is missing and
+        // only then exits, so a missing jar is reported here as a failed start, as for other solvers
+        int jar = java.util.Arrays.asList(cmds).indexOf("-jar") + 1;
+        if (jar > 0 && jar < cmds.length && !new java.io.File(cmds[jar]).isFile()) {
+            return smtConfig.responseFactory.error("Failed to start process " + cmds[jar] + " : no such jar file");
+        }
         try {
             solverProcess.start(false);
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
