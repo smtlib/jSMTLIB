@@ -306,7 +306,14 @@ public class AbstractSolver implements ISolver {
         try {
             if (!capturing) readPipelined(true);
             translatedCmd = translate(cmd);
-            if (capturing) return sendWithoutWaiting(translatedCmd, shapeOf(cmd));
+            if (capturing) return sendWithoutWaiting(translatedCmd, shapeOf(cmd), null);
+            if (!solverPrintsSuccess() && !tolerateSilentExit) {
+                // A solver that writes nothing for success: sent as when pipelining, and read up to the barrier
+                IKeyword scrub = scrubNonDeterminism && smtConfig.testing && cmd instanceof Iget_info g ? g.infoflag() : null;
+                Pending p = (Pending)sendWithoutWaiting(translatedCmd, shapeOf(cmd), scrub);
+                readPipelined(true);
+                return p.response();
+            }
             String response = solverProcess.sendAndListen(translatedCmd, "\n");
             // A null response (observed rarely, likely a SolverProcess read-timing race)
             // would otherwise reach parseResponse() and surface as an uncaught
@@ -359,12 +366,15 @@ public class AbstractSolver implements ISolver {
         final Shape shape;
         /** For a barrier (see readPipelined), the text it echoes; else null */
         final /*@Nullable*/ String marker;
+        /** For get-info when testing, the flag whose response is scrubbed (see normalizeForTesting); else null */
+        final /*@Nullable*/ IKeyword scrub;
         private /*@Nullable*/ IResponse response = null;
 
-        Pending(String sent, Shape shape, /*@Nullable*/ String marker) {
+        Pending(String sent, Shape shape, /*@Nullable*/ String marker, /*@Nullable*/ IKeyword scrub) {
             this.sent = sent;
             this.shape = shape;
             this.marker = marker;
+            this.scrub = scrub;
         }
 
         public boolean isReady() { return response != null; }
@@ -485,10 +495,10 @@ public class AbstractSolver implements ISolver {
     /** Whether a command has been pipelined at all */
     private boolean pipelinedEver = false;
 
-    private IResponse sendWithoutWaiting(String translatedCmd, Shape shape) {
+    private IResponse sendWithoutWaiting(String translatedCmd, Shape shape, /*@Nullable*/ IKeyword scrub) {
         pipelinedSinceFinish = true;
         pipelinedEver = true;
-        Pending p = new Pending(translatedCmd, shape, null);
+        Pending p = new Pending(translatedCmd, shape, null, scrub);
         try {
             solverProcess.sendNoListen(translatedCmd, "\n");
             pending.add(p);
@@ -623,10 +633,10 @@ public class AbstractSolver implements ISolver {
         return true;
     }
 
-    /** Whether the solver writes 'success' for a successful command, so that every pipelined command
-     *  gets one response. True for every adapter now (the solver process is kept at
-     *  :print-success true); an adapter whose solver does not returns false, and its pipelined
-     *  responses are then matched by shape (see matchSilent). */
+    /** Whether the solver writes 'success' for a successful command, so that every command gets one
+     *  response. True by default (the solver process is kept at :print-success true); an adapter
+     *  whose solver does not (alt-ergo) returns false, and its responses are then matched by shape
+     *  (see matchSilent), its commands being sent as when pipelining even when not (see sendCommand). */
     protected boolean solverPrintsSuccess() {
         return true;
     }
@@ -650,7 +660,7 @@ public class AbstractSolver implements ISolver {
         String sent = "(echo \"" + marker + "\")";
         try {
             solverProcess.sendNoListen(sent, "\n");
-            pending.add(new Pending(sent, Shape.ANY, marker));
+            pending.add(new Pending(sent, Shape.ANY, marker, null));
         } catch (IOException e) {
             // The solver has stopped; the pending commands are resolved as its output ends
         }
@@ -660,7 +670,8 @@ public class AbstractSolver implements ISolver {
      *  echo answers, with success, every command before it still without a response; sat, unsat or
      *  unknown answers the next check-sat (the commands before it having succeeded); an error or
      *  unsupported answers the oldest command without a response, though which command it belongs
-     *  to cannot be known for certain; anything else is out of step */
+     *  to cannot be known for certain, as does anything else if that command has a value (a get-
+     *  command or echo); anything else is out of step */
     private boolean matchSilent(String text) {
         String t = text.trim();
         if (isBarrierFor(t)) {
@@ -690,7 +701,8 @@ public class AbstractSolver implements ISolver {
         pending.poll();
         boolean errorLike = parsed != null && (parsed.isError()
                 || (parsed instanceof ISymbol sym && "unsupported".equals(sym.value())));
-        resolve(p, errorLike ? toResponse(p, text) : outOfStepResponse(p.sent, text));
+        boolean hasValue = p.shape == Shape.VALUE || p.shape == Shape.ANY;
+        resolve(p, errorLike || hasValue ? toResponse(p, text) : outOfStepResponse(p.sent, text));
         return true;
     }
 
@@ -813,9 +825,10 @@ public class AbstractSolver implements ISolver {
         return -1;
     }
 
-    private IResponse toResponse(Pending p, String text) {
-        IResponse timedOut = timeLimitResponse(text);
+    private IResponse toResponse(Pending p, String rawText) {
+        IResponse timedOut = timeLimitResponse(rawText);
         if (timedOut != null) return timedOut;
+        String text = p.scrub == null ? rawText : normalizeForTesting(rawText, p.scrub);
         // Logged at once, as when not pipelining: an adapter may parse with the output redirected
         IResponse result = smtConfig.log.unheld(() -> parseResponse(text));
         if (result == null) {
