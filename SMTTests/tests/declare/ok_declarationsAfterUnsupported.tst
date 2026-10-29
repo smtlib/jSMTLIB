@@ -1,0 +1,12 @@
+; the session continues after declarations a solver does not support (bitwuzla exits on these;
+; its adapter answers unsupported)
+(set-info :smt-lib-version 2.7)
+(set-logic ALL)
+(declare-datatype Color ((red) (green)))
+(declare-datatypes ((E 0)) (((e1) (e2))))
+(define-fun-rec f ((x Bool)) Bool x)
+(define-funs-rec ((g ((x Bool)) Bool)) (x))
+(declare-sort-parameter X)
+(declare-fun p () Bool)
+(assert p)
+(check-sat)

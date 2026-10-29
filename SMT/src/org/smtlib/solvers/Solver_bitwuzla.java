@@ -299,6 +299,45 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
         return recordCheck(super.check_sat_assuming(exprs));
     }
 
+    // Bitwuzla does not support declare-datatype(s), define-fun-rec, define-funs-rec or
+    // declare-sort-parameter, and instead of answering unsupported it writes "[error] expected
+    // command" and exits; so these are answered unsupported here and not sent.
+
+    /** Not sent: Bitwuzla exits on it (see above) */
+    @Override
+    public IResponse declare_datatype(ICommand.Ideclare_datatype cmd) {
+        return unsupportedHere();
+    }
+
+    /** Not sent: Bitwuzla exits on it (see above) */
+    @Override
+    public IResponse declare_datatypes(ICommand.Ideclare_datatypes cmd) {
+        return unsupportedHere();
+    }
+
+    /** Not sent: Bitwuzla exits on it (see above) */
+    @Override
+    public IResponse define_fun_rec(ICommand.Idefine_fun_rec cmd) {
+        return unsupportedHere();
+    }
+
+    /** Not sent: Bitwuzla exits on it (see above) */
+    @Override
+    public IResponse define_funs_rec(ICommand.Idefine_funs_rec cmd) {
+        return unsupportedHere();
+    }
+
+    /** Not sent: Bitwuzla exits on it (see above) */
+    @Override
+    public IResponse declare_sort_parameter(ICommand.Ideclare_sort_parameter cmd) {
+        return unsupportedHere();
+    }
+
+    private IResponse unsupportedHere() {
+        linesOffset--; // not sent (see linesOffset)
+        return smtConfig.responseFactory.unsupported();
+    }
+
     @Override
     public IResponse assertExpr(IExpr sexpr) {
         lastCheckCurrent = false;
