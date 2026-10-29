@@ -2,5 +2,5 @@ success
 success
 success
 (error "(m ...) is read as (@ m ...): Argument 2 of @ has sort Bool, expected Int (to match an earlier argument)")
-(error "(m ...) is read as (@ m ...): Left-associative application of @ fails at argument 3: has sort Int, expected sort family ->")
+(error "(m ...) is read as (@ m ...): Left-associative application of @ fails at the application to arguments 1-2: has sort Int, expected sort family ->")
 (error "The function symbol k takes zero arguments")

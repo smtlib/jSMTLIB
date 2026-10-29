@@ -1,2 +1,2 @@
 success
-(error "Unexpected response to exit: unsat")
+(error "Out of step: the response to (exit) was unsat")
