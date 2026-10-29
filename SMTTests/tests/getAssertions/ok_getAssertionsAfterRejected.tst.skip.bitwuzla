@@ -1,0 +1,1 @@
+bitwuzla has no get-assertions (its adapter answers unsupported) and no Real sort, so this test of listing only accepted assertions does not apply
