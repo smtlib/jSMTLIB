@@ -1,0 +1,9 @@
+success
+success
+success
+success
+success
+success
+(error "line 9 column 20: invalid check-sat-assuming command, '(', expected")
+(error "line 10 column 15: unsat core is not available")
+unsupported

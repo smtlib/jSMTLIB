@@ -1267,6 +1267,18 @@ public class AbstractSolver implements ISolver {
         return r;
     }
 
+    /** The elements of a get-unsat-core reply that belong in the unsat core (all of them); an adapter whose
+     *  solver's reply holds others filters them out */
+    protected List<IExpr> unsatCoreElements(List<IExpr> reply) {
+        return reply;
+    }
+
+    /** The elements of a get-unsat-assumptions reply that belong in the response (all of them); an adapter
+     *  whose solver's reply holds others filters them out */
+    protected List<IExpr> unsatAssumptionsElements(List<IExpr> reply) {
+        return reply;
+    }
+
     /** @see org.smtlib.ISolver#get_unsat_assumptions()*/
     @Override
     public IResponse get_unsat_assumptions(){
@@ -1280,7 +1292,7 @@ public class AbstractSolver implements ISolver {
             if (timedOut != null) return timedOut;
             if (isFlatResponse(response)) return checkShape(Shape.VALUE, sent, response, checkImmediateExit(parseResponse(response)));
             List<IExpr> assumptions = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseTermList();
-            return smtConfig.responseFactory.get_unsat_assumptions_response(assumptions);
+            return smtConfig.responseFactory.get_unsat_assumptions_response(unsatAssumptionsElements(assumptions));
         } catch (IOException e) {
             IResponse timedOut = timeLimitResponseAfterExit();
             if (timedOut != null) return timedOut;
@@ -1304,7 +1316,12 @@ public class AbstractSolver implements ISolver {
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;
             if (isFlatResponse(response)) return checkShape(Shape.VALUE, sent, response, checkImmediateExit(parseResponse(response)));
-            List<ISymbol> names = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseSymbolList();
+            List<IExpr> elements = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseTermList();
+            List<ISymbol> names = new java.util.ArrayList<>();
+            for (IExpr e : unsatCoreElements(elements)) {
+                if (!(e instanceof ISymbol name)) return smtConfig.responseFactory.error("Unexpected output from the solver: " + response);
+                names.add(name);
+            }
             return smtConfig.responseFactory.get_unsat_core_response(names);
         } catch (IOException e) {
             IResponse timedOut = timeLimitResponseAfterExit();

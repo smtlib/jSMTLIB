@@ -203,6 +203,59 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
         return err != null ? err : super.get_proof();
     }
 
+    /** The printed assumptions of the most recent check command if it was check-sat-assuming, else null */
+    private /*@Nullable*/ List<String> lastAssumptions = null;
+
+    @Override
+    public IResponse check_sat() {
+        lastAssumptions = null;
+        return super.check_sat();
+    }
+
+    @Override
+    public IResponse check_sat_assuming(IExpr... exprs) {
+        lastAssumptions = new java.util.ArrayList<>();
+        try {
+            for (IExpr e : exprs) lastAssumptions.add(translate(e));
+        } catch (IVisitor.VisitorException e) {
+            lastAssumptions = null;
+        }
+        return super.check_sat_assuming(exprs);
+    }
+
+    @Override
+    public IResponse reset() {
+        lastAssumptions = null;
+        return super.reset();
+    }
+
+    /** Whether the expression is one of the assumptions of the last check-sat-assuming */
+    private boolean isAssumption(IExpr e) {
+        try {
+            return lastAssumptions.contains(translate(e));
+        } catch (IVisitor.VisitorException ex) {
+            return false;
+        }
+    }
+
+    // After check-sat-assuming, z3 answers get-unsat-core and get-unsat-assumptions alike with one list
+    // combining the core's labels and the unsat assumptions (e.g. (p a1 (not q))), whereas SMT-LIB's unsat
+    // core holds only labels and its unsat assumptions only assumptions. These filters correct that.
+
+    /** Drops the assumptions z3 adds to the unsat core (see above) */
+    @Override
+    protected List<IExpr> unsatCoreElements(List<IExpr> reply) {
+        if (lastAssumptions == null) return reply;
+        return reply.stream().filter(e -> !isAssumption(e)).toList();
+    }
+
+    /** Drops the labels z3 adds to the unsat assumptions (see above) */
+    @Override
+    protected List<IExpr> unsatAssumptionsElements(List<IExpr> reply) {
+        if (lastAssumptions == null) return reply;
+        return reply.stream().filter(this::isAssumption).toList();
+    }
+
     /** z3 answers get-unsat-core in assert mode after a check */
     @Override
     public IResponse get_unsat_core() {
