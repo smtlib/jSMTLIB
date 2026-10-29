@@ -1,10 +1,10 @@
-success
-success
-success
-(error "The expression being named is not closed - this symbol is a variable: r")
-(error "The expression being named is not closed - this symbol is a variable: r")
-success
-(error "Symbol R is already defined")
-success
-success
-(error "The expression being named is not closed - this symbol is a variable: r")
+(error "The simplify solver does not support the AUFNIRA logic")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")

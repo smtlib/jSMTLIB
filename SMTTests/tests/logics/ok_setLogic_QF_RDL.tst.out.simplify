@@ -1,0 +1,1 @@
+(error "The simplify solver does not support the QF_RDL logic")

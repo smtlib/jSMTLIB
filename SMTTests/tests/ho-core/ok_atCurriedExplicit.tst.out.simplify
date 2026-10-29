@@ -3,8 +3,8 @@ success
 success
 success
 success
-success
-success
+(error "The simplify solver does not support higher-order functions")
+(error "The simplify solver does not support higher-order functions")
 sat
-success
-unsat
+(error "The simplify solver does not support higher-order functions")
+sat

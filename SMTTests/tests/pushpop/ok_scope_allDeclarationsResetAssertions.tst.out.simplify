@@ -24,4 +24,4 @@ success
 success
 success
 success
-(error "The simplify solver cannot handle decimal literals")
+(error "The simplify solver does not support the Real sort")

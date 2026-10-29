@@ -1,11 +1,11 @@
 unsupported
 success
 success
-(error "Did not expect a Hex literal in an expression to be translated")
+(error "The simplify solver does not support the BitVec sort")
 success
+(error "The simplify solver does not support the BitVec sort")
 success
-success
-success
-(error "Did not expect a Hex literal in an expression to be translated")
-success
+(error "The simplify solver does not support the BitVec sort")
+(error "The simplify solver does not support the BitVec sort")
+(error "The simplify solver does not support mod")
 sat

@@ -1,0 +1,11 @@
+success
+success
+success
+success
+(error "The simplify solver does not support the FloatingPoint sort")
+(error "The simplify solver does not support the FloatingPoint sort")
+(error "The simplify solver does not support the FloatingPoint sort")
+(error "The simplify solver does not support the FloatingPoint sort")
+(error "The simplify solver does not support the FloatingPoint sort")
+(error "The simplify solver does not support the FloatingPoint sort")
+sat

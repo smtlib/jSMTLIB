@@ -1,11 +1,11 @@
-success
-success
-success
-(error "The simplify solver cannot handle decimal literals")
-(error "The simplify solver cannot handle decimal literals")
-(error "The simplify solver cannot handle decimal literals")
-(error "The simplify solver cannot handle decimal literals")
-(error "The simplify solver cannot handle decimal literals")
-(error "The simplify solver cannot handle decimal literals")
-success
-success
+(error "The simplify solver does not support the AUFLIRA logic")
+(error "The logic must be set before a declare-const command is issued")
+(error "The logic must be set before a declare-const command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before a define-sort command is issued")
+(error "The logic must be set before a define-sort command is issued")

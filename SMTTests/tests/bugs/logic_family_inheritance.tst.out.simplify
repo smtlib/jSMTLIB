@@ -28,10 +28,10 @@ success
 success
 success
 success
-(error "The simplify solver does not yet support the bit-vector theory")
+(error "The simplify solver does not support the QF_UFBV logic")
 (error "The logic must be set before an assert command is issued")
 success
-(error "The simplify solver does not yet support the bit-vector theory")
+(error "The simplify solver does not support the QF_UFBV logic")
 (error "The logic must be set before a declare-fun command is issued")
 (error "The logic must be set before a declare-sort command is issued")
 success
