@@ -1,0 +1,11 @@
+#!/bin/bash
+# Fixture for ctrl-x-stdin.scr: a solver that answers success to every command except check-sat,
+# which runs until interrupted (SIGINT), then answers unknown, as z3 does. It creates
+# check-sat-started when check-sat arrives.
+trap 'kill $worker 2>/dev/null' INT
+while read -r line; do
+    case "$line" in
+        *check-sat*) touch check-sat-started; sleep 120 & worker=$!; wait $worker; echo unknown ;;
+        *) echo success ;;
+    esac
+done

@@ -290,6 +290,9 @@ public class Parser extends Lexer implements IParser {
                         if (target instanceof ParserException) {
                             throw (ParserException) target;
                         }
+                        if (target instanceof IParser.AbortInputException) {
+                            throw (IParser.AbortInputException) target;
+                        }
                         ex.printStackTrace(smtConfig.log.getDiag());
                         if (target instanceof StackOverflowError) {
                             lastError = smtConfig.log.logError(smtConfig.responseFactory.error("Stack overflow occurred while parsing input", sym.pos()));

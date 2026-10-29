@@ -1,0 +1,12 @@
+### Ctrl-X on standard input while the solver runs a command interrupts that command (the solver
+### is sent SIGINT, and this one answers unknown), prints the main thread's stack on stderr (only
+### its first line is kept here), and the next command runs
+##EXITCODE 0
+cd "$SCRIPTS/ctrl-x" && rm -f check-sat-started
+( printf '(set-logic QF_UF)\n(check-sat)\n'
+  for i in $(seq 1 100); do [ -e check-sat-started ] && break; sleep 0.2; done
+  printf '\030\n(push 1)\n' ) \
+  | $SMT_CMD --solver slow 2>&1 | sed -n -e '/^success/p' -e '/^unknown/p' -e '/^(error/p' -e '/^Ctrl-X/p'
+rc=${PIPESTATUS[1]}
+rm -f check-sat-started
+exit $rc
