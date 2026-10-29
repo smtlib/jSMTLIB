@@ -4,3 +4,5 @@
 ; list syntactically -- and is rejected only at type-checking.
 (set-logic ALL)
 (assert (@))
+; Solver bug (.bad golden): cvc5 has no HO-Core under ALL (only under its own HO_ logic
+; prefix), so it rejects -> and @.
