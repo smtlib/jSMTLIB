@@ -15,7 +15,6 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -358,56 +357,19 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         return response;
     }
 
-    /** z3 4.3 does not support :produce-assertions (it answers unsupported) and requires the
-     *  SMT-LIB 2.0 :interactive-mode instead, so the option is checked against the value set here */
+    /** Not a correction: this adapter sends commands by its own means (z3 4.3 itself reports
+     *  get-assertions without :produce-assertions, which set_option_impl sends as :interactive-mode) */
     @Override
     public IResponse get_assertions() {
         if (!logicSet) {
             return smtConfig.responseFactory.error("The logic must be set before a get-assertions command is issued");
         }
-        // FIXME - do we really want to call get-option here? it involves going to the solver?
-        if (!smtConfig.relax && !Utils.TRUE.equals(optionValue(Utils.PRODUCE_ASSERTIONS))) {
-            return smtConfig.responseFactory.error("The get-assertions command is only valid if " + Utils.produceAssertionsKey(smtConfig) + " has been enabled");
-        }
         try {
-            StringBuilder sb = new StringBuilder();
-            String s;
-            int parens = 0;
-            do {
-                s = sendRaw("(get-assertions)");
-                IResponse timedOut = timeLimitResponse(s);
-                if (timedOut != null) return timedOut;
-                int p = -1;
-                while (( p = s.indexOf('(',p+1)) != -1) parens++;
-                p = -1;
-                while (( p = s.indexOf(')',p+1)) != -1) parens--;
-                sb.append(s.replace('\n',' ').replace("\r",""));
-            } while (parens > 0);
-            s = sb.toString();
-            org.smtlib.sexpr.Parser p = new org.smtlib.sexpr.Parser(smtConfig,new org.smtlib.impl.Pos.Source(s,null));
-            List<IExpr> exprs = new LinkedList<IExpr>();
-            try {
-                if (p.isLP()) {
-                    p.parseLP();
-                    while (!p.isRP() && !p.isEOD()) {
-                        IExpr e = p.parseExpr();
-                        exprs.add(e);
-                    }
-                    if (p.isRP()) {
-                        p.parseRP();
-                        if (p.isEOD()) return smtConfig.responseFactory.get_assertions_response(exprs); 
-                    }
-                }
-            } catch (Exception e ) {
-                // continue - fall through
-            }
-            return smtConfig.responseFactory.error("Unexpected output from the Z3 solver: " + s);
+            return sendList("(get-assertions)", p -> smtConfig.responseFactory.get_assertions_response(p.parseAssertionList()));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("IOException while reading Z3 reponse");
+            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
     }
-
-
 
     @Override
     public IResponse check_sat() {
@@ -539,15 +501,18 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         IResponse r = checkPrintSuccess(smtConfig,key,value);
         if (r != null) return r;
 
+        // z3 4.3 predates SMT-LIB 2.5's renaming of :interactive-mode to :produce-assertions: it answers
+        // unsupported for :produce-assertions, so that option is sent under its old name
+        String sentOption = Utils.PRODUCE_ASSERTIONS.equals(option) ? Utils.INTERACTIVE_MODE : option;
         try {
-            return send(Shape.SUCCESS, "(set-option " + option + " " + value + ")");
+            return send(Shape.SUCCESS, "(set-option " + sentOption + " " + value + ")");
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
     }
 
     /** Answered from the values set here: z3 4.3 defaults :produce-models to true (SMT-LIB: false)
-     *  and answers unsupported for :produce-assertions */
+     *  and answers unsupported for :produce-assertions (see set_option_impl) */
     @Override
     public IResponse get_option(IKeyword key) { // FIXME - use the solver?
         linesOffset--; // not sent (see linesOffset)

@@ -1,3 +1,0 @@
-success
-success
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
