@@ -37,6 +37,11 @@ public class SolverProcess {
      * value buys little extra safety at a real per-command cost on long scripts. */
     public long errorSettleMillis = 1;
 
+    /** Once the solver's standard output has ended, how long (ms) to wait at most for its
+     *  standard error to end too, so that what it wrote there just before exiting (typically
+     *  an error) is read in full rather than lost to the stderr reader not having caught up */
+    public long endDrainMillis = 2000;
+
     /** The start of a comment line read from stderr whose end has not yet arrived; it is
      *  judged once it has (see listen()) */
     private String unfinishedErrorComment = "";
@@ -256,8 +261,9 @@ public class SolverProcess {
         // errorOut has no end marker of its own -- there is no OS-level guarantee that error
         // text for this command has already been fully written and read by the time
         // standardOut's end marker shows up, so this is a bounded best-effort drain of
-        // whatever has arrived, not a proof of completeness.
-        String rawErr = errorOut.drain(errorSettleMillis);
+        // whatever has arrived, not a proof of completeness. Once stdout has ended, though, the
+        // solver is exiting, so stderr is read to its end (bounded by endDrainMillis).
+        String rawErr = outWasForcedEof ? errorOut.drainToEnd(endDrainMillis) : errorOut.drain(errorSettleMillis);
         String err = withoutComments(rawErr, outWasForcedEof);
         // A forced EOF (stdout closed before ever matching the end marker) with nothing
         // recovered from *either* stream means the solver died without producing any
@@ -330,12 +336,12 @@ public class SolverProcess {
     public String unreadOutput() {
         StringBuilder text = new StringBuilder();
         try {
-            if (standardOut != null) text.append(standardOut.drain(errorSettleMillis));
+            if (standardOut != null) text.append(standardOut.drainToEnd(endDrainMillis));
         } catch (IOException e) {
             // nothing more to read
         }
         try {
-            if (errorOut != null) text.append(errorOut.drain(errorSettleMillis));
+            if (errorOut != null) text.append(errorOut.drainToEnd(endDrainMillis));
         } catch (IOException e) {
             // nothing more to read
         }
@@ -540,7 +546,17 @@ public class SolverProcess {
      *  waitMillis for some (see StreamGobbler.drain) */
     public String readErrorOutput(long waitMillis) throws IOException {
         if (errorOut == null) return "";
-        String err = errorOut.drain(waitMillis);
+        return logError(errorOut.drain(waitMillis));
+    }
+
+    /** For pipelined reading, once the output has ended: the rest of the text on standard error,
+     *  up to its end (waiting at most endDrainMillis) */
+    public String readRemainingErrorOutput() throws IOException {
+        if (errorOut == null) return "";
+        return logError(errorOut.drainToEnd(endDrainMillis));
+    }
+
+    private String logError(String err) throws IOException {
         if (log != null && !err.isEmpty()) { log.write(";ERR: "); log.write(err); log.flush(); }
         return err;
     }
@@ -630,6 +646,7 @@ public class SolverProcess {
         String take() throws IOException {
             try {
                 Chunk c = queue.take();
+                ended |= c.eof;
                 if (c.error != null) throw c.error;
                 lastTakeWasForcedEof = c.eof;
                 return c.text;
@@ -646,6 +663,7 @@ public class SolverProcess {
             try {
                 Chunk c = queue.poll(waitMillis, TimeUnit.MILLISECONDS);
                 if (c == null) return null;
+                ended |= c.eof;
                 if (c.error != null) throw c.error;
                 lastTakeWasForcedEof = c.eof;
                 return c.text;
@@ -668,6 +686,30 @@ public class SolverProcess {
 
         private boolean lastTakeWasForcedEof = false;
 
+        /** Whether the end of the stream has been taken from the queue (by the consumer thread) */
+        private volatile boolean ended = false;
+
+        /** Returns the text that has not been taken, up to the end of the stream, waiting at most
+         *  maxMillis in all for that end */
+        String drainToEnd(long maxMillis) throws IOException {
+            StringBuilder out = new StringBuilder();
+            long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(maxMillis);
+            try {
+                while (!ended) {
+                    long left = deadline - System.nanoTime();
+                    Chunk c = left > 0 ? queue.poll(left, TimeUnit.NANOSECONDS) : queue.poll();
+                    if (c == null) break;
+                    ended |= c.eof;
+                    if (c.error != null) throw c.error;
+                    out.append(c.text);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Interrupted while draining solver output", e);
+            }
+            return out.toString();
+        }
+
         /** Drains whatever text has arrived, waiting up to settleMillis for the *first* chunk
          * before concluding there is none, and (once at least one chunk has arrived) up to
          * settleMillis again for further stragglers before giving up. Always returns -- never
@@ -687,6 +729,7 @@ public class SolverProcess {
             try {
                 Chunk c = queue.poll(settleMillis, TimeUnit.MILLISECONDS); // brief grace period, first chunk
                 while (c != null) {
+                    ended |= c.eof;
                     if (c.error != null) throw c.error;
                     out.append(c.text);
                     if (c.eof) break;
