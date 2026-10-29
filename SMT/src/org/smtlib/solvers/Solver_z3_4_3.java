@@ -366,7 +366,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The logic must be set before a get-assertions command is issued");
         }
         // FIXME - do we really want to call get-option here? it involves going to the solver?
-        if (!smtConfig.relax && !Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSERTIONS)))) {
+        if (!smtConfig.relax && !Utils.TRUE.equals(optionValue(Utils.PRODUCE_ASSERTIONS))) {
             return smtConfig.responseFactory.error("The get-assertions command is only valid if " + Utils.produceAssertionsKey(smtConfig) + " has been enabled");
         }
         try {
@@ -525,14 +525,11 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
         String option = key.value();
-        if (logicSet && (Utils.INTERACTIVE_MODE.equals(option)||Utils.PRODUCE_ASSERTIONS.equals(option))) {
+        if (logicSet && (Utils.INTERACTIVE_MODE.equals(option) || Utils.PRODUCE_ASSERTIONS.equals(option)
+                || Utils.PRODUCE_ASSIGNMENTS.equals(option) || Utils.PRODUCE_PROOFS.equals(option)
+                || Utils.PRODUCE_UNSAT_CORES.equals(option) || Utils.PRODUCE_MODELS.equals(option))) {
+            linesOffset--; // not sent (see linesOffset)
             return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
-        }
-        if (Utils.PRODUCE_ASSIGNMENTS.equals(option) ||
-                Utils.PRODUCE_PROOFS.equals(option) ||
-                Utils.PRODUCE_UNSAT_CORES.equals(option) ||
-                Utils.PRODUCE_MODELS.equals(option)) {
-            if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
         }
         if (Utils.VERBOSITY.equals(option)) {
             smtConfig.verbose = (value instanceof INumeral) ? ((INumeral)value).intValue() : 0;
@@ -553,7 +550,12 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  and answers unsupported for :produce-assertions */
     @Override
     public IResponse get_option(IKeyword key) { // FIXME - use the solver?
-        String option = key.value();
+        linesOffset--; // not sent (see linesOffset)
+        return optionValue(key.value());
+    }
+
+    /** The value of the option as set here, else unsupported */
+    private IResponse optionValue(String option) {
         IAttributeValue value = options.get(Utils.INTERACTIVE_MODE.equals(option) && !smtConfig.isVersion(SMTLIB.V20)? Utils.PRODUCE_ASSERTIONS : option);
         if (value == null) return smtConfig.responseFactory.unsupported();
         return value;
@@ -577,6 +579,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  to echo is its argument */
     @Override
     public IResponse echo(IStringLiteral arg) {
+        linesOffset--; // not sent (see linesOffset)
         return arg;
     }
 
@@ -584,7 +587,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  (non-standard) default of true; z3 4.3 itself reports get-model when no model is available */
     @Override
     public IResponse get_model() {
-        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
+        if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_MODELS))) {
             return smtConfig.responseFactory.error("The get-model command is only valid if :produce-models has been enabled");
         }
         if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
@@ -677,7 +680,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  checks here only give the same messages as the other adapters */
     @Override 
     public IResponse get_proof() {
-        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_PROOFS)))) {
+        if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_PROOFS))) {
             return smtConfig.responseFactory.error("The get-proof command is only valid if :produce-proofs has been enabled");
         }
         if (checkSatStatus != smtConfig.responseFactory.unsat()) {
@@ -694,7 +697,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  available; the checks here only give the same messages as the other adapters */
     @Override 
     public IResponse get_unsat_core() {
-        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_UNSAT_CORES)))) {
+        if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_UNSAT_CORES))) {
             return smtConfig.responseFactory.error("The get-unsat-core command is only valid if :produce-unsat-cores has been enabled");
         }
         if (checkSatStatus != smtConfig.responseFactory.unsat()) {
@@ -712,7 +715,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override 
     public IResponse get_assignment() {
         // FIXME - do we really want to call get-option here? it involves going to the solver?
-        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSIGNMENTS)))) {
+        if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_ASSIGNMENTS))) {
             return smtConfig.responseFactory.error("The get-assignment command is only valid if :produce-assignments has been enabled");
         }
         if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
@@ -729,7 +732,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override 
     public IResponse get_value(IExpr... terms) {
         // FIXME - do we really want to call get-option here? it involves going to the solver?
-        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
+        if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_MODELS))) {
             return smtConfig.responseFactory.error("The get-value command is only valid if :produce-models has been enabled");
         }
         if (!smtConfig.responseFactory.sat().equals(checkSatStatus) && !smtConfig.responseFactory.unknown().equals(checkSatStatus)) {

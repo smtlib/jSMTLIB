@@ -74,9 +74,9 @@ public class AbstractSolver implements ISolver {
      *  the user's script (e.g. a `:print-success` priming send at start()) increments it by
      *  the number of lines inserted; a real script line an adapter deliberately never sends
      *  (e.g. Solver_z3_4_3 skipping literal `(set-logic ALL)`, which that solver has no
-     *  equivalent for) decrements it by the number of lines skipped. A subclass that embeds
-     *  a solver-reported line number in its own response text should rewrite it as
-     *  {@code reportedLine - linesOffset} before returning that text -- see
+     *  equivalent for, or a set-option answered locally) decrements it by the number of lines
+     *  skipped. A subclass that embeds a solver-reported line number in its own response text
+     *  should rewrite it as {@code reportedLine - linesOffset} before returning that text -- see
      *  Solver_z3_4_3/Solver_z3_recent/Solver_bitwuzla's parseResponse() overrides. Solvers
      *  that don't insert or skip any line relative to the user's script (most adapters) never
      *  need to touch this at all, and it stays 0. */
@@ -167,8 +167,11 @@ public class AbstractSolver implements ISolver {
     }
 
 
+    /** Answers a set-option of :print-success locally (it is never sent), else returns null */
     public IResponse checkPrintSuccess(SMT.Configuration smtConfig,IKeyword key, IAttributeValue value) {
         if (key.equals(printSuccess)) {
+            // This script line is not sent, so the solver's line count falls one behind (see linesOffset)
+            linesOffset--;
             // C_set_option.parse() already rejects this eagerly for any text-driven
             // script -- but this method is also reachable directly via
             // smtConfig.commandFactory.set_option(key,value), which bypasses that
@@ -1068,6 +1071,8 @@ public class AbstractSolver implements ISolver {
     @Override
     public IResponse set_option(IKeyword key, IAttributeValue value) {
         String option = key.value();
+        // A channel option is not sent, so the solver's line count falls one behind (see linesOffset)
+        if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option) || Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) linesOffset--;
         if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
             String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : Utils.STDOUT;
             try {
