@@ -1,0 +1,8 @@
+; QF_RDL is real difference logic: its constants may be decimals
+(set-logic QF_RDL)
+(declare-const x Real)
+(declare-const y Real)
+(assert (< (- x y) 1.5))
+(assert (>= (- x y) (- 0.5)))
+(assert (> (- (+ x x) (+ y y)) 2.5))
+(check-sat)

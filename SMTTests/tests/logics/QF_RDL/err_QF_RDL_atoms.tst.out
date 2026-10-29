@@ -3,7 +3,7 @@ success
 success
 (error "rhs must be a symbol if the lhs is a symbol: (= x (* 3 y))")
 (error "rhs must be a symbol if the lhs is a symbol: (<= x 5)")
-(error "The rhs must be a numeral, a negated numeral, or (/ c n) with n a nonzero numeral: (>= (- x y) 1.5)")
+success
 (error "differences must be difference of symbols: (<= (- (+ x x) (+ y y y)) 1)")
-(error "The rhs must be a numeral or negation of numeral: (<= (- (+ x x) (+ y y)) (/ 1 2))")
-(error "The rhs must be a numeral, a negated numeral, or (/ c n) with n a nonzero numeral: (<= (- x y) (/ 1 0))")
+(error "The rhs must be a numeral or decimal, or its negation: (<= (- (+ x x) (+ y y)) (/ 1 2))")
+(error "The rhs must be a numeral or decimal, its negation, or (/ c n) with n a nonzero numeral: (<= (- x y) (/ 1 0))")
