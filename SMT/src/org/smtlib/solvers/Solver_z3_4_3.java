@@ -61,7 +61,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     // adapter -- z3-4.3 never got the same fix.
     protected String cmds_win[] = new String[]{ "", "/smt2","/in","SMTLIB2_COMPLIANT=true","WARNING=false"};//,"/rs:42"};
     protected String cmds_mac[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
-    protected String cmds_unix[] = new String[]{ "", "-smt2","-in","WARNING=false"};
+    protected String cmds_unix[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
 
     /** The parser that parses responses from the solver */
     protected org.smtlib.sexpr.Parser responseParser;
@@ -249,7 +249,20 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
     /** Sends the command text and parses its response, which must have the given shape */
     private IResponse send(Shape shape, String sent) throws IOException {
-        return parse(shape, sent, solverProcess.sendAndListen(sent, "\n"));
+        return parse(shape, sent, sendRaw(sent));
+    }
+
+    /** Sends the command text and returns the solver's raw response. z3 4.3 writes timeout and exits when its
+     *  whole-run limit ends it, also while idle between commands; the next command then finds the process gone,
+     *  and its response is that timeout (as AbstractSolver's sendCommand does). */
+    private String sendRaw(String sent) throws IOException {
+        if (endedByTimeLimit) return "timeout";
+        try {
+            return solverProcess.sendAndListen(sent, "\n");
+        } catch (IOException e) {
+            if (timeLimitResponseAfterExit() != null) return "timeout";
+            throw e;
+        }
     }
 
     /** Parses a list-valued response */
@@ -262,7 +275,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  s-expression forms ( ( T true ) ), ( - 1 )). Errors -- including z3 4.3's value-then-error
      *  responses -- keep the generic handling. */
     private IResponse sendList(String sent, ListParser lp) throws IOException {
-        String r = solverProcess.sendAndListen(sent, "\n");
+        String r = sendRaw(sent);
         if (!isFlatResponse(r) && !r.contains("(error")) {
             try {
                 return lp.parse(new org.smtlib.sexpr.Parser(smtConfig, new Pos.Source(r, null)));
@@ -275,8 +288,13 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
     /** Parses the response to the command text sent, which must have the given shape (#149) */
     private IResponse parse(Shape shape, String sent, String response) {
+        IResponse timedOut = timeLimitResponse(response);
+        if (timedOut != null) return timedOut;
         return checkShape(shape, sent, response, parseResponse(response));
     }
+
+    /** An (error ...) response, at the start of a line of the solver's output */
+    private static final Pattern ERROR_RESPONSE = Pattern.compile("(?m)^\\s*\\(\\s*error\\s");
 
     /** Every command this adapter sends directly to the process ends here, so the solver's report that its
      *  whole-run limit ended it is recognized for all of them (see AbstractSolver#timeLimitResponse). A command sent
@@ -288,8 +306,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         IResponse timedOut = timeLimitResponse(response);
         if (timedOut != null) return timedOut;
         try {
-            if (isMac && response.startsWith("success")) return smtConfig.responseFactory.success(); // FIXME - this is just to avoid a problem with the Mac Z3 implementation
-            if (response.contains("error")) {
+            if (ERROR_RESPONSE.matcher(response).find()) {
                 // Z3 returns an s-expr (always?)
                 // FIXME - (1) the {Print} also needs {Space}; (2) err_getValueTypes.tst returns a non-error s-expr and then an error s-expr - this fails for that case
                 //Pattern p = Pattern.compile("\\p{Space}*\\(\\p{Blank}*error\\p{Blank}+\"(([\\p{Space}\\p{Print}^[\\\"\\\\]]|\\\\\")*)\"\\p{Blank}*\\)\\p{Space}*");
@@ -357,7 +374,9 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             String s;
             int parens = 0;
             do {
-                s = solverProcess.sendAndListen("(get-assertions)\n");
+                s = sendRaw("(get-assertions)");
+                IResponse timedOut = timeLimitResponse(s);
+                if (timedOut != null) return timedOut;
                 int p = -1;
                 while (( p = s.indexOf('(',p+1)) != -1) parens++;
                 p = -1;
@@ -506,11 +525,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
         String option = key.value();
-        if (Utils.PRINT_SUCCESS.equals(option)) {
-            if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
-                return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
-            }
-        }
         if (logicSet && (Utils.INTERACTIVE_MODE.equals(option)||Utils.PRODUCE_ASSERTIONS.equals(option))) {
             return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
         }
@@ -529,12 +543,10 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         if (r != null) return r;
 
         try {
-            solverProcess.sendAndListen("(set-option ",option," ",value.toString(),")\n");// FIXME - detect errors
+            return send(Shape.SUCCESS, "(set-option " + option + " " + value + ")");
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
-
-        return successOrEmpty(smtConfig);
     }
 
     /** Answered from the values set here: z3 4.3 defaults :produce-models to true (SMT-LIB: false)
@@ -553,17 +565,12 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     public IResponse get_info(IKeyword key) {
         String cmd = "(get-info " + key + ")";
         try {
-            String response = solverProcess.sendAndListen(cmd, "\n");
+            String response = sendRaw(cmd);
             if (smtConfig.testing) response = normalizeForTesting(response, key);
             return parse(Shape.VALUE, cmd, response);
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to solver: " + cmd + " " + e);
         }
-    }
-
-    @Override
-    public IResponse set_info(IKeyword key, IAttributeValue value) {
-        return sendCommand(new org.smtlib.command.C_set_info(key,value));
     }
 
     /** z3 4.3 writes echo's text unquoted, so where it ends cannot be found (#136); the response
