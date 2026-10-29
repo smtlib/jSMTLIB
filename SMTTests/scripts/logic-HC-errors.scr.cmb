@@ -9,7 +9,7 @@ success
 (error "The function symbol @ takes two or more arguments")
 (assert (= (@ f x y) y))
            ^^^^^^^^^
-(error "Left-associative application of @ fails at argument 3: has sort B, expected sort family ->")
+(error "Left-associative application of @ fails at the application to arguments 1-2: has sort B, expected sort family ->")
 (assert (= (@ x f) y))
            ^^^^^^^
 (error "Argument 1 of @ has sort A, expected sort family ->")
