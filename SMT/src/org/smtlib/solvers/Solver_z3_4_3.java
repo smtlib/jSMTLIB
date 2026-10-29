@@ -551,6 +551,13 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         return sendCommand(new org.smtlib.command.C_set_info(key,value));
     }
 
+    /** z3 4.3 writes echo's text unquoted, so where it ends cannot be found (#136); the response
+     *  to echo is its argument */
+    @Override
+    public IResponse echo(IStringLiteral arg) {
+        return arg;
+    }
+
     @Override
     public IResponse get_model() {
         if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
