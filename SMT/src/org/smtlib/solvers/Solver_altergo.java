@@ -93,4 +93,11 @@ public class Solver_altergo extends AbstractSolver implements ISolver {
         }
     }
 
+    /** alt-ergo 2.6.3 sends no reply at all to (get-proof) (it also answers :produce-proofs with
+     *  unsupported), so waiting for one would hang; answers unsupported without sending it */
+    @Override
+    public IResponse get_proof() {
+        return smtConfig.responseFactory.unsupported();
+    }
+
 }
