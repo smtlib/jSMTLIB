@@ -1,0 +1,11 @@
+### An empty or whitespace-only argument to --exec, --solver, --out or --diag is a command-line error
+### naming the option. Only the first line of each case is kept; the last case shows the usage too.
+##EXITCODE 1
+$SMT_CMD --solver test --exec " " --text "(set-logic QF_UF)" | head -1; echo "exit ${PIPESTATUS[0]}"
+$SMT_CMD --solver test -e "" --text "(set-logic QF_UF)" | head -1; echo "exit ${PIPESTATUS[0]}"
+$SMT_CMD --solver "" --text "(set-logic QF_UF)" | head -1; echo "exit ${PIPESTATUS[0]}"
+$SMT_CMD -s " " --text "(set-logic QF_UF)" | head -1; echo "exit ${PIPESTATUS[0]}"
+$SMT_CMD --solver test --out "" --text "(set-logic QF_UF)" | head -1; echo "exit ${PIPESTATUS[0]}"
+$SMT_CMD --solver test --out " " --text "(set-logic QF_UF)" | head -1; echo "exit ${PIPESTATUS[0]}"
+$SMT_CMD --solver test --diag "" --text "(set-logic QF_UF)" | head -1; echo "exit ${PIPESTATUS[0]}"
+$SMT_CMD --solver z3-4.16.0 --exec "" --text "(set-logic QF_UF)"

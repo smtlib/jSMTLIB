@@ -984,6 +984,7 @@ public class SMT {
                     return 1;
                 }
                 options.solvername = args[i++];
+                if (blankArgument(options.solvername, "--solver")) return 1;
 
             } else if ("--exec".equals(s) || "-e".equals(s)) {
                 if (i >= args.length) {
@@ -992,6 +993,7 @@ public class SMT {
                     return 1;
                 }
                 options.executable = args[i++];
+                if (blankArgument(options.executable, "--exec")) return 1;
 
             } else if ("--logics".equals(s) || "-L".equals(s)) {
                 if (i >= args.length) {
@@ -1008,6 +1010,7 @@ public class SMT {
                     return 1;
                 }
                 options.diag = args[i++];
+                if (blankArgument(options.diag, "--diag")) return 1;
 
             } else if ("--out".equals(s)) {
                 if (i >= args.length) {
@@ -1016,6 +1019,7 @@ public class SMT {
                     return 1;
                 }
                 options.out = args[i++];
+                if (blankArgument(options.out, "--out")) return 1;
 
             } else if ("--port".equals(s)) {
                 if (i >= args.length) {
@@ -1322,6 +1326,15 @@ public class SMT {
     /** Helper function to log a command-line error */
     protected void error(String msg) {
         smtConfig.log.logError(smtConfig.responseFactory.error(msg));
+    }
+
+    /** Reports an empty or whitespace-only argument to the given option as a command-line
+     *  error; returns whether it was one */
+    private boolean blankArgument(String value, String option) {
+        if (!value.isBlank()) return false;
+        error("The " + option + " option expects a non-empty argument");
+        usage();
+        return true;
     }
 
     /** Trims the given string and returns null if the result is empty, or if the argument
