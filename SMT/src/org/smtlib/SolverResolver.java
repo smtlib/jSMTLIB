@@ -32,7 +32,8 @@ public final class SolverResolver {
 
     /** Resolves the solver:
      *  <ol>
-     *  <li>the adapter: a {@code .adapter.<platform>} property, then {@code .adapter}; else the class
+     *  <li>the adapter: a {@code .adapter.<platform>} property, then {@code .adapter} (an error if the
+     *      class it names is not found); else the class
      *      {@code Solver_<name>} (with - and . in the name as _); else, for a z3 name,
      *      {@code Solver_z3_recent}; else {@code Solver_smt};</li>
      *  <li>a {@code .command} property, split at commas, if given;</li>
@@ -48,7 +49,8 @@ public final class SolverResolver {
      * @param platform the platform name, as {@code SMT.platformName()} gives it
      * @param solverDir the solver directory (SMT_SOLVER_DIR), or null
      * @param classLookup the class with a given name, or null if there is none
-     * @throws ISolver.CreationException if the {@code .command} property has no content */
+     * @throws ISolver.CreationException if a configured adapter class is not found or the
+     *         {@code .command} property has no content */
     public static Resolution resolve(/*@Nullable*/ Properties props, String solvername, /*@Nullable*/ String executable,
             String platform, /*@Nullable*/ String solverDir, Function<String, Class<?>> classLookup)
             throws ISolver.CreationException {
@@ -65,11 +67,19 @@ public final class SolverResolver {
         // push-command bug that the Unix/macOS z3-4.3.1 binary doesn't, needing its own
         // adapter subclass. Mirrors the same convention used for .exec.<platform>.
         if (props != null) {
-            adapterClassName = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_ADAPTER_SUFFIX + "." + platform);
+            String adapterProp = Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_ADAPTER_SUFFIX + "." + platform;
+            adapterClassName = props.getProperty(adapterProp);
             if (adapterClassName == null) {
-                adapterClassName = props.getProperty(Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_ADAPTER_SUFFIX);
+                adapterProp = Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_ADAPTER_SUFFIX;
+                adapterClassName = props.getProperty(adapterProp);
             }
-            if (adapterClassName != null) adapterClass = classLookup.apply(adapterClassName);
+            if (adapterClassName != null) {
+                adapterClass = classLookup.apply(adapterClassName);
+                if (adapterClass == null) {
+                    throw new ISolver.CreationException("Could not find the adapter class " + adapterClassName
+                            + " named by " + adapterProp);
+                }
+            }
         }
 
         if (adapterClass == null) {

@@ -499,7 +499,7 @@ public class SMT {
             } catch (NoSuchMethodException e) {
                 throw new ISolver.CreationException("Could not find an appropriate constructor in " + adapterClassName + ": " + e, e);
             } catch (IllegalAccessException e) {
-                throw new ISolver.CreationException("Could not find an adapter class named " + adapterClassName + ": " + e, e);
+                throw new ISolver.CreationException("The adapter class " + adapterClassName + " or its constructor is not accessible: " + e, e);
             } catch (InstantiationException e) {
                 throw new ISolver.CreationException("Could not create an instance of a " + adapterClassName + ": " + e, e);
             } catch (InvocationTargetException e) {
