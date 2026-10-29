@@ -138,6 +138,24 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
         return result;
     }
 
+    /** When its whole-run limit (--time-limit) ends it, Bitwuzla writes unknown -- as the answer to a running
+     *  check-sat, or unprompted while idle -- and exits with code 0 (checked with 0.9.1). An unknown for any other
+     *  reason (e.g. the per-query limit) leaves it running, so an unknown is the whole-run limit only if the
+     *  process then exits. */
+    @Override
+    protected boolean isTimeLimitResponse(String rawResponse) {
+        if (!rawResponse.trim().equals("unknown") || solverProcess == null) return false;
+        for (int i = 0; i < 20 && solverProcess.isRunning(true); i++) {
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        return !solverProcess.isRunning(true);
+    }
+
     /** Bitwuzla writes its errors as "[error] ..." lines (class comment point 3), so for the get-
      *  commands that parse a list reply such a line goes to {@link #parseResponse}, not the list parser. */
     @Override
