@@ -552,11 +552,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     }
 
     @Override
-    public IResponse echo(IStringLiteral arg) {
-        return arg;
-    }
-
-    @Override
     public IResponse get_model() {
         if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
             return smtConfig.responseFactory.error("The get-model command is only valid if :produce-models has been enabled");

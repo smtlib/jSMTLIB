@@ -1,6 +1,6 @@
 success
 success
-after
+"after declare-fun"
 success
 (:error-behavior immediate-exit )
 success

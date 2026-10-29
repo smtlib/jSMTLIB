@@ -144,16 +144,6 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         return smtConfig.responseFactory.success(); // FIXME - should forbid any actions after exited
     }
 
-    // Simplify has no SMT-LIB syntax at all (its own protocol is translated command-by-command
-    // elsewhere in this class), so AbstractSolver's generic echo() -- which sends the actual
-    // SMT-LIB "(echo ...)" text to the real process -- can't work here; it just gets Simplify's
-    // own "Bad" parse-failure response back. echo doesn't need the solver's involvement anyway
-    // (it just reports the string back), so answer it locally instead, same as Solver_z3_4_3.
-    @Override
-    public IResponse echo(IStringLiteral arg) {
-        return arg;
-    }
-
     /** Never pipelined: commands are executed here, not sent to a process */
     @Override
     public boolean pipelines(ICommand cmd) {
