@@ -788,47 +788,5 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
                 }
             }
         }
-
-        //@ requires iter.hasNext();
-        protected <T extends IExpr> void rightassoc(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
-            T n = iter.next();
-            if (!iter.hasNext()) {
-                n.accept(this);
-            } else {
-                try {
-                    w.append("(");
-                    w.append(fcnname);
-                    w.append(" ");
-                    n.accept(this);
-                    w.append(" ");
-                    rightassoc(fcnname,iter);
-                    w.append(")");
-                } catch (IOException ex) {
-                    throw new IVisitor.VisitorException(ex,null); // FIXME - null ?
-                }
-            }
-        }
-
-
-        //@ requires iter.hasNext();
-        //@ requires length > 0;
-        protected <T extends INode> void chainable(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
-            try {
-                w.append("(and ");
-                T left = iter.next();
-                while (iter.hasNext()) {
-                    w.append("(");
-                    w.append(fcnname);
-                    w.append(" ");
-                    left.accept(this);
-                    w.append(" ");
-                    (left=iter.next()).accept(this);
-                    w.append(")");
-                }
-                w.append(")");
-            } catch (IOException ex) {
-                throw new IVisitor.VisitorException(ex,null); // FIXME - null ?
-            }
-        }
     }
 }
