@@ -4,4 +4,5 @@ success
 success
 sat
 success
-(error "The get-model command is not valid once the assertion stack has changed since the last check command")
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] cannot get value if input formula is not sat
+")
