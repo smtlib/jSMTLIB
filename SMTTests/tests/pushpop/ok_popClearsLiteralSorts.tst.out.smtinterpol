@@ -1,0 +1,14 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "<stdin>:12:19: Unsupported internal sort: String")
+(error "<stdin>:13:11: Application of function null does not type check.")
+success
+sat

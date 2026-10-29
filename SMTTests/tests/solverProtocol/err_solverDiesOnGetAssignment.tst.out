@@ -1,0 +1,5 @@
+success
+success
+success
+sat
+(error "Error writing to solver: org.smtlib.SolverProcess$NoResponseException: Solver process closed its output stream without a response")

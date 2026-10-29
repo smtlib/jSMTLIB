@@ -1,0 +1,3 @@
+success
+(error "No such sort symbol declared: Foo")
+(error "No such sort symbol declared: Foo")

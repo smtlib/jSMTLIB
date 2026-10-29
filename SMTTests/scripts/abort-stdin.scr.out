@@ -1,0 +1,2 @@
+success
+(error "User-defined symbols may not begin with . or @")

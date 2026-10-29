@@ -1,0 +1,13 @@
+success
+success
+success
+success
+U : U
+f : (U) -> U
+c : () -> U
+g : -no entry- 
+success
+success
+(set-logic QF_UF)(what U
+                 ^^^^^^^^
+(error "Unexpected end of data while parsing a what command")

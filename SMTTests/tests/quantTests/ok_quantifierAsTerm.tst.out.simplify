@@ -1,0 +1,8 @@
+success
+success
+success
+(error "Use of forall as a Bool term is not implemented in the Simplify adapter")
+sat
+success
+(error "Use of exists as a Bool term is not implemented in the Simplify adapter")
+sat

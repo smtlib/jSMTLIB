@@ -1,0 +1,14 @@
+success
+success
+success
+success
+success
+success
+(error "Did not expect a Binary literal in an expression to be translated")
+(error "Did not expect a Hex literal in an expression to be translated")
+success
+(error "The simplify solver cannot handle decimal literals")
+(error "The simplify solver cannot handle string literals")
+success
+success
+sat
