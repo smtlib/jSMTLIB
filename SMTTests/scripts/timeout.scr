@@ -58,8 +58,8 @@
 # be present on every one of the 5 CI platforms (confirmed directly against the
 # smtlib/Solvers repo's Solvers-macos/-macos-arm64/-linux/-linux-arm64/-windows trees):
 # z3-4.3 (the legacy adapter), z3-4.8.12 and z3-4.16.0 (two Solver_z3_recent versions,
-# spanning its whole supported range), cvc5-1.3.2, yices2 (the whole-run-only fallback
-# case), smtinterpol-2.5 (the per-query-only fallback case). This exercises every
+# spanning its whole supported range), cvc5-1.3.2, yices2 and smtinterpol-2.5 (per-query-only timeouts, -T approximated per
+# query). This exercises every
 # distinct code path in the -t/-T translation. Deliberately excludes: bitwuzla and
 # alt-ergo (availability varies per platform -- e.g. bitwuzla is on macos-arm64/linux/
 # linux-arm64/windows but NOT macos-x64 -- which would make this script's own output
