@@ -1,0 +1,6 @@
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:12: unexpected token
+")
+(error "Error writing to solver: (assert (= ""A"" (_ char A))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= ""A"" (_ char #x41 #x42))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Expected a numeral here, instead of a binary")

@@ -1,0 +1,10 @@
+success
+success
+(error "<stdin>:5:29: Unsupported internal sort: String")
+(error "<stdin>:6:57: Unsupported internal sort: String")
+(error "<stdin>:7:40: Unsupported internal sort: String")
+sat
+(
+)
+(error "<stdin>:11:49: Unsupported internal sort: String")
+sat

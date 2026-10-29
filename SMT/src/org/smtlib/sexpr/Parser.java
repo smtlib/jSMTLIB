@@ -508,6 +508,8 @@ public class Parser extends Lexer implements IParser {
             ILexToken peek = peekToken();
             if (peek instanceof Symbol) {
                 indices.add(parseSymbol());
+            } else if (peek instanceof IHexLiteral) {
+                indices.add(parseHex());
             } else {
                 indices.add(parseNumeral());
             }
@@ -526,7 +528,7 @@ public class Parser extends Lexer implements IParser {
         // An IExpr can be
         //        literal
         //        symbol
-        //        ( _ symbol numeral+ )
+        //        ( _ symbol index+ )
         //        ( as identifier sort )
         //        ( ! ...
         //        ( forall ...

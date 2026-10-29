@@ -1,0 +1,13 @@
+success
+success
+success
+success
+success
+sat
+(
+(= "A" "A")
+(let ((_let_1 (= "A" "A")) ) (and _let_1 _let_1))
+(= (str.len "\u{2ffff}") 1)
+)
+success
+unsat

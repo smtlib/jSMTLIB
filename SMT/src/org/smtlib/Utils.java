@@ -277,6 +277,8 @@ public class Utils {
     static public final ISymbol BVSGE = new SMTExpr.Symbol("bvsge".intern());
     static public final ISymbol CONCAT = new SMTExpr.Symbol("concat".intern());
     static public final ISymbol EXTRACT = new SMTExpr.Symbol("extract".intern());
+    /** Head of the Strings theory's (_ char H) constants. */
+    static public final ISymbol CHAR = new SMTExpr.Symbol("char".intern());
     static public final ISymbol REPEAT = new SMTExpr.Symbol("repeat".intern());
     static public final ISymbol ZERO_EXTEND = new SMTExpr.Symbol("zero_extend".intern());
     static public final ISymbol SIGN_EXTEND = new SMTExpr.Symbol("sign_extend".intern());

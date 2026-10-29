@@ -121,7 +121,8 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
     static public interface ILiteral extends IExpr, IAttributeValue {
     }
 
-    /** Marker interface for the two legal index types in a parameterized identifier: INumeral and ISymbol. */
+    /** Marker interface for the index types in a parameterized identifier: INumeral and ISymbol, plus
+     *  IHexLiteral, which the Strings theory's (_ char H) uses; each theory decides which kinds it accepts. */
     static public interface IIndex extends IExpr {
     }
 
@@ -216,8 +217,8 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
     }
 
     /** This interface represents SMT-LIB hex literals */
-    static public interface IHexLiteral extends ILiteral {
-        /** Returns a canonical value of the hex literal; lower-case hex digits from most-significant to least-significant */
+    static public interface IHexLiteral extends ILiteral, IIndex {
+        /** Returns the hex digits as written, from most-significant to least-significant */
         String value(); 
 
         /** The hex value as an unsigned integer */

@@ -1,0 +1,6 @@
+success
+(error "<stdin>:3:18: Undeclared sort ((_ BitVec [#x8]) 0)")
+success
+(error "<stdin>:5:16: Builtin function extract does not support argument sorts ()")
+(error "<stdin>:6:11: Unknown function symbol bv1.")
+(error "<stdin>:7:14: Builtin function repeat does not support argument sorts ()")
