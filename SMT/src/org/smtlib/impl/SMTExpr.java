@@ -341,11 +341,12 @@ public abstract class SMTExpr implements IExpr {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof IBinaryLiteral)) return false;
-            return ((IBinaryLiteral)o).intValue().equals(intValue);
+            IBinaryLiteral b = (IBinaryLiteral)o;
+            return b.length() == length && b.intValue().equals(intValue);
         }
 
         @Override
-        public int hashCode() { return intValue.hashCode(); }
+        public int hashCode() { return 31*length + intValue.hashCode(); }
 
         @Override
         public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
@@ -373,11 +374,12 @@ public abstract class SMTExpr implements IExpr {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof IHexLiteral)) return false;
-            return ((IHexLiteral)o).intValue().equals(intValue);
+            IHexLiteral h = (IHexLiteral)o;
+            return h.length() == length && h.intValue().equals(intValue);
         }
 
         @Override
-        public int hashCode() { return value.hashCode(); }
+        public int hashCode() { return 31*length + intValue.hashCode(); }
 
         @Override
         public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
