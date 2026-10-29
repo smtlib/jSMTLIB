@@ -159,6 +159,7 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
         return sb.toString();
     }
 
+    /** Sent to bitwuzla, and also kept here for get_option, which bitwuzla does not support */
     @Override
     protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
         IResponse r = checkPrintSuccess(smtConfig, key, value);

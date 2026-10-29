@@ -66,7 +66,9 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     /** The parser that parses responses from the solver */
     protected org.smtlib.sexpr.Parser responseParser;
 
-    /** Set to true once a set-logic command has been executed */
+    /** Set to true once a set-logic command has been executed. z3 4.3 accepts declarations,
+     *  definitions, assert, push, pop and check-sat before set-logic, which SMT-LIB forbids, so
+     *  those commands check this flag and report the error themselves. */
     protected boolean logicSet = false;
 
     /** The number of pushes less the number of pops so far -- i.e. the real depth of the
@@ -280,6 +282,9 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  whole-run limit ended it is recognized for all of them (see AbstractSolver#timeLimitResponse). A command sent
      *  directly after that finds the process gone and gets an error; sendCommand returns the timeout response. */
     protected IResponse parseResponse(String response) {
+        // z3 4.3 reports line numbers counted from its own input, which includes lines jSMTLIB adds
+        // (see linesOffset), and can write several (error ...) responses for one command; these are
+        // rewritten and joined into one error.
         IResponse timedOut = timeLimitResponse(response);
         if (timedOut != null) return timedOut;
         try {
@@ -336,6 +341,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         return response;
     }
 
+    /** z3 4.3 does not support :produce-assertions (it answers unsupported) and requires the
+     *  SMT-LIB 2.0 :interactive-mode instead, so the option is checked against the value set here */
     @Override
     public IResponse get_assertions() {
         if (!logicSet) {
@@ -472,6 +479,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#set-logic " + logicName);
         if (logicSet) {
+            // z3 4.3 itself reports a second set-logic ("the logic has already been set")
             if (!smtConfig.relax) return smtConfig.responseFactory.error("Logic is already set");
             pop(pushesDepth); // pop back to the base frame -- pushesDepth is 0 again afterward
         }
@@ -492,6 +500,9 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         }
     }
 
+    /** z3 4.3 accepts :interactive-mode, :produce-assertions and the other :produce- options after
+     *  set-logic, which SMT-LIB forbids, so that is reported here; values are kept here for
+     *  get_option. */
     @Override
     protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
         String option = key.value();
@@ -526,6 +537,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         return successOrEmpty(smtConfig);
     }
 
+    /** Answered from the values set here: z3 4.3 defaults :produce-models to true (SMT-LIB: false)
+     *  and answers unsupported for :produce-assertions */
     @Override
     public IResponse get_option(IKeyword key) { // FIXME - use the solver?
         String option = key.value();
@@ -534,6 +547,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         return value;
     }
 
+    /** Not a correction: this adapter sends commands by its own means, so it scrubs run-dependent
+     *  values for testing itself, as AbstractSolver.get_info does */
     @Override
     public IResponse get_info(IKeyword key) {
         String cmd = "(get-info " + key + ")";
@@ -558,6 +573,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         return arg;
     }
 
+    /** The :produce-models check corrects z3 4.3 answering get-model with that option at its
+     *  (non-standard) default of true; z3 4.3 itself reports get-model when no model is available */
     @Override
     public IResponse get_model() {
         if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
@@ -649,6 +666,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         }
     }
 
+    /** z3 4.3 itself reports get-proof without :produce-proofs or when no proof is available; the
+     *  checks here only give the same messages as the other adapters */
     @Override 
     public IResponse get_proof() {
         if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_PROOFS)))) {
@@ -664,6 +683,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         }
     }
 
+    /** z3 4.3 itself reports get-unsat-core without :produce-unsat-cores or when no core is
+     *  available; the checks here only give the same messages as the other adapters */
     @Override 
     public IResponse get_unsat_core() {
         if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_UNSAT_CORES)))) {
@@ -679,6 +700,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         }
     }
 
+    /** z3 4.3 answers get-assignment (with ()) when :produce-assignments is not enabled, which
+     *  SMT-LIB makes an error */
     @Override 
     public IResponse get_assignment() {
         // FIXME - do we really want to call get-option here? it involves going to the solver?
@@ -695,6 +718,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         }
     }
 
+    /** See get_model: z3 4.3 defaults :produce-models to true */
     @Override 
     public IResponse get_value(IExpr... terms) {
         // FIXME - do we really want to call get-option here? it involves going to the solver?
@@ -724,7 +748,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
         @Override
         public Void visit(IFcnExpr e) throws IVisitor.VisitorException {
-            // Only - for >=2 args is not correctly done, but we can't delegate to translateSMT because it might be a sub-expression.
+            // z3 4.3 rejects - with more than two arguments ("wrong number of arguments"), so it is
+            // written left-associated. (Its other n-ary operators are accepted as is.)
             Iterator<IExpr> iter = e.args().iterator();
             if (!iter.hasNext()) throw new VisitorException("Did not expect an empty argument list",e.pos());
             IQualifiedIdentifier fcn = e.head();
