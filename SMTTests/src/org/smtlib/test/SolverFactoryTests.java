@@ -126,7 +126,8 @@ public class SolverFactoryTests {
         String[][] cases = {
             {"cvc5-1.3.2", "Solver_cvc5"}, {"bitwuzla", "Solver_bitwuzla"}, {"z3-4.16.0", "Solver_z3_recent"},
             {"z3-4.3.2", "Solver_z3_4_3_2"}, {"simplify", "Solver_simplify"}, {"altergo", "Solver_altergo"},
-            {"yices2", "Solver_yices2"}, {"smtinterpol-2.5", "Solver_smtinterpol"},
+            {"yices2-2.7.0", "Solver_yices2"}, {"yices2-2.6.5", "Solver_yices2_2_6"},
+            {"smtinterpol-2.5", "Solver_smtinterpol"},
             {"no-such-solver", "Solver_smt"},
         };
         for (String[] c: cases) {
