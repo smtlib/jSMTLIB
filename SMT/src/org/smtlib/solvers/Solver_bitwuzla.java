@@ -20,10 +20,10 @@ import org.smtlib.IExpr.IKeyword;
  *  silent inheritor of {@link AbstractSolver} apart from a handful of real, empirically
  *  confirmed (against 0.9.1) protocol gaps:
  *  <p>
- *  1) Bitwuzla has genuinely no {@code get-info}, {@code get-option}, {@code
- *  get-assignment}, or {@code get-proof} support at all -- each is rejected with {@code
+ *  1) Bitwuzla has no {@code get-info}, {@code get-option}, {@code get-assertions},
+ *  {@code get-assignment} or {@code get-proof} at all -- each is rejected with {@code
  *  [error] <stdin>:L:C: unsupported command '...'} and, critically, that rejection
- *  KILLS the process (see point 2), so these four must be answered entirely client-side
+ *  KILLS the process (see point 2), so these are answered entirely client-side
  *  and never forwarded. {@link #get_option} therefore tracks values itself (via the
  *  inherited {@code options} map, falling back to {@code smtConfig.utils.defaults})
  *  rather than relying on AbstractSolver's default of asking the solver.
@@ -43,7 +43,14 @@ import org.smtlib.IExpr.IKeyword;
  *  IError) instead of the {@code IParser.ParserException} that {@link
  *  AbstractSolver#parseResponse} already knows how to turn into a clean error response.
  *  {@link #parseResponse} widens that catch locally so a non-conforming response
- *  produces an ordinary error IResponse instead of crashing the whole run. */
+ *  produces an ordinary error IResponse instead of crashing the whole run.
+ *  <p>
+ *  4) With its :produce-* option on, Bitwuzla writes nothing at all, or the start of a
+ *  list followed by an error on standard error, for get-model, get-value, get-unsat-core
+ *  and get-unsat-assumptions when it has no answer (e.g. get-value after unknown, or
+ *  get-unsat-core after an assert that followed unsat); it writes nothing or a fragment for
+ *  get-unsat-assumptions whenever that option is off. The adapter answers those cases with an
+ *  error itself, tracking Bitwuzla's own state (see {@link #lastCheck}). */
 public class Solver_bitwuzla extends AbstractSolver implements ISolver {
 
     @Override
@@ -131,6 +138,31 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
         return result;
     }
 
+    /** When its whole-run limit (--time-limit) ends it, Bitwuzla writes unknown -- as the answer to a running
+     *  check-sat, or unprompted while idle -- and exits with code 0 (checked with 0.9.1). An unknown for any other
+     *  reason (e.g. the per-query limit) leaves it running, so an unknown is the whole-run limit only if the
+     *  process then exits. */
+    @Override
+    protected boolean isTimeLimitResponse(String rawResponse) {
+        if (!rawResponse.trim().equals("unknown") || solverProcess == null) return false;
+        for (int i = 0; i < 20 && solverProcess.isRunning(true); i++) {
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        return !solverProcess.isRunning(true);
+    }
+
+    /** Bitwuzla writes its errors as "[error] ..." lines (class comment point 3), so for the get-
+     *  commands that parse a list reply such a line goes to {@link #parseResponse}, not the list parser. */
+    @Override
+    protected boolean isFlatResponse(String response) {
+        return super.isFlatResponse(response) || response.trim().startsWith("[error]");
+    }
+
     /** Bitwuzla's own diagnostics report line numbers relative to everything it has actually
      *  received on stdin, including the (set-option :print-success true) priming line from
      *  start() -- which has no counterpart in the user's own script. Rewrites every such line
@@ -206,32 +238,173 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
         return smtConfig.responseFactory.get_info_response(attr);
     }
 
-    /** Genuinely unsupported by Bitwuzla at the protocol level (see class comment point
-     *  1) -- forwarding would kill the process, so the final step is answered locally
-     *  instead of going through AbstractSolver's default (which forwards). The
-     *  precondition checks themselves are reused from AbstractSolver (not skipped): a
-     *  script that calls get-proof before :produce-proofs is enabled, or before
-     *  check-sat has returned unsat, should still see that specific error rather than a
-     *  blanket "unsupported" -- confirmed against other solvers' goldens for the same
-     *  test (e.g. setInfo/err_statusUnsatButNeedsSat.tst), which expect the precondition
-     *  error even from solvers (yices2 included) that don't really implement this either. */
+    /** Bitwuzla rejects get-proof as an unsupported command and exits (class comment point 1);
+     *  a conforming solver without proofs answers unsupported. */
     @Override
     public IResponse get_proof() {
-        IResponse err = requireOptionEnabled("get-proof", Utils.PRODUCE_PROOFS);
-        if (err != null) return err;
-        err = requireUnsat("get-proof", "check-sat");
-        if (err != null) return err;
         return smtConfig.responseFactory.unsupported();
     }
 
-    /** See {@link #get_proof()}. */
+    /** See {@link #get_proof()}: Bitwuzla rejects get-assignment the same way. */
     @Override
     public IResponse get_assignment() {
-        IResponse err = requireOptionEnabled("get-assignment", Utils.PRODUCE_ASSIGNMENTS);
-        if (err != null) return err;
-        err = requireSatOrUnknown("get-assignment");
-        if (err != null) return err;
         return smtConfig.responseFactory.unsupported();
+    }
+
+    /** See {@link #get_proof()}: Bitwuzla rejects get-assertions the same way. */
+    @Override
+    public IResponse get_assertions() {
+        return smtConfig.responseFactory.unsupported();
+    }
+
+    // Bitwuzla's own state for the get- commands of class comment point 4: the result of its last
+    // check-sat or check-sat-assuming (kept until reset), whether no assert, push, pop or
+    // reset-assertions has come since, and which :produce-* options were on when it ran (Bitwuzla
+    // accepts these options after set-logic, but one set after the check does not apply to it).
+
+    /** The response to the last check-sat or check-sat-assuming since start or reset, else null */
+    private /*@Nullable*/ IResponse lastCheck = null;
+    /** Whether no assert, push, pop or reset-assertions has come since {@link #lastCheck} */
+    private boolean lastCheckCurrent = false;
+    /** The :produce-* options that were on when {@link #lastCheck} ran */
+    private final java.util.Set<String> optionsAtCheck = new java.util.HashSet<>();
+
+    private IResponse recordCheck(IResponse result) {
+        lastCheck = result;
+        lastCheckCurrent = true;
+        optionsAtCheck.clear();
+        for (String o: new String[]{Utils.PRODUCE_MODELS, Utils.PRODUCE_UNSAT_CORES, Utils.PRODUCE_UNSAT_ASSUMPTIONS}) {
+            if (optionOn(o)) optionsAtCheck.add(o);
+        }
+        return result;
+    }
+
+    private boolean optionOn(String option) {
+        return Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(option)));
+    }
+
+    /** The response to {@link #lastCheck}, read first if it was pipelined */
+    private /*@Nullable*/ IResponse lastResult() {
+        readPipelined(true);
+        return lastCheck instanceof Pending p ? p.response() : lastCheck;
+    }
+
+    @Override
+    public IResponse check_sat() {
+        return recordCheck(super.check_sat());
+    }
+
+    @Override
+    public IResponse check_sat_assuming(IExpr ... exprs) {
+        return recordCheck(super.check_sat_assuming(exprs));
+    }
+
+    @Override
+    public IResponse assertExpr(IExpr sexpr) {
+        lastCheckCurrent = false;
+        return super.assertExpr(sexpr);
+    }
+
+    @Override
+    public IResponse push(int number) {
+        lastCheckCurrent = false;
+        return super.push(number);
+    }
+
+    @Override
+    public IResponse pop(int number) {
+        lastCheckCurrent = false;
+        return super.pop(number);
+    }
+
+    @Override
+    public IResponse reset_assertions() {
+        lastCheckCurrent = false;
+        return super.reset_assertions();
+    }
+
+    /** Bitwuzla's reset restores its option defaults, so the values get_option answers from are
+     *  dropped too (except the output channels, which are jSMTLIB's own and stay redirected). */
+    @Override
+    public IResponse reset() {
+        options.keySet().removeIf(k -> !Utils.REGULAR_OUTPUT_CHANNEL.equals(k) && !Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(k));
+        lastCheck = null;
+        lastCheckCurrent = false;
+        return super.reset();
+    }
+
+    /** With :produce-models on, Bitwuzla writes nothing for get-model unless its last check
+     *  returned sat (and crashes if a reset came since); after an assert, push, pop or
+     *  reset-assertions, or with the option set after the check, it writes an ordinary error. */
+    @Override
+    public IResponse get_model() {
+        if (optionOn(Utils.PRODUCE_MODELS)) {
+            IResponse r = lastResult();
+            if (!smtConfig.responseFactory.sat().equals(r)) return noModel("get-model", r);
+        }
+        return super.get_model();
+    }
+
+    /** With :produce-models on, Bitwuzla writes nothing for get-value unless its last check
+     *  returned sat, and a fragment and an error if an assert, push, pop or reset-assertions came
+     *  since or the option was set after the check. */
+    @Override
+    public IResponse get_value(IExpr... terms) {
+        if (optionOn(Utils.PRODUCE_MODELS)) {
+            IResponse r = lastResult();
+            if (!smtConfig.responseFactory.sat().equals(r) || !lastCheckCurrent) return noModel("get-value", r);
+            if (!optionsAtCheck.contains(Utils.PRODUCE_MODELS)) return enabledTooLate("get-value", Utils.PRODUCE_MODELS);
+        }
+        return super.get_value(terms);
+    }
+
+    /** With :produce-unsat-cores on, Bitwuzla writes nothing for get-unsat-core unless its last
+     *  check returned unsat, and a fragment and an error if an assert, push, pop, reset-assertions
+     *  or reset came since or the option was set after the check. */
+    @Override
+    public IResponse get_unsat_core() {
+        if (optionOn(Utils.PRODUCE_UNSAT_CORES)) {
+            IResponse err = requireCurrentUnsat("get-unsat-core", "check-sat", Utils.PRODUCE_UNSAT_CORES);
+            if (err != null) return err;
+        }
+        return super.get_unsat_core();
+    }
+
+    /** Bitwuzla writes nothing for get-unsat-assumptions unless its last check returned unsat; then
+     *  it writes a fragment and an error if the option is off or was set after the check, or an
+     *  assert, push, pop, reset-assertions or reset came since. */
+    @Override
+    public IResponse get_unsat_assumptions() {
+        if (!optionOn(Utils.PRODUCE_UNSAT_ASSUMPTIONS)) {
+            return smtConfig.responseFactory.error("The get-unsat-assumptions command is only valid if "
+                    + Utils.PRODUCE_UNSAT_ASSUMPTIONS + " has been enabled");
+        }
+        // The same text as AbstractSolver.requireUnsat's
+        IResponse err = requireCurrentUnsat("get-unsat-assumptions", "check-sat-assumptions", Utils.PRODUCE_UNSAT_ASSUMPTIONS);
+        if (err != null) return err;
+        return super.get_unsat_assumptions();
+    }
+
+    /** The error for a get-model or get-value Bitwuzla has no model for */
+    private IResponse noModel(String command, /*@Nullable*/ IResponse result) {
+        if (lastCheckCurrent && smtConfig.responseFactory.unknown().equals(result)) {
+            return smtConfig.responseFactory.error("The " + command + " command has no model to report after check-sat returned unknown");
+        }
+        return smtConfig.responseFactory.error("The " + command + " command is only valid immediately after check-sat returned sat or unknown");
+    }
+
+    /** An error unless the last check returned unsat, no assert, push, pop or reset-assertions
+     *  came since and the option was on when it ran; else null */
+    private /*@Nullable*/ IResponse requireCurrentUnsat(String command, String afterWhat, String option) {
+        if (!smtConfig.responseFactory.unsat().equals(lastResult()) || !lastCheckCurrent) {
+            return smtConfig.responseFactory.error("The " + command + " command is only valid immediately after " + afterWhat + " returned unsat");
+        }
+        if (!optionsAtCheck.contains(option)) return enabledTooLate(command, option);
+        return null;
+    }
+
+    private IResponse enabledTooLate(String command, String option) {
+        return smtConfig.responseFactory.error("The " + command + " command is only valid if " + option + " was enabled before the last check");
     }
 
 }

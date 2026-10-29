@@ -5,6 +5,6 @@ success
 (error "Error writing to solver: (assert (= (_ char #x41) (_ char #x041) (_ char #x00041))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Error writing to solver: (assert (= (str.len (_ char #x2FFFF)) 1)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
+unsupported
 (error "Error writing to solver: (assert (distinct (_ char #x2b) (_ char #x0002B))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

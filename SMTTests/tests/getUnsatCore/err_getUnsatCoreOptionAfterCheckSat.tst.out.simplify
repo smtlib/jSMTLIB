@@ -1,0 +1,5 @@
+success
+success
+unsat
+unsupported
+(error "The get-unsat-core command is only valid if :produce-unsat-cores has been enabled")

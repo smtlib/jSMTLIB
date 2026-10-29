@@ -118,12 +118,17 @@ public class WholeRunTimeoutTests {
     /** The whole-run limit runs on the wall clock, so it can end the solver while it is idle, e.g. while a client
      *  is processing a counterexample; the next request of any kind (here get-value) then gets the timeout response */
     private static void checkWholeRunLimitWhileIdle(String solverName) throws Exception {
+        checkWholeRunLimitWhileIdle(solverName, solverName, "(set-option :produce-models true)\n(set-logic ALL)\n"
+                + "(declare-fun x () Int)\n(assert (> x 3))\n(check-sat)\n");
+    }
+
+    /** As above, with the given easy (sat) query, which declares x */
+    private static void checkWholeRunLimitWhileIdle(String solverName, String exeName, String query) throws Exception {
         SMT.Configuration config = new SMT.Configuration();
         config.timeoutTotal = 1;
-        ISolver solver = start(config, solverName, solverName);
+        ISolver solver = start(config, solverName, exeName);
         try {
-            IResponse r = run(config, solver, "(set-option :produce-models true)\n(set-logic ALL)\n"
-                    + "(declare-fun x () Int)\n(assert (> x 3))\n(check-sat)\n");
+            IResponse r = run(config, solver, query);
             Assert.assertEquals("an easy check-sat", config.responseFactory.sat(), r);
             Thread.sleep(2000); // idle past the 1-second limit
             r = run(config, solver, "(get-value (x))\n");
@@ -150,6 +155,35 @@ public class WholeRunTimeoutTests {
             Assert.assertEquals("a later check-sat", config.responseFactory.unknown(), solver.check_sat());
         } finally {
             solver.exit();
+        }
+    }
+
+    @Test
+    public void bitwuzlaWholeRunLimit() throws Exception {
+        checkWholeRunLimit("bitwuzla", "bitwuzla-0.9.1", pigeonholeQuery());
+    }
+
+    @Test
+    public void bitwuzlaWholeRunLimitWhileIdle() throws Exception {
+        checkWholeRunLimitWhileIdle("bitwuzla", "bitwuzla-0.9.1", "(set-option :produce-models true)\n(set-logic QF_BV)\n"
+                + "(declare-fun x () (_ BitVec 4))\n(assert (bvugt x #x3))\n(check-sat)\n");
+    }
+
+    /** bitwuzla answers unknown both at its per-query limit and when its whole-run limit ends it; with both limits
+     *  set, an unknown at the per-query limit is not a timeout, and the solver keeps running */
+    @Test
+    public void bitwuzlaPerQueryLimitWithWholeRunLimit() throws Exception {
+        SMT.Configuration config = new SMT.Configuration();
+        config.timeout = 1;
+        config.timeoutTotal = 30;
+        ISolver solver = start(config, "bitwuzla", "bitwuzla-0.9.1");
+        try {
+            IResponse r = run(config, solver, pigeonholeQuery());
+            Assert.assertEquals("check-sat at the per-query limit", config.responseFactory.unknown(), r);
+            Assert.assertEquals("a later check-sat", config.responseFactory.unknown(), solver.check_sat());
+        } finally {
+            IResponse r = solver.exit();
+            Assert.assertFalse("exit: " + r, r.isError());
         }
     }
 

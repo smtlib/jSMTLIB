@@ -1,0 +1,7 @@
+; :produce-models set only after check-sat (and after set-logic, where SMT-LIB makes it an error)
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(check-sat)
+(set-option :produce-models true)
+(get-value (p))
+(get-model)
