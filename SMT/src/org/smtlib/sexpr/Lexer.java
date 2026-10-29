@@ -196,10 +196,11 @@ public class Lexer {
     private final static String rgxDecimal = "(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?"; // the use of ( is non-capturing
     /** Pattern regular expression for SMT-LIB symbol (without bars) */
     private final static String rgxSymbol = "[a-zA-Z_~!@$%^&*+=<>.?/\\-][0-9a-zA-Z_~!@$%^&*+=<>.?/\\-]*";
-    /** Pattern regular expression for SMT-LIB symbol enclosed in bars */
-    private final static String rgxQuotedSymbol = "\\|[0-9a-zA-Z_~!@$%^&*+=<>.?/\"'(),:;{}#`\\[\\] \t\r\n\\-]*\\|";
+    /** Pattern regular expression for SMT-LIB symbol enclosed in bars; characters 128 and beyond are
+     * rejected afterwards for SMT-LIB 2.0 (see quotedSymbolError) */
+    private final static String rgxQuotedSymbol = "\\|[0-9a-zA-Z_~!@$%^&*+=<>.?/\"'(),:;{}#`\\[\\] \t\r\n\\-\\u0080-\\uFFFF]*\\|";
     /** Pattern regular expression for invalid SMT-LIB unterminated bar-symbol */
-    private final static String rgxNonTermQuotedSymbol = "\\|[0-9a-zA-Z_~!@$%^&*+=<>.?/\"'(),:;{}#`\\[\\] \t\r\n\\-]*";
+    private final static String rgxNonTermQuotedSymbol = "\\|[0-9a-zA-Z_~!@$%^&*+=<>.?/\"'(),:;{}#`\\[\\] \t\r\n\\-\\u0080-\\uFFFF]*";
     /** Pattern regular expression for SMT-LIB keyword (colon beginning) */
     private final static String rgxKeyword = ":[0-9a-zA-Z_~!@$%^&*+=<>.?/\\-]+";
     /** Pattern regular expression for SMT-LIB sequence of non-white space */
@@ -386,6 +387,19 @@ public class Lexer {
         return new Pos(start,end,source);
     }
 
+    /** For SMT-LIB 2.0, which allows only ASCII in quoted symbols, returns an error token at the first
+     * character 128 or beyond in the given bar-quoted text (starting at offset start); otherwise null. */
+    private /*@ nullable */ ILexToken quotedSymbolError(String text, int start) {
+        if (smtConfig.atLeastVersion(SMT.Configuration.SMTLIB.V25)) return null;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c >= 128) {
+                return setPos(new LexError("Invalid character: ASCII(decimal) = " + (int)c), pos(start + i, start + i + 1));
+            }
+        }
+        return null;
+    }
+
     /** Returns the first token found in the given text */
     public ILexToken getToken(String text)  throws ParserException {
         if (!text.isEmpty() && text.charAt(0) == '"') {
@@ -479,7 +493,8 @@ public class Lexer {
             } else if ((matched = matcher.group(k=8)) != null) { // bar-quoted symbol
                 pos = pos(matcher.start(k),matcher.end(k));
                 //token = factory.symbol(matched,pos);
-                token = setPos(new LexSymbol(matched),pos);
+                token = quotedSymbolError(matched, matcher.start(k));
+                if (token == null) token = setPos(new LexSymbol(matched),pos);
             } else if ((matched = matcher.group(k=7)) != null) { // string 
                 // The match is just to the initial quote
                 int begin = matcher.start(k); // position of the initial quote
@@ -591,7 +606,8 @@ public class Lexer {
             } else if ((matched = matcher.group(k=16)) != null) {
                 pos = pos(matcher.start(k),matcher.end(k));
                 //token = factory.error(matched,pos);
-                token = setPos(new LexError("Bar(|)-enclosed symbol is not terminated: " + matched),pos);
+                token = quotedSymbolError(matched, matcher.start(k));
+                if (token == null) token = setPos(new LexError("Bar(|)-enclosed symbol is not terminated: " + matched),pos);
 //                matcher.region(end,csr.length());
 //                throw new SyntaxException("Invalid token: " + matched,token.pos());
             } else if ((matched = matcher.group(k=17)) != null) {
