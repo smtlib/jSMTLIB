@@ -335,9 +335,12 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
 
     /** With :produce-models on, Bitwuzla writes nothing for get-model unless its last check
      *  returned sat (and crashes if a reset came since); after an assert, push, pop or
-     *  reset-assertions, or with the option set after the check, it writes an ordinary error. */
+     *  reset-assertions, or with the option set after the check, it writes an ordinary error.
+     *  Bitwuzla also answers it in assert mode, after a declare or define following the check. */
     @Override
     public IResponse get_model() {
+        IResponse unchanged = requireUnchangedSinceCheck("get-model");
+        if (unchanged != null) return unchanged;
         if (optionOn(Utils.PRODUCE_MODELS)) {
             IResponse r = lastResult();
             if (!smtConfig.responseFactory.sat().equals(r)) return noModel("get-model", r);
@@ -347,9 +350,12 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
 
     /** With :produce-models on, Bitwuzla writes nothing for get-value unless its last check
      *  returned sat, and a fragment and an error if an assert, push, pop or reset-assertions came
-     *  since or the option was set after the check. */
+     *  since or the option was set after the check.
+     *  Bitwuzla also answers it in assert mode, after a declare or define following the check. */
     @Override
     public IResponse get_value(IExpr... terms) {
+        IResponse unchanged = requireUnchangedSinceCheck("get-value");
+        if (unchanged != null) return unchanged;
         if (optionOn(Utils.PRODUCE_MODELS)) {
             IResponse r = lastResult();
             if (!smtConfig.responseFactory.sat().equals(r) || !lastCheckCurrent) return noModel("get-value", r);
@@ -360,9 +366,12 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
 
     /** With :produce-unsat-cores on, Bitwuzla writes nothing for get-unsat-core unless its last
      *  check returned unsat, and a fragment and an error if an assert, push, pop, reset-assertions
-     *  or reset came since or the option was set after the check. */
+     *  or reset came since or the option was set after the check.
+     *  Bitwuzla also answers it in assert mode, after a declare or define following the check. */
     @Override
     public IResponse get_unsat_core() {
+        IResponse unchanged = requireUnchangedSinceCheck("get-unsat-core");
+        if (unchanged != null) return unchanged;
         if (optionOn(Utils.PRODUCE_UNSAT_CORES)) {
             IResponse err = requireCurrentUnsat("get-unsat-core", "check-sat", Utils.PRODUCE_UNSAT_CORES);
             if (err != null) return err;
@@ -372,9 +381,12 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
 
     /** Bitwuzla writes nothing for get-unsat-assumptions unless its last check returned unsat; then
      *  it writes a fragment and an error if the option is off or was set after the check, or an
-     *  assert, push, pop, reset-assertions or reset came since. */
+     *  assert, push, pop, reset-assertions or reset came since.
+     *  Bitwuzla also answers it in assert mode, after a declare or define following the check. */
     @Override
     public IResponse get_unsat_assumptions() {
+        IResponse unchanged = requireUnchangedSinceCheck("get-unsat-assumptions");
+        if (unchanged != null) return unchanged;
         if (!optionOn(Utils.PRODUCE_UNSAT_ASSUMPTIONS)) {
             return smtConfig.responseFactory.error("The get-unsat-assumptions command is only valid if "
                     + Utils.PRODUCE_UNSAT_ASSUMPTIONS + " has been enabled");
