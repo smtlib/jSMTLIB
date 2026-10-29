@@ -249,8 +249,10 @@ public class SolverProcess {
      * returned; otherwise the standard output is returned.
      */
     public String listen() throws IOException {
-        String out = standardOut.take(); // blocks until the end marker is recognized, or the process dies
-        boolean outWasForcedEof = standardOut.lastTakeWasForcedEof();
+        // blocks until the end marker is recognized, or the process dies; unless pipelined reading
+        // (readOutput) has already read the end of the output, after which no more text can come
+        String out = outputEnded ? "" : standardOut.take();
+        boolean outWasForcedEof = outputEnded || standardOut.lastTakeWasForcedEof();
         // Comment lines alone are no response: z3 writes some after a response, and when they
         // are read on their own they belong to an earlier command (#99)
         while (!outWasForcedEof && isOnlyComments(out)) {

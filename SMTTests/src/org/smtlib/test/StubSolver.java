@@ -9,7 +9,8 @@ import java.nio.file.Paths;
  *  replies, one line per command received (including any priming command the adapter sends
  *  first), in order. An empty line is an empty reply; {@code <<stderr>> text} writes the text
  *  to standard error instead; {@code <<exit N>>} ends the process with code N right after the
- *  reply before it (or at once, as the first line). The process also ends after replying to
+ *  reply before it (or at once, as the first line); {@code <<close>>} closes standard output there
+ *  instead, the process reading its input until that ends. The process also ends after replying to
  *  (exit), or when the replies run out.
  *
  *  Not a JUnit test itself (see EchoProcess on why that annotation is not named here). */
@@ -44,10 +45,16 @@ public class StubSolver {
         }
     }
 
-    /** Ends the process if line i is an exit directive; else returns i */
-    private static int exitIfAt(java.util.List<String> replies, int i) {
+    /** Ends the process if line i is an exit directive, or closes standard output if it is a close
+     *  directive; else returns i */
+    private static int exitIfAt(java.util.List<String> replies, int i) throws java.io.IOException {
         if (i < replies.size()) {
             String line = replies.get(i);
+            if (line.equals("<<close>>")) {
+                System.out.close();
+                while (System.in.read() != -1) {}
+                System.exit(0);
+            }
             if (line.startsWith("<<exit ") && line.endsWith(">>")) {
                 System.out.flush();
                 System.err.flush();
