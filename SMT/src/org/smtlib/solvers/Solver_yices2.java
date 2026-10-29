@@ -99,21 +99,16 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
     // via the --timeout=N CLI flag (see cmd()), matching how Solver_z3_recent applies
     // its timeout as a CLI flag rather than a runtime command.
 
-    /** :status is the only real special case left here: yices2 has no native get-info
-     *  support for it ({@code (error "no info for :status")}), so it's answered from the
-     *  locally-tracked checkSatStatus instead. Everything else used to be hardcoded here
-     *  too (:error-behavior, :all-statistics, :reason-unknown, :authors, :version, :name,
-     *  and an "unsupported" catch-all for every other keyword) with stale values from a
-     *  much older yices2 that apparently didn't implement get-info -- current yices2
-     *  answers all of those correctly itself (confirmed :error-behavior is actually
-     *  "immediate-exit", not the hardcoded "continued-execution"; :all-statistics returns
-     *  a real statistics dump, not "unsupported"), so they're now left to
-     *  AbstractSolver's default (forward to the solver). */
+    /** yices2 answers get-info :status with the last set-info :status value, but with
+     *  (error "no info for :status") when none was set; SMT-LIB requires unsupported for a
+     *  flag the solver does not support. Other flags are answered by yices2 itself. */
     @Override
     public IResponse get_info(IKeyword key) {
-        if (Utils.STATUS.toString().equals(key.value())) {
-            return checkSatStatus==null ? smtConfig.responseFactory.unsupported() : checkSatStatus;
+        IResponse r = super.get_info(key);
+        if (Utils.STATUS.value().equals(key.value()) && r instanceof IResponse.IError e
+                && e.errorMsg().contains("no info for :status")) {
+            return smtConfig.responseFactory.unsupported();
         }
-        return super.get_info(key);
+        return r;
     }
 }
