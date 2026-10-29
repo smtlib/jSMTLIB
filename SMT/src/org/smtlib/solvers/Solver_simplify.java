@@ -488,6 +488,8 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
     }
 
+    /** Simplify has no set-option; options are kept here, and the :produce- options answer
+     *  unsupported since Simplify cannot produce models, proofs or cores */
     @Override
     public IResponse set_option(IKeyword option, IAttributeValue value) {
         if (option.value().equals(Utils.PRODUCE_ASSIGNMENTS)) return smtConfig.responseFactory.unsupported();
@@ -499,6 +501,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         return setOptionLocal(option,value);
     }
 
+    /** Simplify has no get-option; answered from the values kept by set_option */
     @Override
     public IResponse get_option(IKeyword key) {
         String option = key.value();
@@ -508,6 +511,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         return value;
     }
 
+    /** Simplify has no get-info; answered here */
     @Override
     public IResponse get_info(IKeyword key) {
         IKeyword option = key;

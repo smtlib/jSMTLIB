@@ -1058,7 +1058,9 @@ public class AbstractSolver implements ISolver {
         return sendCommand(cmd);
     }
 
-    /** @see org.smtlib.ISolver#set_option(IExpr.IKeyword,IExpr.IAttributeValue)  */
+    /** @see org.smtlib.ISolver#set_option(IExpr.IKeyword,IExpr.IAttributeValue)
+     *  The channel options are not sent: responses reach the user through jSMTLIB's own output,
+     *  so it is jSMTLIB's output that they redirect. */
     @Override
     public IResponse set_option(IKeyword key, IAttributeValue value) {
         String option = key.value();
@@ -1106,6 +1108,13 @@ public class AbstractSolver implements ISolver {
     public IResponse set_info(IKeyword key, IAttributeValue value){
         return sendCommand(smtConfig.commandFactory.set_info(key, value));
     }
+
+    // The checks below are made before a get- command is sent, because some solvers answer what
+    // SMT-LIB makes an error (checked 2026-10-29): z3 and yices2 default :produce-models to true and,
+    // with smtinterpol, answer get-model and get-value without it; z3 and yices2 answer
+    // get-assignment without :produce-assignments, and smtinterpol after unsat; smtinterpol answers
+    // get-proof after sat; cvc5 answers get-assertions without :produce-assertions; bitwuzla writes
+    // nothing for get-unsat-core after sat or for get-unsat-assumptions without its option.
 
     /** Returns an error response if the given option has not been enabled (per
      *  {@link #get_option(IKeyword)}), else null. */
