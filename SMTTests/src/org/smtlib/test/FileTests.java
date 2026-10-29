@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.ParameterizedWithNames;
 import org.junit.runners.Parameterized.Parameters;
 import org.smtlib.SMT;
+import org.smtlib.SolverResolver;
 
 @RunWith(ParameterizedWithNames.class)
 public class FileTests extends LogicTests {
@@ -261,14 +262,30 @@ public class FileTests extends LogicTests {
         return f.equals(name) ? null : f;
     }
 
+    /** The versioned name a bare solver name runs as: its configured executable
+     *  (.exec.&lt;platform&gt;, then .exec) when that is the name plus a version suffix (e.g.
+     *  "cvc5" -&gt; "cvc5-1.3.2"); else null. Its skip markers and goldens are checked before
+     *  the bare name's own.
+     *  IMPORTANT: this must stay in sync with the "resolved=..." computation in SMTTests/runtest. */
+    private String resolvedName(String name) {
+        if (family(name) != null) return null;
+        String exec = SolverResolver.configuredExecutable(smt.smtConfig.props, name, PLATFORM);
+        return exec != null && name.equals(family(exec)) ? exec : null;
+    }
+
     private void checkSkip() {
         String base = tstFile.getAbsolutePath();
         String family = family(solvername);
-        List<String> suffixes = new ArrayList<String>(Arrays.asList(
-            ".skip." + solvername + "." + PLATFORM_ARCH,
-            ".skip." + solvername + "." + PLATFORM,
-            ".skip." + solvername
-        ));
+        String resolved = resolvedName(solvername);
+        List<String> suffixes = new ArrayList<String>();
+        if (resolved != null) {
+            suffixes.add(".skip." + resolved + "." + PLATFORM_ARCH);
+            suffixes.add(".skip." + resolved + "." + PLATFORM);
+            suffixes.add(".skip." + resolved);
+        }
+        suffixes.add(".skip." + solvername + "." + PLATFORM_ARCH);
+        suffixes.add(".skip." + solvername + "." + PLATFORM);
+        suffixes.add(".skip." + solvername);
         if (family != null) {
             suffixes.add(".skip." + family + "." + PLATFORM_ARCH);
             suffixes.add(".skip." + family + "." + PLATFORM);
@@ -307,17 +324,10 @@ public class FileTests extends LogicTests {
         // with it for the same test/solver/platform anyway.
         // A .lenient golden (the solver accepts what jSMTLIB rejects, but the standard
         // allows it) is looked up exactly where .bad is.
-        List<String> candidates = new ArrayList<String>(Arrays.asList(
-            base + ext + "." + solvername + "." + PLATFORM_ARCH + ".bad",
-            base + ext + "." + solvername + "." + PLATFORM_ARCH + ".lenient",
-            base + ext + "." + solvername + "." + PLATFORM_ARCH,
-            base + ext + "." + solvername + "." + PLATFORM + ".bad",
-            base + ext + "." + solvername + "." + PLATFORM + ".lenient",
-            base + ext + "." + solvername + "." + PLATFORM,
-            base + ext + "." + solvername,
-            base + ext + "." + solvername + ".bad",
-            base + ext + "." + solvername + ".lenient"
-        ));
+        List<String> candidates = new ArrayList<String>();
+        String resolved = resolvedName(solvername);
+        if (resolved != null) addSolverCandidates(candidates, base + ext + "." + resolved);
+        addSolverCandidates(candidates, base + ext + "." + solvername);
         if (family != null) {
             candidates.add(base + ext + "." + family);
             candidates.add(base + ext + "." + family + ".bad");
@@ -331,6 +341,21 @@ public class FileTests extends LogicTests {
             if (f.exists()) return f;
         }
         return null;
+    }
+
+    /** Adds the goldens named for one solver name (prefix is base + ext + "." + name) */
+    private static void addSolverCandidates(List<String> candidates, String prefix) {
+        candidates.addAll(Arrays.asList(
+            prefix + "." + PLATFORM_ARCH + ".bad",
+            prefix + "." + PLATFORM_ARCH + ".lenient",
+            prefix + "." + PLATFORM_ARCH,
+            prefix + "." + PLATFORM + ".bad",
+            prefix + "." + PLATFORM + ".lenient",
+            prefix + "." + PLATFORM,
+            prefix,
+            prefix + ".bad",
+            prefix + ".lenient"
+        ));
     }
 
     // -----------------------------------------------------------------------
