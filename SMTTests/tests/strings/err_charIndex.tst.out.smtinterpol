@@ -2,4 +2,4 @@ success
 (error "<stdin>:3:15: Builtin function char does not support argument sorts ()")
 (error "<stdin>:4:15: Builtin function char does not support argument sorts ()")
 (error "<stdin>:5:15: Builtin function char does not support argument sorts ()")
-(error "Expected a numeral here, instead of a binary")
+(error "<stdin>:6:15: Builtin function char does not support argument sorts ()")

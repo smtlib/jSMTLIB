@@ -1,0 +1,8 @@
+success
+(error "A bit-vector sort must have exactly one numeral")
+success
+(error "Expected exactly two numerals in an extract identifier")
+(error "Expected exactly one numeral in a bv identifier")
+(error "Expected exactly one numeral in a repeat identifier")
+(error "Expected exactly one numeral in a zero_extend identifier")
+(error "Expected exactly one numeral in a rotate_left identifier")

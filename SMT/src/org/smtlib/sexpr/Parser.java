@@ -510,6 +510,8 @@ public class Parser extends Lexer implements IParser {
                 indices.add(parseSymbol());
             } else if (peek instanceof IHexLiteral) {
                 indices.add(parseHex());
+            } else if (peek instanceof IBinaryLiteral) {
+                indices.add(parseBinary());
             } else {
                 indices.add(parseNumeral());
             }

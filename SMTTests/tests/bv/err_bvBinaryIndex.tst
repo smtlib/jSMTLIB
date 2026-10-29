@@ -1,0 +1,9 @@
+; A binary index parses, but bit-vector identifiers take numerals
+(set-logic QF_BV)
+(declare-fun x () (_ BitVec #b1))
+(declare-fun y () (_ BitVec 8))
+(assert (= #b00 ((_ extract #b1 0) y)))
+(assert (= (_ bv1 #b1000) y))
+(assert (= y ((_ repeat #b1) y)))
+(assert (= #x00 ((_ zero_extend #b100) ((_ extract 3 0) y))))
+(assert (= y ((_ rotate_left #b1) y)))

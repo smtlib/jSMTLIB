@@ -1,2 +1,2 @@
 (declare-fun k () (_ BitVec -1))
-                     ^^^^^^
+                            ^^

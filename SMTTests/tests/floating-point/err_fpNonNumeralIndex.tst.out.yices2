@@ -1,0 +1,6 @@
+(error "unknown logic: QF_FP")
+(error "at line 3, column 22: undefined identifier: FloatingPoint")
+(error "Error writing to solver: (declare-fun y () (_ FloatingPoint 3 #x5)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun z () (_ FloatingPoint 3 5)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= z (_ +zero #b11 5))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= z ((_ to_fp 3 #x5) RNE z))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

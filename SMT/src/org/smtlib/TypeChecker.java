@@ -799,7 +799,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 return null;
             }
             IParameterizedIdentifier pid = (IParameterizedIdentifier)head;
-            if (!checkNumeralIndices(pid, 1, "Expected exactly one numeral in a repeat identifier")) return null;
+            if (!checkNumeralIndices(pid, 1, "Expected exactly one numeral in a " + pheadSymbol + " identifier")) return null;
             int val = ((INumeral) pid.indices().get(0)).intValue();
             s = makeBitVec(val+bitvecSize(s));
             return save(e,s);
@@ -819,7 +819,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 return null;
             }
             IParameterizedIdentifier pid = (IParameterizedIdentifier)head;
-            if (!checkNumeralIndices(pid, 1, "Expected exactly one numeral in a repeat identifier")) return null;
+            if (!checkNumeralIndices(pid, 1, "Expected exactly one numeral in a " + pheadSymbol + " identifier")) return null;
             return save(e,s);
 
         }

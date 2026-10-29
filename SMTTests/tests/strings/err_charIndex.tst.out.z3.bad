@@ -2,4 +2,4 @@ success
 success
 (error "line 4 column 23: invalid function declaration reference, unknown function A")
 (error "line 5 column 33: character literal expects integer parameter")
-(error "Expected a numeral here, instead of a binary")
+success
