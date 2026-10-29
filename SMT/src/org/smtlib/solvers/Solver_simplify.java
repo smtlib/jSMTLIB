@@ -1024,7 +1024,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     /** Sorts the ALL logic brings in that Simplify cannot decide */
     static final Set<String> unsupportedSorts = new HashSet<String>(Arrays.asList(
         "Real","BitVec","FloatingPoint","Float16","Float32","Float64","Float128","RoundingMode",
-        "String","RegLan","->"));
+        "String","RegLan"));
     /** Int operations Simplify would treat as uninterpreted */
     static final Set<String> unsupportedIntOps = new HashSet<String>(Arrays.asList("div","mod","abs","**"));
 
@@ -1050,6 +1050,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             if (!(s instanceof IApplication)) return;
             IApplication a = (IApplication)s;
             String n = a.family().headSymbol().value();
+            if (n.equals(Utils.ARROW.value())) throw unsupported("higher-order functions", pos);
             if (unsupportedSorts.contains(n)) throw unsupported("the " + n + " sort", pos);
             for (ISort p: a.parameters()) checkSort(p, pos);
         }
@@ -1149,6 +1150,8 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
                     throw unsupported("qualified or indexed function symbols",e.pos());
                 }
                 ISymbol fcn = (ISymbol)e.head();
+                // The type checker sorts the head of (m t ...) only for a map m
+                checkSort(fcn.sort(), e.pos());
                 checkIntOp(fcn.value(), e.args(), e.pos());
                 String newName = name(fcn);
                 // A function whose value Simplify holds as a term (an uninterpreted function, select):
@@ -1518,7 +1521,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         @Override
         public String visit(ILambda e) throws IVisitor.VisitorException {
-            throw unsupported("lambda",e.pos());
+            throw unsupported("higher-order functions",e.pos());
         }
 
         @Override
