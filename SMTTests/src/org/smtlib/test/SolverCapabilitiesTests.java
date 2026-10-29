@@ -17,7 +17,7 @@ public class SolverCapabilitiesTests {
     /** The solver names configured in jsmtlib.properties, each of which must record every capability */
     private static final String[] BUILT_IN = { "z3", "z3-4.3", "z3-4.5.0", "z3-4.6.0", "z3-4.7.1", "z3-4.8.12",
         "z3-4.16.0", "cvc5", "cvc5-1.3.2",
-        "yices2", "yices2-2.6.5", "yices2-2.7.0", "smtinterpol-2.5", "bitwuzla", "simplify" };
+        "yices2", "yices2-2.6.5", "yices2-2.7.0", "smtinterpol-2.5", "bitwuzla", "simplify", "altergo" };
 
     private static Properties props(String... keyValues) {
         Properties p = new Properties();
@@ -108,6 +108,7 @@ public class SolverCapabilitiesTests {
         Assert.assertEquals(Support.NO, SolverCapabilities.supports("yices2", Capability.DATATYPES));
         Assert.assertEquals(Support.YES, SolverCapabilities.supports("bitwuzla", Capability.FLOATING_POINT));
         Assert.assertEquals(Support.NO, SolverCapabilities.supports("bitwuzla", Capability.PROOFS));
+        Assert.assertEquals(Support.YES, SolverCapabilities.supports("altergo", Capability.DATATYPES));
         Assert.assertEquals(Support.UNKNOWN, SolverCapabilities.supports("unconfigured", Capability.STRINGS));
     }
 }
