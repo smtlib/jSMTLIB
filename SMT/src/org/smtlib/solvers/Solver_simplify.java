@@ -866,8 +866,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
         }
         if (Utils.VERBOSITY.equals(option)) {
-            IAttributeValue v = options.get(option);
-            smtConfig.verbose = (v instanceof INumeral) ? ((INumeral)v).intValue() : 0;
+            smtConfig.verbose = (value instanceof INumeral) ? ((INumeral)value).intValue() : 0;
         } else if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
             String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : Utils.STDERR;
             try {

@@ -489,8 +489,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
         }
         if (Utils.VERBOSITY.equals(option)) {
-            IAttributeValue v = options.get(option);
-            smtConfig.verbose = (v instanceof INumeral) ? ((INumeral)v).intValue() : 0;
+            smtConfig.verbose = (value instanceof INumeral) ? ((INumeral)value).intValue() : 0;
         }
         // Save the options on our side as well
         options.put(Utils.INTERACTIVE_MODE.equals(option) && !smtConfig.isVersion(SMTLIB.V20) ? Utils.PRODUCE_ASSERTIONS : option,value);

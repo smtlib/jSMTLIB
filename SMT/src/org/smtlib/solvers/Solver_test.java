@@ -393,8 +393,7 @@ public class Solver_test implements ISolver {
 //            return smtConfig.responseFactory.unsupported();
 //        }
         if (Utils.VERBOSITY.equals(option)) {
-            IAttributeValue v = options.get(option);
-            smtConfig.verbose = (v instanceof INumeral) ? ((INumeral)v).intValue() : 0;
+            smtConfig.verbose = (value instanceof INumeral) ? ((INumeral)value).intValue() : 0;
         } else if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
             // Actually, v should never be anything but IStringLiteral - that should
             // be checked during parsing
