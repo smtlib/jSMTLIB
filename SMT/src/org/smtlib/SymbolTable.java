@@ -657,44 +657,53 @@ public class SymbolTable {
             ISort acc = argSorts.get(0);
             for (int i = 1; i < argSorts.size(); i++) {
                 ISort next = argSorts.get(i);
+                // acc is argument 1 on the first step, then the application to arguments 1..i
+                String accWhere = i == 1 ? "argument 1" : "the application to arguments 1-" + i;
+                String nextWhere = "argument " + (i+1);
                 if (isPar) {
                     Map<ISort.IParameter,ISort> bindings;
                     try {
                         bindings = unify(left, acc, new HashMap<ISort.IParameter,ISort>());
+                    } catch (NoMatch e) {
+                        throw assocMismatch("Left", nm, accWhere, e.getMessage());
+                    }
+                    try {
                         bindings = unify(right, next, bindings);
                     } catch (NoMatch e) {
-                        throw new NoMatch("Left-associative application of " + nm + " fails at argument " + (i+1) + ": " + e.getMessage());
+                        throw assocMismatch("Left", nm, nextWhere, e.getMessage());
                     }
                     acc = declaredResult.substitute(bindings);
                 } else {
-                    if (!acc.equals(left) || !next.equals(right)) {
-                        throw new NoMatch("Left-associative application of " + nm + " fails at argument " + (i+1)
-                                + ": has sort " + smtConfig.defaultPrinter.toString(next)
-                                + ", expected " + smtConfig.defaultPrinter.toString(right));
-                    }
+                    if (!acc.equals(left)) throw assocMismatch("Left", nm, accWhere, sortMismatch(acc, left));
+                    if (!next.equals(right)) throw assocMismatch("Left", nm, nextWhere, sortMismatch(next, right));
                     acc = declaredResult;
                 }
             }
             return acc;
         } else if (hasAttribute(entry,":right-assoc")) {
-            ISort acc = argSorts.get(argSorts.size() - 1);
-            for (int i = argSorts.size() - 2; i >= 0; i--) {
+            int n = argSorts.size();
+            ISort acc = argSorts.get(n - 1);
+            for (int i = n - 2; i >= 0; i--) {
                 ISort next = argSorts.get(i);
+                // acc is argument n on the first step, then the application to arguments i+2..n
+                String accWhere = i == n - 2 ? "argument " + n : "the application to arguments " + (i+2) + "-" + n;
+                String nextWhere = "argument " + (i+1);
                 if (isPar) {
                     Map<ISort.IParameter,ISort> bindings;
                     try {
                         bindings = unify(left, next, new HashMap<ISort.IParameter,ISort>());
+                    } catch (NoMatch e) {
+                        throw assocMismatch("Right", nm, nextWhere, e.getMessage());
+                    }
+                    try {
                         bindings = unify(right, acc, bindings);
                     } catch (NoMatch e) {
-                        throw new NoMatch("Right-associative application of " + nm + " fails at argument " + (i+1) + ": " + e.getMessage());
+                        throw assocMismatch("Right", nm, accWhere, e.getMessage());
                     }
                     acc = declaredResult.substitute(bindings);
                 } else {
-                    if (!next.equals(left) || !acc.equals(right)) {
-                        throw new NoMatch("Right-associative application of " + nm + " fails at argument " + (i+1)
-                                + ": has sort " + smtConfig.defaultPrinter.toString(next)
-                                + ", expected " + smtConfig.defaultPrinter.toString(left));
-                    }
+                    if (!next.equals(left)) throw assocMismatch("Right", nm, nextWhere, sortMismatch(next, left));
+                    if (!acc.equals(right)) throw assocMismatch("Right", nm, accWhere, sortMismatch(acc, right));
                     acc = declaredResult;
                 }
             }
@@ -815,6 +824,17 @@ public class SymbolTable {
                     + ", expected " + smtConfig.defaultPrinter.toString(declared));
         }
         return bindings;
+    }
+
+    /** The NoMatch for an n-ary associative application that fails at the given argument or
+     * nested application. */
+    private NoMatch assocMismatch(String direction, String nm, String where, String reason) {
+        return new NoMatch(direction + "-associative application of " + nm + " fails at " + where + ": " + reason);
+    }
+
+    private String sortMismatch(ISort actual, ISort expected) {
+        return "has sort " + smtConfig.defaultPrinter.toString(actual)
+                + ", expected " + smtConfig.defaultPrinter.toString(expected);
     }
 
     /** Returns true if the entry contains a value for the given attribute name (e.g.

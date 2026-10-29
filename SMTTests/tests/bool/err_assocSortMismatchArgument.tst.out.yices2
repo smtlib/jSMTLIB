@@ -1,0 +1,10 @@
+success
+success
+success
+success
+(error "at line 7, column 10: in =>: type error")
+(error "Error writing to solver: (assert (=> p u p)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (=> u p p)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (and u p p)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (and p u p)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (and p p u)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
