@@ -48,18 +48,20 @@ public class FlatResponseTests {
         return outBuf.toString().replace("\r\n", "\n");
     }
 
-    /** get-assertions answered "success", get-value an empty line (printing nothing) and
-     *  get-assignment "unsupported" are passed on as those responses */
+    /** get-assertions answered "success" is out of step (#149); get-value's empty line (printing
+     *  nothing) and get-assignment's "unsupported" are passed on as those responses */
     @Test
     public void flatRepliesAfterSat() {
-        Assert.assertEquals("success\nsuccess\nsuccess\nsuccess\nsuccess\nsat\nsuccess\nunsupported\n",
+        Assert.assertEquals("success\nsuccess\nsuccess\nsuccess\nsuccess\nsat\n(get-assertions)\n^^^^^^^^^^^^^^^^\n"
+                + "(error \"Out of step: the response to (get-assertions) was success\")\nunsupported\n",
                 run("sat", SAT_SCRIPT, null));
     }
 
-    /** As above for get-unsat-core ("success") and get-unsat-assumptions ("unsupported") */
+    /** As above for get-unsat-core ("success", out of step) and get-unsat-assumptions ("unsupported") */
     @Test
     public void flatRepliesAfterUnsat() {
-        Assert.assertEquals("success\nsuccess\nsuccess\nunsat\nsuccess\nunsupported\n",
+        Assert.assertEquals("success\nsuccess\nsuccess\nunsat\n(get-unsat-core)\n^^^^^^^^^^^^^^^^\n"
+                + "(error \"Out of step: the response to (get-unsat-core) was success\")\nunsupported\n",
                 run("unsat", UNSAT_SCRIPT, null));
     }
 
