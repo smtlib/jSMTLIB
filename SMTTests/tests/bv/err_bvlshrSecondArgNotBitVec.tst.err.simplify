@@ -1,8 +1,0 @@
-(set-logic ALL)
-           ^^^
-(declare-fun x () (_ BitVec 4))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-fun y () Int)
-^^^^^^^^^^^^^^^^^^^^^^
-(assert (= x (bvlshr x y)))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^

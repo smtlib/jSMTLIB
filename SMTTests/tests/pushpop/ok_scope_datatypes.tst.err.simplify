@@ -1,66 +1,14 @@
-(set-logic ALL)
-           ^^^
-(push 1)
-^^^^^^^^
-(declare-datatype Color ((red) (green)))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-datatypes ((Tree 0) (Forest 0)) (((leaf) (node (val Int) (kids Forest))) ((fnil) (fcons (head Tree) (rest Forest)))))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (declare-fun c () Color)
-^^^^^^^^^^^^^^^^^^^^^^^^
+                  ^^^^^
 (declare-fun t () Tree)
-^^^^^^^^^^^^^^^^^^^^^^^
+                  ^^^^
 (assert (= c red))
-^^^^^^^^^^^^^^^^^^
+           ^
 (assert (= (val t) 0))
-^^^^^^^^^^^^^^^^^^^^^^
+                ^
 (assert (match t ((leaf false) ((node v k) (= k fnil)))))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(pop 1)
-^^^^^^^
-(declare-sort Color 0)
-^^^^^^^^^^^^^^^^^^^^^^
-(declare-sort Tree 0)
-^^^^^^^^^^^^^^^^^^^^^
-(declare-sort Forest 0)
-^^^^^^^^^^^^^^^^^^^^^^^
-(declare-fun red () Int)
-^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-fun green () Int)
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-fun leaf () Int)
-^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-fun node () Int)
-^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-fun val () Int)
-^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-fun kids () Int)
-^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-fun fnil () Int)
-^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-fun fcons () Int)
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-fun head () Int)
-^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-fun rest () Int)
-^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-datatype Color ((red) (green)))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-datatypes ((Tree 0) (Forest 0)) (((leaf) (node (val Int) (kids Forest))) ((fnil) (fcons (head Tree) (rest Forest)))))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+               ^
 (declare-fun t () Tree)
-^^^^^^^^^^^^^^^^^^^^^^^
+                  ^^^^
 (assert (match t ((leaf true) ((node v k) (= (head (fcons t k)) leaf)))))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-sort Color 0)
-^^^^^^^^^^^^^^^^^^^^^^
-(declare-sort Tree 0)
-^^^^^^^^^^^^^^^^^^^^^
-(declare-fun red () Int)
-^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-fun node () Int)
-^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-fun val () Int)
-^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-fun head () Int)
-^^^^^^^^^^^^^^^^^^^^^^^^^
+               ^

@@ -1,0 +1,5 @@
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:19: invalid sort 'Real'
+")
+(error "Error writing to solver: (assert (and (< 0.0 r) (< r 1.0))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

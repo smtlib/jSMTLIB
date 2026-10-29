@@ -468,8 +468,9 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
     /** Names of the logics Simplify decides: uninterpreted functions, arrays and linear integer
      *  arithmetic, with or without quantifiers. Simplify reasons over integers and treats other
-     *  operations (bit-vectors, nonlinear products, div) as uninterpreted, giving wrong answers. */
-    static final java.util.regex.Pattern supportedLogics = java.util.regex.Pattern.compile("(QF_)?(AX|A)?(UF)?(IDL|LIA)?");
+     *  operations (bit-vectors, nonlinear products, div) as uninterpreted, giving wrong answers.
+     *  ALL means what Simplify decides: the Translator rejects the rest. */
+    static final java.util.regex.Pattern supportedLogics = java.util.regex.Pattern.compile("(QF_)?(AX|A)?(UF)?(IDL|LIA)?|ALL");
 
     @Override
     public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
@@ -901,7 +902,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     }
 
     public /*@Nullable*/String translate(IExpr expr) throws IVisitor.VisitorException {
-        Translator t = new Translator(smtConfig);
+        Translator t = new Translator(smtConfig, "ALL".equals(logicSet));
         String r = expr.accept(t);
         if (t.conjuncts.isEmpty()) return r;
         String and = "(AND ";
@@ -1020,13 +1021,60 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         logicNames = Collections.unmodifiableSet(logic);
     }
 
+    /** Sorts the ALL logic brings in that Simplify cannot decide */
+    static final Set<String> unsupportedSorts = new HashSet<String>(Arrays.asList(
+        "Real","BitVec","FloatingPoint","Float16","Float32","Float64","Float128","RoundingMode",
+        "String","RegLan","->"));
+    /** Int operations Simplify would treat as uninterpreted */
+    static final Set<String> unsupportedIntOps = new HashSet<String>(Arrays.asList("div","mod","abs","**"));
+
     static public class Translator implements IVisitor<String> {
         boolean isFormula = true;
         final private SMT.Configuration smtConfig;
+        /** Under ALL, rejects what Simplify cannot decide (other logics already exclude it) */
+        final private boolean allLogic;
         private List<String> conjuncts = new LinkedList<String>();
 
         public Translator(SMT.Configuration smtConfig) {
+            this(smtConfig, false);
+        }
+
+        public Translator(SMT.Configuration smtConfig, boolean allLogic) {
             this.smtConfig = smtConfig;
+            this.allLogic = allLogic;
+        }
+
+        private void checkSort(/*@Nullable*/ ISort s, IPos pos) throws VisitorException {
+            if (!allLogic || s == null) return;
+            s = s.expand();
+            if (!(s instanceof IApplication)) return;
+            IApplication a = (IApplication)s;
+            String n = a.family().headSymbol().value();
+            if (unsupportedSorts.contains(n)) throw unsupported("the " + n + " sort", pos);
+            for (ISort p: a.parameters()) checkSort(p, pos);
+        }
+
+        /** Rejects div, mod, abs, ** and a product of two or more non-constants */
+        private void checkIntOp(String name, List<IExpr> args, IPos pos) throws VisitorException {
+            if (!allLogic) return;
+            if (unsupportedIntOps.contains(name)) throw unsupported(name, pos);
+            if (!name.equals("*")) return;
+            int nonConstant = 0;
+            for (IExpr a: args) if (!isConstant(a)) nonConstant++;
+            if (nonConstant > 1) throw unsupported("nonlinear multiplication", pos);
+        }
+
+        /** A numeral or its negation */
+        private static boolean isConstant(IExpr e) {
+            if (e instanceof INumeral) return true;
+            if (!(e instanceof IFcnExpr)) return false;
+            IFcnExpr f = (IFcnExpr)e;
+            return f.head() instanceof ISymbol && ((ISymbol)f.head()).value().equals("-")
+                    && f.args().size() == 1 && f.args().get(0) instanceof INumeral;
+        }
+
+        private static VisitorException unsupported(String what, IPos pos) {
+            return new VisitorException("The simplify solver does not support " + what, pos);
         }
 
         /** The constraint that term t, a Bool value, is |@true| or |@false| */
@@ -1062,12 +1110,12 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         @Override
         public String visit(IDecimal e) throws IVisitor.VisitorException {
-            throw new VisitorException("The simplify solver cannot handle decimal literals",e.pos());
+            throw unsupported("the Real sort",e.pos());
         }
 
         @Override
         public String visit(IStringLiteral e) throws IVisitor.VisitorException {
-            throw new VisitorException("The simplify solver cannot handle string literals",e.pos());
+            throw unsupported("the String sort",e.pos());
         }
 
         @Override
@@ -1077,12 +1125,12 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         @Override
         public String visit(IBinaryLiteral e) throws IVisitor.VisitorException {
-            throw new VisitorException("Did not expect a Binary literal in an expression to be translated",e.pos());
+            throw unsupported("the BitVec sort",e.pos());
         }
 
         @Override
         public String visit(IHexLiteral e) throws IVisitor.VisitorException {
-            throw new VisitorException("Did not expect a Hex literal in an expression to be translated",e.pos());
+            throw unsupported("the BitVec sort",e.pos());
         }
 
         @Override
@@ -1092,15 +1140,17 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             try {
                 Iterator<IExpr> iter = e.args().iterator();
                 if (!iter.hasNext()) throw new VisitorException("Did not expect an empty argument list",e.pos());
-                if (!(e.head() instanceof ISymbol)) {
-                    throw new VisitorException("Have not yet implemented parameterized bit-vector functions",e.pos());
-                }
-                ISymbol fcn = (ISymbol)e.head();
-                String newName = name(fcn);
                 ISort s = e.sort();
                 if (s == null) {
                     throw new VisitorException("INTERNAL ERROR: Encountered an un-sorted expression node: " + smtConfig.defaultPrinter.toString(e),e.pos());
                 }
+                checkSort(s, e.pos());
+                if (!(e.head() instanceof ISymbol)) {
+                    throw unsupported("qualified or indexed function symbols",e.pos());
+                }
+                ISymbol fcn = (ISymbol)e.head();
+                checkIntOp(fcn.value(), e.args(), e.pos());
+                String newName = name(fcn);
                 // A function whose value Simplify holds as a term (an uninterpreted function, select):
                 // a Bool value is |@true| or |@false|
                 boolean termFunction = newName.startsWith("|") || newName.equals("select");
@@ -1327,6 +1377,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         @Override
         public String visit(ISymbol e) throws IVisitor.VisitorException {
+            checkSort(e.sort(), e.pos());
             return constant(e, e.sort());
         }
 
@@ -1377,6 +1428,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             // Since there is no overloading, the head will be a new symbol
             // and we don't need to worry that it collides with a pre- or user-defined
             // function name
+            checkSort(e.sort(), e.pos());
             String v = name(e.headSymbol()); // This will come back with bars
             if (v.charAt(0) != '|') {
                 throw new VisitorException("INTERNAL ERROR: Do not expect to ever have a pre-defined name within a parameterized identifier",e.headSymbol().pos());
@@ -1466,11 +1518,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         @Override
         public String visit(ILambda e) throws IVisitor.VisitorException {
-            // Simplify does not implement the HO-Core theory at all -- lambda is left
-            // unimplemented here the same way IExpr.IMatch is (see visit(IExpr.IMatch)
-            // below), rather than adding real lambda-translation logic that is out of
-            // scope for this adapter.
-            return null;
+            throw unsupported("lambda",e.pos());
         }
 
         @Override
@@ -1531,6 +1579,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             if (!(e.head() instanceof ISymbol)) {
                 throw new VisitorException("Have not yet implemented indexed identifiers",e.pos());
             }
+            checkSort(e.qualifier(), e.pos());
             return constant(e.headSymbol(), e.qualifier());
         }
 

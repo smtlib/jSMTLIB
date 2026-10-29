@@ -1,5 +1,0 @@
-(error "The simplify solver does not support the ALL logic")
-(error "Expected at least one sort declaration in declare-datatypes")
-(error "Number of sort declarations (2) does not match number of datatype declarations (1)")
-(error "User-defined symbols may not begin with . or @")
-(error "Expected a right parenthesis here, instead of a eod")

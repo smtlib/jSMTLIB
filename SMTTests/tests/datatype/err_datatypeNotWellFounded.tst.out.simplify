@@ -1,2 +1,0 @@
-(error "The simplify solver does not support the ALL logic")
-(error "Datatype Inf is not well-founded (no finite base case)")

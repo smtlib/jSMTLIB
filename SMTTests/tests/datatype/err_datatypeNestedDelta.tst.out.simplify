@@ -1,2 +1,0 @@
-(error "The simplify solver does not support the ALL logic")
-(error "A recursive datatype must not appear nested inside another sort in a selector sort")

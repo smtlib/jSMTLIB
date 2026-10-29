@@ -1,2 +1,2 @@
 success
-(error "Have not yet implemented parameterized bit-vector functions")
+(error "The simplify solver does not support qualified or indexed function symbols")

@@ -1,21 +1,21 @@
-(error "The simplify solver does not support the ALL logic")
-(error "The logic must be set before a push command is issued")
-(error "The logic must be set before a define-fun-rec command is issued")
-(error "The logic must be set before a define-funs-rec command is issued")
-(error "The logic must be set before an assert command is issued")
-(error "The logic must be set before a pop command is issued")
-(error "The logic must be set before a declare-fun command is issued")
-(error "The logic must be set before a declare-fun command is issued")
-(error "The logic must be set before a declare-fun command is issued")
 success
-(error "The logic must be set before a define-fun-rec command is issued")
-(error "The logic must be set before a define-funs-rec command is issued")
-(error "The logic must be set before an assert command is issued")
 success
-(error "The logic must be set before a declare-fun command is issued")
-(error "The logic must be set before a declare-fun command is issued")
-(error "The logic must be set before a declare-fun command is issued")
+unsupported
+unsupported
 success
-(error "The logic must be set before a declare-fun command is issued")
-(error "The logic must be set before a declare-fun command is issued")
-(error "The logic must be set before a declare-fun command is issued")
+success
+success
+success
+success
+success
+unsupported
+unsupported
+success
+success
+success
+success
+success
+success
+success
+success
+success

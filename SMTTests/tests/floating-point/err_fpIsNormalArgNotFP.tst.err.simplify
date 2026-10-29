@@ -1,6 +1,0 @@
-(set-logic ALL)
-           ^^^
-(declare-fun n () Int)
-^^^^^^^^^^^^^^^^^^^^^^
-(assert (fp.isNormal n))
-^^^^^^^^^^^^^^^^^^^^^^^^

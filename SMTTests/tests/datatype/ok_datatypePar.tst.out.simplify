@@ -1,11 +1,11 @@
-(error "The simplify solver does not support the ALL logic")
-(error "The logic must be set before a declare-datatypes command is issued")
-(error "The logic must be set before a declare-datatype command is issued")
-(error "The logic must be set before a declare-fun command is issued")
-(error "The logic must be set before a declare-fun command is issued")
-(error "The logic must be set before an assert command is issued")
-(error "The logic must be set before an assert command is issued")
-(error "The logic must be set before an assert command is issued")
-(error "The logic must be set before an assert command is issued")
-(error "The logic must be set before an assert command is issued")
-(error "The logic must be set before an assert command is issued")
+success
+unsupported
+unsupported
+(error "No such sort symbol declared: Lst")
+(error "No such sort symbol declared: Lst")
+(error "Unknown constant symbol l")
+(error "Unknown constant symbol l")
+(error "Unknown constant symbol l")
+(error "Unknown constant symbol b")
+(error "Unknown predicate symbol mk-pair with argument types Int Bool")
+(error "Unknown constant symbol l")

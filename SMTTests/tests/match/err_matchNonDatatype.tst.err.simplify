@@ -1,6 +1,0 @@
-(set-logic ALL)
-           ^^^
-(declare-fun x () Int)
-^^^^^^^^^^^^^^^^^^^^^^
-(assert (match x ((y y))))
-^^^^^^^^^^^^^^^^^^^^^^^^^^
