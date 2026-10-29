@@ -37,19 +37,18 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
     public String[] cmd(String exec) {
         java.util.List<String> args = new java.util.ArrayList<String>(
                 java.util.Arrays.asList(exec, "--incremental", "--interactive"));
-        // yices2 has exactly one timeout flag, --timeout=<seconds>, applying to the whole
-        // session -- there is no separate per-query option at all. smtConfig.timeoutTotal
-        // maps onto it directly; if only the per-query smtConfig.timeout was requested, it
-        // is applied here as the closest available approximation, since that's the only
-        // lever yices2 offers.
-        if (smtConfig.timeoutTotal > 0) {
-            args.add("--timeout=" + (int)Math.ceil(smtConfig.timeoutTotal));
-            if (smtConfig.timeout > 0) {
-                smtConfig.log.logDiag("#yices2 has no per-query timeout option; only the whole-run --timeout-total (" + smtConfig.timeoutTotal + "s) is applied, the per-query --timeout (" + smtConfig.timeout + "s) is ignored");
+        // yices2 has exactly one timeout flag, --timeout=<seconds>, applying per check-sat
+        // call -- there is no whole-run option at all. If only the whole-run
+        // smtConfig.timeoutTotal was requested, it is applied here per query as the closest
+        // available approximation.
+        double effective = smtConfig.timeout > 0 ? smtConfig.timeout : smtConfig.timeoutTotal;
+        if (effective > 0) {
+            if (smtConfig.timeout <= 0) {
+                smtConfig.log.logDiag("#yices2 has no whole-run timeout option; approximating with a per-query --timeout of " + smtConfig.timeoutTotal + "s (the requested whole-run value)");
+            } else if (smtConfig.timeoutTotal > 0) {
+                smtConfig.log.logDiag("#yices2 has no whole-run timeout option; only the per-query --timeout (" + smtConfig.timeout + "s) is applied, the whole-run --timeout-total (" + smtConfig.timeoutTotal + "s) is ignored");
             }
-        } else if (smtConfig.timeout > 0) {
-            smtConfig.log.logDiag("#yices2 has no per-query timeout option; approximating with a whole-run --timeout of " + smtConfig.timeout + "s (the requested per-query value)");
-            args.add("--timeout=" + (int)Math.ceil(smtConfig.timeout));
+            args.add("--timeout=" + (int)Math.ceil(effective));
         }
         return args.toArray(new String[args.size()]);
     }
