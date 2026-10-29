@@ -567,7 +567,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The get-model command is only valid immediately after check-sat returned sat or unknown");
         }
         try {
-            return send(Shape.VALUE, "(get-model)");
+            return modelResponse(send(Shape.VALUE, "(get-model)"));
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }

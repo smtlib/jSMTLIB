@@ -1217,7 +1217,19 @@ public class AbstractSolver implements ISolver {
         if (err != null) return err;
         err = requireSatOrUnknown("get-model");
         if (err != null) return err;
-        return sendCommand(smtConfig.commandFactory.get_model());
+        return modelResponse(sendCommand(smtConfig.commandFactory.get_model()));
+    }
+
+    /** The get-model response r, without the leading symbol {@code model} if it has one: z3 4.3 to 4.7
+     *  and yices2 2.6.5 (with --smt2-model-format) answer {@code (model (define-fun ...) ...)}, where
+     *  SMT-LIB has the plain list {@code ((define-fun ...) ...)}. A conforming response, whose elements
+     *  are all lists, is unchanged. */
+    protected IResponse modelResponse(IResponse r) {
+        if (r instanceof org.smtlib.sexpr.ISexpr.ISeq seq && !seq.sexprs().isEmpty()
+                && seq.sexprs().get(0) instanceof ISymbol s && s.value().equals("model")) {
+            return new org.smtlib.sexpr.Sexpr.Seq(new java.util.ArrayList<>(seq.sexprs().subList(1, seq.sexprs().size())));
+        }
+        return r;
     }
 
     /** @see org.smtlib.ISolver#get_unsat_assumptions()*/
