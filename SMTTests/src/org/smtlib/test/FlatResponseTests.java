@@ -48,12 +48,14 @@ public class FlatResponseTests {
         return outBuf.toString().replace("\r\n", "\n");
     }
 
-    /** get-assertions answered "success" is out of step (#149); get-value's empty line (printing
-     *  nothing) and get-assignment's "unsupported" are passed on as those responses */
+    /** get-assertions answered "success" and get-value answered with an empty line are out of step
+     *  (#149); get-assignment's "unsupported" is passed on */
     @Test
     public void flatRepliesAfterSat() {
         Assert.assertEquals("success\nsuccess\nsuccess\nsuccess\nsuccess\nsat\n(get-assertions)\n^^^^^^^^^^^^^^^^\n"
-                + "(error \"Out of step: the response to (get-assertions) was success\")\nunsupported\n",
+                + "(error \"Out of step: the response to (get-assertions) was success\")\n"
+                + "(get-value (p))\n^^^^^^^^^^^^^^^\n(error \"Out of step: the response to (get-value ( p)) was empty\")\n"
+                + "unsupported\n",
                 run("sat", SAT_SCRIPT, null));
     }
 
