@@ -1,6 +1,3 @@
-(error "Failed to start process nonexistent-solver-xyz : Cannot run program ""nonexistent-solver-xyz"": CreateProcess error=2, The system cannot find the file specified")
 (error "z3-4.14.1 failed to start: Failed to start process nonexistent-solver-xyz : Cannot run program ""nonexistent-solver-xyz"": CreateProcess error=2, The system cannot find the file specified")
-(error "Failed to start process nonexistent-solver-xyz : Cannot run program ""nonexistent-solver-xyz"": CreateProcess error=2, The system cannot find the file specified")
 (error "cvc5-1.3.2 failed to start: Failed to start process nonexistent-solver-xyz : Cannot run program ""nonexistent-solver-xyz"": CreateProcess error=2, The system cannot find the file specified")
-(error "Failed to start process nonexistent-solver-xyz : Cannot run program ""nonexistent-solver-xyz"": CreateProcess error=2, The system cannot find the file specified")
 (error "bitwuzla failed to start: Failed to start process nonexistent-solver-xyz : Cannot run program ""nonexistent-solver-xyz"": CreateProcess error=2, The system cannot find the file specified")
