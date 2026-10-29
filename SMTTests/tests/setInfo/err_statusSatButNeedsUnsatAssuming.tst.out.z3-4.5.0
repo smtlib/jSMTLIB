@@ -4,4 +4,4 @@ success
 success
 success
 (error "line 9 column 20: invalid check-sat-assuming command, '(', expected")
-(error "The get-unsat-assumptions command is only valid if :produce-unsat-assumptions has been enabled")
+unsupported

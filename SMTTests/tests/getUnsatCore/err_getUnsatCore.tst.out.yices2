@@ -1,0 +1,3 @@
+success
+(error "not supported: :produce-unsat-cores is false")
+(error "A get-unsat-core command takes no arguments")

@@ -1070,8 +1070,12 @@ public class Parser extends Lexer implements IParser {
         return parseList(this::parseExpr, "assertion", true);
     }
 
-    /** Parses a parenthesized list of names, as returned by a get-unsat-core or
-     *  get-unsat-assumptions response. */
+    /** Parses a parenthesized list of terms, as returned by a get-unsat-assumptions response. */
+    public List<IExpr> parseTermList() throws ParserException {
+        return parseList(this::parseExpr, "term", true);
+    }
+
+    /** Parses a parenthesized list of names, as returned by a get-unsat-core response. */
     public List<ISymbol> parseSymbolList() throws ParserException {
         return parseList(this::parseSymbol, "name", true);
     }

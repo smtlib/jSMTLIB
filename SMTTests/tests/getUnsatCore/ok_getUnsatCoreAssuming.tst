@@ -1,0 +1,11 @@
+; after check-sat-assuming, the unsat core holds only the named assertions and the unsat
+; assumptions only the assumptions (A64)
+(set-option :produce-unsat-cores true)
+(set-option :produce-unsat-assumptions true)
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(declare-fun q () Bool)
+(assert (! (=> p q) :named a1))
+(check-sat-assuming (p (not q)))
+(get-unsat-core)
+(get-unsat-assumptions)

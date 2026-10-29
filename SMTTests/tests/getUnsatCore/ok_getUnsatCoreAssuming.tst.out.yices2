@@ -1,0 +1,9 @@
+success
+(error "can't have both :produce-unsat-cores and :produce-unsat-assumptions true")
+success
+success
+success
+success
+(error "check-sat-assuming is not supported when :produce-unsat-cores is true")
+(error "Can't build an unsat core. Call (check-sat) first")
+(error "not supported: :produce-unsat-assumptions is false")

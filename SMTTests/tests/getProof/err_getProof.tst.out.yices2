@@ -1,0 +1,3 @@
+success
+(error "get-proof is not supported")
+(error "A get-proof command takes no arguments")

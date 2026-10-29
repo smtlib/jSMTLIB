@@ -1,6 +1,0 @@
-success
-success
-success
-unsupported
-success
-(error "The get-unsat-assumptions command is only valid immediately after check-sat-assumptions returned unsat")

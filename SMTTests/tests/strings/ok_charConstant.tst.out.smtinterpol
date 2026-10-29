@@ -6,5 +6,5 @@ success
 sat
 (
 )
-(error "<stdin>:11:49: Unsupported internal sort: String")
+(error "<stdin>:10:49: Unsupported internal sort: String")
 sat

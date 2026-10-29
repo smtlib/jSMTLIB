@@ -634,7 +634,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The get-unsat-assumptions command is only valid if :produce-unsat-assumptions has been enabled");
         }
         if (!smtConfig.responseFactory.unsat().equals(checkSatStatus)) {
-            return smtConfig.responseFactory.error("The get-unsat-assumptions command is only valid immediately after check-sat-assumptions returned unsat");
+            return smtConfig.responseFactory.error("The get-unsat-assumptions command is only valid immediately after check-sat-assuming returned unsat");
         }
         return smtConfig.responseFactory.unsupported();
     }

@@ -74,9 +74,9 @@ public class AbstractSolver implements ISolver {
      *  the user's script (e.g. a `:print-success` priming send at start()) increments it by
      *  the number of lines inserted; a real script line an adapter deliberately never sends
      *  (e.g. Solver_z3_4_3 skipping literal `(set-logic ALL)`, which that solver has no
-     *  equivalent for) decrements it by the number of lines skipped. A subclass that embeds
-     *  a solver-reported line number in its own response text should rewrite it as
-     *  {@code reportedLine - linesOffset} before returning that text -- see
+     *  equivalent for, or a set-option answered locally) decrements it by the number of lines
+     *  skipped. A subclass that embeds a solver-reported line number in its own response text
+     *  should rewrite it as {@code reportedLine - linesOffset} before returning that text -- see
      *  Solver_z3_4_3/Solver_z3_recent/Solver_bitwuzla's parseResponse() overrides. Solvers
      *  that don't insert or skip any line relative to the user's script (most adapters) never
      *  need to touch this at all, and it stays 0. */
@@ -167,8 +167,11 @@ public class AbstractSolver implements ISolver {
     }
 
 
+    /** Answers a set-option of :print-success locally (it is never sent), else returns null */
     public IResponse checkPrintSuccess(SMT.Configuration smtConfig,IKeyword key, IAttributeValue value) {
         if (key.equals(printSuccess)) {
+            // This script line is not sent, so the solver's line count falls one behind (see linesOffset)
+            linesOffset--;
             // C_set_option.parse() already rejects this eagerly for any text-driven
             // script -- but this method is also reachable directly via
             // smtConfig.commandFactory.set_option(key,value), which bypasses that
@@ -943,6 +946,7 @@ public class AbstractSolver implements ISolver {
     @Override
     public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
         checkSatStatus = null;
+        checkMade = false;
         return sendCommand(smtConfig.commandFactory.set_logic(smtConfig.exprFactory.symbol(logicName)));
     }
 
@@ -950,6 +954,7 @@ public class AbstractSolver implements ISolver {
     @Override
     public IResponse reset() {
         checkSatStatus = null;
+        checkMade = false;
         return sendCommand(smtConfig.commandFactory.reset());
     }
 
@@ -984,6 +989,7 @@ public class AbstractSolver implements ISolver {
     /** @see org.smtlib.ISolver#check_sat()*/
     @Override
     public IResponse check_sat() {
+        checkMade = true;
         checkSatStatus = sendCommand(smtConfig.commandFactory.check_sat());
         return checkSatStatus;
     }
@@ -991,6 +997,7 @@ public class AbstractSolver implements ISolver {
     /** @see org.smtlib.ISolver#check_sat_assuming(IExpr...)*/
     @Override
     public IResponse check_sat_assuming(IExpr ... exprs) {
+        checkMade = true;
         checkSatStatus = sendCommand(smtConfig.commandFactory.check_sat_assuming(java.util.Arrays.asList(exprs)));
         return checkSatStatus;
     }
@@ -1064,6 +1071,8 @@ public class AbstractSolver implements ISolver {
     @Override
     public IResponse set_option(IKeyword key, IAttributeValue value) {
         String option = key.value();
+        // A channel option is not sent, so the solver's line count falls one behind (see linesOffset)
+        if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option) || Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) linesOffset--;
         if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
             String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : Utils.STDOUT;
             try {
@@ -1109,12 +1118,40 @@ public class AbstractSolver implements ISolver {
         return sendCommand(smtConfig.commandFactory.set_info(key, value));
     }
 
-    // The checks below are made before a get- command is sent, because some solvers answer what
-    // SMT-LIB makes an error (checked 2026-10-29): z3 and yices2 default :produce-models to true and,
-    // with smtinterpol, answer get-model and get-value without it; z3 and yices2 answer
-    // get-assignment without :produce-assignments, and smtinterpol after unsat; smtinterpol answers
-    // get-proof after sat; cvc5 answers get-assertions without :produce-assertions; bitwuzla writes
-    // nothing for get-unsat-core after sat or for get-unsat-assumptions without its option.
+    // The get- commands are sent without checking their preconditions: a conforming solver reports
+    // a disabled option or a wrong mode itself. An adapter whose solver answers instead overrides
+    // the command to check first, in the modes where its solver answers, using the helpers below.
+
+    /** Whether a check command has been sent since the logic was set (or the solver was reset) */
+    private boolean checkMade = false;
+
+    /** Whether the most recent check command was answered sat or unknown, with the assertion stack
+     *  unchanged since: SMT-LIB's sat mode (false once the whole-run time limit has ended the solver) */
+    protected boolean inSatMode() {
+        if (endedByTimeLimit) return false;
+        readPipelined(true);
+        return smtConfig.responseFactory.sat().equals(checkSatStatus) || smtConfig.responseFactory.unknown().equals(checkSatStatus);
+    }
+
+    /** Whether the most recent check command was answered unsat, with the assertion stack unchanged
+     *  since: SMT-LIB's unsat mode (false once the whole-run time limit has ended the solver) */
+    protected boolean inUnsatMode() {
+        if (endedByTimeLimit) return false;
+        readPipelined(true);
+        return smtConfig.responseFactory.unsat().equals(checkSatStatus);
+    }
+
+    /** Returns an error response if the assertion stack has changed since a check command was answered
+     *  (SMT-LIB's assert mode, where the get- commands about that check are errors), else null */
+    protected /*@Nullable*/ IResponse requireUnchangedSinceCheck(String commandName) {
+        if (endedByTimeLimit) return null;
+        readPipelined(true);
+        if (checkMade && checkSatStatus == null) {
+            return smtConfig.responseFactory.error("The " + commandName
+                    + " command is not valid once the assertion stack has changed since the last check command");
+        }
+        return null;
+    }
 
     /** Returns an error response if the given option has not been enabled (per
      *  {@link #get_option(IKeyword)}), else null. */
@@ -1158,9 +1195,6 @@ public class AbstractSolver implements ISolver {
     /** @see org.smtlib.ISolver#get_assertions() */
     @Override
     public IResponse get_assertions(){
-        String key = Utils.produceAssertionsKey(smtConfig);
-        IResponse err = requireOptionEnabled("get-assertions", key);
-        if (err != null) return err;
         String response = null;
         try {
             // A single read may not capture a multi-line response, so keep reading
@@ -1205,10 +1239,6 @@ public class AbstractSolver implements ISolver {
     /** @see org.smtlib.ISolver#get_proof()*/
     @Override
     public IResponse get_proof(){
-        IResponse err = requireOptionEnabled("get-proof", Utils.PRODUCE_PROOFS);
-        if (err != null) return err;
-        err = requireUnsat("get-proof", "check-sat");
-        if (err != null) return err;
         return proofResponse(sendCommand(smtConfig.commandFactory.get_proof()));
     }
 
@@ -1222,10 +1252,6 @@ public class AbstractSolver implements ISolver {
     /** @see org.smtlib.ISolver#get_model()*/
     @Override
     public IResponse get_model(){
-        IResponse err = requireOptionEnabled("get-model", Utils.PRODUCE_MODELS);
-        if (err != null) return err;
-        err = requireSatOrUnknown("get-model");
-        if (err != null) return err;
         return modelResponse(sendCommand(smtConfig.commandFactory.get_model()));
     }
 
@@ -1241,14 +1267,22 @@ public class AbstractSolver implements ISolver {
         return r;
     }
 
+    /** The elements of a get-unsat-core reply that belong in the unsat core (all of them); an adapter whose
+     *  solver's reply holds others filters them out */
+    protected List<IExpr> unsatCoreElements(List<IExpr> reply) {
+        return reply;
+    }
+
+    /** The elements of a get-unsat-assumptions reply that belong in the response (all of them); an adapter
+     *  whose solver's reply holds others filters them out */
+    protected List<IExpr> unsatAssumptionsElements(List<IExpr> reply) {
+        return reply;
+    }
+
     /** @see org.smtlib.ISolver#get_unsat_assumptions()*/
     @Override
     public IResponse get_unsat_assumptions(){
         if (endedByTimeLimit) return smtConfig.responseFactory.timeout();
-        IResponse err = requireOptionEnabled("get-unsat-assumptions", Utils.PRODUCE_UNSAT_ASSUMPTIONS);
-        if (err != null) return err;
-        err = requireUnsat("get-unsat-assumptions", "check-sat-assumptions");
-        if (err != null) return err;
         String response = null;
         try {
             readPipelined(true);
@@ -1257,8 +1291,8 @@ public class AbstractSolver implements ISolver {
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;
             if (isFlatResponse(response)) return checkShape(Shape.VALUE, sent, response, checkImmediateExit(parseResponse(response)));
-            List<ISymbol> names = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseSymbolList();
-            return smtConfig.responseFactory.get_unsat_assumptions_response(names);
+            List<IExpr> assumptions = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseTermList();
+            return smtConfig.responseFactory.get_unsat_assumptions_response(unsatAssumptionsElements(assumptions));
         } catch (IOException e) {
             IResponse timedOut = timeLimitResponseAfterExit();
             if (timedOut != null) return timedOut;
@@ -1274,10 +1308,6 @@ public class AbstractSolver implements ISolver {
     @Override
     public IResponse get_unsat_core(){
         if (endedByTimeLimit) return smtConfig.responseFactory.timeout();
-        IResponse err = requireOptionEnabled("get-unsat-core", Utils.PRODUCE_UNSAT_CORES);
-        if (err != null) return err;
-        err = requireUnsat("get-unsat-core", "check-sat");
-        if (err != null) return err;
         String response = null;
         try {
             readPipelined(true);
@@ -1286,7 +1316,12 @@ public class AbstractSolver implements ISolver {
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;
             if (isFlatResponse(response)) return checkShape(Shape.VALUE, sent, response, checkImmediateExit(parseResponse(response)));
-            List<ISymbol> names = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseSymbolList();
+            List<IExpr> elements = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseTermList();
+            List<ISymbol> names = new java.util.ArrayList<>();
+            for (IExpr e : unsatCoreElements(elements)) {
+                if (!(e instanceof ISymbol name)) return smtConfig.responseFactory.error("Unexpected output from the solver: " + response);
+                names.add(name);
+            }
             return smtConfig.responseFactory.get_unsat_core_response(names);
         } catch (IOException e) {
             IResponse timedOut = timeLimitResponseAfterExit();
@@ -1303,10 +1338,6 @@ public class AbstractSolver implements ISolver {
     @Override
     public IResponse get_value(IExpr... terms){
         if (endedByTimeLimit) return smtConfig.responseFactory.timeout();
-        IResponse err = requireOptionEnabled("get-value", Utils.PRODUCE_MODELS);
-        if (err != null) return err;
-        err = requireSatOrUnknown("get-value");
-        if (err != null) return err;
         String response = null;
         try {
             readPipelined(true);
@@ -1332,10 +1363,6 @@ public class AbstractSolver implements ISolver {
     @Override
     public IResponse get_assignment(){
         if (endedByTimeLimit) return smtConfig.responseFactory.timeout();
-        IResponse err = requireOptionEnabled("get-assignment", Utils.PRODUCE_ASSIGNMENTS);
-        if (err != null) return err;
-        err = requireSatOrUnknown("get-assignment");
-        if (err != null) return err;
         String response = null;
         try {
             readPipelined(true);

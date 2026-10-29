@@ -2,4 +2,4 @@ success
 success
 unsat
 (error "invalid call to 'setOption' for option 'produce-unsat-cores', solver is already fully initialized")
-(error "The get-unsat-core command is only valid if :produce-unsat-cores has been enabled")
+(error "cannot get unsat core unless explicitly enabled (try --produce-unsat-cores)")

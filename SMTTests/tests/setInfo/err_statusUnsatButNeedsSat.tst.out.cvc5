@@ -6,6 +6,6 @@ success
 success
 success
 unsat
-(error "The get-model command is only valid immediately after check-sat returned sat or unknown")
-(error "The get-value command is only valid immediately after check-sat returned sat or unknown")
-(error "The get-assignment command is only valid immediately after check-sat returned sat or unknown")
+(error "cannot get model unless after a SAT or UNKNOWN response.")
+(error "cannot get value unless after a SAT or UNKNOWN response.")
+(error "cannot get value unless after a SAT or UNKNOWN response.")

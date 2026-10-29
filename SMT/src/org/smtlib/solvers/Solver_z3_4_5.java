@@ -19,6 +19,7 @@ public class Solver_z3_4_5 extends Solver_z3_recent {
 
     @Override
     public IResponse echo(IExpr.IStringLiteral arg) {
+        linesOffset--; // not sent (see linesOffset)
         return arg;
     }
 }

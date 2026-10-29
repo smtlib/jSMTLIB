@@ -3,4 +3,4 @@ success
 success
 unsat
 (error "invalid call to 'setOption' for option 'produce-unsat-assumptions', solver is already fully initialized")
-(error "The get-unsat-assumptions command is only valid if :produce-unsat-assumptions has been enabled")
+(error "cannot get unsat assumptions unless explicitly enabled (try --produce-unsat-assumptions)")
