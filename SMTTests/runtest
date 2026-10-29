@@ -9,6 +9,9 @@
 ##       The solver name is embedded in the .actual filename (not just .tst.out.actual) so that
 ##       distinct solvers tested against the same .tst file never share -- and clobber -- one
 ##       another's capture file.
+##       Goldens and skip markers are looked up by solver name: exact name (platform-specific
+##       first), then family, then plain. A bare name such as cvc5 counts first as the versioned
+##       name it runs (cvc5-1.3.2), with itself as the family; see "resolved" below.
 
 if [ $# -lt 2 ]; then
     echo "Usage: runtest <solver> <testfile>"
@@ -25,6 +28,24 @@ test=$2
 ### it differs from the exact solver name.
 family=$(echo "$solver" | sed -E 's/[_-][0-9].*//')
 if [ "$family" == "$solver" ]; then family=""; fi
+### A bare solver name runs as the versioned name its configured executable gives
+### (.exec.$PLATFORM, then .exec, in SMT/jsmtlib.properties) when that executable is the
+### name plus a version suffix: "cvc5" -> "cvc5-1.3.2", "z3" -> "z3-4.16.0", "yices2" ->
+### "yices2-2.7.0" (yices2-2.6.5 on Windows). Skip markers and goldens named for that
+### versioned name are checked first, then the bare name's own, then the plain ones:
+### versioned (exact) -> bare name (family) -> plain. A bare name whose executable has
+### another stem (simplify -> Simplify-1.5.4, altergo -> alt-ergo-2.6.3) or that has no
+### configured executable keeps only its own files.
+### IMPORTANT: this must stay in sync with FileTests.resolvedName.
+resolved=""
+if [ -z "$family" ]; then
+    _prop() { awk -v k="org.smtlib.solver_$solver.$1" 'index($0, k "=") == 1 { v = substr($0, length(k) + 2) } END { print v }' "$SMT_DIR/jsmtlib.properties" | tr -d '\r'; }
+    _exec=$(_prop "exec.$PLATFORM")
+    if [ -z "$_exec" ]; then _exec=$(_prop exec); fi
+    if [ -n "$_exec" ] && [ "$(echo "$_exec" | sed -E 's/[_-][0-9].*//')" == "$solver" ] && [ "$_exec" != "$solver" ]; then
+        resolved=$_exec
+    fi
+fi
 if [ ! -e "$test" ] && [ -e "$test.tst" ]; then
     test="$test.tst"
 fi
@@ -85,7 +106,16 @@ if [ -e "${test}.stub" ]; then
 fi
 
 ### Check for skip marker (exit 77 = skipped, not a failure)
-if [ -e "${test}.skip.$solver.$PLATFORM_ARCH" ]; then
+if [ -n "$resolved" ] && [ -e "${test}.skip.$resolved.$PLATFORM_ARCH" ]; then
+    echo "SKIP $solver $test: $(cat "${test}.skip.$resolved.$PLATFORM_ARCH")"
+    exit 77
+elif [ -n "$resolved" ] && [ -e "${test}.skip.$resolved.$PLATFORM" ]; then
+    echo "SKIP $solver $test: $(cat "${test}.skip.$resolved.$PLATFORM")"
+    exit 77
+elif [ -n "$resolved" ] && [ -e "${test}.skip.$resolved" ]; then
+    echo "SKIP $solver $test: $(cat "${test}.skip.$resolved")"
+    exit 77
+elif [ -e "${test}.skip.$solver.$PLATFORM_ARCH" ]; then
     echo "SKIP $solver $test: $(cat "${test}.skip.$solver.$PLATFORM_ARCH")"
     exit 77
 elif [ -e "${test}.skip.$solver.$PLATFORM" ]; then
@@ -137,11 +167,16 @@ fi
 ### exact comparison, as FileTests.filterIOExceptionLines does (#150)
 _filtered() { grep -v -e 'java.io.IOException:' -e 'SolverProcess\$NoResponseException:' "$1"; }
 
+### The goldens named for one solver name, given "<test>.<ext>.<name>", in priority order
+_solver_candidates() { echo "$1.$PLATFORM_ARCH.bad" "$1.$PLATFORM_ARCH.lenient" "$1.$PLATFORM_ARCH" "$1.$PLATFORM.bad" "$1.$PLATFORM.lenient" "$1.$PLATFORM" "$1" "$1.bad" "$1.lenient"; }
+
 ### Check the error output
 ### IMPORTANT: the priority order in these two 'for f in' loops must stay in sync
 ### with the candidates array in FileTests.java (SMTTests/src/org/smtlib/test/FileTests.java).
 ### If you change the order here, change it there too, and vice versa.
-err_candidates=("${test}.err.$solver.$PLATFORM_ARCH.bad" "${test}.err.$solver.$PLATFORM_ARCH.lenient" "${test}.err.$solver.$PLATFORM_ARCH" "${test}.err.$solver.$PLATFORM.bad" "${test}.err.$solver.$PLATFORM.lenient" "${test}.err.$solver.$PLATFORM" "${test}.err.$solver" "${test}.err.$solver.bad" "${test}.err.$solver.lenient")
+err_candidates=()
+if [ -n "$resolved" ]; then err_candidates+=($(_solver_candidates "${test}.err.$resolved")); fi
+err_candidates+=($(_solver_candidates "${test}.err.$solver"))
 if [ -n "$family" ]; then err_candidates+=("${test}.err.$family" "${test}.err.$family.bad" "${test}.err.$family.lenient"); fi
 err_candidates+=("${test}.err.$PLATFORM_ARCH" "${test}.err.$PLATFORM" "${test}.err")
 
@@ -180,7 +215,9 @@ done
         
 
 ### Check the regular output
-out_candidates=("${test}.out.$solver.$PLATFORM_ARCH.bad" "${test}.out.$solver.$PLATFORM_ARCH.lenient" "${test}.out.$solver.$PLATFORM_ARCH" "${test}.out.$solver.$PLATFORM.bad" "${test}.out.$solver.$PLATFORM.lenient" "${test}.out.$solver.$PLATFORM" "${test}.out.$solver" "${test}.out.$solver.bad" "${test}.out.$solver.lenient")
+out_candidates=()
+if [ -n "$resolved" ]; then out_candidates+=($(_solver_candidates "${test}.out.$resolved")); fi
+out_candidates+=($(_solver_candidates "${test}.out.$solver"))
 if [ -n "$family" ]; then out_candidates+=("${test}.out.$family" "${test}.out.$family.bad" "${test}.out.$family.lenient"); fi
 out_candidates+=("${test}.out.$PLATFORM_ARCH" "${test}.out.$PLATFORM" "${test}.out")
 
