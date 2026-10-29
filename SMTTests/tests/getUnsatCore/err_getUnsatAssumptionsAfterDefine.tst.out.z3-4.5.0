@@ -1,0 +1,6 @@
+success
+success
+success
+(error "line 7 column 20: invalid check-sat-assuming command, '(', expected")
+success
+(error "The get-unsat-assumptions command is not valid once the assertion stack has changed since the last check command")

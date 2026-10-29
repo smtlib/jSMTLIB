@@ -3,4 +3,4 @@ success
 success
 sat
 success
-(error "The get-proof command is only valid immediately after check-sat returned unsat")
+(error "The get-proof command is not valid once the assertion stack has changed since the last check command")

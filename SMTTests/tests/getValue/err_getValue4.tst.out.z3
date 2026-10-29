@@ -3,4 +3,4 @@ success
 success
 success
 unsat
-(error "The get-value command is only valid immediately after check-sat returned sat or unknown")
+(error "line 7 column 15: model is not available")

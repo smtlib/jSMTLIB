@@ -1,3 +1,3 @@
 success
-(error "The get-model command is only valid immediately after check-sat returned sat or unknown")
+(error "line 3 column 10: model is not available")
 (error "A get-model command takes no arguments")

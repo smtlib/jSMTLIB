@@ -1,0 +1,3 @@
+success
+(error "<stdin>:3:10: Assertion stack has been modified since last check-sat!")
+(error "A get-model command takes no arguments")

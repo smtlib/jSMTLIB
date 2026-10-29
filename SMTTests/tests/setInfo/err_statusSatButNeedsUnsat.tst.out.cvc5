@@ -1,0 +1,9 @@
+success
+success
+success
+success
+success
+success
+sat
+(error "cannot get proof unless in unsat mode.")
+(error "cannot get unsat core unless in unsat mode.")
