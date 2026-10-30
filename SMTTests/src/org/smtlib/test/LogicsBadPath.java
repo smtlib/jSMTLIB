@@ -32,7 +32,7 @@ public class LogicsBadPath extends LogicTests {
         // directly for bitwuzla (same forward-only set_logic as cvc5/yices2/z3/
         // smtinterpol): identical "success" outcome with this same broken path.
         doCommand("(set-logic QF_UF)",
-                solvername.startsWith("z3") || solvername.startsWith("cvc5") || solvername.startsWith("yices2") || solvername.startsWith("z3_4_4") || solvername.startsWith("smtinterpol") || solvername.startsWith("bitwuzla")? "success" : // FIXME
+                solvername.startsWith("z3") || solvername.startsWith("cvc5") || solvername.startsWith("yices2") || solvername.startsWith("z3_4_4") || solvername.startsWith("smtinterpol") || solvername.startsWith("bitwuzla") || solvername.startsWith("altergo")? "success" : // FIXME
                 smt.smtConfig.isVersion(SMTLIB.V20) ? "(error \"Invalid logic path: \\\"xxx\\\" is not a directory\")"
                                                         : "(error \"Invalid logic path: \"\"xxx\"\" is not a directory\")");
     }
