@@ -1,5 +1,5 @@
 success
-(error "Parse Error: <shell>:1.96: Symbol 'Undeclared' not declared as a type")
+(error "Parse Error: <shell>:4.96: Symbol 'Undeclared' not declared as a type")
 (error "Error writing to solver: (declare-sort Lst 0) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Error writing to solver: (declare-sort T 0) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Error writing to solver: (declare-fun nil () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

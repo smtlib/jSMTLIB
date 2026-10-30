@@ -49,6 +49,21 @@ public class Solver_cvc5 extends AbstractSolver implements ISolver {
     @Override
     protected boolean selfReportsImmediateExit() { return true; }
 
+    /** cvc5 (run with --interactive) reports "{@code <shell>:L.C:}" in its error messages, counting
+     *  the lines of each line it reads, so every command sent starts on its line 1 */
+    private static final java.util.List<java.util.regex.Pattern> LINE_NUMBERS =
+            java.util.List.of(java.util.regex.Pattern.compile("(<shell>:)(\\d+)(\\.)"));
+
+    @Override
+    protected java.util.List<java.util.regex.Pattern> lineNumberPatterns() {
+        return LINE_NUMBERS;
+    }
+
+    @Override
+    protected int nextSolverLine() {
+        return 1;
+    }
+
     /** cvc5 reports 'cvc5 interrupted by timeout.' on stderr, with no answer, when its whole-run limit, --tlimit,
      *  ends it, and then aborts (checked with cvc5 1.3.2) */
     @Override

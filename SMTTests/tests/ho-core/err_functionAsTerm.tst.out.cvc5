@@ -2,6 +2,6 @@ success
 success
 success
 success
-(error "Parse Error: <shell>:1.15: Cannot apply equality to functions unless logic is prefixed by HO_.")
+(error "Parse Error: <shell>:7.15: Cannot apply equality to functions unless logic is prefixed by HO_.")
 (error "Error writing to solver: (assert (= h h)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Error writing to solver: (assert (= (lambda ((x Int) ) (f x)) (lambda ((x Int) ) (g x)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

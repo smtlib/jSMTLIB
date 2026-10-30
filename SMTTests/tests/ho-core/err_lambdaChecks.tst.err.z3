@@ -1,5 +1,3 @@
-(declare-fun f () (-> Int Int))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (assert (= f (lambda ((x Int) (x Int)) x)))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (assert (= f (lambda ((x Foo)) 0)))

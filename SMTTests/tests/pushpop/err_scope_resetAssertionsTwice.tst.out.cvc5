@@ -3,4 +3,4 @@ success
 success
 success
 success
-(error "Parse Error: <shell>:1.9: Symbol 'b' not declared as a variable")
+(error "Parse Error: <shell>:7.9: Symbol 'b' not declared as a variable")

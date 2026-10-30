@@ -1,0 +1,31 @@
+success
+success
+success
+(error "at line 6, column 14: can't redefine term: x")
+(error "Error writing to solver: (declare-fun x () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+success
+(error "Error writing to solver: (declare-fun x () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+"hello"
+(error "Error writing to solver: (declare-fun x () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+true
+(error "Error writing to solver: (declare-fun x () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (get-option :produce-models) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun x () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun x () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun x () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun x () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (push 1) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun y () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun y () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (pop 1) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun x () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (define-fun-rec f ((a Bool)) Bool a) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun x () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun x () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (reset) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (set-logic ALL) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun x () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun x () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert z) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

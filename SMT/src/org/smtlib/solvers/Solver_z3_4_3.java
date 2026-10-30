@@ -48,7 +48,13 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  See issue #51. */
     protected String name() { return "z3-4.3"; }
 
-    // linesOffset is inherited from AbstractSolver -- see its own doc comment there.
+    /** z3 reports "line N column C" in its error messages, counting the lines of its whole input */
+    private static final List<Pattern> LINE_NUMBERS = List.of(Pattern.compile("(line )(\\d+)( column)"));
+
+    @Override
+    protected List<Pattern> lineNumberPatterns() {
+        return LINE_NUMBERS;
+    }
 
     /** The command-line arguments for launching the Z3 solver */
     protected String cmds[];
@@ -152,7 +158,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         String translatedCmd = null;
         try {
             translatedCmd = translate(cmd);
-            String response = solverProcess.sendAndListen(translatedCmd,"\n");
+            String response = sendScriptText(true, translatedCmd, "\n");
             IResponse timedOut = timeLimitResponse(response);
             return timedOut != null ? timedOut : parse(shapeOf(cmd), translatedCmd, response);
         } catch (IOException e) {
@@ -167,7 +173,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     public IResponse sendCommand(String cmd) {
         if (endedByTimeLimit) return smtConfig.responseFactory.timeout();
         try {
-            String response = solverProcess.sendAndListen(cmd,"\n");
+            String response = sendScriptText(true, cmd, "\n");
             IResponse timedOut = timeLimitResponse(response);
             return timedOut != null ? timedOut : parse(Shape.SUCCESS, cmd, response);
         } catch (IOException e) {
@@ -187,7 +193,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 //            if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
             // Can't turn off printing success, or we get no feedback
             solverProcess.sendAndListen("(set-option :print-success true)\n"); // Z3 4.3.0 needs this because it mistakenly has the default for :print-success as false
-            linesOffset ++; 
             //if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started "+name()+" ");
             return smtConfig.responseFactory.success();
@@ -257,7 +262,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     private String sendRaw(String sent) throws IOException {
         if (endedByTimeLimit) return "timeout";
         try {
-            return solverProcess.sendAndListen(sent, "\n");
+            return sendScriptText(true, sent, "\n");
         } catch (IOException e) {
             if (timeLimitResponseAfterExit() != null) return "timeout";
             throw e;
@@ -299,13 +304,13 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  whole-run limit ended it is recognized for all of them (see AbstractSolver#timeLimitResponse). A command sent
      *  directly after that finds the process gone and gets an error; sendCommand returns the timeout response. */
     protected IResponse parseResponse(String response) {
-        // z3 4.3 reports line numbers counted from its own input, which includes lines jSMTLIB adds
-        // (see linesOffset), and can write several (error ...) responses for one command; these are
-        // rewritten and joined into one error.
+        // z3 4.3 can write several (error ...) responses for one command; their line numbers are
+        // rewritten (see linesOffset) and they are joined into one error.
         IResponse timedOut = timeLimitResponse(response);
         if (timedOut != null) return timedOut;
         try {
             if (ERROR_RESPONSE.matcher(response).find()) {
+                response = withSourceLines(response);
                 // Z3 returns an s-expr (always?)
                 // FIXME - (1) the {Print} also needs {Space}; (2) err_getValueTypes.tst returns a non-error s-expr and then an error s-expr - this fails for that case
                 //Pattern p = Pattern.compile("\\p{Space}*\\(\\p{Blank}*error\\p{Blank}+\"(([\\p{Space}\\p{Print}^[\\\"\\\\]]|\\\\\")*)\"\\p{Blank}*\\)\\p{Space}*");
@@ -314,20 +319,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
                 String concat = "";
                 while (m.lookingAt()) {
                     if (!concat.isEmpty()) concat = concat + "; ";
-                    String matched = m.group(1);
-                    String prefix = "line ";
-                    int offset = prefix.length();
-                    if (matched.startsWith(prefix)) {
-                        int k = matched.indexOf(' ',offset);
-                        String number = matched.substring(offset, k);
-                        try {
-                            int n = Integer.parseInt(number);
-                            matched = prefix + (n-linesOffset) + matched.substring(k);
-                        } catch (NumberFormatException e) {
-                            // Just continue
-                        }
-                    }
-                    concat = concat + matched;
+                    concat = concat + m.group(1);
                     m.region(m.end(0),m.regionEnd());
                 }
                 if (!concat.isEmpty()) response = concat;
@@ -466,13 +458,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         }
         logicSet = true;
         if (logicName.equals("ALL")) {
-            // z3-4.3 has no "ALL" logic to declare, so this line is never actually sent --
-            // unlike every other logic name, which the else-branch below sends as a real,
-            // counted line. That's one fewer real script line reflected in what z3 counts, so
-            // linesOffset must be decremented to compensate (see issue #97): otherwise every
-            // line-numbered error later in the script under-reports by one relative to the
-            // user's actual source.
-            linesOffset--;
+            // z3-4.3 has no "ALL" logic to declare, so this line is never sent
             return smtConfig.responseFactory.success();
         } else try {
             return send(Shape.SUCCESS, "(set-logic " + logicName + ")");
@@ -490,7 +476,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         if (logicSet && (Utils.INTERACTIVE_MODE.equals(option) || Utils.PRODUCE_ASSERTIONS.equals(option)
                 || Utils.PRODUCE_ASSIGNMENTS.equals(option) || Utils.PRODUCE_PROOFS.equals(option)
                 || Utils.PRODUCE_UNSAT_CORES.equals(option) || Utils.PRODUCE_MODELS.equals(option))) {
-            linesOffset--; // not sent (see linesOffset)
             return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
         }
         if (Utils.VERBOSITY.equals(option)) {
@@ -515,7 +500,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  and answers unsupported for :produce-assertions (see set_option_impl) */
     @Override
     public IResponse get_option(IKeyword key) { // FIXME - use the solver?
-        linesOffset--; // not sent (see linesOffset)
         return optionValue(key.value());
     }
 
@@ -544,7 +528,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  to echo is its argument */
     @Override
     public IResponse echo(IStringLiteral arg) {
-        linesOffset--; // not sent (see linesOffset)
         return arg;
     }
 

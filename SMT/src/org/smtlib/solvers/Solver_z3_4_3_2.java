@@ -53,7 +53,7 @@ public class Solver_z3_4_3_2 extends Solver_z3_4_3 {
         try {
             pushesDepth += number;
             // This odd invocation is to correct a bug in Z3 4.3.2, where (push) can print out more than one success message.
-            solverProcess.sendNoListen("(push ",Integer.toString(number),")\n");
+            sendScriptText(false, "(push ",Integer.toString(number),")\n");
             solverProcess.sendNoListen("(echo \"<<DONE>>\")\n");
             // Accumulates every listen() call (not just the last one) so a genuine (error
             // ...) response to the push -- the process stays alive and still echoes the
@@ -69,10 +69,8 @@ public class Solver_z3_4_3_2 extends Solver_z3_4_3 {
                 drained.append(s);
             } while (!drained.toString().contains("<<DONE>>"));
             String beforeMarker = drained.substring(0, drained.indexOf("<<DONE>>"));
-            // the echo is a line z3 counts (see linesOffset), after the push's own
-            IResponse r = beforeMarker.contains("(error") ? parseResponse(beforeMarker) : successOrEmpty(smtConfig);
-            linesOffset++;
-            return r;
+            // the echo, sent without sendScriptText, needs no linesOffset adjustment
+            return beforeMarker.contains("(error") ? parseResponse(beforeMarker) : successOrEmpty(smtConfig);
         } catch (Exception e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }

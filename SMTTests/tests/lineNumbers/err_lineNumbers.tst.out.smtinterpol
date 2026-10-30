@@ -1,0 +1,31 @@
+success
+success
+success
+(error "<stdin>:6:13: Function x is already defined.")
+(error "<stdin>:9:13: Function x is already defined.")
+success
+(error "<stdin>:11:13: Function x is already defined.")
+"hello"
+(error "<stdin>:13:13: Function x is already defined.")
+true
+(error "<stdin>:15:13: Function x is already defined.")
+false
+(error "<stdin>:17:13: Function x is already defined.")
+(error "<stdin>:18:13: Function x is already defined.")
+(error "<stdin>:20:13: Function x is already defined.")
+(error "<stdin>:20:13: Function x is already defined.")
+success
+success
+(error "<stdin>:23:13: Function y is already defined.")
+success
+(error "<stdin>:27:13: Function x is already defined.")
+(error "<stdin>:28:1: Syntax Error")
+(error "<stdin>:29:13: Function x is already defined.")
+sat
+(error "<stdin>:31:15: Set option :produce-assignments to true to generate assignments!")
+(error "<stdin>:32:13: Function x is already defined.")
+success
+success
+success
+(error "<stdin>:36:13: Function x is already defined.")
+(error "<stdin>:37:8: Unknown function symbol z.")

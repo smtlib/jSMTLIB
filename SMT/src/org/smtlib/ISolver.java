@@ -71,6 +71,11 @@ public interface ISolver {
      */
     IResponse echo(IStringLiteral arg);
 
+    /** Tells the solver the line of the user's source on which the command about to be executed starts
+     *  (counted from 1), or 0 if it has none, so that the line numbers in the solver's messages can be
+     *  given as lines of that source */
+    default void setSourceLine(int line) {}
+
     /** Passes comment text to the solver (for logging/tracing); the argument is the comment body
      * without the leading semicolon. */
     void comment(String comment);

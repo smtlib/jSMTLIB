@@ -1,0 +1,4 @@
+success
+sat
+(error "The get-assignment command is only valid if :produce-assignments has been enabled")
+(error "at line 5, column 9: undefined term: z")

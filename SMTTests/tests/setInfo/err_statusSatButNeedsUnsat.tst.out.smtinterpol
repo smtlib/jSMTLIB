@@ -6,4 +6,4 @@ success
 success
 sat
 (error "The get-proof command is only valid immediately after check-sat returned unsat")
-(error "<stdin>:11:15: Logical context not inconsistent!")
+(error "<stdin>:12:15: Logical context not inconsistent!")
