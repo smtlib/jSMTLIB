@@ -1,2 +1,2 @@
-(error "line 2 column 16: invalid check-sat command, argument must be a Boolean literal")
+(error "line 2 column 27: invalid check-sat command, argument must be a Boolean literal")
 (error "line 3 column 11: logic must be set before initialization")

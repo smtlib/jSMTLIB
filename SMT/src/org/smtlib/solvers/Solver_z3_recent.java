@@ -192,6 +192,19 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
     /** The assumptions of the most recent check command, if it was check-sat-assuming */
     private final Assumptions assumptions = new Assumptions(this::translate);
 
+    /** check-sat-assuming's printed text (check-sat-assuming (a1 ... an)) as z3's legacy (check-sat a1 ... an),
+     *  for z3 versions that do not accept check-sat-assuming. "-assuming (" becomes as many spaces and the
+     *  final ")" is dropped, so each assumption and the ")" after the last keep their columns: z3's error
+     *  columns are then those of the check-sat-assuming text, as for any other command. (Some errors point
+     *  at the token after the assumption, so the ")" stays where the list's ")" was.) */
+    static String legacyCheckSat(String printed) {
+        StringBuilder sb = new StringBuilder(printed);
+        int open = printed.indexOf('(', 1);
+        for (int i = "(check-sat".length(); i <= open; i++) sb.setCharAt(i, ' ');
+        sb.setLength(sb.length() - 1);
+        return sb.toString();
+    }
+
     @Override
     public IResponse check_sat() {
         assumptions.clear();

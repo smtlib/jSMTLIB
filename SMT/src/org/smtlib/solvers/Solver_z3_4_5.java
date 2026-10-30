@@ -29,15 +29,13 @@ public class Solver_z3_4_5 extends Solver_z3_recent {
 
     /** z3 4.5 rejects every check-sat-assuming ("invalid check-sat-assuming command, '(', expected", a
      *  parser bug), so it is sent as z3's legacy (check-sat a1 ... an), which checks under the same
-     *  assumptions. Its unsat core then includes the assumptions, which Solver_z3_recent drops. */
+     *  assumptions, padded with spaces so z3's error columns match the check-sat-assuming text (see
+     *  Solver_z3_recent.legacyCheckSat). Its unsat core then includes the assumptions, which
+     *  Solver_z3_recent drops. */
     @Override
     protected String translate(INode node) throws IVisitor.VisitorException {
-        if (node instanceof ICommand.Icheck_sat_assuming c) {
-            StringBuilder sb = new StringBuilder("(check-sat");
-            for (IExpr e : c.terms()) sb.append(' ').append(super.translate(e));
-            return sb.append(')').toString();
-        }
-        return super.translate(node);
+        String s = super.translate(node);
+        return node instanceof ICommand.Icheck_sat_assuming ? legacyCheckSat(s) : s;
     }
 
     @Override
