@@ -1,7 +1,5 @@
 (declare-const m (-> Int Int))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-const k Int)
-^^^^^^^^^^^^^^^^^^^^^
 (assert (= (m true) 0))
 ^^^^^^^^^^^^^^^^^^^^^^^
 (assert (= (m 0 1) 0))

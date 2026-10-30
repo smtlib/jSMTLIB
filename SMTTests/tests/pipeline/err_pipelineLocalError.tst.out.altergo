@@ -1,6 +1,6 @@
 success
 success
 (error "Error on typing errors (code 4)")
-(error "Error writing to solver: (declare-fun y () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (> x y)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+success
+success
+unknown

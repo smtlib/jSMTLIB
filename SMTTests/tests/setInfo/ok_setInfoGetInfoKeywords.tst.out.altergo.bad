@@ -5,4 +5,4 @@ success
 success
 (:version v2.6.3 )
 success
-(:error-behavior immediate-exit )
+(:error-behavior continued-execution )

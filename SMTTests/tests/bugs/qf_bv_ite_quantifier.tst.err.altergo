@@ -1,12 +1,2 @@
 (assert (= (ite (forall ((y Bool)) y) b b) b))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(reset)
-^^^^^^^
-(set-logic QF_BV)
-^^^^^^^^^^^^^^^^^
-(declare-const b (_ BitVec 4))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-const c Bool)
-^^^^^^^^^^^^^^^^^^^^^^
-(assert (= (ite c b b) b))
-^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -5,6 +5,6 @@ success
 success
 success
 (error "Error on typing errors (code 4)")
-(error "Error writing to solver: (reset) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (set-logic AUFLIRA) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= (/ 4 2) 2.0)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+success
+success
+success

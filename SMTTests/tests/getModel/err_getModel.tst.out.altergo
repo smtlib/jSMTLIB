@@ -1,0 +1,3 @@
+success
+(error "Invalid action during Assert mode: Command get-model")
+(error "A get-model command takes no arguments")

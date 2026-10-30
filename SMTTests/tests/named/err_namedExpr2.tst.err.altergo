@@ -2,8 +2,6 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (assert (exists ((r Bool)) (! r :named R))) ; error
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(assert (forall ((r Bool)) (and r (! q :named R)))) ; OK
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (assert (let ((r true)) (! r :named R))) ; error - R already defined
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (assert (let ((r true)) (! r :named R2))) ; OK

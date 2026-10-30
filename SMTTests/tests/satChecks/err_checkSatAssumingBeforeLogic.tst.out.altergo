@@ -1,2 +1,2 @@
 (error "Error on typing errors (code 4)")
-(error "Error writing to solver: (set-logic QF_UF) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+success

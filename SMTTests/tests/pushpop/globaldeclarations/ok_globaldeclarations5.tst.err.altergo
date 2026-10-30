@@ -1,4 +1,2 @@
 (declare-fun a () Bool) ; OK
 ^^^^^^^^^^^^^^^^^^^^^^^
-(check-sat)  ; sat
-^^^^^^^^^^^

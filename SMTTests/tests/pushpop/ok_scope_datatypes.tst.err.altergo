@@ -2,8 +2,6 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (declare-datatypes ((Tree 0) (Forest 0)) (((leaf) (node (val Int) (kids Forest))) ((fnil) (fcons (head Tree) (rest Forest)))))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-fun t () Tree)
-^^^^^^^^^^^^^^^^^^^^^^^
 (assert (match t ((leaf true) ((node v k) (= (head (fcons t k)) leaf)))))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (declare-sort Color 0)

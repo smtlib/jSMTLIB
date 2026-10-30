@@ -2,8 +2,8 @@ success
 success
 success
 (error "Error on typing errors (code 4)")
-(error "Error writing to solver: (assert (bvuaddo b c)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (bvsaddo b c)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (bvumulo b c)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (bvsmulo b c)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")
+unknown

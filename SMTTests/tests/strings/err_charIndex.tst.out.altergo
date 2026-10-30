@@ -1,5 +1,5 @@
 success
 (error "Error on unexpected internal errors (bugs) (code 125)")
-(error "Error writing to solver: (assert (= ""A"" (_ char A))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= ""A"" (_ char #x41 #x42))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= ""A"" (_ char #b1000001))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error on unexpected internal errors (bugs) (code 125)")
+(error "Error on typing errors (code 4)")
+(error "Error on parsing errors (code 3)")

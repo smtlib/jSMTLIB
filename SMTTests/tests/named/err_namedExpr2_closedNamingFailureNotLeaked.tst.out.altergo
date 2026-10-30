@@ -1,4 +1,4 @@
 success
 success
 (error "Error on typing errors (code 4)")
-(error "Error writing to solver: (assert (forall ((r Bool) ) (and r (! q :named R)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+success

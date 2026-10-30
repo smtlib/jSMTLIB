@@ -2,21 +2,21 @@ success
 success
 success
 (error "Error on parsing errors (code 3)")
-(error "Error writing to solver: (declare-sort-parameter X) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (declare-fun f (X ) X) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (pop 1) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (declare-fun m () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (declare-sort X 0) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (declare-fun f (X ) Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error on parsing errors (code 3)")
+(error "Error on typing errors (code 4)")
+success
+success
+success
+success
 unsupported
-(error "Error writing to solver: (define-const m Bool true) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (declare-sort-parameter X) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (declare-fun f (X ) X) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error on parsing errors (code 3)")
+(error "Error on parsing errors (code 3)")
+(error "Error on typing errors (code 4)")
 unsupported
-(error "Error writing to solver: (declare-fun m () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (declare-sort X 0) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (declare-fun f (X ) Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")
 unsupported
-(error "Error writing to solver: (declare-fun m () Real) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (declare-sort X 1) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (declare-fun f ((X Int) ) Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")

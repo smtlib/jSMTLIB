@@ -4,4 +4,4 @@ success
 success
 unknown
 success
-(error "The get-model command is only valid immediately after check-sat returned sat or unknown")
+(error "Invalid action during Assert mode: Command get-model")

@@ -1,4 +1,2 @@
 (declare-sort-parameter T)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-sort T 0)
-^^^^^^^^^^^^^^^^^^

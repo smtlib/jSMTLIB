@@ -1,8 +1,4 @@
 (assert ((_ is circle) s))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-datatype Color ((red) (green)))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(declare-fun x () Int)
-^^^^^^^^^^^^^^^^^^^^^^
 (assert ((_ is red) x))
 ^^^^^^^^^^^^^^^^^^^^^^^

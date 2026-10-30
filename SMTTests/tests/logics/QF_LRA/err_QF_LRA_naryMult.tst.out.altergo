@@ -2,6 +2,6 @@ success
 success
 success
 (error "Error on typing errors (code 4)")
-(error "Error writing to solver: (assert (= y (* 2.0 x y))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= y (/ x 2 3))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= y (* 2.0 x 3))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")

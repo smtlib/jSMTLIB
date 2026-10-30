@@ -1,5 +1,5 @@
 success
 (error "Error on typing errors (code 4)")
-(error "Error writing to solver: (assert (= f (lambda ((x Int) (x Int) ) x))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= f (lambda ((x Foo) ) 0))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= f (lambda ((x Int) ) (+ x true)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error on parsing errors (code 3)")
+(error "Error on parsing errors (code 3)")
+(error "Error on parsing errors (code 3)")

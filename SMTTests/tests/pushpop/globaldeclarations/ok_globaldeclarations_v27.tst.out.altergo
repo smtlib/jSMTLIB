@@ -3,10 +3,10 @@ unsupported
 success
 success
 (error "Error on parsing errors (code 3)")
-(error "Error writing to solver: (declare-sort-parameter X) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (declare-fun f (X ) X) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (pop 1) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (declare-fun x () X) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (and m (= (f x) x))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error on parsing errors (code 3)")
+(error "Error on typing errors (code 4)")
+success
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")
 unsupported
-(error "Error writing to solver: (assert (and m (= (f (f x)) x))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error on typing errors (code 4)")

@@ -1,8 +1,8 @@
 success
 (error "Error on parsing errors (code 3)")
-(error "Error writing to solver: (declare-fun y () (_ BitVec 8)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= #b00 ((_ extract #b1 0) y))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= (_ bv1 #b1000) y)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= y ((_ repeat #b1) y))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= #x00 ((_ zero_extend #b100) ((_ extract 3 0) y)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= y ((_ rotate_left #b1) y))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+success
+(error "Error on parsing errors (code 3)")
+(error "Error on parsing errors (code 3)")
+(error "Error on parsing errors (code 3)")
+(error "Error on parsing errors (code 3)")
+(error "Error on parsing errors (code 3)")

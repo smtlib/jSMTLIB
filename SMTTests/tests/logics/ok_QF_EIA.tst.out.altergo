@@ -10,6 +10,6 @@ success
 success
 success
 (error "Error on typing errors (code 4)")
-(error "Error writing to solver: (assert (= y (** 2 x))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (>= (** x 3) 0)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (define-sort MyInt () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")
+success

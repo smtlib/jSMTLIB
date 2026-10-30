@@ -1,5 +1,0 @@
-success
-(error "Error on typing errors (code 4)")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= (* 3.0 5.0 2.0) 31.0)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

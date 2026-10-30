@@ -1,6 +1,4 @@
 (get-info :reason-unknown)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-(set-logic QF_UF)
-^^^^^^^^^^^^^^^^^
 (get-info :reason-unknown)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

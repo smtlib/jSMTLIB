@@ -2,4 +2,4 @@ success
 success
 success
 (error "Fatal Error: Unsupported Feature: Constant term plus_zero")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+unknown

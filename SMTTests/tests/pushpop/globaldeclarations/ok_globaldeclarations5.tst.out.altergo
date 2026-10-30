@@ -3,4 +3,4 @@ success
 success
 unsupported
 (error "Error on typing errors (code 4)")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+unknown

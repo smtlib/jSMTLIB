@@ -4,8 +4,8 @@ success
 success
 success
 (error "Error on typing errors (code 4)")
-(error "Error writing to solver: (declare-fun nn () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= nn (ubv_to_int bb))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (bvult b #xf0)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (not (and (>= nn n) (>= (+ n 15) nn) (= (mod nn 16) 0)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+success
+(error "Error on typing errors (code 4)")
+success
+success
+unknown

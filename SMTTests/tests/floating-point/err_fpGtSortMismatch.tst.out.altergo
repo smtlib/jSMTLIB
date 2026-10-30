@@ -1,5 +1,5 @@
 success
 (error "Fatal Error: Unsupported Feature: Type FloatingPoint_8_24")
-(error "Error writing to solver: (declare-fun y () (_ FloatingPoint 8 24)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (declare-fun b () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (fp.gt x y b)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Fatal Error: Unsupported Feature: Type FloatingPoint_8_24")
+success
+(error "Error on typing errors (code 4)")
