@@ -1,2 +1,0 @@
-z3 4.3.2 answers check-sat on this quantified problem with a stream of "success" lines; how many
-are read with the response depends on timing, so no golden can pin it.

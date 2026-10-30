@@ -5,6 +5,9 @@
  */
 package org.smtlib.solvers;
 
+import java.io.IOException;
+import java.util.regex.Pattern;
+
 import org.smtlib.IAttributeValue;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IResponse;
@@ -31,8 +34,13 @@ public class Solver_z3_4_3_2 extends Solver_z3_4_3 {
         super(smtConfig, command);
     }
 
-    /** z3 4.3.2 answers set-option of an option it does not know with an error ("unknown parameter", followed by
-     *  the list of its parameters), where SMT-LIB (and z3 4.3.1) answers unsupported */
+    /** Corrects a non-conformance of z3 4.3.2: set-option of an option it does not know answers an error,
+     *  {@code (error "line L column C: unknown parameter 'foo'\nLegal parameters are:\n ...")}, which names the
+     *  option and then lists every parameter of its module, one per line. SMT-LIB answers {@code unsupported}
+     *  there, as z3 4.3.1 does. The error is parsable, but the z3-4.3 adapters aim to be as close to conforming
+     *  as they can, so it is reported as {@code unsupported}. Only errors matching
+     *  {@code (?s)line \d+ column \d+: unknown parameter .*} are converted; any other set-option error (a bad
+     *  value, for example) passes through. */
     @Override
     protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
         IResponse r = super.set_option_impl(key, value);
@@ -41,6 +49,26 @@ public class Solver_z3_4_3_2 extends Solver_z3_4_3 {
         }
         return r;
     }
+
+    /** Corrects a non-conformance of z3 4.3.2: run with smtlib2_compliant=true, as this adapter runs it, a
+     *  check-sat of a problem with quantifiers, before any push, makes z3 parse its built-in pattern database
+     *  (111 commands) with print-success on, so a "success" line per command precedes the result. Those lines
+     *  are read and dropped here. They all come before the result, so none is left for a later command. (Not
+     *  passing smtlib2_compliant=true would avoid them, but changes many other responses away from SMT-LIB.) */
+    @Override
+    protected /*@Nullable*/ String sendScriptText(boolean listen, String... text) throws IOException {
+        String response = super.sendScriptText(listen, text);
+        if (response != null && text[0].startsWith("(check-sat")) {
+            response = SUCCESS_LINES.matcher(response).replaceFirst("");
+            while (response.isEmpty()) {
+                response = SUCCESS_LINES.matcher(solverProcess.listen()).replaceFirst("");
+            }
+        }
+        return response;
+    }
+
+    /** Leading "success" lines of a response */
+    private static final Pattern SUCCESS_LINES = Pattern.compile("^(success\\r?\\n?)+");
 
     @Override
     public IResponse push(int number) {
