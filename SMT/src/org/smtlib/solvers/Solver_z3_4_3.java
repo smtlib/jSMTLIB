@@ -238,7 +238,9 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         // so we have to use our own translator
         StringWriter sw = new StringWriter();
         sexpr.accept(new Translator(sw));
-        return sw.toString();
+        String s = sw.toString();
+        // z3 4.3 answers unsupported for check-sat-assuming (see check_sat_assuming)
+        return sexpr instanceof ICommand.Icheck_sat_assuming ? Solver_z3_recent.legacyCheckSat(s) : s;
     }
 
     // No translateSMT(INode) here -- a confirmed dead end, not just unused. It once existed
@@ -375,8 +377,10 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     private final Solver_z3_recent.Assumptions assumptions = new Solver_z3_recent.Assumptions(this::translate);
 
     /** z3 4.3 answers unsupported for check-sat-assuming, so it is sent as z3's legacy
-     *  (check-sat a1 ... an) (see Translator), which checks under the same assumptions; its unsat
-     *  core then includes the assumptions, which unsatCoreElements drops. Like check-sat, it is
+     *  (check-sat a1 ... an), which checks under the same assumptions; it is padded with spaces so
+     *  z3's error columns match the check-sat-assuming text (see translate and
+     *  Solver_z3_recent.legacyCheckSat). Its unsat core then includes the assumptions, which
+     *  unsatCoreElements drops. Like check-sat, it is
      *  accepted before set-logic, which SMT-LIB forbids, so that is reported here. */
     @Override
     public IResponse check_sat_assuming(IExpr... exprs) {
@@ -728,22 +732,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     public class Translator extends Printer {
 
         public Translator(Writer w) { super(Solver_z3_4_3.this.smtConfig, w); }
-
-        /** check-sat-assuming is written as z3's legacy (check-sat a1 ... an) (see check_sat_assuming) */
-        @Override
-        public Void visit(ICommand.Icheck_sat_assuming e) throws IVisitor.VisitorException {
-            try {
-                w.append("(check-sat");
-                for (IExpr x : e.terms()) {
-                    w.append(" ");
-                    x.accept(this);
-                }
-                w.append(")");
-            } catch (IOException ex) {
-                throw new IVisitor.VisitorException(ex, null);
-            }
-            return null;
-        }
 
         @Override
         public Void visit(IFcnExpr e) throws IVisitor.VisitorException {
