@@ -117,7 +117,8 @@ cannot be made to show on demand (#145). `StubSolver` then stands in for the sol
 the file's `; OPTIONS: --solver <name>` directive (through that solver's real adapter), with
 the `.stub` file's lines as its replies, one per command received in order, including any
 priming command the adapter sends first (e.g. `(set-option :print-success true)`). An empty
-line is an empty reply; `<<stderr>> text` writes the text to standard error; `<<exit N>>`
+line is an empty reply; `<<stderr>> text` writes the text to standard error; `<<with-stderr text>> reply`
+writes the text to standard error and then the reply to standard output; `<<exit N>>`
 ends the process with code N right after the reply before it. Such a test runs only in the
 `test`-solver variant of `FileTests`, and `runtest` skips it. Examples are in
 `tests/solverProtocol/`.
