@@ -12,12 +12,21 @@ import java.nio.file.Paths;
  *  as the first lines) and answer no command: {@code <<exit N>>} ends the process with code N,
  *  {@code <<close-stdout>>} closes standard output, {@code <<sleep N>>} pauses N milliseconds.
  *  The process also ends after replying to (exit), or when the replies run out.
+ *  {@code <<success-for (cmd)>>}, among the first lines, answers success to every command equal to
+ *  (cmd) without using a reply line: for a priming command an adapter sends on some platforms only
+ *  (e.g. z3's (set-option :print-success true) on Linux).
  *
  *  Not a JUnit test itself (see EchoProcess on why that annotation is not named here). */
 public class StubSolver {
     public static void main(String[] args) throws Exception {
         java.util.List<String> replies = Files.readAllLines(Paths.get(args[0]));
-        int next = directives(replies, 0);
+        java.util.Set<String> successFor = new java.util.HashSet<>();
+        int first = 0;
+        while (first < replies.size() && replies.get(first).startsWith("<<success-for ") && replies.get(first).endsWith(">>")) {
+            String line = replies.get(first++);
+            successFor.add(line.substring(14, line.length() - 2).trim());
+        }
+        int next = directives(replies, first);
         Reader in = new InputStreamReader(System.in);
         StringBuilder command = new StringBuilder();
         int depth = 0;
@@ -36,6 +45,11 @@ public class StubSolver {
             } else if (c == '(') {
                 depth++;
             } else if (c == ')' && --depth == 0) {
+                if (successFor.contains(command.toString())) {
+                    reply("success");
+                    command.setLength(0);
+                    continue;
+                }
                 if (next >= replies.size()) return;
                 reply(replies.get(next));
                 next = directives(replies, next + 1);

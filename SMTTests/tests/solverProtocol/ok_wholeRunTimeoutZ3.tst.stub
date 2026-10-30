@@ -1,3 +1,4 @@
+<<success-for (set-option :print-success true)>>
 success
 success
 success
