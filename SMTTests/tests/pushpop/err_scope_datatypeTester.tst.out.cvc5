@@ -6,7 +6,7 @@ success
 success
 success
 success
-(error "Parse Error: <shell>:1.25: Symbol 'circle' not declared as a variable")
+(error "Parse Error: <shell>:10.25: Symbol 'circle' not declared as a variable")
 (error "Error writing to solver: (declare-datatype Color ((red) (green) )) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Error writing to solver: (declare-fun x () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Error writing to solver: (assert ((_ is red) x)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

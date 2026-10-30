@@ -1,7 +1,7 @@
 success
 success
 success
-(error "Parse Error: <shell>:1.41: Cannot name a term in a binder (e.g., quantifiers, definitions)")
+(error "Parse Error: <shell>:5.41: Cannot name a term in a binder (e.g., quantifiers, definitions)")
 (error "Error writing to solver: (assert (exists ((r Bool) ) (! r :named R))) java.io.IOException: Stream closed")
 (error "Error writing to solver: (assert (forall ((r Bool) ) (and r (! q :named R)))) java.io.IOException: Stream closed")
 (error "Error writing to solver: (assert (let ((r true) ) (! r :named R))) java.io.IOException: Stream closed")

@@ -1,0 +1,3 @@
+success
+"hello"
+(error "at line 4, column 9: undefined term: z")

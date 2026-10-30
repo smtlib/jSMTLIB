@@ -1,0 +1,4 @@
+success
+sat
+(error "The get-assignment command is only valid if :produce-assignments has been enabled")
+(error "Parse Error: <shell>:5.9: Symbol 'z' not declared as a variable")

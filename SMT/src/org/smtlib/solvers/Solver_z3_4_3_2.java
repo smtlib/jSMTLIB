@@ -40,7 +40,7 @@ public class Solver_z3_4_3_2 extends Solver_z3_4_3 {
         try {
             pushesDepth += number;
             // This odd invocation is to correct a bug in Z3 4.3.2, where (push) can print out more than one success message.
-            solverProcess.sendNoListen("(push ",Integer.toString(number),")\n");
+            sendScriptText(false, "(push ",Integer.toString(number),")\n");
             solverProcess.sendNoListen("(echo \"<<DONE>>\")\n");
             // Accumulates every listen() call (not just the last one) so a genuine (error
             // ...) response to the push -- the process stays alive and still echoes the

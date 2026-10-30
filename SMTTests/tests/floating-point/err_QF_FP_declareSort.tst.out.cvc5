@@ -1,2 +1,2 @@
 success
-(error "Parse Error: <shell>:1.2: Free sort symbols not allowed in QF_FP")
+(error "Parse Error: <shell>:3.2: Free sort symbols not allowed in QF_FP")

@@ -1,5 +1,5 @@
 success
-(error "Parse Error: <shell>:1.20: Subexpressions must have the same type:
+(error "Parse Error: <shell>:3.20: Subexpressions must have the same type:
 Equation: (= 2 true)
 Type 1: Int
 Type 2: Bool
