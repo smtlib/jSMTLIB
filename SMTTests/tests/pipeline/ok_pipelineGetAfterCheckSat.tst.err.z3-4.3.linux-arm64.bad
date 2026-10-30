@@ -1,2 +1,2 @@
-(get-assertions)
+(get-unsat-core)
 ^^^^^^^^^^^^^^^^

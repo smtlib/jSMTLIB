@@ -5,6 +5,8 @@
  */
 package org.smtlib.solvers;
 
+import org.smtlib.IAttributeValue;
+import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IResponse;
 import org.smtlib.SMT;
 import org.smtlib.SMT.Configuration;
@@ -27,6 +29,17 @@ public class Solver_z3_4_3_2 extends Solver_z3_4_3 {
      *  the executable form adds */
     public Solver_z3_4_3_2(Configuration smtConfig, String[] command) {
         super(smtConfig, command);
+    }
+
+    /** z3 4.3.2 answers set-option of an option it does not know with an error ("unknown parameter", followed by
+     *  the list of its parameters), where SMT-LIB (and z3 4.3.1) answers unsupported */
+    @Override
+    protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
+        IResponse r = super.set_option_impl(key, value);
+        if (r instanceof IResponse.IError e && e.errorMsg().matches("(?s)line \\d+ column \\d+: unknown parameter .*")) {
+            return smtConfig.responseFactory.unsupported();
+        }
+        return r;
     }
 
     @Override
@@ -56,10 +69,8 @@ public class Solver_z3_4_3_2 extends Solver_z3_4_3 {
                 drained.append(s);
             } while (!drained.toString().contains("<<DONE>>"));
             String beforeMarker = drained.substring(0, drained.indexOf("<<DONE>>"));
-            if (beforeMarker.contains("(error")) {
-                return parseResponse(beforeMarker);
-            }
-            return successOrEmpty(smtConfig);
+            // the echo, sent without sendScriptText, needs no linesOffset adjustment
+            return beforeMarker.contains("(error") ? parseResponse(beforeMarker) : successOrEmpty(smtConfig);
         } catch (Exception e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }

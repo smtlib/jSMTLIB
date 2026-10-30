@@ -7,12 +7,20 @@ success
 success
 success
 success
-(
-z
-a
-m
-)
+success
+sat
 success
 success
 success
-(error "Unexpected output from the Z3 solver: (�  x  m  q  (not z))")
+unsat
+success
+success
+success
+sat
+success
+success
+success
+unsat
+success
+success
+sat

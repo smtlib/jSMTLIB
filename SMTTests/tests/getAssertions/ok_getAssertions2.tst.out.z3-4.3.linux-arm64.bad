@@ -12,7 +12,7 @@ p
 (or p p)
 false
 )
-free
-(error "IOException while reading Z3 reponse")
+(error "Out of step: the response to (pop 1) was free(): invalid size")
+(error "Error writing to Z3 solver: org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Failed to assert expression: org.smtlib.SolverProcess$NoResponseException: Solver process has already exited (not p)")
-(error "IOException while reading Z3 reponse")
+(error "Error writing to Z3 solver: org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
