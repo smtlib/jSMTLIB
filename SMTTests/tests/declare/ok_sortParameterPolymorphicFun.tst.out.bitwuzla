@@ -11,4 +11,4 @@ unsupported
 (error "The solver process has exited")
 (error "The solver process has exited")
 (error "The solver process has exited")
-(error "The get-value command is only valid immediately after check-sat returned sat or unknown")
+(error "The solver process has exited")
