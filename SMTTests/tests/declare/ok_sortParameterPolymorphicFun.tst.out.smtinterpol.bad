@@ -1,0 +1,13 @@
+success
+success
+success
+(error "<stdin>:7:1: Syntax Error")
+(error "<stdin>:8:16: Undeclared sort (A 0)")
+success
+success
+(error "<stdin>:11:12: Unknown function symbol f.")
+(error "<stdin>:12:12: Unknown function symbol f.")
+success
+success
+sat
+(error "<stdin>:17:14: Unknown function symbol f.")

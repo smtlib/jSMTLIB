@@ -1,0 +1,8 @@
+success
+success
+success
+(error "Parse Error: <shell>:1.17: Symbol 'A' not declared as a type")
+(error "Error writing to solver: (assert (forall ((x A) ) (= (f x) x))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun b () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (f b) (not b))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
