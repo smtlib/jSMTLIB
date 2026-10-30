@@ -193,7 +193,7 @@ public class AbstractSolver implements ISolver {
      *  no longer processes input ({@link #errorStopsSolver(IResponse)}) and the process is
      *  still alive, it is stopped, since a later command -- or exit() -- would otherwise wait
      *  forever for a reply. Only the OS process is stopped; the adapter is left as it is, so
-     *  later commands fail fast as "Solver process has already exited" and exit() cleans up
+     *  later commands answer that the solver process has exited and exit() cleans up
      *  normally. */
     protected /*@Nullable*/ IResponse checkImmediateExit(/*@Nullable*/ IResponse result) {
         if (result != null && result.isError() && selfReportsImmediateExit()) {
