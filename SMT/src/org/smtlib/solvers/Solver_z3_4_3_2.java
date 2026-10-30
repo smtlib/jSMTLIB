@@ -76,8 +76,7 @@ public class Solver_z3_4_3_2 extends Solver_z3_4_3 {
             return smtConfig.responseFactory.error("The logic must be set before a push command is issued");
         }
         if (number < 0) throw new SMT.InternalException("Internal bug: A push command called with a negative argument: " + number);
-        checkSatStatus = null;
-        if (number == 0) return smtConfig.responseFactory.success();
+        if (number == 0) return recordChange(StackChange.PUSH, smtConfig.responseFactory.success());
         try {
             pushesDepth += number;
             // This odd invocation is to correct a bug in Z3 4.3.2, where (push) can print out more than one success message.
@@ -98,7 +97,8 @@ public class Solver_z3_4_3_2 extends Solver_z3_4_3 {
             } while (!drained.toString().contains("<<DONE>>"));
             String beforeMarker = drained.substring(0, drained.indexOf("<<DONE>>"));
             // the echo, sent without sendScriptText, needs no linesOffset adjustment
-            return beforeMarker.contains("(error") ? parseResponse(beforeMarker) : successOrEmpty(smtConfig);
+            return recordChange(StackChange.PUSH,
+                    beforeMarker.contains("(error") ? parseResponse(beforeMarker) : successOrEmpty(smtConfig));
         } catch (Exception e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }

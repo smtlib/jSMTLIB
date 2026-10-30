@@ -1,0 +1,8 @@
+success
+success
+success
+success
+sat
+(error "line 8 column 21: invalid declaration, constant 'x' (whith the given signature) already declared")
+(error "line 9 column 15: model is not available")
+(error "line 10 column 10: model is not available")

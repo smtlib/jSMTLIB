@@ -1,4 +1,0 @@
-(check-sat-assuming ())
-^^^^^^^^^^^^^^^^^^^^^^^
-(check-sat-assuming (b))
-^^^^^^^^^^^^^^^^^^^^^^^^

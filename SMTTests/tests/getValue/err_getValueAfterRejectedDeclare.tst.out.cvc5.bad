@@ -1,0 +1,8 @@
+success
+success
+success
+success
+sat
+(error "Cannot bind x to symbol of type Bool, maybe the symbol has already been defined?")
+(error "cannot get value unless after a SAT or UNKNOWN response.")
+(error "cannot get model unless after a SAT or UNKNOWN response.")
