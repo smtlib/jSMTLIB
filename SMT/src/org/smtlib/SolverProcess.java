@@ -454,6 +454,14 @@ public class SolverProcess {
         }
     }
 
+    /** The number of line terminators sent to the process so far */
+    private int linesSent = 0;
+
+    /** The number of the solver input line that the next text sent starts on (lines counted from 1) */
+    public int nextLine() {
+        return linesSent + 1;
+    }
+
     /** Sends all the given text arguments, then (if listen is true) listens for the designated end marker text */
     public /*@Nullable*/ String send(boolean listen, String ... args) throws IOException {
         // Read once: exit() on another thread may null them (#156)
@@ -499,6 +507,7 @@ public class SolverProcess {
         try {
             for (String arg: args) {
                 to.write(arg);
+                for (int i = 0; i < arg.length(); i++) if (arg.charAt(i) == '\n') linesSent++;
             }
             to.flush();
         } catch (IOException e) {

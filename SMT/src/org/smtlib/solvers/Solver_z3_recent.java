@@ -8,7 +8,6 @@ package org.smtlib.solvers;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.smtlib.*;
@@ -54,19 +53,16 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
     protected String cmds_unix[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
 
     /** True only on the platform where the print-success priming command below is needed
-     *  (see the class javadoc) -- also gates the linesOffset compensation in
-     *  parseResponse(), since the two must always travel together. */
+     *  (see the class javadoc) */
     protected final boolean needsPrintSuccessPriming = !isWindows && !isMac;
 
-    // linesOffset is inherited from AbstractSolver -- see its own doc comment there.
-    // Incremented by the priming command in start() (never more than once -- start() is
-    // only ever called once per instance): every "line N" a Linux z3 process reports needs
-    // N-linesOffset to stay consistent with the user's own script, since z3 counts input
-    // lines from the very start of the stream it receives, including the priming line
-    // jSMTLIB adds before the user's script begins. Stays 0 (a no-op in parseResponse()) on
-    // every platform that doesn't need the priming command at all.
+    /** z3 reports "line N column C" in its error messages, counting the lines of its whole input */
+    private static final List<Pattern> LINE_NUMBERS = List.of(Pattern.compile("(line )(\\d+)( column)"));
 
-    private static final Pattern LINE_NUMBER = Pattern.compile("line (\\d+)");
+    @Override
+    protected List<Pattern> lineNumberPatterns() {
+        return LINE_NUMBERS;
+    }
 
     /** Creates an instance of the solver */
     public Solver_z3_recent(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
@@ -110,7 +106,6 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
             solverProcess.start(false);
             if (needsPrintSuccessPriming) {
                 solverProcess.sendAndListen("(set-option :print-success true)\n");
-                linesOffset++;
             }
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
             return smtConfig.responseFactory.success();
@@ -145,25 +140,6 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
     @Override
     protected boolean isTimeLimitResponse(String rawResponse) {
         return rawResponse.trim().equals("timeout");
-    }
-
-    @Override
-    protected IResponse parseResponse(String response) {
-        // Scoped to responses that actually carry an error message: z3 only ever reports a
-        // line number inside an (error "...") response, never in a success/sat/unsat/model
-        // response -- rewriting unconditionally risked mangling an unrelated "line N"
-        // substring that happened to appear elsewhere, e.g. inside a get-value/get-model
-        // response's returned string literal or model value.
-        if (linesOffset != 0 && response.contains("(error")) {
-            Matcher m = LINE_NUMBER.matcher(response);
-            StringBuilder sb = new StringBuilder();
-            while (m.find()) {
-                m.appendReplacement(sb, "line " + (Integer.parseInt(m.group(1)) - linesOffset));
-            }
-            m.appendTail(sb);
-            response = sb.toString();
-        }
-        return super.parseResponse(response);
     }
 
     // The checks below correct recent z3 answering get- commands that SMT-LIB makes errors; it

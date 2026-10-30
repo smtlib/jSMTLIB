@@ -24,6 +24,15 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
     @Override
     protected boolean selfReportsImmediateExit() { return true; }
 
+    /** yices2 reports "at line L, column C" in its error messages, counting the lines of its whole input */
+    private static final java.util.List<java.util.regex.Pattern> LINE_NUMBERS =
+            java.util.List.of(java.util.regex.Pattern.compile("(at line )(\\d+)(, column)"));
+
+    @Override
+    protected java.util.List<java.util.regex.Pattern> lineNumberPatterns() {
+        return LINE_NUMBERS;
+    }
+
     /** Creates an instance of the yices2 solver */
     public Solver_yices2(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
         super(smtConfig, command);

@@ -1,5 +1,5 @@
 success
-(error "Parse Error: <shell>:1.36: Expected a RPAREN_TOK, got `#b11` (BINARY_LITERAL).")
+(error "Parse Error: <shell>:3.36: Expected a RPAREN_TOK, got `#b11` (BINARY_LITERAL).")
 (error "Error writing to solver: (declare-fun y () (_ FloatingPoint 3 #x5)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Error writing to solver: (declare-fun z () (_ FloatingPoint 3 5)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Error writing to solver: (assert (= z (_ +zero #b11 5))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

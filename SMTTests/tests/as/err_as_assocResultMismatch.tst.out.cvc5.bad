@@ -1,4 +1,4 @@
 success
-(error "Parse Error: <shell>:1.22: Could not resolve expression with name + and type Int
+(error "Parse Error: <shell>:3.22: Could not resolve expression with name + and type Int
 ")
 (error "Error writing to solver: (assert (= ((as + Bool) 1 2 3) 6)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
