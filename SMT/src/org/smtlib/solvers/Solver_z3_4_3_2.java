@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 import org.smtlib.IAttributeValue;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IResponse;
-import org.smtlib.SMT;
 import org.smtlib.SMT.Configuration;
 
 /**
@@ -69,38 +68,4 @@ public class Solver_z3_4_3_2 extends Solver_z3_4_3 {
 
     /** Leading "success" lines of a response */
     private static final Pattern SUCCESS_LINES = Pattern.compile("^(success\\r?\\n?)+");
-
-    @Override
-    public IResponse push(int number) {
-        if (!logicSet) {
-            return smtConfig.responseFactory.error("The logic must be set before a push command is issued");
-        }
-        if (number < 0) throw new SMT.InternalException("Internal bug: A push command called with a negative argument: " + number);
-        if (number == 0) return recordChange(StackChange.PUSH, smtConfig.responseFactory.success());
-        try {
-            pushesDepth += number;
-            // This odd invocation is to correct a bug in Z3 4.3.2, where (push) can print out more than one success message.
-            sendScriptText(false, "(push ",Integer.toString(number),")\n");
-            solverProcess.sendNoListen("(echo \"<<DONE>>\")\n");
-            // Accumulates every listen() call (not just the last one) so a genuine (error
-            // ...) response to the push -- the process stays alive and still echoes the
-            // marker normally -- is seen and reported, instead of being silently
-            // overwritten by a later call and swallowed as success. A dead process is
-            // already handled separately: SolverProcess.listen() throws
-            // NoResponseException on a forced EOF with nothing on either stream, caught
-            // below like any other exception here.
-            StringBuilder drained = new StringBuilder();
-            String s;
-            do {
-                s = solverProcess.listen();
-                drained.append(s);
-            } while (!drained.toString().contains("<<DONE>>"));
-            String beforeMarker = drained.substring(0, drained.indexOf("<<DONE>>"));
-            // the echo, sent without sendScriptText, needs no linesOffset adjustment
-            return recordChange(StackChange.PUSH,
-                    beforeMarker.contains("(error") ? parseResponse(beforeMarker) : successOrEmpty(smtConfig));
-        } catch (Exception e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
-        }
-    }
 }
