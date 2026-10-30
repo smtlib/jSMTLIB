@@ -1,4 +1,0 @@
-(check-sat-assuming (p))
-^^^^^^^^^^^^^^^^^^^^^^^^
-(set-option :produce-unsat-assumptions true)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

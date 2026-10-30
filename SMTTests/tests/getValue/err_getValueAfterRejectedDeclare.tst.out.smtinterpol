@@ -1,0 +1,8 @@
+success
+success
+success
+success
+sat
+(error "<stdin>:8:13: Function x is already defined.")
+((x true))
+( ( define-fun x ( ) Bool true ) )

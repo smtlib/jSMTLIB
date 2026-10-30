@@ -339,8 +339,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The logic must be set before an assert command is issued");
         }
         try {
-            response = send(Shape.SUCCESS, "(assert " + translate(sexpr) + ")");
-            checkSatStatus = null;
+            response = recordChange(StackChange.ASSERT, send(Shape.SUCCESS, "(assert " + translate(sexpr) + ")"));
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Failed to assert expression: " + e + " " + sexpr);
         } catch (Exception e) {
@@ -368,15 +367,38 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         if (!logicSet) {
             return smtConfig.responseFactory.error("The logic must be set before a check-sat command is issued");
         }
-        checkSatStatus = sendCommand(smtConfig.commandFactory.check_sat());
-        return checkSatStatus;
+        assumptions.clear();
+        return super.check_sat();
+    }
+
+    /** The assumptions of the most recent check command, if it was check-sat-assuming */
+    private final Solver_z3_recent.Assumptions assumptions = new Solver_z3_recent.Assumptions(this::translate);
+
+    /** z3 4.3 answers unsupported for check-sat-assuming, so it is sent as z3's legacy
+     *  (check-sat a1 ... an) (see Translator), which checks under the same assumptions; its unsat
+     *  core then includes the assumptions, which unsatCoreElements drops. Like check-sat, it is
+     *  accepted before set-logic, which SMT-LIB forbids, so that is reported here. */
+    @Override
+    public IResponse check_sat_assuming(IExpr... exprs) {
+        if (!logicSet) {
+            return smtConfig.responseFactory.error("The logic must be set before a check-sat-assuming command is issued");
+        }
+        assumptions.set(exprs);
+        return super.check_sat_assuming(exprs);
+    }
+
+    /** Drops the assumptions z3 4.3 adds to the unsat core after check-sat-assuming */
+    @Override
+    protected List<IExpr> unsatCoreElements(List<IExpr> reply) {
+        return assumptions.withoutAssumptions(reply);
     }
 
     @Override
     public IResponse reset() {
         logicSet = false;
         pushesDepth = 0;
-        return sendCommand("(reset)");
+        assumptions.clear();
+        return super.reset();
     }
 
     /** z3-4.3 predates reset-assertions (added in SMT-LIB 2.5), and turns out to already
@@ -405,7 +427,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         if (number < 0) throw new SMT.InternalException("Internal bug: A pop command called with a negative argument: " + number);
         if (number == 0) return  successOrEmpty(smtConfig);
         try {
-            checkSatStatus = null;
             // Deliberately no client-side bound check against pushesDepth here: z3-4.3
             // already validates a pop count against its own real stack depth and reports a
             // precise, line/column-annotated error itself (confirmed against a real
@@ -414,7 +435,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             // so defer to it (see issue #53). Only update the local depth bookkeeping once
             // the solver actually accepted the pop; otherwise nothing was really popped and
             // pushesDepth must not drift from what the solver's real stack looks like.
-            IResponse response = send(Shape.SUCCESS, "(pop " + number + ")");
+            IResponse response = recordChange(StackChange.POP, send(Shape.SUCCESS, "(pop " + number + ")"));
             if (!response.isError()) pushesDepth -= number;
             return response;
         } catch (IOException e) {
@@ -428,8 +449,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The logic must be set before a push command is issued");
         }
         if (number < 0) throw new SMT.InternalException("Internal bug: A push command called with a negative argument: " + number);
-        checkSatStatus = null;
-        if (number == 0) return smtConfig.responseFactory.success();
+        if (number == 0) return recordChange(StackChange.PUSH, smtConfig.responseFactory.success());
         try {
             pushesDepth += number;
             // Used to convert any push() error into success whenever !isWindows (issue #53),
@@ -440,7 +460,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             // reproducible case anywhere to justify masking it, and no evidence for the
             // Linux-only claim either, the honest, platform-independent behavior is to
             // return exactly what the solver said, uniformly.
-            return send(Shape.SUCCESS, "(push " + number + ")");
+            return recordChange(StackChange.PUSH, send(Shape.SUCCESS, "(push " + number + ")"));
         } catch (Exception e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -538,7 +558,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_MODELS))) {
             return smtConfig.responseFactory.error("The get-model command is only valid if :produce-models has been enabled");
         }
-        if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
+        IResponse status = checkStatus();
+        if (status != smtConfig.responseFactory.sat() && status != smtConfig.responseFactory.unknown()) {
             return smtConfig.responseFactory.error("The get-model command is only valid immediately after check-sat returned sat or unknown");
         }
         try {
@@ -554,8 +575,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The logic must be set before a declare-const command is issued");
         }
         try {
-            checkSatStatus = null;
-            return send(Shape.SUCCESS, translate(cmd));
+            return recordChange(StackChange.DECLARE_FUN, send(Shape.SUCCESS, translate(cmd)));
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         } catch (IVisitor.VisitorException e) {
@@ -569,8 +589,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The logic must be set before a declare-fun command is issued");
         }
         try {
-            checkSatStatus = null;
-            return send(Shape.SUCCESS, translate(cmd));
+            return recordChange(StackChange.DECLARE_FUN, send(Shape.SUCCESS, translate(cmd)));
 
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
@@ -585,8 +604,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The logic must be set before a " + cmd.commandName() + " command is issued");
         }
         try {
-            checkSatStatus = null;
-            return send(Shape.SUCCESS, translate(cmd));
+            return recordChange(StackChange.DEFINE_FUN, send(Shape.SUCCESS, translate(cmd)));
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         } catch (IVisitor.VisitorException e) {
@@ -600,8 +618,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The logic must be set before a declare-sort command is issued");
         }
         try {
-            checkSatStatus = null;
-            return send(Shape.SUCCESS, translate(cmd));
+            return recordChange(StackChange.DECLARE_SORT, send(Shape.SUCCESS, translate(cmd)));
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         } catch (IVisitor.VisitorException e) {
@@ -615,8 +632,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The logic must be set before a define-sort command is issued");
         }
         try {
-            checkSatStatus = null;
-            return send(Shape.SUCCESS, translate(cmd));
+            return recordChange(StackChange.DEFINE_SORT, send(Shape.SUCCESS, translate(cmd)));
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         } catch (IVisitor.VisitorException e) {
@@ -631,7 +647,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_PROOFS))) {
             return smtConfig.responseFactory.error("The get-proof command is only valid if :produce-proofs has been enabled");
         }
-        if (checkSatStatus != smtConfig.responseFactory.unsat()) {
+        if (checkStatus() != smtConfig.responseFactory.unsat()) {
             return smtConfig.responseFactory.error("The get-proof command is only valid immediately after check-sat returned unsat");
         }
         try {
@@ -648,11 +664,18 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_UNSAT_CORES))) {
             return smtConfig.responseFactory.error("The get-unsat-core command is only valid if :produce-unsat-cores has been enabled");
         }
-        if (checkSatStatus != smtConfig.responseFactory.unsat()) {
+        if (checkStatus() != smtConfig.responseFactory.unsat()) {
             return smtConfig.responseFactory.error("The get-unsat-core command is only valid immediately after check-sat returned unsat");
         }
         try {
-            return sendList("(get-unsat-core)", p -> smtConfig.responseFactory.get_unsat_core_response(p.parseSymbolList()));
+            return sendList("(get-unsat-core)", p -> {
+                List<IExpr.ISymbol> names = new java.util.ArrayList<>();
+                for (IExpr e : unsatCoreElements(p.parseTermList())) {
+                    if (!(e instanceof IExpr.ISymbol name)) throw new ParserException("not a label: " + e, null);
+                    names.add(name);
+                }
+                return smtConfig.responseFactory.get_unsat_core_response(names);
+            });
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -666,7 +689,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_ASSIGNMENTS))) {
             return smtConfig.responseFactory.error("The get-assignment command is only valid if :produce-assignments has been enabled");
         }
-        if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
+        IResponse status = checkStatus();
+        if (status != smtConfig.responseFactory.sat() && status != smtConfig.responseFactory.unknown()) {
             return smtConfig.responseFactory.error("The get-assignment command is only valid immediately after check-sat returned sat or unknown");
         }
         try {
@@ -683,7 +707,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_MODELS))) {
             return smtConfig.responseFactory.error("The get-value command is only valid if :produce-models has been enabled");
         }
-        if (!smtConfig.responseFactory.sat().equals(checkSatStatus) && !smtConfig.responseFactory.unknown().equals(checkSatStatus)) {
+        IResponse status = checkStatus();
+        if (!smtConfig.responseFactory.sat().equals(status) && !smtConfig.responseFactory.unknown().equals(status)) {
             return smtConfig.responseFactory.error("A get-value command is valid only after check-sat has returned sat or unknown");
         }
         try {
@@ -703,6 +728,22 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     public class Translator extends Printer {
 
         public Translator(Writer w) { super(Solver_z3_4_3.this.smtConfig, w); }
+
+        /** check-sat-assuming is written as z3's legacy (check-sat a1 ... an) (see check_sat_assuming) */
+        @Override
+        public Void visit(ICommand.Icheck_sat_assuming e) throws IVisitor.VisitorException {
+            try {
+                w.append("(check-sat");
+                for (IExpr x : e.terms()) {
+                    w.append(" ");
+                    x.accept(this);
+                }
+                w.append(")");
+            } catch (IOException ex) {
+                throw new IVisitor.VisitorException(ex, null);
+            }
+            return null;
+        }
 
         @Override
         public Void visit(IFcnExpr e) throws IVisitor.VisitorException {

@@ -1,0 +1,8 @@
+success
+success
+success
+(error "Parse Error: <shell>:7.19: Symbol 'A' not declared as a type")
+(error "Error writing to solver: (assert (= c c)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (as c Int) 1)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (as c Bool)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

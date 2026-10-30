@@ -98,6 +98,13 @@ public class SolverProcess {
     /** The Java process object (initialized by start() )*/
     protected volatile Process process;
 
+    /** When the process was started, and (once it has ended) how long it ran, in nanoseconds */
+    private long startNanos;
+    private volatile java.util.concurrent.CompletableFuture<Long> runNanos;
+
+    /** Set once jSMTLIB itself has stopped or interrupted the process */
+    private volatile boolean stoppedHere = false;
+
     /** The Writer object that writes to the spawned process (initialized by start() )*/
     protected volatile Writer toProcess;
 
@@ -169,9 +176,11 @@ public class SolverProcess {
     public void start(boolean listen) throws ProverException {
         if (process != null) throw new ProverException("SolverProcess.start() called on an already-started process");
         try {
+            startNanos = System.nanoTime();
             process = discardErrorOutput
                     ? new ProcessBuilder(app).redirectError(ProcessBuilder.Redirect.DISCARD).start()
                     : Runtime.getRuntime().exec(app);
+            runNanos = process.onExit().thenApply(p -> System.nanoTime() - startNanos);
             // Captured into a local rather than reading the 'process' field from within run():
             // exit() nulls that field before this process has necessarily finished dying, and if
             // the hook fires (JVM shutdown racing ahead of the async removal below) after that
@@ -336,23 +345,35 @@ public class SolverProcess {
         return sb.toString();
     }
 
-    /** The text the solver wrote, on stdout and stderr, that has not been read as a response: e.g. a report it wrote
-     *  just before exiting on its own, such as when its whole-run time limit ended it between commands. Meant for use
-     *  after the process has exited, when both streams reach EOF and this returns promptly; it does not wait for a
-     *  response to a command. */
-    public String unreadOutput() {
-        StringBuilder text = new StringBuilder();
+    /** The text the solver wrote that has not been read as a response, on stdout and on stderr (in that order):
+     *  e.g. a report it wrote just before exiting on its own, such as when its whole-run time limit ended it between
+     *  commands. Meant for use after the process has exited, when both streams reach EOF and this returns promptly;
+     *  it does not wait for a response to a command. */
+    public String[] unreadOutput() {
+        return new String[] { unread(standardOut), unread(errorOut) };
+    }
+
+    private String unread(/*@Nullable*/ StreamGobbler stream) {
         try {
-            if (standardOut != null) text.append(standardOut.drainToEnd(endDrainMillis));
+            return stream == null ? "" : stream.drainToEnd(endDrainMillis);
         } catch (IOException e) {
-            // nothing more to read
+            return ""; // nothing more to read
         }
+    }
+
+    /** Whether the process has ended on its own (not stopped or interrupted here), waiting at most waitMillis
+     *  for that, after running at least the given number of seconds */
+    public boolean endedAfter(double seconds, long waitMillis) {
+        java.util.concurrent.CompletableFuture<Long> run = runNanos;
+        if (run == null || stoppedHere) return false;
         try {
-            if (errorOut != null) text.append(errorOut.drainToEnd(endDrainMillis));
-        } catch (IOException e) {
-            // nothing more to read
+            return run.get(waitMillis, TimeUnit.MILLISECONDS) >= seconds * 1e9;
+        } catch (java.util.concurrent.TimeoutException | java.util.concurrent.ExecutionException e) {
+            return false;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
         }
-        return text.toString();
     }
 
     /** Interrupts the command the solver is running by sending it SIGINT: z3 then abandons the
@@ -361,6 +382,7 @@ public class SolverProcess {
     public void interrupt() {
         Process p = process;
         if (p == null) return;
+        stoppedHere = true;
         if (SMT.platformName().equals("windows")) {
             p.destroyForcibly();
             return;
@@ -523,6 +545,7 @@ public class SolverProcess {
     public void stopIfRunning() {
         Process p = process;
         if (p != null && p.isAlive()) {
+            stoppedHere = true;
             p.destroyForcibly();
             try {
                 p.waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
@@ -654,6 +677,7 @@ public class SolverProcess {
                 }
                 // end of stream reached -- fall through to report EOF with any trailing text
             } catch (IOException ioe) {
+                if (local.length() > 0) offer(Chunk.text(local.toString())); // what was read is kept
                 offer(Chunk.error(ioe));
                 return;
             }
@@ -718,7 +742,8 @@ public class SolverProcess {
         private volatile boolean ended = false;
 
         /** Returns the text that has not been taken, up to the end of the stream, waiting at most
-         *  maxMillis in all for that end */
+         *  maxMillis in all for that end. A failure of the stream ends the text; it is thrown only if
+         *  no text came before it (as for drain). */
         String drainToEnd(long maxMillis) throws IOException {
             StringBuilder out = new StringBuilder();
             long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(maxMillis);
@@ -728,7 +753,7 @@ public class SolverProcess {
                     Chunk c = left > 0 ? queue.poll(left, TimeUnit.NANOSECONDS) : queue.poll();
                     if (c == null) break;
                     ended |= c.eof;
-                    if (c.error != null) throw c.error;
+                    if (c.error != null && out.length() == 0) throw c.error;
                     out.append(c.text);
                 }
             } catch (InterruptedException e) {
@@ -741,7 +766,8 @@ public class SolverProcess {
         /** Drains whatever text has arrived, waiting up to settleMillis for the *first* chunk
          * before concluding there is none, and (once at least one chunk has arrived) up to
          * settleMillis again for further stragglers before giving up. Always returns -- never
-         * blocks indefinitely -- once the stream reaches EOF or a settle window elapses.
+         * blocks indefinitely -- once the stream reaches EOF or a settle window elapses. A failure of
+         * the stream ends the text; it is thrown only if no text came before it.
          *
          * The first wait matters as much as the straggler one: this thread only just unblocked
          * from standardOut.take(), which guarantees the solver has finished writing this
@@ -758,7 +784,7 @@ public class SolverProcess {
                 Chunk c = queue.poll(settleMillis, TimeUnit.MILLISECONDS); // brief grace period, first chunk
                 while (c != null) {
                     ended |= c.eof;
-                    if (c.error != null) throw c.error;
+                    if (c.error != null && out.length() == 0) throw c.error;
                     out.append(c.text);
                     if (c.eof) break;
                     c = queue.poll(settleMillis, TimeUnit.MILLISECONDS); // brief grace period for stragglers

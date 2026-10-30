@@ -1,0 +1,9 @@
+success
+success
+success
+success
+unsat
+(
+(set-logic QF_UF)
+(proof (let (($x28 (not p))) (let ((@x29 (asserted $x28))) (unit-resolution @x29 (asserted p) false))))
+)
