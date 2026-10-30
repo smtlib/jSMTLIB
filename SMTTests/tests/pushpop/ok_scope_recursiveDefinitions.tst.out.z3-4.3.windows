@@ -2,7 +2,7 @@ success
 success
 unsupported
 unsupported
-(error "line 8 column 15: unknown function/constant h")
+(error "line 7 column 15: unknown function/constant h")
 success
 success
 success
@@ -10,7 +10,7 @@ success
 unsupported
 unsupported
 unsupported
-(error "line 16 column 15: invalid function application, wrong number of arguments")
+(error "line 15 column 15: invalid function application, wrong number of arguments")
 unsupported
 success
 success
