@@ -62,6 +62,7 @@ public class Solver_z3_4_3_2 extends Solver_z3_4_3 {
             while (response.isEmpty()) {
                 response = SUCCESS_LINES.matcher(solverProcess.listen()).replaceFirst("");
             }
+            logSolverDiagnostics();
         }
         return response;
     }
