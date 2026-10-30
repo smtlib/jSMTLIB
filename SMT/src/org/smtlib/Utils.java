@@ -25,6 +25,14 @@ import org.smtlib.sexpr.ISexpr;
 /** A class of static utility methods and constants for the SMT-LIB package. */
 public class Utils {
 
+    /** The line of its source on which the command starts (counted from 1), or 0 if it has no source position */
+    public static int sourceLine(ICommand cmd) {
+        if (!(cmd instanceof IPos.IPosable posable)) return 0;
+        IPos pos = posable.pos();
+        if (pos == null || pos.source() == null) return 0;
+        return pos.source().lineNumber(pos.charStart());
+    }
+
 
     /** The name of the properties file read by jSMTLIB */
     static final public String PROPS_FILE = "jsmtlib.properties";

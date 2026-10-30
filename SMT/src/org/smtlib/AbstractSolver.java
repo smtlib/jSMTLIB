@@ -64,23 +64,94 @@ public class AbstractSolver implements ISolver {
     /** The object that interacts with external processes */
     protected SolverProcess solverProcess;
 
-    /** Running correction applied when rewriting a line number a solver reports back in its
-     *  own error text, so what the user sees matches their own script's real line numbers
-     *  rather than whatever the solver itself counted in what was actually sent to it (see
-     *  issues #96/#97). Every real command line and every real standalone comment line sent
-     *  to a solver corresponds to exactly one line of the user's own script -- no adjustment
-     *  needed there -- but two kinds of event break that correspondence and must adjust this
-     *  field at the point they happen: a line an adapter inserts that has no counterpart in
-     *  the user's script (e.g. a `:print-success` priming send at start()) increments it by
-     *  the number of lines inserted; a real script line an adapter deliberately never sends
-     *  (e.g. Solver_z3_4_3 skipping literal `(set-logic ALL)`, which that solver has no
-     *  equivalent for, or a set-option answered locally) decrements it by the number of lines
-     *  skipped. A subclass that embeds a solver-reported line number in its own response text
-     *  should rewrite it as {@code reportedLine - linesOffset} before returning that text -- see
-     *  Solver_z3_4_3/Solver_z3_recent/Solver_bitwuzla's parseResponse() overrides. Solvers
-     *  that don't insert or skip any line relative to the user's script (most adapters) never
-     *  need to touch this at all, and it stays 0. */
+    /** The correction to a line number the solver reports for the command whose response is being
+     *  read: line N of the solver's input is shown as line {@code N - linesOffset}, the line of the
+     *  user's source on which that command starts. The solver numbers the lines it receives, which
+     *  are not the source's: jSMTLIB adds lines (a priming :print-success, a pipelining barrier, an
+     *  adapter's own query), omits lines (blank lines, commands answered here) and sends each command
+     *  on one line. So rather than tracking each such difference, linesOffset is set by
+     *  {@link #sendScriptText} whenever text is sent for a command of the script, from the solver line
+     *  that text starts on and the command's source line (see {@link #setSourceLine}). A command
+     *  without a source line (one built through the API) counts as the line after the previous one.
+     *  An adapter rewrites the line numbers in its solver's messages with {@link #withSourceLines}. */
     protected int linesOffset = 0;
+
+    /** The source line of the command being executed (see {@link #setSourceLine}); a command
+     *  without one counts as the line after the previous command */
+    private int sourceLine = 0;
+
+    /** Whether an executor gives each command's source line (see {@link #setSourceLine}); if
+     *  not, each text sent for a command counts as the line after the previous one */
+    private boolean linesGiven = false;
+
+    /** Positive while the adapter sends a query of its own, which is no command of the script */
+    private int ownQueries = 0;
+
+    /** linesOffset as set from each solver line on, kept when {@link #reportsEarlierLines()} */
+    private final java.util.TreeMap<Integer,Integer> offsetsFrom = new java.util.TreeMap<>();
+
+    @Override
+    public void setSourceLine(int line) {
+        sourceLine = line > 0 ? line : sourceLine + 1;
+        linesGiven = true;
+    }
+
+    /** The solver line, as the solver numbers lines in its messages, on which the next text sent
+     *  starts; overridden for a solver that does not number the lines of its whole input */
+    protected int nextSolverLine() {
+        return solverProcess.nextLine();
+    }
+
+    /** Whether the solver's messages name lines of earlier commands (see {@link #earlierSourceLine}) */
+    protected boolean reportsEarlierLines() {
+        return false;
+    }
+
+    /** Sends text for the command being executed (not text the adapter adds of its own accord),
+     *  first setting linesOffset for it; returns the response if listen is true, else null */
+    protected /*@Nullable*/ String sendScriptText(boolean listen, String... text) throws IOException {
+        if (ownQueries == 0) {
+            if (!linesGiven) sourceLine++;
+            int solverLine = nextSolverLine();
+            linesOffset = solverLine - sourceLine;
+            if (reportsEarlierLines()) {
+                java.util.Map.Entry<Integer,Integer> last = offsetsFrom.lastEntry();
+                if (last == null || last.getValue() != linesOffset) offsetsFrom.put(solverLine, linesOffset);
+            }
+        }
+        if (!listen) {
+            solverProcess.sendNoListen(text);
+            return null;
+        }
+        return solverProcess.sendAndListen(text);
+    }
+
+    /** The source line for line n of the solver's input, which may be that of an earlier command */
+    protected int earlierSourceLine(int n) {
+        java.util.Map.Entry<Integer,Integer> e = offsetsFrom.floorEntry(n);
+        return n - (e == null ? linesOffset : e.getValue());
+    }
+
+    /** Patterns matching the line numbers in this solver's messages about the command answered: group 1
+     *  is the text before the number, group 2 the number, group 3 the text after it */
+    protected java.util.List<java.util.regex.Pattern> lineNumberPatterns() {
+        return java.util.List.of();
+    }
+
+    /** The text with each line number lineNumberPatterns finds in it rewritten as a source line (see linesOffset) */
+    protected String withSourceLines(String text) {
+        for (java.util.regex.Pattern p: lineNumberPatterns()) {
+            java.util.regex.Matcher m = p.matcher(text);
+            StringBuilder sb = new StringBuilder();
+            while (m.find()) {
+                int n = Integer.parseInt(m.group(2));
+                m.appendReplacement(sb, java.util.regex.Matcher.quoteReplacement(m.group(1) + (n - linesOffset) + m.group(3)));
+            }
+            m.appendTail(sb);
+            text = sb.toString();
+        }
+        return text;
+    }
 
     /** SMT configuration — set by each concrete subclass constructor. */
     protected SMT.Configuration smtConfig;
@@ -170,8 +241,6 @@ public class AbstractSolver implements ISolver {
     /** Answers a set-option of :print-success locally (it is never sent), else returns null */
     public IResponse checkPrintSuccess(SMT.Configuration smtConfig,IKeyword key, IAttributeValue value) {
         if (key.equals(printSuccess)) {
-            // This script line is not sent, so the solver's line count falls one behind (see linesOffset)
-            linesOffset--;
             // C_set_option.parse() already rejects this eagerly for any text-driven
             // script -- but this method is also reachable directly via
             // smtConfig.commandFactory.set_option(key,value), which bypasses that
@@ -206,6 +275,7 @@ public class AbstractSolver implements ISolver {
      *  correct for any real solver's non-compliant quirks (e.g. legacy bit-vector literal
      *  syntax) — override in a subclass whose target solver needs either. */
     protected IResponse parseResponse(String response) {
+        if (response.contains("(error")) response = withSourceLines(response);
         try {
             return new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseResponse(response);
         } catch (IParser.ParserException e) {
@@ -310,7 +380,7 @@ public class AbstractSolver implements ISolver {
             if (!capturing) readPipelined(true);
             translatedCmd = translate(cmd);
             if (capturing) return sendWithoutWaiting(translatedCmd, shapeOf(cmd));
-            String response = solverProcess.sendAndListen(translatedCmd, "\n");
+            String response = sendScriptText(true, translatedCmd, "\n");
             // A null response (observed rarely, likely a SolverProcess read-timing race)
             // would otherwise reach parseResponse() and surface as an uncaught
             // NullPointerException from deep in the parser, crashing the whole run
@@ -362,12 +432,15 @@ public class AbstractSolver implements ISolver {
         final Shape shape;
         /** For a barrier (see readPipelined), the text it echoes; else null */
         final /*@Nullable*/ String marker;
+        /** linesOffset for the command */
+        final int linesOffset;
         private /*@Nullable*/ IResponse response = null;
 
-        Pending(String sent, Shape shape, /*@Nullable*/ String marker) {
+        Pending(String sent, Shape shape, /*@Nullable*/ String marker, int linesOffset) {
             this.sent = sent;
             this.shape = shape;
             this.marker = marker;
+            this.linesOffset = linesOffset;
         }
 
         public boolean isReady() { return response != null; }
@@ -441,6 +514,7 @@ public class AbstractSolver implements ISolver {
         List<Pending> sent = new java.util.ArrayList<>();
         IResponse response = smtConfig.responseFactory.success();
         for (ICommand c: commands) {
+            setSourceLine(Utils.sourceLine(c));
             if (pipelines(c) && !(c instanceof Icheck_sat) && !(c instanceof Icheck_sat_assuming)) {
                 response = sendPipelined(c);
                 if (response instanceof Pending p) {
@@ -491,12 +565,14 @@ public class AbstractSolver implements ISolver {
     private IResponse sendWithoutWaiting(String translatedCmd, Shape shape) {
         pipelinedSinceFinish = true;
         pipelinedEver = true;
-        Pending p = new Pending(translatedCmd, shape, null);
+        Pending p;
         try {
-            solverProcess.sendNoListen(translatedCmd, "\n");
+            sendScriptText(false, translatedCmd, "\n");
+            p = new Pending(translatedCmd, shape, null, linesOffset);
             pending.add(p);
         } catch (IOException e) {
             // The solver has stopped: report it as for any command sent after that
+            p = new Pending(translatedCmd, shape, null, linesOffset);
             IResponse timedOut = timeLimitResponseAfterExit();
             p.response = timedOut != null ? timedOut : alreadyExited(translatedCmd);
         }
@@ -653,7 +729,7 @@ public class AbstractSolver implements ISolver {
         String sent = "(echo \"" + marker + "\")";
         try {
             solverProcess.sendNoListen(sent, "\n");
-            pending.add(new Pending(sent, Shape.ANY, marker));
+            pending.add(new Pending(sent, Shape.ANY, marker, linesOffset));
         } catch (IOException e) {
             // The solver has stopped; the pending commands are resolved as its output ends
         }
@@ -819,8 +895,16 @@ public class AbstractSolver implements ISolver {
     private IResponse toResponse(Pending p, String text) {
         IResponse timedOut = timeLimitResponse(text);
         if (timedOut != null) return timedOut;
-        // Logged at once, as when not pipelining: an adapter may parse with the output redirected
-        IResponse result = smtConfig.log.unheld(() -> parseResponse(text));
+        // Logged at once, as when not pipelining: an adapter may parse with the output redirected.
+        // Line numbers in it are those of p's command, sent before the commands sent since.
+        int current = linesOffset;
+        linesOffset = p.linesOffset;
+        IResponse result;
+        try {
+            result = smtConfig.log.unheld(() -> parseResponse(text));
+        } finally {
+            linesOffset = current;
+        }
         if (result == null) {
             return smtConfig.responseFactory.error("Could not parse response from the solver for: " + p.sent + " -- raw response: " + text);
         }
@@ -932,14 +1016,11 @@ public class AbstractSolver implements ISolver {
     }
 
     /** Forwards a standalone comment (its own C_comment pseudo-command -- see issue #42) to
-     *  the real solver process, uniformly for every solver adapter: a comment is legal
-     *  SMT-LIB input (any conforming solver must silently ignore it), and forwarding it keeps
-     *  the physical line count of what's actually sent matching the user's own script one
-     *  real line for one sent line -- which line-number rewriting (see e.g.
-     *  Solver_z3_4_3/Solver_z3_recent's linesOffset) depends on. sendNoListen is used, not
-     *  sendAndListen: a comment has no response to wait for. A trailing, same-line comment
-     *  never reaches here at all -- it's captured as Command.trailingText instead (see
-     *  Parser.parseCommand()) and is never sent to a solver. */
+     *  the solver process, uniformly for every solver adapter: a comment is legal SMT-LIB input
+     *  (any conforming solver must silently ignore it), and the solver's log then shows the
+     *  script's comments. It has no response to wait for. A trailing, same-line comment never
+     *  reaches here -- it's captured as Command.trailingText instead (see Parser.parseCommand())
+     *  and is never sent to a solver. */
     @Override public void comment(String comment) {
         try {
             solverProcess.sendNoListen(comment);
@@ -1070,8 +1151,6 @@ public class AbstractSolver implements ISolver {
     @Override
     public IResponse set_option(IKeyword key, IAttributeValue value) {
         String option = key.value();
-        // A channel option is not sent, so the solver's line count falls one behind (see linesOffset)
-        if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option) || Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) linesOffset--;
         if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
             String name = (value instanceof IStringLiteral) ? ((IStringLiteral)value).value() : Utils.STDOUT;
             try {
@@ -1209,7 +1288,13 @@ public class AbstractSolver implements ISolver {
     /** Returns an error response if the given option has not been enabled (per
      *  {@link #get_option(IKeyword)}), else null. */
     protected /*@Nullable*/ IResponse requireOptionEnabled(String commandName, String option) {
-        IResponse value = get_option(smtConfig.exprFactory.keyword(option));
+        IResponse value;
+        ownQueries++;
+        try {
+            value = get_option(smtConfig.exprFactory.keyword(option));
+        } finally {
+            ownQueries--;
+        }
         // If asking failed (e.g. the solver has exited), report that rather than claim the option is off
         if (value != null && value.isError()) return value;
         if (smtConfig.responseFactory.timeout().equals(value)) return value; // the solver's whole-run limit ended it
@@ -1256,7 +1341,7 @@ public class AbstractSolver implements ISolver {
             String sent = translate(smtConfig.commandFactory.get_assertions());
             StringBuilder sb = new StringBuilder();
             readPipelined(true);
-            solverProcess.sendNoListen(sent, "\n");
+            sendScriptText(false, sent, "\n");
             int parens = 0;
             // Tracks whether the scan is currently inside a double-quoted string literal,
             // carried across reads (a string can in principle straddle a chunk boundary),
@@ -1341,7 +1426,7 @@ public class AbstractSolver implements ISolver {
         try {
             readPipelined(true);
             String sent = translate(smtConfig.commandFactory.get_unsat_assumptions());
-            response = solverProcess.sendAndListen(sent, "\n");
+            response = sendScriptText(true, sent, "\n");
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;
             if (isFlatResponse(response)) return checkShape(Shape.VALUE, sent, response, checkImmediateExit(parseResponse(response)));
@@ -1366,7 +1451,7 @@ public class AbstractSolver implements ISolver {
         try {
             readPipelined(true);
             String sent = translate(smtConfig.commandFactory.get_unsat_core());
-            response = solverProcess.sendAndListen(sent, "\n");
+            response = sendScriptText(true, sent, "\n");
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;
             if (isFlatResponse(response)) return checkShape(Shape.VALUE, sent, response, checkImmediateExit(parseResponse(response)));
@@ -1396,7 +1481,7 @@ public class AbstractSolver implements ISolver {
         try {
             readPipelined(true);
             String sent = translate(smtConfig.commandFactory.get_value(java.util.Arrays.asList(terms)));
-            response = solverProcess.sendAndListen(sent, "\n");
+            response = sendScriptText(true, sent, "\n");
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;
             if (isFlatResponse(response)) return checkShape(Shape.VALUE, sent, response, checkImmediateExit(parseResponse(response)));
@@ -1421,7 +1506,7 @@ public class AbstractSolver implements ISolver {
         try {
             readPipelined(true);
             String sent = translate(smtConfig.commandFactory.get_assignment());
-            response = solverProcess.sendAndListen(sent, "\n");
+            response = sendScriptText(true, sent, "\n");
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;
             if (isFlatResponse(response)) return checkShape(Shape.VALUE, sent, response, checkImmediateExit(parseResponse(response)));

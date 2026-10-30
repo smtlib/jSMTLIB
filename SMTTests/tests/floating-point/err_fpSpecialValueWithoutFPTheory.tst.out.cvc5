@@ -1,2 +1,2 @@
 success
-(error "Parse Error: <shell>:1.23: Unknown indexed literal `+oo'")
+(error "Parse Error: <shell>:4.23: Unknown indexed literal `+oo'")

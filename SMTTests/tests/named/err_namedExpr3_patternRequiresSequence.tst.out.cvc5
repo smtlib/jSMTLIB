@@ -1,2 +1,2 @@
 success
-(error "Parse Error: <shell>:1.43: Expected a LPAREN_TOK, got `x` (SYMBOL).")
+(error "Parse Error: <shell>:3.43: Expected a LPAREN_TOK, got `x` (SYMBOL).")

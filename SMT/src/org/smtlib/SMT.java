@@ -811,6 +811,7 @@ public class SMT {
                             command instanceof IPosable ? ((IPosable)command).pos() : null);
                     } else {
                         try {
+                            solver.setSourceLine(Utils.sourceLine(command));
                             if (pipeliner != null && pipeliner.pipelines(command) && !isSmtlibVersionInfo) {
                                 result = pipeliner.sendPipelined(command);
                             } else {

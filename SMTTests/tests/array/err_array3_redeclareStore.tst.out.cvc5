@@ -1,2 +1,2 @@
 success
-(error "Parse Error: <shell>:1.14: Symbol `store' is shadowing a theory function symbol")
+(error "Parse Error: <shell>:3.14: Symbol `store' is shadowing a theory function symbol")

@@ -1,0 +1,4 @@
+success
+true
+false
+(error "at line 5, column 9: undefined term: z")

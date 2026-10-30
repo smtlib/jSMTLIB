@@ -2,7 +2,7 @@ success
 success
 success
 success
-(error "Parse Error: <shell>:1.18: expecting a Boolean subexpression")
+(error "Parse Error: <shell>:7.18: expecting a Boolean subexpression")
 (error "Error writing to solver: (assert (=> p u p)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Error writing to solver: (assert (=> u p p)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Error writing to solver: (assert (and u p p)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

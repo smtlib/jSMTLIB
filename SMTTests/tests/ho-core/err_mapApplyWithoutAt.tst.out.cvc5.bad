@@ -1,5 +1,5 @@
 success
-(error "Parse Error: <shell>:1.30: Symbol '->' not declared as a type")
+(error "Parse Error: <shell>:3.30: Symbol '->' not declared as a type")
 (error "Error writing to solver: (declare-fun k () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Error writing to solver: (assert (= (m true) 0)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Error writing to solver: (assert (= (m 0 1) 0)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

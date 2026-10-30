@@ -1,4 +1,4 @@
 success
 success
 success
-(error "Parse Error: <shell>:1.20: floating-point test applied to mixed sorts")
+(error "Parse Error: <shell>:7.20: floating-point test applied to mixed sorts")

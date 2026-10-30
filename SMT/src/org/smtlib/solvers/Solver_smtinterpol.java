@@ -34,6 +34,15 @@ public class Solver_smtinterpol extends AbstractSolver implements ISolver {
     /** The command-line arguments for launching the solver. */
     protected String cmds[];
 
+    /** SMTInterpol's error messages begin "{@code <stdin>:L:C:}", counting the lines of its whole input */
+    private static final java.util.List<java.util.regex.Pattern> LINE_NUMBERS =
+            java.util.List.of(java.util.regex.Pattern.compile("(<stdin>:)(\\d+)(:)"));
+
+    @Override
+    protected java.util.List<java.util.regex.Pattern> lineNumberPatterns() {
+        return LINE_NUMBERS;
+    }
+
     /** Creates an instance of the solver. The base launch command ("java -jar
      *  &lt;jar&gt; -q") comes from the org.smtlib.solver_smtinterpol-2.5.command
      *  property; only the timeout flag, which is conditional on smtConfig and so

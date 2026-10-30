@@ -196,20 +196,31 @@ public class Pos implements IPos {
             return pos;
         }
 
-        // Note: this counts lines from the beginning of the character sequence, calling charAt at each
-        // character position; this is not very efficient; the presumption is that this method is called
-        // just for the occasional error message.
+        /** A position, not just after a carriage return, and its line number: lineNumber resumes counting
+         *  there for a later position, since it is called for each command of a script in turn */
+        private int countedTo = 0;
+        private int countedLine = 1;
+
         @Override
         public int lineNumber(int pos) {
             int line = 1;
+            int i = 0;
+            if (pos >= countedTo) {
+                i = countedTo;
+                line = countedLine;
+            }
             char c;
-            for (int i=0; i<pos; i++) {
+            for (; i<pos; i++) {
                 c = charAt(i);
                 if (c == '\n') line++;
                 else if (c == '\r') {
                     line++;
                     if (i+1 < pos && charAt(i+1) == '\n') i++;
                 }
+            }
+            if (pos > 0 && charAt(pos-1) != '\r') {
+                countedTo = pos;
+                countedLine = line;
             }
             return line;
         }

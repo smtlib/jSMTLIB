@@ -8,7 +8,7 @@ success
 (error "Incorrect format for a number - no leading zeros allowed: 00")
 (error "Incorrect format for a number - no leading zeros allowed: 01")
 (error "Incorrect format for a number - no leading zeros allowed: 01.2")
-(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:9: expected term
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:13:9: expected term
 ")
 (error "Error writing to solver: (assert 0.0) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
 (error "Invalid token: 0.")

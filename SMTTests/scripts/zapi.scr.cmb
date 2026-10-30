@@ -7,7 +7,7 @@ BAD COMMAND
 (set-logic QF_UF)
 (assert (and p (not p)))
 success
-(error "line 3 column 8: unknown constant q")
+(error "line 2 column 8: unknown constant q")
 unsat
 sat
 ((pb #xffffffff)(pc #x00000000))
