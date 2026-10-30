@@ -1,16 +1,16 @@
 success
-unsupported
-unsupported
+success
+success
 success
 success
 success
 sat
 ((x 3))
-(error "The get-assignment command is only valid if :produce-assignments has been enabled")
+((a true))
 success
 success
 sat
-(error "The get-unsat-core command is only valid if :produce-unsat-cores has been enabled")
+(error "The get-unsat-core command is only valid immediately after check-sat returned unsat")
 success
 sat
 ((x 3))

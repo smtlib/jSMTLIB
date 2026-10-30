@@ -5,4 +5,4 @@ success
 success
 (:version "4.3.2" )
 success
-(error "(:error-behavior continued-execution)")
+(:error-behavior continued-execution )
