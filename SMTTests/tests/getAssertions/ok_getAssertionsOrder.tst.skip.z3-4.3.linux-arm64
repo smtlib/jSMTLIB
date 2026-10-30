@@ -1,0 +1,2 @@
+The ARM64 build of z3-4.3.1 prints get-assertions with corrupted symbol names (garbage bytes that
+differ between runs and machines; #101), so no golden can pin it.
