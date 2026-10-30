@@ -1,0 +1,13 @@
+success
+success
+success
+success
+success
+success
+(error "Fatal Error: Unsupported Feature: Type FloatingPoint_8_24")
+(error "Error writing to solver: (declare-fun s () String) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (to_real (+ i 1)) r)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (select a i) 3)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (bvadd b #x01) #x02)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (fp.isNormal f)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (str.len (str.++ s ""a"")) i)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

@@ -1,0 +1,15 @@
+unsupported
+success
+success
+success
+success
+success
+success
+success
+success
+(error "Error on typing errors (code 4)")
+(error "Error writing to solver: (declare-fun t () T) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (f k) (g (select t k)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+unsupported
+(error "Error writing to solver: (assert (= (f (g k)) (select t 0))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= s s)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

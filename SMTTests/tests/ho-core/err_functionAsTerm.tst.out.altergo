@@ -1,0 +1,7 @@
+success
+success
+success
+success
+(error "Error on typing errors (code 4)")
+(error "Error writing to solver: (assert (= h h)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (lambda ((x Int) ) (f x)) (lambda ((x Int) ) (g x)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

@@ -1,0 +1,4 @@
+success
+(error "Fatal Error: Unsupported Feature: Type FloatingPoint_8_24")
+(error "Error writing to solver: (declare-fun n () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= y (fp.add RNE n y))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

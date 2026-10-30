@@ -1,0 +1,18 @@
+unsupported
+success
+success
+success
+success
+success
+success
+success
+(error "Error on typing errors (code 4)")
+(error "Error writing to solver: (declare-fun r () Tree) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= c red)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (match r ( (leaf false) ((node v w) (= (val r) v))))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (p (size r))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+unsupported
+(error "Error writing to solver: (assert (= c green)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (kids r) (fcons leaf fnil))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (match r ( (leaf false) ((node v w) (= w (rest w)))))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (q (size (head (kids r))))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

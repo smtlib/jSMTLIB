@@ -1,0 +1,4 @@
+success
+(error "Error on typing errors (code 4)")
+(error "Error writing to solver: (declare-fun y () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (@ f y)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

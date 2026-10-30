@@ -1,0 +1,4 @@
+success
+(error "Error on parsing errors (code 3)")
+(error "Error writing to solver: (assert x) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

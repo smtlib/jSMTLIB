@@ -1,0 +1,8 @@
+success
+success
+(error "Error on typing errors (code 4)")
+(error "Error writing to solver: (reset) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (set-logic QF_BV) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun b () (_ BitVec 4)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (declare-fun c () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (ite c b b) b)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

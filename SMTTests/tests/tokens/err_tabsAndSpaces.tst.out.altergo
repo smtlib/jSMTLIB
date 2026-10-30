@@ -1,0 +1,5 @@
+success
+(error "Error on typing errors (code 4)")
+(error "Error writing to solver: (define-fun g () Bool 5) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (define-fun h () Bool 5) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (define-fun i () Bool 5) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

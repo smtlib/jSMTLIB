@@ -1,0 +1,94 @@
+(assert (forall ((y Int)) (>= y 0)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(reset)
+^^^^^^^
+(set-logic QF_LIA)
+^^^^^^^^^^^^^^^^^^
+(declare-const x Int)
+^^^^^^^^^^^^^^^^^^^^^
+(declare-const y Int)
+^^^^^^^^^^^^^^^^^^^^^
+(assert (= (* x y) 0))
+^^^^^^^^^^^^^^^^^^^^^^
+(reset)
+^^^^^^^
+(set-logic QF_LIA)
+^^^^^^^^^^^^^^^^^^
+(declare-const x Int)
+^^^^^^^^^^^^^^^^^^^^^
+(assert (= (* 3 x) 0))
+^^^^^^^^^^^^^^^^^^^^^^
+(reset)
+^^^^^^^
+(set-logic QF_LIA)
+^^^^^^^^^^^^^^^^^^
+(declare-fun f (Int) Int)
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(reset)
+^^^^^^^
+(set-logic QF_LIA)
+^^^^^^^^^^^^^^^^^^
+(declare-sort S 0)
+^^^^^^^^^^^^^^^^^^
+(reset)
+^^^^^^^
+(set-logic QF_UFLIA)
+^^^^^^^^^^^^^^^^^^^^
+(assert (forall ((y Int)) (>= y 0)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(reset)
+^^^^^^^
+(set-logic QF_UFLIA)
+^^^^^^^^^^^^^^^^^^^^
+(declare-const x Int)
+^^^^^^^^^^^^^^^^^^^^^
+(declare-const y Int)
+^^^^^^^^^^^^^^^^^^^^^
+(assert (= (* x y) 0))
+^^^^^^^^^^^^^^^^^^^^^^
+(reset)
+^^^^^^^
+(set-logic QF_UFLIA)
+^^^^^^^^^^^^^^^^^^^^
+(declare-fun f (Int) Int)
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort S 0)
+^^^^^^^^^^^^^^^^^^
+(reset)
+^^^^^^^
+(set-logic QF_UFBV)
+^^^^^^^^^^^^^^^^^^^
+(assert (forall ((y Bool)) y))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(reset)
+^^^^^^^
+(set-logic QF_UFBV)
+^^^^^^^^^^^^^^^^^^^
+(declare-fun f (Bool) Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort S 0)
+^^^^^^^^^^^^^^^^^^
+(reset)
+^^^^^^^
+(set-logic QF_UFIDL)
+^^^^^^^^^^^^^^^^^^^^
+(assert (forall ((y Int)) (>= y 0)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(reset)
+^^^^^^^
+(set-logic QF_UFIDL)
+^^^^^^^^^^^^^^^^^^^^
+(declare-fun f (Int) Int)
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort S 0)
+^^^^^^^^^^^^^^^^^^
+(reset)
+^^^^^^^
+(set-logic QF_UFIDL)
+^^^^^^^^^^^^^^^^^^^^
+(declare-const x Int)
+^^^^^^^^^^^^^^^^^^^^^
+(declare-const y Int)
+^^^^^^^^^^^^^^^^^^^^^
+(assert (= (+ x y) 3))
+^^^^^^^^^^^^^^^^^^^^^^

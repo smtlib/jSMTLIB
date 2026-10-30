@@ -1,0 +1,6 @@
+success
+(error "Error on typing errors (code 4)")
+(error "Error writing to solver: (declare-fun k () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (m true) 0)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (m 0 1) 0)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (= (k 0) 0)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

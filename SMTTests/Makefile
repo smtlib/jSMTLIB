@@ -38,14 +38,9 @@ export SMT_SOLVER_DIR
 ## fallback to Solver_z3_recent, so it doubles as ongoing coverage for that fallback.
 ## bitwuzla and simplify were onboarded and CI-verified clean across all 5 platforms
 ## (goldens + adapter fixes) and are now part of the regular default list, same as
-## every other solver here. altergo is deliberately EXCLUDED: CI run 32671113041
-## confirmed it hangs completely (never responds, not even to the first test) on
-## every platform where the Solvers repo has a build (linux-x64, macos-arm64) --
-## each burned the full 20-minute job timeout before being force-canceled. Its
-## adapter was a documentation-only guess (no local binary was available) about
-## reading a script from stdin; that assumption is now known wrong, or at least
-## incomplete, and needs new evidence (ideally a local Linux/Docker repro) before
-## trying again, not another blind CI iteration at ~20 minutes per guess.
+## every other solver here. altergo is not in the list: its adapter once hung on every
+## platform in CI (run 32671113041, waiting for a 'success' alt-ergo never writes); since
+## A30 it works (tested in Docker on Linux), but it has not yet been run in CI.
 SMT_TEST_SOLVERS ?=test z3-4.3 cvc5-1.3.2 z3-4.5.0 z3-4.6.0 z3-4.7.1 z3-4.8.12 z3-4.10.2 z3-4.12.6 z3-4.14.1 z3-4.16.0 z3-5.1.0 yices2 smtinterpol-2.5 bitwuzla simplify
 export SMT_TEST_SOLVERS
 

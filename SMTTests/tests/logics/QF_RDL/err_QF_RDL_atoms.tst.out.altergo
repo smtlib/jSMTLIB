@@ -1,0 +1,9 @@
+success
+success
+success
+(error "Error on typing errors (code 4)")
+(error "Error writing to solver: (assert (<= x 5)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (>= (- x y) 1.5)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (<= (- (+ x x) (+ y y y)) 1)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (<= (- (+ x x) (+ y y)) (/ 1 2))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "Error writing to solver: (assert (<= (- x y) (/ 1 0))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

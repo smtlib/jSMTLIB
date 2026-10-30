@@ -1,0 +1,6 @@
+success
+success
+success
+success
+(error "Error on unexpected internal errors (bugs) (code 125)")
+(error "Error writing to solver: (assert PP) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")

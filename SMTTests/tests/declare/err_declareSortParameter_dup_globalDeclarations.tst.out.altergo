@@ -1,0 +1,5 @@
+success
+unsupported
+success
+(error "Error on parsing errors (code 3)")
+(error "Error writing to solver: (declare-sort-parameter T) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
