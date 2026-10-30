@@ -46,6 +46,14 @@ public class SolverProcess {
      *  judged once it has (see listen()) */
     private String unfinishedErrorComment = "";
 
+    /** Standard-error text read along with a reply on standard output, which it did not displace: the
+     *  solver's diagnostic output, kept until {@link #takeDiagnosticOutput()} */
+    private final StringBuilder diagnosticOutput = new StringBuilder();
+
+    /** Whether the last line of diagnosticOutput has not yet ended: the next standard-error text, up to
+     *  its first line end, then belongs to it, not to a later command */
+    private boolean diagnosticLineOpen = false;
+
     /** Set true by a caller for the duration of a single command whose expected response
      * text may contain literal, non-SMT-LIB unbalanced parentheses (e.g. some z3
      * :reason-unknown text), so the end-marker recognizer does not wait forever for
@@ -259,8 +267,10 @@ public class SolverProcess {
     }
 
     /** Listens to the process's standard output until the designated endMarker is read,
-     * combined with whatever error output has arrived. If there is error output, it is
-     * returned; otherwise the standard output is returned.
+     * combined with whatever error output has arrived. The reply is what the solver wrote on
+     * standard output; the error output is returned instead only when standard output holds no
+     * reply (it is empty, or it ended with an incomplete one): some solvers write errors there.
+     * Error output not returned is kept as diagnostic output (see takeDiagnosticOutput).
      */
     public String listen() throws IOException {
         // blocks until the end marker is recognized, or the process dies; unless pipelined reading
@@ -280,7 +290,7 @@ public class SolverProcess {
         // whatever has arrived, not a proof of completeness. Once stdout has ended, though, the
         // solver is exiting, so stderr is read to its end (bounded by endDrainMillis).
         String rawErr = outWasForcedEof ? errorOut.drainToEnd(endDrainMillis) : errorOut.drain(errorSettleMillis);
-        String err = withoutComments(rawErr, outWasForcedEof);
+        String err = withoutComments(continueDiagnosticLine(rawErr, outWasForcedEof), outWasForcedEof);
         // A forced EOF (stdout closed before ever matching the end marker) with nothing
         // recovered from *either* stream means the solver died without producing any
         // response at all for this command. Left unhandled, that's otherwise
@@ -305,13 +315,48 @@ public class SolverProcess {
             if (!out.isEmpty()) { log.write(";OUT: "); log.write(out); log.write(eol); log.flush(); } // input usually ends with a prompt and no line terminator
             if (!rawErr.isEmpty()) { log.write(";ERR: "); log.write(rawErr); } // input usually ends with a line terminator, we think
         }
-        // In some cases (yices2) the prompt is on the error stream. Our heuristic is that then there is no line-termination
-        if (err.endsWith("\n") || out.isEmpty()) {
-            return err.isEmpty() ? out : err;
-        } else {
-            if (out.endsWith(endMarker)) out = out.substring(0,out.length()-endMarker.length());
-            return out;
+        String reply = out.endsWith(endMarker) ? out.substring(0, out.length() - endMarker.length()) : out;
+        if (err.isEmpty()) return reply;
+        // Standard error answers only when standard output has no reply: it is empty (as when the
+        // solver writes its errors on standard error), or it ended with an incomplete one (a solver
+        // dying). An unended line there, though, may be a prompt (yices2) or the start of a line still
+        // arriving, and does not answer if standard output wrote anything.
+        boolean noReply = reply.trim().isEmpty() || (outWasForcedEof && !isCompleteReply(reply));
+        if (noReply && (err.endsWith("\n") || out.isEmpty())) return err;
+        diagnosticOutput.append(err);
+        diagnosticLineOpen = !outWasForcedEof && !err.endsWith("\n");
+        return reply;
+    }
+
+    /** Whether the text is one complete response (an atom, a string literal, a quoted symbol or a
+     *  balanced S-expression), apart from surrounding white space */
+    private static boolean isCompleteReply(String text) {
+        String t = text.trim();
+        return AbstractSolver.responseEnd(t + "\n", 0) == t.length();
+    }
+
+    /** The standard-error text but for its start, up to its first line end, if that finishes an unended
+     *  line of diagnostic output; that start is added to the diagnostic output. If the stream has ended, an
+     *  unended line is finished anyway. */
+    private String continueDiagnosticLine(String err, boolean ended) {
+        if (!diagnosticLineOpen) return err;
+        int eol = err.indexOf('\n');
+        if (eol < 0 && !ended) {
+            diagnosticOutput.append(err);
+            return "";
         }
+        int end = eol < 0 ? err.length() : eol + 1;
+        diagnosticOutput.append(err, 0, end);
+        diagnosticLineOpen = false;
+        return err.substring(end);
+    }
+
+    /** Returns and clears the solver's diagnostic output: standard-error text read with a reply on
+     *  standard output, which answered instead (see listen()) */
+    public String takeDiagnosticOutput() {
+        String text = diagnosticOutput.toString();
+        diagnosticOutput.setLength(0);
+        return text;
     }
 
     /** Whether the text has a comment line and nothing else but whitespace */
@@ -597,14 +642,14 @@ public class SolverProcess {
      *  waitMillis for some (see StreamGobbler.drain) */
     public String readErrorOutput(long waitMillis) throws IOException {
         if (errorOut == null) return "";
-        return logError(errorOut.drain(waitMillis));
+        return continueDiagnosticLine(logError(errorOut.drain(waitMillis)), false);
     }
 
     /** For pipelined reading, once the output has ended: the rest of the text on standard error,
      *  up to its end (waiting at most endDrainMillis) */
     public String readRemainingErrorOutput() throws IOException {
         if (errorOut == null) return "";
-        return logError(errorOut.drainToEnd(endDrainMillis));
+        return continueDiagnosticLine(logError(errorOut.drainToEnd(endDrainMillis)), true);
     }
 
     private String logError(String err) throws IOException {
