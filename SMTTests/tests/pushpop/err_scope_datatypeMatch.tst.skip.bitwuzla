@@ -1,1 +1,1 @@
-bitwuzla supports no datatypes: it reports declare-datatype(s) in a non-SMT-LIB form and exits, so the rest of this script is not run.
+bitwuzla supports no datatypes: its adapter answers the command unsupported, but bitwuzla reports the first use of what it would have declared as an error in a non-SMT-LIB form and exits, so the rest of this script is not run.

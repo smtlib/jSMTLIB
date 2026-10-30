@@ -145,4 +145,90 @@ public class Solver_cvc5 extends AbstractSolver implements ISolver {
         return response;
     }
 
+    // The checks below correct cvc5 1.3.2 answering get- commands that SMT-LIB makes errors; it
+    // reports the other cases itself. After assert or define-* following a check, where SMT-LIB
+    // returns to assert mode, cvc5 still answers from the earlier check (a model need not satisfy the
+    // new assertion), and get-unsat-assumptions aborts the process.
+
+    /** The value the script gave :produce-assertions (or its earlier name :interactive-mode): cvc5
+     *  answers get-assertions whatever the option's value, and, run with --interactive, reports it
+     *  as true from the start and again once the assertion stack is used, so get-option cannot tell */
+    private boolean produceAssertions = false;
+
+    @Override
+    protected IResponse set_option_impl(IExpr.IKeyword key, IAttributeValue value) {
+        IResponse r = super.set_option_impl(key, value);
+        if ((Utils.PRODUCE_ASSERTIONS.equals(key.value()) || Utils.INTERACTIVE_MODE.equals(key.value())) && !r.isError()) {
+            produceAssertions = Utils.TRUE.equals(value);
+        }
+        return r;
+    }
+
+    @Override
+    public IResponse reset() {
+        produceAssertions = false;
+        return super.reset();
+    }
+
+    /** cvc5 answers get-assertions with :produce-assertions off */
+    @Override
+    public IResponse get_assertions() {
+        if (!produceAssertions) {
+            return smtConfig.responseFactory.error("The get-assertions command is only valid if "
+                    + Utils.produceAssertionsKey(smtConfig) + " has been enabled");
+        }
+        return super.get_assertions();
+    }
+
+    /** The kinds of command after which cvc5 still answers the get- commands about the last check
+     *  (probed with cvc5 1.3.2, 2026-10-29); after declare-fun, declare-const, declare-sort, push and
+     *  pop it reports the error itself */
+    private static final java.util.Set<StackChange> ANSWERED_AFTER = java.util.EnumSet.of(
+            StackChange.DEFINE_SORT, StackChange.DECLARE_DATATYPE, StackChange.DEFINE_FUN,
+            StackChange.DEFINE_FUN_REC, StackChange.ASSERT, StackChange.RESET_ASSERTIONS);
+
+    /** cvc5 answers get-assignment with :produce-assignments off (if :produce-models is on), and in
+     *  assert mode after a check */
+    @Override
+    public IResponse get_assignment() {
+        IResponse err = inSatMode() ? requireOptionEnabled("get-assignment", Utils.PRODUCE_ASSIGNMENTS)
+                : requireNoChangeSinceCheck("get-assignment", ANSWERED_AFTER);
+        return err != null ? err : super.get_assignment();
+    }
+
+    /** cvc5 answers get-model in assert mode after a check */
+    @Override
+    public IResponse get_model() {
+        IResponse err = requireNoChangeSinceCheck("get-model", ANSWERED_AFTER);
+        return err != null ? err : super.get_model();
+    }
+
+    /** cvc5 answers get-value in assert mode after a check */
+    @Override
+    public IResponse get_value(IExpr... terms) {
+        IResponse err = requireNoChangeSinceCheck("get-value", ANSWERED_AFTER);
+        return err != null ? err : super.get_value(terms);
+    }
+
+    /** cvc5 answers get-proof in assert mode after a check */
+    @Override
+    public IResponse get_proof() {
+        IResponse err = requireNoChangeSinceCheck("get-proof", ANSWERED_AFTER);
+        return err != null ? err : super.get_proof();
+    }
+
+    /** cvc5 answers get-unsat-core in assert mode after a check */
+    @Override
+    public IResponse get_unsat_core() {
+        IResponse err = requireNoChangeSinceCheck("get-unsat-core", ANSWERED_AFTER);
+        return err != null ? err : super.get_unsat_core();
+    }
+
+    /** cvc5 aborts on get-unsat-assumptions in assert mode after a check */
+    @Override
+    public IResponse get_unsat_assumptions() {
+        IResponse err = requireNoChangeSinceCheck("get-unsat-assumptions", ANSWERED_AFTER);
+        return err != null ? err : super.get_unsat_assumptions();
+    }
+
 }

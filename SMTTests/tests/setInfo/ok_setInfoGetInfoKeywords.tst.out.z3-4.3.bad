@@ -1,8 +1,0 @@
-success
-(:name "Z3" )
-success
-(:authors "Leonardo de Moura and Nikolaj Bjorner" )
-success
-(:version "4.3" )
-success
-(error "(:error-behavior continued-execution)")

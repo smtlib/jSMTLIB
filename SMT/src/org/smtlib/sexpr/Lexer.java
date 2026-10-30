@@ -37,8 +37,10 @@ public class Lexer {
         @Override String kind();
     }
 
-    /** Skips the rest of the current line, resetting the matcher to point to the line termination character */
+    /** Skips the rest of the current line, including a token already looked ahead at, resetting the
+     *  matcher to point to the line termination character */
     public void abortLine() {
+        nextToken = null;
         int i = matcher.regionStart();
         // Checking i < csr.length() on every iteration (rather than snapshotting the bound
         // once) matters for a growing/interactive source (CharSequenceInfinite): its

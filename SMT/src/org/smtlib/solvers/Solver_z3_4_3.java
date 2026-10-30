@@ -15,7 +15,6 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -61,7 +60,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     // adapter -- z3-4.3 never got the same fix.
     protected String cmds_win[] = new String[]{ "", "/smt2","/in","SMTLIB2_COMPLIANT=true","WARNING=false"};//,"/rs:42"};
     protected String cmds_mac[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
-    protected String cmds_unix[] = new String[]{ "", "-smt2","-in","WARNING=false"};
+    protected String cmds_unix[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
 
     /** The parser that parses responses from the solver */
     protected org.smtlib.sexpr.Parser responseParser;
@@ -249,7 +248,20 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
     /** Sends the command text and parses its response, which must have the given shape */
     private IResponse send(Shape shape, String sent) throws IOException {
-        return parse(shape, sent, solverProcess.sendAndListen(sent, "\n"));
+        return parse(shape, sent, sendRaw(sent));
+    }
+
+    /** Sends the command text and returns the solver's raw response. z3 4.3 writes timeout and exits when its
+     *  whole-run limit ends it, also while idle between commands; the next command then finds the process gone,
+     *  and its response is that timeout (as AbstractSolver's sendCommand does). */
+    private String sendRaw(String sent) throws IOException {
+        if (endedByTimeLimit) return "timeout";
+        try {
+            return solverProcess.sendAndListen(sent, "\n");
+        } catch (IOException e) {
+            if (timeLimitResponseAfterExit() != null) return "timeout";
+            throw e;
+        }
     }
 
     /** Parses a list-valued response */
@@ -262,7 +274,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  s-expression forms ( ( T true ) ), ( - 1 )). Errors -- including z3 4.3's value-then-error
      *  responses -- keep the generic handling. */
     private IResponse sendList(String sent, ListParser lp) throws IOException {
-        String r = solverProcess.sendAndListen(sent, "\n");
+        String r = sendRaw(sent);
         if (!isFlatResponse(r) && !r.contains("(error")) {
             try {
                 return lp.parse(new org.smtlib.sexpr.Parser(smtConfig, new Pos.Source(r, null)));
@@ -275,8 +287,13 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
     /** Parses the response to the command text sent, which must have the given shape (#149) */
     private IResponse parse(Shape shape, String sent, String response) {
+        IResponse timedOut = timeLimitResponse(response);
+        if (timedOut != null) return timedOut;
         return checkShape(shape, sent, response, parseResponse(response));
     }
+
+    /** An (error ...) response, at the start of a line of the solver's output */
+    private static final Pattern ERROR_RESPONSE = Pattern.compile("(?m)^\\s*\\(\\s*error\\s");
 
     /** Every command this adapter sends directly to the process ends here, so the solver's report that its
      *  whole-run limit ended it is recognized for all of them (see AbstractSolver#timeLimitResponse). A command sent
@@ -288,8 +305,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         IResponse timedOut = timeLimitResponse(response);
         if (timedOut != null) return timedOut;
         try {
-            if (isMac && response.startsWith("success")) return smtConfig.responseFactory.success(); // FIXME - this is just to avoid a problem with the Mac Z3 implementation
-            if (response.contains("error")) {
+            if (ERROR_RESPONSE.matcher(response).find()) {
                 // Z3 returns an s-expr (always?)
                 // FIXME - (1) the {Print} also needs {Space}; (2) err_getValueTypes.tst returns a non-error s-expr and then an error s-expr - this fails for that case
                 //Pattern p = Pattern.compile("\\p{Space}*\\(\\p{Blank}*error\\p{Blank}+\"(([\\p{Space}\\p{Print}^[\\\"\\\\]]|\\\\\")*)\"\\p{Blank}*\\)\\p{Space}*");
@@ -341,54 +357,19 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         return response;
     }
 
-    /** z3 4.3 does not support :produce-assertions (it answers unsupported) and requires the
-     *  SMT-LIB 2.0 :interactive-mode instead, so the option is checked against the value set here */
+    /** Not a correction: this adapter sends commands by its own means (z3 4.3 itself reports
+     *  get-assertions without :produce-assertions, which set_option_impl sends as :interactive-mode) */
     @Override
     public IResponse get_assertions() {
         if (!logicSet) {
             return smtConfig.responseFactory.error("The logic must be set before a get-assertions command is issued");
         }
-        // FIXME - do we really want to call get-option here? it involves going to the solver?
-        if (!smtConfig.relax && !Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSERTIONS)))) {
-            return smtConfig.responseFactory.error("The get-assertions command is only valid if " + Utils.produceAssertionsKey(smtConfig) + " has been enabled");
-        }
         try {
-            StringBuilder sb = new StringBuilder();
-            String s;
-            int parens = 0;
-            do {
-                s = solverProcess.sendAndListen("(get-assertions)\n");
-                int p = -1;
-                while (( p = s.indexOf('(',p+1)) != -1) parens++;
-                p = -1;
-                while (( p = s.indexOf(')',p+1)) != -1) parens--;
-                sb.append(s.replace('\n',' ').replace("\r",""));
-            } while (parens > 0);
-            s = sb.toString();
-            org.smtlib.sexpr.Parser p = new org.smtlib.sexpr.Parser(smtConfig,new org.smtlib.impl.Pos.Source(s,null));
-            List<IExpr> exprs = new LinkedList<IExpr>();
-            try {
-                if (p.isLP()) {
-                    p.parseLP();
-                    while (!p.isRP() && !p.isEOD()) {
-                        IExpr e = p.parseExpr();
-                        exprs.add(e);
-                    }
-                    if (p.isRP()) {
-                        p.parseRP();
-                        if (p.isEOD()) return smtConfig.responseFactory.get_assertions_response(exprs); 
-                    }
-                }
-            } catch (Exception e ) {
-                // continue - fall through
-            }
-            return smtConfig.responseFactory.error("Unexpected output from the Z3 solver: " + s);
+            return sendList("(get-assertions)", p -> smtConfig.responseFactory.get_assertions_response(p.parseAssertionList()));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("IOException while reading Z3 reponse");
+            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
     }
-
-
 
     @Override
     public IResponse check_sat() {
@@ -506,19 +487,11 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
         String option = key.value();
-        if (Utils.PRINT_SUCCESS.equals(option)) {
-            if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
-                return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
-            }
-        }
-        if (logicSet && (Utils.INTERACTIVE_MODE.equals(option)||Utils.PRODUCE_ASSERTIONS.equals(option))) {
+        if (logicSet && (Utils.INTERACTIVE_MODE.equals(option) || Utils.PRODUCE_ASSERTIONS.equals(option)
+                || Utils.PRODUCE_ASSIGNMENTS.equals(option) || Utils.PRODUCE_PROOFS.equals(option)
+                || Utils.PRODUCE_UNSAT_CORES.equals(option) || Utils.PRODUCE_MODELS.equals(option))) {
+            linesOffset--; // not sent (see linesOffset)
             return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
-        }
-        if (Utils.PRODUCE_ASSIGNMENTS.equals(option) ||
-                Utils.PRODUCE_PROOFS.equals(option) ||
-                Utils.PRODUCE_UNSAT_CORES.equals(option) ||
-                Utils.PRODUCE_MODELS.equals(option)) {
-            if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
         }
         if (Utils.VERBOSITY.equals(option)) {
             smtConfig.verbose = (value instanceof INumeral) ? ((INumeral)value).intValue() : 0;
@@ -528,20 +501,26 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         IResponse r = checkPrintSuccess(smtConfig,key,value);
         if (r != null) return r;
 
+        // z3 4.3 predates SMT-LIB 2.5's renaming of :interactive-mode to :produce-assertions: it answers
+        // unsupported for :produce-assertions, so that option is sent under its old name
+        String sentOption = Utils.PRODUCE_ASSERTIONS.equals(option) ? Utils.INTERACTIVE_MODE : option;
         try {
-            solverProcess.sendAndListen("(set-option ",option," ",value.toString(),")\n");// FIXME - detect errors
+            return send(Shape.SUCCESS, "(set-option " + sentOption + " " + value + ")");
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
-
-        return successOrEmpty(smtConfig);
     }
 
     /** Answered from the values set here: z3 4.3 defaults :produce-models to true (SMT-LIB: false)
-     *  and answers unsupported for :produce-assertions */
+     *  and answers unsupported for :produce-assertions (see set_option_impl) */
     @Override
     public IResponse get_option(IKeyword key) { // FIXME - use the solver?
-        String option = key.value();
+        linesOffset--; // not sent (see linesOffset)
+        return optionValue(key.value());
+    }
+
+    /** The value of the option as set here, else unsupported */
+    private IResponse optionValue(String option) {
         IAttributeValue value = options.get(Utils.INTERACTIVE_MODE.equals(option) && !smtConfig.isVersion(SMTLIB.V20)? Utils.PRODUCE_ASSERTIONS : option);
         if (value == null) return smtConfig.responseFactory.unsupported();
         return value;
@@ -553,7 +532,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     public IResponse get_info(IKeyword key) {
         String cmd = "(get-info " + key + ")";
         try {
-            String response = solverProcess.sendAndListen(cmd, "\n");
+            String response = sendRaw(cmd);
             if (smtConfig.testing) response = normalizeForTesting(response, key);
             return parse(Shape.VALUE, cmd, response);
         } catch (IOException e) {
@@ -561,15 +540,11 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         }
     }
 
-    @Override
-    public IResponse set_info(IKeyword key, IAttributeValue value) {
-        return sendCommand(new org.smtlib.command.C_set_info(key,value));
-    }
-
     /** z3 4.3 writes echo's text unquoted, so where it ends cannot be found (#136); the response
      *  to echo is its argument */
     @Override
     public IResponse echo(IStringLiteral arg) {
+        linesOffset--; // not sent (see linesOffset)
         return arg;
     }
 
@@ -577,7 +552,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  (non-standard) default of true; z3 4.3 itself reports get-model when no model is available */
     @Override
     public IResponse get_model() {
-        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
+        if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_MODELS))) {
             return smtConfig.responseFactory.error("The get-model command is only valid if :produce-models has been enabled");
         }
         if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
@@ -670,7 +645,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  checks here only give the same messages as the other adapters */
     @Override 
     public IResponse get_proof() {
-        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_PROOFS)))) {
+        if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_PROOFS))) {
             return smtConfig.responseFactory.error("The get-proof command is only valid if :produce-proofs has been enabled");
         }
         if (checkSatStatus != smtConfig.responseFactory.unsat()) {
@@ -687,7 +662,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  available; the checks here only give the same messages as the other adapters */
     @Override 
     public IResponse get_unsat_core() {
-        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_UNSAT_CORES)))) {
+        if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_UNSAT_CORES))) {
             return smtConfig.responseFactory.error("The get-unsat-core command is only valid if :produce-unsat-cores has been enabled");
         }
         if (checkSatStatus != smtConfig.responseFactory.unsat()) {
@@ -705,7 +680,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override 
     public IResponse get_assignment() {
         // FIXME - do we really want to call get-option here? it involves going to the solver?
-        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSIGNMENTS)))) {
+        if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_ASSIGNMENTS))) {
             return smtConfig.responseFactory.error("The get-assignment command is only valid if :produce-assignments has been enabled");
         }
         if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
@@ -722,7 +697,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override 
     public IResponse get_value(IExpr... terms) {
         // FIXME - do we really want to call get-option here? it involves going to the solver?
-        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
+        if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_MODELS))) {
             return smtConfig.responseFactory.error("The get-value command is only valid if :produce-models has been enabled");
         }
         if (!smtConfig.responseFactory.sat().equals(checkSatStatus) && !smtConfig.responseFactory.unknown().equals(checkSatStatus)) {
@@ -779,48 +754,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
                 } catch (IOException ex) {
                     throw new IVisitor.VisitorException(ex,null); // FIXME - null ?
                 }
-            }
-        }
-
-        //@ requires iter.hasNext();
-        protected <T extends IExpr> void rightassoc(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
-            T n = iter.next();
-            if (!iter.hasNext()) {
-                n.accept(this);
-            } else {
-                try {
-                    w.append("(");
-                    w.append(fcnname);
-                    w.append(" ");
-                    n.accept(this);
-                    w.append(" ");
-                    rightassoc(fcnname,iter);
-                    w.append(")");
-                } catch (IOException ex) {
-                    throw new IVisitor.VisitorException(ex,null); // FIXME - null ?
-                }
-            }
-        }
-
-
-        //@ requires iter.hasNext();
-        //@ requires length > 0;
-        protected <T extends INode> void chainable(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
-            try {
-                w.append("(and ");
-                T left = iter.next();
-                while (iter.hasNext()) {
-                    w.append("(");
-                    w.append(fcnname);
-                    w.append(" ");
-                    left.accept(this);
-                    w.append(" ");
-                    (left=iter.next()).accept(this);
-                    w.append(")");
-                }
-                w.append(")");
-            } catch (IOException ex) {
-                throw new IVisitor.VisitorException(ex,null); // FIXME - null ?
             }
         }
     }

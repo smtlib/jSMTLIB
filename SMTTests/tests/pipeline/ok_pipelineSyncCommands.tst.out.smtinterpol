@@ -8,5 +8,5 @@ false
 success
 success
 success
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
+(error "<stdin>:13:15: Set option :interactive-mode to true to get assertions!")
 sat

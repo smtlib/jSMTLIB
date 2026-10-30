@@ -1,0 +1,11 @@
+; pop walks the popped assertions (TypeChecker.clearSorts, a TreeVisitor), including an
+; s-expression attribute value and a parametric sort in a quantifier declaration
+(set-logic AUFLIA)
+(declare-fun a () (Array Int Int))
+(push 1)
+(assert (! (= (select a 0) 1) :my-attr (k (1 #x1F #b01 2.5) "s" :kw)))
+(assert (forall ((b (Array Int Int))) (= b b)))
+(check-sat)
+(pop 1)
+(assert (= (select a 0) 2))
+(check-sat)

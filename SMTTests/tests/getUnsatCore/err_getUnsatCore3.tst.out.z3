@@ -3,4 +3,4 @@ success
 success
 sat
 success
-(error "The get-unsat-core command is only valid immediately after check-sat returned unsat")
+(error "line 7 column 15: unsat core is not available")

@@ -1,0 +1,7 @@
+success
+success
+success
+success
+sat
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:8:11: model generation is not enabled
+")

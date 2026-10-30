@@ -516,7 +516,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 
         @Override
         public T visit(IResponse.IUnsatAssumptionsResponse e) throws VisitorException {
-            for (ISymbol s: e.names()) {
+            for (IExpr s: e.assumptions()) {
                 s.accept(this);
             }
             return null;

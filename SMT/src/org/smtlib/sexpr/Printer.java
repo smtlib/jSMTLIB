@@ -1045,7 +1045,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     @Override
     public Void visit(IResponse.IUnsatAssumptionsResponse e) throws IVisitor.VisitorException {
         append("(");
-        for (ISymbol n : e.names()) {
+        for (IExpr n : e.assumptions()) {
             n.accept(this);
             append(" ");
         }

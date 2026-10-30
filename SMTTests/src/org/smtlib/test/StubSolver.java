@@ -8,16 +8,16 @@ import java.nio.file.Paths;
 /** A stand-in solver for FileTests' .stub tests (#145): its argument is a plain-text file of
  *  replies, one line per command received (including any priming command the adapter sends
  *  first), in order. An empty line is an empty reply; {@code <<stderr>> text} writes the text
- *  to standard error instead; {@code <<exit N>>} ends the process with code N right after the
- *  reply before it (or at once, as the first line); {@code <<close>>} closes standard output there
- *  instead, the process reading its input until that ends. The process also ends after replying to
- *  (exit), or when the replies run out.
+ *  to standard error instead. Directive lines act right after the reply before them (or at once,
+ *  as the first lines) and answer no command: {@code <<exit N>>} ends the process with code N,
+ *  {@code <<close-stdout>>} closes standard output, {@code <<sleep N>>} pauses N milliseconds.
+ *  The process also ends after replying to (exit), or when the replies run out.
  *
  *  Not a JUnit test itself (see EchoProcess on why that annotation is not named here). */
 public class StubSolver {
     public static void main(String[] args) throws Exception {
         java.util.List<String> replies = Files.readAllLines(Paths.get(args[0]));
-        int next = exitIfAt(replies, 0);
+        int next = directives(replies, 0);
         Reader in = new InputStreamReader(System.in);
         StringBuilder command = new StringBuilder();
         int depth = 0;
@@ -38,27 +38,27 @@ public class StubSolver {
             } else if (c == ')' && --depth == 0) {
                 if (next >= replies.size()) return;
                 reply(replies.get(next));
-                next = exitIfAt(replies, next + 1);
+                next = directives(replies, next + 1);
                 if (command.toString().startsWith("(exit")) return;
                 command.setLength(0);
             }
         }
     }
 
-    /** Ends the process if line i is an exit directive, or closes standard output if it is a close
-     *  directive; else returns i */
-    private static int exitIfAt(java.util.List<String> replies, int i) throws java.io.IOException {
-        if (i < replies.size()) {
+    /** Carries out the directives starting at line i; returns the index of the next reply */
+    private static int directives(java.util.List<String> replies, int i) throws InterruptedException {
+        for (; i < replies.size(); i++) {
             String line = replies.get(i);
-            if (line.equals("<<close>>")) {
-                System.out.close();
-                while (System.in.read() != -1) {}
-                System.exit(0);
-            }
             if (line.startsWith("<<exit ") && line.endsWith(">>")) {
                 System.out.flush();
                 System.err.flush();
                 System.exit(Integer.parseInt(line.substring(7, line.length() - 2).trim()));
+            } else if (line.equals("<<close-stdout>>")) {
+                System.out.close();
+            } else if (line.startsWith("<<sleep ") && line.endsWith(">>")) {
+                Thread.sleep(Long.parseLong(line.substring(8, line.length() - 2).trim()));
+            } else {
+                break;
             }
         }
         return i;

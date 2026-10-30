@@ -2,4 +2,4 @@ success
 success
 success
 sat
-(error "The get-unsat-core command is only valid immediately after check-sat returned unsat")
+(error "<stdin>:6:15: Logical context not inconsistent!")

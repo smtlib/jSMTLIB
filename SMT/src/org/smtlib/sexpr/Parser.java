@@ -147,6 +147,13 @@ public class Parser extends Lexer implements IParser {
      *  reported a confusing second time. */
     private boolean recoveringFromNestedError = false;
 
+    /** Whether the caller discards the rest of the line after an error (with --abort on interactive
+     *  standard input, SMT.doParser calls abortLine), so the parser does not skip ahead itself:
+     *  that could consume, or wait for, lines typed after the error */
+    private boolean recoverByLine() {
+        return smtConfig.abort && smtConfig.interactive;
+    }
+
     /** This field is used only to communicate the position of the name of a command to the command creator
      * (instead of using method arguments).
      */
@@ -235,6 +242,7 @@ public class Parser extends Lexer implements IParser {
                                     peekToken());
                             if (reported.getMessage() != null) smtConfig.log.logError(smtConfig.responseFactory.error(reported.getMessage(), reported.pos()));
                         }
+                        if (recoverByLine()) return null;
                         // Skip to the next LP, matching old null-return behavior -- but log
                         // how many tokens were skipped, for debuggability.
                         int skipped = 0;
@@ -245,8 +253,10 @@ public class Parser extends Lexer implements IParser {
                     smtConfig.topLevel = false;
                     Symbol sym = parseSymbolOrReservedWord("Expected a symbol here, not a #");
                     if (sym == null) {
-                        skipThruRP();
-                        recoveringFromNestedError = true;
+                        if (!recoverByLine()) {
+                            skipThruRP();
+                            recoveringFromNestedError = true;
+                        }
                         return null;
                     }
                     commandName = sym;
@@ -305,13 +315,12 @@ public class Parser extends Lexer implements IParser {
                             target.printStackTrace(smtConfig.log.getDiag());
                         }
                     }
-                    if (command == null) {
-                        skipThruRP();
-                        recoveringFromNestedError = true;
-                    } else if (rp == null) {
-                        skipThruRP();
-                        recoveringFromNestedError = true;
+                    if (command == null || rp == null) {
                         command = null;
+                        if (!recoverByLine()) {
+                            skipThruRP();
+                            recoveringFromNestedError = true;
+                        }
                     }
                     if (command != null) {
                         setPos(command,pos(savedlp.pos(),rp.pos()));
@@ -333,8 +342,10 @@ public class Parser extends Lexer implements IParser {
                 } catch (ParserException e) {
                     // FIXME - is an RP a good recovery token? -- used to be end of line
                     if (e.getMessage() != null) lastError = smtConfig.log.logError(smtConfig.responseFactory.error(e.getMessage(),e.pos()));
-                    try { skipThruRP(); } catch (ParserException ex) { /* already recovering */ }
-                    recoveringFromNestedError = true;
+                    if (!recoverByLine()) {
+                        try { skipThruRP(); } catch (ParserException ex) { /* already recovering */ }
+                        recoveringFromNestedError = true;
+                    }
                 }
                 break;
             }
@@ -1070,8 +1081,12 @@ public class Parser extends Lexer implements IParser {
         return parseList(this::parseExpr, "assertion", true);
     }
 
-    /** Parses a parenthesized list of names, as returned by a get-unsat-core or
-     *  get-unsat-assumptions response. */
+    /** Parses a parenthesized list of terms, as returned by a get-unsat-assumptions response. */
+    public List<IExpr> parseTermList() throws ParserException {
+        return parseList(this::parseExpr, "term", true);
+    }
+
+    /** Parses a parenthesized list of names, as returned by a get-unsat-core response. */
     public List<ISymbol> parseSymbolList() throws ParserException {
         return parseList(this::parseSymbol, "name", true);
     }

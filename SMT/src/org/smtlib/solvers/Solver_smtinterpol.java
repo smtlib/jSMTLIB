@@ -14,8 +14,8 @@ import org.smtlib.*;
  *  silent inheritor of {@link AbstractSolver} -- the base launch command is declared in
  *  jsmtlib.properties via {@code org.smtlib.solver_smtinterpol-2.5.command} (see SMT.startSolver's
  *  {@code %exec%} placeholder substitution), so only the conditional timeout flag and
- *  {@link #start()}/{@link #exit()} (process lifecycle) are handled here. Empirically
- *  fully SMT-LIB compliant: :print-success already defaults to true (no priming
+ *  {@link #start()}/{@link #exit()} (process lifecycle) are handled here, besides the
+ *  get- command checks below. Otherwise empirically SMT-LIB compliant: :print-success already defaults to true (no priming
  *  command needed), errors come back as clean (error "...") s-expressions, and
  *  bitvector values print via the equally-valid {@code (_ bvN W)} indexed-literal
  *  form (not #b/#x, but standard concrete syntax that the generic parser handles
@@ -77,6 +77,65 @@ public class Solver_smtinterpol extends AbstractSolver implements ISolver {
         } catch (Exception e) {
             return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
         }
+    }
+
+    // The checks below correct SMTInterpol 2.5 answering get- commands that SMT-LIB makes errors; it
+    // reports the other cases itself. It answers get-model and get-value with :produce-models off,
+    // though it reports the option as false; get-proof after sat; get-assignment after unsat; and,
+    // after declare-* or define-* following a check, where SMT-LIB returns to assert mode, it still
+    // answers from the earlier check.
+
+    /** The kinds of command after which SMTInterpol still answers the get- commands about the last
+     *  check (probed with 2.5, 2026-10-29); after assert, push, pop and reset-assertions it reports
+     *  the error itself */
+    private static final java.util.Set<StackChange> ANSWERED_AFTER = java.util.EnumSet.of(
+            StackChange.DECLARE_FUN, StackChange.DECLARE_SORT, StackChange.DECLARE_SORT_PARAMETER,
+            StackChange.DECLARE_DATATYPE, StackChange.DEFINE_FUN, StackChange.DEFINE_FUN_REC, StackChange.DEFINE_SORT);
+
+    /** SMTInterpol answers get-model with :produce-models off, and in assert mode after a check */
+    @Override
+    public IResponse get_model() {
+        IResponse err = inSatMode() ? requireOptionEnabled("get-model", Utils.PRODUCE_MODELS)
+                : requireNoChangeSinceCheck("get-model", ANSWERED_AFTER);
+        return err != null ? err : super.get_model();
+    }
+
+    /** SMTInterpol answers get-value with :produce-models off, and in assert mode after a check */
+    @Override
+    public IResponse get_value(IExpr... terms) {
+        IResponse err = inSatMode() ? requireOptionEnabled("get-value", Utils.PRODUCE_MODELS)
+                : requireNoChangeSinceCheck("get-value", ANSWERED_AFTER);
+        return err != null ? err : super.get_value(terms);
+    }
+
+    /** SMTInterpol answers get-assignment after unsat, and in assert mode after a check */
+    @Override
+    public IResponse get_assignment() {
+        IResponse err = inUnsatMode() ? requireSatOrUnknown("get-assignment")
+                : requireNoChangeSinceCheck("get-assignment", ANSWERED_AFTER);
+        return err != null ? err : super.get_assignment();
+    }
+
+    /** SMTInterpol answers get-proof after sat, and in assert mode after a check */
+    @Override
+    public IResponse get_proof() {
+        IResponse err = inSatMode() ? requireUnsat("get-proof", "check-sat")
+                : requireNoChangeSinceCheck("get-proof", ANSWERED_AFTER);
+        return err != null ? err : super.get_proof();
+    }
+
+    /** SMTInterpol answers get-unsat-core in assert mode after a check */
+    @Override
+    public IResponse get_unsat_core() {
+        IResponse err = requireNoChangeSinceCheck("get-unsat-core", ANSWERED_AFTER);
+        return err != null ? err : super.get_unsat_core();
+    }
+
+    /** SMTInterpol answers get-unsat-assumptions in assert mode after a check */
+    @Override
+    public IResponse get_unsat_assumptions() {
+        IResponse err = requireNoChangeSinceCheck("get-unsat-assumptions", ANSWERED_AFTER);
+        return err != null ? err : super.get_unsat_assumptions();
     }
 
 }

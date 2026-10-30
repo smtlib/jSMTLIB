@@ -165,10 +165,6 @@ public class Solver_altergo extends AbstractSolver implements ISolver {
      *  class reads one line, which may be a blank line Alt-Ergo writes around replies) */
     @Override
     public IResponse get_assignment() {
-        IResponse err = requireOptionEnabled("get-assignment", Utils.PRODUCE_ASSIGNMENTS);
-        if (err != null) return err;
-        err = requireSatOrUnknown("get-assignment");
-        if (err != null) return err;
         IResponse r = sendCommand(smtConfig.commandFactory.get_assignment());
         if (!(r instanceof org.smtlib.sexpr.ISexpr.ISeq)) return r;
         String text = smtConfig.defaultPrinter.toString(r);

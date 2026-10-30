@@ -17,8 +17,16 @@ public class Solver_z3_4_5 extends Solver_z3_recent {
         super(smtConfig, command);
     }
 
+    /** z3 4.5 reports the get- commands after a declare or define itself, except after declare-datatype(s)
+     *  (probed 2026-10-29) */
+    @Override
+    protected java.util.Set<StackChange> answeredAfter() {
+        return java.util.EnumSet.of(StackChange.DECLARE_DATATYPE);
+    }
+
     @Override
     public IResponse echo(IExpr.IStringLiteral arg) {
+        linesOffset--; // not sent (see linesOffset)
         return arg;
     }
 }

@@ -1,0 +1,8 @@
+(set-option :produce-unsat-assumptions true)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(check-sat-assuming (p (not q)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(get-unsat-core)
+^^^^^^^^^^^^^^^^
+(get-unsat-assumptions)
+^^^^^^^^^^^^^^^^^^^^^^^
