@@ -22,8 +22,9 @@ import org.smtlib.SMT;
 
 /** Measures what --pipeline saves: a script of many declarations and assertions is run with and
  *  without it, through the command-line tool and through the library's IScript.execute, for each
- *  solver in SMT_TEST_SOLVERS that pipelines. The output must be the same, and pipelining must take at most half the time (about a fifteenth was measured on macOS, so
- *  the bound leaves room for a loaded machine). The timings are printed when the speedup is
+ *  solver in SMT_TEST_SOLVERS that pipelines. The output must be the same, and pipelining must take at most
+ *  half the time (about a fifteenth was measured on macOS, so the bound leaves room for a loaded machine),
+ *  except for alt-ergo (see timed()). The timings are printed when the speedup is
  *  under REPORTED_SPEEDUP, or always if the environment variable SMT_TEST_VERBOSE_TIMING is set. */
 @RunWith(ParameterizedWithNames.class)
 public class PipelinePerformanceTests {
@@ -47,6 +48,15 @@ public class PipelinePerformanceTests {
     }
 
     private final String solvername;
+
+    /** Whether the speedup is asserted. Not for alt-ergo: it writes nothing for success, so even
+     *  unpipelined each command is read up to an echo sent after it (see AbstractSolver.sendCommand),
+     *  never through SolverProcess.listen, whose wait for standard error after every response is most of
+     *  what pipelining saves for the other solvers. Only the round trip is left to save: speedups
+     *  of 0.6x to 1.4x were measured on CI (Linux x64, macOS arm64). The outputs are still compared. */
+    private boolean timed() {
+        return !solvername.equals("altergo");
+    }
 
     /** The answer to a satisfiable check: alt-ergo answers unknown, never sat (a conforming answer) */
     private final String sat;
@@ -111,10 +121,9 @@ public class PipelinePerformanceTests {
         long syncMillis = (Long)sync[1] / 1_000_000;
         long pipelinedMillis = (Long)pipelined[1] / 1_000_000;
         reportTiming("command line", pipelinedMillis, syncMillis);
-        // alt-ergo needs an echo after every command in both modes, and gains only about 2x here
-        double factor = solvername.equals("altergo") ? 1.5 : 2;
+        if (!timed()) return;
         Assert.assertTrue("pipelined " + pipelinedMillis + " ms vs. " + syncMillis + " ms unpipelined",
-                factor * pipelinedMillis < syncMillis);
+                2 * pipelinedMillis < syncMillis);
     }
 
     /** Response and elapsed nanoseconds of executing the script with a new solver, with or without
@@ -156,6 +165,7 @@ public class PipelinePerformanceTests {
         long syncMillis = (Long)sync[1] / 1_000_000;
         long pipelinedMillis = (Long)pipelined[1] / 1_000_000;
         reportTiming("IScript.execute", pipelinedMillis, syncMillis);
+        if (!timed()) return;
         Assert.assertTrue("pipelined " + pipelinedMillis + " ms vs. " + syncMillis + " ms unpipelined",
                 2 * pipelinedMillis < syncMillis);
     }

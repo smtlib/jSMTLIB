@@ -309,6 +309,10 @@ public class FileTests extends LogicTests {
     // order here, change it there too, and vice versa.
     // -----------------------------------------------------------------------
 
+    /** The golden for ext (.out or .err): for the resolved name of a bare solver name (see
+     *  resolvedName), then the solver name, then its family, the first of N.&lt;platform-arch&gt;.bad,
+     *  .lenient, N.&lt;platform-arch&gt;, N.&lt;platform&gt;.bad, .lenient, N.&lt;platform&gt;, N, N.bad,
+     *  N.lenient; then the plain .&lt;platform-arch&gt;, .&lt;platform&gt; and the bare file; or null */
     private File findGoldenFile(String ext) {
         String base = tstFile.getAbsolutePath();
         String family = family(solvername);
@@ -328,11 +332,7 @@ public class FileTests extends LogicTests {
         String resolved = resolvedName(solvername);
         if (resolved != null) addSolverCandidates(candidates, base + ext + "." + resolved);
         addSolverCandidates(candidates, base + ext + "." + solvername);
-        if (family != null) {
-            candidates.add(base + ext + "." + family);
-            candidates.add(base + ext + "." + family + ".bad");
-            candidates.add(base + ext + "." + family + ".lenient");
-        }
+        if (family != null) addSolverCandidates(candidates, base + ext + "." + family);
         candidates.add(base + ext + "." + PLATFORM_ARCH);
         candidates.add(base + ext + "." + PLATFORM);
         candidates.add(base + ext);

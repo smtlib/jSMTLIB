@@ -399,15 +399,23 @@ For a test file `foo.tst`, `FileTests`/`runtest` look for output goldens in
 this priority order (most-specific first), falling back to the bare file:
 
 ```
-foo.tst.out.<solver>.<platform-arch>
-foo.tst.out.<solver>.<platform>
-foo.tst.out.<solver>
+foo.tst.out.<name>.<platform-arch>.bad, .lenient
+foo.tst.out.<name>.<platform-arch>
+foo.tst.out.<name>.<platform>.bad, .lenient
+foo.tst.out.<name>.<platform>
+foo.tst.out.<name>
+foo.tst.out.<name>.bad, .lenient
+    ... for <name> = the exact solver name (e.g. z3-4.16.0), then its family (z3)
 foo.tst.out.<platform-arch>
 foo.tst.out.<platform>
 foo.tst.out                      <- bare default, used by any solver without its own override
 ```
 
-(same pattern for `.err`). Rules of thumb:
+(same pattern for `.err`). The family is the name without its version suffix
+(`z3-4.16.0` -> `z3`), so e.g. `foo.tst.out.z3.linux` applies to every z3 version
+on Linux that has no golden of its own. A bare name such as `z3` counts first as
+the versioned name it runs (`z3-4.16.0`, from `SMT/jsmtlib.properties`), then as
+itself. Rules of thumb:
 - The **bare** `.out` should hold the mathematically accurate answer (e.g. the
   real `sat`/`unsat`), not a weaker solver's `unknown` — add a solver-specific
   override for any solver that can't determine it, rather than degrading the
@@ -420,8 +428,8 @@ foo.tst.out                      <- bare default, used by any solver without its
 - A trailing `.bad` variant (e.g. `foo.tst.out.z3-4.3.bad`) documents solver
   output that is genuinely non-conforming (not just differently-worded) --
   e.g. a claimed success that silently didn't take effect. `findGoldenFile`
-  consults it as a fallback (after the exact and family goldens, before the
-  bare default), so the test still passes deterministically against the
+  consults it in the order above (before the same name's platform file, after
+  its plain one), so the test still passes deterministically against the
   known-bad output instead of failing every run; promote real conforming
   output to a normal golden instead of `.bad`.
 - A trailing `.lenient` variant, looked up exactly where `.bad` is, records a
