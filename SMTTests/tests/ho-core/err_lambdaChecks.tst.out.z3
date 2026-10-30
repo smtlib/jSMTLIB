@@ -1,5 +1,5 @@
 success
-(error "line 3 column 19: unknown sort '->'")
-(error "line 4 column 11: unknown constant f")
-(error "line 5 column 11: unknown constant f")
-(error "line 6 column 11: unknown constant f")
+success
+(error "line 4 column 42: Sorts (Array Int Int) and (Array Int Int Int) are incompatible")
+(error "line 5 column 25: invalid sorted variables: unknown sort 'Foo'")
+(error "line 6 column 41: Sort mismatch at argument #2 for function (declare-fun + (Int Int) Int) supplied sort is Bool")
