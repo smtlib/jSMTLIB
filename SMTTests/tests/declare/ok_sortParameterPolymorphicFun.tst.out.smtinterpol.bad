@@ -10,4 +10,4 @@ success
 success
 success
 sat
-(error "<stdin>:17:14: Unknown function symbol f.")
+(error "<stdin>:16:14: Unknown function symbol f.")
