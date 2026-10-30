@@ -366,7 +366,13 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             // confirm them against.
             if (s.contains("Valid.")) res = smtConfig.responseFactory.unsat();
             else if (s.contains("Invalid.")) res = smtConfig.responseFactory.sat();
-            else if (s.contains("Bad input:") || s.contains("Sx.ReadError")) res = smtConfig.responseFactory.error(s.trim());
+            else if (s.contains("Bad input:")) res = smtConfig.responseFactory.error(s.trim());
+            else if (s.contains("Sx.ReadError")) {
+                res = smtConfig.responseFactory.error(s.trim());
+                // Simplify exits after a read error (it goes on after "Bad input:"); waiting for that, and
+                // stopping it if it lingers, makes every later command answer that the process has exited
+                if (!solverProcess.waitForEnd(END_WAIT_MILLIS)) solverProcess.stopIfRunning();
+            }
             else res = smtConfig.responseFactory.unknown();
             checkSatStatus = res;
 //            s = solverProcess.sendAndListen("(BG_POP)\r\n");
