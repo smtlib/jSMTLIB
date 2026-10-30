@@ -123,7 +123,20 @@ public class AbstractSolver implements ISolver {
             solverProcess.sendNoListen(text);
             return null;
         }
-        return solverProcess.sendAndListen(text);
+        String response = solverProcess.sendAndListen(text);
+        logSolverDiagnostics();
+        return response;
+    }
+
+    /** Logs the standard-error text the solver wrote along with its replies (see
+     *  SolverProcess.takeDiagnosticOutput), noting a whole-run time-limit report there: the reply
+     *  stands, but the solver has ended */
+    protected void logSolverDiagnostics() {
+        if (solverProcess == null) return;
+        String diag = solverProcess.takeDiagnosticOutput();
+        if (diag.trim().isEmpty()) return;
+        timeLimitResponse(diag);
+        smtConfig.log.logDiag(diag.trim());
     }
 
     /** The source line for line n of the solver's input, which may be that of an earlier command */
@@ -686,6 +699,7 @@ public class AbstractSolver implements ISolver {
             // (a solver one response ahead then shows as a response out of step); waiting, no
             // command is left to take it
             if (wait) reportLeftover();
+            logSolverDiagnostics();
             String err = takeErrorOutput(false);
             if (!err.isEmpty()) smtConfig.log.logDiag(err.trim());
         }
@@ -1424,6 +1438,7 @@ public class AbstractSolver implements ISolver {
                 }
                 sb.append(s.replace('\n',' ').replace("\r",""));
             } while (parens > 0);
+            logSolverDiagnostics();
             response = sb.toString();
             if (isFlatResponse(response)) return checkShape(Shape.VALUE, sent, response, checkImmediateExit(parseResponse(response)));
             List<IExpr> exprs = new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseAssertionList();

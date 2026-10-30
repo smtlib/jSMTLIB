@@ -8,8 +8,10 @@ import java.nio.file.Paths;
 /** A stand-in solver for FileTests' .stub tests (#145): its argument is a plain-text file of
  *  replies, one line per command received (including any priming command the adapter sends
  *  first), in order. An empty line is an empty reply; {@code <<stderr>> text} writes the text
- *  to standard error instead. Directive lines act right after the reply before them (or at once,
- *  as the first lines) and answer no command: {@code <<exit N>>} ends the process with code N,
+ *  to standard error instead; {@code <<with-stderr text>> reply} writes the text to standard
+ *  error, then, 50 ms later, the reply to standard output, so that both are there when the reply
+ *  is read. Directive lines act right after the reply before them (or at once, as the first lines)
+ *  and answer no command: {@code <<exit N>>} ends the process with code N,
  *  {@code <<close-stdout>>} closes standard output, {@code <<sleep N>>} pauses N milliseconds,
  *  {@code <<print text>>} and {@code <<eprint text>>} write the text as a line to standard output or error.
  *  The process also ends after replying to (exit), or when the replies run out.
@@ -85,8 +87,15 @@ public class StubSolver {
         return i;
     }
 
-    private static void reply(String line) {
-        if (line.startsWith("<<stderr>>")) {
+    private static void reply(String line) throws InterruptedException {
+        int close = line.indexOf(">>");
+        if (line.startsWith("<<with-stderr ") && close > 0) {
+            System.err.print(line.substring(14, close) + "\n");
+            System.err.flush();
+            Thread.sleep(50);
+            System.out.print(line.substring(close + 2).trim() + "\n");
+            System.out.flush();
+        } else if (line.startsWith("<<stderr>>")) {
             System.err.println(line.substring(10).trim());
             System.err.flush();
         } else {
