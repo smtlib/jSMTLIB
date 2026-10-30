@@ -385,7 +385,7 @@ public class AbstractSolver implements ISolver {
     }
 
     /** How long (ms) to wait for the solver process to end, once a send has found it gone or ending */
-    private static final long END_WAIT_MILLIS = 2000;
+    protected static final long END_WAIT_MILLIS = 2000;
 
     /** Returns responseFactory.timeout(), recording that the solver has ended, if the process ended once its
      *  whole-run time limit had passed, which then ended it; otherwise null. The solver's report of that may be

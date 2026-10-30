@@ -1,2 +1,4 @@
 (error "logic QF_UFNRA is not supported since yices was not built with mcsat support")
 (error "at line 3, column 19: undefined sort: Real")
+(error "The solver process has exited")
+(error "The solver process has exited")

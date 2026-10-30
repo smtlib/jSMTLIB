@@ -154,8 +154,8 @@ public class PipelineApiTests {
         // z3, smtinterpol and alt-ergo go on after the error; cvc5, yices2 and bitwuzla stop, as for every later command
         IResponse after = read(rs.get(3));
         if (after.isError()) {
-            Assert.assertTrue(after.toString(), after.toString().contains("Solver process has already exited"));
-            Assert.assertTrue(read(rs.get(4)).toString().contains("Solver process has already exited"));
+            Assert.assertTrue(after.toString(), after.toString().contains(AbstractSolver.SOLVER_EXITED));
+            Assert.assertTrue(read(rs.get(4)).toString().contains(AbstractSolver.SOLVER_EXITED));
         } else {
             Assert.assertEquals("success", after.toString());
             Assert.assertEquals(sat, read(rs.get(4)).toString());
