@@ -363,8 +363,12 @@ public class AbstractSolver implements ISolver {
      *  passed; otherwise null */
     protected /*@Nullable*/ IResponse timeLimitResponseAfterExit() {
         if (!(smtConfig.timeoutTotal > 0) || solverProcess == null) return null;
-        IResponse timedOut = timeLimitResponse(solverProcess.unreadOutput());
-        return timedOut != null ? timedOut : timeLimitPassedResponse();
+        // each stream separately, as the solver may write other text on the stream without the report
+        for (String text: solverProcess.unreadOutput()) {
+            IResponse timedOut = timeLimitResponse(text);
+            if (timedOut != null) return timedOut;
+        }
+        return timeLimitPassedResponse();
     }
 
     /** How long (ms) to wait for the solver process to end, once a send has found it gone or ending */
