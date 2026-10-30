@@ -168,38 +168,48 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
 
     // The checks below correct recent z3 answering get- commands that SMT-LIB makes errors; it
     // reports the other cases itself. Every version answers get-assignment with
-    // :produce-assignments off, though it reports the option as false. From 4.6 on, after declare-*
-    // or define-* following a check, where SMT-LIB returns to assert mode, z3 still answers from the
-    // earlier check (4.5 reports these itself, so for it the check only changes the message). The
-    // :produce-models default of true (see the class Javadoc) is not checked: z3 reports the option
-    // as true.
+    // :produce-assignments off, though it reports the option as false. After some commands following
+    // a check (see answeredAfter), where SMT-LIB returns to assert mode, z3 still answers from the
+    // earlier check. The :produce-models default of true (see the class Javadoc) is not checked: z3
+    // reports the option as true.
+
+    /** The kinds of command after which this z3 still answers the get- commands about the last check
+     *  (probed 2026-10-29: z3 4.6 to 5.1 after every declare and define; 4.8 and later also after
+     *  reset-assertions, which 4.6 and 4.7 report themselves). After assert, push or pop z3 reports
+     *  the error itself. */
+    protected java.util.Set<StackChange> answeredAfter() {
+        return java.util.EnumSet.of(StackChange.DECLARE_FUN, StackChange.DECLARE_SORT,
+                StackChange.DECLARE_SORT_PARAMETER, StackChange.DECLARE_DATATYPE,
+                StackChange.DEFINE_FUN, StackChange.DEFINE_FUN_REC,
+                StackChange.DEFINE_SORT, StackChange.RESET_ASSERTIONS);
+    }
 
     /** z3 answers get-assignment with :produce-assignments off, and in assert mode after a check */
     @Override
     public IResponse get_assignment() {
         IResponse err = inSatMode() ? requireOptionEnabled("get-assignment", Utils.PRODUCE_ASSIGNMENTS)
-                : requireUnchangedSinceCheck("get-assignment");
+                : requireNoChangeSinceCheck("get-assignment", answeredAfter());
         return err != null ? err : super.get_assignment();
     }
 
     /** z3 answers get-model in assert mode after a check */
     @Override
     public IResponse get_model() {
-        IResponse err = requireUnchangedSinceCheck("get-model");
+        IResponse err = requireNoChangeSinceCheck("get-model", answeredAfter());
         return err != null ? err : super.get_model();
     }
 
     /** z3 answers get-value in assert mode after a check */
     @Override
     public IResponse get_value(IExpr... terms) {
-        IResponse err = requireUnchangedSinceCheck("get-value");
+        IResponse err = requireNoChangeSinceCheck("get-value", answeredAfter());
         return err != null ? err : super.get_value(terms);
     }
 
     /** z3 answers get-proof in assert mode after a check */
     @Override
     public IResponse get_proof() {
-        IResponse err = requireUnchangedSinceCheck("get-proof");
+        IResponse err = requireNoChangeSinceCheck("get-proof", answeredAfter());
         return err != null ? err : super.get_proof();
     }
 
@@ -259,14 +269,14 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
     /** z3 answers get-unsat-core in assert mode after a check */
     @Override
     public IResponse get_unsat_core() {
-        IResponse err = requireUnchangedSinceCheck("get-unsat-core");
+        IResponse err = requireNoChangeSinceCheck("get-unsat-core", answeredAfter());
         return err != null ? err : super.get_unsat_core();
     }
 
     /** z3 answers get-unsat-assumptions in assert mode after a check */
     @Override
     public IResponse get_unsat_assumptions() {
-        IResponse err = requireUnchangedSinceCheck("get-unsat-assumptions");
+        IResponse err = requireNoChangeSinceCheck("get-unsat-assumptions", answeredAfter());
         return err != null ? err : super.get_unsat_assumptions();
     }
 

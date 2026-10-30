@@ -124,11 +124,17 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
     // declare-* or define-* following a check, where SMT-LIB returns to assert mode, it still answers
     // from the earlier check (get-unsat-assumptions then names the new symbol for an assumption).
 
+    /** The kinds of command after which yices2 still answers the get- commands about the last check
+     *  (probed with 2.6.5 and 2.7.0, 2026-10-29; it has no datatypes or recursive definitions); after
+     *  assert, push, pop and reset-assertions it reports the error itself */
+    private static final java.util.Set<StackChange> ANSWERED_AFTER = java.util.EnumSet.of(
+            StackChange.DECLARE_FUN, StackChange.DECLARE_SORT, StackChange.DEFINE_SORT, StackChange.DEFINE_FUN);
+
     /** yices2 answers get-model with :produce-models off, and in assert mode after a check */
     @Override
     public IResponse get_model() {
         IResponse err = inSatMode() ? requireOptionEnabled("get-model", Utils.PRODUCE_MODELS)
-                : requireUnchangedSinceCheck("get-model");
+                : requireNoChangeSinceCheck("get-model", ANSWERED_AFTER);
         return err != null ? err : super.get_model();
     }
 
@@ -136,7 +142,7 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
     @Override
     public IResponse get_value(IExpr... terms) {
         IResponse err = inSatMode() ? requireOptionEnabled("get-value", Utils.PRODUCE_MODELS)
-                : requireUnchangedSinceCheck("get-value");
+                : requireNoChangeSinceCheck("get-value", ANSWERED_AFTER);
         return err != null ? err : super.get_value(terms);
     }
 
@@ -144,21 +150,21 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
     @Override
     public IResponse get_assignment() {
         IResponse err = inSatMode() ? requireOptionEnabled("get-assignment", Utils.PRODUCE_ASSIGNMENTS)
-                : requireUnchangedSinceCheck("get-assignment");
+                : requireNoChangeSinceCheck("get-assignment", ANSWERED_AFTER);
         return err != null ? err : super.get_assignment();
     }
 
     /** yices2 answers get-unsat-core in assert mode after a check */
     @Override
     public IResponse get_unsat_core() {
-        IResponse err = requireUnchangedSinceCheck("get-unsat-core");
+        IResponse err = requireNoChangeSinceCheck("get-unsat-core", ANSWERED_AFTER);
         return err != null ? err : super.get_unsat_core();
     }
 
     /** yices2 answers get-unsat-assumptions, wrongly, in assert mode after a check */
     @Override
     public IResponse get_unsat_assumptions() {
-        IResponse err = requireUnchangedSinceCheck("get-unsat-assumptions");
+        IResponse err = requireNoChangeSinceCheck("get-unsat-assumptions", ANSWERED_AFTER);
         return err != null ? err : super.get_unsat_assumptions();
     }
 }

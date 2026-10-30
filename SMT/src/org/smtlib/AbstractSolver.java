@@ -953,6 +953,7 @@ public class AbstractSolver implements ISolver {
     public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
         checkSatStatus = null;
         checkMade = false;
+        changesSinceCheck.clear();
         return sendCommand(smtConfig.commandFactory.set_logic(smtConfig.exprFactory.symbol(logicName)));
     }
 
@@ -961,41 +962,39 @@ public class AbstractSolver implements ISolver {
     public IResponse reset() {
         checkSatStatus = null;
         checkMade = false;
+        changesSinceCheck.clear();
         return sendCommand(smtConfig.commandFactory.reset());
     }
 
     /** @see org.smtlib.ISolver#reset_assertions() */
     @Override
     public IResponse reset_assertions() {
-        checkSatStatus = null;
-        return sendCommand(smtConfig.commandFactory.reset_assertions());
+        return sendChange(StackChange.RESET_ASSERTIONS, smtConfig.commandFactory.reset_assertions());
     }
 
     /** @see org.smtlib.ISolver#push(int) */
     @Override
     public IResponse push(int number) {
-        checkSatStatus = null;
-        return sendCommand(smtConfig.commandFactory.push(smtConfig.exprFactory.numeral(number)));
+        return sendChange(StackChange.PUSH, smtConfig.commandFactory.push(smtConfig.exprFactory.numeral(number)));
     }
 
     /** @see org.smtlib.ISolver#pop(int) */
     @Override
     public IResponse pop(int number) {
-        checkSatStatus = null;
-        return sendCommand(smtConfig.commandFactory.pop(smtConfig.exprFactory.numeral(number)));
+        return sendChange(StackChange.POP, smtConfig.commandFactory.pop(smtConfig.exprFactory.numeral(number)));
     }
 
     /** @see org.smtlib.ISolver#assertExpr(IExpr) */
     @Override
     public IResponse assertExpr(IExpr sexpr) {
-        checkSatStatus = null;
-        return sendCommand(smtConfig.commandFactory.assertCommand(sexpr));
+        return sendChange(StackChange.ASSERT, smtConfig.commandFactory.assertCommand(sexpr));
     }
 
     /** @see org.smtlib.ISolver#check_sat()*/
     @Override
     public IResponse check_sat() {
         checkMade = true;
+        changesSinceCheck.clear();
         checkSatStatus = sendCommand(smtConfig.commandFactory.check_sat());
         return checkSatStatus;
     }
@@ -1004,6 +1003,7 @@ public class AbstractSolver implements ISolver {
     @Override
     public IResponse check_sat_assuming(IExpr ... exprs) {
         checkMade = true;
+        changesSinceCheck.clear();
         checkSatStatus = sendCommand(smtConfig.commandFactory.check_sat_assuming(java.util.Arrays.asList(exprs)));
         return checkSatStatus;
     }
@@ -1017,22 +1017,19 @@ public class AbstractSolver implements ISolver {
     /** @see org.smtlib.ISolver#define_fun(ICommand.Idefine_fun)  */
     @Override
     public IResponse define_fun(Idefine_fun cmd) {
-        checkSatStatus = null;
-        return sendCommand(cmd);
+        return sendChange(StackChange.DEFINE_FUN, cmd);
     }
 
     /** @see org.smtlib.ISolver#define_fun_rec(ICommand.Idefine_fun_rec)  */
     @Override
     public IResponse define_fun_rec(Idefine_fun_rec cmd) {
-        checkSatStatus = null;
-        return sendCommand(cmd);
+        return sendChange(StackChange.DEFINE_FUN_REC, cmd);
     }
 
     /** @see org.smtlib.ISolver#define_funs_rec(ICommand.Idefine_funs_rec)  */
     @Override
     public IResponse define_funs_rec(Idefine_funs_rec cmd) {
-        checkSatStatus = null;
-        return sendCommand(cmd);
+        return sendChange(StackChange.DEFINE_FUN_REC, cmd);
     }
 
     /** @see org.smtlib.ISolver#declare_const(ICommand.Ideclare_const)  */
@@ -1046,29 +1043,25 @@ public class AbstractSolver implements ISolver {
     /** @see org.smtlib.ISolver#declare_fun(ICommand.Ideclare_fun)  */
     @Override
     public IResponse declare_fun(Ideclare_fun cmd) {
-        checkSatStatus = null;
-        return sendCommand(cmd);
+        return sendChange(StackChange.DECLARE_FUN, cmd);
     }
 
     /** @see org.smtlib.ISolver#define_sort(ICommand.Idefine_sort)  */
     @Override
     public IResponse define_sort(Idefine_sort cmd){
-        checkSatStatus = null;
-        return sendCommand(cmd);
+        return sendChange(StackChange.DEFINE_SORT, cmd);
     }
 
     /** @see org.smtlib.ISolver#declare_sort(ICommand.Ideclare_sort)  */
     @Override
     public IResponse declare_sort(Ideclare_sort cmd) {
-        checkSatStatus = null;
-        return sendCommand(cmd);
+        return sendChange(StackChange.DECLARE_SORT, cmd);
     }
 
     /** @see org.smtlib.ISolver#declare_sort_parameter(ICommand.Ideclare_sort_parameter)  */
     @Override
     public IResponse declare_sort_parameter(Ideclare_sort_parameter cmd) {
-        checkSatStatus = null;
-        return sendCommand(cmd);
+        return sendChange(StackChange.DECLARE_SORT_PARAMETER, cmd);
     }
 
     /** @see org.smtlib.ISolver#set_option(IExpr.IKeyword,IExpr.IAttributeValue)
@@ -1131,6 +1124,25 @@ public class AbstractSolver implements ISolver {
     /** Whether a check command has been sent since the logic was set (or the solver was reset) */
     private boolean checkMade = false;
 
+    /** The kinds of command that change the assertion stack: each returns a conforming solver to
+     *  assert mode, where the get- commands about the last check are errors (declare-const is
+     *  declare-fun, declare-datatypes is declare-datatype, define-funs-rec is define-fun-rec) */
+    public enum StackChange {
+        DECLARE_FUN, DECLARE_SORT, DECLARE_SORT_PARAMETER, DECLARE_DATATYPE, DEFINE_FUN, DEFINE_FUN_REC,
+        DEFINE_SORT, ASSERT, PUSH, POP, RESET_ASSERTIONS
+    }
+
+    /** The kinds of command the solver accepted since the last check command */
+    private final java.util.EnumSet<StackChange> changesSinceCheck = java.util.EnumSet.noneOf(StackChange.class);
+
+    /** Sends a command that changes the assertion stack, recording its kind unless the solver rejects it */
+    protected IResponse sendChange(StackChange kind, ICommand cmd) {
+        checkSatStatus = null;
+        IResponse response = sendCommand(cmd);
+        if (!response.isError()) changesSinceCheck.add(kind);
+        return response;
+    }
+
     /** Whether the most recent check command was answered sat or unknown, with the assertion stack
      *  unchanged since: SMT-LIB's sat mode (false once the whole-run time limit has ended the solver) */
     protected boolean inSatMode() {
@@ -1147,12 +1159,13 @@ public class AbstractSolver implements ISolver {
         return smtConfig.responseFactory.unsat().equals(checkSatStatus);
     }
 
-    /** Returns an error response if the assertion stack has changed since a check command was answered
-     *  (SMT-LIB's assert mode, where the get- commands about that check are errors), else null */
-    protected /*@Nullable*/ IResponse requireUnchangedSinceCheck(String commandName) {
+    /** Returns an error response if, since a check command, the solver has accepted a command of one of
+     *  the given kinds (after which the solver wrongly keeps answering the get- commands about that
+     *  check, which SMT-LIB's assert mode makes errors), else null */
+    protected /*@Nullable*/ IResponse requireNoChangeSinceCheck(String commandName, java.util.Set<StackChange> answeredAfter) {
         if (endedByTimeLimit) return null;
         readPipelined(true);
-        if (checkMade && checkSatStatus == null) {
+        if (checkMade && !java.util.Collections.disjoint(changesSinceCheck, answeredAfter)) {
             return smtConfig.responseFactory.error("The " + commandName
                     + " command is not valid once the assertion stack has changed since the last check command");
         }
@@ -1433,14 +1446,12 @@ public class AbstractSolver implements ISolver {
 
     @Override
     public IResponse declare_datatype(Ideclare_datatype cmd) {
-        checkSatStatus = null;
-        return sendCommand(cmd);
+        return sendChange(StackChange.DECLARE_DATATYPE, cmd);
     }
 
 
     @Override
     public IResponse declare_datatypes(Ideclare_datatypes cmd) {
-        checkSatStatus = null;
-        return sendCommand(cmd);
+        return sendChange(StackChange.DECLARE_DATATYPE, cmd);
     }
 }

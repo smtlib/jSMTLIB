@@ -1,0 +1,12 @@
+(set-info :smt-lib-version 2.7)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-datatype Color ((red) (green)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-datatypes ((E 0)) (((e1) (e2))))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(define-fun-rec f ((x Bool)) Bool x)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(define-funs-rec ((g ((x Bool)) Bool)) (x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort-parameter X)
+^^^^^^^^^^^^^^^^^^^^^^^^^^

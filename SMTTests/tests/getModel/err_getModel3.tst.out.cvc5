@@ -4,4 +4,4 @@ success
 success
 sat
 success
-(error "The get-model command is not valid once the assertion stack has changed since the last check command")
+(error "cannot get model unless after a SAT or UNKNOWN response.")

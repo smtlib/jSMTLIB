@@ -1,0 +1,10 @@
+success
+success
+unsupported
+(error "line 6 column 21: invalid sort parameter, symbol or ')' expected")
+unsupported
+unsupported
+unsupported
+success
+success
+sat

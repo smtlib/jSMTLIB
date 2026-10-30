@@ -85,11 +85,18 @@ public class Solver_smtinterpol extends AbstractSolver implements ISolver {
     // after declare-* or define-* following a check, where SMT-LIB returns to assert mode, it still
     // answers from the earlier check.
 
+    /** The kinds of command after which SMTInterpol still answers the get- commands about the last
+     *  check (probed with 2.5, 2026-10-29); after assert, push, pop and reset-assertions it reports
+     *  the error itself */
+    private static final java.util.Set<StackChange> ANSWERED_AFTER = java.util.EnumSet.of(
+            StackChange.DECLARE_FUN, StackChange.DECLARE_SORT, StackChange.DECLARE_SORT_PARAMETER,
+            StackChange.DECLARE_DATATYPE, StackChange.DEFINE_FUN, StackChange.DEFINE_FUN_REC, StackChange.DEFINE_SORT);
+
     /** SMTInterpol answers get-model with :produce-models off, and in assert mode after a check */
     @Override
     public IResponse get_model() {
         IResponse err = inSatMode() ? requireOptionEnabled("get-model", Utils.PRODUCE_MODELS)
-                : requireUnchangedSinceCheck("get-model");
+                : requireNoChangeSinceCheck("get-model", ANSWERED_AFTER);
         return err != null ? err : super.get_model();
     }
 
@@ -97,7 +104,7 @@ public class Solver_smtinterpol extends AbstractSolver implements ISolver {
     @Override
     public IResponse get_value(IExpr... terms) {
         IResponse err = inSatMode() ? requireOptionEnabled("get-value", Utils.PRODUCE_MODELS)
-                : requireUnchangedSinceCheck("get-value");
+                : requireNoChangeSinceCheck("get-value", ANSWERED_AFTER);
         return err != null ? err : super.get_value(terms);
     }
 
@@ -105,7 +112,7 @@ public class Solver_smtinterpol extends AbstractSolver implements ISolver {
     @Override
     public IResponse get_assignment() {
         IResponse err = inUnsatMode() ? requireSatOrUnknown("get-assignment")
-                : requireUnchangedSinceCheck("get-assignment");
+                : requireNoChangeSinceCheck("get-assignment", ANSWERED_AFTER);
         return err != null ? err : super.get_assignment();
     }
 
@@ -113,21 +120,21 @@ public class Solver_smtinterpol extends AbstractSolver implements ISolver {
     @Override
     public IResponse get_proof() {
         IResponse err = inSatMode() ? requireUnsat("get-proof", "check-sat")
-                : requireUnchangedSinceCheck("get-proof");
+                : requireNoChangeSinceCheck("get-proof", ANSWERED_AFTER);
         return err != null ? err : super.get_proof();
     }
 
     /** SMTInterpol answers get-unsat-core in assert mode after a check */
     @Override
     public IResponse get_unsat_core() {
-        IResponse err = requireUnchangedSinceCheck("get-unsat-core");
+        IResponse err = requireNoChangeSinceCheck("get-unsat-core", ANSWERED_AFTER);
         return err != null ? err : super.get_unsat_core();
     }
 
     /** SMTInterpol answers get-unsat-assumptions in assert mode after a check */
     @Override
     public IResponse get_unsat_assumptions() {
-        IResponse err = requireUnchangedSinceCheck("get-unsat-assumptions");
+        IResponse err = requireNoChangeSinceCheck("get-unsat-assumptions", ANSWERED_AFTER);
         return err != null ? err : super.get_unsat_assumptions();
     }
 
