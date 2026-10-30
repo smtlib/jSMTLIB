@@ -1,1 +1,1 @@
-(error "The solver stopped without a response to: (define-sort A () Bool)")
+(error "The solver process has exited")

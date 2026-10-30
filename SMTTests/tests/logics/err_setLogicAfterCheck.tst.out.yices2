@@ -1,0 +1,10 @@
+success
+success
+success
+success
+success
+sat
+(error "the logic is already set")
+(error "The get-value command is only valid if :produce-models has been enabled")
+success
+unsat

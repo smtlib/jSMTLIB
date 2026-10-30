@@ -76,6 +76,11 @@ public interface ISolver {
      *  given as lines of that source */
     default void setSourceLine(int line) {}
 
+    /** Executes the command on this solver */
+    default IResponse execute(ICommand command) {
+        return command.execute(this);
+    }
+
     /** Passes comment text to the solver (for logging/tracing); the argument is the comment body
      * without the leading semicolon. */
     void comment(String comment);

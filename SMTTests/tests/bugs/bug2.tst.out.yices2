@@ -8,3 +8,5 @@ success
 success
 success
 (error "uninterpreted sorts are not allowed in logic QF_LIA")
+(error "The solver process has exited")
+(error "The solver process has exited")

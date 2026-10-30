@@ -3,7 +3,7 @@ success
 unsupported
 (error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:7:17: invalid sort 'A'
 ")
-(error "Error writing to solver: (assert (forall ((x A) ) (= (f x) x))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (declare-fun b () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= (f b) (not b))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

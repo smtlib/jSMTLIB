@@ -2,4 +2,4 @@ success
 success
 success
 unsat
-(error "Error writing to solver: org.smtlib.SolverProcess$NoResponseException: Solver process closed its output stream without a response")
+(error "The solver process has exited")

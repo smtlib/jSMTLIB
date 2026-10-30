@@ -1,5 +1,5 @@
 success
 (error "Parse Error: <shell>:3.30: Symbol '->' not declared as a type")
-(error "Error writing to solver: (assert (= f (lambda ((x Int) (x Int) ) x))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= f (lambda ((x Foo) ) 0))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= f (lambda ((x Int) ) (+ x true)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

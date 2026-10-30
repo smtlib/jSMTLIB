@@ -1,6 +1,6 @@
 success
 (error "Parse Error: <shell>:3.29: Expected a RPAREN_TOK, got `#x8` (HEX_LITERAL).")
-(error "Error writing to solver: (declare-fun y () (_ BitVec 8)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= #x0 ((_ extract #x3 0) y))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= (_ bv1 #x8) y)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= y ((_ repeat #x1) y))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

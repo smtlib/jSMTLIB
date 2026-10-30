@@ -1,3 +1,3 @@
 success
-(error "The solver stopped without a response to: (assert (= (lambda ((x Int) ) x) (lambda ((x Int) ) (+ x 1))))")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

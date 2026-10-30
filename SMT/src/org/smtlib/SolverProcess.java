@@ -455,6 +455,12 @@ public class SolverProcess {
         }
     }
 
+    /** Whether the process was started and has since exited */
+    public boolean hasExited() {
+        Process p = process;
+        return p != null && !p.isAlive();
+    }
+
     /** Waits at most millis for the process to end; returns whether it has */
     public boolean waitForEnd(long millis) {
         Process p = process;

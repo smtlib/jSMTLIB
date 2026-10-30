@@ -1,6 +1,6 @@
 success
 success
 (error "Parse Error: <shell>:4.14: Symbol 'undeclared' not declared as a variable")
-(error "Error writing to solver: (declare-fun y () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (> x y)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

@@ -5,4 +5,4 @@ success
 success
 success
 success
-(error "The solver stopped without a response to: (declare-fun f ((Y Y) ) Bool)")
+(error "The solver process has exited")

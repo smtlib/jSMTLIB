@@ -4,4 +4,4 @@ success
 success
 success
 (error "Parse Error: <shell>:8.15: Cannot apply equality to functions unless logic is prefixed by HO_.")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")

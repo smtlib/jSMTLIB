@@ -76,14 +76,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  those commands check this flag and report the error themselves. */
     protected boolean logicSet = false;
 
-    /** The number of pushes less the number of pops so far -- i.e. the real depth of the
-     *  solver's own assertion stack. 0 immediately after set_logic(), before any push (not
-     *  1: set_logic() does not itself push anything). Used to know how much to pop for
-     *  set_logic()'s relax-mode re-entry cleanup; NOT used to validate a pop count client-side
-     *  -- z3-4.3 already does that itself, with better diagnostics than this adapter could
-     *  produce (see #53), so only update this after the solver confirms a pop actually
-     *  succeeded, never unconditionally. */
-    protected int pushesDepth = 0;
+    /** Whether z3 4.3 has accepted a set-logic command, after which it rejects another itself */
+    private boolean logicSent = false;
 
     /** Creates an instance of the Z3 solver */
     public Solver_z3_4_3(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
@@ -162,9 +156,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             IResponse timedOut = timeLimitResponse(response);
             return timedOut != null ? timedOut : parse(shapeOf(cmd), translatedCmd, response);
         } catch (IOException e) {
-            IResponse timedOut = timeLimitResponseAfterExit();
-            if (timedOut != null) return timedOut;
-            return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
+            return sendFailure("Error writing to solver: " + translatedCmd, e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
         }
@@ -177,9 +169,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             IResponse timedOut = timeLimitResponse(response);
             return timedOut != null ? timedOut : parse(Shape.SUCCESS, cmd, response);
         } catch (IOException e) {
-            IResponse timedOut = timeLimitResponseAfterExit();
-            if (timedOut != null) return timedOut;
-            return smtConfig.responseFactory.error("Error writing to solver: " + cmd + " " + e);
+            return sendFailure("Error writing to solver: " + cmd, e);
         }
     }
 
@@ -217,7 +207,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended Z3 ");
             return successOrEmpty(smtConfig);
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         }
     }
 
@@ -344,6 +334,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             response = recordChange(StackChange.ASSERT, send(Shape.SUCCESS, "(assert " + translate(sexpr) + ")"));
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Failed to assert expression: " + e + " " + sexpr);
+        } catch (IOException e) {
+            return sendFailure(e, smtConfig.responseFactory.error("Failed to assert expression: " + e + " " + sexpr));
         } catch (Exception e) {
             return smtConfig.responseFactory.error("Failed to assert expression: " + e + " " + sexpr);
         }
@@ -360,7 +352,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         try {
             return sendList("(get-assertions)", p -> smtConfig.responseFactory.get_assertions_response(p.parseAssertionList()));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         }
     }
 
@@ -400,7 +392,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     public IResponse reset() {
         logicSet = false;
-        pushesDepth = 0;
+        logicSent = false;
         assumptions.clear();
         return super.reset();
     }
@@ -431,19 +423,11 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         if (number < 0) throw new SMT.InternalException("Internal bug: A pop command called with a negative argument: " + number);
         if (number == 0) return  successOrEmpty(smtConfig);
         try {
-            // Deliberately no client-side bound check against pushesDepth here: z3-4.3
-            // already validates a pop count against its own real stack depth and reports a
-            // precise, line/column-annotated error itself (confirmed against a real
-            // z3-4.3.1 binary: "invalid pop command, argument is greater than the current
-            // stack depth") -- better diagnostics than anything this adapter could produce,
-            // so defer to it (see issue #53). Only update the local depth bookkeeping once
-            // the solver actually accepted the pop; otherwise nothing was really popped and
-            // pushesDepth must not drift from what the solver's real stack looks like.
-            IResponse response = recordChange(StackChange.POP, send(Shape.SUCCESS, "(pop " + number + ")"));
-            if (!response.isError()) pushesDepth -= number;
-            return response;
+            // No client-side bound check: z3-4.3 validates a pop count against its own stack
+            // depth and reports a precise, line/column-annotated error itself (see issue #53)
+            return recordChange(StackChange.POP, send(Shape.SUCCESS, "(pop " + number + ")"));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         }
     }
 
@@ -455,7 +439,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         if (number < 0) throw new SMT.InternalException("Internal bug: A push command called with a negative argument: " + number);
         if (number == 0) return recordChange(StackChange.PUSH, smtConfig.responseFactory.success());
         try {
-            pushesDepth += number;
             // Used to convert any push() error into success whenever !isWindows (issue #53),
             // on the strength of a comment claiming the problem was Linux-only -- but the
             // condition covered macOS too, and a diagnostic logged unconditionally across a
@@ -466,7 +449,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             // return exactly what the solver said, uniformly.
             return recordChange(StackChange.PUSH, send(Shape.SUCCESS, "(push " + number + ")"));
         } catch (Exception e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         }
     }
 
@@ -475,19 +458,23 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         // FIXME - discriminate among logics
 
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#set-logic " + logicName);
-        if (logicSet) {
-            // z3 4.3 itself reports a second set-logic ("the logic has already been set")
-            if (!smtConfig.relax) return smtConfig.responseFactory.error("Logic is already set");
-            pop(pushesDepth); // pop back to the base frame -- pushesDepth is 0 again afterward
+        boolean all = logicName.equals("ALL");
+        // z3 4.3 reports a second set-logic itself, but set-logic ALL is never sent (see below): so
+        // after ALL it would accept another, which SMT-LIB forbids (--relax allows it), and ALL
+        // after another logic is reported here
+        if (logicSet && (logicSent ? all : !smtConfig.relax)) {
+            return smtConfig.responseFactory.error("Logic is already set");
         }
         logicSet = true;
-        if (logicName.equals("ALL")) {
+        if (all) {
             // z3-4.3 has no "ALL" logic to declare, so this line is never sent
-            return smtConfig.responseFactory.success();
+            return recordChange(StackChange.SET_LOGIC, smtConfig.responseFactory.success());
         } else try {
-            return send(Shape.SUCCESS, "(set-logic " + logicName + ")");
+            IResponse r = recordChange(StackChange.SET_LOGIC, send(Shape.SUCCESS, "(set-logic " + logicName + ")"));
+            if (!r.isError()) logicSent = true;
+            return r;
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e,pos);
+            return sendFailure(e, smtConfig.responseFactory.error("Error writing to Z3 solver: " + e, pos));
         }
     }
 
@@ -516,7 +503,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         try {
             return send(Shape.SUCCESS, "(set-option " + sentOption + " " + value + ")");
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         }
     }
 
@@ -544,7 +531,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             if (smtConfig.testing) response = normalizeForTesting(response, key);
             return parse(Shape.VALUE, cmd, response);
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to solver: " + cmd + " " + e);
+            return sendFailure("Error writing to solver: " + cmd, e);
         }
     }
 
@@ -569,7 +556,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         try {
             return modelResponse(send(Shape.VALUE, "(get-model)"));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         }
     }
 
@@ -581,7 +568,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         try {
             return recordChange(StackChange.DECLARE_FUN, send(Shape.SUCCESS, translate(cmd)));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -596,7 +583,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return recordChange(StackChange.DECLARE_FUN, send(Shape.SUCCESS, translate(cmd)));
 
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -610,7 +597,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         try {
             return recordChange(StackChange.DEFINE_FUN, send(Shape.SUCCESS, translate(cmd)));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -624,7 +611,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         try {
             return recordChange(StackChange.DECLARE_SORT, send(Shape.SUCCESS, translate(cmd)));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -638,7 +625,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         try {
             return recordChange(StackChange.DEFINE_SORT, send(Shape.SUCCESS, translate(cmd)));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -657,7 +644,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         try {
             return proofResponse(send(Shape.VALUE, "(get-proof)"));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         }
     }
 
@@ -681,7 +668,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
                 return smtConfig.responseFactory.get_unsat_core_response(names);
             });
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         }
     }
 
@@ -700,7 +687,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         try {
             return sendList("(get-assignment)", p -> smtConfig.responseFactory.get_assignment_response(p.parseAssignmentList()));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         }
     }
 
@@ -723,7 +710,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             sent.append("))");
             return sendList(sent.toString(), p -> smtConfig.responseFactory.get_value_response(p.parseValueList()));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }

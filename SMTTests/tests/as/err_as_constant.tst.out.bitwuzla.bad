@@ -3,5 +3,5 @@ success
 success
 (error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:5:13: invalid identifier 'x'
 ")
-(error "Error writing to solver: (assert (as zzz Bool)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= (as x U) (as x U))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

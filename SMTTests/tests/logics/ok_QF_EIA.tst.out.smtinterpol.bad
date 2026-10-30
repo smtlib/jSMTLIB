@@ -12,4 +12,4 @@ unsupported
 (error "<stdin>:15:11: No logic set!")
 (error "<stdin>:16:11: No logic set!")
 (error "<stdin>:17:16: No logic set!")
-(error "The solver stopped without a response to: (define-sort MyInt () Int)")
+(error "The solver process has exited")

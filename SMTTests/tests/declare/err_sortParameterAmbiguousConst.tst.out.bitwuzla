@@ -3,7 +3,7 @@ success
 unsupported
 (error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:7:19: invalid sort 'A'
 ")
-(error "Error writing to solver: (assert (= c c)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= (as c Int) 1)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (as c Bool)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

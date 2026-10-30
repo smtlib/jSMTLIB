@@ -5,4 +5,4 @@ unsupported
 success
 (error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:9:26: invalid sort 'A'
 ")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")

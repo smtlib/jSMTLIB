@@ -5,5 +5,5 @@ success
 sat
 (error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:8:14: symbol 'x' already defined at line 5 column 14
 ")
-(error "Error writing to solver: org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (get-model) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

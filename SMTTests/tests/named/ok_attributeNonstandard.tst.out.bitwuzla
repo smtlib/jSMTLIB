@@ -1,5 +1,5 @@
 success
 (error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:10: invalid annotation syntax, expected at least 3 arguments, got 2
 ")
-(error "Error writing to solver: (assert (! true :my-attr)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

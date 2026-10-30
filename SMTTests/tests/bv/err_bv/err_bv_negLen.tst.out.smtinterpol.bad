@@ -1,2 +1,2 @@
 success
-(error "The solver stopped without a response to: (declare-fun k () (_ BitVec -1))")
+(error "The solver process has exited")

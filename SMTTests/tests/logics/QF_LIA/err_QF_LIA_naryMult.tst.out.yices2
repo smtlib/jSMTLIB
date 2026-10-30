@@ -2,6 +2,6 @@ success
 success
 success
 (error "non-linear arithmetic is not allowed in logic QF_LIA")
-(error "Error writing to solver: (assert (= y (* 2 x y))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= y (* 2 x 3))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= y (* 2 x))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

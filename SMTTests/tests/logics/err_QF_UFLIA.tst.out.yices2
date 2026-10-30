@@ -2,4 +2,4 @@ success
 success
 success
 (error "quantifiers are not allowed in logic QF_UFLIA")
-(error "Error writing to solver: (assert (= y (* x x))) java.io.IOException: Stream closed")
+(error "The solver process has exited")

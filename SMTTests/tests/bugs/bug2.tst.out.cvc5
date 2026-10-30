@@ -3,3 +3,10 @@ success
 success
 success
 (error "Parse Error: <shell>:8.2: Free sort symbols not allowed in QF_LIA")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

@@ -822,7 +822,7 @@ public class SMT {
                                 }
                                 executing = solver;
                                 try {
-                                    result = command.execute(solver);
+                                    result = solver.execute(command);
                                 } finally {
                                     executing = null;
                                 }

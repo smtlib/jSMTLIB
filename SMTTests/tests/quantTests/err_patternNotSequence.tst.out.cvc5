@@ -1,4 +1,4 @@
 success
 success
 (error "Parse Error: <shell>:4.51: Expected a LPAREN_TOK, got `)` (RPAREN_TOK).")
-(error "Error writing to solver: (assert (forall ((x Int) ) (! (> (f x) 0) :pattern 5))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")

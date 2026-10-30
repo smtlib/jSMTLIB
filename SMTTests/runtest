@@ -162,9 +162,10 @@ if [[ "$PLATFORM" == "windows" ]]; then
     tr -d '\r' < "$erractual" > "$erractual.tmp" && mv "$erractual.tmp" "$erractual"
 fi
 
-### A command sent to a solver that has exited gets an "Error writing to solver" response
-### naming an exception that depends on timing, so both sides drop such lines before an
-### exact comparison, as FileTests.filterIOExceptionLines does (#150)
+### A command sent to a solver that has exited once got an "Error writing to solver" response
+### naming an exception that depended on timing, so both sides drop such lines before an
+### exact comparison, as FileTests.filterIOExceptionLines does (#150). Such a command now
+### answers "The solver process has exited", which is compared.
 _filtered() { grep -v -e 'java.io.IOException:' -e 'SolverProcess\$NoResponseException:' "$1"; }
 
 ### The goldens named for one solver name, given "<test>.<ext>.<name>", in priority order
