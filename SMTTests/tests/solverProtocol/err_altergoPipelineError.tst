@@ -1,6 +1,6 @@
 ; OPTIONS: --solver altergo --pipeline
-; alt-ergo writes nothing for success and exits after an error; with an echo sent after each
-; pipelined command, the error is matched to the command that caused it (pop), not the oldest.
+; alt-ergo writes nothing for success; with an echo sent after each pipelined command, an error
+; is matched to the command that caused it (pop), not the oldest, and later commands are answered.
 (set-logic QF_UF)
 (declare-fun p () Bool)
 (push 1)

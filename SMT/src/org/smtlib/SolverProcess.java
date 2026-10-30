@@ -433,6 +433,18 @@ public class SolverProcess {
         }
     }
 
+    /** Waits at most millis for the process to end; returns whether it has */
+    public boolean waitForEnd(long millis) {
+        Process p = process;
+        if (p == null) return true;
+        try {
+            return p.waitFor(millis, java.util.concurrent.TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return !p.isAlive();
+        }
+    }
+
     private static void joinQuietly(Thread t) {
         if (t == null) return;
         try {

@@ -19,8 +19,8 @@ import org.smtlib.IExpr.IKeyword;
  *  with {@code unsupported}, so {@link #solverPrintsSuccess} is false: each command is followed by an
  *  echo that marks the end of its response (see AbstractSolver). Alt-Ergo ignores, writing nothing,
  *  get-option, get-value, get-assertions, get-unsat-core, get-unsat-assumptions, get-proof and
- *  reset-assertions; those are answered here. It exits after any error, and in its default mode answers
- *  check-sat with unsat or unknown, never sat.
+ *  reset-assertions; those are answered here. It is run with --continue-on-error (by default it exits
+ *  after any error), and in its default mode answers check-sat with unsat or unknown, never sat.
  *  <p>
  *  Timeout: Alt-Ergo's {@code --timelimit=SECONDS} is one value, applied whole-run or, with
  *  {@code --timelimit-per-goal}, per goal; see the constructor for how jSMTLIB's two timeouts map
@@ -33,7 +33,10 @@ public class Solver_altergo extends AbstractSolver implements ISolver {
     /** Creates an instance of the solver */
     public Solver_altergo(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
         this.smtConfig = smtConfig;
-        List<String> args = new java.util.ArrayList<String>(Arrays.asList(executable,"--input","smtlib2","--output","smtlib2"));
+        // --continue-on-error: by default Alt-Ergo exits after any error; with it, the failed command
+        // leaves the state unchanged and Alt-Ergo reports :error-behavior continued-execution
+        List<String> args = new java.util.ArrayList<String>(Arrays.asList(executable,"--input","smtlib2","--output","smtlib2",
+                "--continue-on-error"));
         // Alt-Ergo's --timelimit=SECONDS is one shared value; --timelimit-per-goal makes it
         // apply per-goal (jSMTLIB's per-query smtConfig.timeout) instead of whole-run
         // (smtConfig.timeoutTotal). If a per-query value was requested, it wins (with the
@@ -88,17 +91,25 @@ public class Solver_altergo extends AbstractSolver implements ISolver {
         return false;
     }
 
-    /** Alt-Ergo exits without writing anything, as it does for any successful command; answered success */
+    /** How long (ms) exit waits for Alt-Ergo to end */
+    private static final long EXIT_WAIT_MILLIS = 2000;
+
+    /** Alt-Ergo is silent for exit, as for any successful command, but no echo can follow it, since the
+     *  process ends; so success is answered once the process has ended. If it had already ended (its
+     *  output was read to its end) or does not end in time, the answer is as the
+     *  base class gives it, or an error. */
     @Override
     public IResponse exit() {
-        IResponse r = super.exit();
-        return smtConfig.responseFactory.empty().equals(r) ? successOrEmpty(smtConfig) : r;
-    }
-
-    /** Alt-Ergo exits after any error (its :error-behavior is immediate-exit) */
-    @Override
-    protected boolean selfReportsImmediateExit() {
-        return true;
+        boolean running = solverProcess != null && !solverProcess.outputEnded() && solverProcess.isRunning(true);
+        IResponse r = sendExitCommand();
+        if (running && smtConfig.responseFactory.empty().equals(r)) {
+            r = solverProcess.waitForEnd(EXIT_WAIT_MILLIS) ? successOrEmpty(smtConfig)
+                    : smtConfig.responseFactory.error("alt-ergo did not end after exit");
+        }
+        solverProcess.exit();
+        if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended " + smtConfig.solvername);
+        solverProcess = null;
+        return r;
     }
 
     /** Sent to Alt-Ergo, and kept here for get_option when Alt-Ergo accepts it */
@@ -161,10 +172,26 @@ public class Solver_altergo extends AbstractSolver implements ISolver {
         return smtConfig.responseFactory.unsupported();
     }
 
-    /** Sent through sendCommand, which reads Alt-Ergo's reply up to the echo after it (the base
-     *  class reads one line, which may be a blank line Alt-Ergo writes around replies) */
+    /** The kinds of command after which Alt-Ergo still answers get-model and get-assignment about the
+     *  last check (probed with 2.6.3, 2026-10-29); after push and pop it reports the error itself */
+    private static final java.util.Set<StackChange> ANSWERED_AFTER = java.util.EnumSet.of(
+            StackChange.DECLARE_FUN, StackChange.DECLARE_SORT, StackChange.DEFINE_SORT,
+            StackChange.DECLARE_DATATYPE, StackChange.DEFINE_FUN, StackChange.DEFINE_FUN_REC, StackChange.ASSERT);
+
+    /** Alt-Ergo answers get-model in assert mode after a check */
+    @Override
+    public IResponse get_model() {
+        IResponse err = requireNoChangeSinceCheck("get-model", ANSWERED_AFTER);
+        return err != null ? err : super.get_model();
+    }
+
+    /** Alt-Ergo answers get-assignment in assert mode after a check. Sent through sendCommand, which
+     *  reads Alt-Ergo's reply up to the echo after it (the base class reads one line, which may be a
+     *  blank line Alt-Ergo writes around replies) */
     @Override
     public IResponse get_assignment() {
+        IResponse err = requireNoChangeSinceCheck("get-assignment", ANSWERED_AFTER);
+        if (err != null) return err;
         IResponse r = sendCommand(smtConfig.commandFactory.get_assignment());
         if (!(r instanceof org.smtlib.sexpr.ISexpr.ISeq)) return r;
         String text = smtConfig.defaultPrinter.toString(r);

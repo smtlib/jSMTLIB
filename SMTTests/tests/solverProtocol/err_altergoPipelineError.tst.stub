@@ -5,4 +5,8 @@
 
 "jsmtlib-sync-3"
 (error "Error on typing errors (code 4)")
-<<exit 1>>
+"jsmtlib-sync-4"
+
+"jsmtlib-sync-5"
+unknown
+"jsmtlib-sync-6"
