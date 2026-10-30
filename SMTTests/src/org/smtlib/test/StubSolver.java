@@ -10,7 +10,8 @@ import java.nio.file.Paths;
  *  first), in order. An empty line is an empty reply; {@code <<stderr>> text} writes the text
  *  to standard error instead. Directive lines act right after the reply before them (or at once,
  *  as the first lines) and answer no command: {@code <<exit N>>} ends the process with code N,
- *  {@code <<close-stdout>>} closes standard output, {@code <<sleep N>>} pauses N milliseconds.
+ *  {@code <<close-stdout>>} closes standard output, {@code <<sleep N>>} pauses N milliseconds,
+ *  {@code <<print text>>} and {@code <<eprint text>>} write the text as a line to standard output or error.
  *  The process also ends after replying to (exit), or when the replies run out.
  *  {@code <<success-for (cmd)>>}, among the first lines, answers success to every command equal to
  *  (cmd) without using a reply line: for a priming command an adapter sends on some platforms only
@@ -69,6 +70,12 @@ public class StubSolver {
                 System.exit(Integer.parseInt(line.substring(7, line.length() - 2).trim()));
             } else if (line.equals("<<close-stdout>>")) {
                 System.out.close();
+            } else if (line.startsWith("<<print ") && line.endsWith(">>")) {
+                System.out.print(line.substring(8, line.length() - 2) + "\n");
+                System.out.flush();
+            } else if (line.startsWith("<<eprint ") && line.endsWith(">>")) {
+                System.err.print(line.substring(9, line.length() - 2) + "\n");
+                System.err.flush();
             } else if (line.startsWith("<<sleep ") && line.endsWith(">>")) {
                 Thread.sleep(Long.parseLong(line.substring(8, line.length() - 2).trim()));
             } else {
