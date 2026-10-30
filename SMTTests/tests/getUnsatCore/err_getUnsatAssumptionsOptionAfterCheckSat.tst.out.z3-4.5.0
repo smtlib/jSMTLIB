@@ -1,6 +1,6 @@
 success
 success
 success
-(error "line 6 column 20: invalid check-sat-assuming command, '(', expected")
+unsat
 (error "line 7 column 39: error setting ':produce-unsat-assumptions', option value cannot be modified after initialization")
 unsupported

@@ -213,57 +213,88 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
         return err != null ? err : super.get_proof();
     }
 
-    /** The printed assumptions of the most recent check command if it was check-sat-assuming, else null */
-    private /*@Nullable*/ List<String> lastAssumptions = null;
+    /** The assumptions of the most recent check command, if it was check-sat-assuming */
+    private final Assumptions assumptions = new Assumptions(this::translate);
 
     @Override
     public IResponse check_sat() {
-        lastAssumptions = null;
+        assumptions.clear();
         return super.check_sat();
     }
 
     @Override
     public IResponse check_sat_assuming(IExpr... exprs) {
-        lastAssumptions = new java.util.ArrayList<>();
-        try {
-            for (IExpr e : exprs) lastAssumptions.add(translate(e));
-        } catch (IVisitor.VisitorException e) {
-            lastAssumptions = null;
-        }
+        assumptions.set(exprs);
         return super.check_sat_assuming(exprs);
     }
 
     @Override
     public IResponse reset() {
-        lastAssumptions = null;
+        assumptions.clear();
         return super.reset();
     }
 
-    /** Whether the expression is one of the assumptions of the last check-sat-assuming */
-    private boolean isAssumption(IExpr e) {
-        try {
-            return lastAssumptions.contains(translate(e));
-        } catch (IVisitor.VisitorException ex) {
-            return false;
-        }
-    }
-
-    // After check-sat-assuming, z3 answers get-unsat-core and get-unsat-assumptions alike with one list
-    // combining the core's labels and the unsat assumptions (e.g. (p a1 (not q))), whereas SMT-LIB's unsat
-    // core holds only labels and its unsat assumptions only assumptions. These filters correct that.
-
-    /** Drops the assumptions z3 adds to the unsat core (see above) */
+    /** Drops the assumptions z3 adds to the unsat core (see Assumptions) */
     @Override
     protected List<IExpr> unsatCoreElements(List<IExpr> reply) {
-        if (lastAssumptions == null) return reply;
-        return reply.stream().filter(e -> !isAssumption(e)).toList();
+        return assumptions.withoutAssumptions(reply);
     }
 
-    /** Drops the labels z3 adds to the unsat assumptions (see above) */
+    /** Drops the labels z3 adds to the unsat assumptions (see Assumptions) */
     @Override
     protected List<IExpr> unsatAssumptionsElements(List<IExpr> reply) {
-        if (lastAssumptions == null) return reply;
-        return reply.stream().filter(this::isAssumption).toList();
+        return assumptions.onlyAssumptions(reply);
+    }
+
+    /** The assumptions of the most recent check command, if it was check-sat-assuming, as an adapter
+     *  prints them. After check-sat-assuming, z3 answers get-unsat-core and get-unsat-assumptions alike
+     *  with one list combining the core's labels and the unsat assumptions (e.g. (p a1 (not q))),
+     *  whereas SMT-LIB's unsat core holds only labels and its unsat assumptions only assumptions; the
+     *  filters here correct that (A64). */
+    static final class Assumptions {
+
+        /** Prints an expression as the adapter sends it */
+        interface Printer {
+            String print(IExpr e) throws IVisitor.VisitorException;
+        }
+
+        private final Printer printer;
+
+        /** The printed assumptions, or null if the last check command was not check-sat-assuming */
+        private /*@Nullable*/ List<String> printed = null;
+
+        Assumptions(Printer printer) {
+            this.printer = printer;
+        }
+
+        void clear() {
+            printed = null;
+        }
+
+        void set(IExpr... exprs) {
+            printed = new java.util.ArrayList<>();
+            try {
+                for (IExpr e : exprs) printed.add(printer.print(e));
+            } catch (IVisitor.VisitorException e) {
+                printed = null;
+            }
+        }
+
+        private boolean isAssumption(IExpr e) {
+            try {
+                return printed.contains(printer.print(e));
+            } catch (IVisitor.VisitorException ex) {
+                return false;
+            }
+        }
+
+        List<IExpr> withoutAssumptions(List<IExpr> reply) {
+            return printed == null ? reply : reply.stream().filter(e -> !isAssumption(e)).toList();
+        }
+
+        List<IExpr> onlyAssumptions(List<IExpr> reply) {
+            return printed == null ? reply : reply.stream().filter(this::isAssumption).toList();
+        }
     }
 
     /** z3 answers get-unsat-core in assert mode after a check */

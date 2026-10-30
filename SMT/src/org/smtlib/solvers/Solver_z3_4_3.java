@@ -375,13 +375,37 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         if (!logicSet) {
             return smtConfig.responseFactory.error("The logic must be set before a check-sat command is issued");
         }
+        assumptions.clear();
         return super.check_sat();
+    }
+
+    /** The assumptions of the most recent check command, if it was check-sat-assuming */
+    private final Solver_z3_recent.Assumptions assumptions = new Solver_z3_recent.Assumptions(this::translate);
+
+    /** z3 4.3 answers unsupported for check-sat-assuming, so it is sent as z3's legacy
+     *  (check-sat a1 ... an) (see Translator), which checks under the same assumptions; its unsat
+     *  core then includes the assumptions, which unsatCoreElements drops. Like check-sat, it is
+     *  accepted before set-logic, which SMT-LIB forbids, so that is reported here. */
+    @Override
+    public IResponse check_sat_assuming(IExpr... exprs) {
+        if (!logicSet) {
+            return smtConfig.responseFactory.error("The logic must be set before a check-sat-assuming command is issued");
+        }
+        assumptions.set(exprs);
+        return super.check_sat_assuming(exprs);
+    }
+
+    /** Drops the assumptions z3 4.3 adds to the unsat core after check-sat-assuming */
+    @Override
+    protected List<IExpr> unsatCoreElements(List<IExpr> reply) {
+        return assumptions.withoutAssumptions(reply);
     }
 
     @Override
     public IResponse reset() {
         logicSet = false;
         pushesDepth = 0;
+        assumptions.clear();
         return super.reset();
     }
 
@@ -661,7 +685,14 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The get-unsat-core command is only valid immediately after check-sat returned unsat");
         }
         try {
-            return sendList("(get-unsat-core)", p -> smtConfig.responseFactory.get_unsat_core_response(p.parseSymbolList()));
+            return sendList("(get-unsat-core)", p -> {
+                List<IExpr.ISymbol> names = new java.util.ArrayList<>();
+                for (IExpr e : unsatCoreElements(p.parseTermList())) {
+                    if (!(e instanceof IExpr.ISymbol name)) throw new ParserException("not a label: " + e, null);
+                    names.add(name);
+                }
+                return smtConfig.responseFactory.get_unsat_core_response(names);
+            });
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -714,6 +745,22 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     public class Translator extends Printer {
 
         public Translator(Writer w) { super(Solver_z3_4_3.this.smtConfig, w); }
+
+        /** check-sat-assuming is written as z3's legacy (check-sat a1 ... an) (see check_sat_assuming) */
+        @Override
+        public Void visit(ICommand.Icheck_sat_assuming e) throws IVisitor.VisitorException {
+            try {
+                w.append("(check-sat");
+                for (IExpr x : e.terms()) {
+                    w.append(" ");
+                    x.accept(this);
+                }
+                w.append(")");
+            } catch (IOException ex) {
+                throw new IVisitor.VisitorException(ex, null);
+            }
+            return null;
+        }
 
         @Override
         public Void visit(IFcnExpr e) throws IVisitor.VisitorException {
