@@ -1,3 +1,5 @@
+(pop 1)
+^^^^^^^
 (get-assertions)
 ^^^^^^^^^^^^^^^^
 (assert (not p))

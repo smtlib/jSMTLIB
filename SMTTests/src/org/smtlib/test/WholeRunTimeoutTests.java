@@ -180,7 +180,10 @@ public class WholeRunTimeoutTests {
         try {
             IResponse r = run(config, solver, pigeonholeQuery());
             Assert.assertEquals("check-sat at the per-query limit", config.responseFactory.unknown(), r);
-            Assert.assertEquals("a later check-sat", config.responseFactory.unknown(), solver.check_sat());
+            // bitwuzla keeps what it learned, so a second second may finish the proof: unknown or unsat
+            IResponse later = solver.check_sat();
+            Assert.assertTrue("a later check-sat: " + later, later.equals(config.responseFactory.unknown())
+                    || later.equals(config.responseFactory.unsat()));
         } finally {
             IResponse r = solver.exit();
             Assert.assertFalse("exit: " + r, r.isError());
@@ -202,8 +205,11 @@ public class WholeRunTimeoutTests {
         checkWholeRunLimitWhileIdle("z3-4.16.0");
     }
 
+    /** Not on linux-arm64, whose z3-4.3.1 build answers sat for the (unsat) pigeonhole query (#101) */
     @Test
     public void z3_4_3WholeRunLimit() throws Exception {
+        Assume.assumeFalse("z3-4.3.1's linux-arm64 build answers sat",
+                System.getProperty("os.name").startsWith("Linux") && System.getProperty("os.arch").equals("aarch64"));
         checkWholeRunLimit("z3-4.3", "z3-4.3.1", pigeonholeQuery());
     }
 

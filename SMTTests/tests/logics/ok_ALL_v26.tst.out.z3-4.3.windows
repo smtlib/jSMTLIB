@@ -1,0 +1,13 @@
+success
+success
+success
+success
+success
+success
+success
+(error "line 9 column 18: unknown sort 'String'")
+success
+success
+success
+success
+(error "line 14 column 28: unknown constant s")
