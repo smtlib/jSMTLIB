@@ -9,9 +9,11 @@
 ##       The solver name is embedded in the .actual filename (not just .tst.out.actual) so that
 ##       distinct solvers tested against the same .tst file never share -- and clobber -- one
 ##       another's capture file.
-##       Goldens and skip markers are looked up by solver name: exact name (platform-specific
-##       first), then family, then plain. A bare name such as cvc5 counts first as the versioned
-##       name it runs (cvc5-1.3.2), with itself as the family; see "resolved" below.
+##       Goldens and skip markers are looked up by solver name: exact name, then family, then
+##       plain. A bare name such as cvc5 counts first as the versioned name it runs (cvc5-1.3.2),
+##       with itself as the family; see "resolved" below. For each name N (exact, then family) the
+##       goldens are N.<platform-arch>.bad/.lenient, N.<platform-arch>, N.<platform>.bad/.lenient,
+##       N.<platform>, N, N.bad/.lenient; then the plain .<platform-arch>, .<platform>, none.
 
 if [ $# -lt 2 ]; then
     echo "Usage: runtest <solver> <testfile>"
@@ -177,7 +179,7 @@ _solver_candidates() { echo "$1.$PLATFORM_ARCH.bad" "$1.$PLATFORM_ARCH.lenient" 
 err_candidates=()
 if [ -n "$resolved" ]; then err_candidates+=($(_solver_candidates "${test}.err.$resolved")); fi
 err_candidates+=($(_solver_candidates "${test}.err.$solver"))
-if [ -n "$family" ]; then err_candidates+=("${test}.err.$family" "${test}.err.$family.bad" "${test}.err.$family.lenient"); fi
+if [ -n "$family" ]; then err_candidates+=($(_solver_candidates "${test}.err.$family")); fi
 err_candidates+=("${test}.err.$PLATFORM_ARCH" "${test}.err.$PLATFORM" "${test}.err")
 
 errok=0
@@ -218,7 +220,7 @@ done
 out_candidates=()
 if [ -n "$resolved" ]; then out_candidates+=($(_solver_candidates "${test}.out.$resolved")); fi
 out_candidates+=($(_solver_candidates "${test}.out.$solver"))
-if [ -n "$family" ]; then out_candidates+=("${test}.out.$family" "${test}.out.$family.bad" "${test}.out.$family.lenient"); fi
+if [ -n "$family" ]; then out_candidates+=($(_solver_candidates "${test}.out.$family")); fi
 out_candidates+=("${test}.out.$PLATFORM_ARCH" "${test}.out.$PLATFORM" "${test}.out")
 
 comparison=""
