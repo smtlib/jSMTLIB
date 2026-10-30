@@ -88,8 +88,8 @@ public class AbstractSolver implements ISolver {
     /** Map that keeps current values of options. */
     protected Map<String, IAttributeValue> options = new HashMap<String, IAttributeValue>();
 
-    /** The result of the most recent check-sat or check-sat-assuming, or null if none has
-     *  been issued since the last state-changing command. */
+    /** The response to the most recent check-sat or check-sat-assuming, or null if there is none.
+     *  Whether the solver is still in the mode it set is given by {@link #checkStatus()}. */
     protected /*@Nullable*/ IResponse checkSatStatus = null;
 
     /** Overridden by a subclass whose target solver's :error-behavior is immediate-exit
@@ -953,7 +953,7 @@ public class AbstractSolver implements ISolver {
     public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
         checkSatStatus = null;
         checkMade = false;
-        changesSinceCheck.clear();
+        clearChanges();
         return sendCommand(smtConfig.commandFactory.set_logic(smtConfig.exprFactory.symbol(logicName)));
     }
 
@@ -962,7 +962,7 @@ public class AbstractSolver implements ISolver {
     public IResponse reset() {
         checkSatStatus = null;
         checkMade = false;
-        changesSinceCheck.clear();
+        clearChanges();
         return sendCommand(smtConfig.commandFactory.reset());
     }
 
@@ -994,7 +994,7 @@ public class AbstractSolver implements ISolver {
     @Override
     public IResponse check_sat() {
         checkMade = true;
-        changesSinceCheck.clear();
+        clearChanges();
         checkSatStatus = sendCommand(smtConfig.commandFactory.check_sat());
         return checkSatStatus;
     }
@@ -1003,7 +1003,7 @@ public class AbstractSolver implements ISolver {
     @Override
     public IResponse check_sat_assuming(IExpr ... exprs) {
         checkMade = true;
-        changesSinceCheck.clear();
+        clearChanges();
         checkSatStatus = sendCommand(smtConfig.commandFactory.check_sat_assuming(java.util.Arrays.asList(exprs)));
         return checkSatStatus;
     }
@@ -1132,31 +1132,66 @@ public class AbstractSolver implements ISolver {
         DEFINE_SORT, ASSERT, PUSH, POP, RESET_ASSERTIONS
     }
 
-    /** The kinds of command the solver accepted since the last check command */
+    /** The kinds of command the solver accepted since the last check command, among those whose
+     *  responses have been read */
     private final java.util.EnumSet<StackChange> changesSinceCheck = java.util.EnumSet.noneOf(StackChange.class);
 
-    /** Sends a command that changes the assertion stack, recording its kind unless the solver rejects it */
+    /** The pipelined commands that change the assertion stack sent since the last check command whose
+     *  responses had not been read when they were recorded, with their kinds */
+    private final List<Map.Entry<StackChange, Pending>> pendingChanges = new java.util.ArrayList<>();
+
+    private void clearChanges() {
+        changesSinceCheck.clear();
+        pendingChanges.clear();
+    }
+
+    /** Sends a command that changes the assertion stack, recording it (see recordChange) */
     protected IResponse sendChange(StackChange kind, ICommand cmd) {
-        checkSatStatus = null;
-        IResponse response = sendCommand(cmd);
-        if (!response.isError()) changesSinceCheck.add(kind);
+        return recordChange(kind, sendCommand(cmd));
+    }
+
+    /** Records the response to a command of the given kind that changes the assertion stack, and
+     *  returns it. The command counts as a change only once its response is known not to be an
+     *  error: a command the solver rejects changes nothing. */
+    protected IResponse recordChange(StackChange kind, IResponse response) {
+        IResponse r = response instanceof Pending p ? p.response() : response;
+        if (r == null) pendingChanges.add(Map.entry(kind, (Pending)response));
+        else if (!r.isError()) changesSinceCheck.add(kind);
         return response;
+    }
+
+    /** The kinds of command the solver has accepted since the last check command, after reading
+     *  the responses to the pipelined commands */
+    private java.util.Set<StackChange> acceptedChanges() {
+        readPipelined(true);
+        for (Map.Entry<StackChange, Pending> e : pendingChanges) {
+            IResponse r = e.getValue().response();
+            if (r != null && !r.isError()) changesSinceCheck.add(e.getKey());
+        }
+        pendingChanges.clear();
+        return changesSinceCheck;
+    }
+
+    /** The response to the most recent check command, or null if there is none or the solver has
+     *  accepted a command that changes the assertion stack since (after reading the responses to
+     *  the pipelined commands): sat or unknown in SMT-LIB's sat mode, unsat in its unsat mode */
+    protected /*@Nullable*/ IResponse checkStatus() {
+        return acceptedChanges().isEmpty() ? checkSatStatus : null;
     }
 
     /** Whether the most recent check command was answered sat or unknown, with the assertion stack
      *  unchanged since: SMT-LIB's sat mode (false once the whole-run time limit has ended the solver) */
     protected boolean inSatMode() {
         if (endedByTimeLimit) return false;
-        readPipelined(true);
-        return smtConfig.responseFactory.sat().equals(checkSatStatus) || smtConfig.responseFactory.unknown().equals(checkSatStatus);
+        IResponse status = checkStatus();
+        return smtConfig.responseFactory.sat().equals(status) || smtConfig.responseFactory.unknown().equals(status);
     }
 
     /** Whether the most recent check command was answered unsat, with the assertion stack unchanged
      *  since: SMT-LIB's unsat mode (false once the whole-run time limit has ended the solver) */
     protected boolean inUnsatMode() {
         if (endedByTimeLimit) return false;
-        readPipelined(true);
-        return smtConfig.responseFactory.unsat().equals(checkSatStatus);
+        return smtConfig.responseFactory.unsat().equals(checkStatus());
     }
 
     /** Returns an error response if, since a check command, the solver has accepted a command of one of
@@ -1164,8 +1199,7 @@ public class AbstractSolver implements ISolver {
      *  check, which SMT-LIB's assert mode makes errors), else null */
     protected /*@Nullable*/ IResponse requireNoChangeSinceCheck(String commandName, java.util.Set<StackChange> answeredAfter) {
         if (endedByTimeLimit) return null;
-        readPipelined(true);
-        if (checkMade && !java.util.Collections.disjoint(changesSinceCheck, answeredAfter)) {
+        if (checkMade && !java.util.Collections.disjoint(acceptedChanges(), answeredAfter)) {
             return smtConfig.responseFactory.error("The " + commandName
                     + " command is not valid once the assertion stack has changed since the last check command");
         }
@@ -1185,17 +1219,18 @@ public class AbstractSolver implements ISolver {
         return null;
     }
 
-    /** Returns an error response unless {@link #checkSatStatus} is sat or unknown, else null. */
+    /** Returns an error response unless {@link #checkStatus()} is sat or unknown, else null. */
     protected /*@Nullable*/ IResponse requireSatOrUnknown(String commandName) {
-        if (!smtConfig.responseFactory.sat().equals(checkSatStatus) && !smtConfig.responseFactory.unknown().equals(checkSatStatus)) {
+        IResponse status = checkStatus();
+        if (!smtConfig.responseFactory.sat().equals(status) && !smtConfig.responseFactory.unknown().equals(status)) {
             return smtConfig.responseFactory.error("The " + commandName + " command is only valid immediately after check-sat returned sat or unknown");
         }
         return null;
     }
 
-    /** Returns an error response unless {@link #checkSatStatus} is unsat, else null. */
+    /** Returns an error response unless {@link #checkStatus()} is unsat, else null. */
     protected /*@Nullable*/ IResponse requireUnsat(String commandName, String afterWhat) {
-        if (!smtConfig.responseFactory.unsat().equals(checkSatStatus)) {
+        if (!smtConfig.responseFactory.unsat().equals(checkStatus())) {
             return smtConfig.responseFactory.error("The " + commandName + " command is only valid immediately after " + afterWhat + " returned unsat");
         }
         return null;
@@ -1440,7 +1475,7 @@ public class AbstractSolver implements ISolver {
     /** @see org.smtlib.ISolver#checkSatStatus()*/
     @Override
     public IResponse checkSatStatus() {
-        return checkSatStatus;
+        return checkStatus();
     }
 
 
