@@ -1,0 +1,31 @@
+success
+success
+success
+(error "line 6 column 22: invalid declaration, constant 'x' (with the given signature) already declared")
+(error "line 9 column 22: invalid declaration, constant 'x' (with the given signature) already declared")
+success
+(error "line 11 column 22: invalid declaration, constant 'x' (with the given signature) already declared")
+"hello"
+(error "line 13 column 22: invalid declaration, constant 'x' (with the given signature) already declared")
+true
+(error "line 15 column 22: invalid declaration, constant 'x' (with the given signature) already declared")
+false
+(error "line 17 column 22: invalid declaration, constant 'x' (with the given signature) already declared")
+(error "line 18 column 22: invalid declaration, constant 'x' (with the given signature) already declared")
+(error "line 20 column 22: invalid declaration, constant 'x' (with the given signature) already declared")
+(error "line 20 column 22: invalid declaration, constant 'x' (with the given signature) already declared")
+success
+success
+(error "line 23 column 22: invalid declaration, constant 'y' (with the given signature) already declared")
+success
+(error "line 27 column 23: invalid declaration, constant 'x' (with the given signature) already declared")
+unsupported
+(error "line 29 column 22: invalid declaration, constant 'x' (with the given signature) already declared")
+sat
+(error "The get-assignment command is only valid if :produce-assignments has been enabled")
+(error "line 32 column 22: invalid declaration, constant 'x' (with the given signature) already declared")
+success
+success
+success
+(error "line 36 column 22: invalid declaration, constant 'x' (with the given signature) already declared")
+(error "line 37 column 8: unknown constant z")
