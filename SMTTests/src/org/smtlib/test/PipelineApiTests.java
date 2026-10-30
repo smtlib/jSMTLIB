@@ -33,11 +33,15 @@ public class PipelineApiTests {
     @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
 
     private final String solvername;
+
+    /** The answer to a satisfiable check: alt-ergo answers unknown, never sat (a conforming answer) */
+    private final String sat;
     private SMT.Configuration config;
     private AbstractSolver solver;
 
     public PipelineApiTests(String solvername) {
         this.solvername = solvername;
+        this.sat = solvername.equals("altergo") ? "unknown" : "sat";
     }
 
     @Parameters
@@ -105,8 +109,8 @@ public class PipelineApiTests {
         List<IResponse> rs = pipeline("(set-logic QF_UF)(declare-fun x () Bool)(assert x)(check-sat)");
         IResponse checkSat = rs.get(3);
         solver.readPipelined(true);
-        Assert.assertEquals("sat", read(checkSat).toString());
-        Assert.assertEquals("sat", solver.checkSatStatus().toString());
+        Assert.assertEquals(sat, read(checkSat).toString());
+        Assert.assertEquals(sat, solver.checkSatStatus().toString());
     }
 
     @Test
@@ -114,9 +118,9 @@ public class PipelineApiTests {
         StringBuilder text = new StringBuilder("(set-logic QF_UF)(declare-fun x () Bool)");
         List<String> expected = new ArrayList<>(List.of("success", "success"));
         for (int i = 0; i < 50; i++) {
-            boolean sat = i % 3 != 0;
-            text.append("(push 1)(assert ").append(sat ? "x" : "(and x (not x))").append(")(check-sat)(pop 1)");
-            expected.addAll(List.of("success", "success", sat ? "sat" : "unsat", "success"));
+            boolean isSat = i % 3 != 0;
+            text.append("(push 1)(assert ").append(isSat ? "x" : "(and x (not x))").append(")(check-sat)(pop 1)");
+            expected.addAll(List.of("success", "success", isSat ? sat : "unsat", "success"));
         }
         List<IResponse> rs = pipeline(text.toString());
         solver.readPipelined(true);
@@ -138,7 +142,7 @@ public class PipelineApiTests {
         IResponse push = parse("(push 1)").get(0).execute(solver);
         Assert.assertEquals("success", push.toString());
         Assert.assertFalse(solver.hasPending());
-        Assert.assertEquals("sat", read(rs.get(3)).toString());
+        Assert.assertEquals(sat, read(rs.get(3)).toString());
     }
 
     @Test
@@ -147,14 +151,14 @@ public class PipelineApiTests {
         solver.readPipelined(true);
         Assert.assertEquals("success", read(rs.get(1)).toString());
         Assert.assertTrue("an error: " + read(rs.get(2)), read(rs.get(2)).isError());
-        // z3 and smtinterpol go on after the error; cvc5, yices2 and bitwuzla stop, as for every later command
+        // z3, smtinterpol and alt-ergo go on after the error; cvc5, yices2 and bitwuzla stop, as for every later command
         IResponse after = read(rs.get(3));
         if (after.isError()) {
             Assert.assertTrue(after.toString(), after.toString().contains("Solver process has already exited"));
             Assert.assertTrue(read(rs.get(4)).toString().contains("Solver process has already exited"));
         } else {
             Assert.assertEquals("success", after.toString());
-            Assert.assertEquals("sat", read(rs.get(4)).toString());
+            Assert.assertEquals(sat, read(rs.get(4)).toString());
         }
     }
 }

@@ -1,0 +1,9 @@
+success
+success
+success
+(error "Error on typing errors (code 4)")
+success
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")
+(error "Error on unexpected internal errors (bugs) (code 125)")
+success

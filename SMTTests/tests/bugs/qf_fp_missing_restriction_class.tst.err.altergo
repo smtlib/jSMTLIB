@@ -1,0 +1,10 @@
+(assert (forall ((x Real)) (= x x)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun f (Real) Real)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort S 0)
+^^^^^^^^^^^^^^^^^^
+(declare-const r Real)
+^^^^^^^^^^^^^^^^^^^^^^
+(declare-const f (_ FloatingPoint 8 24))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

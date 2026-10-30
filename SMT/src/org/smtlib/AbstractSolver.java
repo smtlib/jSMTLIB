@@ -400,7 +400,14 @@ public class AbstractSolver implements ISolver {
         try {
             if (!capturing) readPipelined(true);
             translatedCmd = translate(cmd);
-            if (capturing) return sendWithoutWaiting(translatedCmd, shapeOf(cmd));
+            if (capturing) return sendWithoutWaiting(translatedCmd, shapeOf(cmd), null);
+            if (!solverPrintsSuccess() && !tolerateSilentExit) {
+                // A solver that writes nothing for success: sent as when pipelining, and read up to the barrier
+                IKeyword scrub = scrubNonDeterminism && smtConfig.testing && cmd instanceof Iget_info g ? g.infoflag() : null;
+                Pending p = (Pending)sendWithoutWaiting(translatedCmd, shapeOf(cmd), scrub);
+                readPipelined(true);
+                return p.response();
+            }
             String response = sendScriptText(true, translatedCmd, "\n");
             // A null response (observed rarely, likely a SolverProcess read-timing race)
             // would otherwise reach parseResponse() and surface as an uncaught
@@ -441,7 +448,7 @@ public class AbstractSolver implements ISolver {
     // Each response must have the bare shape its command can produce (#149); one that does not is an
     // error, as is output left over once every command is answered. A solver that writes nothing for
     // a successful command (see solverPrintsSuccess) is matched by shape instead, with an echo sent
-    // as a barrier before waiting.
+    // as a barrier after each command.
 
     /** The response returned for a command sent by {@link #sendPipelined(ICommand)} whose actual
      *  response has not yet been read; {@link #isReady()} tells when it has (see
@@ -455,13 +462,16 @@ public class AbstractSolver implements ISolver {
         final /*@Nullable*/ String marker;
         /** linesOffset for the command */
         final int linesOffset;
+        /** For get-info when testing, the flag whose response is scrubbed (see normalizeForTesting); else null */
+        final /*@Nullable*/ IKeyword scrub;
         private /*@Nullable*/ IResponse response = null;
 
-        Pending(String sent, Shape shape, /*@Nullable*/ String marker, int linesOffset) {
+        Pending(String sent, Shape shape, /*@Nullable*/ String marker, int linesOffset, /*@Nullable*/ IKeyword scrub) {
             this.sent = sent;
             this.shape = shape;
             this.marker = marker;
             this.linesOffset = linesOffset;
+            this.scrub = scrub;
         }
 
         public boolean isReady() { return response != null; }
@@ -583,17 +593,19 @@ public class AbstractSolver implements ISolver {
     /** Whether a command has been pipelined at all */
     private boolean pipelinedEver = false;
 
-    private IResponse sendWithoutWaiting(String translatedCmd, Shape shape) {
+    private IResponse sendWithoutWaiting(String translatedCmd, Shape shape, /*@Nullable*/ IKeyword scrub) {
         pipelinedSinceFinish = true;
         pipelinedEver = true;
         Pending p;
         try {
             sendScriptText(false, translatedCmd, "\n");
-            p = new Pending(translatedCmd, shape, null, linesOffset);
+            p = new Pending(translatedCmd, shape, null, linesOffset, scrub);
             pending.add(p);
+            // so that a response (e.g. an error) is matched to its own command
+            if (!solverPrintsSuccess()) sendBarrier();
         } catch (IOException e) {
             // The solver has stopped: report it as for any command sent after that
-            p = new Pending(translatedCmd, shape, null, linesOffset);
+            p = new Pending(translatedCmd, shape, null, linesOffset, scrub);
             IResponse timedOut = timeLimitResponseAfterExit();
             p.response = timedOut != null ? timedOut : alreadyExited(translatedCmd);
         }
@@ -723,10 +735,10 @@ public class AbstractSolver implements ISolver {
         return true;
     }
 
-    /** Whether the solver writes 'success' for a successful command, so that every pipelined command
-     *  gets one response. True for every adapter now (the solver process is kept at
-     *  :print-success true); an adapter whose solver does not returns false, and its pipelined
-     *  responses are then matched by shape (see matchSilent). */
+    /** Whether the solver writes 'success' for a successful command, so that every command gets one
+     *  response. True by default (the solver process is kept at :print-success true); an adapter
+     *  whose solver does not (alt-ergo) returns false, and its responses are then matched by shape
+     *  (see matchSilent), its commands being sent as when pipelining even when not (see sendCommand). */
     protected boolean solverPrintsSuccess() {
         return true;
     }
@@ -750,7 +762,7 @@ public class AbstractSolver implements ISolver {
         String sent = "(echo \"" + marker + "\")";
         try {
             solverProcess.sendNoListen(sent, "\n");
-            pending.add(new Pending(sent, Shape.ANY, marker, linesOffset));
+            pending.add(new Pending(sent, Shape.ANY, marker, linesOffset, null));
         } catch (IOException e) {
             // The solver has stopped; the pending commands are resolved as its output ends
         }
@@ -760,7 +772,8 @@ public class AbstractSolver implements ISolver {
      *  echo answers, with success, every command before it still without a response; sat, unsat or
      *  unknown answers the next check-sat (the commands before it having succeeded); an error or
      *  unsupported answers the oldest command without a response, though which command it belongs
-     *  to cannot be known for certain; anything else is out of step */
+     *  to cannot be known for certain, as does anything else if that command has a value (a get-
+     *  command or echo); anything else is out of step */
     private boolean matchSilent(String text) {
         String t = text.trim();
         if (isBarrierFor(t)) {
@@ -790,7 +803,8 @@ public class AbstractSolver implements ISolver {
         pending.poll();
         boolean errorLike = parsed != null && (parsed.isError()
                 || (parsed instanceof ISymbol sym && "unsupported".equals(sym.value())));
-        resolve(p, errorLike ? toResponse(p, text) : outOfStepResponse(p.sent, text));
+        boolean hasValue = p.shape == Shape.VALUE || p.shape == Shape.ANY;
+        resolve(p, errorLike || hasValue ? toResponse(p, text) : outOfStepResponse(p.sent, text));
         return true;
     }
 
@@ -913,9 +927,10 @@ public class AbstractSolver implements ISolver {
         return -1;
     }
 
-    private IResponse toResponse(Pending p, String text) {
-        IResponse timedOut = timeLimitResponse(text);
+    private IResponse toResponse(Pending p, String rawText) {
+        IResponse timedOut = timeLimitResponse(rawText);
         if (timedOut != null) return timedOut;
+        String text = p.scrub == null ? rawText : normalizeForTesting(rawText, p.scrub);
         // Logged at once, as when not pipelining: an adapter may parse with the output redirected.
         // Line numbers in it are those of p's command, sent before the commands sent since.
         int current = linesOffset;

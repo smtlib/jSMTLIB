@@ -1,0 +1,9 @@
+unsupported
+success
+(error "Fatal Error: Unsupported Feature: Constant term """)
+(error "Fatal Error: Unsupported Feature: Constant term """)
+(error "Fatal Error: Unsupported Feature: Application Term length """)
+unknown
+unsupported
+(error "Fatal Error: Unsupported Feature: Constant term """)
+unknown

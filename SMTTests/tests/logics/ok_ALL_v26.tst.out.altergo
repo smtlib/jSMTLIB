@@ -1,0 +1,13 @@
+success
+success
+success
+success
+success
+success
+(error "Fatal Error: Unsupported Feature: Type FloatingPoint_8_24")
+(error "Fatal Error: Unsupported Feature: Type string")
+success
+success
+success
+(error "Fatal Error: Unsupported Feature: Application Term fp.isnormal f")
+(error "Fatal Error: Unsupported Feature: Application Term length (s ++ ")

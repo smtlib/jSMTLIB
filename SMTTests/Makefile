@@ -38,15 +38,14 @@ export SMT_SOLVER_DIR
 ## fallback to Solver_z3_recent, so it doubles as ongoing coverage for that fallback.
 ## bitwuzla and simplify were onboarded and CI-verified clean across all 5 platforms
 ## (goldens + adapter fixes) and are now part of the regular default list, same as
-## every other solver here. altergo is deliberately EXCLUDED: CI run 32671113041
-## confirmed it hangs completely (never responds, not even to the first test) on
-## every platform where the Solvers repo has a build (linux-x64, macos-arm64) --
-## each burned the full 20-minute job timeout before being force-canceled. Its
-## adapter was a documentation-only guess (no local binary was available) about
-## reading a script from stdin; that assumption is now known wrong, or at least
-## incomplete, and needs new evidence (ideally a local Linux/Docker repro) before
-## trying again, not another blind CI iteration at ~20 minutes per guess.
-SMT_TEST_SOLVERS ?=test z3-4.3 cvc5-1.3.2 z3-4.5.0 z3-4.6.0 z3-4.7.1 z3-4.8.12 z3-4.10.2 z3-4.12.6 z3-4.14.1 z3-4.16.0 z3-5.1.0 yices2 smtinterpol-2.5 bitwuzla simplify
+## every other solver here. altergo (A30) is tested only on the platforms in ALTERGO_PLATFORMS:
+## linux-x64, where it was verified, and macos-arm64, a trial; to drop the trial, remove
+## macos-arm64 from that list. (Solvers has no alt-ergo binary for the other platforms.)
+ALTERGO_PLATFORMS = linux-x64 macos-arm64
+ifndef PLATFORM_ARCH
+  PLATFORM_ARCH := $(shell . ./setup && echo "$$PLATFORM_ARCH")
+endif
+SMT_TEST_SOLVERS ?=test z3-4.3 cvc5-1.3.2 z3-4.5.0 z3-4.6.0 z3-4.7.1 z3-4.8.12 z3-4.10.2 z3-4.12.6 z3-4.14.1 z3-4.16.0 z3-5.1.0 yices2 smtinterpol-2.5 bitwuzla simplify $(if $(filter $(PLATFORM_ARCH),$(ALTERGO_PLATFORMS)),altergo)
 export SMT_TEST_SOLVERS
 
 test tests:

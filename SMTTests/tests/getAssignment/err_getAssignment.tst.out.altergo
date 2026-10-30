@@ -1,0 +1,3 @@
+success
+(error "Invalid action during Assert mode: Command get-assignment")
+(error "A get-assignment command takes no arguments")

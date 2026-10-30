@@ -1,0 +1,8 @@
+success
+(error "Error on typing errors (code 4)")
+success
+success
+(error "Error on typing errors (code 4)")
+unknown
+(error "Error on typing errors (code 4)")
+unknown

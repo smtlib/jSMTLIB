@@ -1,0 +1,14 @@
+success
+success
+success
+(error "Fatal Error: Unsupported Feature: Type string")
+success
+success
+success
+success
+success
+success
+(error "Fatal Error: Unsupported Feature: Constant term ")
+success
+success
+unknown

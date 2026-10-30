@@ -52,6 +52,9 @@ public class SolverProcess {
      * parentheses to balance. */
     public boolean badFormat = false;
 
+    /** Set before start() by an adapter whose solver writes only diagnostics to stderr, to discard them */
+    public boolean discardErrorOutput = false;
+
     final static protected String eol = System.getProperty("line.separator");
 
     // Set by start() and kept by exit(): a thread blocked in listen() when another thread calls
@@ -174,7 +177,9 @@ public class SolverProcess {
         if (process != null) throw new ProverException("SolverProcess.start() called on an already-started process");
         try {
             startNanos = System.nanoTime();
-            process = Runtime.getRuntime().exec(app);
+            process = discardErrorOutput
+                    ? new ProcessBuilder(app).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+                    : Runtime.getRuntime().exec(app);
             runNanos = process.onExit().thenApply(p -> System.nanoTime() - startNanos);
             // Captured into a local rather than reading the 'process' field from within run():
             // exit() nulls that field before this process has necessarily finished dying, and if
@@ -258,8 +263,10 @@ public class SolverProcess {
      * returned; otherwise the standard output is returned.
      */
     public String listen() throws IOException {
-        String out = standardOut.take(); // blocks until the end marker is recognized, or the process dies
-        boolean outWasForcedEof = standardOut.lastTakeWasForcedEof();
+        // blocks until the end marker is recognized, or the process dies; unless pipelined reading
+        // (readOutput) has already read the end of the output, after which no more text can come
+        String out = outputEnded ? "" : standardOut.take();
+        boolean outWasForcedEof = outputEnded || standardOut.lastTakeWasForcedEof();
         // Comment lines alone are no response: z3 writes some after a response, and when they
         // are read on their own they belong to an earlier command (#99)
         while (!outWasForcedEof && isOnlyComments(out)) {
@@ -445,6 +452,18 @@ public class SolverProcess {
             } catch (IOException e) {
                 // Ignore
             }
+        }
+    }
+
+    /** Waits at most millis for the process to end; returns whether it has */
+    public boolean waitForEnd(long millis) {
+        Process p = process;
+        if (p == null) return true;
+        try {
+            return p.waitFor(millis, java.util.concurrent.TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return !p.isAlive();
         }
     }
 

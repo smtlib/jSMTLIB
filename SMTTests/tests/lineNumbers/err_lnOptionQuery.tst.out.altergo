@@ -1,0 +1,4 @@
+success
+unknown
+(error "Produce assignments disabled; add (set-option :produce-assignments true)")
+(error "Error on typing errors (code 4)")

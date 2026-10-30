@@ -1,0 +1,11 @@
+success
+success
+(error "Error on typing errors (code 4)")
+unknown
+success
+success
+success
+(error "Fatal Error: Unsupported Feature: Type string")
+(error "Fatal Error: Unsupported Feature: Constant term ")
+unknown
+unsupported

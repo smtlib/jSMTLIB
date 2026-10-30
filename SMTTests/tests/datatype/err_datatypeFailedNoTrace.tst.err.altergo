@@ -1,0 +1,14 @@
+(declare-datatypes ((Lst 1) (T 0)) ((par (E) ((nil) (cons (hd E) (tl (Lst E))))) ((mk (f Undeclared)))))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort Lst 0)
+^^^^^^^^^^^^^^^^^^^^
+(declare-sort T 0)
+^^^^^^^^^^^^^^^^^^
+(declare-fun nil () Int)
+^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun cons () Int)
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun hd () Int)
+^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun tl () Int)
+^^^^^^^^^^^^^^^^^^^^^^^

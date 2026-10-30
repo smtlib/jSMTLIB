@@ -1,6 +1,7 @@
 ; OPTIONS: --solver altergo
-; alt-ergo 2.6.3 sends no reply at all to (get-proof), so its adapter answers unsupported.
-; The adapter first sends a priming set-option; the stub ends after its last reply.
+; alt-ergo 2.6.3 writes nothing for a successful command, so the adapter sends an echo after each
+; command and reads up to it; it also writes nothing for (get-proof), which the adapter answers
+; unsupported without sending. The stub gives one reply line per command, a blank one for silence.
 (set-option :produce-proofs true)
 (set-logic QF_UF)
 (declare-fun p () Bool)

@@ -1,0 +1,12 @@
+success
+success
+success
+(error "Error on parsing errors (code 3)")
+success
+success
+unknown
+success
+success
+(error "Error on typing errors (code 4)")
+unknown
+success

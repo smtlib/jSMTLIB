@@ -1,0 +1,5 @@
+success
+success
+success
+unsat
+(error "Invalid action during Unsat mode: Command get-assignment")

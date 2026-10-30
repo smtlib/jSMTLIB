@@ -1,0 +1,14 @@
+success
+(error "Fatal Error: Unsupported Feature: Type FloatingPoint_8_24")
+(error "Fatal Error: Unsupported Feature: Type FloatingPoint_8_24")
+(error "Fatal Error: Unsupported Feature: Constant term plus_zero")
+(error "Fatal Error: Unsupported Feature: Constant term nan")
+(error "Fatal Error: Unsupported Feature: Application Term fp.iszero z")
+(error "Fatal Error: Unsupported Feature: Application Term fp.isnormal z")
+(error "Fatal Error: Unsupported Feature: Application Term fp.issubnormal z")
+(error "Fatal Error: Unsupported Feature: Application Term fp.isinfinite z")
+(error "Fatal Error: Unsupported Feature: Application Term fp.isnegative z")
+(error "Fatal Error: Unsupported Feature: Application Term fp.ispositive z")
+(error "Fatal Error: Unsupported Feature: Application Term fp.isnan n")
+(error "Fatal Error: Unsupported Feature: Application Term fp.iszero n")
+unknown

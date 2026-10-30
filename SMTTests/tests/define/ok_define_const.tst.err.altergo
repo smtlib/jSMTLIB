@@ -1,0 +1,4 @@
+(define-const x Bool true)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert x)
+^^^^^^^^^^
