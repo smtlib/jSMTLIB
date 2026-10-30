@@ -95,6 +95,13 @@ public class SolverProcess {
     /** The Java process object (initialized by start() )*/
     protected volatile Process process;
 
+    /** When the process was started, and (once it has ended) how long it ran, in nanoseconds */
+    private long startNanos;
+    private volatile java.util.concurrent.CompletableFuture<Long> runNanos;
+
+    /** Set once jSMTLIB itself has stopped or interrupted the process */
+    private volatile boolean stoppedHere = false;
+
     /** The Writer object that writes to the spawned process (initialized by start() )*/
     protected volatile Writer toProcess;
 
@@ -166,7 +173,9 @@ public class SolverProcess {
     public void start(boolean listen) throws ProverException {
         if (process != null) throw new ProverException("SolverProcess.start() called on an already-started process");
         try {
+            startNanos = System.nanoTime();
             process = Runtime.getRuntime().exec(app);
+            runNanos = process.onExit().thenApply(p -> System.nanoTime() - startNanos);
             // Captured into a local rather than reading the 'process' field from within run():
             // exit() nulls that field before this process has necessarily finished dying, and if
             // the hook fires (JVM shutdown racing ahead of the async removal below) after that
@@ -348,12 +357,28 @@ public class SolverProcess {
         return text.toString();
     }
 
+    /** Whether the process has ended on its own (not stopped or interrupted here), waiting at most waitMillis
+     *  for that, after running at least the given number of seconds */
+    public boolean endedAfter(double seconds, long waitMillis) {
+        java.util.concurrent.CompletableFuture<Long> run = runNanos;
+        if (run == null || stoppedHere) return false;
+        try {
+            return run.get(waitMillis, TimeUnit.MILLISECONDS) >= seconds * 1e9;
+        } catch (java.util.concurrent.TimeoutException | java.util.concurrent.ExecutionException e) {
+            return false;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+    }
+
     /** Interrupts the command the solver is running by sending it SIGINT: z3 then abandons the
      *  command (check-sat answers unknown) and goes on; most other solvers exit. Windows has no
      *  such signal, so there the process is ended. */
     public void interrupt() {
         Process p = process;
         if (p == null) return;
+        stoppedHere = true;
         if (SMT.platformName().equals("windows")) {
             p.destroyForcibly();
             return;
@@ -504,6 +529,7 @@ public class SolverProcess {
     public void stopIfRunning() {
         Process p = process;
         if (p != null && p.isAlive()) {
+            stoppedHere = true;
             p.destroyForcibly();
             try {
                 p.waitFor(2, java.util.concurrent.TimeUnit.SECONDS);

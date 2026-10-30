@@ -359,10 +359,27 @@ public class AbstractSolver implements ISolver {
 
     /** For when a send has found the solver process gone: the timeout response if the process left this solver's
      *  report that its whole-run time limit ended it unread (that limit runs on the wall clock, so it can end the
-     *  solver between commands, and its report then answers no command); otherwise null */
+     *  solver between commands, and its report then answers no command), or if it ended once that limit had
+     *  passed; otherwise null */
     protected /*@Nullable*/ IResponse timeLimitResponseAfterExit() {
         if (!(smtConfig.timeoutTotal > 0) || solverProcess == null) return null;
-        return timeLimitResponse(solverProcess.unreadOutput());
+        IResponse timedOut = timeLimitResponse(solverProcess.unreadOutput());
+        return timedOut != null ? timedOut : timeLimitPassedResponse();
+    }
+
+    /** How long (ms) to wait for the solver process to end, once a send has found it gone or ending */
+    private static final long END_WAIT_MILLIS = 2000;
+
+    /** Returns responseFactory.timeout(), recording that the solver has ended, if the process ended once its
+     *  whole-run time limit had passed, which then ended it; otherwise null. The solver's report of that may be
+     *  missing or unread (seen on Windows CI), so this does not depend on it. */
+    private /*@Nullable*/ IResponse timeLimitPassedResponse() {
+        if (smtConfig.timeoutTotal > 0 && solverProcess != null
+                && solverProcess.endedAfter(smtConfig.timeoutTotal, END_WAIT_MILLIS)) {
+            endedByTimeLimit = true;
+            return smtConfig.responseFactory.timeout();
+        }
+        return null;
     }
 
     /** The solver's raw response to cmd (sent by sendCommand and waited for), corrected where the solver departs
@@ -973,6 +990,7 @@ public class AbstractSolver implements ISolver {
         unread.setLength(0);
         if (!extra.isEmpty()) err = err.isEmpty() ? extra : extra + "\n" + err;
         IResponse timedOut = err.isEmpty() ? null : timeLimitResponse(err);
+        if (timedOut == null) timedOut = timeLimitPassedResponse();
         boolean first = !err.isEmpty() || lastPipelined == null || !lastPipelined.isError();
         Pending p;
         while ((p = pending.poll()) != null) {
