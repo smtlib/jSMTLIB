@@ -2,5 +2,5 @@ success
 unsupported
 (error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:6:19: invalid sort 'Color'
 ")
-(error "Error writing to solver: (assert (match c ( (red true) (other false)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

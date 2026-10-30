@@ -1,2 +1,2 @@
 success
-(error "The solver stopped without a response to: (declare-fun x () (_ FloatingPoint 8))")
+(error "The solver process has exited")

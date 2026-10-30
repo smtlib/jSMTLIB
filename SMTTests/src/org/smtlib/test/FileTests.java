@@ -406,7 +406,8 @@ public class FileTests extends LogicTests {
      *  AbstractSolver#normalizeForTesting(), this can't be scrubbed at the source, since
      *  it's not response content at all -- it's the *absence* of a response, racing against
      *  however many of a script's remaining commands land after the solver has already
-     *  exited. runtest's _filtered drops the same lines; keep the two in sync. */
+     *  exited. Such a command now answers "The solver process has exited" (not dropped).
+     *  runtest's _filtered drops the same lines; keep the two in sync. */
     private static String filterIOExceptionLines(String s) {
         StringBuilder sb = new StringBuilder();
         for (String line : s.split("\n", -1)) {

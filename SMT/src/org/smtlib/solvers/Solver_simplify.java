@@ -372,7 +372,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 //            s = solverProcess.sendAndListen("(BG_POP)\r\n");
 
         } catch (IOException e) {
-            res = smtConfig.responseFactory.error("Failed to check-sat");
+            res = sendFailure(e, smtConfig.responseFactory.error("Failed to check-sat"));
         }
         return res;
     }
@@ -445,7 +445,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             }
             return smtConfig.responseFactory.success();
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Failed to pop");
+            return sendFailure(e, smtConfig.responseFactory.error("Failed to pop"));
         }
     }
 
@@ -462,7 +462,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             }
             return smtConfig.responseFactory.success();
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Failed to push");
+            return sendFailure(e, smtConfig.responseFactory.error("Failed to push"));
         }
     }
 

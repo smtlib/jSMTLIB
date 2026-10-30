@@ -1,7 +1,7 @@
 success
 (error "at line 4, column 19: syntax error: declare-datatypes is not a command")
 (error "at line 5, column 20: undefined sort constructor: Lst")
-(error "Error writing to solver: (assert (= l (cons true (as nil (Lst Int))))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= (hd l) true)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= l (as nil (Lst Bool)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= l nil)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

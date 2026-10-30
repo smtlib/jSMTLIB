@@ -4,4 +4,4 @@ success
 success
 (error "Parse Error: <shell>:6.21: Could not resolve expression with name zzz and type Bool
 ")
-(error "Error writing to solver: (assert (= (as x U) (as x U))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")

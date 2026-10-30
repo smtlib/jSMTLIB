@@ -1,4 +1,4 @@
 success
 (error "Parse Error: x")
-(error "Error writing to solver: (declare-fun x () Int) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

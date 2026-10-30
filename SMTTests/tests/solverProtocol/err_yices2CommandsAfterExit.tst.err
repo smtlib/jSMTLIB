@@ -1,0 +1,20 @@
+(assert q)
+^^^^^^^^^^
+(get-value (p))
+^^^^^^^^^^^^^^^
+(get-model)
+^^^^^^^^^^^
+(get-assignment)
+^^^^^^^^^^^^^^^^
+(get-unsat-core)
+^^^^^^^^^^^^^^^^
+(echo "hi")
+^^^^^^^^^^^
+(set-option :print-success true)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(get-option :produce-models)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(get-info :name)
+^^^^^^^^^^^^^^^^
+(check-sat)
+^^^^^^^^^^^

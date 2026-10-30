@@ -3,4 +3,4 @@ success
 success
 success
 (error "Parse Error: <shell>:6.42: Symbol 'P' previously declared as a variable")
-(error "Error writing to solver: (assert PP) java.io.IOException: Stream closed")
+(error "The solver process has exited")

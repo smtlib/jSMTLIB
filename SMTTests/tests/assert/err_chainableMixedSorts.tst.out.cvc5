@@ -4,4 +4,4 @@ Equation: (= 2 true)
 Type 1: Int
 Type 2: Bool
 ")
-(error "Error writing to solver: (assert (distinct 1 2 true)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")

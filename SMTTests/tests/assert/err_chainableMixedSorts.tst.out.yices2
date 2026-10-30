@@ -1,3 +1,3 @@
 success
 (error "at line 3, column 10: in equality: incompatible types")
-(error "Error writing to solver: (assert (distinct 1 2 true)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")

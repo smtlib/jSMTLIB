@@ -1,4 +1,4 @@
 success
 success
 success
-(error "Error writing to solver: (assert (match x ( (y y)))) org.smtlib.SolverProcess$NoResponseException: Solver process closed its output stream without a response")
+(error "The solver process has exited")

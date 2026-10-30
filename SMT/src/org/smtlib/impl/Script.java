@@ -95,7 +95,7 @@ public class Script extends Pos.Printable implements IScript {
             s = iter.next();
             // TODO: should we typecheck the entire script before executing it?
             solver.setSourceLine(Utils.sourceLine(s));
-            response = s.execute(solver);
+            response = solver.execute(s);
             // TODO: If we include this output, we need a way to control it via the API so OpenJML can control it
             //if (!r.isOK()) smtConfig.log.logDiag(smtConfig.defaultPrinter.toString(r));
         }

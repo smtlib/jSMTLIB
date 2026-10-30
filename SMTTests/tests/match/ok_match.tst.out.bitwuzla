@@ -3,6 +3,6 @@ unsupported
 unsupported
 (error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:5:19: invalid sort 'Color'
 ")
-(error "Error writing to solver: (declare-fun t () Tree) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (match c ( (red true) (green false) (blue false)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (match t ( (leaf true) ((node l r) false)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

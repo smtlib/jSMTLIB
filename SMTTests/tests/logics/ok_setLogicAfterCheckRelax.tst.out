@@ -1,0 +1,10 @@
+success
+success
+success
+success
+success
+unknown
+success
+(error "The get-model command is only valid immediately after check-sat returned sat or unknown")
+(error "Unknown constant symbol p")
+unknown

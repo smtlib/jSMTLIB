@@ -4,4 +4,4 @@ success
 success
 success
 (error "Parse Error: <shell>:9.26: Symbol 'A' not declared as a type")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")

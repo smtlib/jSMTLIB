@@ -1,5 +1,5 @@
 success
 success
-(error "The solver stopped without a response to: (declare-datatype D ((f (x Bool)) ))")
-(error "Error writing to solver: (declare-fun g (Bool ) Bool) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (declare-datatype E ((ctor (g Bool)) )) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

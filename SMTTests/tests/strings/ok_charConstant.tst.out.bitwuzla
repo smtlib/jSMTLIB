@@ -2,9 +2,9 @@ success
 success
 (error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:5:12: unexpected token
 ")
-(error "Error writing to solver: (assert (= (_ char #x41) (_ char #x041) (_ char #x00041))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= (str.len (_ char #x2FFFF)) 1)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-unsupported
-(error "Error writing to solver: (assert (distinct (_ char #x2b) (_ char #x0002B))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

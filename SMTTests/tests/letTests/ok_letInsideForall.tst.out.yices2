@@ -1,5 +1,5 @@
 (error "logic AUFLIA is not supported")
 (error "at line 2, column 17: undefined sort: Int")
-(error "Error writing to solver: (assert (forall ((y Int) ) (let ((b y) ) (= (f b) 0)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (not (= (f 5) 0))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

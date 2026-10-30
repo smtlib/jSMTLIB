@@ -2,14 +2,20 @@
 ^^^^^^^^^^^^^^^^^^^^^^^
 (declare-fun x () Bool)
 ^^^^^^^^^^^^^^^^^^^^^^^
+(set-option :regular-output-channel "stdout")
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (declare-fun x () Bool)
 ^^^^^^^^^^^^^^^^^^^^^^^
 (echo "hello")
 ^^^^^^^^^^^^^^
 (declare-fun x () Bool)
 ^^^^^^^^^^^^^^^^^^^^^^^
+(get-option :print-success)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (declare-fun x () Bool)
 ^^^^^^^^^^^^^^^^^^^^^^^
+(get-option :produce-models)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (declare-fun x () Bool)
 ^^^^^^^^^^^^^^^^^^^^^^^
 (declare-fun
@@ -32,6 +38,8 @@
 ^^^^^^^^^^^^^^^^^^^^^^^
 (check-sat)
 ^^^^^^^^^^^
+(get-assignment)
+^^^^^^^^^^^^^^^^
 (declare-fun x () Bool)
 ^^^^^^^^^^^^^^^^^^^^^^^
 (reset)

@@ -363,7 +363,30 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
         options.keySet().removeIf(k -> !Utils.REGULAR_OUTPUT_CHANNEL.equals(k) && !Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(k));
         lastCheck = null;
         lastCheckCurrent = false;
+        logicSet = false;
         return super.reset();
+    }
+
+    /** Whether Bitwuzla has accepted a set-logic since start or reset */
+    private boolean logicSet = false;
+
+    /** Bitwuzla (0.9.1) accepts a second set-logic, which SMT-LIB forbids outside start mode, so that
+     *  is reported here (--relax allows it). After one it accepts, it still answers the get- commands
+     *  about its last check, so that check is dropped here, as for reset. */
+    @Override
+    public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
+        if (logicSet && !smtConfig.relax) return smtConfig.responseFactory.error("Logic is already set");
+        IResponse r = super.set_logic(logicName, pos);
+        if (r instanceof Pending p) {
+            readPipelined(true);
+            if (p.response() == null || p.response().isError()) return r;
+        } else if (r.isError()) {
+            return r;
+        }
+        logicSet = true;
+        lastCheck = null;
+        lastCheckCurrent = false;
+        return r;
     }
 
     /** The kinds of command after which Bitwuzla still answers the get- commands about the last check

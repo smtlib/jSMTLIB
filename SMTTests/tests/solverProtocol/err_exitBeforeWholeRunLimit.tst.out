@@ -1,2 +1,2 @@
 success
-(error "Error writing to solver: (declare-fun p () Bool) org.smtlib.SolverProcess$NoResponseException: Solver process closed its output stream without a response")
+(error "The solver process has exited")

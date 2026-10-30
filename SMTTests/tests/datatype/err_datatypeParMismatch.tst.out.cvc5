@@ -2,6 +2,6 @@ success
 success
 success
 (error "Parse Error: <shell>:6.43: matching failed for parameterized constructor")
-(error "Error writing to solver: (assert (= (hd l) true)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= l (as nil (Lst Bool)))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= l nil)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

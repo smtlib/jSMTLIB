@@ -3,4 +3,4 @@ success
 success
 (error "line 6 column 33: sort mismatch, expected first argument of RoundingMode sort")
 (error "Out of step: the response to (assert (= ((_ fp.to_sbv 4) RNE x) #b0011)) was NOT IMPLEMENTED YET!")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")

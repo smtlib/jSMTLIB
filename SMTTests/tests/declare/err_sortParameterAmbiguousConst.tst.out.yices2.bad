@@ -2,7 +2,7 @@
 success
 (error "at line 6, column 24: syntax error: declare-sort-parameter is not a command")
 (error "at line 7, column 19: undefined sort: A")
-(error "Error writing to solver: (assert (= c c)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= (as c Int) 1)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (as c Bool)) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

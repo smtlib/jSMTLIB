@@ -1,4 +1,4 @@
 success
 success
 success
-(error "The solver stopped without a response to: (assert (match l ( (nil false) ((cons h t) (and (= h 1) (= t (as nil (Lst Int))))))))")
+(error "The solver process has exited")

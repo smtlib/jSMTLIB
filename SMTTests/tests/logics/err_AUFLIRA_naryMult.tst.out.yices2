@@ -1,5 +1,5 @@
 (error "logic AUFLIRA is not supported")
 (error "at line 4, column 19: undefined sort: Real")
-(error "Error writing to solver: (declare-fun y () Real) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= y (* x y 2.0))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (assert (= y (* 2.0 x))) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

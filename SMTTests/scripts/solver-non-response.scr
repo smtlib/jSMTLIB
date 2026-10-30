@@ -36,12 +36,12 @@ fail() { echo "FAIL: $1"; FAIL=$((FAIL + 1)); if [ -n "$2" ]; then echo "  $2"; 
 out=$($SMT_CMD --solver bitwuzla --exec "$_tmpdir/stub" \
     --text "(set-logic QF_UF) (define-fun f () Bool 5) (set-logic QF_UF)" 2>/dev/null)
 second=$(echo "$out" | sed -n 2p)
-if echo "$second" | grep -q '^(error "The solver stopped without a response'; then
+if echo "$second" | grep -q '^(error "The solver process has exited")'; then
     pass "a crash is reported as an error"
 else
     fail "a crash is reported as an error" "got: $second"
 fi
-if echo "$out" | sed -n 3p | grep -q '^(error "Error writing to solver'; then
+if echo "$out" | sed -n 3p | grep -q '^(error "The solver process has exited")'; then
     pass "the command after a crash reports the stopped solver"
 else
     fail "the command after a crash reports the stopped solver" "got: $(echo "$out" | sed -n 3p)"

@@ -1,3 +1,3 @@
 success
 success
-(error "line 23 column 11: the logic has already been set")
+(error "line 6 column 11: the logic has already been set")

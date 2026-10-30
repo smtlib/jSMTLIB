@@ -9,6 +9,7 @@ import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
+import org.smtlib.AbstractSolver;
 import org.smtlib.IExpr;
 import org.smtlib.IResponse;
 import org.smtlib.ISolver;
@@ -60,13 +61,12 @@ public class ImmediateExitSolverStoppedAfterErrorBugTest {
             IResponse r = solver.get_value(f.fcn(f.symbol("f"), f.symbol("QQ")));
             Assert.assertTrue("expected an error: " + r, r.isError());
 
-            // The next command must fail promptly, reporting that the solver is gone (as "has
-            // already exited" or, depending on timing, "closed its input stream") -- not that
+            // The next command must fail promptly, reporting that the solver has exited -- not that
             // :produce-models is off
             r = solver.get_value(f.symbol("x"));
             String msg = config.defaultPrinter.toString(r);
             Assert.assertTrue("expected an error: " + msg, r.isError());
-            Assert.assertTrue("expected the error to come from writing to the stopped solver: " + msg, msg.contains("Error writing to solver"));
+            Assert.assertTrue("expected the error for an exited solver: " + msg, msg.contains(AbstractSolver.SOLVER_EXITED));
             Assert.assertFalse("misleading :produce-models message: " + msg, msg.contains("only valid if"));
         } finally {
             solver.exit(); // must return (the Timeout rule guards against a hang)

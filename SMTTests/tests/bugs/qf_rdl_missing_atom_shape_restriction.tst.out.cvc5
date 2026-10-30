@@ -11,4 +11,4 @@ success
 success
 success
 (error "Parse Error: <shell>:17.24: Functions (of non-zero arity) cannot be declared in logic QF_RDL. Try including UF or adding the prefix HO_.")
-(error "Error writing to solver: (declare-sort S 0) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")

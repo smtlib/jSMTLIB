@@ -1,5 +1,5 @@
 success
 success
-(error "Error writing to solver: (assert p) org.smtlib.SolverProcess$NoResponseException: Solver process closed its output stream without a response")
-(error "Error writing to solver: (assert p) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
-(error "Error writing to solver: (check-sat) org.smtlib.SolverProcess$NoResponseException: Solver process has already exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
