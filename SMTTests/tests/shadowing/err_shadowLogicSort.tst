@@ -1,0 +1,6 @@
+; sort parameters may not have the name of a sort symbol of the logic or its theories (Remark 7)
+(set-logic ALL)
+(define-sort S (Int) (Array Int Int))
+(declare-datatype P (par (Bool) ((pair (fst Bool)))))
+(declare-sort U 0)
+(define-sort T (U) (Array U U))

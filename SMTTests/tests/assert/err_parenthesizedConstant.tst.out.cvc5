@@ -1,7 +1,0 @@
-success
-success
-success
-(error "A function application must have at least one argument")
-(error "Parse Error: <shell>:5.11: Expecting function-like symbol, found 'c'")
-(error "A function application must have at least one argument")
-(error "The solver process has exited")

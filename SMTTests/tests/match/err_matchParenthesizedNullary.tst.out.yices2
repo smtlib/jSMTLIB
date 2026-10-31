@@ -2,4 +2,3 @@ success
 (error "at line 3, column 18: syntax error: declare-datatype is not a command")
 (error "at line 4, column 19: undefined sort: L")
 (error "A parenthesized pattern must have at least one variable")
-(error "The solver process has exited")

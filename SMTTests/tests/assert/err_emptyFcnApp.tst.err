@@ -1,4 +1,2 @@
 (assert (f))
         ^^^
-(assert (f))
-        ^^^

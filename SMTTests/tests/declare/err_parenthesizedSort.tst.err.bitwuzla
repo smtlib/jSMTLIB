@@ -2,9 +2,5 @@
 ^^^^^^^^^^^^^^^^^^
 (declare-const x (S))
                  ^^^
-(declare-const x (S))
-^^^^^^^^^^^^^^^^^^^^^
 (declare-const y (T))
                  ^^^
-(declare-const y (T))
-^^^^^^^^^^^^^^^^^^^^^

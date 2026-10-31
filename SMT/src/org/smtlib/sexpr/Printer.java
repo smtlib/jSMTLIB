@@ -136,7 +136,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
         // (originalString == value() unquoted), which would otherwise print unparseable
         // output.
         String orig = e.toString();
-        if ((orig.length() > 0 && orig.charAt(0) == '|') || !needsBarQuoting(e.value())) {
+        if (org.smtlib.impl.SMTExpr.Symbol.isBarQuoted(orig) || !needsBarQuoting(e.value())) {
             append(orig);
         } else {
             append("|");
@@ -167,7 +167,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     /*@Nullable*/
     @Override
     public Void visit(IDecimal e) throws IVisitor.VisitorException {
-        append(e.value().toPlainString());
+        // A decimal always has a '.', even when built from an integral value
+        String v = e.value().toPlainString();
+        append(v.indexOf('.') < 0 ? v + ".0" : v);
         return null;
     }
 
@@ -893,7 +895,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     public Void visit(ILogic s) throws IVisitor.VisitorException {
         append("(logic ");
         s.logicName().accept(this);
-        for (IAttribute<?> attr: s.attributes().values()) {
+        for (IAttribute<?> attr: s.attributeList()) {
             append(" ");
             attr.accept(this);
         }
@@ -905,7 +907,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     public Void visit(ITheory s) throws IVisitor.VisitorException {
         append("(theory ");
         s.theoryName().accept(this);
-        for (IAttribute<?> attr: s.attributes().values()) {
+        for (IAttribute<?> attr: s.attributeList()) {
             append(" ");
             attr.accept(this);
         }

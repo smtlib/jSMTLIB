@@ -1,3 +1,0 @@
-success
-(error "A function application must have at least one argument")
-(error "at line 3, column 17: undefined term: fp.to_real")

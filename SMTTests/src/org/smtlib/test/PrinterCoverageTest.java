@@ -95,12 +95,10 @@ public class PrinterCoverageTest {
     }
 
     /** Parses a (logic ...) definition and confirms the printed form exactly reproduces
-     * the input. Deliberately uses a single attribute: ILogic/ITheory keep attributes in a
-     * {@code HashMap}, so with more than one attribute present, print order relative to the
-     * source is not guaranteed. */
+     * the input: attributes in source order, duplicate keywords kept. */
     @Test
     public void logicRoundTrip() throws Exception {
-        String text = "(logic MyTestLogic :written-by \"Cesare Tinelli\")";
+        String text = "(logic MyTestLogic :written-by \"Cesare Tinelli\" :extensions \"e\" :notes \"a\" :date \"x\" :notes \"b\" :smt-lib-version 2.7)";
         ISource source = config.smtFactory.createSource(text, "logicRoundTrip");
         IParser parser = new org.smtlib.sexpr.Parser(config, source);
         ILogic logic = parser.parseLogic();
@@ -111,10 +109,10 @@ public class PrinterCoverageTest {
     }
 
     /** Parses a (theory ...) definition and confirms the printed form exactly reproduces
-     * the input. See {@link #logicRoundTrip()} for why only one attribute is used. */
+     * the input: attributes in source order, duplicate keywords kept. */
     @Test
     public void theoryRoundTrip() throws Exception {
-        String text = "(theory MyTestTheory :written-by \"Cesare Tinelli\")";
+        String text = "(theory MyTestTheory :written-by \"Cesare Tinelli\" :definition \"d\" :notes \"a\" :date \"x\" :notes \"b\" :smt-lib-version 2.7)";
         ISource source = config.smtFactory.createSource(text, "theoryRoundTrip");
         IParser parser = new org.smtlib.sexpr.Parser(config, source);
         ITheory theory = parser.parseTheory();

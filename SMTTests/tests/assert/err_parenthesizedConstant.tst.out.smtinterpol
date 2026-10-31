@@ -1,7 +1,0 @@
-success
-success
-success
-(error "A function application must have at least one argument")
-(error "<stdin>:5:10: Syntax Error")
-(error "A function application must have at least one argument")
-(error "<stdin>:6:10: Syntax Error")

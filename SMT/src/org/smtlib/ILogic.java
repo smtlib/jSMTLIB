@@ -5,6 +5,7 @@
  */
 package org.smtlib;
 
+import java.util.List;
 import java.util.Map;
 
 import org.smtlib.IExpr.IAttribute;
@@ -19,6 +20,9 @@ public interface ILogic extends INode, ILanguage {
     /** The attributes of the logic */
     //@ ensures \result.size() > 0;
     Map<IKeyword,IAttribute<?>> attributes();
+
+    /** The attributes in source order, including repeated keywords */
+    List<IAttribute<?>> attributeList();
 
     /** The value of an attribute; returns null if the attribute does not exist for this logic. */
     /*@Nullable*/IAttributeValue value(IKeyword keyword);

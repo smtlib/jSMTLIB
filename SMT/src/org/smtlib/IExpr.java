@@ -292,7 +292,7 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
         @Override
         ISymbol headSymbol();
 
-        /** All indices of the identifier; each element is either an INumeral or an ISymbol.
+        /** All indices of the identifier: INumeral or ISymbol, or the literals IIndex describes.
          *  Symbol indices are allowed only in SMT-LIB V2.5 and later. */
         //@ ensures \result.size() > 0;
         List<IIndex> indices();

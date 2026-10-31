@@ -2,4 +2,3 @@ success
 unsupported
 (error "No such sort symbol declared: L")
 (error "A parenthesized pattern must have at least one variable")
-(error "Unknown constant symbol l")

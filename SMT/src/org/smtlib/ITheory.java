@@ -21,6 +21,9 @@ public interface ITheory extends INode {
     //@ ensures \result.size() > 0;
     Map<IKeyword,IExpr.IAttribute<?>> attributes();
 
+    /** The attributes in source order, including repeated keywords */
+    List<IExpr.IAttribute<?>> attributeList();
+
     /** The value of an attribute; returns null if the attribute does not exist for this theory */
     /*@Nullable*/IAttributeValue value(IKeyword keyword);
 

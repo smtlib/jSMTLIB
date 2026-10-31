@@ -6,10 +6,12 @@
 package org.smtlib;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.INumeral;
@@ -68,6 +70,11 @@ public class SymbolTable {
     private List<Map<IIdentifier,List<Entry>>> symStack;
     /** The top-most Symbol scope */
     private Map<IIdentifier,List<Entry>> names;
+
+    /** The names of the function and sort symbols declared by the logic, including its theories,
+     *  which binders may not shadow (SMT-LIB Remark 7) */
+    private Set<String> logicFunctions = new HashSet<>();
+    private Set<String> logicSorts = new HashSet<>();
 
     /** The stack of datatype scopes, parallel to sortStack: each maps a datatype sort name to
      *  its constructors (in declaration order), in the frame holding the sort itself (#166) */
@@ -183,12 +190,24 @@ public class SymbolTable {
                 ctorStack.remove(0);
             }
         } else {
+            logicFunctions.clear();
+            logicSorts.clear();
             sortStack = new LinkedList<Map<IIdentifier,ISort.IDefinition>>();
             symStack = new LinkedList<Map<IIdentifier,List<Entry>>>();
             ctorStack = new LinkedList<Map<String,List<ISymbol>>>();
             push(); // an empty background frame
         }
         push(); // an empty primary frame
+    }
+
+    /** Records a function (sort, if sort is true) symbol declared by the logic or one of its theories */
+    public void addLogicSymbol(IIdentifier id, boolean sort) {
+        if (id instanceof ISymbol) (sort ? logicSorts : logicFunctions).add(((ISymbol)id).value());
+    }
+
+    /** Whether the symbol is a function (sort, if sort is true) symbol of the logic or its theories */
+    public boolean isLogicSymbol(ISymbol s, boolean sort) {
+        return (sort ? logicSorts : logicFunctions).contains(s.value());
     }
 
     /** Adds a new empty frame on the top of the symbol table stack. */

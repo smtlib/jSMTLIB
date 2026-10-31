@@ -1,0 +1,7 @@
+success
+success
+success
+(error "A function application must have at least one argument")
+(error "The function symbol c takes no arguments, so it is written without parentheses")
+(error "A function application must have at least one argument")
+(error "The function symbol f takes one argument")

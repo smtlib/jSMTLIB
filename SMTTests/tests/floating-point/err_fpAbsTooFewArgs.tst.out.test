@@ -1,0 +1,3 @@
+success
+(error "A function application must have at least one argument")
+(error " The fp.abs function should have one argument")

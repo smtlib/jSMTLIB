@@ -1,0 +1,12 @@
+; binders may not shadow a function symbol of the logic or its theories (Remark 7); user symbols may be shadowed
+(set-logic ALL)
+(declare-fun g () Int)
+(assert (forall ((+ Int)) (> + 0)))
+(assert (exists ((abs Int)) (> abs 0)))
+(assert (let ((not true)) not))
+(define-fun f ((select Int)) Int select)
+(define-fun-rec h ((div Int)) Int div)
+(declare-datatype L ((nil) (cons (hd Int) (tl L))))
+(assert (match nil ((nil true) (abs false))))
+(assert (match nil ((nil true) ((cons mod t) false))))
+(assert (forall ((g Int)) (> g 0)))

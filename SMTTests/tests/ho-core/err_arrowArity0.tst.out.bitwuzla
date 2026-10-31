@@ -1,4 +1,0 @@
-success
-(error "A parenthesized sort must have at least one sort parameter")
-(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:5:20: expected '_' or 'Array'
-")

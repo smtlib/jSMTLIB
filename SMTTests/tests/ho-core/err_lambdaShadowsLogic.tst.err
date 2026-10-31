@@ -1,0 +1,2 @@
+(assert (= k (lambda ((ite Int)) (> ite 0))))
+                       ^^^

@@ -5,4 +5,4 @@ success
 success
 success
 success
-(error "The sort symbol X expects 1 arguments, not 0")
+(error "The sort symbol X expects 1 argument, not 0")

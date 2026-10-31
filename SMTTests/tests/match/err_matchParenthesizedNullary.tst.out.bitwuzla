@@ -3,4 +3,3 @@ unsupported
 (error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:19: invalid sort 'L'
 ")
 (error "A parenthesized pattern must have at least one variable")
-(error "The solver process has exited")
