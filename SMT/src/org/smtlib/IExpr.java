@@ -13,8 +13,6 @@ import org.smtlib.IExpr.IDeclaration;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IPos.IPosable;
 
-// FIXME - any new s-expressions
-
 /** This interface represents the functionality for any class implementing an SMT-LIB term or formula */
 public interface IExpr extends INode, IPosable, IAttributeValue {
 
@@ -229,9 +227,7 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
         int length();
     }
 
-    // FIXME - document toString for all interfaces
     // FIXME - review headSymbol, head
-    // FIXME - review IParameter, ILetParameter
 
     /** This interface represents SMT-LIB string literals */
     static public interface IStringLiteral extends ILiteral {
@@ -402,6 +398,10 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
     static public interface IPattern extends INode, IPosable {
         ISymbol constructor();
         List<ISymbol> params();
+
+        /** True if written in parentheses; (c), with no variables, is not SMT-LIB but is parsed (with an
+         *  error) so that type checking reports it as well */
+        default boolean parenthesized() { return !params().isEmpty(); }
     }
 
     /** This interface represents one case in a match expression: a pattern and its body. */

@@ -151,6 +151,11 @@ public class Lexer {
     public String sameLineTrailingText;
     public int sameLineTrailingStart, sameLineTrailingEnd;
 
+    /** The position of a vertical tab or form feed, outside a comment, in the white space before the
+     *  token last scanned, or null: \p{Space} reads them as white space, which SMT-LIB's white space
+     *  is not; the Parser reports them (the Lexer reports nothing itself, #148) */
+    protected /*@Nullable*/ IPos badWhitespace;
+
     /** The source of input used in this lexer; typically a different
      * lexer object will be used for each source (e.g. different file, string,
      * port, etc.) of input data.
@@ -434,6 +439,15 @@ public class Lexer {
                 String full = matcher.group(1);
                 int fullStart = matcher.start(1);
                 int fullEnd = matcher.end(1);
+                for (int i = 0; i < full.length(); i++) {
+                    char c = full.charAt(i);
+                    if (c == ';') { // a comment may contain anything up to the line end
+                        while (i + 1 < full.length() && full.charAt(i + 1) != '\n' && full.charAt(i + 1) != '\r') i++;
+                    } else if (c == '\u000B' || c == '\f') {
+                        badWhitespace = pos(fullStart + i, fullStart + i + 1);
+                        break;
+                    }
+                }
                 // Split at the first line terminator: group 1 is guaranteed (by construction
                 // of the combined regex) to consist purely of whitespace/comment runs, never
                 // a real token, so there is no risk of this splitting into the middle of

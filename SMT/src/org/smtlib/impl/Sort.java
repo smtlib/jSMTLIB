@@ -19,7 +19,9 @@ public abstract class Sort extends Pos.Printable implements ISort {
     /** Returns true iff the receiver is a Sort expression designating the pre-defined Bool sort */
     @Override
     public boolean isBool() {
-        return this == Bool || ((this instanceof IApplication) && Bool.family().equals(((IApplication)this).family()));
+        if (this == Bool) return true;
+        ISort e = expand(); // an alias, possibly of an alias, of Bool
+        return (e instanceof IApplication) && Bool.family().equals(((IApplication)e).family());
     }
 
     /** Returns the pre-defined Bool sort */
@@ -166,11 +168,23 @@ public abstract class Sort extends Pos.Printable implements ISort {
         /** Cached value for expanded() */
         protected ISort expanded = null;
 
+        /** Whether the sort was written as (S), in parentheses with no parameters */
+        protected boolean emptyParentheses = false;
+
         /** Creates a sort application from a sort identifier and a list of sort arguments. */
         public Application(IIdentifier sortID, List<ISort> sortParameters) {
             this.sortID = sortID;
             this.sortParameters = sortParameters;
         }
+
+        /** Creates a sort application that is written in parentheses even if it has no parameters, as (S) */
+        public Application(IIdentifier sortID, List<ISort> sortParameters, boolean parenthesized) {
+            this(sortID, sortParameters);
+            this.emptyParentheses = parenthesized && sortParameters.isEmpty();
+        }
+
+        @Override
+        public boolean parenthesized() { return emptyParentheses || !sortParameters.isEmpty(); }
 
         /** Creates a sort application from a sort identifier and a varargs array of sort arguments. */
         public Application(IIdentifier sortID, ISort... sortParameters) {
@@ -237,8 +251,9 @@ public abstract class Sort extends Pos.Printable implements ISort {
                     if (app.definition() instanceof IFamily) return ss;
                     // Not yet resolved by the type checker: nothing to expand it by, and nothing
                     // to cache, since a definition may still be attached (#141)
-                    if (definition() == null) return ss;
-                    ss = definition().eval(sortParameters);
+                    if (app.definition() == null) return ss;
+                    // app, not this: for an alias of an alias, ss is now the inner alias
+                    ss = app.definition().eval(app.parameters());
                 }
                 expanded = ss;
             }

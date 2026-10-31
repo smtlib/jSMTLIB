@@ -1,0 +1,5 @@
+success
+success
+success
+(error "A parenthesized pattern must have at least one variable")
+(error "<stdin>:5:24: Syntax Error")

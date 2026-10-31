@@ -1,0 +1,8 @@
+(declare-datatype L ((nil) (cons (hd Int) (tl L))))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-const l L)
+^^^^^^^^^^^^^^^^^^^
+(assert (match l (((nil) true) ((cons h t) false))))
+                   ^^^^^
+(assert (match l (((nil) true) ((cons h t) false))))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

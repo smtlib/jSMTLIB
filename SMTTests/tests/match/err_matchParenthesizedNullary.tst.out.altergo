@@ -1,0 +1,5 @@
+success
+success
+success
+(error "A parenthesized pattern must have at least one variable")
+(error "Error on parsing errors (code 3)")

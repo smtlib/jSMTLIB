@@ -1,2 +1,3 @@
 success
+(error "A function application must have at least one argument")
 (error "<stdin>:3:20: Syntax Error")

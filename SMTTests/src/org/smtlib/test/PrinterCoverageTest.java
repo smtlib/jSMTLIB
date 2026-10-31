@@ -85,13 +85,13 @@ public class PrinterCoverageTest {
 
     @Test
     public void fcnSort() throws Exception {
-        // Not real SMT-LIB syntax - function signatures are only ever written via
-        // declare-fun's own separate argument-list/result-sort fields. This is purely
-        // an internal diagnostic form (e.g. Utils.java's symbol-table error messages).
+        // Printed as the SMT-LIB 2.7 map sort; a constant's function sort is just its sort
         ISort fcnSort = config.sortFactory.createFcnSort(
                 new ISort[] { config.sortFactory.Bool(), config.sortFactory.Bool() },
                 config.sortFactory.Bool());
-        Assert.assertEquals("(Bool Bool) -> Bool", fcnSort.toString());
+        Assert.assertEquals("(-> Bool Bool Bool)", fcnSort.toString());
+        ISort constSort = config.sortFactory.createFcnSort(new ISort[0], config.sortFactory.Bool());
+        Assert.assertEquals("Bool", constSort.toString());
     }
 
     /** Parses a (logic ...) definition and confirms the printed form exactly reproduces

@@ -1,0 +1,13 @@
+success
+success
+success
+success
+(error "at line 6, column 32: syntax error: <symbol> expected")
+(error "at line 7, column 27: syntax error: <symbol> expected")
+success
+success
+success
+success
+(error "at line 12, column 35: syntax error: <symbol> expected")
+success
+(error "at line 14, column 30: syntax error: <symbol> expected")

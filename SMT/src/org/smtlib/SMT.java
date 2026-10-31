@@ -102,6 +102,7 @@ public class SMT {
             c.reservedWords.addAll(reservedWords);
             c.reservedWordsNotCommands = new HashSet<String>();
             c.reservedWordsNotCommands.addAll(reservedWordsNotCommands);
+            c.reservedSince = new HashMap<String,SMTLIB>(reservedSince);
             c.utils = new Utils(c);
             return c;
         }
@@ -111,6 +112,32 @@ public class SMT {
 
         /** A list of all reserved words */
         public Set<String> reservedWords = new HashSet<String>();
+
+        /** The version in which a reserved word became reserved, for those not reserved in V2.0 */
+        public Map<String,SMTLIB> reservedSince = new HashMap<String,SMTLIB>();
+
+        /** True if the word is reserved in the configured SMT-LIB version; with --relax, command names are not */
+        public boolean isReservedWord(String word) {
+            if (!(relax ? reservedWordsNotCommands : reservedWords).contains(word)) return false;
+            SMTLIB since = reservedSince.get(word);
+            return since == null || atLeastVersion(since);
+        }
+
+        /** True if the string, as the value of a symbol (without enclosing bars), is a legal symbol in the
+         *  configured SMT-LIB version: not a reserved word (|let| is the same symbol as let), without | or \,
+         *  and of printable and white-space characters only, those beyond ASCII only from V2.5 on */
+        public boolean isOKSymbol(String value) {
+            if (isReservedWord(value)) return false;
+            boolean nonAscii = atLeastVersion(SMTLIB.V25);
+            for (int i = 0; i < value.length(); i++) {
+                char c = value.charAt(i);
+                if (c == '|' || c == '\\') return false;
+                if ((c >= ' ' && c <= '~') || c == '\t' || c == '\n' || c == '\r') continue;
+                if (c >= 128 && nonAscii) continue;
+                return false;
+            }
+            return true;
+        }
 
         /** The version of SMT-LIB to be supported; null means the default (most recent version) */
         public /*@Nullable*/ SMTLIB smtlib = null;

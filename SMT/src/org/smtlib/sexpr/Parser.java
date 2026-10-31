@@ -614,7 +614,11 @@ public class Parser extends Lexer implements IParser {
             list.add(parseExpr());
         }
         ILexToken rp = parseRP();
-        return setPos(smtConfig.exprFactory.fcn(head,list), pos(lp.pos(), rp.pos()));
+        IPos pos = pos(lp.pos(), rp.pos());
+        // (f) is not a term; reported, then kept as an application with no arguments so that
+        // type checking reports it too
+        if (list.isEmpty()) recoverableError("A function application must have at least one argument", pos);
+        return setPos(smtConfig.exprFactory.fcn(head,list), pos);
     }
 
     /** Parses a parenthesized sequence of IDeclaration items */
@@ -740,8 +744,7 @@ public class Parser extends Lexer implements IParser {
         ILexToken token = peekToken();
         if (token instanceof Symbol) {
             ISymbol sym = (ISymbol)token;
-            java.util.Set<String> forbidden = smtConfig.relax ? smtConfig.reservedWordsNotCommands : smtConfig.reservedWords;
-            if (forbidden.contains(sym.value())) {
+            if (smtConfig.isReservedWord(sym.value())) {
                 throw error("A reserved word may not be used as a symbol here: " + token.toString(),token.pos());
             }
             token = getToken();
@@ -858,14 +861,41 @@ public class Parser extends Lexer implements IParser {
 
                 List<ISort> list = parseSortList(parameters);
                 ILexToken rp = parseRP();
-                return setPos(new Sort.Application(head,list),pos(lp.pos(),rp.pos()));
+                return parenthesizedSort(head, list, pos(lp.pos(),rp.pos()));
             } else {
                 IIdentifier id = parseIdentifier();
                 List<ISort> list = parseSortList(parameters);
                 ILexToken rp = parseRP();
-                return setPos(new Sort.Application(id,list),pos(lp.pos(),rp.pos()));
+                return parenthesizedSort(id, list, pos(lp.pos(),rp.pos()));
             }
         }
+    }
+
+    /** A sort ( id sort+ ); (S), with no sorts, is reported, then kept so that type checking reports it too */
+    private Sort parenthesizedSort(IIdentifier id, List<ISort> list, IPos pos) {
+        if (list.isEmpty()) recoverableError("A parenthesized sort must have at least one sort parameter", pos);
+        return setPos(new Sort.Application(id, list, true), pos);
+    }
+
+    /** Reports a vertical tab or form feed between tokens (except with --relax), which is then read as
+     *  white space */
+    @Override
+    protected ILexToken getToken(java.util.regex.Matcher m) throws ParserException {
+        ILexToken token = super.getToken(m);
+        if (badWhitespace != null) {
+            IPos p = badWhitespace;
+            badWhitespace = null;
+            if (!smtConfig.relax) {
+                int c = p.source() == null ? 0 : p.source().charAt(p.charStart());
+                recoverableError("Invalid character: ASCII(decimal) = " + c + "; it is read as white space", p);
+            }
+        }
+        return token;
+    }
+
+    /** Reports a syntax error after which parsing goes on as if the text were legal */
+    private void recoverableError(String msg, IPos pos) {
+        lastError = smtConfig.log.logError(smtConfig.responseFactory.error(msg, pos));
     }
 
     /** Parses sequence of sorts up to a right-parenthesis, returning null with error messages
@@ -900,6 +930,7 @@ public class Parser extends Lexer implements IParser {
             if (t instanceof IKeyword) {
                 throw new ParserException("Expected an attribute value here, instead of a " + t.kind(), t.pos());
             }
+            checkNotReserved(t);
             if (t instanceof IAttributeValue) {
                 IAttributeValue v = (IAttributeValue)t;
                 return v;
@@ -909,6 +940,13 @@ public class Parser extends Lexer implements IParser {
         } else {
             ISexpr value = parseSexpr();
             return value;
+        }
+    }
+
+    /** A symbol attribute value may not be a reserved word (the grammar says symbol) */
+    private void checkNotReserved(ILexToken t) throws ParserException {
+        if (t instanceof Symbol && smtConfig.isReservedWord(((Symbol)t).value())) {
+            throw error("A reserved word may not be used as a symbol here: " + t.toString(), t.pos());
         }
     }
 
@@ -932,6 +970,7 @@ public class Parser extends Lexer implements IParser {
             if (!isLP()) {
                 ILexToken t = getToken();
                 if (t.isError()) throw new ParserException(lexMessage(t), t.pos());
+                checkNotReserved(t);
                 if (t instanceof IAttributeValue) {
                     IAttributeValue v = (IAttributeValue)t;
                     return setPos(smtConfig.exprFactory.attribute(keyword,v),pos(keyword.pos(),v.pos()));
@@ -1237,7 +1276,11 @@ public class Parser extends Lexer implements IParser {
                 params.add(parsePatternSymbol());
             }
             ILexToken rp = parseRP();
-            return setPos(smtConfig.exprFactory.pattern(constructor, params), pos(lp.pos(), rp.pos()));
+            IPos pos = pos(lp.pos(), rp.pos());
+            if (!params.isEmpty()) return setPos(smtConfig.exprFactory.pattern(constructor, params), pos);
+            // (c) is not a pattern; reported, then kept so that type checking reports it too
+            recoverableError("A parenthesized pattern must have at least one variable", pos);
+            return setPos(new SMTExpr.Pattern(constructor, params, true), pos);
         }
     }
 

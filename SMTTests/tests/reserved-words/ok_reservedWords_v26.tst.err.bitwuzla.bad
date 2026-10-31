@@ -1,0 +1,4 @@
+(declare-const define-const Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-const declare-sort-parameter Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

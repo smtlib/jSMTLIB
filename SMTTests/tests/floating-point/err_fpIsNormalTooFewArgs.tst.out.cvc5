@@ -1,2 +1,3 @@
 success
+(error "A function application must have at least one argument")
 (error "Parse Error: <shell>:3.21: invalid kind 'FLOATINGPOINT_IS_NORMAL', expected PI, REGEXP_NONE, REGEXP_ALL, REGEXP_ALLCHAR or SEP_EMP")

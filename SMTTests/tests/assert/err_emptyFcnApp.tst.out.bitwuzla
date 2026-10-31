@@ -1,4 +1,5 @@
 success
 success
+(error "A function application must have at least one argument")
 (error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:10: expected at least 2 arguments to '<function application token>', got 1
 ")

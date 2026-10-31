@@ -811,14 +811,24 @@ public abstract class SMTExpr implements IExpr {
         protected ISymbol constructor;
         protected List<ISymbol> params;
 
+        /** Whether the pattern was written as (c), in parentheses with no variables */
+        protected boolean emptyParentheses = false;
+
         /** Creates a pattern from the given constructor symbol and variable list. */
         public Pattern(ISymbol constructor, List<ISymbol> params) {
             this.constructor = constructor;
             this.params = params;
         }
 
+        /** Creates a pattern that is written in parentheses even if it has no variables, as (c) */
+        public Pattern(ISymbol constructor, List<ISymbol> params, boolean parenthesized) {
+            this(constructor, params);
+            this.emptyParentheses = parenthesized && params.isEmpty();
+        }
+
         @Override public ISymbol constructor() { return constructor; }
         @Override public List<ISymbol> params() { return params; }
+        @Override public boolean parenthesized() { return emptyParentheses || !params.isEmpty(); }
 
         @Override
         public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }

@@ -1,0 +1,6 @@
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:5:14: expected symbol after 'declare-fun'
+")
+(error "The solver process has exited")
