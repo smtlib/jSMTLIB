@@ -1,0 +1,4 @@
+success
+(error "line 3 column 19: invalid quantifier, list of sorted variables is empty")
+(error "line 4 column 19: invalid quantifier, list of sorted variables is empty")
+success
