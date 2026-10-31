@@ -402,10 +402,12 @@ public class Parser extends Lexer implements IParser {
         }
         if (t.toString() == IPLexToken.LP) {
             boolean saved = smtConfig.topLevel;
-            smtConfig.topLevel = false;
-            Sexpr res = parseSeq(t);
-            smtConfig.topLevel = saved; // FIXME - use a try-finally block?
-            return res;
+            try {
+                smtConfig.topLevel = false;
+                return parseSeq(t);
+            } finally {
+                smtConfig.topLevel = saved;
+            }
         } 
         if (t.isError()) throw new ParserException(lexMessage(t), t.pos());
         if (!(t instanceof ISexpr)) {
