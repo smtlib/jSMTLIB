@@ -911,15 +911,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     }
 
     public /*@Nullable*/String translate(IExpr expr) throws IVisitor.VisitorException {
-        Translator t = new Translator(smtConfig, "ALL".equals(logicSet));
-        String r = expr.accept(t);
-        if (t.conjuncts.isEmpty()) return r;
-        String and = "(AND ";
-        for (String c: t.conjuncts) {
-            and = and + c + " ";
-        }
-        and = and + r + " )";
-        return and;
+        return expr.accept(new Translator(smtConfig, "ALL".equals(logicSet)));
     }
     /* Translating simplify:
      *  Simplify has no type definitions
@@ -1042,7 +1034,10 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         final private SMT.Configuration smtConfig;
         /** Under ALL, rejects what Simplify cannot decide (other logics already exclude it) */
         final private boolean allLogic;
-        private List<String> conjuncts = new LinkedList<String>();
+        /** The Simplify text for each let- or quantifier-bound name in scope, innermost scope first */
+        private final Deque<Map<String,String>> bound = new ArrayDeque<Map<String,String>>();
+        /** Numbers the fresh names given to quantified variables */
+        private int freshCount = 0;
 
         public Translator(SMT.Configuration smtConfig) {
             this(smtConfig, false);
@@ -1398,12 +1393,52 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         /** Translates a constant or variable e whose sort, if known, is sort */
         private String constant(ISymbol e, /*@Nullable*/ ISort sort) {
+            for (Map<String,String> scope: bound) {
+                String b = scope.get(e.value());
+                if (b == null) continue;
+                // A Bool-valued let binding or variable is a term, |@true| or |@false|
+                return isFormula && sort != null && sort.isBool() ? "(EQ " + b + " |@true|)" : b;
+            }
             if (!isFormula && e.value().equals("true")) return "|@true|";
             if (!isFormula && e.value().equals("false")) return "|@false|";
             String n = name(e);
             // A Bool constant or variable is a term, |@true| or |@false|
             if (isFormula && sort != null && sort.isBool() && n.startsWith("|")) return "(EQ " + n + " |@true|)";
             return n;
+        }
+
+        /** A name for a quantified variable that no other name can equal, so that a let
+         *  binding substituted into the quantifier's body is not captured: escaping never puts
+         *  a single ? before a digit */
+        private String freshName(ISymbol e) {
+            String n = name(e);
+            if (n.startsWith("|")) n = n.substring(1, n.length()-1);
+            return "|" + n + "?" + (++freshCount) + "|";
+        }
+
+        /** Translates a quantifier: kind is FORALL or EXISTS, and connective joins the Bool
+         *  variables' guard to the body (IMPLIES or AND) */
+        private String quantifier(String kind, String connective, List<IDeclaration> params, IExpr body) throws VisitorException {
+            Map<String,String> scope = new HashMap<String,String>();
+            StringBuilder sb = new StringBuilder();
+            StringBuilder guard = new StringBuilder();
+            sb.append("(").append(kind).append(" (");
+            for (IDeclaration d: params) {
+                String n = freshName(d.parameter());
+                scope.put(d.parameter().value(), n);
+                sb.append(n).append(" ");
+                if (d.sort().isBool()) guard.append(" ").append(boolRange(n));
+            }
+            sb.append(") ");
+            bound.push(scope);
+            try {
+                String b = body.accept(this);
+                sb.append(guard.length() == 0 ? b : "(" + connective + " (AND" + guard + ") " + b + ")");
+            } finally {
+                bound.pop();
+            }
+            sb.append(")");
+            return sb.toString();
         }
 
         /** The Simplify name of a symbol, as a function name or a bound variable */
@@ -1461,17 +1496,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             if (!isFormula) {
                 throw new VisitorException("Use of forall as a Bool term is not implemented in the Simplify adapter",e.pos());
             }
-            StringBuilder sb = new StringBuilder();
-            sb.append("(FORALL (");
-            for (IDeclaration d: e.parameters()) {
-                sb.append(name(d.parameter()));
-                sb.append(" ");
-            }
-            sb.append(") ");
-            String guard = boolGuard(e.parameters());
-            sb.append(guard == null ? e.expr().accept(this) : "(IMPLIES " + guard + " " + e.expr().accept(this) + ")");
-            sb.append(")");
-            return sb.toString();
+            return quantifier("FORALL", "IMPLIES", e.parameters(), e.expr());
         }
 
         @Override
@@ -1479,27 +1504,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             if (!isFormula) {
                 throw new VisitorException("Use of exists as a Bool term is not implemented in the Simplify adapter",e.pos());
             }
-            StringBuilder sb = new StringBuilder();
-            sb.append("(EXISTS (");
-            for (IDeclaration d: e.parameters()) {
-                sb.append(name(d.parameter()));
-                sb.append(" ");
-            }
-            sb.append(") ");
-            String guard = boolGuard(e.parameters());
-            sb.append(guard == null ? e.expr().accept(this) : "(AND " + guard + " " + e.expr().accept(this) + ")");
-            sb.append(")");
-            return sb.toString();
-        }
-
-        /** The constraint that each Bool variable is |@true| or |@false|, or null if there are none:
-         *  Simplify's variables range over all terms */
-        private /*@Nullable*/ String boolGuard(List<IDeclaration> params) {
-            StringBuilder sb = new StringBuilder();
-            for (IDeclaration d: params) {
-                if (d.sort().isBool()) sb.append(" ").append(boolRange(name(d.parameter())));
-            }
-            return sb.length() == 0 ? null : "(AND" + sb + ")";
+            return quantifier("EXISTS", "AND", e.parameters(), e.expr());
         }
 
         @Override 
@@ -1538,19 +1543,25 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         @Override
         public String visit(ILet e) throws IVisitor.VisitorException {
-            // Simplify does not have let
-            // We can create a new temp variable (or function of any quantified parameters)
-            // and then use that.
+            // Simplify has no let: each use of a bound name is replaced by the translation of its
+            // value, made in the let's own scope (the bindings are parallel). A Bool value is a
+            // term too (|@true| or |@false|).
+            Map<String,String> scope = new HashMap<String,String>();
             boolean saved = isFormula;
             isFormula = false;
-            for (IBinding b : e.bindings()) {
-                // A Bool value is a term too (|@true| or |@false|)
-                // FIXME - don't use toString - also need to map to a unique new temporary
-                conjuncts.add("(EQ " + name(b.parameter()) + " " + b.expr().accept(this) + " )");
+            try {
+                for (IBinding b : e.bindings()) {
+                    scope.put(b.parameter().value(), b.expr().accept(this));
+                }
+            } finally {
+                isFormula = saved;
             }
-            isFormula = saved;
-            return e.expr().accept(this);
-            //throw new VisitorException("Use of let is not yet implemented in the Simplify adapter",e.pos()); // FIXME - let in Simplify
+            bound.push(scope);
+            try {
+                return e.expr().accept(this);
+            } finally {
+                bound.pop();
+            }
         }
 
         @Override 

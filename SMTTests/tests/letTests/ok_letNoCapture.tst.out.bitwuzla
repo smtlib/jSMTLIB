@@ -1,0 +1,5 @@
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:1:12: unsupported logic 'LIA'
+")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
