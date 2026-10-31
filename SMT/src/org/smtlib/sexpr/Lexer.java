@@ -213,7 +213,7 @@ public class Lexer {
     /** Pattern regular expression for SMT-LIB sequence of non-white space */
     private final static String rgxAnyNonWS = "[\\S&&[^;\\(\\)]][\\S&&[^;\\(\\)]]*"; // Any sequence of non-whitespace, not beginning with ( ) ;
     /** Pattern regular expression for detecting the end of input */
-    private final static String rgxEndOfInput = "\\z|\\031|\\004"; // FIXME - use CharSequenceReader.endChar
+    private final static String rgxEndOfInput = "\\z|" + Pattern.quote(String.valueOf(CharSequenceInfinite.endChar)) + "|\\004";
     /** Pattern regular expression for checking that a sequence of digits is not followed by other non-white space, non-comment, non-parenthesis characters */
     private final static String trailer = "(?:[\\s\\(\\);]|$)";
 
