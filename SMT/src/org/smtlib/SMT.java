@@ -559,7 +559,11 @@ public class SMT {
     /** The method that does all the execution for the main method, here made a non-static method, so that
      * multiple SMT operations can be proceeding independently.
      * @param args the command-line arguments
-     * @return the exit code to return to the command-line: FIXME - document exit codes
+     * @return the exit code to return to the command-line: 0 if every command succeeded
+     * (or for --help and --version); 1 for a command-line error, a solver that could not be
+     * started, an input file not found, or any command that reported an error; 2 if input
+     * could not be read or processing failed outright (an I/O or parser exception, stack
+     * overflow, out of memory). Over several files, the highest code wins.
      */
     public int exec(String[] args) {
         //if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Start exec");
