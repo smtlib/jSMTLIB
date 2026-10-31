@@ -255,7 +255,7 @@ public class Lexer {
                 + "\"(" + rgxInvalidString + ")\"" + "|("       // group 18: invalid string // NO LONGER MATCHES SINCE CHANGING THE STRING MATCHING
                 + "\\030" + ")|("                               // group 19: the control-X character to kill input
                 + rgxAnyNonWS + ")"                             // group 20: error symbol
-                + "|([ \t\r\n]+)"                               // group 21: stop-gap whitespace
+                + "|([ \t\r\n]+)"                               // group 21: whitespace, a guard (see getToken)
         +   ")"  );
 
     /** A pattern to skip up to the end of the line */
@@ -656,8 +656,8 @@ public class Lexer {
 //                throw new SyntaxException("Invalid token: " + matched,token.pos());
                 //SMT.out.println(smtConfig.responseFactory.error("Invalid token: " + matched));
             } else if ((matched = matcher.group(k=21)) != null) {
-                // FIXME - This should never happen either - it is a stopgap hack, because
-                // with whitespace at the very beginning of a file, the whitespace detector is not finding it
+                // A guard, not known to be reached (no test reaches it): group 1 takes all
+                // whitespace and comments, after which some token group always matches
                 matcher.region(end,csr.length());
                 return getToken();
             } else {
@@ -676,9 +676,9 @@ public class Lexer {
             }
             if (csr != null) matcher.region(end,csr.length());
         } else {
-            // The matcher did not find a match starting at matcher.regionStart()
-            // FIXME - there is a problem if we have spaces at the very beginning of a file, prior to the LP
-            // the matcher does not match???
+            // The matcher did not find a match starting at matcher.regionStart(). A guard, not
+            // known to be reached (no test reaches it): the catch-all error group 20 matches any
+            // character that no other group does. Skip one character and try again.
             int b = matcher.regionStart();
             int e = matcher.regionEnd();
             matcher.region(b+1,e);
