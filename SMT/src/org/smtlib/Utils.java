@@ -152,10 +152,6 @@ public class Utils {
     /** The response to the :name info item */
     public static final String NAME_VALUE = "SMT-LIB adapter";
 
-    /** The response to the :version info item */
-    // FIXME - must this be a string; what is the relationship to SW_VERSION?
-    public static final String VERSION_VALUE = "0.0";
-
     /** The string designating the smtlib attribute within a logic or theory */
     public static final IKeyword SMTLIB_VERSION = new org.smtlib.impl.SMTExpr.Keyword(":smt-lib-version");
 

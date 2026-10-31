@@ -3,6 +3,6 @@ success
 success
 (:authors "David R. Cok" )
 success
-(:version "0.0" )
+(:version "0.17.0" )
 success
 (:error-behavior continued-execution )
