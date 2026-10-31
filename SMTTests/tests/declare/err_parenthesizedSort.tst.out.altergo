@@ -1,0 +1,7 @@
+success
+success
+success
+(error "A parenthesized sort must have at least one sort parameter")
+(error "Error on parsing errors (code 3)")
+(error "A parenthesized sort must have at least one sort parameter")
+(error "Error on parsing errors (code 3)")

@@ -1,0 +1,7 @@
+success
+success
+success
+(error "A parenthesized sort must have at least one sort parameter")
+(error "Parse Error: <shell>:5.21: Extra parentheses around sort name not permitted in SMT-LIB")
+(error "A parenthesized sort must have at least one sort parameter")
+(error "The solver process has exited")

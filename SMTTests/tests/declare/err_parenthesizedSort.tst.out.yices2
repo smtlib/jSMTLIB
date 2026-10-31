@@ -1,0 +1,7 @@
+success
+success
+success
+(error "A parenthesized sort must have at least one sort parameter")
+(error "at line 5, column 20: undefined sort constructor: S")
+(error "A parenthesized sort must have at least one sort parameter")
+(error "The solver process has exited")

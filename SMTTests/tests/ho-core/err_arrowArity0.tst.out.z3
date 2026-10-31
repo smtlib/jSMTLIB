@@ -1,2 +1,3 @@
 success
-(error "line 5 column 18: invalid array sort definition, invalid number of parameters")
+(error "A parenthesized sort must have at least one sort parameter")
+(error "line 5 column 19: unknown sort '->'")

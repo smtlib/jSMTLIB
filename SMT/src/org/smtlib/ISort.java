@@ -152,6 +152,10 @@ public interface ISort extends INode, IPosable {
         //@ ensures \result == definition;
         IDefinition definition(IDefinition definition);
 
+        /** True if written in parentheses; (S), with no parameters, is not SMT-LIB but is parsed (with an
+         *  error) so that type checking reports it as well */
+        default boolean parenthesized() { return !parameters().isEmpty(); }
+
         /** Expands any head abbreviations, if any; requires definition() to be defined */
         @Override
         ISort expand();

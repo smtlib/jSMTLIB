@@ -1,0 +1,5 @@
+success
+unsupported
+(error "No such sort symbol declared: L")
+(error "No such sort symbol declared: L")
+(error "Unknown constant symbol l")

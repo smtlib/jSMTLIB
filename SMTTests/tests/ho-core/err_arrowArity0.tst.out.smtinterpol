@@ -1,0 +1,3 @@
+success
+(error "A parenthesized sort must have at least one sort parameter")
+(error "<stdin>:5:21: Syntax Error")

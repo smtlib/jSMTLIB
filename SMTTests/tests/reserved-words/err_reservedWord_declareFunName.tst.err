@@ -1,0 +1,4 @@
+(declare-fun let () Bool)
+             ^^^
+(declare-fun forall (Bool) Bool)
+             ^^^^^^

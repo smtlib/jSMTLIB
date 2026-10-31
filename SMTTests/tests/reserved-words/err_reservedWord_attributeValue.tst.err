@@ -1,0 +1,8 @@
+(set-info :foo let)
+               ^^^
+(set-info :foo |forall|)
+               ^^^^^^^^
+(assert (! x :named let))
+                    ^^^
+(assert (! x :named |par|))
+                    ^^^^^

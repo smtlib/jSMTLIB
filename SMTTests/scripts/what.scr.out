@@ -3,8 +3,8 @@ success
 success
 success
 U : U
-f : (U) -> U
-c : () -> U
+f : (-> U U)
+c : U
 g : -no entry- 
 success
 success

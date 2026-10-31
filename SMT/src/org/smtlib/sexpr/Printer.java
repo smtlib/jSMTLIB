@@ -320,7 +320,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
     @Override
     public Void visit(IExpr.IPattern e) throws IVisitor.VisitorException {
-        if (e.params().isEmpty()) {
+        if (!e.parenthesized()) {
             e.constructor().accept(this);
         } else {
             append("(");
@@ -851,7 +851,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
     @Override
     public Void visit(IApplication s) throws IVisitor.VisitorException {
-        if (s.parameters().size() == 0) {
+        if (!s.parenthesized()) {
             s.family().accept(this);
         } else {
             append("(");
@@ -867,17 +867,19 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
     @Override
     public Void visit(IFcnSort s) throws IVisitor.VisitorException {
-        // Not real SMT-LIB syntax (function sorts aren't first-class there) - an
-        // internal diagnostic form only; see e.g. Utils.java's symbol-table error messages.
-        append("(");
-        boolean first = true;
-        for (ISort ss: s.argSorts()) {
-            if (!first) append(" ");
-            ss.accept(this);
-            first = false;
+        // The SMT-LIB 2.7 (HO-Core) map sort (-> A B C); a constant's is just its sort
+        if (s.argSorts().length == 0) {
+            s.resultSort().accept(this);
+            return null;
         }
-        append(") -> ");
+        append("(->");
+        for (ISort ss: s.argSorts()) {
+            append(" ");
+            ss.accept(this);
+        }
+        append(" ");
         s.resultSort().accept(this);
+        append(")");
         return null;
     }
 

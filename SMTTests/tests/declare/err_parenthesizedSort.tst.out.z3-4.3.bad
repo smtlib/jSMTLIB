@@ -1,0 +1,7 @@
+success
+success
+success
+(error "A parenthesized sort must have at least one sort parameter")
+success
+(error "A parenthesized sort must have at least one sort parameter")
+(error "line 6 column 19: invalid number of parameters to sort constructor")

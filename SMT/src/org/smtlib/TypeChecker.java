@@ -88,6 +88,38 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         result.add(smtConfig.responseFactory.error(msg,pos));
     }
 
+    /** Reports a symbol that is not legal (see SMT.Configuration.isOKSymbol), which only the API (or
+     *  declare-fun's name) can produce; returns true if it is not legal */
+    protected boolean badSymbol(ISymbol s) {
+        String msg = symbolError(smtConfig, s);
+        if (msg == null) return false;
+        error(msg, s.pos());
+        return true;
+    }
+
+    /** The error message for a symbol that is not legal, or null if it is legal */
+    static /*@Nullable*/ String symbolError(SMT.Configuration smtConfig, ISymbol s) {
+        if (smtConfig.isOKSymbol(s.value())) return null;
+        if (smtConfig.isReservedWord(s.value()))
+            return "A reserved word may not be used as a symbol here: " + smtConfig.defaultPrinter.toString(s);
+        return "Not a legal SMT-LIB symbol: " + smtConfig.utils.quote(s.value());
+    }
+
+    /** Adds the error for a symbol that is not legal to errors; returns true if it is not legal */
+    private static boolean badSymbol(SMT.Configuration smtConfig, ISymbol s, List<IResponse> errors) {
+        String msg = symbolError(smtConfig, s);
+        if (msg == null) return false;
+        errors.add(smtConfig.responseFactory.error(msg, s.pos()));
+        return true;
+    }
+
+    /** Reports a binder with no variables; returns true if the list is empty */
+    protected boolean noVariables(List<?> list, String binder, IPos pos) {
+        if (!list.isEmpty()) return false;
+        error("At least one variable must be bound by " + binder, pos);
+        return true;
+    }
+
     /** Utility method for printing an expression, using the default printer */
     protected String pr(IExpr e) {
         return smtConfig.defaultPrinter.toString(e);
@@ -983,9 +1015,25 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             if (mapSort != null) msg = "(" + name + " ...) is read as (@ " + name + " ...): " + msg;
             error(msg,e.pos());
             return null;
+        } else if (e.args().isEmpty()) {
+            // (c) for a constant c: an application must have at least one argument
+            error("The function symbol " + name + " takes no arguments, so it is written without parentheses", e.pos());
+            return null;
         } else {
             return save(e,matchedResultSort);
         }
+    }
+
+    /** The number of selectors of constructor c of the datatype sort delta, or -1 if c is not one */
+    private int constructorArity(ISymbol c, ISort delta) {
+        List<SymbolTable.Entry> entries = symTable.lookup(c);
+        if (entries != null) {
+            for (SymbolTable.Entry en : entries) {
+                int k = en.sort.argSorts().length;
+                if (symTable.lookupInstance(k, c, delta) != null) return k;
+            }
+        }
+        return -1;
     }
 
     /** The sort of head if it is a variable or constant of a -> sort, else null */
@@ -1109,6 +1157,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             error("The _ wildcard may only appear in match patterns", e.pos());
             return null;
         }
+        if (badSymbol(e)) return null;
         if (Utils.TRUE.equals(e) || Utils.FALSE.equals(e)) {
             return save(e,symTable.smtConfig.sortFactory.Bool());
         } else {
@@ -1319,7 +1368,9 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             resultSort = save(e,e.expr().accept(this));
             for (IAttribute<?> a: e.attributes()) {
                 String name = a.keyword().value();
-                if (name.equals(":named")) { // FIXME - use a canonical representation
+                if (a.attrValue() instanceof ISymbol && badSymbol((ISymbol)a.attrValue())) {
+                    errors = true;
+                } else if (name.equals(":named")) { // FIXME - use a canonical representation
                     IAttributeValue v = a.attrValue();
                     if (!(v instanceof ISymbol)) {
                         result.add(smtConfig.responseFactory.error("Expected a symbol after :named",v==null?a.keyword().pos():v.pos()));
@@ -1366,13 +1417,15 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 
     @Override
     public /*@Nullable*/ ISort visit(IForall e) throws IVisitor.VisitorException {
+        if (noVariables(e.parameters(), "forall", e.pos())) return null;
         Map<ISymbol,Variable> saved = new HashMap<ISymbol,Variable>();
         saved.putAll(currentScope);
         parameters.add(0,saved);
         boolean errors = false;
         Set<ISymbol> seen = new HashSet<>();
         for (IExpr.IDeclaration decl : e.parameters()) {
-            if (!seen.add(decl.parameter())) {
+            if (badSymbol(decl.parameter())) errors = true;
+            else if (!seen.add(decl.parameter())) {
                 error("Parameter list has a duplicate name: " + pr(decl.parameter()), decl.parameter().pos());
                 errors = true;
             }
@@ -1394,13 +1447,15 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 
     @Override
     public /*@Nullable*/ ISort visit(IExists e) throws IVisitor.VisitorException {
+        if (noVariables(e.parameters(), "exists", e.pos())) return null;
         Map<ISymbol,Variable> saved = new HashMap<ISymbol,Variable>();
         saved.putAll(currentScope);
         parameters.add(0,saved);
         boolean errors = false;
         Set<ISymbol> seen = new HashSet<>();
         for (IExpr.IDeclaration decl : e.parameters()) {
-            if (!seen.add(decl.parameter())) {
+            if (badSymbol(decl.parameter())) errors = true;
+            else if (!seen.add(decl.parameter())) {
                 error("Parameter list has a duplicate name: " + pr(decl.parameter()), decl.parameter().pos());
                 errors = true;
             }
@@ -1463,6 +1518,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             error("The lambda expression requires SMT-LIB " + SMTLIB.V27 + " or later", e.pos());
             return null;
         }
+        if (noVariables(e.parameters(), "lambda", e.pos())) return null;
         Map<ISymbol,Variable> saved = new HashMap<ISymbol,Variable>();
         saved.putAll(currentScope);
         parameters.add(0,saved);
@@ -1470,7 +1526,8 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         Set<ISymbol> seen = new HashSet<>();
         List<ISort> paramSorts = new LinkedList<ISort>();
         for (IExpr.IDeclaration decl : e.parameters()) {
-            if (!seen.add(decl.parameter())) {
+            if (badSymbol(decl.parameter())) errors = true;
+            else if (!seen.add(decl.parameter())) {
                 error("Parameter list has a duplicate name: " + pr(decl.parameter()), decl.parameter().pos());
                 errors = true;
             }
@@ -1498,6 +1555,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 
     @Override
     public /*@Nullable*/ ISort visit(ILet e) throws IVisitor.VisitorException {
+        if (noVariables(e.bindings(), "let", e.pos())) return null;
         Map<ISymbol,Variable> newdecls = new HashMap<ISymbol,Variable>();
         Map<ISymbol,Variable> saved = new HashMap<ISymbol,Variable>();
         saved.putAll(currentScope);
@@ -1506,7 +1564,8 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             boolean anyErrors = false;
             Set<ISymbol> seen = new HashSet<>();
             for (IExpr.IBinding decl : e.bindings()) {
-                if (!seen.add(decl.parameter())) {
+                if (badSymbol(decl.parameter())) anyErrors = true;
+                else if (!seen.add(decl.parameter())) {
                     error("Parameter list has a duplicate name: " + pr(decl.parameter()), decl.parameter().pos());
                     anyErrors = true;
                 }
@@ -1579,13 +1638,15 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             try {
                 IExpr.IPattern pat = mc.pattern();
 
-                if (pat.params().isEmpty()) {
+                if (!pat.parenthesized()) {
                     if (Utils.WILDCARD.equals(pat.constructor().value())) {
                         if (!smtConfig.atLeastVersion(SMTLIB.V27)) {
                             error("The _ wildcard in match patterns requires SMT-LIB V2.7 or later", pat.constructor().pos());
                             anyErrors = true;
                         }
                         hasVariableOrWildcard = true;
+                    } else if (badSymbol(pat.constructor())) {
+                        anyErrors = true;
                     } else {
                         IFcnSort ctorSort = symTable.lookupInstance(0, pat.constructor(), scrutineeSort);
                         if (ctorSort == null) {
@@ -1597,15 +1658,29 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                         }
                     }
                 } else {
+                    // (c x1 ... xk): c a constructor of the scrutinee's datatype with k > 0 selectors
                     int arity = pat.params().size();
                     IFcnSort ctorSort = symTable.lookup(arity, pat.constructor());
                     IFcnSort instance = ctorSort == null ? null : symTable.lookupInstance(arity, pat.constructor(), scrutineeSort);
-                    if (ctorSort == null) {
+                    int ctorArity = allCtors.contains(pat.constructor()) ? constructorArity(pat.constructor(), scrutineeSort) : -1;
+                    if (ctorArity == 0) {
+                        error("The constructor " + pat.constructor().value() + " takes no arguments, so its pattern is written without parentheses",
+                                pat.pos());
+                        anyErrors = true;
+                    } else if (ctorArity > 0 && ctorArity != arity) {
+                        error("The constructor " + pat.constructor().value() + " takes " + ctorArity
+                                + " argument" + (ctorArity == 1 ? "" : "s") + ", not " + arity, pat.pos());
+                        anyErrors = true;
+                    } else if (ctorSort == null) {
                         error("Unknown constructor: " + pat.constructor().value(), pat.constructor().pos());
                         anyErrors = true;
                     } else if (instance == null) {
                         error("Constructor " + pat.constructor().value() + " has result sort "
                                 + pr(ctorSort.resultSort()) + " but scrutinee has sort " + pr(scrutineeSort),
+                                pat.constructor().pos());
+                        anyErrors = true;
+                    } else if (ctorArity < 0) {
+                        error(pat.constructor().value() + " is not a constructor of the datatype " + pr(scrutineeSort),
                                 pat.constructor().pos());
                         anyErrors = true;
                     } else {
@@ -1619,6 +1694,8 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                                     error("The _ wildcard in match patterns requires SMT-LIB V2.7 or later", params.get(i).pos());
                                     anyErrors = true;
                                 }
+                            } else if (badSymbol(params.get(i))) {
+                                anyErrors = true;
                             } else {
                                 if (!patternVarsSeen.add(params.get(i).value())) {
                                     error("Duplicate variable in match pattern: " + params.get(i).value(), params.get(i).pos());
@@ -1717,6 +1794,10 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             return null;
         }
         if (errors) return null;
+        if (s.parenthesized() && args.isEmpty()) {
+            error("The sort symbol " + pr(f) + " takes no parameters, so it is written without parentheses", s.pos());
+            return null;
+        }
         s.definition(def);
         return def.eval(newargs);
     }
@@ -1841,6 +1922,11 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "get-model", errors);
         } else if (cmd instanceof ICommand.Iget_unsat_assumptions) {
             requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "get-unsat-assumptions", errors);
+        } else if (cmd instanceof ICommand.Iset_info || cmd instanceof ICommand.Iset_option) {
+            // A symbol attribute value must be a legal symbol (the parser reports a reserved word in text)
+            IAttributeValue v = cmd instanceof ICommand.Iset_info ? ((ICommand.Iset_info)cmd).value()
+                    : ((ICommand.Iset_option)cmd).value();
+            if (v instanceof ISymbol) badSymbol(smtConfig, (ISymbol)v, errors);
         } else if (cmd instanceof ICommand.Iset_logic) {
             String logicName = ((ICommand.Iset_logic) cmd).logic().value();
             if ("ALL".equals(logicName) && !smtConfig.relax && !smtConfig.atLeastVersion(SMT.Configuration.SMTLIB.V25)) {
@@ -1866,12 +1952,14 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             errors.add(smtConfig.responseFactory.error("User-defined symbols may not be empty strings", id.pos()));
         else if (v.charAt(0) == '@' || v.charAt(0) == '.')
             errors.add(smtConfig.responseFactory.error("User-defined symbols may not begin with . or @", id.pos()));
+        else badSymbol(smtConfig, id, errors);
     }
 
     private static void validateUniqueDeclarations(SMT.Configuration smtConfig,
             List<IExpr.IDeclaration> params, List<IResponse> errors) {
         Set<ISymbol> seen = new HashSet<>();
         for (IExpr.IDeclaration d : params) {
+            if (badSymbol(smtConfig, d.parameter(), errors)) return;
             if (!seen.add(d.parameter())) {
                 errors.add(smtConfig.responseFactory.error(
                     "A name is duplicated in the parameter list: " +
@@ -1885,6 +1973,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             List<ISort.IParameter> params, List<IResponse> errors) {
         Set<String> seen = new HashSet<>();
         for (ISort.IParameter p : params) {
+            if (badSymbol(smtConfig, p.symbol(), errors)) return;
             if (!seen.add(p.symbol().value())) {
                 errors.add(smtConfig.responseFactory.error(
                     "A name is duplicated in the parameter list: " +
@@ -1922,6 +2011,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             if (params != null) {
                 Set<String> seen = new HashSet<>();
                 for (IExpr.ISymbol p : params) {
+                    if (badSymbol(smtConfig, p, errors)) return;
                     if (!seen.add(p.value())) {
                         errors.add(smtConfig.responseFactory.error(
                             "Duplicate sort parameter in datatype declaration: " + p.value(),
@@ -1941,7 +2031,9 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 
             // No δi nested below top symbol in selector sorts
             for (IExpr.IConstructor ctor : dt.constructors()) {
+                if (badSymbol(smtConfig, ctor.symbol(), errors)) return;
                 for (IExpr.ISelector sel : ctor.selectors()) {
+                    if (badSymbol(smtConfig, sel.symbol(), errors)) return;
                     if (containsDeltaNestedBelowTop(sel.sort(), deltaNames)) {
                         errors.add(smtConfig.responseFactory.error(
                             "A recursive datatype must not appear nested inside another sort in a selector sort",

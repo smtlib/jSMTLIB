@@ -1,0 +1,8 @@
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:17: 'declare-sort' of arity > 0 not supported
+")
+(error "A parenthesized sort must have at least one sort parameter")
+(error "The solver process has exited")
+(error "A parenthesized sort must have at least one sort parameter")
+(error "The solver process has exited")

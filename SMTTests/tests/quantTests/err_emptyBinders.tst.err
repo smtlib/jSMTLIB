@@ -1,0 +1,6 @@
+(assert (forall () true))
+        ^^^^^^^^^^^^^^^^
+(assert (exists () true))
+        ^^^^^^^^^^^^^^^^
+(assert (let () true))
+        ^^^^^^^^^^^^^
