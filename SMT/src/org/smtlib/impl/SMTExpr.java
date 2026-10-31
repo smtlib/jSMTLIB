@@ -295,18 +295,6 @@ public abstract class SMTExpr implements IExpr {
         public boolean isOK() { return value.equals(Response.OK) || value.equals(Response.EMPTY.value()); }
 
         @Override public boolean isError() { return false; }
-
-//        // FIXME - do we want these?
-//        public static class Parameter extends Symbol implements IParameter {
-//            public Parameter(ISymbol s) { super(s.toString()); pos = s.pos(); }
-//        }
-//
-//        public static class LetParameter extends Symbol implements ILetParameter {
-//
-//
-//            public LetParameter(ISymbol s) { super(s.toString()); pos = s.pos();  }
-//        }
-
     }
 
     /** Represents a function-application expression: a qualified identifier applied to a list of argument expressions. */

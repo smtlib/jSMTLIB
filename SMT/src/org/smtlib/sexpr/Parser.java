@@ -698,7 +698,6 @@ public class Parser extends Lexer implements IParser {
         ISymbol sym = parseSymbol();
         ISort sort = parseSort(null);
         ILexToken rp = parseRP();
-        //ISymbol.IParameter p = new Symbol.Parameter(sym); // FIXME - use a factory
         return setPos(smtConfig.exprFactory.declaration(sym,sort), pos(lp.pos(), rp.pos()));
     }
 
@@ -709,7 +708,6 @@ public class Parser extends Lexer implements IParser {
         ISymbol sym = parseSymbol();
         IExpr expr = parseExpr();
         ILexToken rp = parseRP();
-        //ISymbol.ILetParameter p = new Symbol.LetParameter(sym); // FIXME - use a factory
         return setPos(smtConfig.exprFactory.binding(sym,expr), pos(lp.pos(), rp.pos()));
     }
 
