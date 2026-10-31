@@ -923,6 +923,7 @@ public class Utils {
                 // rather than resolving to a sort that is not really interchangeable with the
                 // (_ FloatingPoint eb sb) form it is supposed to mean.
                 // FIXME - check this - the comment sounds like AI-speak for unimplemented/unsupported material
+                symTable.addLogicSymbol(name, true);
                 if (theoryName.equals("FloatingPoint") && (name.value().equals("Float16")
                         || name.value().equals("Float32") || name.value().equals("Float64")
                         || name.value().equals("Float128"))) {
@@ -1009,6 +1010,7 @@ public class Utils {
             ISort result = sorts.remove(sorts.size() - 1);
             List<IExpr.IAttribute<?>> attrs = parseAttributeTail(iter2, key);
             ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(sorts.toArray(new ISort[sorts.size()]), result);
+            symTable.addLogicSymbol(sym, false);
             boolean b = symTable.add(new SymbolTable.Entry(sym, fcnSort, attrs, null), true, true);
             if (!b) return smtConfig.responseFactory.error("Failed to add to symbol table: " + smtConfig.defaultPrinter.toString(sym) + " " + smtConfig.defaultPrinter.toString(fcnSort));
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Added symbol " + name);
@@ -1067,6 +1069,7 @@ public class Utils {
             ISort result = sorts.remove(sorts.size() - 1);
             List<IExpr.IAttribute<?>> attrs = parseAttributeTail(iter2, key);
             ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(sorts.toArray(new ISort[sorts.size()]), result);
+            symTable.addLogicSymbol(sym, false);
             boolean b = symTable.add(new SymbolTable.Entry(sym, fcnSort, attrs, params), true, true);
             if (!b) return smtConfig.responseFactory.error("Failed to add to symbol table: " + smtConfig.defaultPrinter.toString(sym));
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Added symbol " + sym.value());

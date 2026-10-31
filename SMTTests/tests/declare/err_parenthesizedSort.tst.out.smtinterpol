@@ -1,7 +1,0 @@
-success
-success
-success
-(error "A parenthesized sort must have at least one sort parameter")
-(error "<stdin>:5:20: Syntax Error")
-(error "A parenthesized sort must have at least one sort parameter")
-(error "<stdin>:6:20: Syntax Error")

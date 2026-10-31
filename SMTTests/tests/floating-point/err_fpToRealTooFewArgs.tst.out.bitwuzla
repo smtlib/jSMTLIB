@@ -1,4 +1,0 @@
-success
-(error "A function application must have at least one argument")
-(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:17: undefined symbol 'fp.to_real'
-")

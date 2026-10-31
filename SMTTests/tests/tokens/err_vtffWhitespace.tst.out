@@ -1,6 +1,6 @@
 success
+success
+success
 (error "Invalid character: ASCII(decimal) = 11; it is read as white space")
-success
 (error "Invalid character: ASCII(decimal) = 12; it is read as white space")
-success
 success

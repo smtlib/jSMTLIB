@@ -1,4 +1,4 @@
-(declare-consta Bool)
-              ^
-(declare-const bBool)
-                ^
+(asserta)
+       ^
+(assert (notb))
+            ^

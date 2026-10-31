@@ -1,0 +1,28 @@
+(declare-fun g () Int)
+^^^^^^^^^^^^^^^^^^^^^^
+(assert (forall ((+ Int)) (> + 0)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (exists ((abs Int)) (> abs 0)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (let ((not true)) not))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(define-fun f ((select Int)) Int select)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(define-fun-rec h ((div Int)) Int div)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-datatype L ((nil) (cons (hd Int) (tl L))))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (match nil ((nil true) (abs false))))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (match nil ((nil true) ((cons mod t) false))))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (forall ((g Int)) (> g 0)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(define-sort S (Int) (Array Int Int))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-datatype P (par (Bool) ((pair (fst Bool)))))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort U 0)
+^^^^^^^^^^^^^^^^^^
+(define-sort T (U) (Array U U))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

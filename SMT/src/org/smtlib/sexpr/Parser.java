@@ -35,6 +35,18 @@ public class Parser extends Lexer implements IParser {
 
     public /*@ Nullable */ IResponse.IError lastError() { return lastError; }
 
+    /** Whether the command being parsed (or last returned) had a recoverable syntax error */
+    protected boolean commandHasError = false;
+
+    /** Whether any such error was an invalid character, which the type checker does not see */
+    protected boolean commandHasLexicalError = false;
+
+    @Override
+    public boolean commandHasError() { return commandHasError; }
+
+    @Override
+    public boolean commandHasLexicalError() { return commandHasLexicalError; }
+
     /** The (common) factory used to generate objects */
     final protected IExpr.IFactory factory;
 
@@ -169,6 +181,8 @@ public class Parser extends Lexer implements IParser {
     /*@Mutable*/
     public Command parseCommand() {
         boolean savedTopLevel = smtConfig.topLevel;
+        commandHasError = false;
+        commandHasLexicalError = false;
         Command command = null;
         try {
             while (true) { // The while loop is just so that AbortInputException can cause a retry
@@ -887,6 +901,7 @@ public class Parser extends Lexer implements IParser {
             badWhitespace = null;
             if (!smtConfig.relax) {
                 int c = p.source() == null ? 0 : p.source().charAt(p.charStart());
+                commandHasLexicalError = true;
                 recoverableError("Invalid character: ASCII(decimal) = " + c + "; it is read as white space", p);
             }
         }
@@ -895,6 +910,7 @@ public class Parser extends Lexer implements IParser {
 
     /** Reports a syntax error after which parsing goes on as if the text were legal */
     private void recoverableError(String msg, IPos pos) {
+        commandHasError = true;
         lastError = smtConfig.log.logError(smtConfig.responseFactory.error(msg, pos));
     }
 

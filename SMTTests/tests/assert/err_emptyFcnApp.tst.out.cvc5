@@ -1,4 +1,0 @@
-success
-success
-(error "A function application must have at least one argument")
-(error "Parse Error: <shell>:4.11: Expecting function-like symbol, found 'f'")

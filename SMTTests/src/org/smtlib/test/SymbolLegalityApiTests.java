@@ -107,6 +107,48 @@ public class SymbolLegalityApiTests {
                 ((IResponse.IError) result.get(0)).errorMsg());
     }
 
+    /** The first error; with no logic loaded, the literal's sort is reported as unknown too */
+    private String firstError(List<IResponse> result) {
+        return ((IResponse.IError) result.get(0)).errorMsg();
+    }
+
+    @Test
+    public void negativeLiterals() throws Exception {
+        Assert.assertEquals("A numeral may not be negative: -5", firstError(check(f.numeral("-5"))));
+        Assert.assertEquals("A decimal may not be negative: -1.5", firstError(check(f.decimal("-1.5"))));
+    }
+
+    @Test
+    public void decimalsPrintWithPoint() {
+        Assert.assertEquals("5.0", config.defaultPrinter.toString(f.decimal("5")));
+        Assert.assertEquals("5.00", config.defaultPrinter.toString(f.decimal("5.00")));
+        Assert.assertEquals("5000.0", config.defaultPrinter.toString(f.decimal("5E3")));
+    }
+
+    @Test
+    public void okStrings() {
+        Assert.assertTrue(config.isOKString("a \"b\" \\ c\t\n"));
+        Assert.assertTrue(config.isOKString("é"));
+        Assert.assertFalse(config.isOKString("a\u0001b"));
+        config.smtlib = SMTLIB.V20;
+        Assert.assertFalse(config.isOKString("é"));
+    }
+
+    @Test
+    public void illegalStringLiteral() throws Exception {
+        Assert.assertEquals("A string literal may not contain the character with code 7",
+                firstError(check(f.unquotedString("a\u0007b"))));
+    }
+
+    @Test
+    public void emptyAnnotation() throws Exception {
+        // p is undeclared (no logic), which is reported first
+        IExpr e = f.attributedExpr(f.symbol("p"), new LinkedList<IExpr.IAttribute<?>>());
+        List<IResponse> result = check(e);
+        Assert.assertEquals(2, result.size());
+        Assert.assertEquals("An annotated term must have at least one attribute", ((IResponse.IError) result.get(1)).errorMsg());
+    }
+
     @Test
     public void parenthesizedFormsPrint() {
         ISymbol c = f.symbol("c");

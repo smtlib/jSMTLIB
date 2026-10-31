@@ -128,15 +128,26 @@ public class SMT {
          *  and of printable and white-space characters only, those beyond ASCII only from V2.5 on */
         public boolean isOKSymbol(String value) {
             if (isReservedWord(value)) return false;
-            boolean nonAscii = atLeastVersion(SMTLIB.V25);
             for (int i = 0; i < value.length(); i++) {
                 char c = value.charAt(i);
-                if (c == '|' || c == '\\') return false;
-                if ((c >= ' ' && c <= '~') || c == '\t' || c == '\n' || c == '\r') continue;
-                if (c >= 128 && nonAscii) continue;
-                return false;
+                if (c == '|' || c == '\\' || !isOKChar(c)) return false;
             }
             return true;
+        }
+
+        /** True if the string, as the (unescaped) value of a string literal, is legal in the configured
+         *  SMT-LIB version: printable and white-space characters only, those beyond ASCII only from V2.5 on */
+        public boolean isOKString(String value) {
+            for (int i = 0; i < value.length(); i++) {
+                if (!isOKChar(value.charAt(i))) return false;
+            }
+            return true;
+        }
+
+        /** True if c is a printable or white-space character, or one beyond ASCII from V2.5 on */
+        private boolean isOKChar(char c) {
+            if ((c >= ' ' && c <= '~') || c == '\t' || c == '\n' || c == '\r') return true;
+            return c >= 128 && atLeastVersion(SMTLIB.V25);
         }
 
         /** The version of SMT-LIB to be supported; null means the default (most recent version) */
@@ -796,6 +807,22 @@ public class SMT {
                 try {
                     command = p.parseCommand();
                     if (command == null) {
+                        retcode = 1;
+                        if (abortMode) {
+                            if (!smtConfig.interactive) {
+                                smtConfig.log.logDiag("Aborting because of a parsing error");
+                                break;
+                            }
+                            p.abortLine();
+                        }
+                        result = p.lastError();
+                        continue;
+                    }
+                    // A command with a (recovered) syntax error is not sent to a solver. The test
+                    // solver, which only type checks, still reports the type error that an empty
+                    // parenthesized form always has (so its state is unchanged); an invalid
+                    // character draws no type error, so that command is not run at all.
+                    if (p.commandHasError() && (p.commandHasLexicalError() || !(solver instanceof org.smtlib.solvers.Solver_test))) {
                         retcode = 1;
                         if (abortMode) {
                             if (!smtConfig.interactive) {

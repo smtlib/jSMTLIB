@@ -1,3 +1,0 @@
-success
-(error "A function application must have at least one argument")
-(error "Parse Error: <shell>:6.11: Symbol '@' not declared as a variable")

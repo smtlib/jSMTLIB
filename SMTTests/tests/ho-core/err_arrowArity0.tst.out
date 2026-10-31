@@ -1,3 +1,2 @@
 success
 (error "A parenthesized sort must have at least one sort parameter")
-(error "The sort symbol -> expects 2 arguments, not 0")

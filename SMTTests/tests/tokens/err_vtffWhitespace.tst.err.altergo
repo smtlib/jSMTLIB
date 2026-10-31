@@ -1,0 +1,6 @@
+(asserta)
+       ^
+(assert (notb))
+            ^
+(assert (and a b))
+^^^^^^^^^^^^^^^^^^

@@ -1,7 +1,0 @@
-success
-success
-success
-(error "A function application must have at least one argument")
-(error "Error on parsing errors (code 3)")
-(error "A function application must have at least one argument")
-(error "Error on parsing errors (code 3)")

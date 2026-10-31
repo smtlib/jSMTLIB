@@ -113,6 +113,16 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         return true;
     }
 
+    /** Reports a bound variable (sort parameter, if sort is true) with the name of a function (sort)
+     *  symbol of the logic or its theories, which only --relax allows (SMT-LIB Remark 7); returns true
+     *  if reported */
+    protected boolean shadowsLogic(ISymbol s, boolean sort) {
+        if (smtConfig.relax || !symTable.isLogicSymbol(s, sort)) return false;
+        error((sort ? "A sort parameter may not have the name of a sort symbol of the logic: "
+                    : "A bound variable may not have the name of a function symbol of the logic: ") + pr(s), s.pos());
+        return true;
+    }
+
     /** Reports a binder with no variables; returns true if the list is empty */
     protected boolean noVariables(List<?> list, String binder, IPos pos) {
         if (!list.isEmpty()) return false;
@@ -137,6 +147,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         try {
             symTable.logicInUse.checkSortDeclaration(id,params,expr);
             if (params != null) for (ISort.IParameter p : params) {
+                if (f.shadowsLogic(p.symbol(), true)) errors = true;
                 boolean b = symTable.addSortParameter(p.symbol(), false);
                 if (!b) {
                     f.error("Duplicate sort parameters: " + p.symbol(),p.pos());
@@ -192,6 +203,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         symTable.push();
         try {
             for (IDeclaration p : params) {
+                f.shadowsLogic(p.parameter(), false);
                 if (p.sort().accept(f) != null) {
                     ISort.IFcnSort fs = symTable.smtConfig.sortFactory.createFcnSort(new ISort[0],p.sort());
                     SymbolTable.Entry entry = new SymbolTable.Entry(p.parameter(),fs,null,null);
@@ -370,6 +382,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 
     @Override
     public /*@Nullable*/ ISort visit(INumeral e) {
+        if (e.value().signum() < 0) error("A numeral may not be negative: " + e.value(), e.pos());
         IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("NUMERAL"));
         if (sort == null) error("No sort specified for numeral",e.pos());
         return save(e,sort == null ? null : sort.resultSort());
@@ -1184,6 +1197,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 
     @Override
     public /*@Nullable*/ISort visit(IDecimal e) {
+        if (e.value().signum() < 0) error("A decimal may not be negative: " + e.value().toPlainString(), e.pos());
         if (decimalSortSymbol == null) decimalSortSymbol = smtConfig.exprFactory.symbol("DECIMAL");
         IFcnSort sort = symTable.lookup(0,decimalSortSymbol);
         if (sort == null) result.add(smtConfig.responseFactory.error("No sort specified for decimal literal",e.pos()));
@@ -1211,6 +1225,10 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 
     @Override
     public /*@Nullable*/ ISort visit(IStringLiteral e) {
+        if (!smtConfig.isOKString(e.value())) {
+            int c = e.value().chars().filter(ch -> !smtConfig.isOKString(String.valueOf((char)ch))).findFirst().getAsInt();
+            error("A string literal may not contain the character with code " + c, e.pos());
+        }
         if (stringSortSymbol == null) stringSortSymbol = smtConfig.exprFactory.symbol("STRING");
         IFcnSort sort = symTable.lookup(0,stringSortSymbol);
         if (sort == null) result.add(smtConfig.responseFactory.error("No sort specified for string-literal",e.pos()));
@@ -1366,6 +1384,10 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         ISort resultSort = null;
         try {
             resultSort = save(e,e.expr().accept(this));
+            if (e.attributes().isEmpty()) {
+                error("An annotated term must have at least one attribute", e.pos());
+                errors = true;
+            }
             for (IAttribute<?> a: e.attributes()) {
                 String name = a.keyword().value();
                 if (a.attrValue() instanceof ISymbol && badSymbol((ISymbol)a.attrValue())) {
@@ -1424,7 +1446,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         boolean errors = false;
         Set<ISymbol> seen = new HashSet<>();
         for (IExpr.IDeclaration decl : e.parameters()) {
-            if (badSymbol(decl.parameter())) errors = true;
+            if (badSymbol(decl.parameter()) || shadowsLogic(decl.parameter(), false)) errors = true;
             else if (!seen.add(decl.parameter())) {
                 error("Parameter list has a duplicate name: " + pr(decl.parameter()), decl.parameter().pos());
                 errors = true;
@@ -1454,7 +1476,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         boolean errors = false;
         Set<ISymbol> seen = new HashSet<>();
         for (IExpr.IDeclaration decl : e.parameters()) {
-            if (badSymbol(decl.parameter())) errors = true;
+            if (badSymbol(decl.parameter()) || shadowsLogic(decl.parameter(), false)) errors = true;
             else if (!seen.add(decl.parameter())) {
                 error("Parameter list has a duplicate name: " + pr(decl.parameter()), decl.parameter().pos());
                 errors = true;
@@ -1526,7 +1548,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         Set<ISymbol> seen = new HashSet<>();
         List<ISort> paramSorts = new LinkedList<ISort>();
         for (IExpr.IDeclaration decl : e.parameters()) {
-            if (badSymbol(decl.parameter())) errors = true;
+            if (badSymbol(decl.parameter()) || shadowsLogic(decl.parameter(), false)) errors = true;
             else if (!seen.add(decl.parameter())) {
                 error("Parameter list has a duplicate name: " + pr(decl.parameter()), decl.parameter().pos());
                 errors = true;
@@ -1564,7 +1586,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             boolean anyErrors = false;
             Set<ISymbol> seen = new HashSet<>();
             for (IExpr.IBinding decl : e.bindings()) {
-                if (badSymbol(decl.parameter())) anyErrors = true;
+                if (badSymbol(decl.parameter()) || shadowsLogic(decl.parameter(), false)) anyErrors = true;
                 else if (!seen.add(decl.parameter())) {
                     error("Parameter list has a duplicate name: " + pr(decl.parameter()), decl.parameter().pos());
                     anyErrors = true;
@@ -1651,6 +1673,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                         IFcnSort ctorSort = symTable.lookupInstance(0, pat.constructor(), scrutineeSort);
                         if (ctorSort == null) {
                             // Not a nullary constructor of this sort — treat as variable binding
+                            if (shadowsLogic(pat.constructor(), false)) anyErrors = true;
                             currentScope.put(pat.constructor(), new Variable(pat.constructor(), scrutineeSort, null, false));
                             hasVariableOrWildcard = true;
                         } else {
@@ -1694,7 +1717,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                                     error("The _ wildcard in match patterns requires SMT-LIB V2.7 or later", params.get(i).pos());
                                     anyErrors = true;
                                 }
-                            } else if (badSymbol(params.get(i))) {
+                            } else if (badSymbol(params.get(i)) || shadowsLogic(params.get(i), false)) {
                                 anyErrors = true;
                             } else {
                                 if (!patternVarsSeen.add(params.get(i).value())) {
@@ -2123,6 +2146,12 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         List<IResponse> errors = new LinkedList<>();
         Set<String> newNames = new HashSet<>();
         for (int i = 0; i < sortDecls.size(); i++) {
+            if (datatypes.get(i).symbols() != null) {
+                TypeChecker f = new TypeChecker(symTable);
+                for (ISymbol p : datatypes.get(i).symbols()) {
+                    if (f.shadowsLogic(p, true)) return f.result;
+                }
+            }
             for (IExpr.IConstructor ctor : datatypes.get(i).constructors()) {
                 String ctorName = ctor.symbol().value();
                 if (!newNames.add(ctorName) || symTable.lookup(ctor.symbol()) != null) {

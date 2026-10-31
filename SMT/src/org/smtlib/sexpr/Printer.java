@@ -167,7 +167,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     /*@Nullable*/
     @Override
     public Void visit(IDecimal e) throws IVisitor.VisitorException {
-        append(e.value().toPlainString());
+        // A decimal always has a '.', even when built from an integral value
+        String v = e.value().toPlainString();
+        append(v.indexOf('.') < 0 ? v + ".0" : v);
         return null;
     }
 
