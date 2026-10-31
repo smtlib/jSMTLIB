@@ -476,6 +476,7 @@ public class SymbolTable {
             // We have a name match. First check for an exact match on arity.
             Entry found = null;
             ISort foundResult = null;
+            List<Entry> matches = new LinkedList<Entry>();
             List<Entry> tried = new LinkedList<Entry>();
             List<String> failures = new LinkedList<String>();
             for (Entry entry: entrylist) {
@@ -496,10 +497,7 @@ public class SymbolTable {
                 //   resultSort == null & multiple argument sort matches -> ambiguous
                 if (resultSort != null) {
                     if (resultSort.equals(candidateResult)) {
-                        if (found != null) {
-                            // FIXME - there appear to be two entries that match on all arguments and the result
-                            return null;
-                        }
+                        matches.add(entry);
                         found = entry;
                         foundResult = candidateResult;
                     } else {
@@ -507,16 +505,14 @@ public class SymbolTable {
                                 + ", expected " + smtConfig.defaultPrinter.toString(resultSort) + " (from the `as` qualifier)");
                     }
                 } else {
-                    // No result sort specified - there should not be any overloading
-                    if (found != null) {
-                        // Found something previously and now have this match - so ambiguous
-                        // FIXME - no place to give an error message that the result sort is ambiguous
-                        return null;
-                    }
+                    matches.add(entry);
                     found = entry;
                     foundResult = candidateResult;
-                    // Otherwise have just one match - keep checking the rest of the list
                 }
+            }
+            if (matches.size() > 1) {
+                if (reason != null) reason.append(ambiguity(name, matches));
+                return null;
             }
             if (found != null) return foundResult;
 
@@ -586,6 +582,32 @@ public class SymbolTable {
             first = false;
             reason.append(signature(entry));
         }
+    }
+
+    /** Returns an error message if more than one constant (arity 0) named `name` is declared,
+     *  so that a bare use of it needs an `as` qualifier; otherwise null. */
+    public /*@Nullable*/ String ambiguousConstant(IIdentifier name) {
+        List<Entry> entrylist = lookup(name);
+        if (entrylist == null) return null;
+        List<Entry> constants = new LinkedList<Entry>();
+        for (Entry entry: entrylist) {
+            if (entry.sort.argSorts().length == 0) constants.add(entry);
+        }
+        return constants.size() > 1 ? ambiguity(name, constants) : null;
+    }
+
+    /** The message for a use of `name` that more than one declaration matches. */
+    private String ambiguity(IIdentifier name, List<Entry> matches) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Ambiguous use of ").append(smtConfig.defaultPrinter.toString(name))
+            .append(", which matches more than one declaration (qualify it with as): ");
+        boolean first = true;
+        for (Entry entry: matches) {
+            if (!first) sb.append("; ");
+            first = false;
+            sb.append(signature(entry));
+        }
+        return sb.toString();
     }
 
     private static final String[] NUMBER_WORDS = {

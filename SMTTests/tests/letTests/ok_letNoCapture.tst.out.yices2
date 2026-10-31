@@ -1,0 +1,4 @@
+(error "the exists/forall solver does not work in incremental mode")
+(error "at line 2, column 19: undefined sort: Int")
+(error "The solver process has exited")
+(error "The solver process has exited")

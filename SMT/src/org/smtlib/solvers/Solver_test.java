@@ -451,7 +451,7 @@ public class Solver_test implements ISolver {
         } else if (Utils.AUTHORS.equals(option)) {
             lit = smtConfig.exprFactory.unquotedString(Utils.AUTHORS_VALUE);
         } else if (Utils.VERSION.equals(option)) {
-            lit = smtConfig.exprFactory.unquotedString(Utils.VERSION_VALUE);
+            lit = smtConfig.exprFactory.unquotedString(Version.version());
 
         } else if (Utils.REASON_UNKNOWN.equals(option)) {
             return smtConfig.responseFactory.unsupported();

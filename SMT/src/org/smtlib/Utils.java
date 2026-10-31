@@ -152,10 +152,6 @@ public class Utils {
     /** The response to the :name info item */
     public static final String NAME_VALUE = "SMT-LIB adapter";
 
-    /** The response to the :version info item */
-    // FIXME - must this be a string; what is the relationship to SW_VERSION?
-    public static final String VERSION_VALUE = "0.0";
-
     /** The string designating the smtlib attribute within a logic or theory */
     public static final IKeyword SMTLIB_VERSION = new org.smtlib.impl.SMTExpr.Keyword(":smt-lib-version");
 
@@ -913,17 +909,10 @@ public class Utils {
                     return smtConfig.responseFactory.error("Ill-formed attribute in the declaration of sort " + name + ": " + key);
                 }
                 List<IExpr.IAttribute<?>> attrs = parseAttributeTail(iter2, key);
-                // FloatingPoint.smt2's Float16/Float32/Float64/Float128 are documented as
-                // synonyms for specific (_ FloatingPoint eb sb) instances, not independent
-                // sorts -- this generic loop has no aliasing concept (addSortDefinition always
-                // creates a fresh, unrelated 0-arity family), so registering them here would
-                // silently break the documented synonym relationship rather than implement it.
-                // Skip them; they remain deliberately unimplemented (declare-fun ... Float32
-                // still errors "unknown sort") until/unless something actually needs them,
-                // rather than resolving to a sort that is not really interchangeable with the
-                // (_ FloatingPoint eb sb) form it is supposed to mean.
-                // FIXME - check this - the comment sounds like AI-speak for unimplemented/unsupported material
                 symTable.addLogicSymbol(name, true);
+                // Float16/Float32/Float64/Float128 are synonyms for (_ FloatingPoint eb sb)
+                // instances, which SymbolTable.lookupSort provides; registered here they would
+                // be new sorts, distinct from the ones they abbreviate.
                 if (theoryName.equals("FloatingPoint") && (name.value().equals("Float16")
                         || name.value().equals("Float32") || name.value().equals("Float64")
                         || name.value().equals("Float128"))) {
