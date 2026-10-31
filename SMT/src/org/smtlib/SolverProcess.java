@@ -284,6 +284,7 @@ public class SolverProcess {
             out = standardOut.take();
             outWasForcedEof = standardOut.lastTakeWasForcedEof();
         }
+        if (outWasForcedEof) outputEnded = true;
         // errorOut has no end marker of its own -- there is no OS-level guarantee that error
         // text for this command has already been fully written and read by the time
         // standardOut's end marker shows up, so this is a bounded best-effort drain of
@@ -616,11 +617,10 @@ public class SolverProcess {
         send(false, args);
     }
 
-    /** Set once pipelined reading ({@link #readOutput(long)}) has reached the end of standard output */
+    /** Set once reading ({@link #readOutput(long)} or {@link #listen()}) has reached the end of standard output */
     private boolean outputEnded = false;
 
-    /** Whether pipelined reading has reached the end of standard output: the process has exited
-     *  or closed it */
+    /** Whether reading has reached the end of standard output: the process has exited or closed it */
     public boolean outputEnded() {
         return outputEnded;
     }

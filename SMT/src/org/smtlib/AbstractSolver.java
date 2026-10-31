@@ -315,10 +315,14 @@ public class AbstractSolver implements ISolver {
         // exit answers success (nothing is tolerated); sendCommand reports anything else (#149)
         IResponse r = sendCommand(smtConfig.commandFactory.exit(), true);
         if (pipelinedEver && solverProcess != null) {
-            // The solver stops after exit; whatever else it wrote is out of step
+            // The solver stops after exit; whatever else it wrote, up to the end of its output, is out of step
+            long deadline = System.currentTimeMillis() + END_WAIT_MILLIS;
             try {
-                String out;
-                while (!solverProcess.outputEnded() && (out = solverProcess.readOutput(PIPELINE_POLL_MILLIS)) != null) unread.append(out);
+                long left;
+                while (!solverProcess.outputEnded() && (left = deadline - System.currentTimeMillis()) > 0) {
+                    String out = solverProcess.readOutput(left);
+                    if (out != null) unread.append(out);
+                }
             } catch (IOException e) {
                 // nothing more to read
             }
@@ -471,6 +475,8 @@ public class AbstractSolver implements ISolver {
             if (response == null) {
                 return smtConfig.responseFactory.error("No response received from the solver for: " + translatedCmd);
             }
+            // exit in a pipelined run: text read with its response is out of step (see sendExitCommand)
+            if (tolerateSilentExit && pipelinedEver) response = keepFirstResponse(response);
             IResponse timedOut = timeLimitResponse(response);
             if (timedOut != null) return timedOut;
             response = correctResponse(cmd, response);
@@ -703,6 +709,17 @@ public class AbstractSolver implements ISolver {
             String err = takeErrorOutput(false);
             if (!err.isEmpty()) smtConfig.log.logDiag(err.trim());
         }
+    }
+
+    /** The first response in text, the rest of which is kept in unread: one read can return more than one
+     *  response, e.g. when a solver one response ahead answers the command before exit late */
+    private String keepFirstResponse(String text) {
+        int start = 0;
+        while (start < text.length() && Character.isWhitespace(text.charAt(start))) start++;
+        int end = responseEnd(text, start);
+        if (end <= start) return text;
+        unread.append(text, end, text.length());
+        return text.substring(0, end);
     }
 
     /** Reports output read beyond the responses to the pipelined commands */
