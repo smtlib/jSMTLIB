@@ -1201,16 +1201,14 @@ public class SMT {
         }
 
         if (options.solvername == null) {
-            String p = options.props.getProperty(Utils.PROPS_DEFAULT_SOLVER);
-            if (p == null || p.isEmpty()) p = Utils.TEST_SOLVER;
-            // FIXME - this assignment is discarded whenever the --exec check just below
-            // fails; the check probably belongs before it (or outside this block entirely).
-            options.solvername = p;
             if (options.executable != null) {
                 error("If you specify an executable, you must also specify a solver");
                 usage();
                 return 1;
             }
+            String p = options.props.getProperty(Utils.PROPS_DEFAULT_SOLVER);
+            if (p == null || p.isEmpty()) p = Utils.TEST_SOLVER;
+            options.solvername = p;
         }
         return 0;
     }
