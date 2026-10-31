@@ -447,7 +447,8 @@ public class Parser extends Lexer implements IParser {
             } else if (token instanceof ISexpr) {
                 seq.sexprs().add((ISexpr)token);
             } else {
-                // FIXME - invalid token
+                // Every token the lexer makes is one of the above
+                throw new ParserException("INTERNAL ERROR: unexpected token " + token, token.pos());
             }
         }
     }
