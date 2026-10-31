@@ -1,3 +1,0 @@
-success
-success
-(error "at line 10, column 17: syntax error: define-funs-rec is not a command")

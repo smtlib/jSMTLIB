@@ -1869,6 +1869,10 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 errors.add(smtConfig.responseFactory.error(
                     "The number of function declarations (" + c.declarations().size() +
                     ") must equal the number of bodies (" + c.bodies().size() + ")", null));
+            for (IExpr.IFunctionDeclaration d : c.declarations()) {
+                if (!errors.isEmpty()) break;
+                validateUniqueDeclarations(smtConfig, d.parameters(), errors);
+            }
         } else if (cmd instanceof ICommand.Ideclare_sort) {
             validateUserId(smtConfig, ((ICommand.Ideclare_sort)cmd).sortSymbol(), errors);
         } else if (cmd instanceof ICommand.Ideclare_sort_parameter) {
