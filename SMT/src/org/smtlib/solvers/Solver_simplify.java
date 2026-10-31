@@ -1514,26 +1514,22 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         @Override
         public String visit(IExpr.IFunctionDeclaration e) throws IVisitor.VisitorException {
-            // FIXME
-            return null;
+            throw unsupported("datatypes", e.pos());
         }
 
         @Override
         public String visit(IExpr.ISortDeclaration e) throws IVisitor.VisitorException {
-            // FIXME
-            return null;
+            throw unsupported("datatypes", e.pos());
         }
 
         @Override
         public String visit(IExpr.ISelector e) throws IVisitor.VisitorException {
-            // FIXME
-            return null;
+            throw unsupported("datatypes", e.pos());
         }
 
         @Override
         public String visit(IExpr.IConstructor e) throws IVisitor.VisitorException {
-            // FIXME
-            return null;
+            throw unsupported("datatypes", e.pos());
         }
 
         @Override
@@ -1725,23 +1721,22 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         @Override
         public String visit(ISort.IDatatype e) throws VisitorException {
-            // TODO Auto-generated method stub
-            return null;
+            throw unsupported("datatypes", e.pos());
         }
 
         @Override
         public String visit(IExpr.IMatch e) throws VisitorException {
-            return null;
+            throw unsupported("datatypes", e.pos());
         }
 
         @Override
         public String visit(IExpr.IMatchCase e) throws VisitorException {
-            return null;
+            throw unsupported("datatypes", e.pos());
         }
 
         @Override
         public String visit(IExpr.IPattern e) throws VisitorException {
-            return null;
+            throw unsupported("datatypes", e.pos());
         }
 
 
