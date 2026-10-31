@@ -960,7 +960,8 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
             append("(");
             p.first().accept(this);
             append(" ");
-            append(p.second().toString()); // FIXME - change when we do not use Boolean
+            // SMT-LIB prints the value as true or false, which is how Java prints the Boolean second() always is
+            append(p.second().toString());
             append(")");
         }
         append(")");
