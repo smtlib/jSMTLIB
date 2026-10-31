@@ -259,10 +259,16 @@ public abstract class SMTExpr implements IExpr {
         protected String value; // canonical string (without bars)
         protected String originalString;
 
-        /** The argument is a Symbol string, with or without enclosing bars */
+        /** The argument is a Symbol string, with or without enclosing bars; a lone or unmatched bar
+         *  is kept in the value (and reported by the type checker) */
         public Symbol(String v) {
-            value = v.length() > 0 && v.charAt(0) == '|' ? v.substring(1,v.length()-1) : v;
+            value = isBarQuoted(v) ? v.substring(1,v.length()-1) : v;
             originalString = v;
+        }
+
+        /** Whether v is enclosed in a pair of bars */
+        public static boolean isBarQuoted(String v) {
+            return v.length() >= 2 && v.charAt(0) == '|' && v.charAt(v.length()-1) == '|';
         }
 
         /** Returns the unique string for this symbol (e.g. modulo enclosing bars) */
@@ -352,7 +358,7 @@ public abstract class SMTExpr implements IExpr {
         public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
     }
 
-    /** Represents an SMT-LIB hex literal (e.g. {@code #xDEAD}); the value string contains only lowercase hex digits. */
+    /** Represents an SMT-LIB hex literal (e.g. {@code #xDEAD}); the value string holds the hex digits as written. */
     static public class HexLiteral extends Literal<String> implements IHexLiteral {
         protected int length; // in hex digits
         protected BigInteger intValue;
@@ -683,13 +689,17 @@ public abstract class SMTExpr implements IExpr {
         /** The name of the logic */
         protected ISymbol logicName;
 
-        /** The logic's attributes */
+        /** The logic's attributes — last occurrence wins for duplicate keywords */
         protected Map<IKeyword,IAttribute<?>> attributes = new HashMap<IKeyword,IAttribute<?>>();
+
+        /** All logic attributes in source order, preserving duplicates */
+        protected List<IAttribute<?>> attributesList = new ArrayList<>();
 
         /** Creates a logic */
         public Logic(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
             this.smtConfig = smtConfig;
             this.logicName = name;
+            this.attributesList.addAll(attributes);
             for (IAttribute<?> attr: attributes) {
                 this.attributes.put(attr.keyword(),attr);
             }
@@ -702,6 +712,9 @@ public abstract class SMTExpr implements IExpr {
         /** The attributes, as a Map, keyed by the keyword in the attribute */
         @Override
         public Map<IKeyword,IAttribute<?>> attributes() { return attributes; }
+
+        @Override
+        public List<IAttribute<?>> attributeList() { return attributesList; }
 
         /** The value of a given attribute */
         @Override
@@ -751,6 +764,9 @@ public abstract class SMTExpr implements IExpr {
         /** The attributes, as a Map, keyed by the keyword in the attribute */
         @Override
         public Map<IKeyword,IAttribute<?>> attributes() { return attributes; }
+
+        @Override
+        public List<IAttribute<?>> attributeList() { return attributesList; }
 
         /** The value of a given attribute (last occurrence wins for duplicate keywords) */
         @Override

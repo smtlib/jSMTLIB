@@ -460,7 +460,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
         @Override
         public /*@Nullable*/T visit(ILogic s) throws VisitorException {
             s.logicName().accept(this);
-            for (IAttribute<?> attr: s.attributes().values()) {
+            for (IAttribute<?> attr: s.attributeList()) {
                 attr.accept(this);
             }
             return null;
@@ -469,7 +469,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
         @Override
         public /*@Nullable*/T visit(ITheory s) throws VisitorException {
             s.theoryName().accept(this);
-            for (IAttribute<?> attr: s.attributes().values()) {
+            for (IAttribute<?> attr: s.attributeList()) {
                 attr.accept(this);
             }
             return null;

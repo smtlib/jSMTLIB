@@ -4,4 +4,4 @@ success
 (error "A parenthesized sort must have at least one sort parameter")
 (error "The sort symbol S takes no parameters, so it is written without parentheses")
 (error "A parenthesized sort must have at least one sort parameter")
-(error "The sort symbol T expects 1 arguments, not 0")
+(error "The sort symbol T expects 1 argument, not 0")

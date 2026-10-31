@@ -150,6 +150,15 @@ public class SymbolLegalityApiTests {
     }
 
     @Test
+    public void barsStrippedOnlyInPairs() throws Exception {
+        Assert.assertEquals("ab", f.symbol("|ab|").value());
+        Assert.assertEquals("", f.symbol("||").value());
+        Assert.assertEquals("|", f.symbol("|").value());
+        Assert.assertEquals("|ab", f.symbol("|ab").value());
+        Assert.assertEquals("Not a legal SMT-LIB symbol: \"|ab\"", soleError(check(f.symbol("|ab"))));
+    }
+
+    @Test
     public void parenthesizedFormsPrint() {
         ISymbol c = f.symbol("c");
         Assert.assertEquals("c", f.pattern(c, new LinkedList<ISymbol>()).toString());

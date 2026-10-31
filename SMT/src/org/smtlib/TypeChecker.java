@@ -1813,7 +1813,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 return result;
             }
             error("The sort symbol " + pr(f) + " expects " + def.intArity()
-                    + " arguments, not " + args.size(), s.pos());
+                    + (def.intArity() == 1 ? " argument" : " arguments") + ", not " + args.size(), s.pos());
             return null;
         }
         if (errors) return null;
