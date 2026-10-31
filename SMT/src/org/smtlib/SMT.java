@@ -878,8 +878,7 @@ public class SMT {
                     // A leading comment must not count as "using up" the first-command slot --
                     // it's not a real script command, just carried along so it can be
                     // forwarded to the solver (see issue #42).
-                    // FIXME - result is dereferenced here and below without a null check; this
-                    // assumes no ICommand.execute() implementation ever returns null.
+                    // result is not null here or below: no ICommand.execute() returns null.
                     if (!(command instanceof ICommand.Icomment)) {
                         smtlibVersionAllowed = (command instanceof ICommand.Ireset)
                                 || (isSmtlibVersionInfo && !result.isError());
