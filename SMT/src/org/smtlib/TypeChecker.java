@@ -1152,6 +1152,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
     /*@checkers.igj.quals.ReadOnly*/
     public /*@Nullable*/ ISort visit(ISymbol e) {
         IFcnSort sort = null;
+        String ambiguous;
         String value = e.value();
         if (Utils.WILDCARD.equals(value)) {
             error("The _ wildcard may only appear in match patterns", e.pos());
@@ -1174,6 +1175,9 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 return null;
             } else if (SymbolTable.containsParameter(sort.resultSort())) {
                 error("The sort of " + value + " is not determined; qualify it with as", e.pos());
+                return null;
+            } else if ((ambiguous = symTable.ambiguousConstant(e)) != null) {
+                error(ambiguous, e.pos());
                 return null;
             } else {
                 return save(e,sort.resultSort());
