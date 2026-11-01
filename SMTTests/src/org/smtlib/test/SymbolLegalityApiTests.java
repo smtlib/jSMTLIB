@@ -11,6 +11,7 @@ import org.smtlib.IExpr;
 import org.smtlib.IExpr.IDeclaration;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IResponse;
+import org.smtlib.ISort;
 import org.smtlib.SMT;
 import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.SymbolTable;
@@ -189,6 +190,20 @@ public class SymbolLegalityApiTests {
                 new org.smtlib.command.C_set_option(f.keyword("x"), f.symbol("true")))));
         Assert.assertEquals("Not a legal SMT-LIB keyword: \":\"", soleError(TypeChecker.validate(config,
                 new org.smtlib.command.C_get_info(f.keyword(":")))));
+    }
+
+    /** Applications of the same family with different numbers of arguments are not equal (e.g.
+     *  the ill-sorted (Array Int), which only the API, or text with an arity error, produces) */
+    @Test
+    public void sortsWithDifferentArityNotEqual() {
+        ISort i = config.sortFactory.createSortExpression(f.symbol("Int"));
+        ISort a1 = config.sortFactory.createSortExpression(f.symbol("Array"), i);
+        ISort a2 = config.sortFactory.createSortExpression(f.symbol("Array"), i, i);
+        Assert.assertFalse(a1.equals(a2));
+        Assert.assertFalse(a2.equals(a1));
+        Assert.assertFalse(a1.equalsNoExpand(a2));
+        Assert.assertFalse(a2.equalsNoExpand(a1));
+        Assert.assertTrue(a2.equals(config.sortFactory.createSortExpression(f.symbol("Array"), i, i)));
     }
 
     @Test
