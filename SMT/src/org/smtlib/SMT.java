@@ -16,7 +16,6 @@ import java.util.*;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IParser.AbortInputException;
 import org.smtlib.IParser.ParserException;
-import org.smtlib.IPos.IPosable;
 
 //import checkers.javari.quals.Mutable; NonNull
 
@@ -880,7 +879,7 @@ public class SMT {
                     if (isSmtlibVersionInfo && !smtlibVersionAllowed) {
                         result = smtConfig.responseFactory.error(
                             "The :smt-lib-version attribute may only be set as the first command of a script, or immediately after a reset command",
-                            command instanceof IPosable ? ((IPosable)command).pos() : null);
+                            command.pos());
                     } else {
                         try {
                             solver.setSourceLine(Utils.sourceLine(command));
@@ -902,7 +901,7 @@ public class SMT {
                         } catch (UnsupportedOperationException e) {
                             result = smtConfig.responseFactory.error(
                                 "The " + smtConfig.solvername + " solver does not support this operation: " + e.getMessage(),
-                                command instanceof IPosable ? ((IPosable)command).pos() : null);
+                                command.pos());
                         }
                         if (!result.isError() && isSmtlibVersionInfo) {
                             ICommand.Iset_info si = (ICommand.Iset_info) command;
@@ -981,11 +980,11 @@ public class SMT {
     private boolean report(ICommand command, IResponse result) {
         if (result.isError()) {
             IResponse.IError eresult = (IResponse.IError)result;
-            if (eresult.pos() == null && command instanceof IPosable) {
+            if (eresult.pos() == null && command != null) {
                 // This is in case we omitted setting the position when the error
                 // was generated - we set it to the whole command.  However, we ought
                 // to root out all such omissions and correct them where possible.
-                eresult.setPos(((IPosable)command).pos());
+                eresult.setPos(command.pos());
             }
             smtConfig.log.logError(eresult);
             return true;

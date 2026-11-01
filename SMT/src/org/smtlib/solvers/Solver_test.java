@@ -10,7 +10,6 @@ import java.util.*;
 import org.smtlib.*;
 import org.smtlib.ICommand.*;
 import org.smtlib.IExpr.*;
-import org.smtlib.IPos.IPosable;
 import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.impl.Response;
 
@@ -481,10 +480,10 @@ public class Solver_test implements ISolver {
     @Override 
     public IResponse declare_const(Ideclare_const cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-const command is issued");// FIXME - position and on other similar statements
+            return smtConfig.responseFactory.error("The logic must be set before a declare-const command is issued", cmd.pos());
         }
         String encodedName = encode(cmd.symbol());
-        List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), new LinkedList<ISort>(), cmd.resultSort(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
+        List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), new LinkedList<ISort>(), cmd.resultSort(),cmd.pos());
         if (list.isEmpty()) {
             ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(new ISort[0],cmd.resultSort());
             SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null,null);
@@ -504,7 +503,7 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse declare_fun(Ideclare_fun cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-fun command is issued");// FIXME - position and on other similar statements
+            return smtConfig.responseFactory.error("The logic must be set before a declare-fun command is issued", cmd.pos());
         }
         // C_declare_fun.parse() always accepts a trailing attribute* and the
         // "(declare-fun par (params) (name sorts attrs))" par-polymorphic form (SMT-LIB's
@@ -518,7 +517,7 @@ public class Solver_test implements ISolver {
             return smtConfig.responseFactory.error("Function attributes on declare-fun require --relax", cmd.symbol().pos());
         }
         String encodedName = encode(cmd.symbol());
-        List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.argSorts(),cmd.resultSort(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
+        List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.argSorts(),cmd.resultSort(),cmd.pos());
         if (list.isEmpty()) {
             ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(cmd.argSorts().toArray(new ISort[cmd.argSorts().size()]),cmd.resultSort());
             // cmd.attributes() is never null (empty if none); cmd.parameters() is only ever
@@ -552,7 +551,7 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse define_fun(Idefine_fun cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a " + cmd.commandName() + " command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a " + cmd.commandName() + " command is issued", cmd.pos());
         }
         String encodedName = encode(cmd.symbol());
         List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.parameters(),cmd.resultSort(),cmd.expression());
@@ -580,7 +579,7 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse define_fun_rec(Idefine_fun_rec cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a define-fun-rec command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a define-fun-rec command is issued", cmd.pos());
         }
         List<IResponse> list = TypeChecker.checkFcnRec(symTable, isGlobal(), cmd.symbol(),
                 cmd.parameters(), cmd.resultSort(), cmd.expression());
@@ -595,7 +594,7 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse define_funs_rec(Idefine_funs_rec cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a define-funs-rec command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a define-funs-rec command is issued", cmd.pos());
         }
         List<IResponse> list = TypeChecker.checkFcnsRec(symTable, isGlobal(),
                 cmd.declarations(), cmd.bodies());
@@ -610,7 +609,7 @@ public class Solver_test implements ISolver {
     @Override 
     public IResponse declare_sort(Ideclare_sort cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-sort command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a declare-sort command is issued", cmd.pos());
         }
         List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable,cmd.sortSymbol(),null,null);
         boolean b = list.isEmpty();
@@ -629,7 +628,7 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse declare_sort_parameter(Ideclare_sort_parameter cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-sort-parameter command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a declare-sort-parameter command is issued", cmd.pos());
         }
         List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable, cmd.sortSymbol(), null, null);
         if (!list.isEmpty()) return list.get(0);
@@ -644,7 +643,7 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse define_sort(Idefine_sort cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a define-sort command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a define-sort command is issued", cmd.pos());
         }
         List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable,cmd.sortSymbol(),cmd.parameters(),cmd.expression());
         boolean b = list.isEmpty();
@@ -664,7 +663,7 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse declare_datatype(Ideclare_datatype cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-datatype command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a declare-datatype command is issued", cmd.pos());
         }
         return declareDatatypes(Collections.singletonList(cmd.sortDeclaration()), Collections.singletonList(cmd.datatype()));
     }
@@ -672,7 +671,7 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse declare_datatypes(Ideclare_datatypes cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-datatypes command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a declare-datatypes command is issued", cmd.pos());
         }
         return declareDatatypes(cmd.sortDeclarations(), cmd.datatypes());
     }

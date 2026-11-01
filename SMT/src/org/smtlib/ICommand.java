@@ -19,7 +19,7 @@ import org.smtlib.ISort.IParameter;
  * to type-check the command and to execute it.
  * @author David R. Cok
  */
-public interface ICommand extends INode {
+public interface ICommand extends INode, IPos.IPosable {
 
     /** This interface defines classes that implement techniques for mapping a command name to a class
      * that implements that command.

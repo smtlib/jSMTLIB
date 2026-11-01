@@ -1419,7 +1419,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                     ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(new ISort[0],resultSort);
                     SymbolTable.Entry entry = new SymbolTable.Entry((ISymbol)v,fcnSort,null,null);
                     if (!symTable.add(entry, false, false)) { 
-                        result.add(smtConfig.responseFactory.error("Symbol " + v.toString() + " is already defined",v.pos())); // FIXME - encode name
+                        result.add(smtConfig.responseFactory.error("Symbol " + v.toString() + " is already defined",v.pos()));
                         errors = true;
                     }
                     if (isClosed != null) {
