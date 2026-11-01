@@ -205,9 +205,9 @@ public class Lexer {
     private final static String rgxSymbol = "[a-zA-Z_~!@$%^&*+=<>.?/\\-][0-9a-zA-Z_~!@$%^&*+=<>.?/\\-]*";
     /** Pattern regular expression for SMT-LIB symbol enclosed in bars; characters 128 and beyond are
      * rejected afterwards for SMT-LIB 2.0 (see quotedSymbolError) */
-    private final static String rgxQuotedSymbol = "\\|[0-9a-zA-Z_~!@$%^&*+=<>.?/\"'(),:;{}#`\\[\\] \t\r\n\\-\\u0080-\\uFFFF]*\\|";
+    private final static String rgxQuotedSymbol = "\\|[0-9a-zA-Z_~!@$%^&*+=<>.?/\"'(),:;{}#`\\[\\] \t\r\n\\-\\u0080-\\x{10FFFF}]*\\|";
     /** Pattern regular expression for invalid SMT-LIB unterminated bar-symbol */
-    private final static String rgxNonTermQuotedSymbol = "\\|[0-9a-zA-Z_~!@$%^&*+=<>.?/\"'(),:;{}#`\\[\\] \t\r\n\\-\\u0080-\\uFFFF]*";
+    private final static String rgxNonTermQuotedSymbol = "\\|[0-9a-zA-Z_~!@$%^&*+=<>.?/\"'(),:;{}#`\\[\\] \t\r\n\\-\\u0080-\\x{10FFFF}]*";
     /** Pattern regular expression for SMT-LIB keyword (colon beginning) */
     private final static String rgxKeyword = ":[0-9a-zA-Z_~!@$%^&*+=<>.?/\\-]+";
     /** Pattern regular expression for SMT-LIB sequence of non-white space */

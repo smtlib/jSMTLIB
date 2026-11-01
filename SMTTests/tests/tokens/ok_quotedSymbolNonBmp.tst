@@ -1,0 +1,7 @@
+; A quoted symbol may contain a character beyond U+FFFF (SMT-LIB 2.5+)
+(set-option :produce-models true)
+(set-logic QF_UF)
+(declare-fun |𝔸| () Bool)
+(assert |𝔸|)
+(check-sat)
+(get-value (|𝔸|))
