@@ -304,8 +304,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             if (ERROR_RESPONSE.matcher(response).find()) {
                 response = withSourceLines(response);
                 // Z3 returns an s-expr (always?)
-                // FIXME - (1) the {Print} also needs {Space}; (2) err_getValueTypes.tst returns a non-error s-expr and then an error s-expr - this fails for that case
                 //Pattern p = Pattern.compile("\\p{Space}*\\(\\p{Blank}*error\\p{Blank}+\"(([\\p{Space}\\p{Print}^[\\\"\\\\]]|\\\\\")*)\"\\p{Blank}*\\)\\p{Space}*");
+                // The message is that of each (error "...") in turn, or the whole text if something else comes first
                 Pattern p = Pattern.compile("\\p{Space}*\\(\\p{Blank}*error\\p{Blank}+\"(([\\p{Print}\\p{Space}&&[^\"\\\\]]|\\\\\")*)\"\\p{Blank}*\\)");
                 Matcher m = p.matcher(response);
                 String concat = "";
@@ -455,8 +455,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
     @Override
     public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
-        // FIXME - discriminate among logics
-
+        // Which logics are accepted is left to z3 4.3 (it answers success, ignoring a logic it does not know)
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#set-logic " + logicName);
         boolean all = logicName.equals("ALL");
         // z3 4.3 reports a second set-logic itself, but set-logic ALL is never sent (see below): so
@@ -507,11 +506,22 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         }
     }
 
-    /** Answered from the values set here: z3 4.3 defaults :produce-models to true (SMT-LIB: false)
-     *  and answers unsupported for :produce-assertions (see set_option_impl) */
+    /** Sent to the solver, except where z3 4.3's answer does not conform: it defaults :produce-models
+     *  to true (SMT-LIB: false), writes the channel names unquoted, knows :produce-assertions only as
+     *  :interactive-mode (see set_option_impl), and answers unsupported, not the default value, for a
+     *  standard option it lacks */
     @Override
-    public IResponse get_option(IKeyword key) { // FIXME - use the solver?
-        return optionValue(key.value());
+    public IResponse get_option(IKeyword key) {
+        String option = key.value();
+        if (Utils.PRODUCE_MODELS.equals(option) || Utils.REGULAR_OUTPUT_CHANNEL.equals(option)
+                || Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
+            return optionValue(option);
+        }
+        IKeyword sent = Utils.PRODUCE_ASSERTIONS.equals(option) ? smtConfig.exprFactory.keyword(Utils.INTERACTIVE_MODE) : key;
+        IResponse r = super.get_option(sent);
+        IAttributeValue standardDefault = smtConfig.utils.defaults.get(option);
+        if (standardDefault != null && smtConfig.responseFactory.unsupported().equals(r)) return standardDefault;
+        return r;
     }
 
     /** The value of the option as set here, else unsupported */
@@ -676,7 +686,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  SMT-LIB makes an error */
     @Override 
     public IResponse get_assignment() {
-        // FIXME - do we really want to call get-option here? it involves going to the solver?
         if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_ASSIGNMENTS))) {
             return smtConfig.responseFactory.error("The get-assignment command is only valid if :produce-assignments has been enabled");
         }
@@ -694,7 +703,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     /** See get_model: z3 4.3 defaults :produce-models to true */
     @Override 
     public IResponse get_value(IExpr... terms) {
-        // FIXME - do we really want to call get-option here? it involves going to the solver?
         if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_MODELS))) {
             return smtConfig.responseFactory.error("The get-value command is only valid if :produce-models has been enabled");
         }
