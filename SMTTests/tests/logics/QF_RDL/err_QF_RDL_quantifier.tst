@@ -1,4 +1,4 @@
 ; QF_RDL forbids quantifiers
 (set-logic QF_RDL)
 (declare-const x Real)
-(assert (forall ((z Real)) (>= z 0.0)))
+(assert (forall ((z Real)) (>= z 0)))
