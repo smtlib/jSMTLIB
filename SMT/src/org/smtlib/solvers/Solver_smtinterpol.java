@@ -81,6 +81,8 @@ public class Solver_smtinterpol extends AbstractSolver implements ISolver {
         }
         try {
             solverProcess.start(false);
+            IResponse seed = sendSeed();
+            if (seed != null) return seed;
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
             return smtConfig.responseFactory.success();
         } catch (Exception e) {

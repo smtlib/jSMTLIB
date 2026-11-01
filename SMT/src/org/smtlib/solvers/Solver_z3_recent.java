@@ -74,6 +74,12 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
         } else {
             cmds = cmds_unix;
         }
+        if (smtConfig.seed != 0) {
+            // z3 accepts the standard :random-seed but does not use it (4.5.0 to 5.1.0); smt.random_seed is its seed
+            List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
+            args.add("smt.random_seed=" + smtConfig.seed);
+            cmds = args.toArray(new String[args.size()]);
+        }
         double timeout = smtConfig.timeout;
         double timeoutTotal = smtConfig.timeoutTotal;
         if (timeout > 0 || timeoutTotal > 0) {

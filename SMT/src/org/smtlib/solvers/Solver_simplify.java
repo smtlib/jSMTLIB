@@ -124,6 +124,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         assertionSetStack.add(0,new LinkedList<IExpr>());
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#start " + solverName());
         solverProcess.start(true);
+        reportSeedIgnored();
         try {
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started simplify");
             solverProcess.sendAndListen("(BG_PUSH (FORALL (B X Y) (IMPLIES (EQ B |@true|) (EQ (" + ite_term + " B X Y) X))))\n");

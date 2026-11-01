@@ -260,7 +260,7 @@ public class SMT {
         /** If true, then information about the position of an error is not shown */
         public boolean noshow = false;
 
-        /** If non-zero, a seed to pass to the solver to initialize its random number generator */
+        /** If non-zero, a seed to pass to the solver to initialize its random number generator (--seed, non-negative) */
         public int seed = 0;
 
         // FIXME - review the use of out/diag/log/stdout/stderr
@@ -1192,9 +1192,10 @@ public class SMT {
                 String a = args[i];
                 try {
                     options.seed = Integer.parseInt(a);
+                    if (options.seed < 0) throw new NumberFormatException();
                     i++;
                 } catch (NumberFormatException e) {
-                    error("The --seed option expects an integer value: " + a);
+                    error("The --seed option expects a non-negative integer value: " + a);
                     usage();
                     return 1;
                 }
@@ -1460,6 +1461,7 @@ public class SMT {
         new Opt("--timeout-total", "-T", "<seconds>", "timeout for the solver's whole run (its process lifetime), also always given here in seconds",
                 "likewise converted to each solver's own unit/flag, or, if that solver has no whole-run option,",
                 "applied as a best-effort per-query limit instead"),
+        new Opt("--seed", null, "<int>", "seed for the solver's random number generator, if it has one (0, the default, sets none)"),
         new Opt("--echo", null, null, "if enabled, commands are echoed to diagnostic output when successfully parsed"),
         new Opt("--abort", null, null, "if enabled, an error causes immediate exit (on interactive standard input, the rest of its line is skipped)"),
         new Opt("--pipeline", null, null, "if enabled, commands in file (including -) or --text input are sent to the solver without",

@@ -389,7 +389,11 @@ public class SMTCommandLineTests {
     }
 
     @Test public void seedNonInteger() {
-        assertError(run("--seed", "fast"), "The --seed option expects an integer value: fast");
+        assertError(run("--seed", "fast"), "The --seed option expects a non-negative integer value: fast");
+    }
+
+    @Test public void seedNegative() {
+        assertError(run("--seed", "-1"), "The --seed option expects a non-negative integer value: -1");
     }
 
     @Test public void timeoutNonNumeric() {

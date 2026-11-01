@@ -1091,6 +1091,23 @@ public class AbstractSolver implements ISolver {
         throw new UnsupportedOperationException("AbstractSolver.start");
     }
 
+    /** Passes --seed, if given, as the standard :random-seed option, for an adapter whose solver uses
+     *  that option; called from start(), while :print-success is true. Returns an error if the solver
+     *  rejects it, else null. */
+    protected /*@Nullable*/ IResponse sendSeed() throws IOException {
+        if (smtConfig.seed == 0) return null;
+        String reply = solverProcess.sendAndListen("(set-option :random-seed " + smtConfig.seed + ")\n").trim();
+        if (reply.equals("success")) return null;
+        return smtConfig.responseFactory.error("The solver rejected --seed " + smtConfig.seed + ": " + reply);
+    }
+
+    /** Reports that --seed, if given, is ignored, for an adapter whose solver has no random seed */
+    protected void reportSeedIgnored() {
+        if (smtConfig.seed != 0) {
+            smtConfig.log.logDiag("#" + smtConfig.solvername + " has no random seed option; --seed " + smtConfig.seed + " is ignored");
+        }
+    }
+
     /** @see org.smtlib.ISolver#exit() */
     @Override
     public IResponse exit() {
