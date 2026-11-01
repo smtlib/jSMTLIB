@@ -1,0 +1,6 @@
+(set-info :56 a)
+          ^^^
+(set-info :assert a)
+          ^^^^^^^
+(get-info :_)
+          ^^

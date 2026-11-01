@@ -893,7 +893,7 @@ public class Parser extends Lexer implements IParser {
     }
 
     /** Reports a vertical tab or form feed between tokens (except with --relax), which is then read as
-     *  white space */
+     *  white space, and a keyword that is not a colon followed by a simple symbol (#185) */
     @Override
     protected ILexToken getToken(java.util.regex.Matcher m) throws ParserException {
         ILexToken token = super.getToken(m);
@@ -905,6 +905,11 @@ public class Parser extends Lexer implements IParser {
                 commandHasLexicalError = true;
                 recoverableError("Invalid character: ASCII(decimal) = " + c + "; it is read as white space", p);
             }
+        }
+        if (token instanceof IKeyword && !smtConfig.isOKKeyword(((IKeyword)token).value())) {
+            commandHasLexicalError = true;
+            recoverableError("A keyword must be a colon followed by a simple symbol (not starting with a digit, not a reserved word): "
+                    + ((IKeyword)token).value(), token.pos());
         }
         return token;
     }

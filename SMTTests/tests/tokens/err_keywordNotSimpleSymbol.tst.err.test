@@ -1,0 +1,7 @@
+(set-info :56 a)
+          ^^^
+(set-info :assert a)
+          ^^^^^^^
+(get-info :_)
+          ^^
+WARNING: :a2 is not a standard set-info attribute

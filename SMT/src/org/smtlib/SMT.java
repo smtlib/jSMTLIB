@@ -135,6 +135,20 @@ public class SMT {
             return true;
         }
 
+        /** True if the string (including the colon) is a legal keyword: a colon followed by a simple symbol,
+         *  that is, letters, digits and the characters {@code ~!@$%^&*_-+=<>.?/}, not starting with a digit
+         *  and not a reserved word. The standard's example :56 contradicts this (#185). */
+        public boolean isOKKeyword(String value) {
+            if (value.length() < 2 || value.charAt(0) != ':') return false;
+            if (Character.isDigit(value.charAt(1)) || isReservedWord(value.substring(1))) return false;
+            for (int i = 1; i < value.length(); i++) {
+                char c = value.charAt(i);
+                if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+                        || "~!@$%^&*_-+=<>.?/".indexOf(c) >= 0)) return false;
+            }
+            return true;
+        }
+
         /** True if the string, as the (unescaped) value of a string literal, is legal in the configured
          *  SMT-LIB version: printable and white-space characters only, those beyond ASCII only from V2.5 on */
         public boolean isOKString(String value) {
