@@ -256,7 +256,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
 
         @Override
         public /*@Nullable*/T visit(IParameterizedIdentifier e) throws VisitorException {
-            e.headSymbol().accept(this);
+            e.head().accept(this);
             for (IExpr.IIndex idx: e.indices()) idx.accept(this);
             return null;
         }

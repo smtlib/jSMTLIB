@@ -196,20 +196,20 @@ public abstract class SMTExpr implements IExpr {
 
     /** This class represents an SMT parameterized-identifier AST (e.g. {@code (_ BitVec 32)}). */
     static public class ParameterizedIdentifier extends Pos.AbstractExpr implements IParameterizedIdentifier {
-        protected IIdentifier head;
+        protected ISymbol head;
         protected List<IIndex> indices;
 
-        /** Creates a parameterized identifier from the given base identifier and index list. */
-        public ParameterizedIdentifier(IIdentifier symbol, List<IIndex> indices) {
+        /** Creates a parameterized identifier from the given head symbol and index list. */
+        public ParameterizedIdentifier(ISymbol symbol, List<IIndex> indices) {
             this.head = symbol;
             this.indices = indices;
         }
 
         @Override
-        public IIdentifier head() { return head; }
+        public ISymbol head() { return head; }
 
         @Override
-        public ISymbol headSymbol() { return head.headSymbol(); }
+        public ISymbol headSymbol() { return head; }
 
         @Override
         public List<IIndex> indices() { return indices; }
@@ -217,7 +217,7 @@ public abstract class SMTExpr implements IExpr {
         /** The code point of a (_ char H) identifier, or null if this is not one. Leading zeros in H don't
          *  matter, so (_ char #x41) and (_ char #x041) are equal although their hex literals differ. */
         static private /*@Nullable*/ BigInteger charCode(IParameterizedIdentifier p) {
-            if (!Utils.CHAR.equals(p.headSymbol()) || p.indices().size() != 1) return null;
+            if (!Utils.CHAR.equals(p.head()) || p.indices().size() != 1) return null;
             IIndex idx = p.indices().get(0);
             return idx instanceof IHexLiteral ? ((IHexLiteral)idx).intValue() : null;
         }
@@ -227,7 +227,7 @@ public abstract class SMTExpr implements IExpr {
             if (this == o) return true;
             if (!(o instanceof IParameterizedIdentifier)) return false;
             IParameterizedIdentifier p = (IParameterizedIdentifier)o;
-            if (!this.headSymbol().equals(p.headSymbol())) return false;
+            if (!this.head().equals(p.head())) return false;
             BigInteger code = charCode(this);
             if (code != null) return code.equals(charCode(p));
             if (this.indices().size() != p.indices().size()) return false;
@@ -239,7 +239,7 @@ public abstract class SMTExpr implements IExpr {
 
         @Override
         public int hashCode() {
-            int hash = headSymbol().hashCode();
+            int hash = head().hashCode();
             BigInteger code = charCode(this);
             if (code != null) return (hash << 1) + code.hashCode();
             for (IIndex idx : indices) hash = (hash << 1) + idx.hashCode();
