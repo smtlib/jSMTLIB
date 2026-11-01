@@ -1,0 +1,4 @@
+(declare-const r Real)
+^^^^^^^^^^^^^^^^^^^^^^
+(declare-const f (_ FloatingPoint 8 24))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
