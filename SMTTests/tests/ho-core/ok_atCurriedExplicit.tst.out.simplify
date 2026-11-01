@@ -5,6 +5,6 @@ success
 success
 (error "The simplify solver does not support higher-order functions")
 (error "The simplify solver does not support higher-order functions")
-sat
+unknown
 (error "The simplify solver does not support higher-order functions")
-sat
+unknown
