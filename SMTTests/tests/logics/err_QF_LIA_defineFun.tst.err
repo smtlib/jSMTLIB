@@ -1,0 +1,4 @@
+(define-fun sq () Int (* x x))
+                      ^^^^^^^
+(define-fun allPos () Bool (forall ((y Int)) (> y 0)))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^

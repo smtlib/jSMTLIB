@@ -82,6 +82,25 @@ public class SolverCapabilitiesTests {
         q(props("s.capabilities", "strings,-strings"), "s", Capability.STRINGS);
     }
 
+    @Test
+    public void emptyElementsAndDuplicatesAreIgnored() {
+        Properties p = props("s.capabilities", "strings,,proofs", "t.capabilities", "strings,strings");
+        Assert.assertEquals(Support.YES, q(p, "s", Capability.STRINGS));
+        Assert.assertEquals(Support.YES, q(p, "s", Capability.PROOFS));
+        Assert.assertEquals(Support.YES, q(p, "t", Capability.STRINGS));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void negatedNonCapabilityIsAnError() {
+        q(props("s.capabilities", "-1"), "s", Capability.STRINGS);
+    }
+
+    /** As an unknown token is, whichever capability is asked about */
+    @Test(expected = IllegalArgumentException.class)
+    public void contradictionAboutAnotherCapabilityIsAnError() {
+        q(props("s.capabilities", "strings,-strings"), "s", Capability.PROOFS);
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void unknownCapabilityNameIsAnError() {
         SolverCapabilities.supports("cvc5", "sequences");

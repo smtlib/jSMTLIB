@@ -247,16 +247,9 @@ public class Solver_test implements ISolver {
 
     @Override
     public IResponse get_value(IExpr... terms) {
-        TypeChecker tc = new TypeChecker(symTable);
-        try {
-            for (IExpr term: terms) {
-                term.accept(tc);
-            }
-        } catch (IVisitor.VisitorException e) {
-            Utils.jacocoNeverExecuted(); // Defensive check against maintenance bugs, though not executed in current code
-            tc.result.add(smtConfig.responseFactory.error(e.getMessage()));
-        } finally {
-            if (!tc.result.isEmpty()) return tc.result.get(0); // FIXME - report all errors?
+        for (IExpr term: terms) {
+            List<IResponse> errs = TypeChecker.checkTerm(symTable, term);
+            if (!errs.isEmpty()) return errs.get(0);
         }
         if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
             return smtConfig.responseFactory.error("The get-value command is only valid if :produce-models has been enabled");

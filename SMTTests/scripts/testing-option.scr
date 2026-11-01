@@ -1,0 +1,4 @@
+### --testing replaces statistics figures in a get-info response by VALUE; without it the solver's own figures appear
+##EXITCODE 0
+$SMT_CMD --solver z3-4.3 --testing $SCRIPTS/get-info-statistics.smt2
+$SMT_CMD --solver z3-4.3 $SCRIPTS/get-info-statistics.smt2 | sed -E 's/[0-9]+(\.[0-9]+)?/N/g'
