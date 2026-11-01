@@ -273,7 +273,8 @@ public abstract class Sort extends Pos.Printable implements ISort {
             if (!(sort instanceof IApplication)) return false;
             IApplication esort = (IApplication)sort;
             if (esort.family().equals(this.family())) {
-                // If the family() is equal, the arity must be equal
+                // Different arities (an ill-sorted application, such as (Array Int)) are not equal
+                if (esort.parameters().size() != this.parameters().size()) return false;
                 int i = 0;
                 for (ISort p: this.parameters()) {
                     if (!p.equalsNoExpand(esort.param(i++))) return false;
