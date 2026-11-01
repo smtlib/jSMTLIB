@@ -365,8 +365,14 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             // else -- genuinely no recognized shape at all -- still falls through to
             // unknown(), rather than guessing at further error shapes with no binary to
             // confirm them against.
+            // "Invalid." means only that Simplify found no proof; it is sat only in a logic Simplify decides
+            unknownIncomplete = false;
             if (s.contains("Valid.")) res = smtConfig.responseFactory.unsat();
-            else if (s.contains("Invalid.")) res = smtConfig.responseFactory.sat();
+            else if (s.contains("Invalid.") && completeLogics.contains(logicSet)) res = smtConfig.responseFactory.sat();
+            else if (s.contains("Invalid.")) {
+                res = smtConfig.responseFactory.unknown();
+                unknownIncomplete = true;
+            }
             else if (s.contains("Bad input:")) res = smtConfig.responseFactory.error(s.trim());
             else if (s.contains("Sx.ReadError")) {
                 res = smtConfig.responseFactory.error(s.trim());
@@ -473,11 +479,21 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         }
     }
 
-    /** Names of the logics Simplify decides: uninterpreted functions, arrays and linear integer
-     *  arithmetic, with or without quantifiers. Simplify reasons over integers and treats other
-     *  operations (bit-vectors, nonlinear products, div) as uninterpreted, giving wrong answers.
-     *  ALL means what Simplify decides: the Translator rejects the rest. */
+    /** Names of the logics Simplify accepts: uninterpreted functions, arrays and linear integer
+     *  arithmetic, with or without quantifiers (it decides only {@link #completeLogics}). Simplify
+     *  reasons over integers and treats other operations (bit-vectors, nonlinear products, div) as
+     *  uninterpreted, giving wrong answers. ALL means what Simplify accepts: the Translator rejects
+     *  the rest. */
     static final java.util.regex.Pattern supportedLogics = java.util.regex.Pattern.compile("(QF_)?(AX|A)?(UF)?(IDL|LIA)?|ALL");
+
+    /** The supported logics in which Simplify is a decision procedure, so that its "Invalid." means sat
+     *  (#176). Its integer arithmetic (a rational relaxation plus heuristics) and its matching-based
+     *  quantifier instantiation are incomplete, and its arrays are quantified axioms, so elsewhere
+     *  "Invalid." means unknown. */
+    static final Set<String> completeLogics = Set.of("QF_UF");
+
+    /** Whether the last check-sat answered unknown because Simplify is incomplete for the logic */
+    private boolean unknownIncomplete = false;
 
     @Override
     public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
@@ -532,7 +548,10 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         } else if (Utils.NAME.equals(option)) {
             lit = smtConfig.exprFactory.unquotedString("simplify");
         } else if (Utils.REASON_UNKNOWN.equals(option)) {
-            return smtConfig.responseFactory.unsupported();
+            if (!unknownIncomplete || !smtConfig.responseFactory.unknown().equals(checkSatStatus)) {
+                return smtConfig.responseFactory.unsupported();
+            }
+            lit = smtConfig.exprFactory.symbol(Utils.INCOMPLETE);
         } else if (Utils.ALL_STATISTICS.equals(option)) {
             return smtConfig.responseFactory.unsupported();
         } else {

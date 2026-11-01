@@ -1,7 +1,7 @@
 unsupported
 success
 success
-sat
+unknown
 (error "The get-value command is only valid if :produce-models has been enabled")
 (error "Integer expressions must be linear in this logic")
 (error "A quantified expression is not allowed in the QF_LIA logic")

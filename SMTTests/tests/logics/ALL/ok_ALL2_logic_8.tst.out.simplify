@@ -8,4 +8,4 @@ success
 (error "The simplify solver does not support the BitVec sort")
 (error "The simplify solver does not support the BitVec sort")
 (error "The simplify solver does not support mod")
-sat
+unknown

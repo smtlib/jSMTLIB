@@ -11,4 +11,4 @@ success
 (error "The simplify solver does not support the String sort")
 (error "The simplify solver does not support the Real sort")
 success
-sat
+unknown
