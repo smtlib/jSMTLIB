@@ -1,5 +1,7 @@
-(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:12: unsupported logic 'QF_RDL'
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:5:12: unsupported logic 'QF_RDL'
 ")
+(error "The solver process has exited")
+(error "The solver process has exited")
 (error "The solver process has exited")
 (error "The solver process has exited")
 (error "The solver process has exited")

@@ -16,8 +16,8 @@ import org.smtlib.IExpr.ISymbol;
 
 /** QF_RDL atoms (QF_RDL.smt2): (op x y), (op (- x y) c), (op (- (+ x ... x) (+ y ... y)) c)
  *  with k &gt; 1 occurrences each of x and y, and the extension (op (- x y) (/ c n)); x, y are
- *  free constants of sort Real, c is m or (- m), and m, n are numerals with n nonzero. Being real
- *  difference logic, c may also be a decimal d or (- d). */
+ *  free constants of sort Real, c is m or (- m), and m, n are numerals with n nonzero. A decimal
+ *  d or (- d) as c is an error; --relax accepts it with a warning. */
 public class QF_RDL extends DifferenceLogic {
 
     public QF_RDL(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
@@ -37,23 +37,29 @@ public class QF_RDL extends DifferenceLogic {
             throw restrictionError("lhs must be a symbol or a difference", e);
         }
         if (isDifferenceOfSymbols(lhs)) {
-            if (isConstant(rhs) || isQuotient(rhs)) return;
-            throw restrictionError("The rhs must be a numeral or decimal, its negation, or (/ c n) with n a nonzero numeral", e);
+            if (isInteger(rhs) || isQuotient(rhs) || relaxedDecimal(e, rhs)) return;
+            throw restrictionError("The rhs must be a numeral, a negated numeral, or (/ c n) with n a nonzero numeral", e);
         }
         if (!isDifferenceOfRepeatedSums((IExpr.IFcnExpr)lhs)) {
             throw restrictionError("differences must be difference of symbols", e);
         }
-        if (!isConstant(rhs)) {
-            throw restrictionError("The rhs must be a numeral or decimal, or its negation", e);
+        if (!isInteger(rhs) && !relaxedDecimal(e, rhs)) {
+            throw restrictionError("The rhs must be a numeral or a negated numeral", e);
         }
     }
 
-    /** True for a numeral or decimal, or its negation */
-    private boolean isConstant(IExpr e) {
-        if (isInteger(e) || e instanceof IExpr.IDecimal) return true;
-        if (!(e instanceof IExpr.IFcnExpr)) return false;
-        IExpr.IFcnExpr f = (IExpr.IFcnExpr) e;
-        return Utils.MINUS.equals(f.head()) && f.args().size() == 1 && f.args().get(0) instanceof IExpr.IDecimal;
+    /** True, after a warning, if --relax is set and c is a decimal d or (- d), which QF_RDL.smt2 does not allow */
+    private boolean relaxedDecimal(IExpr.IFcnExpr atom, IExpr c) {
+        if (!smtConfig.relax) return false;
+        if (c instanceof IExpr.IFcnExpr) {
+            IExpr.IFcnExpr f = (IExpr.IFcnExpr) c;
+            if (!Utils.MINUS.equals(f.head()) || f.args().size() != 1) return false;
+            c = f.args().get(0);
+        }
+        if (!(c instanceof IExpr.IDecimal)) return false;
+        smtConfig.log.logDiag("WARNING: A QF_RDL constant should be a numeral or a negated numeral, not a decimal: "
+                + smtConfig.defaultPrinter.toString(atom));
+        return true;
     }
 
     /** True for (/ c n) with c a numeral or negated numeral and n a nonzero numeral */

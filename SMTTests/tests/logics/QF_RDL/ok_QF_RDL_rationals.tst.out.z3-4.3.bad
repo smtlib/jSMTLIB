@@ -1,0 +1,8 @@
+success
+success
+success
+success
+success
+success
+success
+(error "line 10 column 10: Benchmark is not in QF_RDL (real difference logic).")
