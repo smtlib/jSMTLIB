@@ -140,7 +140,7 @@ it. Examples are in `tests/solverProtocol/`.
 | `getValue/` | `get-value` |
 | `getset_option/` | `get-option`/`set-option` for every defined option, including all `:produce-*` options |
 | `letTests/` | `let`-bound sat/unsat checks (migrated from `LetTests.java`) |
-| `logics/` (largest, ~69 files) | One `ok_<LOGIC>.tst`/`err_<LOGIC>.tst` pair per SMT-LIB logic — `set-logic` acceptance plus per-logic operator/sort legality |
+| `logics/` (largest) | One subfolder per SMT-LIB logic, named exactly for it (`logics/QF_LIA/`, `logics/ALL/`, ...), holding that logic's `ok_`/`err_` tests — `set-logic` acceptance plus per-logic operator/sort legality. Tests of the `set-logic` command itself, and tests spanning several logics, stay at the top level |
 | `match/` | `match` expressions and patterns (including the `_` wildcard) |
 | `named/` | `:named` attribute and named-expression scoping |
 | `pushpop/` | `push`/`pop` scope handling |
@@ -334,8 +334,8 @@ extending `LogicsBase`) has also been retired: it hardcoded
 `checkResponse` helper doesn't actually assert anything for a successful
 `set-logic` — only the error path does a real string comparison — so in
 practice it only ever verified "no error" for the success cases. All 24
-real logic names it covered have an exact `tests/logics/ok_<NAME>.tst`
-counterpart; `ALL` is covered by `ok_setLogic_ALL.tst` and is also the
+real logic names it covered have `set-logic` tests in `tests/logics/<NAME>/`;
+`ALL` is covered by `ALL/ok_setLogic_ALL.tst` and is also the
 working logic in dozens of other `.tst` files across the suite; the
 deliberately-bogus `ZZZ` case is covered by `err_setLogic.tst`'s
 `(set-logic Q)` line, same error-message format with a different
@@ -381,7 +381,7 @@ migration rationale and status.
 |---|---|
 | **UnitTests** | `Log` listener add/remove/clear lifecycle; `Utils.quote`/`Utils.unescape` string-escaping rules (V2.0 vs V2.5), called directly as Java methods. |
 | **PrinterCoverageTest** | Directly constructs internal objects that can never arise from parsing SMT-LIB text (`ISort.IFamily`/`IAbbreviation`/`IFcnSort`, structured `IResponse` subtypes built via factory calls, `Sexpr.Token`/`Expr`) and checks their `toString()`. |
-| **LogicsCoverageTest** | Infrastructure self-check: every logic `SMT/logics/*.smt2` ships (searched recursively, but deliberately excluding the `V2.0/` subfolder — those logics have no `tests/logics/` coverage yet, a known, self-acknowledged gap) must have matching `(set-logic ...)` coverage somewhere under `tests/logics/`. |
+| **LogicsCoverageTest** | Infrastructure self-check: every logic `SMT/logics/*.smt2` ships (searched recursively, but deliberately excluding the `V2.0/` subfolder — those logics have no `tests/logics/` coverage yet, a known, self-acknowledged gap) must have matching `(set-logic ...)` coverage somewhere under `tests/logics/` (including its per-logic subfolders). |
 
 ### Infrastructure / base classes (no `@Test` methods, not run directly)
 
