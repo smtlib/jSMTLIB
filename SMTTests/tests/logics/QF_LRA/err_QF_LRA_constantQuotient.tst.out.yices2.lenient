@@ -1,5 +1,7 @@
 success
 success
 success
+success
 sat
+success
 (error "division by zero not allowed in logic QF_LRA")
