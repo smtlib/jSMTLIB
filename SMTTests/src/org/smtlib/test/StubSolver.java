@@ -13,7 +13,8 @@ import java.nio.file.Paths;
  *  is read. Directive lines act right after the reply before them (or at once, as the first lines)
  *  and answer no command: {@code <<exit N>>} ends the process with code N,
  *  {@code <<close-stdout>>} closes standard output, {@code <<sleep N>>} pauses N milliseconds,
- *  {@code <<print text>>} and {@code <<eprint text>>} write the text as a line to standard output or error.
+ *  {@code <<print text>>} and {@code <<eprint text>>} write the text as a line to standard output or error,
+ *  {@code <<print-part text>>} and {@code <<eprint-part text>>} without a line end.
  *  The process also ends after replying to (exit), or when the replies run out.
  *  {@code <<success-for (cmd)>>}, among the first lines, answers success to every command equal to
  *  (cmd) without using a reply line: for a priming command an adapter sends on some platforms only
@@ -75,6 +76,12 @@ public class StubSolver {
             } else if (line.startsWith("<<print ") && line.endsWith(">>")) {
                 System.out.print(line.substring(8, line.length() - 2) + "\n");
                 System.out.flush();
+            } else if (line.startsWith("<<print-part ") && line.endsWith(">>")) {
+                System.out.print(line.substring(13, line.length() - 2));
+                System.out.flush();
+            } else if (line.startsWith("<<eprint-part ") && line.endsWith(">>")) {
+                System.err.print(line.substring(14, line.length() - 2));
+                System.err.flush();
             } else if (line.startsWith("<<eprint ") && line.endsWith(">>")) {
                 System.err.print(line.substring(9, line.length() - 2) + "\n");
                 System.err.flush();

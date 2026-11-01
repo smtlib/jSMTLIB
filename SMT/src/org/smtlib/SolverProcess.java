@@ -47,7 +47,7 @@ public class SolverProcess {
     private String unfinishedErrorComment = "";
 
     /** Standard-error text read along with a reply on standard output, which it did not displace: the
-     *  solver's diagnostic output, kept until {@link #takeDiagnosticOutput()} */
+     *  solver's diagnostic output, kept until {@link #takeDiagnosticOutput(boolean)} */
     private final StringBuilder diagnosticOutput = new StringBuilder();
 
     /** Whether the last line of diagnosticOutput has not yet ended: the next standard-error text, up to
@@ -352,11 +352,20 @@ public class SolverProcess {
         return err.substring(end);
     }
 
+    /** Adds the start of a line of standard-error text, read when pipelining, to the diagnostic output,
+     *  as an unended line that the next standard-error text read finishes */
+    public void openDiagnosticLine(String text) {
+        diagnosticOutput.append(text);
+        diagnosticLineOpen = true;
+    }
+
     /** Returns and clears the solver's diagnostic output: standard-error text read with a reply on
-     *  standard output, which answered instead (see listen()) */
-    public String takeDiagnosticOutput() {
-        String text = diagnosticOutput.toString();
-        diagnosticOutput.setLength(0);
+     *  standard output, which answered instead (see listen()). An unended last line is kept until it
+     *  ends, so that it is logged whole, unless all is true (the solver is being stopped). */
+    public String takeDiagnosticOutput(boolean all) {
+        int end = all || !diagnosticLineOpen ? diagnosticOutput.length() : diagnosticOutput.lastIndexOf("\n") + 1;
+        String text = diagnosticOutput.substring(0, end);
+        diagnosticOutput.delete(0, end);
         return text;
     }
 

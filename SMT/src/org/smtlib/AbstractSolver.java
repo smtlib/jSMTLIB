@@ -132,8 +132,13 @@ public class AbstractSolver implements ISolver {
      *  SolverProcess.takeDiagnosticOutput), noting a whole-run time-limit report there: the reply
      *  stands, but the solver has ended */
     protected void logSolverDiagnostics() {
+        logSolverDiagnostics(false);
+    }
+
+    /** As {@link #logSolverDiagnostics()}; all includes an unended last line, for when the solver is stopped */
+    private void logSolverDiagnostics(boolean all) {
         if (solverProcess == null) return;
-        String diag = solverProcess.takeDiagnosticOutput();
+        String diag = solverProcess.takeDiagnosticOutput(all);
         if (diag.trim().isEmpty()) return;
         timeLimitResponse(diag);
         smtConfig.log.logDiag(diag.trim());
@@ -228,6 +233,7 @@ public class AbstractSolver implements ISolver {
 
     @Override
     public void forceExit() {
+        logSolverDiagnostics(true);
         if (solverProcess != null) solverProcess.exit();
     }
 
@@ -708,6 +714,12 @@ public class AbstractSolver implements ISolver {
             logSolverDiagnostics();
             String err = takeErrorOutput(false);
             if (!err.isEmpty()) smtConfig.log.logDiag(err.trim());
+            // An unended line is kept as an open line of diagnostic output, which the next text read
+            // finishes, whether pipelined or by listen() (see SolverProcess.openDiagnosticLine)
+            if (solverProcess != null && unreadErrorOutput.length() > 0 && unreadErrorOutput.charAt(0) != ';') {
+                solverProcess.openDiagnosticLine(unreadErrorOutput.toString());
+                unreadErrorOutput.setLength(0);
+            }
         }
     }
 
@@ -1112,6 +1124,7 @@ public class AbstractSolver implements ISolver {
     @Override
     public IResponse exit() {
         IResponse response = sendExitCommand();
+        logSolverDiagnostics(true);
         solverProcess.exit();
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended " + smtConfig.solvername);
         solverProcess = null;
