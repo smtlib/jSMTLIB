@@ -1,0 +1,8 @@
+success
+unsupported
+unsupported
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:5:19: invalid sort '|My List|'
+")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

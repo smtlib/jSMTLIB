@@ -159,6 +159,39 @@ public class SymbolLegalityApiTests {
     }
 
     @Test
+    public void okKeywords() {
+        Assert.assertTrue(config.isOKKeyword(":named"));
+        Assert.assertTrue(config.isOKKeyword(":->"));
+        Assert.assertTrue(config.isOKKeyword(":a2"));
+        Assert.assertFalse(config.isOKKeyword(":56"));
+        Assert.assertFalse(config.isOKKeyword(":assert"));
+        Assert.assertFalse(config.isOKKeyword(":_"));
+        Assert.assertFalse(config.isOKKeyword(":"));
+        Assert.assertFalse(config.isOKKeyword("named"));
+        Assert.assertFalse(config.isOKKeyword(":a b"));
+        Assert.assertFalse(config.isOKKeyword(":a|b"));
+        Assert.assertFalse(config.isOKKeyword(":é"));
+        config.relax = true;
+        Assert.assertTrue(config.isOKKeyword(":assert"));
+        config.smtlib = SMTLIB.V26;
+        Assert.assertTrue(config.isOKKeyword(":lambda"));
+    }
+
+    @Test
+    public void illegalKeywordInAnnotation() throws Exception {
+        IExpr e = f.attributedExpr(f.symbol("true"), f.keyword(":a b"), null);
+        Assert.assertEquals("Not a legal SMT-LIB keyword: \":a b\"", soleError(check(e)));
+    }
+
+    @Test
+    public void illegalKeywordInCommand() {
+        Assert.assertEquals("Not a legal SMT-LIB keyword: \"x\"", soleError(TypeChecker.validate(config,
+                new org.smtlib.command.C_set_option(f.keyword("x"), f.symbol("true")))));
+        Assert.assertEquals("Not a legal SMT-LIB keyword: \":\"", soleError(TypeChecker.validate(config,
+                new org.smtlib.command.C_get_info(f.keyword(":")))));
+    }
+
+    @Test
     public void parenthesizedFormsPrint() {
         ISymbol c = f.symbol("c");
         Assert.assertEquals("c", f.pattern(c, new LinkedList<ISymbol>()).toString());

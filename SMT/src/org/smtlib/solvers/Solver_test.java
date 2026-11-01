@@ -751,7 +751,7 @@ public class Solver_test implements ISolver {
             symTable.pop();
         }
         for (SymbolTable.Entry entry : entries) symTable.add(entry, global, false);
-        symTable.addDatatypeConstructors(sortName.value(), ctorList, global);
+        symTable.addDatatypeConstructors(sortName, ctorList, global);
         return null;
     }
 

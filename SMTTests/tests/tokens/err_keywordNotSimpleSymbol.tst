@@ -1,0 +1,5 @@
+; a keyword is a colon followed by a simple symbol: not starting with a digit, not a reserved word (#185)
+(set-info :56 a)
+(set-info :assert a)
+(get-info :_)
+(set-info :a2 a)

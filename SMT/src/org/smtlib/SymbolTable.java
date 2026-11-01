@@ -78,7 +78,7 @@ public class SymbolTable {
 
     /** The stack of datatype scopes, parallel to sortStack: each maps a datatype sort name to
      *  its constructors (in declaration order), in the frame holding the sort itself (#166) */
-    private List<Map<String,List<ISymbol>>> ctorStack;
+    private List<Map<IIdentifier,List<ISymbol>>> ctorStack;
 
     /** Thrown internally within lookup() to report, with a specific reason, why a single
      * candidate entry could not be matched against an actual call -- caught per candidate and
@@ -194,7 +194,7 @@ public class SymbolTable {
             logicSorts.clear();
             sortStack = new LinkedList<Map<IIdentifier,ISort.IDefinition>>();
             symStack = new LinkedList<Map<IIdentifier,List<Entry>>>();
-            ctorStack = new LinkedList<Map<String,List<ISymbol>>>();
+            ctorStack = new LinkedList<Map<IIdentifier,List<ISymbol>>>();
             push(); // an empty background frame
         }
         push(); // an empty primary frame
@@ -214,19 +214,19 @@ public class SymbolTable {
     public void push() {
         sortStack.add(0,sorts=new HashMap<IIdentifier,ISort.IDefinition>());
         symStack.add(0,names=new HashMap<IIdentifier,List<Entry>>());
-        ctorStack.add(0,new HashMap<String,List<ISymbol>>());
+        ctorStack.add(0,new HashMap<IIdentifier,List<ISymbol>>());
     }
 
     /** Records a datatype's constructors, in the frame its sort was added to
      *  (global = background, else current). */
-    public void addDatatypeConstructors(String sortName, List<ISymbol> ctors, boolean global) {
+    public void addDatatypeConstructors(IIdentifier sortName, List<ISymbol> ctors, boolean global) {
         ctorStack.get(global ? ctorStack.size()-1 : 0).put(sortName, ctors);
     }
 
-    /** The constructors of the datatype sort with the given name, or null if no datatype of
+    /** The constructors of the datatype sort with the given identifier, or null if no datatype of
      *  that name is in scope. */
-    public /*@Nullable*/ List<ISymbol> datatypeConstructors(String sortName) {
-        for (Map<String,List<ISymbol>> frame: ctorStack) {
+    public /*@Nullable*/ List<ISymbol> datatypeConstructors(IIdentifier sortName) {
+        for (Map<IIdentifier,List<ISymbol>> frame: ctorStack) {
             List<ISymbol> ctors = frame.get(sortName);
             if (ctors != null) return ctors;
         }

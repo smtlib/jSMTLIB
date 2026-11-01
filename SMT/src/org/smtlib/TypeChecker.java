@@ -105,6 +105,13 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         return "Not a legal SMT-LIB symbol: " + smtConfig.utils.quote(s.value());
     }
 
+    /** The error for a keyword that is not legal (see SMT.Configuration.isOKKeyword), which only
+     *  the API can produce, or null if it is legal */
+    static /*@Nullable*/ IResponse keywordError(SMT.Configuration smtConfig, IKeyword k) {
+        if (smtConfig.isOKKeyword(k.value())) return null;
+        return smtConfig.responseFactory.error("Not a legal SMT-LIB keyword: " + smtConfig.utils.quote(k.value()), k.pos());
+    }
+
     /** Adds the error for a symbol that is not legal to errors; returns true if it is not legal */
     private static boolean badSymbol(SMT.Configuration smtConfig, ISymbol s, List<IResponse> errors) {
         String msg = symbolError(smtConfig, s);
@@ -1394,7 +1401,11 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             }
             for (IAttribute<?> a: e.attributes()) {
                 String name = a.keyword().value();
-                if (a.attrValue() instanceof ISymbol && badSymbol((ISymbol)a.attrValue())) {
+                IResponse keyErr = keywordError(smtConfig, a.keyword());
+                if (keyErr != null) {
+                    result.add(keyErr);
+                    errors = true;
+                } else if (a.attrValue() instanceof ISymbol && badSymbol((ISymbol)a.attrValue())) {
                     errors = true;
                 } else if (name.equals(":named")) { // FIXME - use a canonical representation
                     IAttributeValue v = a.attrValue();
@@ -1634,13 +1645,8 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         if (scrutineeSort == null) return null;
 
         // The scrutinee must be of a declared datatype sort
-        String scrutineeSortName = null;
-        if (scrutineeSort instanceof ISort.IApplication) {
-            IIdentifier fam = ((ISort.IApplication)scrutineeSort).family();
-            scrutineeSortName = fam.toString();
-        }
-        List<ISymbol> allCtors = (scrutineeSortName != null)
-                ? symTable.datatypeConstructors(scrutineeSortName) : null;
+        List<ISymbol> allCtors = (scrutineeSort instanceof ISort.IApplication)
+                ? symTable.datatypeConstructors(((ISort.IApplication)scrutineeSort).family()) : null;
         if (allCtors == null) {
             error("The scrutinee of a match expression must be of a datatype sort, but has sort "
                     + pr(scrutineeSort), e.expr().pos());
@@ -1955,9 +1961,18 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             requireVersion(smtConfig, SMT.Configuration.SMTLIB.V25, "get-unsat-assumptions", errors);
         } else if (cmd instanceof ICommand.Iset_info || cmd instanceof ICommand.Iset_option) {
             // A symbol attribute value must be a legal symbol (the parser reports a reserved word in text)
+            IKeyword k = cmd instanceof ICommand.Iset_info ? ((ICommand.Iset_info)cmd).infoflag()
+                    : ((ICommand.Iset_option)cmd).option();
             IAttributeValue v = cmd instanceof ICommand.Iset_info ? ((ICommand.Iset_info)cmd).value()
                     : ((ICommand.Iset_option)cmd).value();
-            if (v instanceof ISymbol) badSymbol(smtConfig, (ISymbol)v, errors);
+            IResponse keyErr = keywordError(smtConfig, k);
+            if (keyErr != null) errors.add(keyErr);
+            else if (v instanceof ISymbol) badSymbol(smtConfig, (ISymbol)v, errors);
+        } else if (cmd instanceof ICommand.Iget_info || cmd instanceof ICommand.Iget_option) {
+            IKeyword k = cmd instanceof ICommand.Iget_info ? ((ICommand.Iget_info)cmd).infoflag()
+                    : ((ICommand.Iget_option)cmd).option();
+            IResponse keyErr = keywordError(smtConfig, k);
+            if (keyErr != null) errors.add(keyErr);
         } else if (cmd instanceof ICommand.Iset_logic) {
             String logicName = ((ICommand.Iset_logic) cmd).logic().value();
             if ("ALL".equals(logicName) && !smtConfig.relax && !smtConfig.atLeastVersion(SMT.Configuration.SMTLIB.V25)) {
