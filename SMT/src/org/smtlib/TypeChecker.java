@@ -1696,7 +1696,10 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                     IFcnSort ctorSort = symTable.lookup(arity, pat.constructor());
                     IFcnSort instance = ctorSort == null ? null : symTable.lookupInstance(arity, pat.constructor(), scrutineeSort);
                     int ctorArity = allCtors.contains(pat.constructor()) ? constructorArity(pat.constructor(), scrutineeSort) : -1;
-                    if (ctorArity == 0) {
+                    if (ctorArity == 0 && smtConfig.relax) {
+                        // --relax accepts (c) for a nullary constructor c, with the parser's warning
+                        coveredCtors.add(pat.constructor().value());
+                    } else if (ctorArity == 0) {
                         error("The constructor " + pat.constructor().value() + " takes no arguments, so its pattern is written without parentheses",
                                 pat.pos());
                         anyErrors = true;
