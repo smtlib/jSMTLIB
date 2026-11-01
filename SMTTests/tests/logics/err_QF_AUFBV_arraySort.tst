@@ -1,0 +1,11 @@
+; QF_AUFBV: all array terms have sort (Array (_ BitVec i) (_ BitVec j))
+(set-logic QF_AUFBV)
+(declare-sort U 0)
+(declare-const a (Array (_ BitVec 8) Bool))
+(declare-fun f ((Array U U)) Bool)
+(define-fun d ((x (Array Bool Bool))) Bool true)
+(declare-const n (Array (_ BitVec 8) (Array (_ BitVec 8) (_ BitVec 8))))
+(define-sort A () (Array Bool (_ BitVec 8)))
+; a parameterized abbreviation is checked where it is instantiated
+(define-sort P (X) (Array X X))
+(declare-const p (P Bool))

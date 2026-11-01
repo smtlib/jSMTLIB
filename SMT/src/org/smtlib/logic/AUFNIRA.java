@@ -30,5 +30,5 @@ public class AUFNIRA extends Logic {
     public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
     }
 
-// FIXME - needs to allow implicit casts
+    // The Int-to-Real reading in its :extensions is TypeChecker.widensToReal
 }

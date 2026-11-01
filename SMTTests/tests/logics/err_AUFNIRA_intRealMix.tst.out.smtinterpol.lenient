@@ -1,0 +1,12 @@
+success
+success
+success
+success
+success
+success
+success
+(error "<stdin>:12:9: Application of function null does not type check.")
+(error "<stdin>:13:9: Application of function null does not type check.")
+(error "<stdin>:15:9: Application of function null does not type check.")
+(error "<stdin>:17:9: Application of function null does not type check.")
+success

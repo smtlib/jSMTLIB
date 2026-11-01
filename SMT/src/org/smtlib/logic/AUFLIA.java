@@ -20,6 +20,7 @@ public class AUFLIA extends Logic {
 
     @Override
     public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
+        checkArraySorts(argSorts, resultSort, id);
     }
 
     @Override
@@ -27,11 +28,20 @@ public class AUFLIA extends Logic {
         if (!isLinearInteger(expression)) {
             throw new IVisitor.VisitorException("Integer expressions must be linear in this logic",expression.pos());
         }
+        checkBoundArraySorts(expression);
     }
 
     @Override
     public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
-        if (expr != null) checkArraySort(expr, id, "(Array Int Int)", sortApp("Array", sortApp("Int"), sortApp("Int")));
+        if (expr != null) checkArraySorts(expr, id.pos());
+    }
+
+    @Override
+    protected String allowedArraySorts() { return "(Array Int Int)"; }
+
+    @Override
+    protected boolean allowedArraySort(ISort.IApplication array) {
+        return sameSort(array, sortApp("Array", sortApp("Int"), sortApp("Int")));
     }
 
 }

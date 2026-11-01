@@ -1,0 +1,16 @@
+; A logic's restriction on array sorts covers every array term: function argument and
+; result sorts and quantified variables, not only define-sort
+(set-logic QF_ABV)
+(define-fun d ((x (Array (_ BitVec 8) Bool))) Bool true)
+(reset)
+(set-logic QF_AUFLIA)
+(declare-const a (Array Int Bool))
+(declare-fun f ((Array Bool Int)) Int)
+(reset)
+(set-logic AUFLIA)
+(declare-const a (Array Int Bool))
+(assert (forall ((b (Array Int Bool))) true))
+(reset)
+(set-logic AUFLIRA)
+(declare-fun f ((Array Int Int)) Real)
+(assert (exists ((b (Array Real Real))) true))

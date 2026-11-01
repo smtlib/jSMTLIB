@@ -22,13 +22,19 @@ public class QF_ABV extends QF_UF {
     public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
         // May declare constants, but not functions without definitions
         noFunctions(id,argSorts,resultSort,definition);
-        checkArraySortIsBitVecToBitVec(resultSort, id);
+        checkArraySorts(argSorts, resultSort, id);
     }
 
     public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
         noSorts(id,params,expr);
-        if (expr != null) checkArraySortIsBitVecToBitVec(expr, id);
+        if (expr != null) checkArraySorts(expr, id.pos());
     }
+
+    @Override
+    protected String allowedArraySorts() { return "(Array (_ BitVec i) (_ BitVec j))"; }
+
+    @Override
+    protected boolean allowedArraySort(ISort.IApplication array) { return isBitVecArray(array); }
 
     // The spec's "Formulas in ite terms must satisfy the same restriction as well [i.e. be
     // quantifier-free], with the exception that they need not be closed" doesn't need any

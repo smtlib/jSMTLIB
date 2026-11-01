@@ -1,0 +1,32 @@
+(set-logic AUFNIRA)
+^^^^^^^^^^^^^^^^^^^
+(declare-const i Int)
+^^^^^^^^^^^^^^^^^^^^^
+(declare-const r Real)
+^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun g (Real Real) Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (g i r))
+^^^^^^^^^^^^^^^^
+(assert (g r i))
+^^^^^^^^^^^^^^^^
+(assert (= r i))
+^^^^^^^^^^^^^^^^
+(assert (distinct i r))
+^^^^^^^^^^^^^^^^^^^^^^^
+(assert (= (+ i r i) (* r i)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (< i r i))
+^^^^^^^^^^^^^^^^^^
+(assert (= (- r i) (/ r i)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(reset)
+^^^^^^^
+(set-logic AUFLIRA)
+^^^^^^^^^^^^^^^^^^^
+(declare-const i Int)
+^^^^^^^^^^^^^^^^^^^^^
+(declare-const r Real)
+^^^^^^^^^^^^^^^^^^^^^^
+(assert (<= (+ i r) (- r i)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

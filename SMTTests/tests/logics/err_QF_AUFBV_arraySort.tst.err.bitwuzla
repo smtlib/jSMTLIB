@@ -1,0 +1,4 @@
+(define-sort P (X) (Array X X))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-const p (P Bool))
+^^^^^^^^^^^^^^^^^^^^^^^^^^

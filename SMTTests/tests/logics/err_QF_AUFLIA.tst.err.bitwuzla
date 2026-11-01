@@ -8,5 +8,5 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (assert (= y (* x x)))
 ^^^^^^^^^^^^^^^^^^^^^^
-(define-sort BadArr () (Array Int Real))
+(define-sort BadArr () (Array Int Bool))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

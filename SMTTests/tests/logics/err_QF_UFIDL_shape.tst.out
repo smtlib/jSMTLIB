@@ -1,0 +1,13 @@
+success
+success
+success
+success
+(error "In each (+ t1 t2) or (- t1 t2), t1 or t2 must be a numeral in the QF_UFIDL logic: (+ x y)")
+(error "In each (+ t1 t2) or (- t1 t2), t1 or t2 must be a numeral in the QF_UFIDL logic: (- x (f y))")
+(error "In each (+ t1 t2) or (- t1 t2), t1 or t2 must be a numeral in the QF_UFIDL logic: (- x y)")
+(error "In each (+ t1 t2) or (- t1 t2), t1 or t2 must be a numeral in the QF_UFIDL logic: (+ x 1 y)")
+(error "The function symbol * is not allowed in the QF_UFIDL logic: (* 2 x)")
+(error "Negation is not allowed in the QF_UFIDL logic: (- x)")
+(error "The function symbol div is not allowed in the QF_UFIDL logic: (div x 2)")
+(error "The function symbol mod is not allowed in the QF_UFIDL logic: (mod x 2)")
+(error "The function symbol abs is not allowed in the QF_UFIDL logic: (abs x)")

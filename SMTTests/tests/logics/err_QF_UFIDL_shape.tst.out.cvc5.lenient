@@ -1,0 +1,13 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "Parse Error: <shell>:16.20: Symbol 'div' not declared as a variable")
+(error "The solver process has exited")
+(error "The solver process has exited")

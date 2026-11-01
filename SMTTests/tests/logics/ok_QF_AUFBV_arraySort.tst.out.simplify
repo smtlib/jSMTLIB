@@ -1,0 +1,8 @@
+(error "The simplify solver does not support the QF_AUFBV logic")
+(error "The logic must be set before a define-sort command is issued")
+(error "The logic must be set before a define-sort command is issued")
+(error "The logic must be set before a declare-const command is issued")
+(error "The logic must be set before a declare-const command is issued")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before a define-fun command is issued")
+(error "The logic must be set before an assert command is issued")

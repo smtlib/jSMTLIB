@@ -1,0 +1,9 @@
+success
+success
+(error "Array sorts must be (Array (_ BitVec i) (_ BitVec j)) in this logic")
+(error "Array sorts must be (Array (_ BitVec i) (_ BitVec j)) in this logic")
+(error "Array sorts must be (Array (_ BitVec i) (_ BitVec j)) in this logic")
+(error "Array sorts must be (Array (_ BitVec i) (_ BitVec j)) in this logic")
+(error "Error while checking sort abbreviation: Array sorts must be (Array (_ BitVec i) (_ BitVec j)) in this logic")
+success
+(error "Array sorts must be (Array (_ BitVec i) (_ BitVec j)) in this logic")
