@@ -140,7 +140,8 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended simplify ");
         //process = null;
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#exit " + solverName());
-        return smtConfig.responseFactory.success(); // FIXME - should forbid any actions after exited
+        // Later commands answer that the process has exited (AbstractSolver.execute)
+        return smtConfig.responseFactory.success();
     }
 
     // Simplify has no SMT-LIB syntax at all (its own protocol is translated command-by-command
@@ -1569,7 +1570,8 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 //            StringBuilder sb = new StringBuilder();
 //            sb.append(e.parameter().accept(this));
 //            return sb.toString();
-            throw new VisitorException("Use of bindings is not yet implemented in the Simplify adapter",e.pos()); // FIXME - let in Simplify
+            // Unreached: visit(ILet) translates its bindings' values itself
+            throw new VisitorException("INTERNAL ERROR: a let binding translated outside its let",e.pos());
         }
 
         @Override
