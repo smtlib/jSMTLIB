@@ -11,3 +11,6 @@
 (error "The solver process has exited")
 (error "The solver process has exited")
 (error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

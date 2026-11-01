@@ -13,3 +13,7 @@
 (assert (<= (- x y) (/ 1 3)))
 (assert (<= (- x y) (/ (- 1) 3)))
 (assert (<= (- (+ x x x) (+ y y y)) 1))
+(assert (>= (- x y) 1))
+(assert (<= (- x y) 5))
+; define-sort alias is allowed (covers checkSortDeclaration pass path)
+(define-sort MyReal () Real)
