@@ -227,8 +227,6 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
         int length();
     }
 
-    // FIXME - review headSymbol, head
-
     /** This interface represents SMT-LIB string literals */
     static public interface IStringLiteral extends ILiteral {
         /** Returns the value without enclosing quotes and without any escape sequences; there may be explicit new line (and other white space characters) */
@@ -285,12 +283,8 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
     /** This interface represents SMT-LIB parameterized identifiers */
     static public interface IParameterizedIdentifier extends IIdentifier {
 
-        // TODO - document
-        IIdentifier head();
-
         /** The head symbol of the identifier */
-        @Override
-        ISymbol headSymbol();
+        ISymbol head();
 
         /** All indices of the identifier: INumeral or ISymbol, or the literals IIndex describes.
          *  Symbol indices are allowed only in SMT-LIB V2.5 and later. */

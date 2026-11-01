@@ -758,7 +758,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             return save(e,i);
         }
         ISymbol pheadSymbol = null;
-        if (head instanceof IParameterizedIdentifier) pheadSymbol = ((IParameterizedIdentifier)head).headSymbol();
+        if (head instanceof IParameterizedIdentifier) pheadSymbol = ((IParameterizedIdentifier)head).head();
         if (symTable.bitVectorTheorySet &&
                 head instanceof IParameterizedIdentifier &&
                 Utils.EXTRACT.equals(pheadSymbol)) {
@@ -1079,7 +1079,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         ISort.IApplication se = (ISort.IApplication)s;
         if (!(se.family() instanceof IParameterizedIdentifier)) return false;
         IParameterizedIdentifier pid = (IParameterizedIdentifier)se.family();
-        return Utils.BITVEC_SYM.equals(pid.headSymbol());
+        return Utils.BITVEC_SYM.equals(pid.head());
     }
 
     // Real/Int sort checks are only needed here, for the Int-to-Real coercion rule
@@ -1127,7 +1127,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         ISort.IApplication se = (ISort.IApplication)s;
         if (!(se.family() instanceof IParameterizedIdentifier)) return false;
         IParameterizedIdentifier pid = (IParameterizedIdentifier)se.family();
-        return Utils.FLOATINGPOINT_SYM.equals(pid.headSymbol());
+        return Utils.FLOATINGPOINT_SYM.equals(pid.head());
     }
 
     private boolean isRoundingMode(ISort s) {
@@ -1295,7 +1295,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         requireVersionForSymbolIndex(e);
         IFcnSort sort = null;
         boolean useext = true;
-        String pname = e.headSymbol().value();
+        String pname = e.head().value();
         if (useext && symTable.bitVectorTheorySet &&
                 (pname.matches("bv(0|[1-9][0-9]*)") // TODO - allow leading zeros?
                 )) {
@@ -1310,9 +1310,9 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             return save(e,s);
         }
         if (useext && symTable.floatingPointTheorySet &&
-                (Utils.FP_POS_INF.equals(e.headSymbol()) || Utils.FP_NEG_INF.equals(e.headSymbol())
-                || Utils.FP_POS_ZERO.equals(e.headSymbol()) || Utils.FP_NEG_ZERO.equals(e.headSymbol())
-                || Utils.FP_NAN.equals(e.headSymbol()))) {
+                (Utils.FP_POS_INF.equals(e.head()) || Utils.FP_NEG_INF.equals(e.head())
+                || Utils.FP_POS_ZERO.equals(e.head()) || Utils.FP_NEG_ZERO.equals(e.head())
+                || Utils.FP_NAN.equals(e.head()))) {
             if (!checkNumeralIndices(e, 2, "Expected exactly two numerals (eb sb) in a " + pname + " identifier")) return null;
             int eb = ((INumeral) e.indices().get(0)).intValue();
             int sb = ((INumeral) e.indices().get(1)).intValue();
@@ -1320,7 +1320,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             return save(e,s);
         }
 
-        if (Utils.CHAR.equals(e.headSymbol())) {
+        if (Utils.CHAR.equals(e.head())) {
             if (stringSortSymbol == null) stringSortSymbol = smtConfig.exprFactory.symbol("STRING");
             IFcnSort ssort = symTable.lookup(0,stringSortSymbol);
             if (ssort != null) return checkChar(e, ssort.resultSort());

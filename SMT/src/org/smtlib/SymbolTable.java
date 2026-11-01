@@ -334,12 +334,12 @@ public class SymbolTable {
         // FIXME _ improve so this is not hard coded
         if (name instanceof IParameterizedIdentifier) {
             IParameterizedIdentifier pf = (IParameterizedIdentifier)name;
-            if (bitVectorTheorySet && Utils.BITVEC_SYM.equals(pf.headSymbol())) {
+            if (bitVectorTheorySet && Utils.BITVEC_SYM.equals(pf.head())) {
                 if (pf.indices().size() != 1 || !(pf.indices().get(0) instanceof INumeral)) {
                     return smtConfig.sortFactory.createErrorDefinition(name,"A bit-vector sort must have exactly one numeral",
                             pf.indices().size() > 1 ? pf.indices().get(1).pos()
                                     : pf.indices().size() == 1 ? pf.indices().get(0).pos()
-                                    : pf.headSymbol().pos());
+                                    : pf.head().pos());
                 }
                 if (((INumeral) pf.indices().get(0)).intValue() == 0) {
                     return smtConfig.sortFactory.createErrorDefinition(name,"A bit-vector sort must have a length of at least 1",pf.indices().get(0).pos());
@@ -348,12 +348,12 @@ public class SymbolTable {
                 sorts.put(name, def);
                 return def;
             }
-            if (floatingPointTheorySet && Utils.FLOATINGPOINT_SYM.equals(pf.headSymbol())) {
+            if (floatingPointTheorySet && Utils.FLOATINGPOINT_SYM.equals(pf.head())) {
                 if (pf.indices().size() != 2 || !(pf.indices().get(0) instanceof INumeral) || !(pf.indices().get(1) instanceof INumeral)) {
                     return smtConfig.sortFactory.createErrorDefinition(name,"A FloatingPoint sort must have exactly two numerals (eb sb)",
                             pf.indices().size() == 2 && !(pf.indices().get(0) instanceof INumeral) ? pf.indices().get(0).pos()
                                     : pf.indices().size() > 0 ? pf.indices().get(pf.indices().size()-1).pos()
-                                    : pf.headSymbol().pos());
+                                    : pf.head().pos());
                 }
                 int eb = ((INumeral) pf.indices().get(0)).intValue();
                 int sb = ((INumeral) pf.indices().get(1)).intValue();
