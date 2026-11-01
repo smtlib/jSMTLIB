@@ -18,8 +18,9 @@ import org.junit.rules.Timeout;
  * Test-infrastructure self-check (no solver): every logic jSMTLIB ships a definition
  * for, under ../SMT/logics/ (searched recursively, so this includes the per-version
  * subdirectories such as V2.0/), must be exercised by at least one (set-logic ...)
- * command somewhere under tests/logics/*.tst. Catches a logic being added, renamed, or
- * left behind in a version subdirectory without anyone adding matching test coverage.
+ * command in some .tst file under tests/logics/ (searched recursively). Catches a
+ * logic being added, renamed, or left behind in a version subdirectory without anyone
+ * adding matching test coverage.
  */
 public class LogicsCoverageTest {
 
