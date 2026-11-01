@@ -1072,7 +1072,9 @@ public class SMT {
                     usage();
                     return 1;
                 }
-                options.logicPath = trimToNull(args[i++]);
+                options.logicPath = args[i++];
+                if (blankArgument(options.logicPath, "--logics")) return 1;
+                options.logicPath = options.logicPath.trim();
 
             } else if ("--diag".equals(s)) {
                 if (i >= args.length) {
@@ -1397,10 +1399,10 @@ public class SMT {
         smtConfig.log.logError(smtConfig.responseFactory.error(msg));
     }
 
-    /** Reports an empty or whitespace-only argument to the given option as a command-line
-     *  error; returns whether it was one */
-    private boolean blankArgument(String value, String option) {
-        if (!value.isBlank()) return false;
+    /** Reports a null (from the API), empty or whitespace-only argument to the given option as a
+     *  command-line error; returns whether it was one */
+    private boolean blankArgument(/*@Nullable*/ String value, String option) {
+        if (value != null && !value.isBlank()) return false;
         error("The " + option + " option expects a non-empty argument");
         usage();
         return true;

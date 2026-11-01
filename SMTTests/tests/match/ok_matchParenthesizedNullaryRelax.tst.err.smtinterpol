@@ -1,0 +1,3 @@
+WARNING: A parenthesized pattern should have at least one variable: (nil)
+(assert (match l (((nil) true) ((cons h t) false))))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

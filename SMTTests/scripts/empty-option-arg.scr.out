@@ -12,6 +12,10 @@ exit 1
 exit 1
 (error "The --diag option expects a non-empty argument")
 exit 1
+(error "The --logics option expects a non-empty argument")
+exit 1
+(error "The --logics option expects a non-empty argument")
+exit 1
 (error "The --exec option expects a non-empty argument")
 Usage: java org.smtlib.SMT [args] [file]
        --help [-h]

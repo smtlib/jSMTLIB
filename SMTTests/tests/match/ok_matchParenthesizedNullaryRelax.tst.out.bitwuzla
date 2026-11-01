@@ -1,0 +1,7 @@
+success
+unsupported
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:6:19: invalid sort 'L'
+")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

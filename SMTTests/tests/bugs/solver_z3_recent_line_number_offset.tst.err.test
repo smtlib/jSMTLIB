@@ -1,2 +1,6 @@
 (assert (undeclaredfun x))
         ^^^^^^^^^^^^^^^^^
+(set-option :produce-models true)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(get-value (s))
+^^^^^^^^^^^^^^^

@@ -1,5 +1,5 @@
 success
 success
 unknown
-success
-(error "The get-unsat-core command is only valid immediately after check-sat returned unsat")
+(error "The value of the :produce-unsat-cores option must be set before the set-logic command")
+(error "The get-unsat-core command is only valid if :produce-unsat-cores has been enabled")

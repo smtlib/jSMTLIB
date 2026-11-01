@@ -1,0 +1,8 @@
+(set-option :produce-proofs true)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(set-option :produce-unsat-cores true)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(set-option :produce-assignments true)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(set-option :produce-unsat-assumptions true)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
