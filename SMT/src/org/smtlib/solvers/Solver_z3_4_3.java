@@ -573,7 +573,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     public IResponse declare_const(Ideclare_const cmd) {
         if (!logicSet) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-const command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a declare-const command is issued", cmd.pos());
         }
         try {
             return recordChange(StackChange.DECLARE_FUN, send(Shape.SUCCESS, translate(cmd)));
@@ -587,7 +587,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     public IResponse declare_fun(Ideclare_fun cmd) {
         if (!logicSet) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-fun command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a declare-fun command is issued", cmd.pos());
         }
         try {
             return recordChange(StackChange.DECLARE_FUN, send(Shape.SUCCESS, translate(cmd)));
@@ -602,7 +602,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     public IResponse define_fun(Idefine_fun cmd) {
         if (!logicSet) {
-            return smtConfig.responseFactory.error("The logic must be set before a " + cmd.commandName() + " command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a " + cmd.commandName() + " command is issued", cmd.pos());
         }
         try {
             return recordChange(StackChange.DEFINE_FUN, send(Shape.SUCCESS, translate(cmd)));
@@ -616,7 +616,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     public IResponse declare_sort(Ideclare_sort cmd) {
         if (!logicSet) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-sort command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a declare-sort command is issued", cmd.pos());
         }
         try {
             return recordChange(StackChange.DECLARE_SORT, send(Shape.SUCCESS, translate(cmd)));
@@ -630,7 +630,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     public IResponse define_sort(Idefine_sort cmd) {
         if (!logicSet) {
-            return smtConfig.responseFactory.error("The logic must be set before a define-sort command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a define-sort command is issued", cmd.pos());
         }
         try {
             return recordChange(StackChange.DEFINE_SORT, send(Shape.SUCCESS, translate(cmd)));
