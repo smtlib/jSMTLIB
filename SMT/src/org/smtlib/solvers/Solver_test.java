@@ -382,16 +382,10 @@ public class Solver_test implements ISolver {
                 ((Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
             }
         }
-        if (logicSet != null && (Utils.GLOBAL_DECLARATIONS.equals(option)||Utils.INTERACTIVE_MODE.equals(option)||Utils.PRODUCE_ASSERTIONS.equals(option))) {
+        // --relax allows a start-mode-only option to be set after set-logic
+        if (logicSet != null && !smtConfig.relax && Utils.startModeOptions.contains(option)) {
             return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
         }
-//        if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 
-//                //Utils.PRODUCE_MODELS.equals(option) || 
-//                Utils.PRODUCE_PROOFS.equals(option) ||
-//                Utils.PRODUCE_UNSAT_CORES.equals(option)) {
-//            if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
-//            return smtConfig.responseFactory.unsupported();
-//        }
         if (Utils.VERBOSITY.equals(option)) {
             smtConfig.verbose = (value instanceof INumeral) ? ((INumeral)value).intValue() : 0;
         } else if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {

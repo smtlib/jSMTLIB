@@ -1,0 +1,7 @@
+success
+unsupported
+unsupported
+unsupported
+unsupported
+(error "The value of the :produce-unsat-assumptions option must be set before the set-logic command")
+(error "The value of the :random-seed option must be set before the set-logic command")

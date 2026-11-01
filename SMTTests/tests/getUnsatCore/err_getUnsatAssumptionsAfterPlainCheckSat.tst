@@ -7,15 +7,12 @@
 ; Solver_test#get_unsat_assumptions, which Solver_simplify's version is a direct
 ; copy of -- same gap, same reachable "unsupported" tail).
 ;
-; Real solvers vary widely here since none of jSMTLIB's own precondition logic
-; applies to them (each forwards straight to its native process): yices2/smtinterpol
-; both reject setting :produce-unsat-assumptions after set-logic outright (a
-; genuine, unrelated solver-native restriction) and so never even get to try;
-; cvc5 and bitwuzla natively support get-unsat-assumptions after a plain check-sat
-; and answer "()".
+; Real solvers vary since none of jSMTLIB's own precondition logic applies to them
+; (each forwards straight to its native process); cvc5 and bitwuzla natively support
+; get-unsat-assumptions after a plain check-sat and answer "()".
+(set-option :produce-unsat-assumptions true)
 (set-logic QF_UF)
 (set-info :status unsat)
-(set-option :produce-unsat-assumptions true)
 (assert false)
 (check-sat)
 (get-unsat-assumptions)

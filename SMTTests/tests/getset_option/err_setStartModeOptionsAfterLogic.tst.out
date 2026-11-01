@@ -1,0 +1,7 @@
+success
+(error "The value of the :produce-models option must be set before the set-logic command")
+(error "The value of the :produce-proofs option must be set before the set-logic command")
+(error "The value of the :produce-unsat-cores option must be set before the set-logic command")
+(error "The value of the :produce-assignments option must be set before the set-logic command")
+(error "The value of the :produce-unsat-assumptions option must be set before the set-logic command")
+(error "The value of the :random-seed option must be set before the set-logic command")
