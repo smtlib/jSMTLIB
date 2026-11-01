@@ -20,20 +20,28 @@ public class AUFLIRA extends Logic {
 
     @Override
     public void checkFcnDeclaration(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
+        checkArraySorts(argSorts, resultSort, id);
     }
 
     @Override
     public void validExpression(IExpr expression) throws IVisitor.VisitorException {
         if (!isLinearReal(expression))
             throw new IVisitor.VisitorException("Arithmetic expressions must be linear in the " + logicName + " logic", expression.pos());
+        checkBoundArraySorts(expression);
     }
 
     @Override
     public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
-        if (expr != null) checkArraySort(expr, id,
-                "(Array Int Real) or (Array Int (Array Int Real))",
-                sortApp("Array", sortApp("Int"), sortApp("Real")),
-                sortApp("Array", sortApp("Int"), sortApp("Array", sortApp("Int"), sortApp("Real"))));
+        if (expr != null) checkArraySorts(expr, id.pos());
+    }
+
+    @Override
+    protected String allowedArraySorts() { return "(Array Int Real) or (Array Int (Array Int Real))"; }
+
+    @Override
+    protected boolean allowedArraySort(ISort.IApplication array) {
+        ISort intReal = sortApp("Array", sortApp("Int"), sortApp("Real"));
+        return sameSort(array, intReal) || sameSort(array, sortApp("Array", sortApp("Int"), intReal));
     }
 
 }

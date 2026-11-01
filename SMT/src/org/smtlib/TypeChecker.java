@@ -145,7 +145,6 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         symTable.push();
         boolean errors = false;
         try {
-            symTable.logicInUse.checkSortDeclaration(id,params,expr);
             if (params != null) for (ISort.IParameter p : params) {
                 if (f.shadowsLogic(p.symbol(), true)) errors = true;
                 boolean b = symTable.addSortParameter(p.symbol(), false);
@@ -155,6 +154,8 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 }
             }
             if (!errors && expr != null) expr.accept(f);
+            // After the type check, which links the abbreviations in expr to their definitions
+            if (f.result.isEmpty()) symTable.logicInUse.checkSortDeclaration(id,params,expr);
         } catch (IVisitor.VisitorException e) {
             f.error("Error while checking sort abbreviation: " + e.getMessage(),id.pos());
         } catch (Exception e) {
@@ -978,39 +979,14 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         }
         StringBuilder reason = new StringBuilder();
         ISort matchedResultSort = symTable.lookup(head,argSorts,resultSort,reason);
-        if (matchedResultSort == null && symTable.realsIntsTheorySet) {
-            // Per the Int-to-Real widening extension (e.g. AUFLIRA.smt2/AUFNIRA.smt2's
-            // :extensions), every Int-sorted argument is implicitly coerced to Real -- not
-            // just the ones alongside an already-Real-sorted argument. Without an existing
-            // Real argument to borrow a concrete sort from (e.g. (/ x x) with x:Int, where
-            // Reals_Ints declares only (/ Real Real Real), no (/ Int Int Real) overload),
-            // fall back to a freshly constructed Real sort.
-            ISort realSort = null;
-            boolean hasInt = false;
-            for (ISort sort: argSorts) {
-                if (isRealSort(sort)) realSort = sort;
-                else if (isIntSort(sort)) hasInt = true;
-            }
-            if (hasInt) {
-                if (realSort == null) realSort = makeReal();
-                List<ISort> newargs = new LinkedList<ISort>();
-                for (ISort sort: argSorts) {
-                    if (isIntSort(sort)) {
-                        newargs.add(realSort);
-                    } else {
-                        newargs.add(sort);
-                    }
-                }
-                // Retry with a throwaway StringBuilder, not `reason`: if this retry also
-                // fails (e.g. a genuinely wrong-sorted argument that widening can't fix),
-                // `reason` must keep explaining the failure against the actual argument
-                // sorts the caller wrote, not this speculative coercion attempt's -- e.g.
-                // "expected Int" must not be overwritten by an unrelated retry's "expected
-                // Real" for a call that was never about Int/Real widening at all.
-                StringBuilder retryReason = new StringBuilder();
-                ISort retryResultSort = symTable.lookup(head,newargs,resultSort,retryReason);
-                if (retryResultSort != null) matchedResultSort = retryResultSort;
-            }
+        if (matchedResultSort == null && symTable.realsIntsTheorySet && widensToReal(head, argSorts)) {
+            List<ISort> newargs = new LinkedList<ISort>();
+            ISort realSort = makeReal();
+            for (ISort sort: argSorts) newargs.add(isIntSort(sort) ? realSort : sort);
+            // A throwaway StringBuilder, so that `reason` still explains the failure against
+            // the argument sorts as written if this retry fails too
+            ISort retryResultSort = symTable.lookup(head,newargs,resultSort,new StringBuilder());
+            if (retryResultSort != null) matchedResultSort = retryResultSort;
         }
         if (matchedResultSort == null) {
             String msg;
@@ -1080,6 +1056,32 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         if (!(se.family() instanceof IParameterizedIdentifier)) return false;
         IParameterizedIdentifier pid = (IParameterizedIdentifier)se.family();
         return Utils.BITVEC_SYM.equals(pid.headSymbol());
+    }
+
+    /** Whether an application of head to arguments of these sorts may read its Int arguments
+     *  as Real, per the :extensions of AUFLIRA and AUFNIRA: for op of rank (op Real Real s),
+     *  t1 of sort Int and t of sort Real, (op t1 t) and (op t t1) mean (op (to_real t1) t) and
+     *  (op t (to_real t1)); (/ t1 t2) with t1, t2 Int means (/ (to_real t1) (to_real t2)).
+     *  More than two arguments qualify only as the n-ary form of a binary :left-assoc,
+     *  :right-assoc, :chainable or :pairwise operator (Sec. 3.6.2), i.e. when head has no
+     *  declaration of that arity; the lookup with Int read as Real then decides the rest. */
+    private boolean widensToReal(IIdentifier head, List<ISort> argSorts) {
+        int n = argSorts.size();
+        if (n < 2) return false;
+        boolean hasReal = false;
+        for (ISort sort: argSorts) {
+            if (isRealSort(sort)) hasReal = true;
+            else if (!isIntSort(sort)) return false;
+        }
+        if (!hasReal && !Utils.SLASH.equals(head)) return false;
+        if (n == 2) return true;
+        List<SymbolTable.Entry> entries = symTable.lookup(head);
+        if (entries != null) {
+            for (SymbolTable.Entry entry: entries) {
+                if (entry.sort.argSorts().length == n) return false;
+            }
+        }
+        return true;
     }
 
     // Real/Int sort checks are only needed here, for the Int-to-Real coercion rule

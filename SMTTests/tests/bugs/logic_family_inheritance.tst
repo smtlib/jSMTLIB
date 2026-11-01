@@ -48,4 +48,5 @@
 (set-logic QF_UFIDL)
 (declare-const x Int)
 (declare-const y Int)
-(assert (= (+ x y) 3))
+; not a QF_IDL atom shape, but QF_UFIDL's syntax does not extend QF_IDL's
+(assert (= (+ x 1) y))

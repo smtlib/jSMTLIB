@@ -45,4 +45,4 @@ success
 success
 success
 success
-(error "line 51 column 21: logic only supports difference arithmetic")
+success

@@ -1,0 +1,11 @@
+; QF_UFIDL's :language: in every (op t1 t2) with op in {+, -} one of t1, t2 is a numeral;
+; the n-ary forms reduce to binary ones (Sec. 3.6.2)
+(set-logic QF_UFIDL)
+(declare-const x Int)
+(declare-const y Int)
+(declare-fun f (Int) Int)
+(assert (= (+ x 1) y))
+(assert (< (- 2 x) (f y)))
+(assert (= (- 0 5) (+ 1 x 2)))
+(assert (<= x y (f x)))
+(assert (= (f (+ 3 x)) (- (f x) 1)))

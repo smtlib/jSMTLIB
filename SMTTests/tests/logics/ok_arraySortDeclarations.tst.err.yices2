@@ -1,0 +1,14 @@
+(set-logic AUFLIA)
+^^^^^^^^^^^^^^^^^^
+(assert (forall ((b (Array Int Int))) (= b b)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(reset)
+^^^^^^^
+(set-logic AUFLIRA)
+^^^^^^^^^^^^^^^^^^^
+(define-sort R () Real)
+^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun f ((Array Int (Array Int R))) (Array Int R))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (exists ((b (Array Int Real))) (= b b)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
