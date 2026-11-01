@@ -132,8 +132,13 @@ public class AbstractSolver implements ISolver {
      *  SolverProcess.takeDiagnosticOutput), noting a whole-run time-limit report there: the reply
      *  stands, but the solver has ended */
     protected void logSolverDiagnostics() {
+        logSolverDiagnostics(false);
+    }
+
+    /** As {@link #logSolverDiagnostics()}; all includes an unended last line, for when the solver is stopped */
+    private void logSolverDiagnostics(boolean all) {
         if (solverProcess == null) return;
-        String diag = solverProcess.takeDiagnosticOutput();
+        String diag = solverProcess.takeDiagnosticOutput(all);
         if (diag.trim().isEmpty()) return;
         timeLimitResponse(diag);
         smtConfig.log.logDiag(diag.trim());
@@ -228,6 +233,7 @@ public class AbstractSolver implements ISolver {
 
     @Override
     public void forceExit() {
+        logSolverDiagnostics(true);
         if (solverProcess != null) solverProcess.exit();
     }
 
@@ -708,6 +714,12 @@ public class AbstractSolver implements ISolver {
             logSolverDiagnostics();
             String err = takeErrorOutput(false);
             if (!err.isEmpty()) smtConfig.log.logDiag(err.trim());
+            // An unended line is kept as an open line of diagnostic output, which the next text read
+            // finishes, whether pipelined or by listen() (see SolverProcess.openDiagnosticLine)
+            if (solverProcess != null && unreadErrorOutput.length() > 0 && unreadErrorOutput.charAt(0) != ';') {
+                solverProcess.openDiagnosticLine(unreadErrorOutput.toString());
+                unreadErrorOutput.setLength(0);
+            }
         }
     }
 
@@ -1091,10 +1103,28 @@ public class AbstractSolver implements ISolver {
         throw new UnsupportedOperationException("AbstractSolver.start");
     }
 
+    /** Passes --seed, if given, as the standard :random-seed option, for an adapter whose solver uses
+     *  that option; called from start(), while :print-success is true. Returns an error if the solver
+     *  rejects it, else null. */
+    protected /*@Nullable*/ IResponse sendSeed() throws IOException {
+        if (smtConfig.seed == 0) return null;
+        String reply = solverProcess.sendAndListen("(set-option :random-seed " + smtConfig.seed + ")\n").trim();
+        if (reply.equals("success")) return null;
+        return smtConfig.responseFactory.error("The solver rejected --seed " + smtConfig.seed + ": " + reply);
+    }
+
+    /** Reports that --seed, if given, is ignored, for an adapter whose solver has no random seed */
+    protected void reportSeedIgnored() {
+        if (smtConfig.seed != 0) {
+            smtConfig.log.logDiag("#" + smtConfig.solvername + " has no random seed option; --seed " + smtConfig.seed + " is ignored");
+        }
+    }
+
     /** @see org.smtlib.ISolver#exit() */
     @Override
     public IResponse exit() {
         IResponse response = sendExitCommand();
+        logSolverDiagnostics(true);
         solverProcess.exit();
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended " + smtConfig.solvername);
         solverProcess = null;

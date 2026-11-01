@@ -1,0 +1,6 @@
+success
+success
+success
+success
+success
+(error "Expected an expression with Bool sort, not X")

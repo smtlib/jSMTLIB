@@ -66,6 +66,7 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
         if (smtConfig.seed != 0) {
             args.add("--seed");
             args.add(Integer.toString(smtConfig.seed));
+            options.put(Utils.RANDOM_SEED, smtConfig.exprFactory.numeral(smtConfig.seed)); // for get_option
         }
         if (smtConfig.timeout > 0) {
             // --time-limit-per is a per-check-sat timeout in milliseconds (matching

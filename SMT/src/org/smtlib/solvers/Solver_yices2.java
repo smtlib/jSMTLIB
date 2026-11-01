@@ -80,6 +80,8 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
             // Can't turn off printing success, or we get no feedback
 //            solverProcess.sendAndListen("(set-option :print-success true)\n"); // Z3 4.4.0 needs this because it mistakenly has the default for :print-success as false
             //if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
+            IResponse seed = sendSeed();
+            if (seed != null) return seed;
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started yices2 ");
             return smtConfig.responseFactory.success();
         } catch (Exception e) {

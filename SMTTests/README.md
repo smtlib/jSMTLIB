@@ -119,9 +119,9 @@ the `.stub` file's lines as its replies, one per command received in order, incl
 priming command the adapter sends first (e.g. `(set-option :print-success true)`). An empty
 line is an empty reply; `<<stderr>> text` writes the text to standard error; `<<with-stderr text>> reply`
 writes the text to standard error and then the reply to standard output; `<<exit N>>`
-ends the process with code N right after the reply before it. Such a test runs only in the
-`test`-solver variant of `FileTests`, and `runtest` skips it. Examples are in
-`tests/solverProtocol/`.
+ends the process with code N right after the reply before it (StubSolver describes the other
+directives). Such a test runs only in the `test`-solver variant of `FileTests`, and `runtest` skips
+it. Examples are in `tests/solverProtocol/`.
 
 | Subdirectory | Covers |
 |---|---|

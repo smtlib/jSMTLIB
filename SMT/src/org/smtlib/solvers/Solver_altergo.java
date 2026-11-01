@@ -76,6 +76,7 @@ public class Solver_altergo extends AbstractSolver implements ISolver {
     public IResponse start() {
         try {
             solverProcess.start(false);
+            reportSeedIgnored();
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
             return smtConfig.responseFactory.success();
         } catch (Exception e) {
