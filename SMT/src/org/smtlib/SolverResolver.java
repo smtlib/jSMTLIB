@@ -36,7 +36,7 @@ public final class SolverResolver {
      *      class it names is not found); else the class
      *      {@code Solver_<name>} (with - and . in the name as _); else, for a z3 name,
      *      {@code Solver_z3_recent}; else {@code Solver_smt};</li>
-     *  <li>a {@code .command} property, split at commas, if given;</li>
+     *  <li>a {@code .command} property, split at commas, if given and not blank;</li>
      *  <li>the executable: the one given, else {@code .exec.<platform>}, then {@code .exec}; resolved by
      *      {@link SMT#resolveExecutablePath}, and put in the command in place of {@code %exec%}, or as
      *      its first element if there is no {@code %exec%}; with neither a command nor an executable,
@@ -50,7 +50,7 @@ public final class SolverResolver {
      * @param solverDir the solver directory (SMT_SOLVER_DIR), or null
      * @param classLookup the class with a given name, or null if there is none
      * @throws ISolver.CreationException if a configured adapter class is not found or the
-     *         {@code .command} property has no content */
+     *         {@code .command} property is only commas */
     public static Resolution resolve(/*@Nullable*/ Properties props, String solvername, /*@Nullable*/ String executable,
             String platform, /*@Nullable*/ String solverDir, Function<String, Class<?>> classLookup)
             throws ISolver.CreationException {
@@ -107,7 +107,7 @@ public final class SolverResolver {
         String[] command = null;
         String propName = Utils.PROPS_SOLVER_PREFIX + solvername + Utils.PROPS_COMMAND_SUFFIX;
         String commandString = props == null ? null : props.getProperty(propName);
-        if (commandString != null && !commandString.isEmpty()) {
+        if (commandString != null && !commandString.trim().isEmpty()) {
             command = commandString.split(",");
             if (command.length == 0) {
                 throw new ISolver.CreationException("The command specified for " + propName + " appears to have no content");

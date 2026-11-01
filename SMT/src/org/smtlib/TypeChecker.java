@@ -312,14 +312,23 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 
     /** The main entry point for type-checking an IExpr (expected to be a Bool)*/
     public static List<IResponse> check(SymbolTable symTable, IExpr expr) {
+        return check(symTable, expr, true);
+    }
+
+    /** Type-checks a term of any sort (e.g. a get-value term) and checks it against the logic in use, if any. */
+    public static List<IResponse> checkTerm(SymbolTable symTable, IExpr expr) {
+        return check(symTable, expr, false);
+    }
+
+    private static List<IResponse> check(SymbolTable symTable, IExpr expr, boolean requireBool) {
         TypeChecker f = new TypeChecker(symTable);
         try {
             ISort topsort = expr.accept(f);
-            if (topsort != null && !topsort.isBool()) {
+            if (requireBool && topsort != null && !topsort.isBool()) {
                 f.error("Expected an expression with Bool sort, not " + topsort, expr.pos());
             }
             try {
-                symTable.logicInUse.validExpression(expr);
+                if (symTable.logicInUse != null) symTable.logicInUse.validExpression(expr);
             } catch (IVisitor.VisitorException e) {
                 f.error(e.getMessage(), e.pos());
             }

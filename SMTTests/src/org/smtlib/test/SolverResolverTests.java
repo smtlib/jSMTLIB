@@ -114,6 +114,17 @@ public class SolverResolverTests {
         }
     }
 
+    /** An empty or blank .command counts as none, as a blank .exec does */
+    @Test
+    public void emptyCommandCountsAsNone() throws Exception {
+        for (String value : new String[]{"", "  "}) {
+            Resolution r = resolve(props("s.command", value, "s.exec", "s-1.0"), "s", null, known());
+            Assert.assertNull(r.command());
+            Assert.assertEquals(DIR + "/s-1.0", r.executable());
+            Assert.assertEquals(DIR + "/s", resolve(props("s.command", value), "s", null, known()).executable());
+        }
+    }
+
     @Test
     public void executableLookupOrder() throws Exception {
         Properties p = props("s.exec.linux", "s-linux", "s.exec", "s-plain");

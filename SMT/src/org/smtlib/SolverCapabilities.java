@@ -4,6 +4,8 @@
  */
 package org.smtlib;
 
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Properties;
 
 /** Whether a solver supports a capability, as recorded per solver name in jsmtlib.properties (#157):
@@ -82,7 +84,7 @@ public final class SolverCapabilities {
         String propName = Utils.PROPS_SOLVER_PREFIX + solvername + PROPS_CAPABILITIES_SUFFIX;
         String entry = props.getProperty(propName);
         if (entry == null) return Support.UNKNOWN;
-        Support result = Support.UNKNOWN;
+        Map<Capability, Support> recorded = new EnumMap<>(Capability.class);
         for (String token : entry.split(",")) {
             token = token.trim();
             if (token.isEmpty()) continue;
@@ -90,14 +92,13 @@ public final class SolverCapabilities {
             String name = negated ? token.substring(1) : token;
             Capability c = Capability.lookup(name);
             if (c == null) throw new IllegalArgumentException("Unknown capability '" + name + "' in " + propName);
-            if (c != capability) continue;
             Support s = negated ? Support.NO : Support.YES;
-            if (result != Support.UNKNOWN && result != s) {
+            if (recorded.getOrDefault(c, s) != s) {
                 throw new IllegalArgumentException("Capability '" + name + "' is both supported and unsupported in " + propName);
             }
-            result = s;
+            recorded.put(c, s);
         }
-        return result;
+        return recorded.getOrDefault(capability, Support.UNKNOWN);
     }
 
     /** The family name: the solver name before the first '-' followed by a digit; null if there is none */
