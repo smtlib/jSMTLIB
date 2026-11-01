@@ -78,7 +78,10 @@ public abstract class Sort extends Pos.Printable implements ISort {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof IFamily)) return false;
-            return identifier().equals(((IFamily)o).identifier());  // FIXME - is this sufficient in the presence of overriding symbols?
+            // By name and arity: one scope declares a sort name at most once, so families that
+            // match yet differ come only from different scopes (e.g. redeclared after a pop)
+            IFamily f = (IFamily)o;
+            return identifier().equals(f.identifier()) && intArity() == f.intArity();
         }
 
         @Override

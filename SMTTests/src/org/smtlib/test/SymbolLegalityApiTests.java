@@ -206,6 +206,15 @@ public class SymbolLegalityApiTests {
         Assert.assertTrue(a2.equals(config.sortFactory.createSortExpression(f.symbol("Array"), i, i)));
     }
 
+    /** Sort families (e.g. U declared, popped and redeclared) are equal only with equal arities */
+    @Test
+    public void familiesWithDifferentArityNotEqual() {
+        ISort.IFamily u0 = config.sortFactory.createSortFamily(f.symbol("U"), f.numeral(0), null);
+        ISort.IFamily u1 = config.sortFactory.createSortFamily(f.symbol("U"), f.numeral(1), null);
+        Assert.assertFalse(u0.equals(u1));
+        Assert.assertTrue(u0.equals(config.sortFactory.createSortFamily(f.symbol("U"), f.numeral(0), null)));
+    }
+
     @Test
     public void parenthesizedFormsPrint() {
         ISymbol c = f.symbol("c");

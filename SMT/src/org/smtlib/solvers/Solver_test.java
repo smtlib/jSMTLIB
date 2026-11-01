@@ -122,16 +122,30 @@ public class Solver_test implements ISolver {
         return r;
     }
 
+    /** Whether exit (or forceExit) has been executed */
+    private boolean exited = false;
+
+    /** Once exited, every command but exit (and a comment) answers as a process-based solver's would */
+    @Override
+    public IResponse execute(ICommand cmd) {
+        if (exited && !(cmd instanceof Iexit) && !(cmd instanceof Icomment)) {
+            return smtConfig.responseFactory.error(AbstractSolver.SOLVER_EXITED);
+        }
+        return cmd.execute(this);
+    }
+
     @Override
     public IResponse exit() {
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#exit " + solverName());
-        return smtConfig.responseFactory.success(); // FIXME - should forbid any actions after exited
+        exited = true;
+        return smtConfig.responseFactory.success();
     }
 
     @Override
     public void forceExit() {
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#forceexit " + solverName());
-    } // FIXME - should forbid any actions after exited
+        exited = true;
+    }
 
     @Override
     public IResponse echo(IStringLiteral arg) {
