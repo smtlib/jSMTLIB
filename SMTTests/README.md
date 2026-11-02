@@ -433,9 +433,11 @@ itself. Rules of thumb:
   known-bad output instead of failing every run; promote real conforming
   output to a normal golden instead of `.bad`.
 - A trailing `.lenient` variant, looked up exactly where `.bad` is, records a
-  solver accepting what jSMTLIB rejects where the standard permits it (an
-  extension, or a check the standard does not require of a solver), so that
-  leniency is identifiable apart from non-conformance.
+  solver accepting a construct the standard does not include (e.g. a quantifier
+  in a QF_ logic, a start-mode option after set-logic) when that acceptance is
+  the output's only non-conformance, so that leniency is identifiable apart from
+  `.bad`: rejecting what the standard allows, wrong answers, non-SMT-LIB
+  replies, wrong error positions, crashes. Output mixing the two stays `.bad`.
 
 ---
 
