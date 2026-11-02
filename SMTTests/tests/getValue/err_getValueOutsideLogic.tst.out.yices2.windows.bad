@@ -1,0 +1,7 @@
+success
+success
+success
+sat
+((x 0)((+ x 1) 1))
+(((* x x) 0))
+(error "The solver process has exited")
