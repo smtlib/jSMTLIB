@@ -1,0 +1,4 @@
+<<success-for (set-option :print-success true)>>
+success
+<<sleep 1500>>
+<<exit 0>>

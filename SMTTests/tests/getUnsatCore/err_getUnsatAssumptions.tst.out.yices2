@@ -1,0 +1,3 @@
+success
+(error "not supported: :produce-unsat-assumptions is false")
+(error "A get-unsat-assumptions command takes no arguments")

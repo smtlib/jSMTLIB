@@ -1,0 +1,4 @@
+(define-sort S (Int) (Array Int Int))
+                ^^^
+(declare-datatype P (par (Bool) ((pair (fst Bool)))))
+                          ^^^^

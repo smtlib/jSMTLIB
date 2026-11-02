@@ -77,12 +77,7 @@ public class ScriptTests {
     }
 
     private static File findScriptsFolder() {
-        try {
-            String resource = ScriptTests.class.getClassLoader().getResource("err_array.tst").getPath();
-            return new File(new File(resource).getParentFile().getParentFile(), "scripts");
-        } catch (Exception e) {
-            return new File("scripts");
-        }
+        return SMTTestsFolders.find("scripts");
     }
 
     /** Resolves the bash executable to launch runscript with. A bare "bash" is normally

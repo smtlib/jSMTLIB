@@ -1,0 +1,5 @@
+; a constructor pattern has one variable per selector
+(set-logic ALL)
+(declare-datatype L ((nil) (cons (hd Int) (tl L))))
+(declare-const l L)
+(assert (match l (((cons h) true) (_ false))))

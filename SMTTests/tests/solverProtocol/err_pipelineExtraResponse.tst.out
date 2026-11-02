@@ -1,0 +1,5 @@
+success
+success
+success
+(error "Out of step: the response to (check-sat) was success")
+(error "Unexpected output from the solver: sat")

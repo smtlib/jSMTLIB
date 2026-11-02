@@ -1,0 +1,4 @@
+(error "The simplify solver does not support the QF_LRA logic")
+(error "The logic must be set before a declare-const command is issued")
+(error "The logic must be set before a declare-const command is issued")
+(error "The logic must be set before a declare-sort command is issued")

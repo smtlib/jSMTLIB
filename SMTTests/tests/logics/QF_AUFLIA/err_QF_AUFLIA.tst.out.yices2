@@ -1,0 +1,6 @@
+success
+success
+success
+(error "quantifiers are not allowed in logic QF_AUFLIA")
+(error "The solver process has exited")
+(error "The solver process has exited")

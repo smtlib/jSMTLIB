@@ -1,0 +1,8 @@
+(set-logic AUFLIA)
+^^^^^^^^^^^^^^^^^^
+(assert (forall () true))
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (exists () true))
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (let () true))
+^^^^^^^^^^^^^^^^^^^^^^

@@ -32,12 +32,9 @@ import org.smtlib.solvers.Solver_z3_4_3;
  * this adapter could produce -- so the fix instead removes the client-side check entirely and
  * defers to the solver (per the project's adapter-minimalism principle: defer to native
  * behavior when the solver is compliant, only intercept where it genuinely isn't). What
- * remains necessary is correctness of the local {@code pushesDepth} bookkeeping itself: it
- * must only be decremented once the solver actually confirms the pop succeeded, not
- * unconditionally before even asking -- otherwise a rejected pop would desync it from the
- * solver's real stack depth, corrupting later operations that depend on it (namely
- * {@code set_logic()}'s relax-mode re-entry, which does {@code pop(pushesDepth)} to clear the
- * stack before establishing a new logic).
+ * remained necessary was correctness of {@code pushesDepth} for {@code set_logic()}'s relax-mode
+ * re-entry, which popped the whole stack. That re-entry pop (and {@code pushesDepth}) has since
+ * been removed: z3-4.3 rejects a second set-logic itself, so the pop only lost assertions.
  * <p>
  * Separately, {@code reset_assertions()} was briefly changed to simulate the command (which
  * z3-4.3 predates) by popping back to the base frame -- also reverted. z3-4.3, sent the
@@ -110,14 +107,15 @@ public class SolverZ343PushPopStackDepthBugTest {
                 solver.fake.sent.get(solver.fake.sent.size() - 1).contains("pop"));
     }
 
+    /** The relax-mode re-entry cleanup that pushesDepth served is gone: z3-4.3 rejects a second
+     *  set-logic itself, so a re-entered set-logic is sent as is, with no pop before it, and the
+     *  solver's rejection is the response. */
     @Test
-    public void pushesDepthIsNotDecrementedWhenTheSolverRejectsThePop() {
+    public void relaxSetLogicIsSentWithoutACleanupPop() {
         List<String> canned = new LinkedList<>();
         canned.add("success\n"); // (set-logic ...)
         canned.add("success\n"); // (push 2)
-        canned.add("(error \"too large\")\n"); // (pop 5) -- rejected by the (simulated) solver
-        canned.add("success\n"); // (pop 2) -- set_logic()'s relax re-entry cleanup
-        canned.add("success\n"); // (set-logic ...) -- sent again after the cleanup pop
+        canned.add("(error \"line 3 column 11: the logic has already been set\")\n"); // (set-logic ...)
 
         SMT.Configuration config = new SMT.Configuration();
         config.relax = true;
@@ -125,21 +123,11 @@ public class SolverZ343PushPopStackDepthBugTest {
         solver.set_logic("QF_UF", null);
         solver.push(2);
 
-        IResponse rejected = solver.pop(5);
-        Assert.assertTrue(rejected.isError());
-
-        // If the earlier rejected pop(5) had wrongly decremented pushesDepth anyway (2 - 5 =
-        // -3), this relax-mode re-entry's internal pop(pushesDepth) would either throw
-        // (pop() rejects a negative count) or send the wrong amount. A correct
-        // implementation sends exactly 2 -- the real, unaffected depth.
         IResponse r = solver.set_logic("QF_UF", null);
 
-        Assert.assertFalse("pushesDepth must not have gone negative from the rejected pop", r.isError());
-        String lastPop = null;
-        for (String s : solver.fake.sent) if (s.contains("pop")) lastPop = s;
-        Assert.assertNotNull(lastPop);
-        Assert.assertTrue("expected the cleanup pop to send the real depth (2), got: " + lastPop,
-                lastPop.contains("2"));
+        Assert.assertTrue("z3-4.3's own rejection must be the response", r.isError());
+        for (String s : solver.fake.sent) Assert.assertFalse("no pop may be sent: " + s, s.contains("pop"));
+        Assert.assertTrue(solver.fake.sent.get(solver.fake.sent.size() - 1).contains("set-logic"));
     }
 
     @Test
@@ -156,36 +144,21 @@ public class SolverZ343PushPopStackDepthBugTest {
                 lastSent.contains("reset-assertions"));
     }
 
+    /** After reset, a set-logic is in start mode again: it is sent, not rejected locally */
     @Test
-    public void resetClearsPushesDepthSoALaterCleanupPopUsesTheRealDepth() {
+    public void setLogicAfterResetIsSent() {
         List<String> canned = new LinkedList<>();
         canned.add("success\n"); // (set-logic ...)
-        canned.add("success\n"); // (push 2)
         canned.add("success\n"); // (reset)
-        canned.add("success\n"); // (set-logic ...) again, fresh (logicSet was cleared)
-        canned.add("success\n"); // (push 1)
-        canned.add("success\n"); // (pop 1) -- relax re-entry cleanup on the third set_logic
-        canned.add("success\n"); // (set-logic ...) -- sent again after that cleanup pop
-
-        SMT.Configuration config = new SMT.Configuration();
-        config.relax = true;
-        TestableSolver solver = new TestableSolver(config, canned);
+        canned.add("success\n"); // (set-logic ...)
+        TestableSolver solver = new TestableSolver(new SMT.Configuration(), canned);
         solver.set_logic("QF_UF", null);
-        solver.push(2);
         solver.reset();
-        solver.set_logic("QF_UF", null);
-        solver.push(1);
 
-        // If reset() had left the old depth (2) lying around, this third set_logic's cleanup
-        // pop would wrongly try to pop 1+2=3, not the real depth of 1.
         IResponse r = solver.set_logic("QF_UF", null);
 
         Assert.assertFalse(r.isError());
-        String lastPop = null;
-        for (String s : solver.fake.sent) if (s.contains("pop")) lastPop = s;
-        Assert.assertNotNull(lastPop);
-        Assert.assertTrue("expected the cleanup pop to reflect only the post-reset push (1), got: " + lastPop,
-                lastPop.contains("1") && !lastPop.contains("3"));
+        Assert.assertEquals(3, solver.fake.sent.size());
     }
 
     @Test

@@ -1,0 +1,2 @@
+sat
+(error "line 3 column 11: logic must be set before initialization")

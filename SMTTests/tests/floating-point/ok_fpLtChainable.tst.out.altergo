@@ -1,0 +1,11 @@
+success
+(error "Fatal Error: Unsupported Feature: Type FloatingPoint_8_24")
+(error "Fatal Error: Unsupported Feature: Type FloatingPoint_8_24")
+(error "Fatal Error: Unsupported Feature: Type FloatingPoint_8_24")
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")
+(error "Fatal Error: Unsupported Feature: Application Term fp.lt one two")
+unknown
+(error "Fatal Error: Unsupported Feature: Application Term fp.lt one three")
+unknown

@@ -1,0 +1,9 @@
+success
+success
+success
+success
+success
+success
+unknown
+(error "The get-unsat-core command is only valid immediately after check-sat returned unsat")
+(error "The get-unsat-assumptions command is only valid immediately after check-sat-assuming returned unsat")

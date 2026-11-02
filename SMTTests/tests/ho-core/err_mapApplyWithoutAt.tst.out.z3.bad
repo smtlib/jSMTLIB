@@ -1,0 +1,9 @@
+success
+success
+success
+(error "line 5 column 18: unknown constant m (Bool) 
+declared: (declare-fun m () (Array Int Int)) ")
+(error "line 6 column 17: unknown constant m (Int Int) 
+declared: (declare-fun m () (Array Int Int)) ")
+(error "line 7 column 15: unknown constant k (Int) 
+declared: (declare-fun k () Int) ")

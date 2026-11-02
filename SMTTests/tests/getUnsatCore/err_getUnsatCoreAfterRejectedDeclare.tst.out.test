@@ -1,0 +1,8 @@
+success
+success
+success
+success
+success
+unknown
+(error "Symbol x is already defined")
+(error "The get-unsat-core command is only valid immediately after check-sat returned unsat")

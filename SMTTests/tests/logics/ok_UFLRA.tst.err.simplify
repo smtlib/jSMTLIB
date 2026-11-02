@@ -1,8 +1,0 @@
-(assert (= b (+ a 1.0)))
-                  ^^^
-(assert (= b (- a 1.0)))
-                  ^^^
-(assert (= b (* 2.0 a)))
-                ^^^
-(assert (forall ((z Real)) (>= z 0.0)))
-                                 ^^^

@@ -1,0 +1,6 @@
+success
+success
+success
+unsat
+(error "invalid call to 'setOption' for option 'produce-unsat-assumptions', solver is already fully initialized")
+(error "cannot get unsat assumptions unless explicitly enabled (try --produce-unsat-assumptions)")

@@ -1,0 +1,4 @@
+success
+sat
+(error "<stdin>:4:15: Set option :produce-assignments to true to generate assignments!")
+(error "<stdin>:5:8: Unknown function symbol z.")

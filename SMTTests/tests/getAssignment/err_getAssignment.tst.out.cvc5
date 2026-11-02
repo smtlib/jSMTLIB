@@ -1,0 +1,3 @@
+success
+(error "cannot get value unless model generation is enabled (try --produce-models)")
+(error "A get-assignment command takes no arguments")

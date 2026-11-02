@@ -4,3 +4,4 @@
 VER=$(cat ../SMT/version.txt)
 echo $VER
 $SMT_CMD --version | diff -b - <(echo "$VER")
+$SMT_CMD --solver test $SCRIPTS/version-check.smt2 | diff -b - <(echo "(:version \"$VER\" )")

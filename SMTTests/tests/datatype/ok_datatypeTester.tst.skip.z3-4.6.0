@@ -1,0 +1,5 @@
+z3-4.6.0 hangs (times out, does not respond at all) on (declare-datatype ...),
+confirmed reproducible via direct invocation (consistent EXIT 124/timeout, not
+an intermittent race) -- this build predates z3's SMT-LIB2 datatype support and
+apparently doesn't error cleanly on the unrecognized command, it just stops
+responding. No golden captures a hang meaningfully; skip instead.

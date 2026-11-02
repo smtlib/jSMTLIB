@@ -1,0 +1,11 @@
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:12: unsupported logic 'QF_UFLIA'
+")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

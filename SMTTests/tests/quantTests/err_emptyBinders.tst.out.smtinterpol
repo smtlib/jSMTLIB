@@ -1,0 +1,4 @@
+success
+(error "<stdin>:3:17: Syntax Error")
+(error "<stdin>:4:17: Syntax Error")
+(error "<stdin>:5:14: Syntax Error")

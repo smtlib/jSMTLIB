@@ -1,0 +1,4 @@
+success
+(error "Out of step: the response to (declare-fun p () Bool) was sat")
+success
+sat

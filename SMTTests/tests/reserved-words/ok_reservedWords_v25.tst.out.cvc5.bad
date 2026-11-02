@@ -1,0 +1,5 @@
+success
+success
+(error "Parse Error: <shell>:4.14: Expected SMT-LIBv2 symbol, got `match` (MATCH_TOK).")
+(error "The solver process has exited")
+(error "The solver process has exited")

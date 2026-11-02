@@ -1,0 +1,3 @@
+success
+(:version "1.0" :build 42 :flag :parts (a b))
+(:num-terms 3 :new-stat 0.29 :time 12ms)

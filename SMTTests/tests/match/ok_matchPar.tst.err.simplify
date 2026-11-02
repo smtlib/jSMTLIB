@@ -1,0 +1,4 @@
+(declare-fun l () (Lst Int))
+                   ^^^
+(assert (match l ((nil false) ((cons h t) (and (= h 1) (= t (as nil (Lst Int))))))))
+               ^

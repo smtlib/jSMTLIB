@@ -1,0 +1,8 @@
+success
+(:name "Bitwuzla" )
+success
+(:authors "Aina Niemetz, Mathias Preiner, and contributors" )
+success
+(:version "0.9.1" )
+success
+(:error-behavior immediate-exit )

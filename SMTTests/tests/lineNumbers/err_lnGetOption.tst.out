@@ -1,0 +1,4 @@
+success
+true
+false
+(error "Unknown constant symbol z")

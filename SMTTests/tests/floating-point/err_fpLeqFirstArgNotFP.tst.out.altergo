@@ -1,0 +1,4 @@
+success
+success
+(error "Fatal Error: Unsupported Feature: Type FloatingPoint_8_24")
+(error "Error on typing errors (code 4)")

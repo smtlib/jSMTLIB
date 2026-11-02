@@ -4,36 +4,36 @@ success
 success
 success
 unsupported
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
-success
-success
-unsupported
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
-success
-success
-unsupported
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
-success
-unsupported
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
-success
-success
-unsupported
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
-success
-unsupported
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
-success
-unsupported
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
-success
-success
-success
-unsupported
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
-success
 unsupported
 success
 success
 unsupported
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
+unsupported
+success
+success
+unsupported
+unsupported
+success
+unsupported
+unsupported
+success
+success
+unsupported
+unsupported
+success
+unsupported
+unsupported
+success
+unsupported
+unsupported
+success
+success
+success
+unsupported
+unsupported
+success
+unsupported
+success
+success
+unsupported
+unsupported

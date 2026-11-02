@@ -141,8 +141,8 @@ public abstract class Response {
         }
 
         @Override
-        public UnsatAssumptionsResponse get_unsat_assumptions_response(List<ISymbol> names) {
-            return new UnsatAssumptionsResponse(names);
+        public UnsatAssumptionsResponse get_unsat_assumptions_response(List<IExpr> assumptions) {
+            return new UnsatAssumptionsResponse(assumptions);
         }
 
         @Override
@@ -256,12 +256,12 @@ public abstract class Response {
 
     /** Implements the IResponse.IUnsatAssumptionsResponse interface */
     static public class UnsatAssumptionsResponse extends Pos.Printable implements IResponse.IUnsatAssumptionsResponse {
-        private List<ISymbol> names = new LinkedList<ISymbol>();
-        @Override 
-        public List<ISymbol> names() { return names; }
+        private List<IExpr> assumptions;
+        @Override
+        public List<IExpr> assumptions() { return assumptions; }
 
-        public UnsatAssumptionsResponse(List<ISymbol> names) {
-            this.names = names;
+        public UnsatAssumptionsResponse(List<IExpr> assumptions) {
+            this.assumptions = assumptions;
         }
 
         @Override

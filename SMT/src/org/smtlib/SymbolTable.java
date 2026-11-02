@@ -6,10 +6,12 @@
 package org.smtlib;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.INumeral;
@@ -38,8 +40,6 @@ public class SymbolTable {
     public boolean floatingPointTheorySet = false;
 
 
-    /** Maps each datatype sort name to its constructors (in declaration order); populated by declare-datatype/declare-datatypes */
-    public Map<String, List<ISymbol>> datatypeConstructors = new HashMap<>();
 
     /** The logic that is being used - this value is used to check that
      * expressions, etc., conform to the language restrictions of the current
@@ -70,6 +70,15 @@ public class SymbolTable {
     private List<Map<IIdentifier,List<Entry>>> symStack;
     /** The top-most Symbol scope */
     private Map<IIdentifier,List<Entry>> names;
+
+    /** The names of the function and sort symbols declared by the logic, including its theories,
+     *  which binders may not shadow (SMT-LIB Remark 7) */
+    private Set<String> logicFunctions = new HashSet<>();
+    private Set<String> logicSorts = new HashSet<>();
+
+    /** The stack of datatype scopes, parallel to sortStack: each maps a datatype sort name to
+     *  its constructors (in declaration order), in the frame holding the sort itself (#166) */
+    private List<Map<IIdentifier,List<ISymbol>>> ctorStack;
 
     /** Thrown internally within lookup() to report, with a specific reason, why a single
      * candidate entry could not be matched against an actual call -- caught per candidate and
@@ -171,29 +180,57 @@ public class SymbolTable {
         return new Iterator(this);
     }
 
-    /** Initializes the symbol table with an empty background frame and one empty frame. */
+    /** Leaves the background frame and an empty primary frame, the state after set-logic;
+     *  keepBackground false empties the background frame too. */
     public void clear(boolean keepBackground) {
         if (keepBackground) {
-            while (sortStack.size() > 1) sortStack.remove(0);
-            while (symStack.size() > 1) symStack.remove(0);
-            // add()/addSortParameter() write through the sorts/names fields, not through
-            // symStack/sortStack directly -- without this they'd keep pointing at the
-            // frame Map just removed above, silently losing any subsequent declaration.
-            sorts = sortStack.get(0);
-            names = symStack.get(0);
+            while (symStack.size() > 1) {
+                sortStack.remove(0);
+                symStack.remove(0);
+                ctorStack.remove(0);
+            }
         } else {
+            logicFunctions.clear();
+            logicSorts.clear();
             sortStack = new LinkedList<Map<IIdentifier,ISort.IDefinition>>();
             symStack = new LinkedList<Map<IIdentifier,List<Entry>>>();
-            datatypeConstructors = new HashMap<>();
+            ctorStack = new LinkedList<Map<IIdentifier,List<ISymbol>>>();
             push(); // an empty background frame
-            push(); // an empty primary frame
         }
+        push(); // an empty primary frame
+    }
+
+    /** Records a function (sort, if sort is true) symbol declared by the logic or one of its theories */
+    public void addLogicSymbol(IIdentifier id, boolean sort) {
+        if (id instanceof ISymbol) (sort ? logicSorts : logicFunctions).add(((ISymbol)id).value());
+    }
+
+    /** Whether the symbol is a function (sort, if sort is true) symbol of the logic or its theories */
+    public boolean isLogicSymbol(ISymbol s, boolean sort) {
+        return (sort ? logicSorts : logicFunctions).contains(s.value());
     }
 
     /** Adds a new empty frame on the top of the symbol table stack. */
     public void push() {
         sortStack.add(0,sorts=new HashMap<IIdentifier,ISort.IDefinition>());
         symStack.add(0,names=new HashMap<IIdentifier,List<Entry>>());
+        ctorStack.add(0,new HashMap<IIdentifier,List<ISymbol>>());
+    }
+
+    /** Records a datatype's constructors, in the frame its sort was added to
+     *  (global = background, else current). */
+    public void addDatatypeConstructors(IIdentifier sortName, List<ISymbol> ctors, boolean global) {
+        ctorStack.get(global ? ctorStack.size()-1 : 0).put(sortName, ctors);
+    }
+
+    /** The constructors of the datatype sort with the given identifier, or null if no datatype of
+     *  that name is in scope. */
+    public /*@Nullable*/ List<ISymbol> datatypeConstructors(IIdentifier sortName) {
+        for (Map<IIdentifier,List<ISymbol>> frame: ctorStack) {
+            List<ISymbol> ctors = frame.get(sortName);
+            if (ctors != null) return ctors;
+        }
+        return null;
     }
 
     /** Combines the top two symbol scopes, removing the current top scope; presumes that there
@@ -224,6 +261,7 @@ public class SymbolTable {
         }
         sortStack.remove(0);
         symStack.remove(0);
+        ctorStack.remove(0);
         sorts = sortStack.get(0);
         names = symStack.get(0);
     }
@@ -296,11 +334,12 @@ public class SymbolTable {
         // FIXME _ improve so this is not hard coded
         if (name instanceof IParameterizedIdentifier) {
             IParameterizedIdentifier pf = (IParameterizedIdentifier)name;
-            if (bitVectorTheorySet && Utils.BITVEC_SYM.equals(pf.headSymbol())) {
+            if (bitVectorTheorySet && Utils.BITVEC_SYM.equals(pf.head())) {
                 if (pf.indices().size() != 1 || !(pf.indices().get(0) instanceof INumeral)) {
                     return smtConfig.sortFactory.createErrorDefinition(name,"A bit-vector sort must have exactly one numeral",
                             pf.indices().size() > 1 ? pf.indices().get(1).pos()
-                                    : pf.headSymbol().pos());
+                                    : pf.indices().size() == 1 ? pf.indices().get(0).pos()
+                                    : pf.head().pos());
                 }
                 if (((INumeral) pf.indices().get(0)).intValue() == 0) {
                     return smtConfig.sortFactory.createErrorDefinition(name,"A bit-vector sort must have a length of at least 1",pf.indices().get(0).pos());
@@ -309,11 +348,12 @@ public class SymbolTable {
                 sorts.put(name, def);
                 return def;
             }
-            if (floatingPointTheorySet && Utils.FLOATINGPOINT_SYM.equals(pf.headSymbol())) {
+            if (floatingPointTheorySet && Utils.FLOATINGPOINT_SYM.equals(pf.head())) {
                 if (pf.indices().size() != 2 || !(pf.indices().get(0) instanceof INumeral) || !(pf.indices().get(1) instanceof INumeral)) {
                     return smtConfig.sortFactory.createErrorDefinition(name,"A FloatingPoint sort must have exactly two numerals (eb sb)",
-                            pf.indices().size() > 0 ? pf.indices().get(pf.indices().size()-1).pos()
-                                    : pf.headSymbol().pos());
+                            pf.indices().size() == 2 && !(pf.indices().get(0) instanceof INumeral) ? pf.indices().get(0).pos()
+                                    : pf.indices().size() > 0 ? pf.indices().get(pf.indices().size()-1).pos()
+                                    : pf.head().pos());
                 }
                 int eb = ((INumeral) pf.indices().get(0)).intValue();
                 int sb = ((INumeral) pf.indices().get(1)).intValue();
@@ -436,7 +476,7 @@ public class SymbolTable {
             // We have a name match. First check for an exact match on arity.
             Entry found = null;
             ISort foundResult = null;
-            boolean foundMatchButNotOnResult = false;
+            List<Entry> matches = new LinkedList<Entry>();
             List<Entry> tried = new LinkedList<Entry>();
             List<String> failures = new LinkedList<String>();
             for (Entry entry: entrylist) {
@@ -444,43 +484,34 @@ public class SymbolTable {
                 tried.add(entry);
                 ISort candidateResult;
                 try {
-                    candidateResult = matchExact(entry, argSorts);
+                    candidateResult = matchExact(entry, argSorts, resultSort);
                 } catch (NoMatch nm) {
                     failures.add(nm.getMessage());
                     continue;
                 }
                 // Cases to consider
-                //   resultSort != null & just one argument sort match -> error - not supposed to use a qualifier
+                //   resultSort != null & just one argument sort match -> return it if the result sort matches
+                //       ((as f S) is allowed for a non-overloaded f: SMT-LIB Remark 8)
                 //   resultSort != null & multiple argument sort matches -> pick the one that matches on result sort
                 //   resultSort == null & and just one argument sort match -> return it
                 //   resultSort == null & multiple argument sort matches -> ambiguous
                 if (resultSort != null) {
                     if (resultSort.equals(candidateResult)) {
-                        if (found != null) {
-                            // FIXME - there appear to be two entries that match on all arguments and the result
-                            return null;
-                        }
+                        matches.add(entry);
                         found = entry;
                         foundResult = candidateResult;
                     } else {
-                        foundMatchButNotOnResult = true;
-                        failures.add("has result sort " + smtConfig.defaultPrinter.toString(candidateResult)
+                        failures.add(smtConfig.defaultPrinter.toString(name) + " has result sort " + smtConfig.defaultPrinter.toString(candidateResult)
                                 + ", expected " + smtConfig.defaultPrinter.toString(resultSort) + " (from the `as` qualifier)");
                     }
                 } else {
-                    // No result sort specified - there should not be any overloading
-                    if (found != null) {
-                        // Found something previously and now have this match - so ambiguous
-                        // FIXME - no place to give an error message that the result sort is ambiguous
-                        return null;
-                    }
+                    matches.add(entry);
                     found = entry;
                     foundResult = candidateResult;
-                    // Otherwise have just one match - keep checking the rest of the list
                 }
             }
-            if (resultSort != null && found != null && !foundMatchButNotOnResult) {
-                // FIXME - should report unneeded disambiguation
+            if (matches.size() > 1) {
+                if (reason != null) reason.append(ambiguity(name, matches));
                 return null;
             }
             if (found != null) return foundResult;
@@ -494,7 +525,10 @@ public class SymbolTable {
                 if (entry.sort.argSorts().length != 2) continue;
                 tried.add(entry);
                 try {
-                    return matchAssociative(entry, argSorts);
+                    ISort assocResult = matchAssociative(entry, argSorts);
+                    if (resultSort == null || resultSort.equals(assocResult)) return assocResult;
+                    failures.add(smtConfig.defaultPrinter.toString(name) + " has result sort " + smtConfig.defaultPrinter.toString(assocResult)
+                            + ", expected " + smtConfig.defaultPrinter.toString(resultSort) + " (from the `as` qualifier)");
                 } catch (NoMatch nm) {
                     failures.add(nm.getMessage());
                 }
@@ -550,6 +584,32 @@ public class SymbolTable {
         }
     }
 
+    /** Returns an error message if more than one constant (arity 0) named `name` is declared,
+     *  so that a bare use of it needs an `as` qualifier; otherwise null. */
+    public /*@Nullable*/ String ambiguousConstant(IIdentifier name) {
+        List<Entry> entrylist = lookup(name);
+        if (entrylist == null) return null;
+        List<Entry> constants = new LinkedList<Entry>();
+        for (Entry entry: entrylist) {
+            if (entry.sort.argSorts().length == 0) constants.add(entry);
+        }
+        return constants.size() > 1 ? ambiguity(name, constants) : null;
+    }
+
+    /** The message for a use of `name` that more than one declaration matches. */
+    private String ambiguity(IIdentifier name, List<Entry> matches) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Ambiguous use of ").append(smtConfig.defaultPrinter.toString(name))
+            .append(", which matches more than one declaration (qualify it with as): ");
+        boolean first = true;
+        for (Entry entry: matches) {
+            if (!first) sb.append("; ");
+            first = false;
+            sb.append(signature(entry));
+        }
+        return sb.toString();
+    }
+
     private static final String[] NUMBER_WORDS = {
         "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"
     };
@@ -581,8 +641,10 @@ public class SymbolTable {
      * exact match: plain structural equality for a monomorphic entry, unification for a
      * par-polymorphic one (substituting any discovered parameter bindings into the declared
      * result sort). Returns the concrete result sort on success; throws NoMatch, naming the
-     * specific argument and sorts involved, on mismatch. */
-    private ISort matchExact(Entry entry, List<ISort> argSorts) {
+     * specific argument and sorts involved, on mismatch. A par entry's result sort is also
+     * unified with resultSort (from an `as` qualifier, or null), which is the only way to bind
+     * a parameter that no argument determines, e.g. E in (as nil (Lst E)). */
+    private ISort matchExact(Entry entry, List<ISort> argSorts, /*@Nullable*/ ISort resultSort) {
         ISort[] declaredArgs = entry.sort.argSorts();
         if (entry.parameters == null) {
             for (int i = 0; i < declaredArgs.length; i++) {
@@ -603,7 +665,19 @@ public class SymbolTable {
                         + " " + nm.getMessage());
             }
         }
-        return entry.sort.resultSort().substitute(bindings);
+        if (resultSort != null) {
+            try {
+                bindings = unify(entry.sort.resultSort(), resultSort, bindings);
+            } catch (NoMatch nm) {
+                // lookup() reports the result sort mismatch
+            }
+        }
+        ISort result = entry.sort.resultSort().substitute(bindings);
+        if (containsParameter(result)) {
+            throw new NoMatch("The sort of " + smtConfig.defaultPrinter.toString(entry.name)
+                    + " is not determined by its arguments; qualify it with as");
+        }
+        return result;
     }
 
     /** Tries a single 2-arg candidate entry, carrying an associativity attribute, against an
@@ -623,47 +697,58 @@ public class SymbolTable {
         boolean isPar = entry.parameters != null;
         String nm = smtConfig.defaultPrinter.toString(entry.name);
         if (hasAttribute(entry,":left-assoc")) {
-            ISort acc = argSorts.get(0);
-            for (int i = 1; i < argSorts.size(); i++) {
-                ISort next = argSorts.get(i);
+            java.util.Iterator<ISort> it = argSorts.iterator();
+            ISort acc = it.next();
+            for (int i = 1; it.hasNext(); i++) {
+                ISort next = it.next();
+                // acc is argument 1 on the first step, then the application to arguments 1..i
+                String accWhere = i == 1 ? "argument 1" : "the application to arguments 1-" + i;
+                String nextWhere = "argument " + (i+1);
                 if (isPar) {
                     Map<ISort.IParameter,ISort> bindings;
                     try {
                         bindings = unify(left, acc, new HashMap<ISort.IParameter,ISort>());
+                    } catch (NoMatch e) {
+                        throw assocMismatch("Left", nm, accWhere, e.getMessage());
+                    }
+                    try {
                         bindings = unify(right, next, bindings);
                     } catch (NoMatch e) {
-                        throw new NoMatch("Left-associative application of " + nm + " fails at argument " + (i+1) + ": " + e.getMessage());
+                        throw assocMismatch("Left", nm, nextWhere, e.getMessage());
                     }
                     acc = declaredResult.substitute(bindings);
                 } else {
-                    if (!acc.equals(left) || !next.equals(right)) {
-                        throw new NoMatch("Left-associative application of " + nm + " fails at argument " + (i+1)
-                                + ": has sort " + smtConfig.defaultPrinter.toString(next)
-                                + ", expected " + smtConfig.defaultPrinter.toString(right));
-                    }
+                    if (!acc.equals(left)) throw assocMismatch("Left", nm, accWhere, sortMismatch(acc, left));
+                    if (!next.equals(right)) throw assocMismatch("Left", nm, nextWhere, sortMismatch(next, right));
                     acc = declaredResult;
                 }
             }
             return acc;
         } else if (hasAttribute(entry,":right-assoc")) {
-            ISort acc = argSorts.get(argSorts.size() - 1);
-            for (int i = argSorts.size() - 2; i >= 0; i--) {
-                ISort next = argSorts.get(i);
+            int n = argSorts.size();
+            java.util.ListIterator<ISort> it = argSorts.listIterator(n);
+            ISort acc = it.previous();
+            for (int i = n - 2; it.hasPrevious(); i--) {
+                ISort next = it.previous();
+                // acc is argument n on the first step, then the application to arguments i+2..n
+                String accWhere = i == n - 2 ? "argument " + n : "the application to arguments " + (i+2) + "-" + n;
+                String nextWhere = "argument " + (i+1);
                 if (isPar) {
                     Map<ISort.IParameter,ISort> bindings;
                     try {
                         bindings = unify(left, next, new HashMap<ISort.IParameter,ISort>());
+                    } catch (NoMatch e) {
+                        throw assocMismatch("Right", nm, nextWhere, e.getMessage());
+                    }
+                    try {
                         bindings = unify(right, acc, bindings);
                     } catch (NoMatch e) {
-                        throw new NoMatch("Right-associative application of " + nm + " fails at argument " + (i+1) + ": " + e.getMessage());
+                        throw assocMismatch("Right", nm, accWhere, e.getMessage());
                     }
                     acc = declaredResult.substitute(bindings);
                 } else {
-                    if (!next.equals(left) || !acc.equals(right)) {
-                        throw new NoMatch("Right-associative application of " + nm + " fails at argument " + (i+1)
-                                + ": has sort " + smtConfig.defaultPrinter.toString(next)
-                                + ", expected " + smtConfig.defaultPrinter.toString(left));
-                    }
+                    if (!next.equals(left)) throw assocMismatch("Right", nm, nextWhere, sortMismatch(next, left));
+                    if (!acc.equals(right)) throw assocMismatch("Right", nm, accWhere, sortMismatch(acc, right));
                     acc = declaredResult;
                 }
             }
@@ -694,6 +779,42 @@ public class SymbolTable {
             }
         }
         throw new NoMatch(nm + " does not accept more than two arguments");
+    }
+
+    /** Whether the sort contains a sort parameter. */
+    public static boolean containsParameter(ISort sort) {
+        if (sort instanceof ISort.IParameter) return true;
+        if (sort instanceof ISort.IApplication) {
+            for (ISort p: ((ISort.IApplication) sort).parameters()) {
+                if (containsParameter(p)) return true;
+            }
+        }
+        return false;
+    }
+
+    /** The signature of the arity-n function name, instantiated so that its result sort is
+     * resultSort (a par entry's parameters are bound by unification), or null if there is no
+     * such function or its result sort cannot be resultSort. Used for constructor patterns,
+     * whose sort comes from the match scrutinee. */
+    public /*@Nullable*/ IFcnSort lookupInstance(int arity, IIdentifier name, ISort resultSort) {
+        for (Map<IIdentifier,List<Entry>> set: symStack) {
+            List<Entry> entrylist = set.get(name);
+            if (entrylist == null) continue;
+            for (Entry e: entrylist) {
+                if (e.sort.argSorts().length != arity) continue;
+                if (e.parameters == null) {
+                    if (resultSort.equals(e.sort.resultSort())) return e.sort;
+                    continue;
+                }
+                try {
+                    return (IFcnSort) e.sort.substitute(unify(e.sort.resultSort(), resultSort, new HashMap<ISort.IParameter,ISort>()));
+                } catch (NoMatch nm) {
+                    // try the next entry
+                }
+            }
+            return null;
+        }
+        return null;
     }
 
     /** Attempts to unify a (possibly parameter-containing) declared sort against a concrete
@@ -748,6 +869,17 @@ public class SymbolTable {
                     + ", expected " + smtConfig.defaultPrinter.toString(declared));
         }
         return bindings;
+    }
+
+    /** The NoMatch for an n-ary associative application that fails at the given argument or
+     * nested application. */
+    private NoMatch assocMismatch(String direction, String nm, String where, String reason) {
+        return new NoMatch(direction + "-associative application of " + nm + " fails at " + where + ": " + reason);
+    }
+
+    private String sortMismatch(ISort actual, ISort expected) {
+        return "has sort " + smtConfig.defaultPrinter.toString(actual)
+                + ", expected " + smtConfig.defaultPrinter.toString(expected);
     }
 
     /** Returns true if the entry contains a value for the given attribute name (e.g.

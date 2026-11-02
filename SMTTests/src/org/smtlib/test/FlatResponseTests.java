@@ -48,18 +48,22 @@ public class FlatResponseTests {
         return outBuf.toString().replace("\r\n", "\n");
     }
 
-    /** get-assertions answered "success", get-value an empty line (printing nothing) and
-     *  get-assignment "unsupported" are passed on as those responses */
+    /** get-assertions answered "success" and get-value answered with an empty line are out of step
+     *  (#149); get-assignment's "unsupported" is passed on */
     @Test
     public void flatRepliesAfterSat() {
-        Assert.assertEquals("success\nsuccess\nsuccess\nsuccess\nsuccess\nsat\nsuccess\nunsupported\n",
+        Assert.assertEquals("success\nsuccess\nsuccess\nsuccess\nsuccess\nsat\n(get-assertions)\n^^^^^^^^^^^^^^^^\n"
+                + "(error \"Out of step: the response to (get-assertions) was success\")\n"
+                + "(get-value (p))\n^^^^^^^^^^^^^^^\n(error \"Out of step: the response to (get-value ( p)) was empty\")\n"
+                + "unsupported\n",
                 run("sat", SAT_SCRIPT, null));
     }
 
-    /** As above for get-unsat-core ("success") and get-unsat-assumptions ("unsupported") */
+    /** As above for get-unsat-core ("success", out of step) and get-unsat-assumptions ("unsupported") */
     @Test
     public void flatRepliesAfterUnsat() {
-        Assert.assertEquals("success\nsuccess\nsuccess\nunsat\nsuccess\nunsupported\n",
+        Assert.assertEquals("success\nsuccess\nsuccess\nunsat\n(get-unsat-core)\n^^^^^^^^^^^^^^^^\n"
+                + "(error \"Out of step: the response to (get-unsat-core) was success\")\nunsupported\n",
                 run("unsat", UNSAT_SCRIPT, null));
     }
 
@@ -71,6 +75,7 @@ public class FlatResponseTests {
         String text = new String(Files.readAllBytes(log.toPath())).replace("\r\n", "\n");
         Assert.assertTrue(text, text.startsWith(";; "));
         Assert.assertTrue(text, text.contains("org.smtlib.test.FlatAnswerProcess sat"));
+        Assert.assertTrue(text, text.contains("(set-option :print-success true)\n;OUT: success\n")); // #142
         Assert.assertTrue(text, text.contains("(set-logic QF_UF)\n;OUT: success\n"));
         Assert.assertTrue(text, text.contains("(get-value ( p))\n;OUT: \n"));
         Assert.assertTrue(text, text.contains("(get-assignment)\n;OUT: unsupported\n"));

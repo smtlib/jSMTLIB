@@ -1,0 +1,2 @@
+(set-option :produce-unsat-assumptions true)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

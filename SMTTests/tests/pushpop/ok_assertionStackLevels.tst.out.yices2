@@ -4,36 +4,36 @@ success
 success
 success
 (:assertion-stack-levels 0 )
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
+(error "get-assertions is not supported")
 success
 success
 (:assertion-stack-levels 1 )
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
+(error "get-assertions is not supported")
 success
 success
 (:assertion-stack-levels 2 )
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
+(error "get-assertions is not supported")
 success
 (:assertion-stack-levels 1 )
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
+(error "get-assertions is not supported")
 success
 success
 (:assertion-stack-levels 3 )
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
+(error "get-assertions is not supported")
 success
 (:assertion-stack-levels 1 )
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
+(error "get-assertions is not supported")
 success
 (:assertion-stack-levels 0 )
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
+(error "get-assertions is not supported")
 success
 success
 success
 (:assertion-stack-levels 1 )
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
+(error "get-assertions is not supported")
 success
 (:assertion-stack-levels 0 )
 unsupported
 success
 (:assertion-stack-levels 0 )
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
+(error "get-assertions is not supported")

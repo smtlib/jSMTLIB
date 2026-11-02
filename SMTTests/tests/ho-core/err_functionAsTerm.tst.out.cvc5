@@ -1,0 +1,7 @@
+success
+success
+success
+success
+(error "Parse Error: <shell>:7.15: Cannot apply equality to functions unless logic is prefixed by HO_.")
+(error "The solver process has exited")
+(error "The solver process has exited")

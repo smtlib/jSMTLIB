@@ -1,0 +1,11 @@
+success
+success
+success
+success
+success
+success
+success
+(error "Ambiguous use of f, which matches more than one declaration (qualify it with as): (f Int) -> S; (f Int) -> T")
+success
+(error "Ambiguous use of c, which matches more than one declaration (qualify it with as): (c) -> S; (c) -> T")
+success

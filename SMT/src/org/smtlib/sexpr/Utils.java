@@ -1,9 +1,12 @@
 package org.smtlib.sexpr;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
+import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.command.*;
 
 /** Constants and reserved-word sets specific to the S-expression concrete syntax. */
@@ -19,6 +22,10 @@ public class Utils {
     public static final String DECIMAL    = "DECIMAL";
     /** Concrete syntax for the special STRING token */
     public static final String STRING     = "STRING";
+    /** Concrete syntax for the special BINARY token */
+    public static final String BINARY     = "BINARY";
+    /** Concrete syntax for the special HEXADECIMAL token */
+    public static final String HEXADECIMAL = "HEXADECIMAL";
     /** Concrete syntax for the token that starts a parameterized identifier */
     public static final String PARAM = "_";
     /** The _ wildcard in match patterns */
@@ -43,14 +50,18 @@ public class Utils {
     static public final Set<String> reservedWordsNotCommands;
     /** All reserved words (reserved-non-commands plus command names) */
     static public final Set<String> reservedWords;
+    /** The SMT-LIB version in which a reserved word became reserved, for those not reserved in V2.0 */
+    static public final Map<String,SMTLIB> reservedSince;
     static {
         Set<String> notCmds = new HashSet<>();
         notCmds.add(ATTRIBUTE);
         notCmds.add(PARAM);
         notCmds.add(AS);
+        notCmds.add(BINARY);
         notCmds.add(DECIMAL);
         notCmds.add(EXISTS);
         notCmds.add(FORALL);
+        notCmds.add(HEXADECIMAL);
         notCmds.add(LAMBDA);
         notCmds.add(LET);
         notCmds.add(MATCH);
@@ -94,6 +105,19 @@ public class Utils {
         all.add(C_set_logic.commandName);
         all.add(C_set_option.commandName);
         reservedWords = Collections.unmodifiableSet(all);
+
+        // From the reserved-word lists of the V2.0, V2.5, V2.6 and V2.7 references (the V2.5 and V2.6
+        // appendix lists omit define-funs-rec, but every command name is reserved)
+        Map<String,SMTLIB> since = new HashMap<>();
+        for (String w : new String[] { BINARY, HEXADECIMAL, C_check_sat_assuming.commandName,
+                C_declare_const.commandName, C_define_fun_rec.commandName, C_define_funs_rec.commandName,
+                C_echo.commandName, C_get_model.commandName, C_get_unsat_assumptions.commandName,
+                C_reset.commandName, C_reset_assertions.commandName }) since.put(w, SMTLIB.V25);
+        for (String w : new String[] { MATCH, C_declare_datatype.commandName,
+                C_declare_datatypes.commandName }) since.put(w, SMTLIB.V26);
+        for (String w : new String[] { LAMBDA, C_define_const.commandName,
+                C_declare_sort_parameter.commandName }) since.put(w, SMTLIB.V27);
+        reservedSince = Collections.unmodifiableMap(since);
     }
 
     private Utils() {}

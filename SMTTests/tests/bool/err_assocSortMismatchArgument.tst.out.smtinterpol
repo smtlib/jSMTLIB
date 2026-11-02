@@ -1,0 +1,10 @@
+success
+success
+success
+success
+(error "<stdin>:7:9: Application of function (=> Bool Bool Bool) does not type check.")
+(error "<stdin>:8:9: Application of function (=> Bool Bool Bool) does not type check.")
+(error "<stdin>:9:9: Application of function (=> Bool Bool Bool) does not type check.")
+(error "<stdin>:10:9: Application of function (and Bool Bool Bool) does not type check.")
+(error "<stdin>:11:9: Application of function (and Bool Bool Bool) does not type check.")
+(error "<stdin>:12:9: Application of function (and Bool Bool Bool) does not type check.")

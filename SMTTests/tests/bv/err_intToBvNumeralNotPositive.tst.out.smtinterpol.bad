@@ -1,3 +1,3 @@
 success
 success
-(error "The solver stopped without a response to: (assert (= #b0 ((_ int_to_bv 0) x)))")
+(error "The solver process has exited")

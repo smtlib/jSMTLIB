@@ -1,0 +1,12 @@
+(error "unsupported :smt-lib-version")
+success
+success
+(error "at line 7, column 24: syntax error: declare-sort-parameter is not a command")
+success
+(error "quantifiers are not allowed in logic ALL")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

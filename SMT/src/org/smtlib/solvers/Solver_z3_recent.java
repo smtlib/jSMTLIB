@@ -8,7 +8,6 @@ package org.smtlib.solvers;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.smtlib.*;
@@ -54,19 +53,16 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
     protected String cmds_unix[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
 
     /** True only on the platform where the print-success priming command below is needed
-     *  (see the class javadoc) -- also gates the linesOffset compensation in
-     *  parseResponse(), since the two must always travel together. */
+     *  (see the class javadoc) */
     protected final boolean needsPrintSuccessPriming = !isWindows && !isMac;
 
-    // linesOffset is inherited from AbstractSolver -- see its own doc comment there.
-    // Incremented by the priming command in start() (never more than once -- start() is
-    // only ever called once per instance): every "line N" a Linux z3 process reports needs
-    // N-linesOffset to stay consistent with the user's own script, since z3 counts input
-    // lines from the very start of the stream it receives, including the priming line
-    // jSMTLIB adds before the user's script begins. Stays 0 (a no-op in parseResponse()) on
-    // every platform that doesn't need the priming command at all.
+    /** z3 reports "line N column C" in its error messages, counting the lines of its whole input */
+    private static final List<Pattern> LINE_NUMBERS = List.of(Pattern.compile("(line )(\\d+)( column)"));
 
-    private static final Pattern LINE_NUMBER = Pattern.compile("line (\\d+)");
+    @Override
+    protected List<Pattern> lineNumberPatterns() {
+        return LINE_NUMBERS;
+    }
 
     /** Creates an instance of the solver */
     public Solver_z3_recent(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
@@ -77,6 +73,12 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
             cmds = cmds_mac;
         } else {
             cmds = cmds_unix;
+        }
+        if (smtConfig.seed != 0) {
+            // z3 accepts the standard :random-seed but does not use it (4.5.0 to 5.1.0); smt.random_seed is its seed
+            List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
+            args.add("smt.random_seed=" + smtConfig.seed);
+            cmds = args.toArray(new String[args.size()]);
         }
         double timeout = smtConfig.timeout;
         double timeoutTotal = smtConfig.timeoutTotal;
@@ -110,7 +112,6 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
             solverProcess.start(false);
             if (needsPrintSuccessPriming) {
                 solverProcess.sendAndListen("(set-option :print-success true)\n");
-                linesOffset++;
             }
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
             return smtConfig.responseFactory.success();
@@ -147,23 +148,162 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
         return rawResponse.trim().equals("timeout");
     }
 
+    // The checks below correct recent z3 answering get- commands that SMT-LIB makes errors; it
+    // reports the other cases itself. Every version answers get-assignment with
+    // :produce-assignments off, though it reports the option as false. After some commands following
+    // a check (see answeredAfter), where SMT-LIB returns to assert mode, z3 still answers from the
+    // earlier check. The :produce-models default of true (see the class Javadoc) is not checked: z3
+    // reports the option as true.
+
+    /** The kinds of command after which this z3 still answers the get- commands about the last check
+     *  (probed 2026-10-29: z3 4.6 to 5.1 after every declare and define; 4.8 and later also after
+     *  reset-assertions, which 4.6 and 4.7 report themselves). After assert, push or pop z3 reports
+     *  the error itself. */
+    protected java.util.Set<StackChange> answeredAfter() {
+        return java.util.EnumSet.of(StackChange.DECLARE_FUN, StackChange.DECLARE_SORT,
+                StackChange.DECLARE_SORT_PARAMETER, StackChange.DECLARE_DATATYPE,
+                StackChange.DEFINE_FUN, StackChange.DEFINE_FUN_REC,
+                StackChange.DEFINE_SORT, StackChange.RESET_ASSERTIONS);
+    }
+
+    /** z3 answers get-assignment with :produce-assignments off, and in assert mode after a check */
     @Override
-    protected IResponse parseResponse(String response) {
-        // Scoped to responses that actually carry an error message: z3 only ever reports a
-        // line number inside an (error "...") response, never in a success/sat/unsat/model
-        // response -- rewriting unconditionally risked mangling an unrelated "line N"
-        // substring that happened to appear elsewhere, e.g. inside a get-value/get-model
-        // response's returned string literal or model value.
-        if (linesOffset != 0 && response.contains("(error")) {
-            Matcher m = LINE_NUMBER.matcher(response);
-            StringBuilder sb = new StringBuilder();
-            while (m.find()) {
-                m.appendReplacement(sb, "line " + (Integer.parseInt(m.group(1)) - linesOffset));
-            }
-            m.appendTail(sb);
-            response = sb.toString();
+    public IResponse get_assignment() {
+        IResponse err = inSatMode() ? requireOptionEnabled("get-assignment", Utils.PRODUCE_ASSIGNMENTS)
+                : requireNoChangeSinceCheck("get-assignment", answeredAfter());
+        return err != null ? err : super.get_assignment();
+    }
+
+    /** z3 answers get-model in assert mode after a check */
+    @Override
+    public IResponse get_model() {
+        IResponse err = requireNoChangeSinceCheck("get-model", answeredAfter());
+        return err != null ? err : super.get_model();
+    }
+
+    /** z3 answers get-value in assert mode after a check */
+    @Override
+    public IResponse get_value(IExpr... terms) {
+        IResponse err = requireNoChangeSinceCheck("get-value", answeredAfter());
+        return err != null ? err : super.get_value(terms);
+    }
+
+    /** z3 answers get-proof in assert mode after a check */
+    @Override
+    public IResponse get_proof() {
+        IResponse err = requireNoChangeSinceCheck("get-proof", answeredAfter());
+        return err != null ? err : super.get_proof();
+    }
+
+    /** The assumptions of the most recent check command, if it was check-sat-assuming */
+    private final Assumptions assumptions = new Assumptions(this::translate);
+
+    /** check-sat-assuming's printed text (check-sat-assuming (a1 ... an)) as z3's legacy (check-sat a1 ... an),
+     *  for z3 versions that do not accept check-sat-assuming. "-assuming (" becomes as many spaces and the
+     *  final ")" is dropped, so each assumption and the ")" after the last keep their columns: z3's error
+     *  columns are then those of the check-sat-assuming text, as for any other command. (Some errors point
+     *  at the token after the assumption, so the ")" stays where the list's ")" was.) */
+    static String legacyCheckSat(String printed) {
+        StringBuilder sb = new StringBuilder(printed);
+        int open = printed.indexOf('(', 1);
+        for (int i = "(check-sat".length(); i <= open; i++) sb.setCharAt(i, ' ');
+        sb.setLength(sb.length() - 1);
+        return sb.toString();
+    }
+
+    @Override
+    public IResponse check_sat() {
+        assumptions.clear();
+        return super.check_sat();
+    }
+
+    @Override
+    public IResponse check_sat_assuming(IExpr... exprs) {
+        assumptions.set(exprs);
+        return super.check_sat_assuming(exprs);
+    }
+
+    @Override
+    public IResponse reset() {
+        assumptions.clear();
+        return super.reset();
+    }
+
+    /** Drops the assumptions z3 adds to the unsat core (see Assumptions) */
+    @Override
+    protected List<IExpr> unsatCoreElements(List<IExpr> reply) {
+        return assumptions.withoutAssumptions(reply);
+    }
+
+    /** Drops the labels z3 adds to the unsat assumptions (see Assumptions) */
+    @Override
+    protected List<IExpr> unsatAssumptionsElements(List<IExpr> reply) {
+        return assumptions.onlyAssumptions(reply);
+    }
+
+    /** The assumptions of the most recent check command, if it was check-sat-assuming, as an adapter
+     *  prints them. After check-sat-assuming, z3 answers get-unsat-core and get-unsat-assumptions alike
+     *  with one list combining the core's labels and the unsat assumptions (e.g. (p a1 (not q))),
+     *  whereas SMT-LIB's unsat core holds only labels and its unsat assumptions only assumptions; the
+     *  filters here correct that (A64). */
+    static final class Assumptions {
+
+        /** Prints an expression as the adapter sends it */
+        interface Printer {
+            String print(IExpr e) throws IVisitor.VisitorException;
         }
-        return super.parseResponse(response);
+
+        private final Printer printer;
+
+        /** The printed assumptions, or null if the last check command was not check-sat-assuming */
+        private /*@Nullable*/ List<String> printed = null;
+
+        Assumptions(Printer printer) {
+            this.printer = printer;
+        }
+
+        void clear() {
+            printed = null;
+        }
+
+        void set(IExpr... exprs) {
+            printed = new java.util.ArrayList<>();
+            try {
+                for (IExpr e : exprs) printed.add(printer.print(e));
+            } catch (IVisitor.VisitorException e) {
+                printed = null;
+            }
+        }
+
+        private boolean isAssumption(IExpr e) {
+            try {
+                return printed.contains(printer.print(e));
+            } catch (IVisitor.VisitorException ex) {
+                return false;
+            }
+        }
+
+        List<IExpr> withoutAssumptions(List<IExpr> reply) {
+            return printed == null ? reply : reply.stream().filter(e -> !isAssumption(e)).toList();
+        }
+
+        List<IExpr> onlyAssumptions(List<IExpr> reply) {
+            return printed == null ? reply : reply.stream().filter(this::isAssumption).toList();
+        }
+    }
+
+    /** z3 answers get-unsat-core in assert mode after a check */
+    @Override
+    public IResponse get_unsat_core() {
+        IResponse err = requireNoChangeSinceCheck("get-unsat-core", answeredAfter());
+        return err != null ? err : super.get_unsat_core();
+    }
+
+    /** z3 answers get-unsat-assumptions in assert mode after a check */
+    @Override
+    public IResponse get_unsat_assumptions() {
+        IResponse err = requireNoChangeSinceCheck("get-unsat-assumptions", answeredAfter());
+        return err != null ? err : super.get_unsat_assumptions();
     }
 
 }

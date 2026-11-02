@@ -1,0 +1,6 @@
+success
+success
+success
+<<sleep 200>>
+<<print-part sat>>
+<<close-stdout>>

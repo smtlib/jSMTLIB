@@ -40,7 +40,7 @@ public class ParseExpressions {
 
     public void testExpr(String input, String output) throws Exception {
         SMT.Configuration config = new SMT.Configuration();
-        config.smtlib = version;
+        config.smtlib = org.smtlib.SMT.Configuration.SMTLIB.find(version);
         config.log.clearListeners();
         config.log.addListener(listener);
         ISource source = config.smtFactory.createSource(input,null);
@@ -59,7 +59,7 @@ public class ParseExpressions {
     public void testSExpr(String input, String output) throws Exception {
         try {
             SMT.Configuration config = new SMT.Configuration();
-            config.smtlib = version;
+            config.smtlib = org.smtlib.SMT.Configuration.SMTLIB.find(version);
             ISource source = config.smtFactory.createSource(input,null);
             IParser p = new org.smtlib.sexpr.Parser(config,source);
             IAttributeValue e = p.parseAttributeValue();

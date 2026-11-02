@@ -15,3 +15,5 @@
 (assert (= f (lambda ((x Int)) (+ x 1))))
 (get-assertions)
 (pop 1)
+; Solver bug (.bad golden): cvc5 has no HO-Core under ALL (only under its own HO_ logic
+; prefix), so it rejects -> and @.

@@ -1,0 +1,3 @@
+### --abort on standard input: a validation error ends the run
+##EXITCODE 1
+printf '(set-logic QF_UF)\n(declare-fun @p () Bool) (push 1)\n(declare-fun p () Bool)\n' | $SMT_CMD --abort --solver test -

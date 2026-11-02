@@ -1,0 +1,5 @@
+success
+sat
+unsupported
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:5:9: undefined symbol 'z'
+")

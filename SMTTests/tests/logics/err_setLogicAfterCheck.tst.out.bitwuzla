@@ -1,0 +1,11 @@
+success
+success
+success
+success
+success
+sat
+(error "Logic is already set")
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:11:2: model generation is not enabled
+")
+(error "The solver process has exited")
+(error "The solver process has exited")

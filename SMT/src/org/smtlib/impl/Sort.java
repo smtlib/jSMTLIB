@@ -19,7 +19,9 @@ public abstract class Sort extends Pos.Printable implements ISort {
     /** Returns true iff the receiver is a Sort expression designating the pre-defined Bool sort */
     @Override
     public boolean isBool() {
-        return this == Bool || ((this instanceof IApplication) && Bool.family().equals(((IApplication)this).family()));
+        if (this == Bool) return true;
+        ISort e = expand(); // an alias, possibly of an alias, of Bool
+        return (e instanceof IApplication) && Bool.family().equals(((IApplication)e).family());
     }
 
     /** Returns the pre-defined Bool sort */
@@ -76,7 +78,10 @@ public abstract class Sort extends Pos.Printable implements ISort {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof IFamily)) return false;
-            return identifier().equals(((IFamily)o).identifier());  // FIXME - is this sufficient in the presence of overriding symbols?
+            // By name and arity: one scope declares a sort name at most once, so families that
+            // match yet differ come only from different scopes (e.g. redeclared after a pop)
+            IFamily f = (IFamily)o;
+            return identifier().equals(f.identifier()) && intArity() == f.intArity();
         }
 
         @Override
@@ -166,11 +171,23 @@ public abstract class Sort extends Pos.Printable implements ISort {
         /** Cached value for expanded() */
         protected ISort expanded = null;
 
+        /** Whether the sort was written as (S), in parentheses with no parameters */
+        protected boolean emptyParentheses = false;
+
         /** Creates a sort application from a sort identifier and a list of sort arguments. */
         public Application(IIdentifier sortID, List<ISort> sortParameters) {
             this.sortID = sortID;
             this.sortParameters = sortParameters;
         }
+
+        /** Creates a sort application that is written in parentheses even if it has no parameters, as (S) */
+        public Application(IIdentifier sortID, List<ISort> sortParameters, boolean parenthesized) {
+            this(sortID, sortParameters);
+            this.emptyParentheses = parenthesized && sortParameters.isEmpty();
+        }
+
+        @Override
+        public boolean parenthesized() { return emptyParentheses || !sortParameters.isEmpty(); }
 
         /** Creates a sort application from a sort identifier and a varargs array of sort arguments. */
         public Application(IIdentifier sortID, ISort... sortParameters) {
@@ -235,7 +252,11 @@ public abstract class Sort extends Pos.Printable implements ISort {
                         return result;
                     }
                     if (app.definition() instanceof IFamily) return ss;
-                    ss = definition().eval(sortParameters);
+                    // Not yet resolved by the type checker: nothing to expand it by, and nothing
+                    // to cache, since a definition may still be attached (#141)
+                    if (app.definition() == null) return ss;
+                    // app, not this: for an alias of an alias, ss is now the inner alias
+                    ss = app.definition().eval(app.parameters());
                 }
                 expanded = ss;
             }
@@ -255,7 +276,8 @@ public abstract class Sort extends Pos.Printable implements ISort {
             if (!(sort instanceof IApplication)) return false;
             IApplication esort = (IApplication)sort;
             if (esort.family().equals(this.family())) {
-                // If the family() is equal, the arity must be equal
+                // Different arities (an ill-sorted application, such as (Array Int)) are not equal
+                if (esort.parameters().size() != this.parameters().size()) return false;
                 int i = 0;
                 for (ISort p: this.parameters()) {
                     if (!p.equalsNoExpand(esort.param(i++))) return false;
@@ -394,6 +416,7 @@ public abstract class Sort extends Pos.Printable implements ISort {
         /** Creates a sort parameter for the given symbol name. */
         public Parameter(IExpr.ISymbol symbol) {
             this.symbol = symbol;
+            setPos(symbol.pos());
         }
 
         @Override

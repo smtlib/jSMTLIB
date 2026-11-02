@@ -1,0 +1,3 @@
+success
+(error "<stdin>:3:20: Undeclared sort (Foo 0)")
+(error "<stdin>:4:20: Undeclared sort (Foo 0)")

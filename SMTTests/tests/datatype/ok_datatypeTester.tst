@@ -1,0 +1,11 @@
+; (_ is C) is a D -> Bool tester for each constructor C of a datatype D, including a
+; parametric one (#167)
+(set-logic ALL)
+(declare-datatype Color ((red) (green)))
+(declare-datatypes ((Lst 1)) ((par (E) ((nil) (cons (hd E) (tl (Lst E)))))))
+(declare-fun c () Color)
+(declare-fun l () (Lst Int))
+(assert ((_ is red) c))
+(assert (not ((_ is green) c)))
+(assert ((_ is cons) l))
+(assert ((_ is nil) (tl l)))

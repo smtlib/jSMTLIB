@@ -1,0 +1,3 @@
+success
+(error "at line 4, column 13: undefined term: lambda")
+(error "The solver process has exited")

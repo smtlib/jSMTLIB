@@ -1,0 +1,11 @@
+success
+success
+(error "A bound variable may not have the name of a function symbol of the logic: +")
+(error "A bound variable may not have the name of a function symbol of the logic: abs")
+(error "A bound variable may not have the name of a function symbol of the logic: not")
+(error "A bound variable may not have the name of a function symbol of the logic: select")
+(error "A bound variable may not have the name of a function symbol of the logic: div")
+unsupported
+(error "Unknown constant symbol nil")
+(error "Unknown constant symbol nil")
+success

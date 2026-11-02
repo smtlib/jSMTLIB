@@ -1,0 +1,2 @@
+(error "Parse Error: <shell>:2.2: set-logic must appear before this point.")
+(error "The solver process has exited")

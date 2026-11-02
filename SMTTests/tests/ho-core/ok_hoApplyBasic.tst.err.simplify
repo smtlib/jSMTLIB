@@ -1,4 +1,4 @@
-(check-sat)
-^^^^^^^^^^^
-(check-sat)
-^^^^^^^^^^^
+(assert (@ f x))
+           ^
+(assert (not (@ f x)))
+                ^

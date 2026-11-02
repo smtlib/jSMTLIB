@@ -1,0 +1,7 @@
+success
+success
+success
+success
+(error "The function symbol f takes one argument")
+(error "The function symbol h takes two arguments")
+success

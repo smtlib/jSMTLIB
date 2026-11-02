@@ -1,10 +1,10 @@
+(error "The simplify solver does not support the AUFNIRA logic")
+(error "The logic must be set before a declare-const command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before a declare-const command is issued")
+(error "The logic must be set before an assert command is issued")
+(error "The logic must be set before a declare-const command is issued")
+(error "The logic must be set before an assert command is issued")
 success
-success
-(error "The simplify solver cannot handle decimal literals")
-success
-success
-success
-(error "No matching declaration for function symbol <. Available signatures: (< Int Int) -> Bool :chainable; (< Real Real) -> Bool :chainable")
-success
-success
-(error "The simplify solver cannot handle decimal literals")
+(error "The simplify solver does not support the AUFLIRA logic")
+(error "The logic must be set before an assert command is issued")

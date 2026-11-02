@@ -1,0 +1,6 @@
+unsupported
+success
+success
+success
+(error "Sx.ReadError in file.")
+(error "The solver process has exited")

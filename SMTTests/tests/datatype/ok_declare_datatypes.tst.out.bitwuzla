@@ -1,3 +1,2 @@
 success
-(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:2:2: expected command at 'declare-datatypes'
-")
+unsupported

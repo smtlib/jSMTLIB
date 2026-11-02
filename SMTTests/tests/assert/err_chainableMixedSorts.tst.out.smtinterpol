@@ -1,0 +1,3 @@
+success
+(error "<stdin>:3:9: Builtin function = does not support argument sorts ()")
+(error "<stdin>:4:9: Builtin function distinct does not support argument sorts ()")

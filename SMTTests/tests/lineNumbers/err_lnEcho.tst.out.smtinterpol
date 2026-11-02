@@ -1,0 +1,3 @@
+success
+"hello"
+(error "<stdin>:4:8: Unknown function symbol z.")

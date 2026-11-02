@@ -1,0 +1,7 @@
+success
+success
+success
+<<close-stdout>>
+<<sleep 500>>
+<<stderr>> (error "out of memory")
+<<exit 1>>

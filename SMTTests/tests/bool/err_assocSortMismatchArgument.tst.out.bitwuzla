@@ -1,0 +1,11 @@
+success
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:7:17: expected Boolean term at index 2 as argument to '=>'
+")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

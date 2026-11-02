@@ -1,3 +1,0 @@
-(error "The simplify solver does not yet support the bit-vector theory")
-(error "The logic must be set before a declare-const command is issued")
-(error "The logic must be set before a declare-sort command is issued")

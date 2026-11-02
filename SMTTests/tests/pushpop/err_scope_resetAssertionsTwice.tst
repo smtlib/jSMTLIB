@@ -1,0 +1,7 @@
+; a declaration made after a reset-assertions is removed by the next one (#166)
+(set-logic QF_UF)
+(declare-fun a () Bool)
+(reset-assertions)
+(declare-fun b () Bool)
+(reset-assertions)
+(assert b)

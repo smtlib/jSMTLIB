@@ -1,0 +1,6 @@
+success
+success
+success
+unknown
+success
+(error "Invalid action during Assert mode: Command get-assignment")

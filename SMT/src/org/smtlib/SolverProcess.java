@@ -37,9 +37,22 @@ public class SolverProcess {
      * value buys little extra safety at a real per-command cost on long scripts. */
     public long errorSettleMillis = 1;
 
+    /** Once the solver's standard output has ended, how long (ms) to wait at most for its
+     *  standard error to end too, so that what it wrote there just before exiting (typically
+     *  an error) is read in full rather than lost to the stderr reader not having caught up */
+    public long endDrainMillis = 2000;
+
     /** The start of a comment line read from stderr whose end has not yet arrived; it is
      *  judged once it has (see listen()) */
     private String unfinishedErrorComment = "";
+
+    /** Standard-error text read along with a reply on standard output, which it did not displace: the
+     *  solver's diagnostic output, kept until {@link #takeDiagnosticOutput(boolean)} */
+    private final StringBuilder diagnosticOutput = new StringBuilder();
+
+    /** Whether the last line of diagnosticOutput has not yet ended: the next standard-error text, up to
+     *  its first line end, then belongs to it, not to a later command */
+    private boolean diagnosticLineOpen = false;
 
     /** Set true by a caller for the duration of a single command whose expected response
      * text may contain literal, non-SMT-LIB unbalanced parentheses (e.g. some z3
@@ -47,8 +60,13 @@ public class SolverProcess {
      * parentheses to balance. */
     public boolean badFormat = false;
 
+    /** Set before start() by an adapter whose solver writes only diagnostics to stderr, to discard them */
+    public boolean discardErrorOutput = false;
+
     final static protected String eol = System.getProperty("line.separator");
 
+    // Set by start() and kept by exit(): a thread blocked in listen() when another thread calls
+    // exit() (e.g. through forceExit()) still reads them once it wakes (#156)
     protected StreamGobbler standardOut;
     protected StreamGobbler errorOut;
 
@@ -86,10 +104,17 @@ public class SolverProcess {
     protected String endMarker;
 
     /** The Java process object (initialized by start() )*/
-    protected Process process;
+    protected volatile Process process;
+
+    /** When the process was started, and (once it has ended) how long it ran, in nanoseconds */
+    private long startNanos;
+    private volatile java.util.concurrent.CompletableFuture<Long> runNanos;
+
+    /** Set once jSMTLIB itself has stopped or interrupted the process */
+    private volatile boolean stoppedHere = false;
 
     /** The Writer object that writes to the spawned process (initialized by start() )*/
-    protected Writer toProcess;
+    protected volatile Writer toProcess;
 
     /** A place (e.g., log file), if non-null, to write all outbound communications for diagnostic purposes */
     public /*@Nullable*/Writer log;
@@ -159,7 +184,11 @@ public class SolverProcess {
     public void start(boolean listen) throws ProverException {
         if (process != null) throw new ProverException("SolverProcess.start() called on an already-started process");
         try {
-            process = Runtime.getRuntime().exec(app);
+            startNanos = System.nanoTime();
+            process = discardErrorOutput
+                    ? new ProcessBuilder(app).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+                    : Runtime.getRuntime().exec(app);
+            runNanos = process.onExit().thenApply(p -> System.nanoTime() - startNanos);
             // Captured into a local rather than reading the 'process' field from within run():
             // exit() nulls that field before this process has necessarily finished dying, and if
             // the hook fires (JVM shutdown racing ahead of the async removal below) after that
@@ -238,12 +267,16 @@ public class SolverProcess {
     }
 
     /** Listens to the process's standard output until the designated endMarker is read,
-     * combined with whatever error output has arrived. If there is error output, it is
-     * returned; otherwise the standard output is returned.
+     * combined with whatever error output has arrived. The reply is what the solver wrote on
+     * standard output; the error output is returned instead only when standard output holds no
+     * reply (it is empty, or it ended with an incomplete one): some solvers write errors there.
+     * Error output not returned is kept as diagnostic output (see takeDiagnosticOutput).
      */
     public String listen() throws IOException {
-        String out = standardOut.take(); // blocks until the end marker is recognized, or the process dies
-        boolean outWasForcedEof = standardOut.lastTakeWasForcedEof();
+        // blocks until the end marker is recognized, or the process dies; unless pipelined reading
+        // (readOutput) has already read the end of the output, after which no more text can come
+        String out = outputEnded ? "" : standardOut.take();
+        boolean outWasForcedEof = outputEnded || standardOut.lastTakeWasForcedEof();
         // Comment lines alone are no response: z3 writes some after a response, and when they
         // are read on their own they belong to an earlier command (#99)
         while (!outWasForcedEof && isOnlyComments(out)) {
@@ -251,12 +284,14 @@ public class SolverProcess {
             out = standardOut.take();
             outWasForcedEof = standardOut.lastTakeWasForcedEof();
         }
+        if (outWasForcedEof) outputEnded = true;
         // errorOut has no end marker of its own -- there is no OS-level guarantee that error
         // text for this command has already been fully written and read by the time
         // standardOut's end marker shows up, so this is a bounded best-effort drain of
-        // whatever has arrived, not a proof of completeness.
-        String rawErr = errorOut.drain(errorSettleMillis);
-        String err = withoutComments(rawErr, outWasForcedEof);
+        // whatever has arrived, not a proof of completeness. Once stdout has ended, though, the
+        // solver is exiting, so stderr is read to its end (bounded by endDrainMillis).
+        String rawErr = outWasForcedEof ? errorOut.drainToEnd(endDrainMillis) : errorOut.drain(errorSettleMillis);
+        String err = withoutComments(continueDiagnosticLine(rawErr, outWasForcedEof), outWasForcedEof);
         // A forced EOF (stdout closed before ever matching the end marker) with nothing
         // recovered from *either* stream means the solver died without producing any
         // response at all for this command. Left unhandled, that's otherwise
@@ -281,13 +316,57 @@ public class SolverProcess {
             if (!out.isEmpty()) { log.write(";OUT: "); log.write(out); log.write(eol); log.flush(); } // input usually ends with a prompt and no line terminator
             if (!rawErr.isEmpty()) { log.write(";ERR: "); log.write(rawErr); } // input usually ends with a line terminator, we think
         }
-        // In some cases (yices2) the prompt is on the error stream. Our heuristic is that then there is no line-termination
-        if (err.endsWith("\n") || out.isEmpty()) {
-            return err.isEmpty() ? out : err;
-        } else {
-            if (out.endsWith(endMarker)) out = out.substring(0,out.length()-endMarker.length());
-            return out;
+        String reply = out.endsWith(endMarker) ? out.substring(0, out.length() - endMarker.length()) : out;
+        if (err.isEmpty()) return reply;
+        // Standard error answers only when standard output has no reply: it is empty (as when the
+        // solver writes its errors on standard error), or it ended with an incomplete one (a solver
+        // dying). An unended line there, though, may be a prompt (yices2) or the start of a line still
+        // arriving, and does not answer if standard output wrote anything.
+        boolean noReply = reply.trim().isEmpty() || (outWasForcedEof && !isCompleteReply(reply));
+        if (noReply && (err.endsWith("\n") || out.isEmpty())) return err;
+        diagnosticOutput.append(err);
+        diagnosticLineOpen = !outWasForcedEof && !err.endsWith("\n");
+        return reply;
+    }
+
+    /** Whether the text is one complete response (an atom, a string literal, a quoted symbol or a
+     *  balanced S-expression), apart from surrounding white space */
+    private static boolean isCompleteReply(String text) {
+        String t = text.trim();
+        return AbstractSolver.responseEnd(t + "\n", 0) == t.length();
+    }
+
+    /** The standard-error text but for its start, up to its first line end, if that finishes an unended
+     *  line of diagnostic output; that start is added to the diagnostic output. If the stream has ended, an
+     *  unended line is finished anyway. */
+    private String continueDiagnosticLine(String err, boolean ended) {
+        if (!diagnosticLineOpen) return err;
+        int eol = err.indexOf('\n');
+        if (eol < 0 && !ended) {
+            diagnosticOutput.append(err);
+            return "";
         }
+        int end = eol < 0 ? err.length() : eol + 1;
+        diagnosticOutput.append(err, 0, end);
+        diagnosticLineOpen = false;
+        return err.substring(end);
+    }
+
+    /** Adds the start of a line of standard-error text, read when pipelining, to the diagnostic output,
+     *  as an unended line that the next standard-error text read finishes */
+    public void openDiagnosticLine(String text) {
+        diagnosticOutput.append(text);
+        diagnosticLineOpen = true;
+    }
+
+    /** Returns and clears the solver's diagnostic output: standard-error text read with a reply on
+     *  standard output, which answered instead (see listen()). An unended last line is kept until it
+     *  ends, so that it is logged whole, unless all is true (the solver is being stopped). */
+    public String takeDiagnosticOutput(boolean all) {
+        int end = all || !diagnosticLineOpen ? diagnosticOutput.length() : diagnosticOutput.lastIndexOf("\n") + 1;
+        String text = diagnosticOutput.substring(0, end);
+        diagnosticOutput.delete(0, end);
+        return text;
     }
 
     /** Whether the text has a comment line and nothing else but whitespace */
@@ -321,32 +400,63 @@ public class SolverProcess {
         return sb.toString();
     }
 
-    /** The text the solver wrote, on stdout and stderr, that has not been read as a response: e.g. a report it wrote
-     *  just before exiting on its own, such as when its whole-run time limit ended it between commands. Meant for use
-     *  after the process has exited, when both streams reach EOF and this returns promptly; it does not wait for a
-     *  response to a command. */
-    public String unreadOutput() {
-        StringBuilder text = new StringBuilder();
+    /** The text the solver wrote that has not been read as a response, on stdout and on stderr (in that order):
+     *  e.g. a report it wrote just before exiting on its own, such as when its whole-run time limit ended it between
+     *  commands. Meant for use after the process has exited, when both streams reach EOF and this returns promptly;
+     *  it does not wait for a response to a command. */
+    public String[] unreadOutput() {
+        return new String[] { unread(standardOut), unread(errorOut) };
+    }
+
+    private String unread(/*@Nullable*/ StreamGobbler stream) {
         try {
-            if (standardOut != null) text.append(standardOut.drain(errorSettleMillis));
+            return stream == null ? "" : stream.drainToEnd(endDrainMillis);
         } catch (IOException e) {
-            // nothing more to read
+            return ""; // nothing more to read
+        }
+    }
+
+    /** Whether the process has ended on its own (not stopped or interrupted here), waiting at most waitMillis
+     *  for that, after running at least the given number of seconds */
+    public boolean endedAfter(double seconds, long waitMillis) {
+        java.util.concurrent.CompletableFuture<Long> run = runNanos;
+        if (run == null || stoppedHere) return false;
+        try {
+            return run.get(waitMillis, TimeUnit.MILLISECONDS) >= seconds * 1e9;
+        } catch (java.util.concurrent.TimeoutException | java.util.concurrent.ExecutionException e) {
+            return false;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+    }
+
+    /** Interrupts the command the solver is running by sending it SIGINT: z3 then abandons the
+     *  command (check-sat answers unknown) and goes on; most other solvers exit. Windows has no
+     *  such signal, so there the process is ended. */
+    public void interrupt() {
+        Process p = process;
+        if (p == null) return;
+        stoppedHere = true;
+        if (SMT.platformName().equals("windows")) {
+            p.destroyForcibly();
+            return;
         }
         try {
-            if (errorOut != null) text.append(errorOut.drain(errorSettleMillis));
-        } catch (IOException e) {
-            // nothing more to read
+            new ProcessBuilder("kill", "-INT", Long.toString(p.pid())).start().waitFor();
+        } catch (IOException | InterruptedException e) {
+            // the solver is left running
         }
-        return text.toString();
     }
 
     /** Returns true if the process is still running; this relies on exceptions
      * for control flow and may be a bit expensive.
      */
     public boolean isRunning(boolean expectStopped) {
-        if (process == null) return false;
+        Process p = process;
+        if (p == null) return false;
         try {
-            process.exitValue();
+            p.exitValue();
             if (!expectStopped) {
                 if (log != null) {
                     try {
@@ -378,8 +488,9 @@ public class SolverProcess {
 
     /** Aborts the process; returns immediately if already stopped */
     public void exit() {
-        if (process == null) return;
-        process.destroyForcibly();
+        Process p = process;
+        if (p == null) return;
+        p.destroyForcibly();
         process = null;
         toProcess = null;
         // destroyForcibly() closes the process's pipes, which drives each gobbler's read()
@@ -387,8 +498,6 @@ public class SolverProcess {
         // start()/exit() cycles (e.g. across many tests) don't accumulate live threads.
         joinQuietly(standardOut);
         joinQuietly(errorOut);
-        standardOut = null;
-        errorOut = null;
         if (log != null) {
             try {
                 log.write(";;Exiting solver");
@@ -401,6 +510,24 @@ public class SolverProcess {
         }
     }
 
+    /** Whether the process was started and has since exited */
+    public boolean hasExited() {
+        Process p = process;
+        return p != null && !p.isAlive();
+    }
+
+    /** Waits at most millis for the process to end; returns whether it has */
+    public boolean waitForEnd(long millis) {
+        Process p = process;
+        if (p == null) return true;
+        try {
+            return p.waitFor(millis, java.util.concurrent.TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return !p.isAlive();
+        }
+    }
+
     private static void joinQuietly(Thread t) {
         if (t == null) return;
         try {
@@ -410,9 +537,20 @@ public class SolverProcess {
         }
     }
 
+    /** The number of line terminators sent to the process so far */
+    private int linesSent = 0;
+
+    /** The number of the solver input line that the next text sent starts on (lines counted from 1) */
+    public int nextLine() {
+        return linesSent + 1;
+    }
+
     /** Sends all the given text arguments, then (if listen is true) listens for the designated end marker text */
     public /*@Nullable*/ String send(boolean listen, String ... args) throws IOException {
-        if (toProcess == null) throw new ProverException("The solver has not been started");
+        // Read once: exit() on another thread may null them (#156)
+        Writer to = toProcess;
+        Process p = process;
+        if (to == null) throw new ProverException("The solver has not been started");
         // Check liveness *before* writing, rather than relying on the write/read to fail on
         // its own. Writes to an already-exited process's pipe are not reliably synchronous
         // with the process's death: the OS may buffer several KB before a write actually
@@ -429,7 +567,7 @@ public class SolverProcess {
         // for every command except exit (see tests/bugs/bug2.tst's golden, where several
         // commands after the one that actually killed the solver are each expected to
         // show up as a cascaded error, not go silently missing).
-        if (process != null && !process.isAlive()) {
+        if (p != null && !p.isAlive()) {
             throw new NoResponseException("Solver process has already exited");
         }
         // The pre-write isAlive() check above closes most of the race, but not all of it:
@@ -451,9 +589,10 @@ public class SolverProcess {
         }
         try {
             for (String arg: args) {
-                toProcess.write(arg);
+                to.write(arg);
+                for (int i = 0; i < arg.length(); i++) if (arg.charAt(i) == '\n') linesSent++;
             }
-            toProcess.flush();
+            to.flush();
         } catch (IOException e) {
             throw new NoResponseException("Solver process closed its input stream while writing: " + e.getMessage());
         }
@@ -467,6 +606,7 @@ public class SolverProcess {
     public void stopIfRunning() {
         Process p = process;
         if (p != null && p.isAlive()) {
+            stoppedHere = true;
             p.destroyForcibly();
             try {
                 p.waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
@@ -486,11 +626,10 @@ public class SolverProcess {
         send(false, args);
     }
 
-    /** Set once pipelined reading ({@link #readOutput(long)}) has reached the end of standard output */
+    /** Set once reading ({@link #readOutput(long)} or {@link #listen()}) has reached the end of standard output */
     private boolean outputEnded = false;
 
-    /** Whether pipelined reading has reached the end of standard output: the process has exited
-     *  or closed it */
+    /** Whether reading has reached the end of standard output: the process has exited or closed it */
     public boolean outputEnded() {
         return outputEnded;
     }
@@ -518,7 +657,17 @@ public class SolverProcess {
      *  waitMillis for some (see StreamGobbler.drain) */
     public String readErrorOutput(long waitMillis) throws IOException {
         if (errorOut == null) return "";
-        String err = errorOut.drain(waitMillis);
+        return continueDiagnosticLine(logError(errorOut.drain(waitMillis)), false);
+    }
+
+    /** For pipelined reading, once the output has ended: the rest of the text on standard error,
+     *  up to its end (waiting at most endDrainMillis) */
+    public String readRemainingErrorOutput() throws IOException {
+        if (errorOut == null) return "";
+        return continueDiagnosticLine(logError(errorOut.drainToEnd(endDrainMillis)), true);
+    }
+
+    private String logError(String err) throws IOException {
         if (log != null && !err.isEmpty()) { log.write(";ERR: "); log.write(err); log.flush(); }
         return err;
     }
@@ -588,6 +737,7 @@ public class SolverProcess {
                 }
                 // end of stream reached -- fall through to report EOF with any trailing text
             } catch (IOException ioe) {
+                if (local.length() > 0) offer(Chunk.text(local.toString())); // what was read is kept
                 offer(Chunk.error(ioe));
                 return;
             }
@@ -608,6 +758,7 @@ public class SolverProcess {
         String take() throws IOException {
             try {
                 Chunk c = queue.take();
+                ended |= c.eof;
                 if (c.error != null) throw c.error;
                 lastTakeWasForcedEof = c.eof;
                 return c.text;
@@ -624,6 +775,7 @@ public class SolverProcess {
             try {
                 Chunk c = queue.poll(waitMillis, TimeUnit.MILLISECONDS);
                 if (c == null) return null;
+                ended |= c.eof;
                 if (c.error != null) throw c.error;
                 lastTakeWasForcedEof = c.eof;
                 return c.text;
@@ -646,10 +798,36 @@ public class SolverProcess {
 
         private boolean lastTakeWasForcedEof = false;
 
+        /** Whether the end of the stream has been taken from the queue (by the consumer thread) */
+        private volatile boolean ended = false;
+
+        /** Returns the text that has not been taken, up to the end of the stream, waiting at most
+         *  maxMillis in all for that end. A failure of the stream ends the text; it is thrown only if
+         *  no text came before it (as for drain). */
+        String drainToEnd(long maxMillis) throws IOException {
+            StringBuilder out = new StringBuilder();
+            long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(maxMillis);
+            try {
+                while (!ended) {
+                    long left = deadline - System.nanoTime();
+                    Chunk c = left > 0 ? queue.poll(left, TimeUnit.NANOSECONDS) : queue.poll();
+                    if (c == null) break;
+                    ended |= c.eof;
+                    if (c.error != null && out.length() == 0) throw c.error;
+                    out.append(c.text);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Interrupted while draining solver output", e);
+            }
+            return out.toString();
+        }
+
         /** Drains whatever text has arrived, waiting up to settleMillis for the *first* chunk
          * before concluding there is none, and (once at least one chunk has arrived) up to
          * settleMillis again for further stragglers before giving up. Always returns -- never
-         * blocks indefinitely -- once the stream reaches EOF or a settle window elapses.
+         * blocks indefinitely -- once the stream reaches EOF or a settle window elapses. A failure of
+         * the stream ends the text; it is thrown only if no text came before it.
          *
          * The first wait matters as much as the straggler one: this thread only just unblocked
          * from standardOut.take(), which guarantees the solver has finished writing this
@@ -665,7 +843,8 @@ public class SolverProcess {
             try {
                 Chunk c = queue.poll(settleMillis, TimeUnit.MILLISECONDS); // brief grace period, first chunk
                 while (c != null) {
-                    if (c.error != null) throw c.error;
+                    ended |= c.eof;
+                    if (c.error != null && out.length() == 0) throw c.error;
                     out.append(c.text);
                     if (c.eof) break;
                     c = queue.poll(settleMillis, TimeUnit.MILLISECONDS); // brief grace period for stragglers

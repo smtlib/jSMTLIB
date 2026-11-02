@@ -1,0 +1,13 @@
+success
+success
+success
+success
+(error "line 8 column 21: logic only supports difference arithmetic")
+success
+success
+(error "line 12 column 23: logic only supports difference arithmetic")
+(error "line 14 column 21: logic only supports difference arithmetic")
+(error "line 15 column 19: logic only supports difference arithmetic")
+(error "line 16 column 23: logic only supports difference arithmetic")
+(error "line 17 column 23: logic only supports difference arithmetic")
+(error "line 18 column 21: logic only supports difference arithmetic")

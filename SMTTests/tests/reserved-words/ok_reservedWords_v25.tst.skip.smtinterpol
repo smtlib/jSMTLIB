@@ -1,0 +1,2 @@
+smtinterpol 2.5 treats words reserved only in later SMT-LIB versions as reserved here, reports a syntax error and
+then stops responding (the run times out), so no golden can capture it.

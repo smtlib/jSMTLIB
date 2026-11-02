@@ -1,0 +1,8 @@
+success
+success
+success
+success
+success
+unsat
+(error "at line 9, column 14: can't redefine term: x")
+(error "The solver process has exited")

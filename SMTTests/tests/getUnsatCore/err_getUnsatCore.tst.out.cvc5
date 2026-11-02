@@ -1,0 +1,3 @@
+success
+(error "cannot get unsat core unless explicitly enabled (try --produce-unsat-cores)")
+(error "A get-unsat-core command takes no arguments")

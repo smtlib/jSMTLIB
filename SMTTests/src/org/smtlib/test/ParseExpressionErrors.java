@@ -29,7 +29,7 @@ public class ParseExpressionErrors {
 
     public void testExpr(String input, String msg, int start, int end) throws Exception {
         SMT.Configuration config = new SMT.Configuration();
-        config.smtlib = version;
+        config.smtlib = org.smtlib.SMT.Configuration.SMTLIB.find(version);
         config.log.clearListeners();
         config.log.addListener(listener);
         ISource source = config.smtFactory.createSource(input,null);
@@ -58,7 +58,7 @@ public class ParseExpressionErrors {
 
     public void testSExpr(String input, String output) throws Exception {
         SMT.Configuration config = new SMT.Configuration();
-        config.smtlib = version;
+        config.smtlib = org.smtlib.SMT.Configuration.SMTLIB.find(version);
         config.log.clearListeners();
         config.log.addListener(listener);
         ISource source = config.smtFactory.createSource(input,null);

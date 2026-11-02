@@ -1,0 +1,3 @@
+success
+(error "Parse Error: <shell>:3.31: Expected unicode string whose characters are less than code point 196608")
+(error "The solver process has exited")

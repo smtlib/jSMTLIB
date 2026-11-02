@@ -1,0 +1,6 @@
+success
+success
+success
+unknown
+success
+(error "The get-unsat-assumptions command is only valid immediately after check-sat-assuming returned unsat")

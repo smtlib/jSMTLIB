@@ -1,4 +1,2 @@
-(declare-sort-parameter T)
-^^^^^^^^^^^^^^^^^^^^^^^^^^
 (declare-fun f (T) T)
 ^^^^^^^^^^^^^^^^^^^^^

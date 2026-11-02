@@ -1,0 +1,3 @@
+### An adapter property naming a class that does not exist is reported, not replaced by a default adapter
+##EXITCODE 1
+(cd $SCRIPTS/adapter-missing-class && $SMT_CMD --solver missing --text "(exit)")

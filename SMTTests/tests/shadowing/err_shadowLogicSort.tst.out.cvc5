@@ -1,0 +1,5 @@
+success
+(error "Parse Error: <shell>:3.17: Symbol 'Int' previously declared as a type")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

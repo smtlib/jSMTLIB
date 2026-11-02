@@ -1,0 +1,9 @@
+success
+success
+success
+success
+sat
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:9:14: symbol 'x' already defined at line 6 column 14
+")
+(error "The solver process has exited")
+(error "The solver process has exited")

@@ -1,2 +1,2 @@
 success
-(error "Parse Error: <shell>:1.19: Symbol 'BadSort' not declared as a type")
+(error "Parse Error: <shell>:6.19: Symbol 'BadSort' not declared as a type")

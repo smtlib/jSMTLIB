@@ -1,0 +1,9 @@
+success
+(error "Fatal Error: Unsupported Feature: Type FloatingPoint_8_24")
+(error "Fatal Error: Unsupported Feature: Type FloatingPoint_8_24")
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")
+(error "Fatal Error: Unsupported Feature: Application Term fp.neg negone")
+(error "Fatal Error: Unsupported Feature: Application Term fp.abs negone")
+(error "Fatal Error: Unsupported Feature: Application Term fp.abs one")
+unknown

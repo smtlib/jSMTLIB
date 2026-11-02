@@ -1,0 +1,12 @@
+(declare-fun c () Color)
+                  ^^^^^
+(declare-fun l () (Lst Int))
+                   ^^^
+(assert ((_ is red) c))
+                    ^
+(assert (not ((_ is green) c)))
+                           ^
+(assert ((_ is cons) l))
+                     ^
+(assert ((_ is nil) (tl l)))
+                        ^

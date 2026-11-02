@@ -1,0 +1,4 @@
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:16: unsat core production is not enabled
+")
+(error "A get-unsat-core command takes no arguments")

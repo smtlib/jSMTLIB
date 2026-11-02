@@ -1,0 +1,3 @@
+success
+(error "cannot get model unless model generation is enabled (try --produce-models)")
+(error "A get-model command takes no arguments")

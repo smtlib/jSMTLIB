@@ -1,0 +1,14 @@
+success
+success
+success
+success
+success
+success
+success
+(error "logic AUFLIA is not supported")
+(error "at line 11, column 20: undefined sort constructor: Array")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

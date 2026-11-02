@@ -1,0 +1,6 @@
+success
+success
+success
+unsat
+(error "option :produce-unsat-assumptions can't be set now. It must be set before (set-logic ...)")
+(error "not supported: :produce-unsat-assumptions is false")

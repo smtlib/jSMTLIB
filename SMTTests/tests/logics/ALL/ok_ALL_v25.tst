@@ -1,0 +1,12 @@
+; Under SMT-LIB 2.5, ALL provides every 2.5 theory: Ints, Reals, BitVec, Array, FloatingPoint
+(set-info :smt-lib-version 2.5)
+(set-logic ALL)
+(declare-fun i () Int)
+(declare-fun r () Real)
+(declare-fun a () (Array Int Int))
+(declare-fun b () (_ BitVec 8))
+(declare-fun f () Float32)
+(assert (= (to_real (+ i 1)) r))
+(assert (= (select a i) 3))
+(assert (= (bvadd b #x01) #x02))
+(assert (fp.isNormal f))

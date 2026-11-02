@@ -1,0 +1,4 @@
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:20: expected '_' or 'Array'
+")
+(error "The solver process has exited")

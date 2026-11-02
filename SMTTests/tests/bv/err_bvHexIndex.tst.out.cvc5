@@ -1,0 +1,6 @@
+success
+(error "Parse Error: <shell>:3.29: Expected a RPAREN_TOK, got `#x8` (HEX_LITERAL).")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

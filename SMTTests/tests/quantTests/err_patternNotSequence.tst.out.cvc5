@@ -1,0 +1,4 @@
+success
+success
+(error "Parse Error: <shell>:4.51: Expected a LPAREN_TOK, got `)` (RPAREN_TOK).")
+(error "The solver process has exited")

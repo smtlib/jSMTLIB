@@ -1,0 +1,14 @@
+success
+(error "Array sorts must be (Array (_ BitVec i) (_ BitVec j)) in this logic")
+success
+success
+(error "Array sorts must be (Array Int Int) in this logic")
+(error "Array sorts must be (Array Int Int) in this logic")
+success
+success
+(error "Array sorts must be (Array Int Int) in this logic")
+(error "Array sorts must be (Array Int Int) in this logic")
+success
+success
+(error "Array sorts must be (Array Int Real) or (Array Int (Array Int Real)) in this logic")
+(error "Array sorts must be (Array Int Real) or (Array Int (Array Int Real)) in this logic")

@@ -1,0 +1,7 @@
+success
+success
+success
+(error "non-linear arithmetic is not allowed in logic QF_LIA")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

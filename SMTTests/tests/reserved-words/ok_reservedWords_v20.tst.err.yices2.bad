@@ -1,0 +1,8 @@
+(declare-fun check-sat-assuming () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun declare-const () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun get-unsat-assumptions () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun reset-assertions () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

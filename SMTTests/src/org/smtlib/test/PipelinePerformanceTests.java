@@ -22,8 +22,9 @@ import org.smtlib.SMT;
 
 /** Measures what --pipeline saves: a script of many declarations and assertions is run with and
  *  without it, through the command-line tool and through the library's IScript.execute, for each
- *  solver in SMT_TEST_SOLVERS that pipelines. The output must be the same, and pipelining must take at most half the time (about a fifteenth was measured on macOS, so
- *  the bound leaves room for a loaded machine). The timings are printed when the speedup is
+ *  solver in SMT_TEST_SOLVERS that pipelines. The output must be the same, and pipelining must take at most
+ *  half the time (about a fifteenth was measured on macOS, so the bound leaves room for a loaded machine),
+ *  except for alt-ergo (see timed()). The timings are printed when the speedup is
  *  under REPORTED_SPEEDUP, or always if the environment variable SMT_TEST_VERBOSE_TIMING is set. */
 @RunWith(ParameterizedWithNames.class)
 public class PipelinePerformanceTests {
@@ -48,8 +49,21 @@ public class PipelinePerformanceTests {
 
     private final String solvername;
 
+    /** Whether the speedup is asserted. Not for alt-ergo: it writes nothing for success, so even
+     *  unpipelined each command is read up to an echo sent after it (see AbstractSolver.sendCommand),
+     *  never through SolverProcess.listen, whose wait for standard error after every response is most of
+     *  what pipelining saves for the other solvers. Only the round trip is left to save: speedups
+     *  of 0.6x to 1.4x were measured on CI (Linux x64, macOS arm64). The outputs are still compared. */
+    private boolean timed() {
+        return !solvername.equals("altergo");
+    }
+
+    /** The answer to a satisfiable check: alt-ergo answers unknown, never sat (a conforming answer) */
+    private final String sat;
+
     public PipelinePerformanceTests(String solvername) {
         this.solvername = solvername;
+        this.sat = solvername.equals("altergo") ? "unknown" : "sat";
     }
 
     @Parameters
@@ -103,10 +117,11 @@ public class PipelinePerformanceTests {
         Object[] sync = run(text, false);
         Object[] pipelined = run(text, true);
         Assert.assertEquals("output with --pipeline", sync[0], pipelined[0]);
-        Assert.assertTrue("unexpected output: " + sync[0], ((String)sync[0]).endsWith("sat\n"));
+        Assert.assertTrue("unexpected output: " + sync[0], ((String)sync[0]).endsWith(sat + "\n"));
         long syncMillis = (Long)sync[1] / 1_000_000;
         long pipelinedMillis = (Long)pipelined[1] / 1_000_000;
         reportTiming("command line", pipelinedMillis, syncMillis);
+        if (!timed()) return;
         Assert.assertTrue("pipelined " + pipelinedMillis + " ms vs. " + syncMillis + " ms unpipelined",
                 2 * pipelinedMillis < syncMillis);
     }
@@ -146,10 +161,11 @@ public class PipelinePerformanceTests {
         Object[] sync = execute(text, false);
         Object[] pipelined = execute(text, true);
         Assert.assertEquals("response with pipelining", sync[0], pipelined[0]);
-        Assert.assertEquals("sat", sync[0]);
+        Assert.assertEquals(sat, sync[0]);
         long syncMillis = (Long)sync[1] / 1_000_000;
         long pipelinedMillis = (Long)pipelined[1] / 1_000_000;
         reportTiming("IScript.execute", pipelinedMillis, syncMillis);
+        if (!timed()) return;
         Assert.assertTrue("pipelined " + pipelinedMillis + " ms vs. " + syncMillis + " ms unpipelined",
                 2 * pipelinedMillis < syncMillis);
     }

@@ -1,0 +1,4 @@
+success
+success
+(error "line 4 column 50: invalid s-expression, unexpected ')'")
+success

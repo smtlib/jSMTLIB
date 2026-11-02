@@ -35,6 +35,18 @@ public class Parser extends Lexer implements IParser {
 
     public /*@ Nullable */ IResponse.IError lastError() { return lastError; }
 
+    /** Whether the command being parsed (or last returned) had a recoverable syntax error */
+    protected boolean commandHasError = false;
+
+    /** Whether any such error was an invalid character, which the type checker does not see */
+    protected boolean commandHasLexicalError = false;
+
+    @Override
+    public boolean commandHasError() { return commandHasError; }
+
+    @Override
+    public boolean commandHasLexicalError() { return commandHasLexicalError; }
+
     /** The (common) factory used to generate objects */
     final protected IExpr.IFactory factory;
 
@@ -147,6 +159,13 @@ public class Parser extends Lexer implements IParser {
      *  reported a confusing second time. */
     private boolean recoveringFromNestedError = false;
 
+    /** Whether the caller discards the rest of the line after an error (with --abort on interactive
+     *  standard input, SMT.doParser calls abortLine), so the parser does not skip ahead itself:
+     *  that could consume, or wait for, lines typed after the error */
+    private boolean recoverByLine() {
+        return smtConfig.abort && smtConfig.interactive;
+    }
+
     /** This field is used only to communicate the position of the name of a command to the command creator
      * (instead of using method arguments).
      */
@@ -162,6 +181,8 @@ public class Parser extends Lexer implements IParser {
     /*@Mutable*/
     public Command parseCommand() {
         boolean savedTopLevel = smtConfig.topLevel;
+        commandHasError = false;
+        commandHasLexicalError = false;
         Command command = null;
         try {
             while (true) { // The while loop is just so that AbortInputException can cause a retry
@@ -235,6 +256,7 @@ public class Parser extends Lexer implements IParser {
                                     peekToken());
                             if (reported.getMessage() != null) smtConfig.log.logError(smtConfig.responseFactory.error(reported.getMessage(), reported.pos()));
                         }
+                        if (recoverByLine()) return null;
                         // Skip to the next LP, matching old null-return behavior -- but log
                         // how many tokens were skipped, for debuggability.
                         int skipped = 0;
@@ -245,8 +267,10 @@ public class Parser extends Lexer implements IParser {
                     smtConfig.topLevel = false;
                     Symbol sym = parseSymbolOrReservedWord("Expected a symbol here, not a #");
                     if (sym == null) {
-                        skipThruRP();
-                        recoveringFromNestedError = true;
+                        if (!recoverByLine()) {
+                            skipThruRP();
+                            recoveringFromNestedError = true;
+                        }
                         return null;
                     }
                     commandName = sym;
@@ -290,6 +314,9 @@ public class Parser extends Lexer implements IParser {
                         if (target instanceof ParserException) {
                             throw (ParserException) target;
                         }
+                        if (target instanceof IParser.AbortInputException) {
+                            throw (IParser.AbortInputException) target;
+                        }
                         ex.printStackTrace(smtConfig.log.getDiag());
                         if (target instanceof StackOverflowError) {
                             lastError = smtConfig.log.logError(smtConfig.responseFactory.error("Stack overflow occurred while parsing input", sym.pos()));
@@ -302,13 +329,12 @@ public class Parser extends Lexer implements IParser {
                             target.printStackTrace(smtConfig.log.getDiag());
                         }
                     }
-                    if (command == null) {
-                        skipThruRP();
-                        recoveringFromNestedError = true;
-                    } else if (rp == null) {
-                        skipThruRP();
-                        recoveringFromNestedError = true;
+                    if (command == null || rp == null) {
                         command = null;
+                        if (!recoverByLine()) {
+                            skipThruRP();
+                            recoveringFromNestedError = true;
+                        }
                     }
                     if (command != null) {
                         setPos(command,pos(savedlp.pos(),rp.pos()));
@@ -330,8 +356,10 @@ public class Parser extends Lexer implements IParser {
                 } catch (ParserException e) {
                     // FIXME - is an RP a good recovery token? -- used to be end of line
                     if (e.getMessage() != null) lastError = smtConfig.log.logError(smtConfig.responseFactory.error(e.getMessage(),e.pos()));
-                    try { skipThruRP(); } catch (ParserException ex) { /* already recovering */ }
-                    recoveringFromNestedError = true;
+                    if (!recoverByLine()) {
+                        try { skipThruRP(); } catch (ParserException ex) { /* already recovering */ }
+                        recoveringFromNestedError = true;
+                    }
                 }
                 break;
             }
@@ -388,10 +416,12 @@ public class Parser extends Lexer implements IParser {
         }
         if (t.toString() == IPLexToken.LP) {
             boolean saved = smtConfig.topLevel;
-            smtConfig.topLevel = false;
-            Sexpr res = parseSeq(t);
-            smtConfig.topLevel = saved; // FIXME - use a try-finally block?
-            return res;
+            try {
+                smtConfig.topLevel = false;
+                return parseSeq(t);
+            } finally {
+                smtConfig.topLevel = saved;
+            }
         } 
         if (t.isError()) throw new ParserException(lexMessage(t), t.pos());
         if (!(t instanceof ISexpr)) {
@@ -433,7 +463,8 @@ public class Parser extends Lexer implements IParser {
             } else if (token instanceof ISexpr) {
                 seq.sexprs().add((ISexpr)token);
             } else {
-                // FIXME - invalid token
+                // Every token the lexer makes is one of the above
+                throw new ParserException("INTERNAL ERROR: unexpected token " + token, token.pos());
             }
         }
     }
@@ -505,6 +536,10 @@ public class Parser extends Lexer implements IParser {
             ILexToken peek = peekToken();
             if (peek instanceof Symbol) {
                 indices.add(parseSymbol());
+            } else if (peek instanceof IHexLiteral) {
+                indices.add(parseHex());
+            } else if (peek instanceof IBinaryLiteral) {
+                indices.add(parseBinary());
             } else {
                 indices.add(parseNumeral());
             }
@@ -523,7 +558,7 @@ public class Parser extends Lexer implements IParser {
         // An IExpr can be
         //        literal
         //        symbol
-        //        ( _ symbol numeral+ )
+        //        ( _ symbol index+ )
         //        ( as identifier sort )
         //        ( ! ...
         //        ( forall ...
@@ -582,6 +617,9 @@ public class Parser extends Lexer implements IParser {
                 IExpr expr = parseExpr();
                 List<IAttribute<?>> list = parseTermAttributeSequence();
                 ILexToken rp = parseRP();
+                if (list.isEmpty()) {
+                    throw new ParserException("An annotated term must have at least one attribute", pos(lp.pos(), rp.pos()));
+                }
                 return setPos(smtConfig.exprFactory.attributedExpr(expr,list),pos(lp.pos(), rp.pos()));
             }
         }
@@ -593,7 +631,11 @@ public class Parser extends Lexer implements IParser {
             list.add(parseExpr());
         }
         ILexToken rp = parseRP();
-        return setPos(smtConfig.exprFactory.fcn(head,list), pos(lp.pos(), rp.pos()));
+        IPos pos = pos(lp.pos(), rp.pos());
+        // (f) is not a term; reported, then kept as an application with no arguments so that
+        // type checking reports it too
+        if (list.isEmpty()) recoverableError("A function application must have at least one argument", pos);
+        return setPos(smtConfig.exprFactory.fcn(head,list), pos);
     }
 
     /** Parses a parenthesized sequence of IDeclaration items */
@@ -671,7 +713,6 @@ public class Parser extends Lexer implements IParser {
         ISymbol sym = parseSymbol();
         ISort sort = parseSort(null);
         ILexToken rp = parseRP();
-        //ISymbol.IParameter p = new Symbol.Parameter(sym); // FIXME - use a factory
         return setPos(smtConfig.exprFactory.declaration(sym,sort), pos(lp.pos(), rp.pos()));
     }
 
@@ -682,7 +723,6 @@ public class Parser extends Lexer implements IParser {
         ISymbol sym = parseSymbol();
         IExpr expr = parseExpr();
         ILexToken rp = parseRP();
-        //ISymbol.ILetParameter p = new Symbol.LetParameter(sym); // FIXME - use a factory
         return setPos(smtConfig.exprFactory.binding(sym,expr), pos(lp.pos(), rp.pos()));
     }
 
@@ -719,8 +759,7 @@ public class Parser extends Lexer implements IParser {
         ILexToken token = peekToken();
         if (token instanceof Symbol) {
             ISymbol sym = (ISymbol)token;
-            java.util.Set<String> forbidden = smtConfig.relax ? smtConfig.reservedWordsNotCommands : smtConfig.reservedWords;
-            if (forbidden.contains(sym.value())) {
+            if (smtConfig.isReservedWord(sym.value())) {
                 throw error("A reserved word may not be used as a symbol here: " + token.toString(),token.pos());
             }
             token = getToken();
@@ -837,14 +876,48 @@ public class Parser extends Lexer implements IParser {
 
                 List<ISort> list = parseSortList(parameters);
                 ILexToken rp = parseRP();
-                return setPos(new Sort.Application(head,list),pos(lp.pos(),rp.pos()));
+                return parenthesizedSort(head, list, pos(lp.pos(),rp.pos()));
             } else {
                 IIdentifier id = parseIdentifier();
                 List<ISort> list = parseSortList(parameters);
                 ILexToken rp = parseRP();
-                return setPos(new Sort.Application(id,list),pos(lp.pos(),rp.pos()));
+                return parenthesizedSort(id, list, pos(lp.pos(),rp.pos()));
             }
         }
+    }
+
+    /** A sort ( id sort+ ); (S), with no sorts, is reported, then kept so that type checking reports it too */
+    private Sort parenthesizedSort(IIdentifier id, List<ISort> list, IPos pos) {
+        if (list.isEmpty()) recoverableError("A parenthesized sort must have at least one sort parameter", pos);
+        return setPos(new Sort.Application(id, list, true), pos);
+    }
+
+    /** Reports a vertical tab or form feed between tokens (except with --relax), which is then read as
+     *  white space, and a keyword that is not a colon followed by a simple symbol (#185) */
+    @Override
+    protected ILexToken getToken(java.util.regex.Matcher m) throws ParserException {
+        ILexToken token = super.getToken(m);
+        if (badWhitespace != null) {
+            IPos p = badWhitespace;
+            badWhitespace = null;
+            if (!smtConfig.relax) {
+                int c = p.source() == null ? 0 : p.source().charAt(p.charStart());
+                commandHasLexicalError = true;
+                recoverableError("Invalid character: ASCII(decimal) = " + c + "; it is read as white space", p);
+            }
+        }
+        if (token instanceof IKeyword && !smtConfig.isOKKeyword(((IKeyword)token).value())) {
+            commandHasLexicalError = true;
+            recoverableError("A keyword must be a colon followed by a simple symbol (not starting with a digit, not a reserved word): "
+                    + ((IKeyword)token).value(), token.pos());
+        }
+        return token;
+    }
+
+    /** Reports a syntax error after which parsing goes on as if the text were legal */
+    private void recoverableError(String msg, IPos pos) {
+        commandHasError = true;
+        lastError = smtConfig.log.logError(smtConfig.responseFactory.error(msg, pos));
     }
 
     /** Parses sequence of sorts up to a right-parenthesis, returning null with error messages
@@ -879,6 +952,7 @@ public class Parser extends Lexer implements IParser {
             if (t instanceof IKeyword) {
                 throw new ParserException("Expected an attribute value here, instead of a " + t.kind(), t.pos());
             }
+            checkNotReserved(t);
             if (t instanceof IAttributeValue) {
                 IAttributeValue v = (IAttributeValue)t;
                 return v;
@@ -888,6 +962,13 @@ public class Parser extends Lexer implements IParser {
         } else {
             ISexpr value = parseSexpr();
             return value;
+        }
+    }
+
+    /** A symbol attribute value may not be a reserved word (the grammar says symbol) */
+    private void checkNotReserved(ILexToken t) throws ParserException {
+        if (t instanceof Symbol && smtConfig.isReservedWord(((Symbol)t).value())) {
+            throw error("A reserved word may not be used as a symbol here: " + t.toString(), t.pos());
         }
     }
 
@@ -911,6 +992,7 @@ public class Parser extends Lexer implements IParser {
             if (!isLP()) {
                 ILexToken t = getToken();
                 if (t.isError()) throw new ParserException(lexMessage(t), t.pos());
+                checkNotReserved(t);
                 if (t instanceof IAttributeValue) {
                     IAttributeValue v = (IAttributeValue)t;
                     return setPos(smtConfig.exprFactory.attribute(keyword,v),pos(keyword.pos(),v.pos()));
@@ -1060,8 +1142,12 @@ public class Parser extends Lexer implements IParser {
         return parseList(this::parseExpr, "assertion", true);
     }
 
-    /** Parses a parenthesized list of names, as returned by a get-unsat-core or
-     *  get-unsat-assumptions response. */
+    /** Parses a parenthesized list of terms, as returned by a get-unsat-assumptions response. */
+    public List<IExpr> parseTermList() throws ParserException {
+        return parseList(this::parseExpr, "term", true);
+    }
+
+    /** Parses a parenthesized list of names, as returned by a get-unsat-core response. */
     public List<ISymbol> parseSymbolList() throws ParserException {
         return parseList(this::parseSymbol, "name", true);
     }
@@ -1130,14 +1216,29 @@ public class Parser extends Lexer implements IParser {
                 if (list.get(0) instanceof ISymbol && ((ISymbol)list.get(0)).value().equals("error") && list.get(1) instanceof IStringLiteral) {
                     return f.error(((IStringLiteral)list.get(1)).value());
                 }
-                if (list.get(0) instanceof IKeyword) {
-                    IAttribute<?> attr = smtConfig.exprFactory.attribute((IKeyword)list.get(0),list.get(1));
-                    return f.get_info_response(attr);
-                }
             }
+            List<IAttribute<?>> attributes = attributeList(list);
+            if (attributes != null) return f.get_info_response(attributes);
         }
         return sexpr;
         //return f.error("Could not translate response: " + response);
+    }
+
+    /** The attributes of a get-info reply, each a keyword with an optional value, or null if the
+     *  list is not of that form */
+    private /*@Nullable*/ List<IAttribute<?>> attributeList(List<ISexpr> list) {
+        if (list.isEmpty()) return null;
+        List<IAttribute<?>> attributes = new LinkedList<IAttribute<?>>();
+        for (int i = 0; i < list.size(); i++) {
+            if (!(list.get(i) instanceof IKeyword)) return null;
+            IKeyword key = (IKeyword)list.get(i);
+            if (i + 1 < list.size() && !(list.get(i + 1) instanceof IKeyword)) {
+                attributes.add(smtConfig.exprFactory.attribute(key, list.get(++i)));
+            } else {
+                attributes.add(smtConfig.exprFactory.attribute(key));
+            }
+        }
+        return attributes;
     }
 
     /** Parses a left parenthesis, returning null and emitting an error message
@@ -1197,7 +1298,17 @@ public class Parser extends Lexer implements IParser {
                 params.add(parsePatternSymbol());
             }
             ILexToken rp = parseRP();
-            return setPos(smtConfig.exprFactory.pattern(constructor, params), pos(lp.pos(), rp.pos()));
+            IPos pos = pos(lp.pos(), rp.pos());
+            if (!params.isEmpty()) return setPos(smtConfig.exprFactory.pattern(constructor, params), pos);
+            // (c) is not a pattern; reported (a warning with --relax), then kept so that type checking
+            // reports it too (or, with --relax, accepts it for a nullary constructor)
+            if (smtConfig.relax) {
+                smtConfig.log.logDiag("WARNING: A parenthesized pattern should have at least one variable: ("
+                        + smtConfig.defaultPrinter.toString(constructor) + ")");
+            } else {
+                recoverableError("A parenthesized pattern must have at least one variable", pos);
+            }
+            return setPos(new SMTExpr.Pattern(constructor, params, true), pos);
         }
     }
 

@@ -1,0 +1,16 @@
+success
+success
+success
+success
+success
+success
+success
+(error "Parse Error: <shell>:12.13: argument type is not the type of the function's argument type:
+argument:  i
+has type:  Int
+not type: Real
+in term : (h i)")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

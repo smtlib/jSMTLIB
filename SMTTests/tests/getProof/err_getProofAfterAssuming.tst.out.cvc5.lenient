@@ -1,0 +1,14 @@
+success
+success
+success
+success
+unsat
+(
+(declare-const p Bool)
+(assume @p1 (not p))
+(assume @p2 p)
+(step @p3 :rule bool-eq-false :args (p))
+(step @p4 :rule symm :premises (@p3))
+(step @p5 :rule eq_resolve :premises (@p1 @p4))
+(step @p6 false :rule eq_resolve :premises (@p2 @p5))
+)

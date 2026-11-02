@@ -1,0 +1,3 @@
+(error "unsupported :smt-lib-version")
+success
+sat

@@ -1,0 +1,8 @@
+(set-logic QF_FP)
+^^^^^^^^^^^^^^^^^
+(declare-const r Real)
+^^^^^^^^^^^^^^^^^^^^^^
+(declare-const bv (_ BitVec 8))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-const f (_ FloatingPoint 8 24))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

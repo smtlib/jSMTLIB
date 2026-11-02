@@ -1,0 +1,4 @@
+(assert (not (= (g (forall ((y Int)) (> y 0))) (g false))))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (not (= (g (exists ((y Int)) (> y 0))) (g true))))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^

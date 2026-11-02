@@ -1,0 +1,8 @@
+success
+success
+unsupported
+(error "line 7 column 16: Parsing function declaration. Expecting sort list '(': unknown sort 'A'")
+(error "line 8 column 20: invalid sorted variables: unknown sort 'A'")
+success
+(error "line 10 column 15: unknown constant f (Bool) ")
+sat

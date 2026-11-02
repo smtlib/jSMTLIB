@@ -1,0 +1,4 @@
+success
+(error "Parse Error: <shell>:3.22: Could not resolve expression with name + and type Int
+")
+(error "The solver process has exited")

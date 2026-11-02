@@ -1,0 +1,20 @@
+### --abort on interactive standard input (no files): an error discards the rest of its line, even
+### further complete commands, and parsing resumes with the next line, for lexical, parse,
+### validation and execution errors. Standard input as a file (-) is not interactive: the run ends.
+##EXITCODE 0
+run() {
+    echo "== $1"
+    printf "(set-logic QF_UF)\n$2" | $SMT_CMD --abort --solver test $3
+    echo " [exit $?]"
+}
+run "invalid token after a command" '(push 1) #\n(push 1)\n(push 1)\n'
+run "invalid token before a command" '# (push 1)\n(push 1)\n(push 1)\n'
+run "stray symbol before a command" 'a (push 1)\n(push 1)\n'
+run "parse error" '(push x) (push 1)\n(push 1)\n'
+run "extra argument" '(push 1 2) (push 1)\n(push 1)\n'
+run "unknown command" '(foo 1) (push 1)\n(push 1)\n'
+run "parse error on the second line of a command" '(assert\n #) (push 1)\n(push 1)\n'
+run "parse error inside an unfinished command" '(assert (and # p\n(push 1)\n(push 1)\n'
+run "validation error" '(declare-fun @p () Bool) (push 1)\n(push 1)\n'
+run "execution error" '(pop 5) (push 1)\n(push 1)\n'
+run "standard input as a file" '(push 1) #\n(push 1)\n' -

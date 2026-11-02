@@ -1,0 +1,5 @@
+success
+(error "A sort parameter may not have the name of a sort symbol of the logic: Int")
+(error "A sort parameter may not have the name of a sort symbol of the logic: Bool")
+success
+success

@@ -1,0 +1,14 @@
+; a failed declare-datatypes leaves nothing declared: its sorts, constructors and
+; selectors can all be declared afterwards (#168)
+(set-logic ALL)
+(declare-datatypes ((Lst 1) (T 0)) ((par (E) ((nil) (cons (hd E) (tl (Lst E))))) ((mk (f Undeclared)))))
+(declare-sort Lst 0)
+(declare-sort T 0)
+(declare-fun nil () Int)
+(declare-fun cons () Int)
+(declare-fun hd () Int)
+(declare-fun tl () Int)
+(declare-fun mk () Int)
+(declare-fun f () Int)
+; Solver bugs (.bad goldens): z3 and smtinterpol-2.5 leave the failed declaration's sorts
+; Lst and T declared, so redeclaring them fails.

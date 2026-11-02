@@ -1,0 +1,6 @@
+(assert (g 0 (m 1)))
+        ^^^^^^^^^^^
+(assert (forall ((k (-> Int Int))) (= (k 0) (@ k 0))))
+                                      ^^^^^
+(assert (not (= (m 0) (@ m 0))))
+                ^^^^^

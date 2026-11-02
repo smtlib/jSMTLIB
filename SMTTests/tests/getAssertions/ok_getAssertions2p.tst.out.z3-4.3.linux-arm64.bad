@@ -1,0 +1,18 @@
+success
+success
+success
+success
+success
+success
+success
+success
+(
+true
+p
+(or p p)
+false
+)
+(error "Out of step: the response to (pop 1) was free(): invalid size")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

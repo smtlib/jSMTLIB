@@ -1,3 +1,0 @@
-success
-success
-(error "Parse Error: <shell>:1.11: Expecting function-like symbol, found 'f'")

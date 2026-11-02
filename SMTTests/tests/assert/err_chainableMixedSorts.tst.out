@@ -1,0 +1,3 @@
+success
+(error "Chained/pairwise application of = fails at argument 3: has sort Bool, expected Int (to match an earlier argument)")
+(error "Chained/pairwise application of distinct fails at argument 3: has sort Bool, expected Int (to match an earlier argument)")

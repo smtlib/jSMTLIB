@@ -136,7 +136,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
         // (originalString == value() unquoted), which would otherwise print unparseable
         // output.
         String orig = e.toString();
-        if ((orig.length() > 0 && orig.charAt(0) == '|') || !needsBarQuoting(e.value())) {
+        if (org.smtlib.impl.SMTExpr.Symbol.isBarQuoted(orig) || !needsBarQuoting(e.value())) {
             append(orig);
         } else {
             append("|");
@@ -147,16 +147,17 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     }
 
     /** True if a bare (unquoted) symbol cannot represent this value: it's empty, starts
-     *  with a digit, or contains a character outside the simple-symbol charset (letters,
+     *  with a digit, or contains a character outside the simple-symbol charset (ASCII letters,
      *  digits, and {@code ~!@$%^&*_-+=<>.?/}) -- per the SMT-LIB grammar for
      *  {@code <simple_symbol>}, such a value needs {@code |...|} bar-quoting to print as
      *  valid, re-parseable syntax. */
     private static boolean needsBarQuoting(String v) {
         if (v.isEmpty()) return true;
-        if (Character.isDigit(v.charAt(0))) return true;
+        if (v.charAt(0) >= '0' && v.charAt(0) <= '9') return true;
         for (int i = 0; i < v.length(); i++) {
             char c = v.charAt(i);
-            if (Character.isLetterOrDigit(c)) continue;
+            // ASCII only: non-ASCII letters and digits are not simple-symbol characters
+            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) continue;
             if ("~!@$%^&*_-+=<>.?/".indexOf(c) >= 0) continue;
             return true;
         }
@@ -166,7 +167,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     /*@Nullable*/
     @Override
     public Void visit(IDecimal e) throws IVisitor.VisitorException {
-        append(e.value().toPlainString());
+        // A decimal always has a '.', even when built from an integral value
+        String v = e.value().toPlainString();
+        append(v.indexOf('.') < 0 ? v + ".0" : v);
         return null;
     }
 
@@ -319,7 +322,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
     @Override
     public Void visit(IExpr.IPattern e) throws IVisitor.VisitorException {
-        if (e.params().isEmpty()) {
+        if (!e.parenthesized()) {
             e.constructor().accept(this);
         } else {
             append("(");
@@ -850,7 +853,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
     @Override
     public Void visit(IApplication s) throws IVisitor.VisitorException {
-        if (s.parameters().size() == 0) {
+        if (!s.parenthesized()) {
             s.family().accept(this);
         } else {
             append("(");
@@ -866,17 +869,19 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
     @Override
     public Void visit(IFcnSort s) throws IVisitor.VisitorException {
-        // Not real SMT-LIB syntax (function sorts aren't first-class there) - an
-        // internal diagnostic form only; see e.g. Utils.java's symbol-table error messages.
-        append("(");
-        boolean first = true;
-        for (ISort ss: s.argSorts()) {
-            if (!first) append(" ");
-            ss.accept(this);
-            first = false;
+        // The SMT-LIB 2.7 (HO-Core) map sort (-> A B C); a constant's is just its sort
+        if (s.argSorts().length == 0) {
+            s.resultSort().accept(this);
+            return null;
         }
-        append(") -> ");
+        append("(->");
+        for (ISort ss: s.argSorts()) {
+            append(" ");
+            ss.accept(this);
+        }
+        append(" ");
         s.resultSort().accept(this);
+        append(")");
         return null;
     }
 
@@ -890,7 +895,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     public Void visit(ILogic s) throws IVisitor.VisitorException {
         append("(logic ");
         s.logicName().accept(this);
-        for (IAttribute<?> attr: s.attributes().values()) {
+        for (IAttribute<?> attr: s.attributeList()) {
             append(" ");
             attr.accept(this);
         }
@@ -902,7 +907,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     public Void visit(ITheory s) throws IVisitor.VisitorException {
         append("(theory ");
         s.theoryName().accept(this);
-        for (IAttribute<?> attr: s.attributes().values()) {
+        for (IAttribute<?> attr: s.attributeList()) {
             append(" ");
             attr.accept(this);
         }
@@ -955,7 +960,8 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
             append("(");
             p.first().accept(this);
             append(" ");
-            append(p.second().toString()); // FIXME - change when we do not use Boolean
+            // SMT-LIB prints the value as true or false, which is how Java prints the Boolean second() always is
+            append(p.second().toString());
             append(")");
         }
         append(")");
@@ -1044,7 +1050,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     @Override
     public Void visit(IResponse.IUnsatAssumptionsResponse e) throws IVisitor.VisitorException {
         append("(");
-        for (ISymbol n : e.names()) {
+        for (IExpr n : e.assumptions()) {
             n.accept(this);
             append(" ");
         }

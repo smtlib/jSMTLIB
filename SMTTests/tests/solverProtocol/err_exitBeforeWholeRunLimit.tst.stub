@@ -1,0 +1,3 @@
+<<success-for (set-option :print-success true)>>
+success
+<<exit 0>>

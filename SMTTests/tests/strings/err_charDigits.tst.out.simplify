@@ -1,0 +1,3 @@
+success
+(error "The index of a char identifier has at most 5 hex digits")
+(error "The simplify solver does not support the String sort")

@@ -44,20 +44,15 @@ public class LRA extends Logic {
         IVisitor<Void> visitor = new IVisitor.TreeVisitor<Void>() {
             @Override
             public Void visit(IExpr.IFcnExpr e) throws IVisitor.VisitorException {
-                if (e.args().size() == 2) {
-                    IQualifiedIdentifier fcn = e.head();
-                    if (Utils.MULT.equals(fcn)) {
-                        if (!(isConst(e.args().get(0)) || isConst(e.args().get(1)))) {
-                                throw restrictionError("The expression must be linear", e);
-                        }
-                    } else if (Utils.SLASH.equals(fcn)) {
-                        if (!(isConst(e.args().get(0)) && isConst(e.args().get(1)))) {
-                            throw restrictionError("The expression must be linear", e);
-                        }
-                    } else {
-                        super.visit(e); // checks all the arguments
+                IQualifiedIdentifier fcn = e.head();
+                if (Utils.MULT.equals(fcn)) {
+                    List<IExpr> factors = nonCoefficients(e, LRA.this::isConst);
+                    if (factors.size() > 1) throw restrictionError("The expression must be linear", e);
+                    for (IExpr f : factors) f.accept(this);
+                } else if (Utils.SLASH.equals(fcn)) {
+                    if (!nonCoefficients(e, LRA.this::isConst).isEmpty()) {
+                        throw restrictionError("The expression must be linear", e);
                     }
-
                 } else {
                     super.visit(e); // checks all the arguments
                 }

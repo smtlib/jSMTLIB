@@ -1,0 +1,4 @@
+success
+success
+(error "non-linear arithmetic is not allowed in logic ALL")
+(error "The solver process has exited")

@@ -1,0 +1,2 @@
+(declare-datatypes ((Lst 1) (T 0)) ((par (E) ((nil) (cons (hd E) (tl (Lst E))))) ((mk (f Undeclared)))))
+                                                                                         ^^^^^^^^^^

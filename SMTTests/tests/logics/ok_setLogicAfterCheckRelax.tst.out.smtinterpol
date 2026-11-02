@@ -1,0 +1,10 @@
+success
+success
+success
+success
+success
+sat
+(error "<stdin>:11:11: Logic already set!")
+( ( define-fun p ( ) Bool true ) )
+success
+unsat

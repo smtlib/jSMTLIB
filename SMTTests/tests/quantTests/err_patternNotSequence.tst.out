@@ -1,0 +1,4 @@
+success
+success
+(error "Expected a sequence after :pattern")
+(error "Expected a sequence after :pattern")

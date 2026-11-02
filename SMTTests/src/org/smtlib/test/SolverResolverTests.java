@@ -7,6 +7,7 @@ import java.util.function.Function;
 import org.junit.Assert;
 import org.junit.Test;
 import org.smtlib.ISolver;
+import org.smtlib.SMT;
 import org.smtlib.SolverResolver;
 import org.smtlib.SolverResolver.Resolution;
 
@@ -42,9 +43,33 @@ public class SolverResolverTests {
     }
 
     @Test
-    public void unloadableAdapterFallsBackToConvention() throws Exception {
-        Properties p = props("s.adapter", "a.Missing");
-        Assert.assertEquals("org.smtlib.solvers.Solver_s", resolve(p, "s", null, known("org.smtlib.solvers.Solver_s")).adapterClassName());
+    public void missingConfiguredAdapterIsAnError() {
+        // reported, not replaced by the naming convention's class
+        try {
+            resolve(props("s.adapter", "a.Missing"), "s", null, known("org.smtlib.solvers.Solver_s"));
+            Assert.fail("expected a CreationException");
+        } catch (ISolver.CreationException e) {
+            Assert.assertTrue(e.getMessage(), e.getMessage().contains("a.Missing"));
+            Assert.assertTrue(e.getMessage(), e.getMessage().contains("org.smtlib.solver_s.adapter"));
+        }
+    }
+
+    /** An adapter class that SMT cannot access (it is not public) */
+    static class Inaccessible {
+        public Inaccessible(SMT.Configuration smtConfig, String executable) {}
+    }
+
+    @Test
+    public void inaccessibleAdapterIsReported() {
+        SMT.Configuration config = new SMT.Configuration();
+        config.props = props("s.adapter", Inaccessible.class.getName());
+        try {
+            config.createSolver("s", null);
+            Assert.fail("expected a CreationException");
+        } catch (ISolver.CreationException e) {
+            Assert.assertTrue(e.getMessage(), e.getMessage().startsWith("The adapter class " + Inaccessible.class.getName()
+                    + " or its constructor is not accessible"));
+        }
     }
 
     @Test
@@ -86,6 +111,17 @@ public class SolverResolverTests {
             Assert.fail("expected a CreationException");
         } catch (ISolver.CreationException e) {
             Assert.assertTrue(e.getMessage(), e.getMessage().contains("appears to have no content"));
+        }
+    }
+
+    /** An empty or blank .command counts as none, as a blank .exec does */
+    @Test
+    public void emptyCommandCountsAsNone() throws Exception {
+        for (String value : new String[]{"", "  "}) {
+            Resolution r = resolve(props("s.command", value, "s.exec", "s-1.0"), "s", null, known());
+            Assert.assertNull(r.command());
+            Assert.assertEquals(DIR + "/s-1.0", r.executable());
+            Assert.assertEquals(DIR + "/s", resolve(props("s.command", value), "s", null, known()).executable());
         }
     }
 

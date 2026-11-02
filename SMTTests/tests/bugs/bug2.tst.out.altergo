@@ -1,0 +1,12 @@
+success
+success
+success
+success
+(error "Error on typing errors (code 4)")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

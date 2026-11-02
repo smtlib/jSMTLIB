@@ -1,4 +1,6 @@
-(check-sat)
-^^^^^^^^^^^
-(check-sat)
-^^^^^^^^^^^
+(assert (= (@ f x) h))
+           ^^^^^^^
+(assert (@ h y))
+           ^
+(assert (not (@ (@ f x) y)))
+                ^^^^^^^

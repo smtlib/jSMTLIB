@@ -1,0 +1,12 @@
+success
+success
+success
+unsupported
+success
+success
+sat
+success
+success
+(error "line 13 column 20: invalid sorted variables: unknown sort 'A'")
+sat
+success

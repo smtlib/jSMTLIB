@@ -1,0 +1,7 @@
+success
+success
+sat
+success
+(error "The get-value command is only valid if :produce-models was enabled before the last check")
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] model production not enabled
+")

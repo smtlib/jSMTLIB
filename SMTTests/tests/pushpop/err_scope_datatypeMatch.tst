@@ -1,0 +1,8 @@
+; after pop, a sort that reuses a popped datatype's name is not a datatype for match (#166)
+(set-logic ALL)
+(push 1)
+(declare-datatype D ((c) (e)))
+(pop 1)
+(declare-sort D 0)
+(declare-fun x () D)
+(assert (match x ((c true) (e false))))

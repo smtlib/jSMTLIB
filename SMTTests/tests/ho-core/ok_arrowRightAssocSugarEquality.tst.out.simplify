@@ -1,5 +1,5 @@
 success
 success
 success
-success
-sat
+(error "The simplify solver does not support higher-order functions")
+unknown

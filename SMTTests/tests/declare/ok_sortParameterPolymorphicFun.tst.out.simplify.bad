@@ -1,0 +1,13 @@
+success
+unsupported
+success
+success
+success
+success
+success
+(error "Argument 1 of f has sort Bool, expected A")
+(error "Argument 1 of f has sort Int, expected A")
+success
+success
+sat
+(error "Argument 1 of f has sort Bool, expected A")

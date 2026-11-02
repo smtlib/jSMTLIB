@@ -1,0 +1,3 @@
+The ARM64 build of z3-4.3.1 answers this test's check-sat (a quantified problem) with "line 333 ...
+unexpected character" errors from its internal pattern database, whose count differs between machines
+(one error under qemu, a long run of them on CI's linux-arm64 runner), so no golden can pin it (#101).

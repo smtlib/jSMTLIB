@@ -1,0 +1,3 @@
+success
+(error "cannot get proof unless proofs are enabled (try --produce-proofs)")
+(error "A get-proof command takes no arguments")

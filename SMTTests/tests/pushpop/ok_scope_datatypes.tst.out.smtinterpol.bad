@@ -1,0 +1,35 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "<stdin>:34:13: Function red is already defined.")
+(error "<stdin>:35:13: Function node is already defined.")
+(error "<stdin>:36:13: Function val is already defined.")
+(error "<stdin>:37:13: Function head is already defined.")

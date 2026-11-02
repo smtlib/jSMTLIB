@@ -1,0 +1,12 @@
+success
+success
+success
+success
+success
+success
+success
+success
+(error "Parse Error: <shell>:10.25: Symbol 'circle' not declared as a variable")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

@@ -1,0 +1,6 @@
+; Lambda type checking: duplicate parameter, undeclared parameter sort, ill-sorted body
+(set-logic ALL)
+(declare-fun f () (-> Int Int))
+(assert (= f (lambda ((x Int) (x Int)) x)))
+(assert (= f (lambda ((x Foo)) 0)))
+(assert (= f (lambda ((x Int)) (+ x true))))

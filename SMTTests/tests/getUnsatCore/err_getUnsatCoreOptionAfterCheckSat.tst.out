@@ -1,0 +1,5 @@
+success
+success
+unsat
+(error "invalid call to 'setOption' for option 'produce-unsat-cores', solver is already fully initialized")
+(error "cannot get unsat core unless explicitly enabled (try --produce-unsat-cores)")

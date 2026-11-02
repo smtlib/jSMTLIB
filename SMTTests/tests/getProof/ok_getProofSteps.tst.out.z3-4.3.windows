@@ -1,0 +1,11 @@
+success
+success
+success
+success
+success
+success
+unsat
+(
+(set-logic QF_UF)
+(proof (let (($x31 (not p))) (let ((@x32 (asserted $x31))) (let ((@x33 (and-elim (asserted (and p q)) p))) (unit-resolution @x33 @x32 false)))))
+)

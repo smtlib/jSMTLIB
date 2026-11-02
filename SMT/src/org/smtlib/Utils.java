@@ -25,6 +25,14 @@ import org.smtlib.sexpr.ISexpr;
 /** A class of static utility methods and constants for the SMT-LIB package. */
 public class Utils {
 
+    /** The line of its source on which the command starts (counted from 1), or 0 if it has no source position */
+    public static int sourceLine(ICommand cmd) {
+        if (!(cmd instanceof IPos.IPosable posable)) return 0;
+        IPos pos = posable.pos();
+        if (pos == null || pos.source() == null) return 0;
+        return pos.source().lineNumber(pos.charStart());
+    }
+
 
     /** The name of the properties file read by jSMTLIB */
     static final public String PROPS_FILE = "jsmtlib.properties";
@@ -114,6 +122,11 @@ public class Utils {
     /** The string designating an option item */
     public static final String PRODUCE_MODELS = ":produce-models";
 
+    /** The standard options that may be set only in start mode, i.e. before set-logic (SMT-LIB 2.7, 4.1.7) */
+    public static final Set<String> startModeOptions = Set.of(GLOBAL_DECLARATIONS, INTERACTIVE_MODE,
+            PRODUCE_ASSERTIONS, PRODUCE_ASSIGNMENTS, PRODUCE_MODELS, PRODUCE_PROOFS, PRODUCE_UNSAT_ASSUMPTIONS,
+            PRODUCE_UNSAT_CORES, RANDOM_SEED);
+
     /** The string designating an info item */
     public static final IKeyword ERROR_BEHAVIOR = new org.smtlib.impl.SMTExpr.Keyword(":error-behavior");
 
@@ -144,10 +157,6 @@ public class Utils {
     /** The response to the :name info item */
     public static final String NAME_VALUE = "SMT-LIB adapter";
 
-    /** The response to the :version info item */
-    // FIXME - must this be a string; what is the relationship to SW_VERSION?
-    public static final String VERSION_VALUE = "0.0";
-
     /** The string designating the smtlib attribute within a logic or theory */
     public static final IKeyword SMTLIB_VERSION = new org.smtlib.impl.SMTExpr.Keyword(":smt-lib-version");
 
@@ -177,6 +186,9 @@ public class Utils {
 
     /** The String for the theory symbol */
     public static final String THEORY = "theory";
+
+    /** The String for the head of a datatype tester, (_ is C) */
+    public static final String IS = "is";
 
     /** The String for the par reserved word */
     public static final String PAR = "par";
@@ -222,7 +234,9 @@ public class Utils {
     static public final ISymbol EQ = new SMTExpr.Symbol("=".intern());
     static public final ISymbol DISTINCT = new SMTExpr.Symbol("distinct".intern());
     static public final ISymbol ITE = new SMTExpr.Symbol("ite".intern());
+    static public final ISymbol XOR = new SMTExpr.Symbol("xor".intern());
 
+    static public final ISymbol PLUS = new SMTExpr.Symbol("+".intern());
     static public final ISymbol MINUS = new SMTExpr.Symbol("-".intern());
     static public final ISymbol MULT = new SMTExpr.Symbol("*".intern());
     static public final ISymbol SLASH = new SMTExpr.Symbol("/".intern());
@@ -272,6 +286,8 @@ public class Utils {
     static public final ISymbol BVSGE = new SMTExpr.Symbol("bvsge".intern());
     static public final ISymbol CONCAT = new SMTExpr.Symbol("concat".intern());
     static public final ISymbol EXTRACT = new SMTExpr.Symbol("extract".intern());
+    /** Head of the Strings theory's (_ char H) constants. */
+    static public final ISymbol CHAR = new SMTExpr.Symbol("char".intern());
     static public final ISymbol REPEAT = new SMTExpr.Symbol("repeat".intern());
     static public final ISymbol ZERO_EXTEND = new SMTExpr.Symbol("zero_extend".intern());
     static public final ISymbol SIGN_EXTEND = new SMTExpr.Symbol("sign_extend".intern());
@@ -368,6 +384,40 @@ public class Utils {
             infoKeywords.add(k);
         }
 
+    }
+
+    /** The reason value is not a valid value for the standard set-info attribute key,
+     *  or null if it is valid or key is not a standard set-info attribute */
+    static public /*@Nullable*/ String invalidSetInfoValue(IKeyword key, IAttributeValue value) {
+        String k = key.value();
+        boolean ok;
+        String expected;
+        if (k.equals(":smt-lib-version")) {
+            ok = value instanceof IExpr.IDecimal; expected = "a decimal";
+        } else if (k.equals(":source")) {
+            ok = value instanceof IExpr.IStringLiteral || (value instanceof IExpr.ISymbol && value.toString().startsWith("|"));
+            expected = "a string or a quoted symbol";
+        } else if (k.equals(":category")) {
+            ok = value instanceof IExpr.IStringLiteral && java.util.Arrays.asList("crafted","random","industrial").contains(((IExpr.IStringLiteral)value).value());
+            expected = "\"crafted\", \"random\" or \"industrial\"";
+        } else if (k.equals(":license")) {
+            ok = value instanceof IExpr.IStringLiteral; expected = "a string";
+        } else if (k.equals(":status")) {
+            ok = value instanceof IExpr.ISymbol && java.util.Arrays.asList("sat","unsat","unknown").contains(((IExpr.ISymbol)value).value())
+                    && !value.toString().startsWith("|");
+            expected = "sat, unsat or unknown";
+        } else {
+            return null;
+        }
+        return ok ? null : "The value of " + k + " must be " + expected;
+    }
+
+    /** The attributes the standard defines for set-info (any other is allowed, but not standard) */
+    static final public HashSet<IKeyword> setInfoKeywords = new HashSet<IKeyword>();
+    static {
+        for (String k : new String[] { ":smt-lib-version", ":source", ":category", ":license", ":status" }) {
+            setInfoKeywords.add(new org.smtlib.impl.SMTExpr.Keyword(k));
+        }
     }
 
     // /** The values for info characteristics as used for the test solver */
@@ -604,7 +654,7 @@ public class Utils {
             // SMT-LIB version), then the top-level (latest-version) copy.
             List<String> candidates = new ArrayList<>();
             if (smtConfig.smtlib != null) {
-                SMTLIB cv = SMTLIB.find(smtConfig.smtlib);
+                SMTLIB cv = smtConfig.smtlib;
                 SMTLIB latest = SMTLIB.values()[SMTLIB.values().length - 1];
                 if (cv != null && cv != latest) candidates.add(cv.id + "/" + filename);
             }
@@ -635,6 +685,9 @@ public class Utils {
         try (InputStream input = openLogicStream(name, pos)){
             SMT.Configuration config = smtConfig.clone();
             config.interactive = false;
+            // The file's text (e.g. non-ASCII names in descriptions) follows the current standard,
+            // whatever SMT-LIB version the script uses
+            config.smtlib = SMTLIB.values()[SMTLIB.values().length - 1];
             ISource source = config.smtFactory.createSource(config, input, null);
             IParser p = config.smtFactory.createParser(config, source);
             ILogic logic = p.parseLogic();
@@ -703,6 +756,9 @@ public class Utils {
         try (var input = openLogicStream(name, null)) {
             SMT.Configuration config = smtConfig.clone();
             config.interactive = false;
+            // The file's text (e.g. non-ASCII names in descriptions) follows the current standard,
+            // whatever SMT-LIB version the script uses
+            config.smtlib = SMTLIB.values()[SMTLIB.values().length - 1];
             source = config.smtFactory.createSource(config, input, null);
             IParser p = config.smtFactory.createParser(config, source);
             ITheory th = p.parseTheory();
@@ -803,10 +859,10 @@ public class Utils {
             ISymbol theoryName = (IExpr.ISymbol) theory;
             if (CORE.equals(theoryName.value())) continue;
             if ("ALL".equals(logicName)) {
+                // ALL holds every theory of the configured version: take the versioned copy if
+                // there is one, and skip a theory that exists only in a newer version.
                 boolean savedRelax = smtConfig.relax;
-                String savedSmtlib = smtConfig.smtlib;
                 smtConfig.relax = true;
-                smtConfig.smtlib = null;
                 ITheory th;
                 try {
                     th = findTheory(theoryName.value(), smtConfig.logicPath);
@@ -814,7 +870,6 @@ public class Utils {
                     return e.errorResponse;
                 } finally {
                     smtConfig.relax = savedRelax;
-                    smtConfig.smtlib = savedSmtlib;
                 }
                 IAttributeValue tv = th.value(SMTLIB_VERSION);
                 if (tv instanceof IDecimal) {
@@ -859,16 +914,10 @@ public class Utils {
                     return smtConfig.responseFactory.error("Ill-formed attribute in the declaration of sort " + name + ": " + key);
                 }
                 List<IExpr.IAttribute<?>> attrs = parseAttributeTail(iter2, key);
-                // FloatingPoint.smt2's Float16/Float32/Float64/Float128 are documented as
-                // synonyms for specific (_ FloatingPoint eb sb) instances, not independent
-                // sorts -- this generic loop has no aliasing concept (addSortDefinition always
-                // creates a fresh, unrelated 0-arity family), so registering them here would
-                // silently break the documented synonym relationship rather than implement it.
-                // Skip them; they remain deliberately unimplemented (declare-fun ... Float32
-                // still errors "unknown sort") until/unless something actually needs them,
-                // rather than resolving to a sort that is not really interchangeable with the
-                // (_ FloatingPoint eb sb) form it is supposed to mean.
-                // FIXME - check this - the comment sounds like AI-speak for unimplemented/unsupported material
+                symTable.addLogicSymbol(name, true);
+                // Float16/Float32/Float64/Float128 are synonyms for (_ FloatingPoint eb sb)
+                // instances, which SymbolTable.lookupSort provides; registered here they would
+                // be new sorts, distinct from the ones they abbreviate.
                 if (theoryName.equals("FloatingPoint") && (name.value().equals("Float16")
                         || name.value().equals("Float32") || name.value().equals("Float64")
                         || name.value().equals("Float128"))) {
@@ -955,6 +1004,7 @@ public class Utils {
             ISort result = sorts.remove(sorts.size() - 1);
             List<IExpr.IAttribute<?>> attrs = parseAttributeTail(iter2, key);
             ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(sorts.toArray(new ISort[sorts.size()]), result);
+            symTable.addLogicSymbol(sym, false);
             boolean b = symTable.add(new SymbolTable.Entry(sym, fcnSort, attrs, null), true, true);
             if (!b) return smtConfig.responseFactory.error("Failed to add to symbol table: " + smtConfig.defaultPrinter.toString(sym) + " " + smtConfig.defaultPrinter.toString(fcnSort));
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Added symbol " + name);
@@ -1013,6 +1063,7 @@ public class Utils {
             ISort result = sorts.remove(sorts.size() - 1);
             List<IExpr.IAttribute<?>> attrs = parseAttributeTail(iter2, key);
             ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(sorts.toArray(new ISort[sorts.size()]), result);
+            symTable.addLogicSymbol(sym, false);
             boolean b = symTable.add(new SymbolTable.Entry(sym, fcnSort, attrs, params), true, true);
             if (!b) return smtConfig.responseFactory.error("Failed to add to symbol table: " + smtConfig.defaultPrinter.toString(sym));
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Added symbol " + sym.value());

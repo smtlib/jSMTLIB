@@ -16,7 +16,7 @@ success
 (error "Bar(|)-enclosed symbol is not terminated: |a")
 success
 (error "Invalid token: 0a")
-(error "Parse Error: <shell>:1.9: Symbol '.123' not declared as a variable")
+(error "Parse Error: <shell>:25.9: Symbol '.123' not declared as a variable")
 (error "Invalid token: ,")
 (error "User-defined symbols may not begin with . or @")
 (error "User-defined symbols may not begin with . or @")

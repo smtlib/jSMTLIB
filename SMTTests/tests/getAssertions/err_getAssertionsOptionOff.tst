@@ -1,0 +1,6 @@
+; get-assertions with :produce-assertions off is an error (cvc5 answers it; its adapter checks)
+(set-option :produce-assertions false)
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(assert p)
+(get-assertions)

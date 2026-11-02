@@ -1,7 +1,7 @@
 success
 success
 success
-(error "line 6 column 6: invalid pop command, argument is greater than the current stack depth")
+(error "line 5 column 6: invalid pop command, argument is greater than the current stack depth")
 success
 success
 sat

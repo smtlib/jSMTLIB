@@ -1,0 +1,3 @@
+success
+(error "Bar(|)-enclosed symbol is not terminated: |café () Bool)
+")

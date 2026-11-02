@@ -1,0 +1,3 @@
+success
+(error "The code point of a char identifier must be at most #x2FFFF")
+success

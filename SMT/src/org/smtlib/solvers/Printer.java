@@ -91,18 +91,11 @@ public class Printer extends org.smtlib.sexpr.Printer {
         return false;
     }
 
-    /** Prints a forall/exists whose parameter list contains one or more Bool-sorted
-     *  parameters, none of which real SMT-LIB-compliant-but-not-quite solvers this Printer
-     *  targets accept as a quantified sort: a Bool-sorted parameter only ranges over two
-     *  values, so quantifying over it is equivalent to a case split. Unfolds one such
-     *  parameter at a time (each occurrence becomes a "(let ((b true/false)) ...)" pair,
-     *  conjoined for forall / disjoined for exists, exactly as the original single-parameter-
-     *  only version of this method did), recursing on the remaining parameters -- so
-     *  parameters().size() == 3 with two Bool-sorted parameters produces a 4-way case split,
-     *  each case an ordinary quantifier over whatever non-Bool parameter(s) remain. Once no
-     *  Bool-sorted parameter remains, prints an ordinary quantifier over what's left, or (if
-     *  nothing is left at all) just the body -- matching the original method's base case
-     *  exactly for the single-Bool-parameter input it already handled. */
+    /** Prints a forall/exists over one or more Bool-sorted parameters as a case split: each such
+     *  parameter becomes a pair of (let ((b true/false)) ...) cases, conjoined for forall and
+     *  disjoined for exists, around a quantifier over the remaining parameters (or just the body).
+     *  yices2, run incrementally, rejects every quantifier; this lets it answer those over Bool
+     *  variables only, bringing it closer to SMT-LIB behavior. */
     private void printQuantifierUnfoldingBoolParams(String keyword, List<IDeclaration> params, IExpr body, IPos pos) throws IVisitor.VisitorException {
         int idx = -1;
         for (int i = 0; i < params.size(); i++) {

@@ -1,0 +1,3 @@
+success
+(error "at line 3, column 19: undefined identifier: char")
+(error "The solver process has exited")

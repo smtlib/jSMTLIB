@@ -1,0 +1,7 @@
+success
+success
+success
+unknown
+(error "The get-model command has no model to report after check-sat returned unknown")
+(error "The get-value command has no model to report after check-sat returned unknown")
+"alive"

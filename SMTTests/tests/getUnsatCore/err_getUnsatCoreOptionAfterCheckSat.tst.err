@@ -1,0 +1,4 @@
+(set-option :produce-unsat-cores true)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(get-unsat-core)
+^^^^^^^^^^^^^^^^

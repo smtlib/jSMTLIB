@@ -50,14 +50,14 @@ public class ConfigurationSharedStateBugTest {
     @Test
     public void cloneAndOriginalEachKeepTheirOwnUtils() throws Exception {
         SMT.Configuration original = new SMT.Configuration();
-        original.smtlib = "V2.0";
+        original.smtlib = org.smtlib.SMT.Configuration.SMTLIB.V20;
         SMT.Configuration clone = original.clone();
 
         // Fixed: the clone gets its own independent Utils instance.
         Assert.assertNotSame(original.utils, clone.utils);
 
         // Diverge the clone's own version setting from the original's.
-        clone.smtlib = "V2.7";
+        clone.smtlib = org.smtlib.SMT.Configuration.SMTLIB.V27;
 
         // The clone's own quoting reflects the clone's own V2.7 setting (backslash left
         // unescaped), not the original's V2.0 setting (which would escape it to "\\\\").

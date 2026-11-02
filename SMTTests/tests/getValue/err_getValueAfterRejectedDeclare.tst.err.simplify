@@ -1,0 +1,6 @@
+(declare-const x Bool)
+               ^
+(get-value (x))
+^^^^^^^^^^^^^^^
+(get-model)
+^^^^^^^^^^^

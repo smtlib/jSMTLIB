@@ -1,0 +1,9 @@
+; An ill-sorted step of @'s :left-assoc sugar names the argument, or the nested application,
+; that does not fit. See ok_hoApplyBasic.tst for why ALL is the logic used.
+(set-logic ALL)
+(declare-const f (-> Int Int))
+(declare-const g (-> Int Bool Int))
+(assert (= 0 (@ 1 2 3)))
+(assert (= 0 (@ f 1 2)))
+(assert (= 0 (@ g true 2)))
+(assert (= 0 (@ g 1 2)))

@@ -6,4 +6,4 @@ success
 success
 success
 success
-(error "Parse Error: <shell>:1.26: array select operating on non-array")
+(error "Parse Error: <shell>:10.26: array select operating on non-array")

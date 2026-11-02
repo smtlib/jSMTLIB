@@ -1,0 +1,6 @@
+success
+success
+sat
+success
+((p false))
+( ( define-fun p ( ) Bool false ) )

@@ -4,4 +4,4 @@
 (error "Expected a symbol here, not a hex-literal")
 (error "Expected a symbol here, not a string-literal")
 (error "Too many arguments or extraneous material after the command or missing right parenthesis")
-(error "Parse Error: <shell>:1.12: LogicInfo::setLogicString(): cannot parse logic string: Q")
+(error "Parse Error: <shell>:8.12: LogicInfo::setLogicString(): cannot parse logic string: Q")

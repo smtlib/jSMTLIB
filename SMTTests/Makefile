@@ -38,15 +38,14 @@ export SMT_SOLVER_DIR
 ## fallback to Solver_z3_recent, so it doubles as ongoing coverage for that fallback.
 ## bitwuzla and simplify were onboarded and CI-verified clean across all 5 platforms
 ## (goldens + adapter fixes) and are now part of the regular default list, same as
-## every other solver here. altergo is deliberately EXCLUDED: CI run 32671113041
-## confirmed it hangs completely (never responds, not even to the first test) on
-## every platform where the Solvers repo has a build (linux-x64, macos-arm64) --
-## each burned the full 20-minute job timeout before being force-canceled. Its
-## adapter was a documentation-only guess (no local binary was available) about
-## reading a script from stdin; that assumption is now known wrong, or at least
-## incomplete, and needs new evidence (ideally a local Linux/Docker repro) before
-## trying again, not another blind CI iteration at ~20 minutes per guess.
-SMT_TEST_SOLVERS ?=test z3-4.3 cvc5-1.3.2 z3-4.5.0 z3-4.6.0 z3-4.7.1 z3-4.8.12 z3-4.10.2 z3-4.12.6 z3-4.14.1 z3-4.16.0 z3-5.1.0 yices2 smtinterpol-2.5 bitwuzla simplify
+## every other solver here. altergo (A30) is tested only on the platforms in ALTERGO_PLATFORMS:
+## linux-x64, where it was verified, and macos-arm64, a trial; to drop the trial, remove
+## macos-arm64 from that list. (Solvers has no alt-ergo binary for the other platforms.)
+ALTERGO_PLATFORMS = linux-x64 macos-arm64
+ifndef PLATFORM_ARCH
+  PLATFORM_ARCH := $(shell . ./setup && echo "$$PLATFORM_ARCH")
+endif
+SMT_TEST_SOLVERS ?=test z3-4.3 cvc5-1.3.2 z3-4.5.0 z3-4.6.0 z3-4.7.1 z3-4.8.12 z3-4.10.2 z3-4.12.6 z3-4.14.1 z3-4.16.0 z3-5.1.0 yices2 smtinterpol-2.5 bitwuzla simplify $(if $(filter $(PLATFORM_ARCH),$(ALTERGO_PLATFORMS)),altergo)
 export SMT_TEST_SOLVERS
 
 test tests:
@@ -180,15 +179,28 @@ cov-analyze-by-test:
 ## Merge every per-test file back into one data set and report it, exactly like
 ## cov-report does for cov-test -- a check that splitting lost nothing: its totals should
 ## match cov-report's for the same code and SMT_TEST_SOLVERS.
-cov-report-by-test:
+cov-report-by-test: cov/report-classes
 	java -jar jacoco/lib/jacococli.jar merge --quiet cov/by-test/*.exec --destfile cov/by-test-merged.exec
 	java -jar jacoco/lib/jacococli.jar report cov/by-test-merged.exec \
 		--classfiles $(COV_CLASSES) \
-		--classfiles bin \
+		--classfiles cov/report-classes \
 		--sourcefiles ../SMT/src \
 		--sourcefiles src \
 		--html cov/html-by-test \
 		--xml cov/coverage-by-test.xml
+
+## The helper processes that tests launch as stand-in solvers run in their own JVMs, without
+## the JaCoCo agent, so they would always show 0%; reports leave them out by reading the test
+## classes from a copy without them (jacococli report has no exclude option).
+COV_FIXTURES = StubSolver EchoProcess FlatAnswerProcess NonSmtlibErrorProcess LateCommentProcess
+COV_FIXTURE_EXCLUDES = $(foreach c,$(COV_FIXTURES),--exclude 'org/smtlib/test/$(c).class' --exclude 'org/smtlib/test/$(c)$$*.class')
+
+cov/report-classes: FORCE
+	rm -rf cov/report-classes
+	mkdir -p cov/report-classes
+	tar -C bin -cf - $(COV_FIXTURE_EXCLUDES) . | tar -C cov/report-classes -xf -
+
+FORCE:
 
 ## Remove collected coverage data
 cov-clean:
@@ -196,16 +208,16 @@ cov-clean:
 
 ## Generate HTML + XML coverage report from the single exec file produced by cov-test.
 ## Two --classfiles/--sourcefiles pairs, not one: $(COV_CLASSES) covers org.smtlib itself,
-## and bin/src cover org.smtlib.test/org.smtlib.test.bugs (the JUnit test harness --
+## and the test classes (bin less COV_FIXTURES)/src cover org.smtlib.test/org.smtlib.test.bugs (the JUnit test harness --
 ## FileTests, LogicTests, etc. -- compiled by cov-test's own runjunits into bin/) --
 ## jacococli accepts each option repeated, unioning every location given. Test-harness
 ## code is exercised by the very tests being measured and is worth the same coverage
 ## visibility as anything under SMT/src (e.g. a change to FileTests/LogicTests should
 ## show up here too, not just in whether the suite as a whole still passes).
-cov-report:
+cov-report: cov/report-classes
 	java -jar jacoco/lib/jacococli.jar report cov/junits.exec \
 		--classfiles $(COV_CLASSES) \
-		--classfiles bin \
+		--classfiles cov/report-classes \
 		--sourcefiles ../SMT/src \
 		--sourcefiles src \
 		--html cov/html \
@@ -304,7 +316,9 @@ ci-cov:
 		classfiles_args="--classfiles $$classjar"; \
 		sourcefiles_args="--sourcefiles ../SMT/src"; \
 		if [ -n "$$testbin" ]; then \
-			classfiles_args="$$classfiles_args --classfiles $$testbin"; \
+			rm -rf cov/ci/report-classes; mkdir -p cov/ci/report-classes; \
+			tar -C "$$testbin" -cf - $(COV_FIXTURE_EXCLUDES) . | tar -C cov/ci/report-classes -xf -; \
+			classfiles_args="$$classfiles_args --classfiles cov/ci/report-classes"; \
 			sourcefiles_args="$$sourcefiles_args --sourcefiles src"; \
 		else \
 			echo "WARNING: no compiled org.smtlib.test bin/ found in the downloaded artifacts -- report will omit test-harness coverage"; \

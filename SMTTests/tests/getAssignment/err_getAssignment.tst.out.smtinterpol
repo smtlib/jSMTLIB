@@ -1,0 +1,3 @@
+success
+(error "<stdin>:3:15: Set option :produce-assignments to true to generate assignments!")
+(error "A get-assignment command takes no arguments")

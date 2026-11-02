@@ -1,0 +1,8 @@
+success
+success
+success
+(error "Parse Error: <shell>:7.19: Symbol 'A' not declared as a type")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

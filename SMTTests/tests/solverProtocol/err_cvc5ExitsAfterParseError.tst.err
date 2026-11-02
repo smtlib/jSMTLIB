@@ -1,0 +1,6 @@
+(assert QQ)
+^^^^^^^^^^^
+(declare-const x Int)
+^^^^^^^^^^^^^^^^^^^^^
+(check-sat)
+^^^^^^^^^^^

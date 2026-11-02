@@ -1,0 +1,3 @@
+### Input of more than 100K characters from standard input
+##EXITCODE 0
+awk 'BEGIN { print "(set-logic QF_UF)"; for (i = 0; i < 9000; i++) print "(assert true) ; " i; print "(check-sat)" }' | $SMT_CMD --solver test --nosuccess -

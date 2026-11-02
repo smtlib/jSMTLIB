@@ -15,7 +15,6 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,7 +48,13 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
      *  See issue #51. */
     protected String name() { return "z3-4.3"; }
 
-    // linesOffset is inherited from AbstractSolver -- see its own doc comment there.
+    /** z3 reports "line N column C" in its error messages, counting the lines of its whole input */
+    private static final List<Pattern> LINE_NUMBERS = List.of(Pattern.compile("(line )(\\d+)( column)"));
+
+    @Override
+    protected List<Pattern> lineNumberPatterns() {
+        return LINE_NUMBERS;
+    }
 
     /** The command-line arguments for launching the Z3 solver */
     protected String cmds[];
@@ -61,22 +66,18 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     // adapter -- z3-4.3 never got the same fix.
     protected String cmds_win[] = new String[]{ "", "/smt2","/in","SMTLIB2_COMPLIANT=true","WARNING=false"};//,"/rs:42"};
     protected String cmds_mac[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
-    protected String cmds_unix[] = new String[]{ "", "-smt2","-in","WARNING=false"};
+    protected String cmds_unix[] = new String[]{ "", "-smt2","-in","SMTLIB2_COMPLIANT=true","WARNING=false"};
 
     /** The parser that parses responses from the solver */
     protected org.smtlib.sexpr.Parser responseParser;
 
-    /** Set to true once a set-logic command has been executed */
+    /** Set to true once a set-logic command has been executed. z3 4.3 accepts declarations,
+     *  definitions, assert, push, pop and check-sat before set-logic, which SMT-LIB forbids, so
+     *  those commands check this flag and report the error themselves. */
     protected boolean logicSet = false;
 
-    /** The number of pushes less the number of pops so far -- i.e. the real depth of the
-     *  solver's own assertion stack. 0 immediately after set_logic(), before any push (not
-     *  1: set_logic() does not itself push anything). Used to know how much to pop for
-     *  set_logic()'s relax-mode re-entry cleanup; NOT used to validate a pop count client-side
-     *  -- z3-4.3 already does that itself, with better diagnostics than this adapter could
-     *  produce (see #53), so only update this after the solver confirms a pop actually
-     *  succeeded, never unconditionally. */
-    protected int pushesDepth = 0;
+    /** Whether z3 4.3 has accepted a set-logic command, after which it rejects another itself */
+    private boolean logicSent = false;
 
     /** Creates an instance of the Z3 solver */
     public Solver_z3_4_3(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
@@ -151,13 +152,11 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         String translatedCmd = null;
         try {
             translatedCmd = translate(cmd);
-            String response = solverProcess.sendAndListen(translatedCmd,"\n");
+            String response = sendScriptText(true, translatedCmd, "\n");
             IResponse timedOut = timeLimitResponse(response);
-            return timedOut != null ? timedOut : parseResponse(response);
+            return timedOut != null ? timedOut : parse(shapeOf(cmd), translatedCmd, response);
         } catch (IOException e) {
-            IResponse timedOut = timeLimitResponseAfterExit();
-            if (timedOut != null) return timedOut;
-            return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
+            return sendFailure("Error writing to solver: " + translatedCmd, e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to solver: " + translatedCmd + " " + e);
         }
@@ -166,13 +165,11 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     public IResponse sendCommand(String cmd) {
         if (endedByTimeLimit) return smtConfig.responseFactory.timeout();
         try {
-            String response = solverProcess.sendAndListen(cmd,"\n");
+            String response = sendScriptText(true, cmd, "\n");
             IResponse timedOut = timeLimitResponse(response);
-            return timedOut != null ? timedOut : parseResponse(response);
+            return timedOut != null ? timedOut : parse(Shape.SUCCESS, cmd, response);
         } catch (IOException e) {
-            IResponse timedOut = timeLimitResponseAfterExit();
-            if (timedOut != null) return timedOut;
-            return smtConfig.responseFactory.error("Error writing to solver: " + cmd + " " + e);
+            return sendFailure("Error writing to solver: " + cmd, e);
         }
     }
 
@@ -186,7 +183,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 //            if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
             // Can't turn off printing success, or we get no feedback
             solverProcess.sendAndListen("(set-option :print-success true)\n"); // Z3 4.3.0 needs this because it mistakenly has the default for :print-success as false
-            linesOffset ++; 
             //if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started "+name()+" ");
             return smtConfig.responseFactory.success();
@@ -211,7 +207,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended Z3 ");
             return successOrEmpty(smtConfig);
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         }
     }
 
@@ -232,7 +228,9 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         // so we have to use our own translator
         StringWriter sw = new StringWriter();
         sexpr.accept(new Translator(sw));
-        return sw.toString();
+        String s = sw.toString();
+        // z3 4.3 answers unsupported for check-sat-assuming (see check_sat_assuming)
+        return sexpr instanceof ICommand.Icheck_sat_assuming ? Solver_z3_recent.legacyCheckSat(s) : s;
     }
 
     // No translateSMT(INode) here -- a confirmed dead end, not just unused. It once existed
@@ -245,53 +243,75 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     // "plain printing for a single node with no override" correctly; only a whole-subtree
     // bypass was ever the problem. See issue #65.
 
-    /** Rewrites z3 4.3's legacy bit-vector literals (bvVALUE[WIDTH]) as standard #b... literals */
-    protected String rewriteOldBitVectors(String response) {
-        Pattern oldbv = Pattern.compile("bv([0-9]+)\\[([0-9]+)\\]");
-        Matcher mm = oldbv.matcher(response);
-        while (mm.find()) {
-            long val = Long.parseLong(mm.group(1));
-            int base = Integer.parseInt(mm.group(2));
-            String bits = "";
-            for (int i=0; i<base; i++) { bits = ((val&1)==0 ? "0" : "1") + bits; val = val >>> 1; }
-            response = response.substring(0,mm.start()) + "#b" + bits + response.substring(mm.end(),response.length());
-            mm = oldbv.matcher(response);
-        }
-        return response;
+    /** Sends the command text and parses its response, which must have the given shape */
+    private IResponse send(Shape shape, String sent) throws IOException {
+        return parse(shape, sent, sendRaw(sent));
     }
+
+    /** Sends the command text and returns the solver's raw response. z3 4.3 writes timeout and exits when its
+     *  whole-run limit ends it, also while idle between commands; the next command then finds the process gone,
+     *  and its response is that timeout (as AbstractSolver's sendCommand does). */
+    private String sendRaw(String sent) throws IOException {
+        if (endedByTimeLimit) return "timeout";
+        try {
+            return sendScriptText(true, sent, "\n");
+        } catch (IOException e) {
+            if (timeLimitResponseAfterExit() != null) return "timeout";
+            throw e;
+        }
+    }
+
+    /** Parses a list-valued response */
+    private interface ListParser {
+        IResponse parse(org.smtlib.sexpr.Parser p) throws ParserException;
+    }
+
+    /** Sends a get- command whose answer is a list and returns it structured, as the other adapters do
+     *  (AbstractSolver.get_value etc.), so that it prints the same way (e.g. ((T true)), (- 1), not the
+     *  s-expression forms ( ( T true ) ), ( - 1 )). Errors -- including z3 4.3's value-then-error
+     *  responses -- keep the generic handling. */
+    private IResponse sendList(String sent, ListParser lp) throws IOException {
+        String r = sendRaw(sent);
+        if (!isFlatResponse(r) && !r.contains("(error")) {
+            try {
+                return lp.parse(new org.smtlib.sexpr.Parser(smtConfig, new Pos.Source(r, null)));
+            } catch (ParserException e) {
+                // fall through to the generic handling below
+            }
+        }
+        return parse(Shape.VALUE, sent, r);
+    }
+
+    /** Parses the response to the command text sent, which must have the given shape (#149) */
+    private IResponse parse(Shape shape, String sent, String response) {
+        IResponse timedOut = timeLimitResponse(response);
+        if (timedOut != null) return timedOut;
+        return checkShape(shape, sent, response, parseResponse(response));
+    }
+
+    /** An (error ...) response, at the start of a line of the solver's output */
+    private static final Pattern ERROR_RESPONSE = Pattern.compile("(?m)^\\s*\\(\\s*error\\s");
 
     /** Every command this adapter sends directly to the process ends here, so the solver's report that its
      *  whole-run limit ended it is recognized for all of them (see AbstractSolver#timeLimitResponse). A command sent
      *  directly after that finds the process gone and gets an error; sendCommand returns the timeout response. */
     protected IResponse parseResponse(String response) {
+        // z3 4.3 can write several (error ...) responses for one command; their line numbers are
+        // rewritten (see linesOffset) and they are joined into one error.
         IResponse timedOut = timeLimitResponse(response);
         if (timedOut != null) return timedOut;
         try {
-            response = rewriteOldBitVectors(response);
-            if (isMac && response.startsWith("success")) return smtConfig.responseFactory.success(); // FIXME - this is just to avoid a problem with the Mac Z3 implementation
-            if (response.contains("error")) {
+            if (ERROR_RESPONSE.matcher(response).find()) {
+                response = withSourceLines(response);
                 // Z3 returns an s-expr (always?)
-                // FIXME - (1) the {Print} also needs {Space}; (2) err_getValueTypes.tst returns a non-error s-expr and then an error s-expr - this fails for that case
                 //Pattern p = Pattern.compile("\\p{Space}*\\(\\p{Blank}*error\\p{Blank}+\"(([\\p{Space}\\p{Print}^[\\\"\\\\]]|\\\\\")*)\"\\p{Blank}*\\)\\p{Space}*");
+                // The message is that of each (error "...") in turn, or the whole text if something else comes first
                 Pattern p = Pattern.compile("\\p{Space}*\\(\\p{Blank}*error\\p{Blank}+\"(([\\p{Print}\\p{Space}&&[^\"\\\\]]|\\\\\")*)\"\\p{Blank}*\\)");
                 Matcher m = p.matcher(response);
                 String concat = "";
                 while (m.lookingAt()) {
                     if (!concat.isEmpty()) concat = concat + "; ";
-                    String matched = m.group(1);
-                    String prefix = "line ";
-                    int offset = prefix.length();
-                    if (matched.startsWith(prefix)) {
-                        int k = matched.indexOf(' ',offset);
-                        String number = matched.substring(offset, k);
-                        try {
-                            int n = Integer.parseInt(number);
-                            matched = prefix + (n-linesOffset) + matched.substring(k);
-                        } catch (NumberFormatException e) {
-                            // Just continue
-                        }
-                    }
-                    concat = concat + matched;
+                    concat = concat + m.group(1);
                     m.region(m.end(0),m.regionEnd());
                 }
                 if (!concat.isEmpty()) response = concat;
@@ -311,78 +331,70 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The logic must be set before an assert command is issued");
         }
         try {
-            String s = solverProcess.sendAndListen("(assert ",translate(sexpr),")\n");
-            response = parseResponse(s);
-            checkSatStatus = null;
+            response = recordChange(StackChange.ASSERT, send(Shape.SUCCESS, "(assert " + translate(sexpr) + ")"));
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Failed to assert expression: " + e + " " + sexpr);
+        } catch (IOException e) {
+            return sendFailure(e, smtConfig.responseFactory.error("Failed to assert expression: " + e + " " + sexpr));
         } catch (Exception e) {
             return smtConfig.responseFactory.error("Failed to assert expression: " + e + " " + sexpr);
         }
         return response;
     }
 
+    /** Not a correction: this adapter sends commands by its own means (z3 4.3 itself reports
+     *  get-assertions without :produce-assertions, which set_option_impl sends as :interactive-mode) */
     @Override
     public IResponse get_assertions() {
         if (!logicSet) {
             return smtConfig.responseFactory.error("The logic must be set before a get-assertions command is issued");
         }
-        // FIXME - do we really want to call get-option here? it involves going to the solver?
-        if (!smtConfig.relax && !Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSERTIONS)))) {
-            return smtConfig.responseFactory.error("The get-assertions command is only valid if " + Utils.produceAssertionsKey(smtConfig) + " has been enabled");
-        }
         try {
-            StringBuilder sb = new StringBuilder();
-            String s;
-            int parens = 0;
-            do {
-                s = solverProcess.sendAndListen("(get-assertions)\n");
-                int p = -1;
-                while (( p = s.indexOf('(',p+1)) != -1) parens++;
-                p = -1;
-                while (( p = s.indexOf(')',p+1)) != -1) parens--;
-                sb.append(s.replace('\n',' ').replace("\r",""));
-            } while (parens > 0);
-            s = sb.toString();
-            org.smtlib.sexpr.Parser p = new org.smtlib.sexpr.Parser(smtConfig,new org.smtlib.impl.Pos.Source(s,null));
-            List<IExpr> exprs = new LinkedList<IExpr>();
-            try {
-                if (p.isLP()) {
-                    p.parseLP();
-                    while (!p.isRP() && !p.isEOD()) {
-                        IExpr e = p.parseExpr();
-                        exprs.add(e);
-                    }
-                    if (p.isRP()) {
-                        p.parseRP();
-                        if (p.isEOD()) return smtConfig.responseFactory.get_assertions_response(exprs); 
-                    }
-                }
-            } catch (Exception e ) {
-                // continue - fall through
-            }
-            return smtConfig.responseFactory.error("Unexpected output from the Z3 solver: " + s);
+            return sendList("(get-assertions)", p -> smtConfig.responseFactory.get_assertions_response(p.parseAssertionList()));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("IOException while reading Z3 reponse");
+            return sendFailure("Error writing to Z3 solver:", e);
         }
     }
-
-
 
     @Override
     public IResponse check_sat() {
         if (!logicSet) {
             return smtConfig.responseFactory.error("The logic must be set before a check-sat command is issued");
         }
-        checkSatStatus = sendCommand(smtConfig.commandFactory.check_sat());
-        return checkSatStatus;
+        assumptions.clear();
+        return super.check_sat();
+    }
+
+    /** The assumptions of the most recent check command, if it was check-sat-assuming */
+    private final Solver_z3_recent.Assumptions assumptions = new Solver_z3_recent.Assumptions(this::translate);
+
+    /** z3 4.3 answers unsupported for check-sat-assuming, so it is sent as z3's legacy
+     *  (check-sat a1 ... an), which checks under the same assumptions; it is padded with spaces so
+     *  z3's error columns match the check-sat-assuming text (see translate and
+     *  Solver_z3_recent.legacyCheckSat). Its unsat core then includes the assumptions, which
+     *  unsatCoreElements drops. Like check-sat, it is
+     *  accepted before set-logic, which SMT-LIB forbids, so that is reported here. */
+    @Override
+    public IResponse check_sat_assuming(IExpr... exprs) {
+        if (!logicSet) {
+            return smtConfig.responseFactory.error("The logic must be set before a check-sat-assuming command is issued");
+        }
+        assumptions.set(exprs);
+        return super.check_sat_assuming(exprs);
+    }
+
+    /** Drops the assumptions z3 4.3 adds to the unsat core after check-sat-assuming */
+    @Override
+    protected List<IExpr> unsatCoreElements(List<IExpr> reply) {
+        return assumptions.withoutAssumptions(reply);
     }
 
     @Override
     public IResponse reset() {
         logicSet = false;
-        pushesDepth = 0;
-        return sendCommand("(reset)");
+        logicSent = false;
+        assumptions.clear();
+        return super.reset();
     }
 
     /** z3-4.3 predates reset-assertions (added in SMT-LIB 2.5), and turns out to already
@@ -411,20 +423,11 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         if (number < 0) throw new SMT.InternalException("Internal bug: A pop command called with a negative argument: " + number);
         if (number == 0) return  successOrEmpty(smtConfig);
         try {
-            checkSatStatus = null;
-            // Deliberately no client-side bound check against pushesDepth here: z3-4.3
-            // already validates a pop count against its own real stack depth and reports a
-            // precise, line/column-annotated error itself (confirmed against a real
-            // z3-4.3.1 binary: "invalid pop command, argument is greater than the current
-            // stack depth") -- better diagnostics than anything this adapter could produce,
-            // so defer to it (see issue #53). Only update the local depth bookkeeping once
-            // the solver actually accepted the pop; otherwise nothing was really popped and
-            // pushesDepth must not drift from what the solver's real stack looks like.
-            IResponse response = parseResponse(solverProcess.sendAndListen("(pop ",Integer.toString(number),")\n"));
-            if (!response.isError()) pushesDepth -= number;
-            return response;
+            // No client-side bound check: z3-4.3 validates a pop count against its own stack
+            // depth and reports a precise, line/column-annotated error itself (see issue #53)
+            return recordChange(StackChange.POP, send(Shape.SUCCESS, "(pop " + number + ")"));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         }
     }
 
@@ -434,10 +437,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("The logic must be set before a push command is issued");
         }
         if (number < 0) throw new SMT.InternalException("Internal bug: A push command called with a negative argument: " + number);
-        checkSatStatus = null;
-        if (number == 0) return smtConfig.responseFactory.success();
+        if (number == 0) return recordChange(StackChange.PUSH, smtConfig.responseFactory.success());
         try {
-            pushesDepth += number;
             // Used to convert any push() error into success whenever !isWindows (issue #53),
             // on the strength of a comment claiming the problem was Linux-only -- but the
             // condition covered macOS too, and a diagnostic logged unconditionally across a
@@ -446,135 +447,138 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             // reproducible case anywhere to justify masking it, and no evidence for the
             // Linux-only claim either, the honest, platform-independent behavior is to
             // return exactly what the solver said, uniformly.
-            return parseResponse(solverProcess.sendAndListen("(push ",Integer.toString(number),")\n"));
+            return recordChange(StackChange.PUSH, send(Shape.SUCCESS, "(push " + number + ")"));
         } catch (Exception e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         }
     }
 
     @Override
     public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
-        // FIXME - discriminate among logics
-
+        // Which logics are accepted is left to z3 4.3 (it answers success, ignoring a logic it does not know)
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#set-logic " + logicName);
-        if (logicSet) {
-            if (!smtConfig.relax) return smtConfig.responseFactory.error("Logic is already set");
-            pop(pushesDepth); // pop back to the base frame -- pushesDepth is 0 again afterward
+        boolean all = logicName.equals("ALL");
+        // z3 4.3 reports a second set-logic itself, but set-logic ALL is never sent (see below): so
+        // after ALL it would accept another, which SMT-LIB forbids (--relax allows it), and ALL
+        // after another logic is reported here
+        if (logicSet && (logicSent ? all : !smtConfig.relax)) {
+            return smtConfig.responseFactory.error("Logic is already set");
         }
         logicSet = true;
-        if (logicName.equals("ALL")) {
-            // z3-4.3 has no "ALL" logic to declare, so this line is never actually sent --
-            // unlike every other logic name, which the else-branch below sends as a real,
-            // counted line. That's one fewer real script line reflected in what z3 counts, so
-            // linesOffset must be decremented to compensate (see issue #97): otherwise every
-            // line-numbered error later in the script under-reports by one relative to the
-            // user's actual source.
-            linesOffset--;
-            return smtConfig.responseFactory.success();
+        if (all) {
+            // z3-4.3 has no "ALL" logic to declare, so this line is never sent
+            return recordChange(StackChange.SET_LOGIC, smtConfig.responseFactory.success());
         } else try {
-            return parseResponse(solverProcess.sendAndListen("(set-logic ",logicName,")\n"));
+            IResponse r = recordChange(StackChange.SET_LOGIC, send(Shape.SUCCESS, "(set-logic " + logicName + ")"));
+            if (!r.isError()) logicSent = true;
+            return r;
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e,pos);
+            return sendFailure(e, smtConfig.responseFactory.error("Error writing to Z3 solver: " + e, pos));
         }
     }
 
+    /** z3 4.3 accepts :interactive-mode, :produce-assertions and the other :produce- options after
+     *  set-logic, which SMT-LIB forbids, so that is reported here; values are kept here for
+     *  get_option. */
     @Override
     protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
         String option = key.value();
-        if (Utils.PRINT_SUCCESS.equals(option)) {
-            if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
-                return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'");
-            }
-        }
-        if (logicSet && (Utils.INTERACTIVE_MODE.equals(option)||Utils.PRODUCE_ASSERTIONS.equals(option))) {
+        if (logicSet && (Utils.INTERACTIVE_MODE.equals(option) || Utils.PRODUCE_ASSERTIONS.equals(option)
+                || Utils.PRODUCE_ASSIGNMENTS.equals(option) || Utils.PRODUCE_PROOFS.equals(option)
+                || Utils.PRODUCE_UNSAT_CORES.equals(option) || Utils.PRODUCE_MODELS.equals(option))) {
             return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
         }
-        if (Utils.PRODUCE_ASSIGNMENTS.equals(option) ||
-                Utils.PRODUCE_PROOFS.equals(option) ||
-                Utils.PRODUCE_UNSAT_CORES.equals(option)) {
-            if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
-            return smtConfig.responseFactory.unsupported();
-        }
-        if (Utils.PRODUCE_MODELS.equals(option)) {
-            if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
-        }
         if (Utils.VERBOSITY.equals(option)) {
-            IAttributeValue v = options.get(option);
-            smtConfig.verbose = (v instanceof INumeral) ? ((INumeral)v).intValue() : 0;
+            smtConfig.verbose = (value instanceof INumeral) ? ((INumeral)value).intValue() : 0;
         }
         // Save the options on our side as well
         options.put(Utils.INTERACTIVE_MODE.equals(option) && !smtConfig.isVersion(SMTLIB.V20) ? Utils.PRODUCE_ASSERTIONS : option,value);
         IResponse r = checkPrintSuccess(smtConfig,key,value);
         if (r != null) return r;
 
+        // z3 4.3 predates SMT-LIB 2.5's renaming of :interactive-mode to :produce-assertions: it answers
+        // unsupported for :produce-assertions, so that option is sent under its old name
+        String sentOption = Utils.PRODUCE_ASSERTIONS.equals(option) ? Utils.INTERACTIVE_MODE : option;
         try {
-            solverProcess.sendAndListen("(set-option ",option," ",value.toString(),")\n");// FIXME - detect errors
+            return send(Shape.SUCCESS, "(set-option " + sentOption + " " + value + ")");
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         }
-
-        return successOrEmpty(smtConfig);
     }
 
+    /** Sent to the solver, except where z3 4.3's answer does not conform: it defaults :produce-models
+     *  to true (SMT-LIB: false), writes the channel names unquoted, knows :produce-assertions only as
+     *  :interactive-mode (see set_option_impl), and answers unsupported, not the default value, for a
+     *  standard option it lacks */
     @Override
-    public IResponse get_option(IKeyword key) { // FIXME - use the solver?
+    public IResponse get_option(IKeyword key) {
         String option = key.value();
+        if (Utils.PRODUCE_MODELS.equals(option) || Utils.REGULAR_OUTPUT_CHANNEL.equals(option)
+                || Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
+            return optionValue(option);
+        }
+        IKeyword sent = Utils.PRODUCE_ASSERTIONS.equals(option) ? smtConfig.exprFactory.keyword(Utils.INTERACTIVE_MODE) : key;
+        IResponse r = super.get_option(sent);
+        IAttributeValue standardDefault = smtConfig.utils.defaults.get(option);
+        if (standardDefault != null && smtConfig.responseFactory.unsupported().equals(r)) return standardDefault;
+        return r;
+    }
+
+    /** The value of the option as set here, else unsupported */
+    private IResponse optionValue(String option) {
         IAttributeValue value = options.get(Utils.INTERACTIVE_MODE.equals(option) && !smtConfig.isVersion(SMTLIB.V20)? Utils.PRODUCE_ASSERTIONS : option);
         if (value == null) return smtConfig.responseFactory.unsupported();
         return value;
     }
 
+    /** Not a correction: this adapter sends commands by its own means, so it scrubs run-dependent
+     *  values for testing itself, as AbstractSolver.get_info does */
     @Override
     public IResponse get_info(IKeyword key) {
         String cmd = "(get-info " + key + ")";
         try {
-            String response = solverProcess.sendAndListen(cmd, "\n");
-            if (smtConfig.testing) response = normalizeForTesting(response);
-            return parseResponse(response);
+            String response = sendRaw(cmd);
+            if (smtConfig.testing) response = normalizeForTesting(response, key);
+            return parse(Shape.VALUE, cmd, response);
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to solver: " + cmd + " " + e);
+            return sendFailure("Error writing to solver: " + cmd, e);
         }
     }
 
-    @Override
-    public IResponse set_info(IKeyword key, IAttributeValue value) {
-        if (Utils.infoKeywords.contains(key)) {
-            return smtConfig.responseFactory.error("Setting the value of a pre-defined keyword is not permitted: "+
-                    smtConfig.defaultPrinter.toString(key),key.pos());
-        }
-        return sendCommand(new org.smtlib.command.C_set_info(key,value));
-    }
-
+    /** z3 4.3 writes echo's text unquoted, so where it ends cannot be found (#136); the response
+     *  to echo is its argument */
     @Override
     public IResponse echo(IStringLiteral arg) {
         return arg;
     }
 
+    /** The :produce-models check corrects z3 4.3 answering get-model with that option at its
+     *  (non-standard) default of true; z3 4.3 itself reports get-model when no model is available */
     @Override
     public IResponse get_model() {
-        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
+        if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_MODELS))) {
             return smtConfig.responseFactory.error("The get-model command is only valid if :produce-models has been enabled");
         }
-        if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
+        IResponse status = checkStatus();
+        if (status != smtConfig.responseFactory.sat() && status != smtConfig.responseFactory.unknown()) {
             return smtConfig.responseFactory.error("The get-model command is only valid immediately after check-sat returned sat or unknown");
         }
         try {
-            return parseResponse(solverProcess.sendAndListen("(get-model)\n"));
+            return modelResponse(send(Shape.VALUE, "(get-model)"));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         }
     }
 
     @Override
     public IResponse declare_const(Ideclare_const cmd) {
         if (!logicSet) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-const command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a declare-const command is issued", cmd.pos());
         }
         try {
-            checkSatStatus = null;
-            return parseResponse(solverProcess.sendAndListen(translate(cmd),"\n"));
+            return recordChange(StackChange.DECLARE_FUN, send(Shape.SUCCESS, translate(cmd)));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -583,14 +587,13 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     public IResponse declare_fun(Ideclare_fun cmd) {
         if (!logicSet) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-fun command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a declare-fun command is issued", cmd.pos());
         }
         try {
-            checkSatStatus = null;
-            return parseResponse(solverProcess.sendAndListen(translate(cmd),"\n"));
+            return recordChange(StackChange.DECLARE_FUN, send(Shape.SUCCESS, translate(cmd)));
 
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -599,13 +602,12 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     public IResponse define_fun(Idefine_fun cmd) {
         if (!logicSet) {
-            return smtConfig.responseFactory.error("The logic must be set before a define-fun command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a " + cmd.commandName() + " command is issued", cmd.pos());
         }
         try {
-            checkSatStatus = null;
-            return parseResponse(solverProcess.sendAndListen(translate(cmd),"\n"));
+            return recordChange(StackChange.DEFINE_FUN, send(Shape.SUCCESS, translate(cmd)));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -614,13 +616,12 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     public IResponse declare_sort(Ideclare_sort cmd) {
         if (!logicSet) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-sort command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a declare-sort command is issued", cmd.pos());
         }
         try {
-            checkSatStatus = null;
-            return parseResponse(solverProcess.sendAndListen(translate(cmd),"\n"));
+            return recordChange(StackChange.DECLARE_SORT, send(Shape.SUCCESS, translate(cmd)));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -629,106 +630,95 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     public IResponse define_sort(Idefine_sort cmd) {
         if (!logicSet) {
-            return smtConfig.responseFactory.error("The logic must be set before a define-sort command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a define-sort command is issued", cmd.pos());
         }
         try {
-            checkSatStatus = null;
-            return parseResponse(solverProcess.sendAndListen(translate(cmd),"\n"));
+            return recordChange(StackChange.DEFINE_SORT, send(Shape.SUCCESS, translate(cmd)));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
     }
 
+    /** z3 4.3 itself reports get-proof without :produce-proofs or when no proof is available; the
+     *  checks here only give the same messages as the other adapters */
     @Override 
     public IResponse get_proof() {
-        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_PROOFS)))) {
+        if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_PROOFS))) {
             return smtConfig.responseFactory.error("The get-proof command is only valid if :produce-proofs has been enabled");
         }
-        if (checkSatStatus != smtConfig.responseFactory.unsat()) {
+        if (checkStatus() != smtConfig.responseFactory.unsat()) {
             return smtConfig.responseFactory.error("The get-proof command is only valid immediately after check-sat returned unsat");
         }
         try {
-            return proofResponse(parseResponse(solverProcess.sendAndListen("(get-proof)\n")));
+            return proofResponse(send(Shape.VALUE, "(get-proof)"));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         }
     }
 
+    /** z3 4.3 itself reports get-unsat-core without :produce-unsat-cores or when no core is
+     *  available; the checks here only give the same messages as the other adapters */
     @Override 
     public IResponse get_unsat_core() {
-        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_UNSAT_CORES)))) {
+        if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_UNSAT_CORES))) {
             return smtConfig.responseFactory.error("The get-unsat-core command is only valid if :produce-unsat-cores has been enabled");
         }
-        if (checkSatStatus != smtConfig.responseFactory.unsat()) {
+        if (checkStatus() != smtConfig.responseFactory.unsat()) {
             return smtConfig.responseFactory.error("The get-unsat-core command is only valid immediately after check-sat returned unsat");
         }
         try {
-            return parseResponse(solverProcess.sendAndListen("(get-unsat-core)\n"));
+            return sendList("(get-unsat-core)", p -> {
+                List<IExpr.ISymbol> names = new java.util.ArrayList<>();
+                for (IExpr e : unsatCoreElements(p.parseTermList())) {
+                    if (!(e instanceof IExpr.ISymbol name)) throw new ParserException("not a label: " + e, null);
+                    names.add(name);
+                }
+                return smtConfig.responseFactory.get_unsat_core_response(names);
+            });
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         }
     }
 
+    /** z3 4.3 answers get-assignment (with ()) when :produce-assignments is not enabled, which
+     *  SMT-LIB makes an error */
     @Override 
     public IResponse get_assignment() {
-        // FIXME - do we really want to call get-option here? it involves going to the solver?
-        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSIGNMENTS)))) {
+        if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_ASSIGNMENTS))) {
             return smtConfig.responseFactory.error("The get-assignment command is only valid if :produce-assignments has been enabled");
         }
-        if (checkSatStatus != smtConfig.responseFactory.sat() && checkSatStatus != smtConfig.responseFactory.unknown()) {
+        IResponse status = checkStatus();
+        if (status != smtConfig.responseFactory.sat() && status != smtConfig.responseFactory.unknown()) {
             return smtConfig.responseFactory.error("The get-assignment command is only valid immediately after check-sat returned sat or unknown");
         }
         try {
-            return parseResponse(solverProcess.sendAndListen("(get-assignment)\n"));
+            return sendList("(get-assignment)", p -> smtConfig.responseFactory.get_assignment_response(p.parseAssignmentList()));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         }
     }
 
+    /** See get_model: z3 4.3 defaults :produce-models to true */
     @Override 
     public IResponse get_value(IExpr... terms) {
-        // FIXME - do we really want to call get-option here? it involves going to the solver?
-        if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
+        if (!Utils.TRUE.equals(optionValue(Utils.PRODUCE_MODELS))) {
             return smtConfig.responseFactory.error("The get-value command is only valid if :produce-models has been enabled");
         }
-        if (!smtConfig.responseFactory.sat().equals(checkSatStatus) && !smtConfig.responseFactory.unknown().equals(checkSatStatus)) {
+        IResponse status = checkStatus();
+        if (!smtConfig.responseFactory.sat().equals(status) && !smtConfig.responseFactory.unknown().equals(status)) {
             return smtConfig.responseFactory.error("A get-value command is valid only after check-sat has returned sat or unknown");
         }
         try {
-            solverProcess.sendNoListen("(get-value (");
+            StringBuilder sent = new StringBuilder("(get-value (");
             for (IExpr e: terms) {
-                solverProcess.sendNoListen(" ",translate(e));
+                sent.append(" ").append(translate(e));
             }
-            String r = rewriteOldBitVectors(solverProcess.sendAndListen("))\n"));
-            // Values are returned structured, as by the other adapters (AbstractSolver.get_value),
-            // so that they print the same way (e.g. (- 1), not the s-expression form ( - 1 )).
-            // Errors -- including z3 4.3's value-then-error responses -- keep the existing handling.
-            if (!isFlatResponse(r) && !r.contains("(error")) {
-                try {
-                    List<IResponse.IPair<IExpr,IExpr>> values = new org.smtlib.sexpr.Parser(smtConfig, new Pos.Source(r, null)).parseValueList();
-                    return smtConfig.responseFactory.get_value_response(values);
-                } catch (ParserException e) {
-                    // fall through to the generic handling below
-                }
-            }
-            IResponse response = parseResponse(r);
-//            if (response instanceof ISeq) {
-//                List<ISexpr> valueslist = new LinkedList<ISexpr>();
-//                Iterator<ISexpr> iter = ((ISeq)response).sexprs().iterator();
-//                for (IExpr e: terms) {
-//                    if (!iter.hasNext()) break;
-//                    List<ISexpr> values = new LinkedList<ISexpr>();
-//                    values.add(new Sexpr.Expr(e));
-//                    values.add(iter.next());
-//                    valueslist.add(new Sexpr.Seq(values));
-//                } 
-//                return new Sexpr.Seq(valueslist);
-//            }
-            return response;
+            sent.append("))");
+            return sendList(sent.toString(), p -> smtConfig.responseFactory.get_value_response(p.parseValueList()));
         } catch (IOException e) {
-            return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
+            return sendFailure("Error writing to Z3 solver:", e);
         } catch (IVisitor.VisitorException e) {
             return smtConfig.responseFactory.error("Error writing to Z3 solver: " + e);
         }
@@ -740,7 +730,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
         @Override
         public Void visit(IFcnExpr e) throws IVisitor.VisitorException {
-            // Only - for >=2 args is not correctly done, but we can't delegate to translateSMT because it might be a sub-expression.
+            // z3 4.3 rejects - with more than two arguments ("wrong number of arguments"), so it is
+            // written left-associated. (Its other n-ary operators are accepted as is.)
             Iterator<IExpr> iter = e.args().iterator();
             if (!iter.hasNext()) throw new VisitorException("Did not expect an empty argument list",e.pos());
             IQualifiedIdentifier fcn = e.head();
@@ -770,48 +761,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
                 } catch (IOException ex) {
                     throw new IVisitor.VisitorException(ex,null); // FIXME - null ?
                 }
-            }
-        }
-
-        //@ requires iter.hasNext();
-        protected <T extends IExpr> void rightassoc(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
-            T n = iter.next();
-            if (!iter.hasNext()) {
-                n.accept(this);
-            } else {
-                try {
-                    w.append("(");
-                    w.append(fcnname);
-                    w.append(" ");
-                    n.accept(this);
-                    w.append(" ");
-                    rightassoc(fcnname,iter);
-                    w.append(")");
-                } catch (IOException ex) {
-                    throw new IVisitor.VisitorException(ex,null); // FIXME - null ?
-                }
-            }
-        }
-
-
-        //@ requires iter.hasNext();
-        //@ requires length > 0;
-        protected <T extends INode> void chainable(String fcnname, Iterator<T> iter ) throws IVisitor.VisitorException {
-            try {
-                w.append("(and ");
-                T left = iter.next();
-                while (iter.hasNext()) {
-                    w.append("(");
-                    w.append(fcnname);
-                    w.append(" ");
-                    left.accept(this);
-                    w.append(" ");
-                    (left=iter.next()).accept(this);
-                    w.append(")");
-                }
-                w.append(")");
-            } catch (IOException ex) {
-                throw new IVisitor.VisitorException(ex,null); // FIXME - null ?
             }
         }
     }

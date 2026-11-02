@@ -1,5 +1,5 @@
 success
-(error "The simplify solver cannot handle string literals")
-sat
-(error "The simplify solver cannot handle string literals")
-sat
+(error "The simplify solver does not support the String sort")
+unknown
+(error "The simplify solver does not support the String sort")
+unknown

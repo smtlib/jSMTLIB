@@ -1,0 +1,11 @@
+success
+success
+success
+success
+success
+success
+unsat
+(
+(set-logic QF_UF)
+(proof (|unit-resolution| (|and-elim| (asserted (and p q)) p) (asserted (not p)) false))
+)

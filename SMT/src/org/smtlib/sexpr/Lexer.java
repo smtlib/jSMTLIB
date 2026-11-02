@@ -37,8 +37,10 @@ public class Lexer {
         @Override String kind();
     }
 
-    /** Skips the rest of the current line, resetting the matcher to point to the line termination character */
+    /** Skips the rest of the current line, including a token already looked ahead at, resetting the
+     *  matcher to point to the line termination character */
     public void abortLine() {
+        nextToken = null;
         int i = matcher.regionStart();
         // Checking i < csr.length() on every iteration (rather than snapshotting the bound
         // once) matters for a growing/interactive source (CharSequenceInfinite): its
@@ -149,6 +151,11 @@ public class Lexer {
     public String sameLineTrailingText;
     public int sameLineTrailingStart, sameLineTrailingEnd;
 
+    /** The position of a vertical tab or form feed, outside a comment, in the white space before the
+     *  token last scanned, or null: \p{Space} reads them as white space, which SMT-LIB's white space
+     *  is not; the Parser reports them (the Lexer reports nothing itself, #148) */
+    protected /*@Nullable*/ IPos badWhitespace;
+
     /** The source of input used in this lexer; typically a different
      * lexer object will be used for each source (e.g. different file, string,
      * port, etc.) of input data.
@@ -196,16 +203,17 @@ public class Lexer {
     private final static String rgxDecimal = "(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?"; // the use of ( is non-capturing
     /** Pattern regular expression for SMT-LIB symbol (without bars) */
     private final static String rgxSymbol = "[a-zA-Z_~!@$%^&*+=<>.?/\\-][0-9a-zA-Z_~!@$%^&*+=<>.?/\\-]*";
-    /** Pattern regular expression for SMT-LIB symbol enclosed in bars */
-    private final static String rgxQuotedSymbol = "\\|[0-9a-zA-Z_~!@$%^&*+=<>.?/\"'(),:;{}#`\\[\\] \t\r\n\\-]*\\|";
+    /** Pattern regular expression for SMT-LIB symbol enclosed in bars; characters 128 and beyond are
+     * rejected afterwards for SMT-LIB 2.0 (see quotedSymbolError) */
+    private final static String rgxQuotedSymbol = "\\|[0-9a-zA-Z_~!@$%^&*+=<>.?/\"'(),:;{}#`\\[\\] \t\r\n\\-\\u0080-\\x{10FFFF}]*\\|";
     /** Pattern regular expression for invalid SMT-LIB unterminated bar-symbol */
-    private final static String rgxNonTermQuotedSymbol = "\\|[0-9a-zA-Z_~!@$%^&*+=<>.?/\"'(),:;{}#`\\[\\] \t\r\n\\-]*";
+    private final static String rgxNonTermQuotedSymbol = "\\|[0-9a-zA-Z_~!@$%^&*+=<>.?/\"'(),:;{}#`\\[\\] \t\r\n\\-\\u0080-\\x{10FFFF}]*";
     /** Pattern regular expression for SMT-LIB keyword (colon beginning) */
     private final static String rgxKeyword = ":[0-9a-zA-Z_~!@$%^&*+=<>.?/\\-]+";
     /** Pattern regular expression for SMT-LIB sequence of non-white space */
     private final static String rgxAnyNonWS = "[\\S&&[^;\\(\\)]][\\S&&[^;\\(\\)]]*"; // Any sequence of non-whitespace, not beginning with ( ) ;
     /** Pattern regular expression for detecting the end of input */
-    private final static String rgxEndOfInput = "\\z|\\031|\\004"; // FIXME - use CharSequenceReader.endChar
+    private final static String rgxEndOfInput = "\\z|" + Pattern.quote(String.valueOf(CharSequenceInfinite.endChar)) + "|\\004";
     /** Pattern regular expression for checking that a sequence of digits is not followed by other non-white space, non-comment, non-parenthesis characters */
     private final static String trailer = "(?:[\\s\\(\\);]|$)";
 
@@ -247,7 +255,7 @@ public class Lexer {
                 + "\"(" + rgxInvalidString + ")\"" + "|("       // group 18: invalid string // NO LONGER MATCHES SINCE CHANGING THE STRING MATCHING
                 + "\\030" + ")|("                               // group 19: the control-X character to kill input
                 + rgxAnyNonWS + ")"                             // group 20: error symbol
-                + "|([ \t\r\n]+)"                               // group 21: stop-gap whitespace
+                + "|([ \t\r\n]+)"                               // group 21: whitespace, a guard (see getToken)
         +   ")"  );
 
     /** A pattern to skip up to the end of the line */
@@ -386,6 +394,19 @@ public class Lexer {
         return new Pos(start,end,source);
     }
 
+    /** For SMT-LIB 2.0, which allows only ASCII in quoted symbols, returns an error token at the first
+     * character 128 or beyond in the given bar-quoted text (starting at offset start); otherwise null. */
+    private /*@ nullable */ ILexToken quotedSymbolError(String text, int start) {
+        if (smtConfig.atLeastVersion(SMT.Configuration.SMTLIB.V25)) return null;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c >= 128) {
+                return setPos(new LexError("Invalid character: ASCII(decimal) = " + (int)c), pos(start + i, start + i + 1));
+            }
+        }
+        return null;
+    }
+
     /** Returns the first token found in the given text */
     public ILexToken getToken(String text)  throws ParserException {
         if (!text.isEmpty() && text.charAt(0) == '"') {
@@ -418,6 +439,15 @@ public class Lexer {
                 String full = matcher.group(1);
                 int fullStart = matcher.start(1);
                 int fullEnd = matcher.end(1);
+                for (int i = 0; i < full.length(); i++) {
+                    char c = full.charAt(i);
+                    if (c == ';') { // a comment may contain anything up to the line end
+                        while (i + 1 < full.length() && full.charAt(i + 1) != '\n' && full.charAt(i + 1) != '\r') i++;
+                    } else if (c == '\u000B' || c == '\f') {
+                        badWhitespace = pos(fullStart + i, fullStart + i + 1);
+                        break;
+                    }
+                }
                 // Split at the first line terminator: group 1 is guaranteed (by construction
                 // of the combined regex) to consist purely of whitespace/comment runs, never
                 // a real token, so there is no risk of this splitting into the middle of
@@ -479,7 +509,8 @@ public class Lexer {
             } else if ((matched = matcher.group(k=8)) != null) { // bar-quoted symbol
                 pos = pos(matcher.start(k),matcher.end(k));
                 //token = factory.symbol(matched,pos);
-                token = setPos(new LexSymbol(matched),pos);
+                token = quotedSymbolError(matched, matcher.start(k));
+                if (token == null) token = setPos(new LexSymbol(matched),pos);
             } else if ((matched = matcher.group(k=7)) != null) { // string 
                 // The match is just to the initial quote
                 int begin = matcher.start(k); // position of the initial quote
@@ -521,7 +552,7 @@ public class Lexer {
                                 continue;
                             }
                         }
-                    } else if (SMT.Configuration.SMTLIB.V20.toString().equals(smtConfig.smtlib)) { // Version 2.0
+                    } else if (SMT.Configuration.SMTLIB.V20 == smtConfig.smtlib) { // Version 2.0
                         while (true) {
                             p++;
                             char c = csr.charAt(p);
@@ -591,7 +622,8 @@ public class Lexer {
             } else if ((matched = matcher.group(k=16)) != null) {
                 pos = pos(matcher.start(k),matcher.end(k));
                 //token = factory.error(matched,pos);
-                token = setPos(new LexError("Bar(|)-enclosed symbol is not terminated: " + matched),pos);
+                token = quotedSymbolError(matched, matcher.start(k));
+                if (token == null) token = setPos(new LexError("Bar(|)-enclosed symbol is not terminated: " + matched),pos);
 //                matcher.region(end,csr.length());
 //                throw new SyntaxException("Invalid token: " + matched,token.pos());
             } else if ((matched = matcher.group(k=17)) != null) {
@@ -624,8 +656,8 @@ public class Lexer {
 //                throw new SyntaxException("Invalid token: " + matched,token.pos());
                 //SMT.out.println(smtConfig.responseFactory.error("Invalid token: " + matched));
             } else if ((matched = matcher.group(k=21)) != null) {
-                // FIXME - This should never happen either - it is a stopgap hack, because
-                // with whitespace at the very beginning of a file, the whitespace detector is not finding it
+                // A guard, not known to be reached (no test reaches it): group 1 takes all
+                // whitespace and comments, after which some token group always matches
                 matcher.region(end,csr.length());
                 return getToken();
             } else {
@@ -644,9 +676,9 @@ public class Lexer {
             }
             if (csr != null) matcher.region(end,csr.length());
         } else {
-            // The matcher did not find a match starting at matcher.regionStart()
-            // FIXME - there is a problem if we have spaces at the very beginning of a file, prior to the LP
-            // the matcher does not match???
+            // The matcher did not find a match starting at matcher.regionStart(). A guard, not
+            // known to be reached (no test reaches it): the catch-all error group 20 matches any
+            // character that no other group does. Skip one character and try again.
             int b = matcher.regionStart();
             int e = matcher.regionEnd();
             matcher.region(b+1,e);

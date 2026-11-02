@@ -1,0 +1,9 @@
+success
+success
+success
+success
+(error "rhs must be a symbol if the lhs is a symbol: (= x (* 3 y))")
+(error "lhs must be a symbol or a difference: (= (+ x y) 7)")
+(error "rhs must be a symbol if the lhs is a symbol: (distinct x 3)")
+(error "rhs must be a symbol if the lhs is a symbol: (< x (ite p y x))")
+(error "Invalid operation in IDL logic: (= x y y)")

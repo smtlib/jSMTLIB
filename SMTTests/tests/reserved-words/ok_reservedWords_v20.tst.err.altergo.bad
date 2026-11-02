@@ -1,0 +1,18 @@
+(declare-fun check-sat-assuming () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun declare-const () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun define-fun-rec () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun define-funs-rec () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun echo () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun get-model () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun get-unsat-assumptions () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun reset () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun reset-assertions () Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

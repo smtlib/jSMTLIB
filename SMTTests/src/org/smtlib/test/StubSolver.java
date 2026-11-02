@@ -8,15 +8,29 @@ import java.nio.file.Paths;
 /** A stand-in solver for FileTests' .stub tests (#145): its argument is a plain-text file of
  *  replies, one line per command received (including any priming command the adapter sends
  *  first), in order. An empty line is an empty reply; {@code <<stderr>> text} writes the text
- *  to standard error instead; {@code <<exit N>>} ends the process with code N right after the
- *  reply before it (or at once, as the first line). The process also ends after replying to
- *  (exit), or when the replies run out.
+ *  to standard error instead; {@code <<with-stderr text>> reply} writes the text to standard
+ *  error, then, 50 ms later, the reply to standard output, so that both are there when the reply
+ *  is read. Directive lines act right after the reply before them (or at once, as the first lines)
+ *  and answer no command: {@code <<exit N>>} ends the process with code N,
+ *  {@code <<close-stdout>>} closes standard output, {@code <<sleep N>>} pauses N milliseconds,
+ *  {@code <<print text>>} and {@code <<eprint text>>} write the text as a line to standard output or error,
+ *  {@code <<print-part text>>} and {@code <<eprint-part text>>} without a line end.
+ *  The process also ends after replying to (exit), or when the replies run out.
+ *  {@code <<success-for (cmd)>>}, among the first lines, answers success to every command equal to
+ *  (cmd) without using a reply line: for a priming command an adapter sends on some platforms only
+ *  (e.g. z3's (set-option :print-success true) on Linux).
  *
  *  Not a JUnit test itself (see EchoProcess on why that annotation is not named here). */
 public class StubSolver {
     public static void main(String[] args) throws Exception {
         java.util.List<String> replies = Files.readAllLines(Paths.get(args[0]));
-        int next = exitIfAt(replies, 0);
+        java.util.Set<String> successFor = new java.util.HashSet<>();
+        int first = 0;
+        while (first < replies.size() && replies.get(first).startsWith("<<success-for ") && replies.get(first).endsWith(">>")) {
+            String line = replies.get(first++);
+            successFor.add(line.substring(14, line.length() - 2).trim());
+        }
+        int next = directives(replies, first);
         Reader in = new InputStreamReader(System.in);
         StringBuilder command = new StringBuilder();
         int depth = 0;
@@ -35,30 +49,60 @@ public class StubSolver {
             } else if (c == '(') {
                 depth++;
             } else if (c == ')' && --depth == 0) {
+                if (successFor.contains(command.toString())) {
+                    reply("success");
+                    command.setLength(0);
+                    continue;
+                }
                 if (next >= replies.size()) return;
                 reply(replies.get(next));
-                next = exitIfAt(replies, next + 1);
+                next = directives(replies, next + 1);
                 if (command.toString().startsWith("(exit")) return;
                 command.setLength(0);
             }
         }
     }
 
-    /** Ends the process if line i is an exit directive; else returns i */
-    private static int exitIfAt(java.util.List<String> replies, int i) {
-        if (i < replies.size()) {
+    /** Carries out the directives starting at line i; returns the index of the next reply */
+    private static int directives(java.util.List<String> replies, int i) throws InterruptedException {
+        for (; i < replies.size(); i++) {
             String line = replies.get(i);
             if (line.startsWith("<<exit ") && line.endsWith(">>")) {
                 System.out.flush();
                 System.err.flush();
                 System.exit(Integer.parseInt(line.substring(7, line.length() - 2).trim()));
+            } else if (line.equals("<<close-stdout>>")) {
+                System.out.close();
+            } else if (line.startsWith("<<print ") && line.endsWith(">>")) {
+                System.out.print(line.substring(8, line.length() - 2) + "\n");
+                System.out.flush();
+            } else if (line.startsWith("<<print-part ") && line.endsWith(">>")) {
+                System.out.print(line.substring(13, line.length() - 2));
+                System.out.flush();
+            } else if (line.startsWith("<<eprint-part ") && line.endsWith(">>")) {
+                System.err.print(line.substring(14, line.length() - 2));
+                System.err.flush();
+            } else if (line.startsWith("<<eprint ") && line.endsWith(">>")) {
+                System.err.print(line.substring(9, line.length() - 2) + "\n");
+                System.err.flush();
+            } else if (line.startsWith("<<sleep ") && line.endsWith(">>")) {
+                Thread.sleep(Long.parseLong(line.substring(8, line.length() - 2).trim()));
+            } else {
+                break;
             }
         }
         return i;
     }
 
-    private static void reply(String line) {
-        if (line.startsWith("<<stderr>>")) {
+    private static void reply(String line) throws InterruptedException {
+        int close = line.indexOf(">>");
+        if (line.startsWith("<<with-stderr ") && close > 0) {
+            System.err.print(line.substring(14, close) + "\n");
+            System.err.flush();
+            Thread.sleep(50);
+            System.out.print(line.substring(close + 2).trim() + "\n");
+            System.out.flush();
+        } else if (line.startsWith("<<stderr>>")) {
             System.err.println(line.substring(10).trim());
             System.err.flush();
         } else {

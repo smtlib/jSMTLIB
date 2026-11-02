@@ -1,0 +1,4 @@
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:2:12: unsupported logic 'QF_LIA'
+")
+(error "Expected an identifier or reserved word here, not a numeral")
+(error "Expected an identifier or reserved word here, not a string-literal")

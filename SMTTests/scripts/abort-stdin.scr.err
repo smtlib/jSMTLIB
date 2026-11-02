@@ -1,0 +1,3 @@
+(declare-fun @p () Bool) (push 1)
+             ^^
+Aborting because of a validation error

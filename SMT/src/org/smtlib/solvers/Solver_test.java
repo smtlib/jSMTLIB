@@ -10,7 +10,6 @@ import java.util.*;
 import org.smtlib.*;
 import org.smtlib.ICommand.*;
 import org.smtlib.IExpr.*;
-import org.smtlib.IPos.IPosable;
 import org.smtlib.SMT.Configuration.SMTLIB;
 import org.smtlib.impl.Response;
 
@@ -32,7 +31,13 @@ public class Solver_test implements ISolver {
     /** The symbol table used by this solver */
     public SymbolTable symTable; // TODO - public for the sake of C_what - change to protected
 
-    /** The data structure that maintains the solver's assertion set stack */
+    /** The solver's assertion set stack, one frame per push level, top first. Once the logic
+     *  is set it always has at least one frame: start() and reset() add the base frame and
+     *  pop() cannot remove it. The base frame holds the assertions made outside any push.
+     *  Declarations live in symTable, which has one more frame: each frame here pairs with
+     *  the symTable frame of the same level (the base frame with its primary frame), and
+     *  symTable's bottom, background frame holds the logic's symbols and the global
+     *  declarations. */
     protected List<List<IExpr>> assertionSetStack = new LinkedList<List<IExpr>>();
 
     /** Internal state variable - set non-null once the logic is set. */
@@ -62,6 +67,7 @@ public class Solver_test implements ISolver {
     public Solver_test(SMT.Configuration smtConfig, String exec) {
         this.smtConfig = smtConfig;
         options.putAll(smt().utils.defaults);
+        if (smtConfig.seed != 0) options.put(Utils.RANDOM_SEED, smtConfig.exprFactory.numeral(smtConfig.seed));
         this.symTable = new SymbolTable(smtConfig);
     }
 
@@ -100,6 +106,8 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse reset_assertions() {
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#reset-assertions");
+        // Before set-logic there are no assertions to reset
+        if (logicSet == null) return smtConfig.responseFactory.success();
         // Remove all pushed frames
         IResponse r = pop(assertionSetStack.size()-1);
         // Remove assertions, but not necessarily global declarations
@@ -115,16 +123,30 @@ public class Solver_test implements ISolver {
         return r;
     }
 
+    /** Whether exit (or forceExit) has been executed */
+    private boolean exited = false;
+
+    /** Once exited, every command but exit (and a comment) answers as a process-based solver's would */
+    @Override
+    public IResponse execute(ICommand cmd) {
+        if (exited && !(cmd instanceof Iexit) && !(cmd instanceof Icomment)) {
+            return smtConfig.responseFactory.error(AbstractSolver.SOLVER_EXITED);
+        }
+        return cmd.execute(this);
+    }
+
     @Override
     public IResponse exit() {
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#exit " + solverName());
-        return smtConfig.responseFactory.success(); // FIXME - should forbid any actions after exited
+        exited = true;
+        return smtConfig.responseFactory.success();
     }
 
     @Override
     public void forceExit() {
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#forceexit " + solverName());
-    } // FIXME - should forbid any actions after exited
+        exited = true;
+    }
 
     @Override
     public IResponse echo(IStringLiteral arg) {
@@ -151,9 +173,6 @@ public class Solver_test implements ISolver {
             // rather than being a shortcut that should eventually return the rest -- there is
             // no wire format for "the rest" to be returned in.
             return errs.get(0);
-        }
-        if (assertionSetStack.isEmpty()) {
-            return smtConfig.responseFactory.error("All assertion sets have been popped from the stack");
         }
         assertionSetStack.get(0).add(expr);
         checkSatStatus = null;
@@ -229,15 +248,9 @@ public class Solver_test implements ISolver {
 
     @Override
     public IResponse get_value(IExpr... terms) {
-        TypeChecker tc = new TypeChecker(symTable);
-        try {
-            for (IExpr term: terms) {
-                term.accept(tc);
-            }
-        } catch (IVisitor.VisitorException e) {
-            tc.result.add(smtConfig.responseFactory.error(e.getMessage()));
-        } finally {
-            if (!tc.result.isEmpty()) return tc.result.get(0); // FIXME - report all errors?
+        for (IExpr term: terms) {
+            List<IResponse> errs = TypeChecker.checkTerm(symTable, term);
+            if (!errs.isEmpty()) return errs.get(0);
         }
         if (!Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_MODELS)))) {
             return smtConfig.responseFactory.error("The get-value command is only valid if :produce-models has been enabled");
@@ -287,7 +300,7 @@ public class Solver_test implements ISolver {
             return smtConfig.responseFactory.error("The get-unsat-assumptions command is only valid if :produce-unsat-assumptions has been enabled");
         }
         if (!smtConfig.responseFactory.unsat().equals(checkSatStatus)) {
-            return smtConfig.responseFactory.error("The get-unsat-assumptions command is only valid immediately after check-sat-assumptions returned unsat");
+            return smtConfig.responseFactory.error("The get-unsat-assumptions command is only valid immediately after check-sat-assuming returned unsat");
         }
         return smtConfig.responseFactory.unsupported();
     }
@@ -376,19 +389,12 @@ public class Solver_test implements ISolver {
                 ((Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
             }
         }
-        if (logicSet != null && (Utils.GLOBAL_DECLARATIONS.equals(option)||Utils.INTERACTIVE_MODE.equals(option)||Utils.PRODUCE_ASSERTIONS.equals(option))) {
+        // --relax allows a start-mode-only option to be set after set-logic
+        if (logicSet != null && !smtConfig.relax && Utils.startModeOptions.contains(option)) {
             return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
         }
-//        if (Utils.PRODUCE_ASSIGNMENTS.equals(option) || 
-//                //Utils.PRODUCE_MODELS.equals(option) || 
-//                Utils.PRODUCE_PROOFS.equals(option) ||
-//                Utils.PRODUCE_UNSAT_CORES.equals(option)) {
-//            if (logicSet) return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
-//            return smtConfig.responseFactory.unsupported();
-//        }
         if (Utils.VERBOSITY.equals(option)) {
-            IAttributeValue v = options.get(option);
-            smtConfig.verbose = (v instanceof INumeral) ? ((INumeral)v).intValue() : 0;
+            smtConfig.verbose = (value instanceof INumeral) ? ((INumeral)value).intValue() : 0;
         } else if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
             // Actually, v should never be anything but IStringLiteral - that should
             // be checked during parsing
@@ -425,9 +431,11 @@ public class Solver_test implements ISolver {
 
     @Override
     public IResponse set_info(IKeyword key, IAttributeValue value) {
-        if (Utils.infoKeywords.contains(key)) {
-            return smtConfig.responseFactory.error("Setting the value of a pre-defined keyword is not permitted: "+ 
-                    smtConfig.defaultPrinter.toString(key),key.pos());
+        // set-info takes any attribute and does not affect get-info
+        String invalid = Utils.invalidSetInfoValue(key, value);
+        if (invalid != null) return smtConfig.responseFactory.error(invalid, value.pos());
+        if (!Utils.setInfoKeywords.contains(key)) {
+            smtConfig.log.logDiag("WARNING: " + smtConfig.defaultPrinter.toString(key) + " is not a standard set-info attribute");
         }
         options.put(key.value(),value);
         return smtConfig.responseFactory.success();
@@ -444,7 +452,7 @@ public class Solver_test implements ISolver {
         } else if (Utils.AUTHORS.equals(option)) {
             lit = smtConfig.exprFactory.unquotedString(Utils.AUTHORS_VALUE);
         } else if (Utils.VERSION.equals(option)) {
-            lit = smtConfig.exprFactory.unquotedString(Utils.VERSION_VALUE);
+            lit = smtConfig.exprFactory.unquotedString(Version.version());
 
         } else if (Utils.REASON_UNKNOWN.equals(option)) {
             return smtConfig.responseFactory.unsupported();
@@ -474,10 +482,10 @@ public class Solver_test implements ISolver {
     @Override 
     public IResponse declare_const(Ideclare_const cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-const command is issued");// FIXME - position and on other similar statements
+            return smtConfig.responseFactory.error("The logic must be set before a declare-const command is issued", cmd.pos());
         }
         String encodedName = encode(cmd.symbol());
-        List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), new LinkedList<ISort>(), cmd.resultSort(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
+        List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), new LinkedList<ISort>(), cmd.resultSort(),cmd.pos());
         if (list.isEmpty()) {
             ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(new ISort[0],cmd.resultSort());
             SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null,null);
@@ -497,7 +505,7 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse declare_fun(Ideclare_fun cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-fun command is issued");// FIXME - position and on other similar statements
+            return smtConfig.responseFactory.error("The logic must be set before a declare-fun command is issued", cmd.pos());
         }
         // C_declare_fun.parse() always accepts a trailing attribute* and the
         // "(declare-fun par (params) (name sorts attrs))" par-polymorphic form (SMT-LIB's
@@ -511,7 +519,7 @@ public class Solver_test implements ISolver {
             return smtConfig.responseFactory.error("Function attributes on declare-fun require --relax", cmd.symbol().pos());
         }
         String encodedName = encode(cmd.symbol());
-        List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.argSorts(),cmd.resultSort(),cmd instanceof IPosable ? ((IPosable)cmd).pos(): null);
+        List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.argSorts(),cmd.resultSort(),cmd.pos());
         if (list.isEmpty()) {
             ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(cmd.argSorts().toArray(new ISort[cmd.argSorts().size()]),cmd.resultSort());
             // cmd.attributes() is never null (empty if none); cmd.parameters() is only ever
@@ -545,7 +553,7 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse define_fun(Idefine_fun cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a define-fun command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a " + cmd.commandName() + " command is issued", cmd.pos());
         }
         String encodedName = encode(cmd.symbol());
         List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.parameters(),cmd.resultSort(),cmd.expression());
@@ -573,7 +581,7 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse define_fun_rec(Idefine_fun_rec cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a define-fun-rec command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a define-fun-rec command is issued", cmd.pos());
         }
         List<IResponse> list = TypeChecker.checkFcnRec(symTable, isGlobal(), cmd.symbol(),
                 cmd.parameters(), cmd.resultSort(), cmd.expression());
@@ -588,7 +596,7 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse define_funs_rec(Idefine_funs_rec cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a define-funs-rec command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a define-funs-rec command is issued", cmd.pos());
         }
         List<IResponse> list = TypeChecker.checkFcnsRec(symTable, isGlobal(),
                 cmd.declarations(), cmd.bodies());
@@ -603,7 +611,7 @@ public class Solver_test implements ISolver {
     @Override 
     public IResponse declare_sort(Ideclare_sort cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-sort command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a declare-sort command is issued", cmd.pos());
         }
         List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable,cmd.sortSymbol(),null,null);
         boolean b = list.isEmpty();
@@ -622,7 +630,7 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse declare_sort_parameter(Ideclare_sort_parameter cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-sort-parameter command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a declare-sort-parameter command is issued", cmd.pos());
         }
         List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable, cmd.sortSymbol(), null, null);
         if (!list.isEmpty()) return list.get(0);
@@ -637,7 +645,7 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse define_sort(Idefine_sort cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a define-sort command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a define-sort command is issued", cmd.pos());
         }
         List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable,cmd.sortSymbol(),cmd.parameters(),cmd.expression());
         boolean b = list.isEmpty();
@@ -657,68 +665,94 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse declare_datatype(Ideclare_datatype cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-datatype command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a declare-datatype command is issued", cmd.pos());
         }
-        ISymbol sortName = cmd.sortDeclaration().symbol();
-        INumeral arity = cmd.sortDeclaration().arity();
-        ISort.IDatatype dt = cmd.datatype();
-        List<IResponse> nameErrors = TypeChecker.validateDatatypeNames(symTable, smtConfig,
-            Collections.singletonList(cmd.sortDeclaration()),
-            Collections.singletonList(dt));
-        if (!nameErrors.isEmpty()) return nameErrors.get(0);
-        if (!symTable.addSortDefinition(sortName, arity, null, isGlobal())) {
-            return smtConfig.responseFactory.error("The sort is already declared: " + smtConfig.defaultPrinter.toString(sortName), sortName.pos());
-        }
-        IResponse err = registerDatatypeConstructors(sortName, dt);
-        if (err != null) return err;
-        checkSatStatus = null;
-        return smtConfig.responseFactory.success();
+        return declareDatatypes(Collections.singletonList(cmd.sortDeclaration()), Collections.singletonList(cmd.datatype()));
     }
 
     @Override
     public IResponse declare_datatypes(Ideclare_datatypes cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-datatypes command is issued");
+            return smtConfig.responseFactory.error("The logic must be set before a declare-datatypes command is issued", cmd.pos());
         }
-        List<ISortDeclaration> sortDecls = cmd.sortDeclarations();
-        List<ISort.IDatatype> datatypes = cmd.datatypes();
+        return declareDatatypes(cmd.sortDeclarations(), cmd.datatypes());
+    }
+
+    /** Declares a group of datatypes. The group is first declared in a scratch scope, which is
+     *  then discarded, so that a failed declaration leaves nothing in the symbol table. */
+    private IResponse declareDatatypes(List<ISortDeclaration> sortDecls, List<ISort.IDatatype> datatypes) {
         List<IResponse> nameErrors = TypeChecker.validateDatatypeNames(symTable, smtConfig, sortDecls, datatypes);
         if (!nameErrors.isEmpty()) return nameErrors.get(0);
-        // Register all sort names first so constructors can cross-reference them
-        for (ISortDeclaration sd : sortDecls) {
-            if (!symTable.addSortDefinition(sd.symbol(), sd.arity(), null, isGlobal())) {
-                return smtConfig.responseFactory.error("The sort is already declared: " + smtConfig.defaultPrinter.toString(sd.symbol()), sd.symbol().pos());
-            }
+        IResponse err;
+        symTable.push();
+        try {
+            err = addDatatypes(sortDecls, datatypes, false);
+        } finally {
+            symTable.pop();
         }
-        for (int i = 0; i < sortDecls.size(); i++) {
-            IResponse err = registerDatatypeConstructors(sortDecls.get(i).symbol(), datatypes.get(i));
-            if (err != null) return err;
-        }
+        if (err == null) err = addDatatypes(sortDecls, datatypes, isGlobal());
+        if (err != null) return err;
         checkSatStatus = null;
         return smtConfig.responseFactory.success();
     }
 
-    /** Registers constructors and selectors for one datatype into the symbol table. */
-    private IResponse registerDatatypeConstructors(ISymbol sortName, ISort.IDatatype dt) {
-        ISort declaredSort = smtConfig.sortFactory.createSortExpression(sortName, new ISort[0]);
-        List<ISymbol> ctorList = new java.util.ArrayList<>();
-        for (IConstructor ctor : dt.constructors()) {
-            List<ISort> argSorts = new java.util.LinkedList<>();
-            for (ISelector sel : ctor.selectors()) argSorts.add(sel.sort());
-            List<IResponse> errs = TypeChecker.checkFcn(symTable, ctor.symbol(), argSorts, declaredSort, ctor.symbol().pos());
-            if (!errs.isEmpty()) return errs.get(0);
-            ISort.IFcnSort ctorSort = smtConfig.sortFactory.createFcnSort(argSorts.toArray(new ISort[0]), declaredSort);
-            symTable.add(new SymbolTable.Entry(ctor.symbol(), ctorSort, null, null), isGlobal(), false);
-            ctorList.add(ctor.symbol());
-            for (ISelector sel : ctor.selectors()) {
-                ISort[] selArgs = new ISort[]{ declaredSort };
-                List<IResponse> selErrs = TypeChecker.checkFcn(symTable, sel.symbol(), Arrays.asList(selArgs), sel.sort(), sel.symbol().pos());
-                if (!selErrs.isEmpty()) return selErrs.get(0);
-                ISort.IFcnSort selSort = smtConfig.sortFactory.createFcnSort(selArgs, sel.sort());
-                symTable.add(new SymbolTable.Entry(sel.symbol(), selSort, null, null), isGlobal(), false);
+    /** Adds the sorts of a datatype group, then each datatype's constructors and selectors, to
+     *  the given frame (global = background, else current); returns the first error, if any. */
+    private /*@Nullable*/ IResponse addDatatypes(List<ISortDeclaration> sortDecls, List<ISort.IDatatype> datatypes, boolean global) {
+        // All sort names first, so constructors can cross-reference them
+        for (ISortDeclaration sd : sortDecls) {
+            if (!symTable.addSortDefinition(sd.symbol(), sd.arity(), null, global)) {
+                return smtConfig.responseFactory.error("The sort is already declared: " + smtConfig.defaultPrinter.toString(sd.symbol()), sd.symbol().pos());
             }
         }
-        symTable.datatypeConstructors.put(sortName.value(), ctorList);
+        for (int i = 0; i < sortDecls.size(); i++) {
+            IResponse err = addDatatypeConstructors(sortDecls.get(i).symbol(), datatypes.get(i), global);
+            if (err != null) return err;
+        }
+        return null;
+    }
+
+    /** Adds the constructors, selectors and testers of one datatype to the given frame; those
+     *  of a parametric datatype are par-polymorphic over its sort parameters. */
+    private /*@Nullable*/ IResponse addDatatypeConstructors(ISymbol sortName, ISort.IDatatype dt, boolean global) {
+        List<SymbolTable.Entry> entries = new java.util.ArrayList<>();
+        List<ISymbol> ctorList = new java.util.ArrayList<>();
+        // A scope for the sort parameters; the entries are added after it is popped
+        symTable.push();
+        try {
+            List<ISort.IParameter> params = null;
+            if (dt.symbols() != null && !dt.symbols().isEmpty()) {
+                params = new java.util.ArrayList<>();
+                for (ISymbol p : dt.symbols()) {
+                    symTable.addSortParameter(p, false);
+                    params.add((ISort.IParameter) symTable.lookupSort(p));
+                }
+            }
+            ISort declaredSort = smtConfig.sortFactory.createSortExpression(sortName,
+                    params == null ? new ISort[0] : params.toArray(new ISort[0]));
+            List<IResponse> errs = new java.util.LinkedList<>();
+            for (IConstructor ctor : dt.constructors()) {
+                List<ISort> argSorts = new java.util.LinkedList<>();
+                for (ISelector sel : ctor.selectors()) argSorts.add(sel.sort());
+                ISort.IFcnSort ctorSort = TypeChecker.resolveFcnSort(symTable, ctor.symbol(), argSorts, declaredSort, ctor.symbol().pos(), errs);
+                if (ctorSort == null) return errs.get(0);
+                entries.add(new SymbolTable.Entry(ctor.symbol(), ctorSort, null, params));
+                ctorList.add(ctor.symbol());
+                IExpr.IIdentifier tester = smtConfig.exprFactory.id(smtConfig.exprFactory.symbol(Utils.IS),
+                        Collections.<IExpr.IIndex>singletonList(ctor.symbol()));
+                ISort.IFcnSort testerSort = smtConfig.sortFactory.createFcnSort(new ISort[]{ ctorSort.resultSort() }, smtConfig.sortFactory.Bool());
+                entries.add(new SymbolTable.Entry(tester, testerSort, null, params));
+                for (ISelector sel : ctor.selectors()) {
+                    ISort.IFcnSort selSort = TypeChecker.resolveFcnSort(symTable, sel.symbol(), Arrays.asList(declaredSort), sel.sort(), sel.symbol().pos(), errs);
+                    if (selSort == null) return errs.get(0);
+                    entries.add(new SymbolTable.Entry(sel.symbol(), selSort, null, params));
+                }
+            }
+        } finally {
+            symTable.pop();
+        }
+        for (SymbolTable.Entry entry : entries) symTable.add(entry, global, false);
+        symTable.addDatatypeConstructors(sortName, ctorList, global);
         return null;
     }
 

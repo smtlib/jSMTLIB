@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "Parse Error: <shell>:1.26: expecting comparable bit-vector terms")
+(error "Parse Error: <shell>:7.26: expecting comparable bit-vector terms")

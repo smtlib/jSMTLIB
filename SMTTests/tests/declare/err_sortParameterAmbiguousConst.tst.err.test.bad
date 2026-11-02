@@ -1,0 +1,4 @@
+(assert (= (as c Int) 1))
+           ^^^^^^^^^^
+(assert (as c Bool))
+        ^^^^^^^^^^^

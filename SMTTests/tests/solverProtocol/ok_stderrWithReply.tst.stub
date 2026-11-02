@@ -1,0 +1,8 @@
+success
+success
+success
+<<with-stderr warning: before sat>> sat
+<<sleep 50>>
+<<eprint warning: after sat>>
+<<sleep 50>>
+((p true))

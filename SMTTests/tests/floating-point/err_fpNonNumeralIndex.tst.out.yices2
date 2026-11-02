@@ -1,0 +1,6 @@
+(error "unknown logic: QF_FP")
+(error "at line 3, column 22: undefined identifier: FloatingPoint")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

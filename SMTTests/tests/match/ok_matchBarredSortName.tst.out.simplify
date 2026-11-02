@@ -1,0 +1,7 @@
+success
+unsupported
+unsupported
+(error "No such sort symbol declared: |My List|")
+(error "No such sort symbol declared: |L|")
+(error "Unknown constant symbol x")
+(error "Unknown constant symbol y")

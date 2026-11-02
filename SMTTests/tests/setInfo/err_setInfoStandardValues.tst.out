@@ -1,0 +1,8 @@
+(error "The value of :smt-lib-version must be a decimal")
+(error "The value of :source must be a string or a quoted symbol")
+(error "The value of :source must be a string or a quoted symbol")
+(error "The value of :category must be ""crafted"", ""random"" or ""industrial""")
+(error "The value of :category must be ""crafted"", ""random"" or ""industrial""")
+(error "The value of :license must be a string")
+(error "The value of :status must be sat, unsat or unknown")
+(error "The value of :status must be sat, unsat or unknown")

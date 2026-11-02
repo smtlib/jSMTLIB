@@ -38,7 +38,7 @@
            (http://smt-lib.org/papers/BTRW15.pdf)
 
   The following additional people provided substantial feedback and directions:
-  François Bobot, David Cok, Alberto Griggio, Florian Lapschies, Leonardo de 
+  FranÃ§ois Bobot, David Cok, Alberto Griggio, Florian Lapschies, Leonardo de 
   Moura, Gabriele Paganelli, Cody Roux, Christoph Wintersteiger.
  "
  

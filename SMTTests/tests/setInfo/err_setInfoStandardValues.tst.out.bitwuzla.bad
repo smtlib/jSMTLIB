@@ -1,0 +1,9 @@
+success
+success
+success
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:8:19: invalid value 'maybe' for ':status'
+")
+(error "The solver process has exited")

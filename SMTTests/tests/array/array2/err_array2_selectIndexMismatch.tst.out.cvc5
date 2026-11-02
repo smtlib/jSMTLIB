@@ -4,4 +4,4 @@ success
 success
 success
 success
-(error "Parse Error: <shell>:1.25: array select not indexed with correct type for array")
+(error "Parse Error: <shell>:8.25: array select not indexed with correct type for array")

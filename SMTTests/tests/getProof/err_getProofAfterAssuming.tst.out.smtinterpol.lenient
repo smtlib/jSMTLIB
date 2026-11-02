@@ -1,0 +1,6 @@
+success
+success
+success
+success
+unsat
+(! (res p (assume p) (! (let ((.cse0 (not p))) (res .cse0 (assume .cse0) (not- .cse0))) :proves (- p) :input)) :proves () :rup)

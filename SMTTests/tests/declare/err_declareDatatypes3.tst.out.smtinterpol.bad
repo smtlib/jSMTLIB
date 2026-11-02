@@ -1,1 +1,1 @@
-(error "The solver stopped without a response to: (declare-datatypes ( (Color 0)) ( ((red) (green) (blue) )))")
+(error "The solver process has exited")

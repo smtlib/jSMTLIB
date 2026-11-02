@@ -1,0 +1,7 @@
+success
+success
+success
+success
+sat
+success
+(error "can't build a model. Call (check-sat) first")

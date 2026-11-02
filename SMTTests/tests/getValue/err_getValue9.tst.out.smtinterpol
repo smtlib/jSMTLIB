@@ -1,4 +1,4 @@
 success
 success
 success
-(error "The get-value command is only valid immediately after check-sat returned sat or unknown")
+(error "<stdin>:5:15: Assertion stack has been modified since last check-sat!")

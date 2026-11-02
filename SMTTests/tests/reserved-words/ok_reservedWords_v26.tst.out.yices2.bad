@@ -1,0 +1,5 @@
+success
+success
+success
+(error "at line 5, column 26: syntax error: <symbol> expected")
+success

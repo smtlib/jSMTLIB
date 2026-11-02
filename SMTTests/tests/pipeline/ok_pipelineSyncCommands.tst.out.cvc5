@@ -8,9 +8,5 @@ false
 success
 success
 success
-(
-(> x 0)
-(< x 5)
-(> y x)
-)
+(error "The get-assertions command is only valid if :produce-assertions has been enabled")
 sat

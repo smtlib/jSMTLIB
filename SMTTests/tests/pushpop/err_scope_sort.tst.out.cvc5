@@ -3,4 +3,4 @@ success
 success
 success
 success
-(error "Parse Error: <shell>:1.20: Symbol 'B' not declared as a type")
+(error "Parse Error: <shell>:7.20: Symbol 'B' not declared as a type")

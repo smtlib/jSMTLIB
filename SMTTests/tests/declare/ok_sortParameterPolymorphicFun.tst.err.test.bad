@@ -1,0 +1,6 @@
+(assert (= (f b) (not b)))
+           ^^^^^
+(assert (= (f n) (+ n 1)))
+           ^^^^^
+(get-value ((f b) (f n)))
+            ^^^^^

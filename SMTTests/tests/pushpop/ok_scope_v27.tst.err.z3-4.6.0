@@ -1,0 +1,8 @@
+(declare-fun f (X) X)
+^^^^^^^^^^^^^^^^^^^^^
+(define-const m Bool true)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun f (X) X)
+^^^^^^^^^^^^^^^^^^^^^
+(declare-const m Real)
+^^^^^^^^^^^^^^^^^^^^^^

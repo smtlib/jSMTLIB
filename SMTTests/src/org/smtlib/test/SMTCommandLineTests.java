@@ -82,19 +82,16 @@ public class SMTCommandLineTests {
     }
 
     @Test public void logicsNullArg() {
-        // Programmatic API: null element → logicPath stays null (the != null guard short-circuits)
+        // Programmatic API: a null argument is an error, as an empty one is
         int ret = run("-L", null, "--solver", "test", "--text", "(exit)");
-        outPs.flush();
-        Assert.assertEquals("Expected success when -L argument is null", 0, ret);
-        Assert.assertFalse("Expected no error when -L argument is null", output().contains("(error"));
+        Assert.assertEquals(1, ret);
+        assertError(ret, "The --logics option expects a non-empty argument");
     }
 
     @Test public void logicsEmptyArg() {
-        // Empty string → trim check fires, logicPath is nulled out, execution continues normally
         int ret = run("-L", "", "--solver", "test", "--text", "(exit)");
-        outPs.flush();
-        Assert.assertEquals("Expected success when -L argument is empty", 0, ret);
-        Assert.assertFalse("Expected no error when -L argument is empty", output().contains("(error"));
+        Assert.assertEquals(1, ret);
+        assertError(ret, "The --logics option expects a non-empty argument");
     }
 
     @Test public void logicsFromClasspath() {
@@ -389,7 +386,11 @@ public class SMTCommandLineTests {
     }
 
     @Test public void seedNonInteger() {
-        assertError(run("--seed", "fast"), "The --seed option expects an integer value: fast");
+        assertError(run("--seed", "fast"), "The --seed option expects a non-negative integer value: fast");
+    }
+
+    @Test public void seedNegative() {
+        assertError(run("--seed", "-1"), "The --seed option expects a non-negative integer value: -1");
     }
 
     @Test public void timeoutNonNumeric() {

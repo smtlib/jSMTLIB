@@ -6,8 +6,8 @@ success
 success
 success
 success
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
+(error "get-assertions is not supported")
 success
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
+(error "get-assertions is not supported")
 success
-(error "The get-assertions command is only valid if :produce-assertions has been enabled")
+(error "get-assertions is not supported")

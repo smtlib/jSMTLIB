@@ -1,0 +1,5 @@
+; A pattern term may not contain a binder (SMT-LIB 2.7, 3.6.5)
+(set-logic AUFLIA)
+(declare-fun f (Int) Int)
+(assert (forall ((x Int)) (! (> (f x) 0) :pattern ((let ((y x)) (f y))))))
+(assert (forall ((x Int)) (! (> (f x) 0) :pattern ((exists ((y Int)) (> (f y) x))))))

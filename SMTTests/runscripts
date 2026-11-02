@@ -1,22 +1,11 @@
 #!/bin/bash
 
 cd "$(dirname "$0")" || exit 1
-INSTALL=$(cd ../SMT && pwd)
-
-
 trap 'exit 130' INT
 if [ -n "${COV++}" ]; then
     source ./setup-coverage scripts
 fi
 source setup
-source version.check
-# On Windows, Java jar URLs include a leading slash before the drive letter (file:/D:/...)
-# but $INSTALL from Git-bash has no leading slash (D:/...). JAR_INSTALL adds it on Windows.
-if [[ "$PLATFORM" == "windows" ]]; then
-    JAR_INSTALL="/$INSTALL"
-else
-    JAR_INSTALL="$INSTALL"
-fi
 
 if [ $# -eq 0 ]; then
     # Recurse (e.g. into scripts/solverBehavior/), not just the top level.
@@ -41,71 +30,11 @@ for f in "${files[@]}" ; do
         echo "SKIP $f: file not found"
         continue
     fi
-    ### Check for skip marker
-    if [ -e "$f.skip.$PLATFORM_ARCH" ]; then
-        echo "SKIP $f: $(cat "$f.skip.$PLATFORM_ARCH")"; continue
-    elif [ -e "$f.skip.$PLATFORM" ]; then
-        echo "SKIP $f: $(cat "$f.skip.$PLATFORM")"; continue
-    elif [ -e "$f.skip" ]; then
-        echo "SKIP $f: $(cat "$f.skip")"; continue
-    fi
-
     echo SCRIPT $f
-    expectedret=$(grep EXITCODE "$f" | sed -e "s/##EXITCODE //")
-
-    # SMT-LIB defines two output channels: the regular output channel (stdout)
-    # carries formal responses such as (error "..."), while the diagnostic
-    # channel (stderr) carries contextual information such as the source-text
-    # excerpt and caret(s) showing where in the input an error occurred.
-    # We therefore test all three views:
-    #   .out  — regular output only  (stdout)
-    #   .err  — diagnostic output only (stderr)
-    #   .cmb  — both streams merged (2>&1), so error context and message appear together
-
-    ( source "$f" ) 2> "$f.err.actual" > "$f.out.actual"
-    actualret=$?
-    # A script exits 77 to skip itself (e.g. no solver it checks is available)
-    if [ $actualret -eq 77 ]; then
-        echo "SKIP $f: $(grep '^SKIP:' "$f.out.actual" | head -1 | sed 's/^SKIP: //')"
-        rm -f "$f.out.actual" "$f.err.actual"
-        continue
-    fi
-    ### Strip Windows CR so Unix golden files match
-    if [[ "$PLATFORM" == "windows" ]]; then
-        tr -d '\r' < "$f.out.actual" > "$f.out.actual.tmp" && mv "$f.out.actual.tmp" "$f.out.actual"
-        tr -d '\r' < "$f.err.actual" > "$f.err.actual.tmp" && mv "$f.err.actual.tmp" "$f.err.actual"
-    fi
-    _cmp_golden() {
-        local actual="$1" base="$2" label="$3"
-        local golden
-        if   [ -e "${base}.$PLATFORM_ARCH" ]; then golden="${base}.$PLATFORM_ARCH"
-        elif [ -e "${base}.$PLATFORM" ];      then golden="${base}.$PLATFORM"
-        elif [ -e "${base}" ];                then golden="${base}"
-        else golden=""; fi
-        if [ -n "$golden" ]; then
-            sed -e "s@\$JAR_INSTALL@$JAR_INSTALL@g" -e "s@\$INSTALL@$INSTALL@" -e "s@\$HOME@$HOME@" -e "s@\$SOLVERS@$SMT_SOLVER_DIR@g" -e "s@\$TESTS@$PWD@g" < "$golden" | diff "$actual" -
-            if [ $? -eq 0 ]; then rm -f "$actual"; else (( fail++ )); fi
-        else
-            echo "Creating $label file for $f"
-            cat "$actual"
-            mv "$actual" "${base}"
-        fi
-    }
-    _cmp_golden "$f.out.actual" "$f.out" "output"
-    _cmp_golden "$f.err.actual" "$f.err" "err"
-
-    # Combined test: re-run merging stderr into stdout
-    ( source "$f" ) > "$f.cmb.actual" 2>&1
-    ### Strip Windows CR so Unix golden files match
-    if [[ "$PLATFORM" == "windows" ]]; then
-        tr -d '\r' < "$f.cmb.actual" > "$f.cmb.actual.tmp" && mv "$f.cmb.actual.tmp" "$f.cmb.actual"
-    fi
-    _cmp_golden "$f.cmb.actual" "$f.cmb" "combined output"
-
-    if [ "$actualret" != "$expectedret" ]; then
-        echo CODE = $actualret $expectedret
-        (( fail++ ))
-    fi
+    ### runscript does the checking, as for ScriptTests
+    bash ./runscript "$f"
+    ret=$?
+    if [ $ret -ne 0 ] && [ $ret -ne 77 ]; then (( fail++ )); fi
 done
 if [ $fail -eq 0 ]; then
     echo "All script tests SUCCEEDED"

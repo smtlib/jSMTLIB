@@ -1,0 +1,7 @@
+
+"jsmtlib-sync-1"
+
+"jsmtlib-sync-2"
+(error "Error on typing errors (code 4)")
+<<close-stdout>>
+<<sleep 3000>>

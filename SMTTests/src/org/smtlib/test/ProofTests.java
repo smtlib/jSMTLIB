@@ -60,7 +60,7 @@ public class ProofTests {
 
     /** Whether the solver produces proofs (the others answer unsupported or an error) */
     private boolean producesProofs() {
-        return (solvername.startsWith("z3") && !solvername.startsWith("z3-4.3"))
+        return solvername.startsWith("z3")
                 || solvername.startsWith("cvc5") || solvername.startsWith("smtinterpol");
     }
 
@@ -99,6 +99,8 @@ public class ProofTests {
     @Test
     public void deepProof() throws Exception {
         Assume.assumeTrue("proof not deeply nested", producesProofs() && !solvername.startsWith("cvc5"));
+        Assume.assumeFalse("z3-4.3 answers unknown: symmetry_reduce does not support proof production",
+                solvername.startsWith("z3-4.3"));
         int n = 2000;
         StringBuilder sb = new StringBuilder("(set-option :produce-proofs true)(set-logic QF_UF)(declare-sort U 0)"
                 + "(declare-fun a (Bool Bool Bool Bool Bool Bool Bool Bool Bool Bool Bool) U)(assert (and");

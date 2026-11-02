@@ -1,6 +1,6 @@
 success
 success
-success
+(error "The value of :category must be \"crafted\", \"random\" or \"industrial\"")
 success
 (error "Error while checking sort abbreviation: New sorts are not allowed in this logic")
 (error "No such sort symbol declared: S1")

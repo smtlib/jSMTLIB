@@ -1,0 +1,3 @@
+success
+success
+(error "line 4 column 8: unknown constant z")

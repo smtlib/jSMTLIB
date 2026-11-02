@@ -1,0 +1,9 @@
+unsupported
+success
+(error "at line 5, column 19: undefined identifier: char")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

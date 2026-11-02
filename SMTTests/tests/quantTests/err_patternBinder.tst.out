@@ -1,0 +1,4 @@
+success
+success
+(error "A pattern term may not contain a binder")
+(error "A pattern term may not contain a binder")

@@ -1,2 +1,2 @@
 success
-(error "The solver stopped without a response to: (declare-datatype D ((ctor (a Bool)) (ctor (b Bool)) ))")
+(error "The solver process has exited")

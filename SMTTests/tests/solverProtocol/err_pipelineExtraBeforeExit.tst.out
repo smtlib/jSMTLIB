@@ -1,0 +1,4 @@
+success
+success
+(error "Unexpected output from the solver: success")
+success

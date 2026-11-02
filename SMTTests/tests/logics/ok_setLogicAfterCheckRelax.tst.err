@@ -1,0 +1,4 @@
+(get-model)
+^^^^^^^^^^^
+(assert (not p))
+             ^

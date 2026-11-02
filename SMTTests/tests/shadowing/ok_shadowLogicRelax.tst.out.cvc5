@@ -1,0 +1,15 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "Parse Error: <shell>:14.17: Symbol 'Int' previously declared as a type")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

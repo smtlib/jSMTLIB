@@ -80,60 +80,85 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
         return smtConfig.sortFactory.createSortExpression(smtConfig.exprFactory.symbol(name), params);
     }
 
-    /** Checks that the sort expression contains no Array sort outside the allowed set.
-     *  Skips the check for Array sorts whose parameters include sort parameters (parameterized abbreviations).
-     *  @param allowedMsg  human-readable list of allowed Array sorts, used in the error message
-     *  @param allowedSorts  the allowed Array sorts, compared structurally (see {@link #sortApp}) */
-    protected void checkArraySort(ISort sort, IIdentifier id, String allowedMsg, ISort... allowedSorts) throws IVisitor.VisitorException {
-        if (!(sort instanceof ISort.IApplication)) return;
-        ISort.IApplication app = (ISort.IApplication) sort;
-        if (Utils.ARRAY.equals(app.family().headSymbol())) {
-            for (ISort param : app.parameters()) {
-                if (param instanceof ISort.IParameter) return;
-            }
-            for (ISort allowed : allowedSorts) {
-                if (sort.equalsNoExpand(allowed)) return;
-            }
-            throw new IVisitor.VisitorException("Array sorts must be " + allowedMsg + " in this logic", id.pos());
+    /** The Array sorts this logic allows, as text for error messages, or null if it allows
+     *  every Array sort. A logic restricting Array sorts overrides this and {@link #allowedArraySort}. */
+    protected /*@Nullable*/ String allowedArraySorts() { return null; }
+
+    /** Whether this logic allows the Array sort array, whose own sort is already expanded and
+     *  which contains no sort parameter */
+    protected boolean allowedArraySort(ISort.IApplication array) { return true; }
+
+    /** Checks every Array sort within sort, expanding abbreviations, against {@link
+     *  #allowedArraySort}. An Array sort containing a sort parameter is skipped: it is checked
+     *  where the parameterized abbreviation is instantiated. */
+    protected void checkArraySorts(ISort sort, IPos pos) throws IVisitor.VisitorException {
+        if (allowedArraySorts() == null) return;
+        ISort s = sort.expand();
+        if (!(s instanceof ISort.IApplication)) return;
+        ISort.IApplication app = (ISort.IApplication) s;
+        if (Utils.ARRAY.equals(app.family().headSymbol()) && !hasSortParameter(app) && !allowedArraySort(app)) {
+            throw new IVisitor.VisitorException("Array sorts must be " + allowedArraySorts() + " in this logic", pos);
         }
         for (ISort param : app.parameters()) {
-            checkArraySort(param, id, allowedMsg, allowedSorts);
+            checkArraySorts(param, pos);
         }
     }
 
-    /** Checks that the sort expression contains no Array sort other than one indexed and
-     *  valued by BitVec sorts of any width, i.e. (Array (_ BitVec i) (_ BitVec j)) for some
-     *  i, j &gt; 0 -- the restriction QF_ABV's spec mandates. Predicate-based (unlike
-     *  {@link #checkArraySort}'s enumerated allowed set) since the BitVec widths are
-     *  unconstrained, so the allowed shapes can't be enumerated as fixed sorts.
-     *  Skips the check for Array sorts whose parameters include sort parameters (parameterized
-     *  abbreviations), mirroring {@link #checkArraySort}. */
-    protected void checkArraySortIsBitVecToBitVec(ISort sort, IIdentifier id) throws IVisitor.VisitorException {
-        if (!(sort instanceof ISort.IApplication)) return;
-        ISort.IApplication app = (ISort.IApplication) sort;
-        if (Utils.ARRAY.equals(app.family().headSymbol())) {
-            for (ISort param : app.parameters()) {
-                if (param instanceof ISort.IParameter) return;
-            }
-            List<ISort> params = app.parameters();
-            if (params.size() != 2 || !isBitVecSort(params.get(0)) || !isBitVecSort(params.get(1))) {
-                throw new IVisitor.VisitorException("Array sorts must be (Array (_ BitVec i) (_ BitVec j)) in this logic", id.pos());
-            }
-            return;
-        }
-        for (ISort param : app.parameters()) {
-            checkArraySortIsBitVecToBitVec(param, id);
-        }
+    /** Checks the Array sorts in a function's argument and result sorts */
+    protected void checkArraySorts(List<ISort> argSorts, ISort resultSort, IIdentifier id) throws IVisitor.VisitorException {
+        for (ISort s : argSorts) checkArraySorts(s, id.pos());
+        checkArraySorts(resultSort, id.pos());
     }
 
-    /** Recognizes a literal (_ BitVec n) sort. Deliberately does not call {@link ISort#expand()}
-     *  to also recognize a user-defined alias for one (e.g. (define-sort Word32 () (_ BitVec
-     *  32))): calling expand() here, mid-define-sort type-checking, hits a pre-existing,
-     *  unrelated NullPointerException in sort-abbreviation resolution (Sort.Application's
-     *  definition() is still null at that point) -- so an aliased BitVec sort used as an
-     *  Array's index/value sort is (rarely) wrongly rejected here rather than accepted, which
-     *  is an acceptable narrower gap against crashing outright. */
-    private boolean isBitVecSort(ISort s) {
+    /** Checks the Array sorts of the variables bound by quantifiers in expression */
+    protected void checkBoundArraySorts(IExpr expression) throws IVisitor.VisitorException {
+        if (allowedArraySorts() == null) return;
+        IVisitor<Void> visitor = new IVisitor.TreeVisitor<Void>() {
+            @Override
+            public Void visit(IForall e) throws IVisitor.VisitorException {
+                for (IDeclaration d : e.parameters()) checkArraySorts(d.sort(), d.pos());
+                return super.visit(e);
+            }
+            @Override
+            public Void visit(IExists e) throws IVisitor.VisitorException {
+                for (IDeclaration d : e.parameters()) checkArraySorts(d.sort(), d.pos());
+                return super.visit(e);
+            }
+        };
+        expression.accept(visitor);
+    }
+
+    private static boolean hasSortParameter(ISort sort) {
+        if (sort instanceof ISort.IParameter) return true;
+        if (!(sort instanceof ISort.IApplication)) return false;
+        for (ISort p : ((ISort.IApplication) sort).parameters()) {
+            if (hasSortParameter(p)) return true;
+        }
+        return false;
+    }
+
+    /** Whether sort, with abbreviations expanded, is structurally the same as allowed */
+    protected static boolean sameSort(ISort sort, ISort allowed) {
+        ISort s = sort.expand();
+        if (!(s instanceof ISort.IApplication) || !(allowed instanceof ISort.IApplication)) return false;
+        ISort.IApplication a = (ISort.IApplication) s;
+        ISort.IApplication b = (ISort.IApplication) allowed;
+        if (!a.family().equals(b.family()) || a.parameters().size() != b.parameters().size()) return false;
+        for (int i = 0; i < a.parameters().size(); i++) {
+            if (!sameSort(a.parameters().get(i), b.parameters().get(i))) return false;
+        }
+        return true;
+    }
+
+    /** Whether array is (Array (_ BitVec i) (_ BitVec j)), as QF_ABV and QF_AUFBV require */
+    protected static boolean isBitVecArray(ISort.IApplication array) {
+        List<ISort> params = array.parameters();
+        return params.size() == 2 && isBitVecSort(params.get(0)) && isBitVecSort(params.get(1));
+    }
+
+    /** Whether sort, with abbreviations expanded, is a (_ BitVec n) sort */
+    protected static boolean isBitVecSort(ISort sort) {
+        ISort s = sort.expand();
         return (s instanceof ISort.IApplication) && Utils.BITVEC_SYM.equals(((ISort.IApplication) s).family().headSymbol());
     }
 
@@ -157,16 +182,25 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
 //        return f.args().size() == 0;
     }
 
+    /** The arguments of an application (of * or /) that are not coefficients. A product, of
+     *  any arity, is linear when at most one of its factors is not a coefficient. */
+    protected static List<IExpr> nonCoefficients(IExpr.IFcnExpr e, java.util.function.Predicate<IExpr> isCoefficient) {
+        List<IExpr> result = new java.util.ArrayList<>();
+        for (IExpr a : e.args()) {
+            if (!isCoefficient.test(a)) result.add(a);
+        }
+        return result;
+    }
+
     public boolean isLinearInteger(IExpr expr) {
         try {
             IVisitor<Void> visitor = new IVisitor.TreeVisitor<Void>() {
                 @Override
                 public Void visit(IExpr.IFcnExpr e) throws IVisitor.VisitorException {
                     IQualifiedIdentifier fcn = e.head();
-                    if (Utils.MULT.equals(fcn) && e.args().size() == 2) {
-                        IExpr lhs = e.args().get(0);
-                        IExpr rhs = e.args().get(1);
-                        if (!((isInteger(lhs) && isFreeConstant(rhs)) || (isFreeConstant(lhs) && isInteger(rhs))))
+                    if (Utils.MULT.equals(fcn)) {
+                        List<IExpr> factors = nonCoefficients(e, Logic.this::isInteger);
+                        if (factors.size() > 1 || (factors.size() == 1 && !isFreeConstant(factors.get(0))))
                             throw new IVisitor.VisitorException("nonlinear", null);
                         return null;
                     } else if (Utils.DIV.equals(fcn) || Utils.MOD.equals(fcn) || Utils.ABS.equals(fcn)) {
@@ -188,14 +222,13 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
                 @Override
                 public Void visit(IExpr.IFcnExpr e) throws IVisitor.VisitorException {
                     IQualifiedIdentifier fcn = e.head();
-                    if (Utils.MULT.equals(fcn) && e.args().size() == 2) {
-                        IExpr lhs = e.args().get(0);
-                        IExpr rhs = e.args().get(1);
-                        if (!((isRealConst(lhs) && isFreeConstant(rhs)) || (isFreeConstant(lhs) && isRealConst(rhs))))
+                    if (Utils.MULT.equals(fcn)) {
+                        List<IExpr> factors = nonCoefficients(e, Logic.this::isRealConst);
+                        if (factors.size() > 1 || (factors.size() == 1 && !isFreeConstant(factors.get(0))))
                             throw new IVisitor.VisitorException("nonlinear", null);
                         return null;
-                    } else if (Utils.SLASH.equals(fcn) && e.args().size() == 2) {
-                        if (!(isRealConst(e.args().get(0)) && isRealConst(e.args().get(1))))
+                    } else if (Utils.SLASH.equals(fcn)) {
+                        if (!nonCoefficients(e, Logic.this::isRealConst).isEmpty())
                             throw new IVisitor.VisitorException("nonlinear", null);
                         return null;
                     }

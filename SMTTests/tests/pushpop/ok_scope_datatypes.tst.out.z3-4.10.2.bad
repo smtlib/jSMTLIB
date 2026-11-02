@@ -1,0 +1,35 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "line 27 column 25: sort already defined Color")
+(error "line 28 column 28: sort already defined Tree")
+success
+(error "line 30 column 43: invalid function declaration reference, unknown function node")
+success
+(error "line 32 column 14: invalid sort declaration, sort already declared/defined")
+(error "line 33 column 14: invalid sort declaration, sort already declared/defined")
+(error "line 34 column 23: invalid declaration, constant 'red' (with the given signature) already declared")
+(error "line 35 column 24: invalid declaration, constant 'node' (with the given signature) already declared")
+(error "line 36 column 23: invalid declaration, constant 'val' (with the given signature) already declared")
+(error "line 37 column 24: invalid declaration, constant 'head' (with the given signature) already declared")

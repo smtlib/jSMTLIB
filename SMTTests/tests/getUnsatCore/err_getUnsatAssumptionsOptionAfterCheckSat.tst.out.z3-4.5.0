@@ -1,0 +1,6 @@
+success
+success
+success
+unsat
+(error "line 7 column 39: error setting ':produce-unsat-assumptions', option value cannot be modified after initialization")
+unsupported

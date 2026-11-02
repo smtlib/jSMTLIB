@@ -1,0 +1,14 @@
+(set-info :smt-lib-version 2.7)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort-parameter A)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun f (A) A)
+^^^^^^^^^^^^^^^^^^^^^
+(assert (forall ((x A)) (= (f x) x)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-const b Bool)
+^^^^^^^^^^^^^^^^^^^^^^
+(assert (= (f b) (not b)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(check-sat)
+^^^^^^^^^^^

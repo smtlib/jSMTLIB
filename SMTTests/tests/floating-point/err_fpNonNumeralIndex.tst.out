@@ -1,0 +1,6 @@
+success
+(error "A FloatingPoint sort must have exactly two numerals (eb sb)")
+(error "A FloatingPoint sort must have exactly two numerals (eb sb)")
+success
+(error "Expected exactly two numerals (eb sb) in a +zero identifier")
+(error "Expected exactly two numerals (eb sb) in a to_fp identifier")

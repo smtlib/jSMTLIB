@@ -1,0 +1,31 @@
+success
+success
+success
+(error "Cannot bind x to symbol of type Bool, maybe the symbol has already been defined?")
+(error "Cannot bind x to symbol of type Bool, maybe the symbol has already been defined?")
+success
+(error "Cannot bind x to symbol of type Bool, maybe the symbol has already been defined?")
+"hello"
+(error "Cannot bind x to symbol of type Bool, maybe the symbol has already been defined?")
+true
+(error "Cannot bind x to symbol of type Bool, maybe the symbol has already been defined?")
+false
+(error "Cannot bind x to symbol of type Bool, maybe the symbol has already been defined?")
+(error "Cannot bind x to symbol of type Bool, maybe the symbol has already been defined?")
+(error "Cannot bind x to symbol of type Bool, maybe the symbol has already been defined?")
+(error "Cannot bind x to symbol of type Bool, maybe the symbol has already been defined?")
+success
+success
+(error "Cannot bind y to symbol of type Bool, maybe the symbol has already been defined?")
+success
+(error "Cannot bind x to symbol of type Bool, maybe the symbol has already been defined?")
+(error "recursive function definitions require a logic with quantifiers")
+(error "Cannot bind x to symbol of type Bool, maybe the symbol has already been defined?")
+sat
+(error "The get-assignment command is only valid if :produce-assignments has been enabled")
+(error "Cannot bind x to symbol of type Bool, maybe the symbol has already been defined?")
+success
+success
+success
+(error "Cannot bind x to symbol of type Bool, maybe the symbol has already been defined?")
+(error "Parse Error: <shell>:37.9: Symbol 'z' not declared as a variable")

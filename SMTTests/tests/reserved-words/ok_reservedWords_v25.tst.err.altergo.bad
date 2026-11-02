@@ -1,0 +1,6 @@
+(declare-const match Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-const declare-datatype Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-const declare-datatypes Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

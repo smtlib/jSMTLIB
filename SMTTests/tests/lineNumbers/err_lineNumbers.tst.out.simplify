@@ -1,0 +1,31 @@
+success
+success
+success
+(error "Symbol x is already defined")
+(error "Symbol x is already defined")
+success
+(error "Symbol x is already defined")
+"hello"
+(error "Symbol x is already defined")
+true
+(error "Symbol x is already defined")
+false
+(error "Symbol x is already defined")
+(error "Symbol x is already defined")
+(error "Symbol x is already defined")
+(error "Symbol x is already defined")
+success
+success
+(error "Symbol y is already defined")
+success
+(error "Symbol x is already defined")
+unsupported
+(error "Symbol x is already defined")
+sat
+(error "The get-assignment command is only valid if :produce-assignments has been enabled")
+(error "Symbol x is already defined")
+success
+success
+success
+(error "Symbol x is already defined")
+(error "Unknown constant symbol z")

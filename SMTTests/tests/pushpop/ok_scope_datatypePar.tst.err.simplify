@@ -1,0 +1,4 @@
+(declare-fun l () (Lst Int))
+                   ^^^
+(assert (= (hd l) 1))
+               ^

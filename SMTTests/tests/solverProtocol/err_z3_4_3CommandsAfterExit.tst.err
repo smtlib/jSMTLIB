@@ -1,0 +1,16 @@
+(get-value (p))
+^^^^^^^^^^^^^^^
+(get-model)
+^^^^^^^^^^^
+(get-assignment)
+^^^^^^^^^^^^^^^^
+(get-assertions)
+^^^^^^^^^^^^^^^^
+(get-option :produce-models)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert p)
+^^^^^^^^^^
+(push 1)
+^^^^^^^^
+(check-sat)
+^^^^^^^^^^^

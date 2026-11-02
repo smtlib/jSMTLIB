@@ -1,0 +1,4 @@
+success
+success
+success
+(error "Invalid action during Assert mode: Command get-model")

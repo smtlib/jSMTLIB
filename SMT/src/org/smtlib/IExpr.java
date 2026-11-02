@@ -13,8 +13,6 @@ import org.smtlib.IExpr.IDeclaration;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IPos.IPosable;
 
-// FIXME - any new s-expressions
-
 /** This interface represents the functionality for any class implementing an SMT-LIB term or formula */
 public interface IExpr extends INode, IPosable, IAttributeValue {
 
@@ -121,7 +119,9 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
     static public interface ILiteral extends IExpr, IAttributeValue {
     }
 
-    /** Marker interface for the two legal index types in a parameterized identifier: INumeral and ISymbol. */
+    /** Marker interface for the index types in a parameterized identifier: INumeral and ISymbol, plus
+     *  IHexLiteral, which the Strings theory's (_ char H) uses, and IBinaryLiteral, which no theory uses
+     *  but which is parsed so that a solver reports it; each theory decides which kinds it accepts. */
     static public interface IIndex extends IExpr {
     }
 
@@ -204,7 +204,7 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
     }
 
     /** This interface represents SMT-LIB binary literals */
-    static public interface IBinaryLiteral extends ILiteral {
+    static public interface IBinaryLiteral extends ILiteral, IIndex {
         /** Returns a canonical value of the binary literal: 0 and 1 digits from MSB to LSB */
         String value();
 
@@ -216,8 +216,8 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
     }
 
     /** This interface represents SMT-LIB hex literals */
-    static public interface IHexLiteral extends ILiteral {
-        /** Returns a canonical value of the hex literal; lower-case hex digits from most-significant to least-significant */
+    static public interface IHexLiteral extends ILiteral, IIndex {
+        /** Returns the hex digits as written, from most-significant to least-significant */
         String value(); 
 
         /** The hex value as an unsigned integer */
@@ -226,10 +226,6 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
         /** Number of hex digits */
         int length();
     }
-
-    // FIXME - document toString for all interfaces
-    // FIXME - review headSymbol, head
-    // FIXME - review IParameter, ILetParameter
 
     /** This interface represents SMT-LIB string literals */
     static public interface IStringLiteral extends ILiteral {
@@ -287,14 +283,10 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
     /** This interface represents SMT-LIB parameterized identifiers */
     static public interface IParameterizedIdentifier extends IIdentifier {
 
-        // TODO - document
-        IIdentifier head();
-
         /** The head symbol of the identifier */
-        @Override
-        ISymbol headSymbol();
+        ISymbol head();
 
-        /** All indices of the identifier; each element is either an INumeral or an ISymbol.
+        /** All indices of the identifier: INumeral or ISymbol, or the literals IIndex describes.
          *  Symbol indices are allowed only in SMT-LIB V2.5 and later. */
         //@ ensures \result.size() > 0;
         List<IIndex> indices();
@@ -400,6 +392,10 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
     static public interface IPattern extends INode, IPosable {
         ISymbol constructor();
         List<ISymbol> params();
+
+        /** True if written in parentheses; (c), with no variables, is not SMT-LIB but is parsed (with an
+         *  error) so that type checking reports it as well */
+        default boolean parenthesized() { return !params().isEmpty(); }
     }
 
     /** This interface represents one case in a match expression: a pattern and its body. */

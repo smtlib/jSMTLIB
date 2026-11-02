@@ -1,0 +1,7 @@
+success
+success
+success
+unsupported
+success
+(error "line 9 column 25: unknown sort 'A'")
+unknown

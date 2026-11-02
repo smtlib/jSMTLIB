@@ -1,0 +1,8 @@
+(declare-fun red () Int)
+^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun node () Int)
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun val () Int)
+^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun head () Int)
+^^^^^^^^^^^^^^^^^^^^^^^^^

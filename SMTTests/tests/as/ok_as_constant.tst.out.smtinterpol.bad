@@ -1,0 +1,9 @@
+success
+success
+success
+success
+success
+(error "<stdin>:7:8: Application of function (x Bool) does not type check.")
+(error "<stdin>:8:11: Application of function (y U) does not type check.")
+(error "<stdin>:9:8: Application of function (true Bool) does not type check.")
+sat

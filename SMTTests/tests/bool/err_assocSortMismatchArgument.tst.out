@@ -1,0 +1,10 @@
+success
+success
+success
+success
+(error "Right-associative application of => fails at argument 3: has sort U, expected Bool")
+(error "Right-associative application of => fails at argument 2: has sort U, expected Bool")
+(error "Right-associative application of => fails at argument 1: has sort U, expected Bool")
+(error "Left-associative application of and fails at argument 1: has sort U, expected Bool")
+(error "Left-associative application of and fails at argument 2: has sort U, expected Bool")
+(error "Left-associative application of and fails at argument 3: has sort U, expected Bool")

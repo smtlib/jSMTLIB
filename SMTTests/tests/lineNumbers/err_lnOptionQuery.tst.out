@@ -1,0 +1,4 @@
+success
+unknown
+(error "The get-assignment command is only valid if :produce-assignments has been enabled")
+(error "Unknown constant symbol z")

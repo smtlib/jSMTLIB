@@ -1,0 +1,7 @@
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:29: expected 64 bit integer
+")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

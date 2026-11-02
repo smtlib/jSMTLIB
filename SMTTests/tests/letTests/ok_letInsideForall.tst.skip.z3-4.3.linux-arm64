@@ -1,0 +1,4 @@
+The ARM64 build of z3-4.3.1 answers this test's quantified check-sat with spurious "unexpected
+character" parse errors at a line past the end of the input, the non-deterministic corruption
+described in quantTests/ok_forallBoolUnSat.tst.skip.z3-4.3.linux-arm64 (#101); skipped rather
+than pinned to one variant.

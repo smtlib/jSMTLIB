@@ -1,0 +1,4 @@
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:11: model generation is not enabled
+")
+(error "A get-model command takes no arguments")

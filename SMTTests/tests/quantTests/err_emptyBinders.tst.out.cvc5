@@ -1,0 +1,4 @@
+success
+(error "Parse Error: <shell>:3.18: Expected non-empty sorted variable list")
+(error "The solver process has exited")
+(error "The solver process has exited")

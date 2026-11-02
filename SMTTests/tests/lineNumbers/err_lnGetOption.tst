@@ -1,0 +1,5 @@
+; #58: the error below is reported at its own line, after get-option (answered here by some adapters)
+(set-logic QF_UF)
+(get-option :print-success)
+(get-option :produce-models)
+(assert z)

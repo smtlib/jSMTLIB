@@ -1,0 +1,11 @@
+success
+unsupported
+unsupported
+(error "No such sort symbol declared: Lst")
+(error "No such sort symbol declared: Lst")
+(error "Unknown constant symbol l")
+(error "Unknown constant symbol l")
+(error "Unknown constant symbol l")
+(error "Unknown constant symbol b")
+(error "Unknown predicate symbol mk-pair with argument types Int Bool")
+(error "Unknown constant symbol l")

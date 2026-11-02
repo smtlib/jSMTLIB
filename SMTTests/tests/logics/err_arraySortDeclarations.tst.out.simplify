@@ -1,0 +1,14 @@
+(error "The simplify solver does not support the QF_ABV logic")
+(error "The logic must be set before a define-fun command is issued")
+success
+success
+(error "Array sorts must be (Array Int Int) in this logic")
+(error "Array sorts must be (Array Int Int) in this logic")
+success
+success
+(error "Array sorts must be (Array Int Int) in this logic")
+(error "Array sorts must be (Array Int Int) in this logic")
+success
+(error "The simplify solver does not support the AUFLIRA logic")
+(error "The logic must be set before a declare-fun command is issued")
+(error "The logic must be set before an assert command is issued")

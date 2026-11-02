@@ -1,0 +1,4 @@
+(error "logic UFLRA is not supported")
+(error "at line 3, column 19: undefined sort: Real")
+(error "The solver process has exited")
+(error "The solver process has exited")

@@ -1,4 +1,4 @@
 success
 success
 success
-(error "The solver stopped without a response to: (assert (fp.leq x y))")
+(error "The solver process has exited")

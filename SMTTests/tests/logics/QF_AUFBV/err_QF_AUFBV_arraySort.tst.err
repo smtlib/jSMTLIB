@@ -1,0 +1,12 @@
+(declare-const a (Array (_ BitVec 8) Bool))
+               ^
+(declare-fun f ((Array U U)) Bool)
+             ^
+(define-fun d ((x (Array Bool Bool))) Bool true)
+            ^
+(declare-const n (Array (_ BitVec 8) (Array (_ BitVec 8) (_ BitVec 8))))
+               ^
+(define-sort A () (Array Bool (_ BitVec 8)))
+             ^
+(declare-const p (P Bool))
+               ^

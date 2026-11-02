@@ -1,0 +1,8 @@
+; get-unsat-assumptions answers with terms, here a negated assumption (A59); z3 4.5 rejects (not q) in check-sat-assuming (.bad)
+(set-option :produce-unsat-assumptions true)
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(declare-fun q () Bool)
+(assert (=> p q))
+(check-sat-assuming (p (not q)))
+(get-unsat-assumptions)

@@ -1,4 +1,4 @@
 success
 success
 success
-(error "The get-value command is only valid immediately after check-sat returned sat or unknown")
+(error "can't build a model. Call (check-sat) first")

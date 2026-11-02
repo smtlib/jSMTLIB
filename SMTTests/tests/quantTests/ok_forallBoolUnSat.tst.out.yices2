@@ -1,0 +1,4 @@
+success
+(error "the exists/forall solver does not work in incremental mode")
+(error "no logic set")
+(error "no logic set")

@@ -1,0 +1,6 @@
+success
+(error "at line 3, column 32: syntax error: <numeral> expected")
+success
+(error "at line 5, column 31: syntax error: <numeral> expected")
+(error "at line 6, column 22: syntax error: <numeral> expected")
+(error "at line 7, column 28: syntax error: <numeral> expected")

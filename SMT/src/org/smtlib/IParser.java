@@ -32,6 +32,13 @@ public interface IParser {
     /** Returns the most recent error, or null */
     IResponse.IError lastError(); // FIXME - is this used?
 
+    /** Returns true if the command most recently returned by parseCommand() had a syntax error
+     *  that parsing recovered from; such a command is not sent to a solver */
+    boolean commandHasError();
+
+    /** Returns true if one of the errors commandHasError() reports was an invalid character */
+    boolean commandHasLexicalError();
+
     /** Skips remainder of current line */
     void abortLine();
 

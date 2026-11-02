@@ -1,0 +1,14 @@
+(define-fun d ((x (Array (_ BitVec 8) Bool))) Bool true)
+            ^
+(declare-const a (Array Int Bool))
+               ^
+(declare-fun f ((Array Bool Int)) Int)
+             ^
+(declare-const a (Array Int Bool))
+               ^
+(assert (forall ((b (Array Int Bool))) true))
+                 ^^^^^^^^^^^^^^^^^^^^
+(declare-fun f ((Array Int Int)) Real)
+             ^
+(assert (exists ((b (Array Real Real))) true))
+                 ^^^^^^^^^^^^^^^^^^^^^

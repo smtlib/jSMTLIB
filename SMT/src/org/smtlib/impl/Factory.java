@@ -52,6 +52,7 @@ public class Factory implements IExpr.IFactory, ISort.IFactory, ICommand.IFactor
         config.utils = new org.smtlib.Utils(config);
         config.reservedWords.addAll(Utils.reservedWords);
         config.reservedWordsNotCommands.addAll(Utils.reservedWordsNotCommands);
+        config.reservedSince.putAll(Utils.reservedSince);
     }
 
     /** Sets the text position for a given instance. This is a template so it can return its

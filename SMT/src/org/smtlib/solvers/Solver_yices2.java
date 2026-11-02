@@ -24,6 +24,15 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
     @Override
     protected boolean selfReportsImmediateExit() { return true; }
 
+    /** yices2 reports "at line L, column C" in its error messages, counting the lines of its whole input */
+    private static final java.util.List<java.util.regex.Pattern> LINE_NUMBERS =
+            java.util.List.of(java.util.regex.Pattern.compile("(at line )(\\d+)(, column)"));
+
+    @Override
+    protected java.util.List<java.util.regex.Pattern> lineNumberPatterns() {
+        return LINE_NUMBERS;
+    }
+
     /** Creates an instance of the yices2 solver */
     public Solver_yices2(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
         super(smtConfig, command);
@@ -37,23 +46,29 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
     public String[] cmd(String exec) {
         java.util.List<String> args = new java.util.ArrayList<String>(
                 java.util.Arrays.asList(exec, "--incremental", "--interactive"));
-        // yices2 has exactly one timeout flag, --timeout=<seconds>, applying to the whole
-        // session -- there is no separate per-query option at all. smtConfig.timeoutTotal
-        // maps onto it directly; if only the per-query smtConfig.timeout was requested, it
-        // is applied here as the closest available approximation, since that's the only
-        // lever yices2 offers.
-        if (smtConfig.timeoutTotal > 0) {
-            args.add("--timeout=" + (int)Math.ceil(smtConfig.timeoutTotal));
-            if (smtConfig.timeout > 0) {
-                smtConfig.log.logDiag("#yices2 has no per-query timeout option; only the whole-run --timeout-total (" + smtConfig.timeoutTotal + "s) is applied, the per-query --timeout (" + smtConfig.timeout + "s) is ignored");
+        // yices2 has exactly one timeout flag, --timeout=<seconds>, applying per check-sat
+        // call -- there is no whole-run option at all. If only the whole-run
+        // smtConfig.timeoutTotal was requested, it is applied here per query as the closest
+        // available approximation.
+        double effective = smtConfig.timeout > 0 ? smtConfig.timeout : smtConfig.timeoutTotal;
+        if (effective > 0) {
+            if (smtConfig.timeout <= 0) {
+                smtConfig.log.logDiag("#yices2 has no whole-run timeout option; approximating with a per-query --timeout of " + smtConfig.timeoutTotal + "s (the requested whole-run value)");
+            } else if (smtConfig.timeoutTotal > 0) {
+                smtConfig.log.logDiag("#yices2 has no whole-run timeout option; only the per-query --timeout (" + smtConfig.timeout + "s) is applied, the whole-run --timeout-total (" + smtConfig.timeoutTotal + "s) is ignored");
             }
-        } else if (smtConfig.timeout > 0) {
-            smtConfig.log.logDiag("#yices2 has no per-query timeout option; approximating with a whole-run --timeout of " + smtConfig.timeout + "s (the requested per-query value)");
-            args.add("--timeout=" + (int)Math.ceil(smtConfig.timeout));
+            args.add("--timeout=" + (int)Math.ceil(effective));
         }
         return args.toArray(new String[args.size()]);
     }
 
+
+    /** yices2 writes echo's text unquoted, so where it ends cannot be found (#136); the response
+     *  to echo is its argument */
+    @Override
+    public IResponse echo(IExpr.IStringLiteral arg) {
+        return arg;
+    }
 
     @Override
     public IResponse start() {
@@ -65,6 +80,8 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
             // Can't turn off printing success, or we get no feedback
 //            solverProcess.sendAndListen("(set-option :print-success true)\n"); // Z3 4.4.0 needs this because it mistakenly has the default for :print-success as false
             //if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
+            IResponse seed = sendSeed();
+            if (seed != null) return seed;
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started yices2 ");
             return smtConfig.responseFactory.success();
         } catch (Exception e) {
@@ -99,21 +116,66 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
     // via the --timeout=N CLI flag (see cmd()), matching how Solver_z3_recent applies
     // its timeout as a CLI flag rather than a runtime command.
 
-    /** :status is the only real special case left here: yices2 has no native get-info
-     *  support for it ({@code (error "no info for :status")}), so it's answered from the
-     *  locally-tracked checkSatStatus instead. Everything else used to be hardcoded here
-     *  too (:error-behavior, :all-statistics, :reason-unknown, :authors, :version, :name,
-     *  and an "unsupported" catch-all for every other keyword) with stale values from a
-     *  much older yices2 that apparently didn't implement get-info -- current yices2
-     *  answers all of those correctly itself (confirmed :error-behavior is actually
-     *  "immediate-exit", not the hardcoded "continued-execution"; :all-statistics returns
-     *  a real statistics dump, not "unsupported"), so they're now left to
-     *  AbstractSolver's default (forward to the solver). */
+    /** yices2 answers get-info :status with the last set-info :status value, but with
+     *  (error "no info for :status") when none was set; SMT-LIB requires unsupported for a
+     *  flag the solver does not support. Other flags are answered by yices2 itself. */
     @Override
     public IResponse get_info(IKeyword key) {
-        if (Utils.STATUS.toString().equals(key.value())) {
-            return checkSatStatus==null ? smtConfig.responseFactory.unsupported() : checkSatStatus;
+        IResponse r = super.get_info(key);
+        if (Utils.STATUS.value().equals(key.value()) && r instanceof IResponse.IError e
+                && e.errorMsg().contains("no info for :status")) {
+            return smtConfig.responseFactory.unsupported();
         }
-        return super.get_info(key);
+        return r;
+    }
+
+    // The checks below correct yices2 (2.6.5 and 2.7.0) answering get- commands that SMT-LIB makes
+    // errors; it reports the other cases itself. yices2 answers get-model, get-value and
+    // get-assignment with their enabling option off, though it reports the option as false. After
+    // declare-* or define-* following a check, where SMT-LIB returns to assert mode, it still answers
+    // from the earlier check (get-unsat-assumptions then names the new symbol for an assumption).
+
+    /** The kinds of command after which yices2 still answers the get- commands about the last check
+     *  (probed with 2.6.5 and 2.7.0, 2026-10-29; it has no datatypes or recursive definitions); after
+     *  assert, push, pop and reset-assertions it reports the error itself */
+    private static final java.util.Set<StackChange> ANSWERED_AFTER = java.util.EnumSet.of(
+            StackChange.DECLARE_FUN, StackChange.DECLARE_SORT, StackChange.DEFINE_SORT, StackChange.DEFINE_FUN);
+
+    /** yices2 answers get-model with :produce-models off, and in assert mode after a check */
+    @Override
+    public IResponse get_model() {
+        IResponse err = inSatMode() ? requireOptionEnabled("get-model", Utils.PRODUCE_MODELS)
+                : requireNoChangeSinceCheck("get-model", ANSWERED_AFTER);
+        return err != null ? err : super.get_model();
+    }
+
+    /** yices2 answers get-value with :produce-models off, and in assert mode after a check */
+    @Override
+    public IResponse get_value(IExpr... terms) {
+        IResponse err = inSatMode() ? requireOptionEnabled("get-value", Utils.PRODUCE_MODELS)
+                : requireNoChangeSinceCheck("get-value", ANSWERED_AFTER);
+        return err != null ? err : super.get_value(terms);
+    }
+
+    /** yices2 answers get-assignment with :produce-assignments off, and in assert mode after a check */
+    @Override
+    public IResponse get_assignment() {
+        IResponse err = inSatMode() ? requireOptionEnabled("get-assignment", Utils.PRODUCE_ASSIGNMENTS)
+                : requireNoChangeSinceCheck("get-assignment", ANSWERED_AFTER);
+        return err != null ? err : super.get_assignment();
+    }
+
+    /** yices2 answers get-unsat-core in assert mode after a check */
+    @Override
+    public IResponse get_unsat_core() {
+        IResponse err = requireNoChangeSinceCheck("get-unsat-core", ANSWERED_AFTER);
+        return err != null ? err : super.get_unsat_core();
+    }
+
+    /** yices2 answers get-unsat-assumptions, wrongly, in assert mode after a check */
+    @Override
+    public IResponse get_unsat_assumptions() {
+        IResponse err = requireNoChangeSinceCheck("get-unsat-assumptions", ANSWERED_AFTER);
+        return err != null ? err : super.get_unsat_assumptions();
     }
 }

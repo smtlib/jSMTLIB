@@ -1,0 +1,4 @@
+success
+true
+false
+(error "Parse Error: <shell>:5.9: Symbol 'z' not declared as a variable")

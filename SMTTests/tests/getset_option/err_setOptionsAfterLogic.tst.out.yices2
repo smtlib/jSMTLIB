@@ -1,0 +1,4 @@
+success
+unsupported
+(error "option :global-declarations can't be set now. It must be set before (set-logic ...)")
+unsupported

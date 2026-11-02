@@ -1,0 +1,11 @@
+success
+success
+success
+<<sleep 200>>
+<<eprint-part warning: par>>
+<<sleep 50>>
+sat
+<<sleep 200>>
+<<eprint tial>>
+<<sleep 50>>
+<<with-stderr (error "no model")>>

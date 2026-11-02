@@ -1,0 +1,5 @@
+success
+success
+success
+unsat
+(error "The solver process has exited")

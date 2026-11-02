@@ -1,0 +1,4 @@
+(error "A keyword must be a colon followed by a simple symbol (not starting with a digit, not a reserved word): :56")
+(error "A keyword must be a colon followed by a simple symbol (not starting with a digit, not a reserved word): :assert")
+(error "A keyword must be a colon followed by a simple symbol (not starting with a digit, not a reserved word): :_")
+success

@@ -1,0 +1,3 @@
+WARNING: A QF_RDL constant should be a numeral or a negated numeral, not a decimal: (< (- x y) 1.5)
+WARNING: A QF_RDL constant should be a numeral or a negated numeral, not a decimal: (>= (- x y) (- 0.5))
+WARNING: A QF_RDL constant should be a numeral or a negated numeral, not a decimal: (> (- (+ x x) (+ y y)) 2.5)

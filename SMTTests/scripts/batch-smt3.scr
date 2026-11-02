@@ -1,3 +1,4 @@
-##EXITCODE 1
-## This test is platform-dependent - it has my path for simplify hard-coded
-$SMT_CMD --solver simplify --exec "C:/cygwin/home/dcok/mybin/simplify.exe" $SCRIPTS/ok_sat.smt2
+##EXITCODE 0
+## A batch run with --exec naming the solver executable by an absolute path
+_abs_z3="$(cd "$SMT_SOLVER_DIR" && pwd)/z3-5.1.0"
+$SMT_CMD --solver z3-5.1.0 --exec "$_abs_z3" $SCRIPTS/ok_sat.smt2

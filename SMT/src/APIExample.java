@@ -17,11 +17,11 @@ public class APIExample {
             System.err.println("ERROR: SMT_SOLVER_DIR directory does not exist: " + solvers);
             System.exit(1);
         }
-        // A bare name relative to SMT_SOLVER_DIR, not solvers + "/z3-4.3.1": createSolver()
+        // A bare name relative to SMT_SOLVER_DIR, not solvers + "/z3-5.1.0": createSolver()
         // itself resolves a relative executable against SMT_SOLVER_DIR (see
         // SMT.Configuration#createSolver / SMT#resolveExecutablePath), so pre-resolving it
         // here would get it resolved a second time, doubling the SMT_SOLVER_DIR prefix.
-        String z3exec = "z3-4.3.1";
+        String z3exec = "z3-5.1.0";
         
         
         try {
@@ -64,7 +64,7 @@ public class APIExample {
             script.add(command4);
             
             // Execute the script
-            ISolver solver = smt.smtConfig.createSolver("z3-4.3", z3exec);
+            ISolver solver = smt.smtConfig.createSolver("z3-5.1.0", z3exec);
             solver.start();
             IResponse response = script.execute(solver);
             System.out.println(printer.toString(response));
@@ -76,7 +76,7 @@ public class APIExample {
             script.add(command2);
             script.add(smt.smtConfig.commandFactory.assertCommand(q));
             script.add(command4);
-            solver = smt.smtConfig.createSolver("z3-4.3", z3exec);
+            solver = smt.smtConfig.createSolver("z3-5.1.0", z3exec);
             solver.start();
             response = script.execute(solver);
             System.out.println(printer.toString(response));
@@ -86,7 +86,7 @@ public class APIExample {
             // THIS API WILL BE CHANGING
             ISort.IFactory sortfactory = smt.smtConfig.sortFactory;
             ISort boolsort = sortfactory.createSortExpression(efactory.symbol("Bool"));
-            solver = smt.smtConfig.createSolver("z3-4.3", z3exec);
+            solver = smt.smtConfig.createSolver("z3-5.1.0", z3exec);
             solver.start();
             IResponse r = solver.set_logic("QF_UF",null);
             r = solver.declare_fun(new C_declare_fun(p,new java.util.LinkedList<ISort>(),boolsort));
@@ -103,7 +103,7 @@ public class APIExample {
             List<IExpr.IIndex> nums = new LinkedList<IExpr.IIndex>();
             nums.add(efactory.numeral(32)); // TODO - room for improvement in ease of use here...
             ISort bv32 = sortfactory.createSortExpression(efactory.id(efactory.symbol("BitVec"),nums));
-            solver = smt.smtConfig.createSolver("z3-4.3", z3exec);
+            solver = smt.smtConfig.createSolver("z3-5.1.0", z3exec);
             solver.start();
             solver.set_option(efactory.keyword(":produce-models"),efactory.symbol("true"));
             r = solver.set_logic("QF_BV",null);

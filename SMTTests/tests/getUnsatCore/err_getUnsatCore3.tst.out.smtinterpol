@@ -3,4 +3,4 @@ success
 success
 sat
 success
-(error "The get-unsat-core command is only valid immediately after check-sat returned unsat")
+(error "<stdin>:7:15: Assertion stack has been modified since last check-sat!")

@@ -26,7 +26,7 @@ out=$(run bad); st=$?
 echo "$out" | grep -q '^(error "Failed to parse the command script: ' && [ $st -eq 1 ] \
     && pass "a file that does not parse is an error" || fail "a file that does not parse is an error" "got ($st): $out"
 out=$(run missing); st=$?
-echo "$out" | grep -q '^(error "java.io.FileNotFoundException: ' && [ $st -eq 1 ] \
+[ "$out" = "(error \"The script file $_dir/missing.smt2 does not exist\")" ] && [ $st -eq 1 ] \
     && pass "a missing file is an error" || fail "a missing file is an error" "got ($st): $out"
 
 [ "$FAIL" -eq 0 ]

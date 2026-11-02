@@ -52,7 +52,7 @@ public class StaticSmtConfigStringLiteralBugTest {
         // Some unrelated code elsewhere in the process constructs a second Configuration
         // (e.g. a concurrent session, or Utils.findLogic/findTheory's own internal clone()).
         SMT.Configuration b = new SMT.Configuration();
-        b.smtlib = "V2.0";
+        b.smtlib = org.smtlib.SMT.Configuration.SMTLIB.V20;
 
         // The SAME raw text, still conceptually parsed "as far as Configuration A is
         // concerned" -- StringLiteral's constructor now takes the Configuration explicitly, so

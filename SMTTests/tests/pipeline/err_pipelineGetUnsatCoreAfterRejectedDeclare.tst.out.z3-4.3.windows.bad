@@ -1,0 +1,8 @@
+success
+success
+success
+success
+success
+unsat
+(error "line 10 column 21: invalid declaration, constant 'x' (with the given signature) already declared")
+(error "line 11 column 15: unsat core is not available")

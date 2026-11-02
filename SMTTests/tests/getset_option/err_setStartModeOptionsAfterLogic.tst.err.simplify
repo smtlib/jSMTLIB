@@ -1,0 +1,4 @@
+(set-option :produce-unsat-assumptions true)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(set-option :random-seed 5)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^

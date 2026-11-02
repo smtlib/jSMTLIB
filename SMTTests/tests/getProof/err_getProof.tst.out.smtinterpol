@@ -1,0 +1,3 @@
+success
+(error "<stdin>:3:10: Option :produce-proofs not set to true")
+(error "A get-proof command takes no arguments")

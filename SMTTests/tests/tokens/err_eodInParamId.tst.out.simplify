@@ -1,2 +1,2 @@
-(error "The simplify solver does not yet support the bit-vector theory")
+(error "The simplify solver does not support the QF_BV logic")
 (error "Unexpected end of data while parsing a parameterized identifier")

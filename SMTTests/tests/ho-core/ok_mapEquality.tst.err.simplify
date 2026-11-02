@@ -1,0 +1,4 @@
+(assert (= m n))
+           ^
+(assert (not (= (@ m 0) (@ n 0))))
+                   ^

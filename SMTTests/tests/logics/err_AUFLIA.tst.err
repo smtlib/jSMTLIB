@@ -1,4 +1,0 @@
-(assert (= y (* x x)))
-        ^^^^^^^^^^^^^
-(define-sort BadArr () (Array Int Real))
-             ^^^^^^

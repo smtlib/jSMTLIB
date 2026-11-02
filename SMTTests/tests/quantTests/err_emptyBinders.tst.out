@@ -1,0 +1,4 @@
+success
+(error "At least one variable must be bound by forall")
+(error "At least one variable must be bound by exists")
+(error "At least one variable must be bound by let")

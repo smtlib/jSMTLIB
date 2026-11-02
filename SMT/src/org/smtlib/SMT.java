@@ -16,7 +16,6 @@ import java.util.*;
 import org.smtlib.IExpr.IKeyword;
 import org.smtlib.IParser.AbortInputException;
 import org.smtlib.IParser.ParserException;
-import org.smtlib.IPos.IPosable;
 
 //import checkers.javari.quals.Mutable; NonNull
 
@@ -102,6 +101,7 @@ public class SMT {
             c.reservedWords.addAll(reservedWords);
             c.reservedWordsNotCommands = new HashSet<String>();
             c.reservedWordsNotCommands.addAll(reservedWordsNotCommands);
+            c.reservedSince = new HashMap<String,SMTLIB>(reservedSince);
             c.utils = new Utils(c);
             return c;
         }
@@ -112,8 +112,59 @@ public class SMT {
         /** A list of all reserved words */
         public Set<String> reservedWords = new HashSet<String>();
 
+        /** The version in which a reserved word became reserved, for those not reserved in V2.0 */
+        public Map<String,SMTLIB> reservedSince = new HashMap<String,SMTLIB>();
+
+        /** True if the word is reserved in the configured SMT-LIB version; with --relax, command names are not */
+        public boolean isReservedWord(String word) {
+            if (!(relax ? reservedWordsNotCommands : reservedWords).contains(word)) return false;
+            SMTLIB since = reservedSince.get(word);
+            return since == null || atLeastVersion(since);
+        }
+
+        /** True if the string, as the value of a symbol (without enclosing bars), is a legal symbol in the
+         *  configured SMT-LIB version: not a reserved word (|let| is the same symbol as let), without | or \,
+         *  and of printable and white-space characters only, those beyond ASCII only from V2.5 on */
+        public boolean isOKSymbol(String value) {
+            if (isReservedWord(value)) return false;
+            for (int i = 0; i < value.length(); i++) {
+                char c = value.charAt(i);
+                if (c == '|' || c == '\\' || !isOKChar(c)) return false;
+            }
+            return true;
+        }
+
+        /** True if the string (including the colon) is a legal keyword: a colon followed by a simple symbol,
+         *  that is, letters, digits and the characters {@code ~!@$%^&*_-+=<>.?/}, not starting with a digit
+         *  and not a reserved word. The standard's example :56 contradicts this (#185). */
+        public boolean isOKKeyword(String value) {
+            if (value.length() < 2 || value.charAt(0) != ':') return false;
+            if (Character.isDigit(value.charAt(1)) || isReservedWord(value.substring(1))) return false;
+            for (int i = 1; i < value.length(); i++) {
+                char c = value.charAt(i);
+                if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+                        || "~!@$%^&*_-+=<>.?/".indexOf(c) >= 0)) return false;
+            }
+            return true;
+        }
+
+        /** True if the string, as the (unescaped) value of a string literal, is legal in the configured
+         *  SMT-LIB version: printable and white-space characters only, those beyond ASCII only from V2.5 on */
+        public boolean isOKString(String value) {
+            for (int i = 0; i < value.length(); i++) {
+                if (!isOKChar(value.charAt(i))) return false;
+            }
+            return true;
+        }
+
+        /** True if c is a printable or white-space character, or one beyond ASCII from V2.5 on */
+        private boolean isOKChar(char c) {
+            if ((c >= ' ' && c <= '~') || c == '\t' || c == '\n' || c == '\r') return true;
+            return c >= 128 && atLeastVersion(SMTLIB.V25);
+        }
+
         /** The version of SMT-LIB to be supported; null means the default (most recent version) */
-        public String smtlib = null;
+        public /*@Nullable*/ SMTLIB smtlib = null;
         /** Enumeration of the supported SMT-LIB versions, in declaration order from oldest to newest. */
         public static enum SMTLIB {
             V20("V2.0"),
@@ -132,9 +183,7 @@ public class SMT {
         private SMTLIB currentVersion() {
             SMTLIB[] values = SMTLIB.values();
             SMTLIB latest = values[values.length - 1];
-            if (smtlib == null) return latest;
-            SMTLIB v = SMTLIB.find(smtlib);
-            return (v != null) ? v : latest;
+            return smtlib == null ? latest : smtlib;
         }
 
         /** Returns true if the configured version equals the given version. */
@@ -210,7 +259,7 @@ public class SMT {
         /** If true, then information about the position of an error is not shown */
         public boolean noshow = false;
 
-        /** If non-zero, a seed to pass to the solver to initialize its random number generator */
+        /** If non-zero, a seed to pass to the solver to initialize its random number generator (--seed, non-negative) */
         public int seed = 0;
 
         // FIXME - review the use of out/diag/log/stdout/stderr
@@ -362,6 +411,14 @@ public class SMT {
          *  3. Utils.PROPS_FILE in the user's home directory.
          *  4. Utils.PROPS_FILE in the current working directory.
          */
+        /** Reports a properties file that exists but could not be read; reading goes on without it */
+        private void reportPropertiesError(String path, Exception e) {
+            String reason = String.valueOf(e.getMessage());
+            // A FileNotFoundException's message starts with the file's (platform-separator) path
+            if (reason.replace('\\', '/').startsWith(path)) reason = reason.substring(path.length()).trim();
+            log.logDiag("Error reading properties file " + path + ": " + reason);
+        }
+
         public Properties readProperties() {
             Properties p = new Properties();
             File f;
@@ -407,7 +464,7 @@ public class SMT {
                         if (verbose > 0) log.logDiag("#reading properties (class path) from " + url);
                         p.load(rdr);
                     } catch (IOException|IllegalArgumentException e) {
-                        log.logDiag("IOException reading properties from classpath: " + e);
+                        reportPropertiesError(url.toString(), e);
                     }
                 }
             }
@@ -424,6 +481,7 @@ public class SMT {
                         if (verbose > 0) log.logDiag("#reading properties (jar sibling) from " + f.getPath().replace('\\', '/'));
                         p.load(rdr);
                     } catch (IOException|IllegalArgumentException e) {
+                        reportPropertiesError(f.getPath().replace('\\', '/'), e);
                     }
                 }
             }
@@ -435,6 +493,7 @@ public class SMT {
                     if (verbose > 0) log.logDiag("#reading properties (user home) from " + f.getPath().replace('\\', '/'));
                     p.load(rdr);
                 } catch (IOException|IllegalArgumentException e) {
+                    reportPropertiesError(f.getPath().replace('\\', '/'), e);
                 }
             }
             // Find and read file in current working directory
@@ -444,6 +503,7 @@ public class SMT {
                     if (verbose > 0) log.logDiag("#reading properties (current dir) from " + f.getPath().replace('\\', '/'));
                     p.load(rdr);
                 } catch (IOException|IllegalArgumentException e) {
+                    reportPropertiesError(f.getPath().replace('\\', '/'), e);
                 }
             }
             return p;
@@ -490,7 +550,7 @@ public class SMT {
             } catch (NoSuchMethodException e) {
                 throw new ISolver.CreationException("Could not find an appropriate constructor in " + adapterClassName + ": " + e, e);
             } catch (IllegalAccessException e) {
-                throw new ISolver.CreationException("Could not find an adapter class named " + adapterClassName + ": " + e, e);
+                throw new ISolver.CreationException("The adapter class " + adapterClassName + " or its constructor is not accessible: " + e, e);
             } catch (InstantiationException e) {
                 throw new ISolver.CreationException("Could not create an instance of a " + adapterClassName + ": " + e, e);
             } catch (InvocationTargetException e) {
@@ -523,7 +583,11 @@ public class SMT {
     /** The method that does all the execution for the main method, here made a non-static method, so that
      * multiple SMT operations can be proceeding independently.
      * @param args the command-line arguments
-     * @return the exit code to return to the command-line: FIXME - document exit codes
+     * @return the exit code to return to the command-line: 0 if every command succeeded
+     * (or for --help and --version); 1 for a command-line error, a solver that could not be
+     * started, an input file not found, or any command that reported an error; 2 if input
+     * could not be read or processing failed outright (an I/O or parser exception, stack
+     * overflow, out of memory). Over several files, the highest code wins.
      */
     public int exec(String[] args) {
         //if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Start exec");
@@ -585,7 +649,7 @@ public class SMT {
                 // No files listed - use standard input
                 smtConfig.interactive = true;
                 warnPipelineIgnored("interactive standard input");
-                Reader rdr = new BufferedReader(new InputStreamReader(System.in));
+                Reader rdr = new BufferedReader(new InputStreamReader(watchForCtrlX(System.in)));
                 if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Start parsing standard input");
                 CharSequenceReader csr = new CharSequenceReader(rdr,100000,0,2);
                 csr.prompter = new Prompter(smtConfig);
@@ -606,7 +670,7 @@ public class SMT {
                             stdinRead = true;
                             file = "<stdin>";
                         }
-                        Reader rdr = new BufferedReader(stdin ? new InputStreamReader(System.in) : new FileReader(file));
+                        Reader rdr = new BufferedReader(stdin ? new InputStreamReader(watchForCtrlX(System.in)) : new FileReader(file));
                         CharSequenceReader csr = new CharSequenceReader(rdr,100000,0,2);
                         src = smtConfig.smtFactory.createSource(csr, file);
                         p = smtConfig.smtFactory.createParser(smtConfig,src);
@@ -644,6 +708,64 @@ public class SMT {
 
     protected int doParser(IParser p) { 
         return doParser(p,true);
+    }
+
+    /** Whether the input is exhausted; Ctrl-X met while looking ahead discards the partial input,
+     *  as it does inside parseCommand */
+    private boolean atEnd(IParser p) throws IOException, ParserException {
+        while (true) {
+            try {
+                return p.isEOD();
+            } catch (AbortInputException e) {
+                smtConfig.log.logOut("Input aborted");
+                smtConfig.topLevel = true;
+            }
+        }
+    }
+
+    /** The solver while it executes a command, else null */
+    private volatile /*@Nullable*/ ISolver executing = null;
+
+    /** Ctrl-X typed on standard input aborts the current command: one being read is discarded by
+     *  the lexer (so the character is passed on); one being executed is interrupted here, after
+     *  printing the main thread's stack (useful if something loops). Then the next command is read.
+     *  Returns standard input with the Ctrl-X watched for. */
+    private InputStream watchForCtrlX(InputStream in) {
+        PipedInputStream pin = new PipedInputStream(1 << 16);
+        PipedOutputStream pout;
+        try {
+            pout = new PipedOutputStream(pin);
+        } catch (IOException e) {
+            return in;
+        }
+        Thread main = Thread.currentThread();
+        Thread t = new Thread(() -> {
+            try (pout) {
+                int c;
+                while ((c = in.read()) != -1) {
+                    ISolver s = executing;
+                    if (c == '\030' && s != null) {
+                        interruptCommand(main, s);
+                        continue;
+                    }
+                    pout.write(c);
+                    if (in.available() == 0) pout.flush();
+                }
+            } catch (IOException e) {
+                // end of input as far as the parser is concerned
+            }
+        }, "jSMTLIB standard input");
+        t.setDaemon(true);
+        t.start();
+        return pin;
+    }
+
+    private void interruptCommand(Thread main, ISolver s) {
+        PrintStream err = System.err;
+        err.println("Ctrl-X: interrupting the command; the main thread is at");
+        for (StackTraceElement f: main.getStackTrace()) err.println("    at " + f);
+        err.flush();
+        if (s instanceof AbstractSolver a) a.interrupt();
     }
 
     protected /*@Nullable*/ ISolver solver = null;
@@ -698,10 +820,26 @@ public class SMT {
         try {
             IResponse result = null;
             ICommand command = null;
-            while (!(command instanceof ICommand.Iexit) && !p.isEOD()) {
+            while (!(command instanceof ICommand.Iexit) && !atEnd(p)) {
                 try {
                     command = p.parseCommand();
                     if (command == null) {
+                        retcode = 1;
+                        if (abortMode) {
+                            if (!smtConfig.interactive) {
+                                smtConfig.log.logDiag("Aborting because of a parsing error");
+                                break;
+                            }
+                            p.abortLine();
+                        }
+                        result = p.lastError();
+                        continue;
+                    }
+                    // A command with a (recovered) syntax error is not sent to a solver. The test
+                    // solver, which only type checks, still reports the type error that an empty
+                    // parenthesized form always has (so its state is unchanged); an invalid
+                    // character draws no type error, so that command is not run at all.
+                    if (p.commandHasError() && (p.commandHasLexicalError() || !(solver instanceof org.smtlib.solvers.Solver_test))) {
                         retcode = 1;
                         if (abortMode) {
                             if (!smtConfig.interactive) {
@@ -741,9 +879,10 @@ public class SMT {
                     if (isSmtlibVersionInfo && !smtlibVersionAllowed) {
                         result = smtConfig.responseFactory.error(
                             "The :smt-lib-version attribute may only be set as the first command of a script, or immediately after a reset command",
-                            command instanceof IPosable ? ((IPosable)command).pos() : null);
+                            command.pos());
                     } else {
                         try {
+                            solver.setSourceLine(Utils.sourceLine(command));
                             if (pipeliner != null && pipeliner.pipelines(command) && !isSmtlibVersionInfo) {
                                 result = pipeliner.sendPipelined(command);
                             } else {
@@ -752,25 +891,34 @@ public class SMT {
                                     if (readPipelined(pipeliner, true)) break;
                                     if (pipelineFailed) retcode = 1;
                                 }
-                                result = command.execute(solver);
+                                executing = solver;
+                                try {
+                                    result = solver.execute(command);
+                                } finally {
+                                    executing = null;
+                                }
                             }
                         } catch (UnsupportedOperationException e) {
                             result = smtConfig.responseFactory.error(
                                 "The " + smtConfig.solvername + " solver does not support this operation: " + e.getMessage(),
-                                command instanceof IPosable ? ((IPosable)command).pos() : null);
+                                command.pos());
                         }
                         if (!result.isError() && isSmtlibVersionInfo) {
                             ICommand.Iset_info si = (ICommand.Iset_info) command;
                             if (si.value() instanceof IExpr.IDecimal) {
-                                smtConfig.smtlib = "V" + si.value().toString();
+                                String v = si.value().toString();
+                                smtConfig.smtlib = SMT.Configuration.SMTLIB.find("V" + v);
+                                if (smtConfig.smtlib == null) {
+                                    SMT.Configuration.SMTLIB[] all = SMT.Configuration.SMTLIB.values();
+                                    smtConfig.log.logDiag("WARNING: SMT-LIB version " + v + " is not one jSMTLIB knows; using " + all[all.length-1]);
+                                }
                             }
                         }
                     }
                     // A leading comment must not count as "using up" the first-command slot --
                     // it's not a real script command, just carried along so it can be
                     // forwarded to the solver (see issue #42).
-                    // FIXME - result is dereferenced here and below without a null check; this
-                    // assumes no ICommand.execute() implementation ever returns null.
+                    // result is not null here or below: no ICommand.execute() returns null.
                     if (!(command instanceof ICommand.Icomment)) {
                         smtlibVersionAllowed = (command instanceof ICommand.Ireset)
                                 || (isSmtlibVersionInfo && !result.isError());
@@ -819,6 +967,7 @@ public class SMT {
             retcode = 2;
         }
         finishPipelined(pipeliner);
+        if (pipeliner != null && pipeliner.outOfStep()) pipelineFailed = true;
         if (pipelineFailed && retcode == 0) retcode = 1;
         solver.forceExit();  // Just in case the solver was not explicitly exited
         solver = null;
@@ -831,11 +980,11 @@ public class SMT {
     private boolean report(ICommand command, IResponse result) {
         if (result.isError()) {
             IResponse.IError eresult = (IResponse.IError)result;
-            if (eresult.pos() == null && command instanceof IPosable) {
+            if (eresult.pos() == null && command != null) {
                 // This is in case we omitted setting the position when the error
                 // was generated - we set it to the whole command.  However, we ought
                 // to root out all such omissions and correct them where possible.
-                eresult.setPos(((IPosable)command).pos());
+                eresult.setPos(command.pos());
             }
             smtConfig.log.logError(eresult);
             return true;
@@ -887,7 +1036,7 @@ public class SMT {
     /** At the end of the input, waits for and prints the remaining pipelined responses, unless the
      *  run was aborted */
     private void finishPipelined(/*@Nullable*/ AbstractSolver pipeliner) {
-        if (pipeliner != null && !pipelineAborted) pipeliner.readPipelined(true);
+        if (pipeliner != null && !pipelineAborted) pipeliner.finishPipelined();
         smtConfig.log.flush();
         smtConfig.log.discardHeld();
     }
@@ -906,6 +1055,7 @@ public class SMT {
                     return 1;
                 }
                 options.solvername = args[i++];
+                if (blankArgument(options.solvername, "--solver")) return 1;
 
             } else if ("--exec".equals(s) || "-e".equals(s)) {
                 if (i >= args.length) {
@@ -914,6 +1064,7 @@ public class SMT {
                     return 1;
                 }
                 options.executable = args[i++];
+                if (blankArgument(options.executable, "--exec")) return 1;
 
             } else if ("--logics".equals(s) || "-L".equals(s)) {
                 if (i >= args.length) {
@@ -921,7 +1072,9 @@ public class SMT {
                     usage();
                     return 1;
                 }
-                options.logicPath = trimToNull(args[i++]);
+                options.logicPath = args[i++];
+                if (blankArgument(options.logicPath, "--logics")) return 1;
+                options.logicPath = options.logicPath.trim();
 
             } else if ("--diag".equals(s)) {
                 if (i >= args.length) {
@@ -930,6 +1083,7 @@ public class SMT {
                     return 1;
                 }
                 options.diag = args[i++];
+                if (blankArgument(options.diag, "--diag")) return 1;
 
             } else if ("--out".equals(s)) {
                 if (i >= args.length) {
@@ -938,6 +1092,7 @@ public class SMT {
                     return 1;
                 }
                 options.out = args[i++];
+                if (blankArgument(options.out, "--out")) return 1;
 
             } else if ("--port".equals(s)) {
                 if (i >= args.length) {
@@ -1038,9 +1193,10 @@ public class SMT {
                 String a = args[i];
                 try {
                     options.seed = Integer.parseInt(a);
+                    if (options.seed < 0) throw new NumberFormatException();
                     i++;
                 } catch (NumberFormatException e) {
-                    error("The --seed option expects an integer value: " + a);
+                    error("The --seed option expects a non-negative integer value: " + a);
                     usage();
                     return 1;
                 }
@@ -1091,16 +1247,14 @@ public class SMT {
         }
 
         if (options.solvername == null) {
-            String p = options.props.getProperty(Utils.PROPS_DEFAULT_SOLVER);
-            if (p == null || p.isEmpty()) p = Utils.TEST_SOLVER;
-            // FIXME - this assignment is discarded whenever the --exec check just below
-            // fails; the check probably belongs before it (or outside this block entirely).
-            options.solvername = p;
             if (options.executable != null) {
                 error("If you specify an executable, you must also specify a solver");
                 usage();
                 return 1;
             }
+            String p = options.props.getProperty(Utils.PROPS_DEFAULT_SOLVER);
+            if (p == null || p.isEmpty()) p = Utils.TEST_SOLVER;
+            options.solvername = p;
         }
         return 0;
     }
@@ -1231,7 +1385,6 @@ public class SMT {
             IResponse res = solver.start();
             //if (smtConfig.verbose != 0) smtConfig.log.logDiag("#SMT RES " + res);
             if (res.isError()) {
-                smtConfig.log.logError((IResponse.IError)res);
                 error(solvername + " failed to start: " + ((IResponse.IError)res).errorMsg());
                 return null;
             }
@@ -1245,6 +1398,15 @@ public class SMT {
     /** Helper function to log a command-line error */
     protected void error(String msg) {
         smtConfig.log.logError(smtConfig.responseFactory.error(msg));
+    }
+
+    /** Reports a null (from the API), empty or whitespace-only argument to the given option as a
+     *  command-line error; returns whether it was one */
+    private boolean blankArgument(/*@Nullable*/ String value, String option) {
+        if (value != null && !value.isBlank()) return false;
+        error("The " + option + " option expects a non-empty argument");
+        usage();
+        return true;
     }
 
     /** Trims the given string and returns null if the result is empty, or if the argument
@@ -1300,8 +1462,9 @@ public class SMT {
         new Opt("--timeout-total", "-T", "<seconds>", "timeout for the solver's whole run (its process lifetime), also always given here in seconds",
                 "likewise converted to each solver's own unit/flag, or, if that solver has no whole-run option,",
                 "applied as a best-effort per-query limit instead"),
+        new Opt("--seed", null, "<int>", "seed for the solver's random number generator, if it has one (0, the default, sets none)"),
         new Opt("--echo", null, null, "if enabled, commands are echoed to diagnostic output when successfully parsed"),
-        new Opt("--abort", null, null, "if enabled, an error causes immediate exit"),
+        new Opt("--abort", null, null, "if enabled, an error causes immediate exit (on interactive standard input, the rest of its line is skipped)"),
         new Opt("--pipeline", null, null, "if enabled, commands in file (including -) or --text input are sent to the solver without",
                 "waiting for each response where possible; the output is the same"),
         new Opt("--no-pipeline", null, null, "each command waits for its response before the next is sent (the default)"),

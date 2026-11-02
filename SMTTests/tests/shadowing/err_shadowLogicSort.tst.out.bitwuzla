@@ -1,0 +1,6 @@
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:17: parameterized 'define-sort' not supported, expected ')'
+")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

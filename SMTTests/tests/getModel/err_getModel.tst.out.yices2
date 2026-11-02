@@ -1,0 +1,3 @@
+success
+(error "can't build a model. Call (check-sat) first")
+(error "A get-model command takes no arguments")

@@ -1,0 +1,2 @@
+simplify does not pipeline (Solver_simplify.pipelines is false), so this test would only check
+simplify's own responses, which differ here in ways unrelated to pipelining.

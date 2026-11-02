@@ -1,0 +1,24 @@
+(set-logic AUFNIRA)
+^^^^^^^^^^^^^^^^^^^
+(declare-const i Int)
+^^^^^^^^^^^^^^^^^^^^^
+(declare-const r Real)
+^^^^^^^^^^^^^^^^^^^^^^
+(declare-const b Bool)
+^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun h (Real) Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun g (Real Real) Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun k (Real Real Real) Bool)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (h i))
+^^^^^^^^^^^^^^
+(assert (is_int i))
+^^^^^^^^^^^^^^^^^^^
+(assert (g i i))
+^^^^^^^^^^^^^^^^
+(assert (k i r r))
+^^^^^^^^^^^^^^^^^^
+(assert (= r (ite b i r)))
+^^^^^^^^^^^^^^^^^^^^^^^^^^

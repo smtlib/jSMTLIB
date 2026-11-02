@@ -1,0 +1,12 @@
+### yices2's --timeout applies to each check-sat: jSMTLIB's per-query -t maps to it, also when the
+### whole-run -T is given too (that one is then reported as ignored). The fixture problem runs far
+### longer than 30 s unbounded, so check-sat answering unknown within 30 s shows -t 1 was applied.
+##EXITCODE 0
+$SMT_CMD --solver yices2 -t 1 -T 600 "$SCRIPTS/yices2-timeouts/php.smt2" 2>&1 &
+_pid=$!
+( sleep 30; kill -9 $_pid 2>/dev/null ) &
+_watchdog=$!
+wait $_pid
+_rc=$?
+kill $_watchdog 2>/dev/null
+exit $_rc

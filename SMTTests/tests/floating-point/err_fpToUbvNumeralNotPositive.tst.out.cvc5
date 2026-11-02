@@ -1,7 +1,7 @@
 success
 success
 success
-(error "Parse Error: <shell>:1.37: Subexpressions must have the same type:
+(error "Parse Error: <shell>:5.37: Subexpressions must have the same type:
 Equation: (= b ((_ fp.to_ubv 0) roundNearestTiesToEven x))
 Type 1: (_ BitVec 4)
 Type 2: (_ BitVec 0)

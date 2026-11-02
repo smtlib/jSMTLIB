@@ -1,3 +1,3 @@
-(error "line 7 column 6: invalid pop command, argument is greater than the current stack depth")
+(error "line 8 column 6: invalid pop command, argument is greater than the current stack depth")
 sat
 sat

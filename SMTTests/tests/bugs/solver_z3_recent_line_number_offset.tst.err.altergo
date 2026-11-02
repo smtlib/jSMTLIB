@@ -1,0 +1,6 @@
+(assert (undeclaredfun x))
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-const s String)
+^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (= s "line 5 of the report"))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,0 +1,8 @@
+success
+success
+success
+success
+unknown
+(error "Error on typing errors (code 4)")
+unsupported
+( ( define-fun x ( ) Bool true ) )

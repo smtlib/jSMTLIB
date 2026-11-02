@@ -1,0 +1,4 @@
+(assert ((_ is circle) s))
+        ^^^^^^^^^^^^^^^^^
+(assert ((_ is red) x))
+        ^^^^^^^^^^^^^^

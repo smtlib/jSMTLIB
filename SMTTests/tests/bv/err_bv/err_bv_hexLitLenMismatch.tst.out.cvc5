@@ -1,6 +1,6 @@
 success
 success
-(error "Parse Error: <shell>:1.18: Subexpressions must have the same type:
+(error "Parse Error: <shell>:4.18: Subexpressions must have the same type:
 Equation: (= z #b10101011)
 Type 1: (_ BitVec 4)
 Type 2: (_ BitVec 8)

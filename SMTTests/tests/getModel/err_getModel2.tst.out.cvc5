@@ -1,0 +1,4 @@
+success
+success
+success
+(error "cannot get model unless after a SAT or UNKNOWN response.")

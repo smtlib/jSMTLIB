@@ -70,7 +70,7 @@ public class ParseCommand {
      *  Exercises the multi-message path of testCommand(String, String...) end to end. */
     @Test
     public void declare_const_reports_version_and_badsymbol_errors() throws Exception {
-        config.smtlib = "V2.0";
+        config.smtlib = org.smtlib.SMT.Configuration.SMTLIB.V20;
         testCommand("(declare-const .x Bool)",
             "The declare-const command requires SMT-LIB V2.5 or later",
             "User-defined symbols may not begin with . or @");
@@ -356,7 +356,7 @@ public class ParseCommand {
 
     @Test
     public void check_sat_assuming_not_literal() throws Exception {
-        config.smtlib = "V2.6";
+        config.smtlib = org.smtlib.SMT.Configuration.SMTLIB.V26;
         testCommand("(check-sat-assuming ((and p q)))",
                 "Arguments to check-sat-assuming must be a symbol or (not symbol) in SMT-LIB V2.6 and earlier");
     }

@@ -196,30 +196,40 @@ public abstract class SMTExpr implements IExpr {
 
     /** This class represents an SMT parameterized-identifier AST (e.g. {@code (_ BitVec 32)}). */
     static public class ParameterizedIdentifier extends Pos.AbstractExpr implements IParameterizedIdentifier {
-        protected IIdentifier head;
+        protected ISymbol head;
         protected List<IIndex> indices;
 
-        /** Creates a parameterized identifier from the given base identifier and index list. */
-        public ParameterizedIdentifier(IIdentifier symbol, List<IIndex> indices) {
+        /** Creates a parameterized identifier from the given head symbol and index list. */
+        public ParameterizedIdentifier(ISymbol symbol, List<IIndex> indices) {
             this.head = symbol;
             this.indices = indices;
         }
 
         @Override
-        public IIdentifier head() { return head; }
+        public ISymbol head() { return head; }
 
         @Override
-        public ISymbol headSymbol() { return head.headSymbol(); }
+        public ISymbol headSymbol() { return head; }
 
         @Override
         public List<IIndex> indices() { return indices; }
+
+        /** The code point of a (_ char H) identifier, or null if this is not one. Leading zeros in H don't
+         *  matter, so (_ char #x41) and (_ char #x041) are equal although their hex literals differ. */
+        static private /*@Nullable*/ BigInteger charCode(IParameterizedIdentifier p) {
+            if (!Utils.CHAR.equals(p.head()) || p.indices().size() != 1) return null;
+            IIndex idx = p.indices().get(0);
+            return idx instanceof IHexLiteral ? ((IHexLiteral)idx).intValue() : null;
+        }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof IParameterizedIdentifier)) return false;
             IParameterizedIdentifier p = (IParameterizedIdentifier)o;
-            if (!this.headSymbol().equals(p.headSymbol())) return false;
+            if (!this.head().equals(p.head())) return false;
+            BigInteger code = charCode(this);
+            if (code != null) return code.equals(charCode(p));
             if (this.indices().size() != p.indices().size()) return false;
             for (int i = 0; i < this.indices().size(); i++) {
                 if (!this.indices().get(i).equals(p.indices().get(i))) return false;
@@ -229,7 +239,9 @@ public abstract class SMTExpr implements IExpr {
 
         @Override
         public int hashCode() {
-            int hash = headSymbol().hashCode();
+            int hash = head().hashCode();
+            BigInteger code = charCode(this);
+            if (code != null) return (hash << 1) + code.hashCode();
             for (IIndex idx : indices) hash = (hash << 1) + idx.hashCode();
             return hash;
         }
@@ -247,10 +259,16 @@ public abstract class SMTExpr implements IExpr {
         protected String value; // canonical string (without bars)
         protected String originalString;
 
-        /** The argument is a Symbol string, with or without enclosing bars */
+        /** The argument is a Symbol string, with or without enclosing bars; a lone or unmatched bar
+         *  is kept in the value (and reported by the type checker) */
         public Symbol(String v) {
-            value = v.length() > 0 && v.charAt(0) == '|' ? v.substring(1,v.length()-1) : v;
+            value = isBarQuoted(v) ? v.substring(1,v.length()-1) : v;
             originalString = v;
+        }
+
+        /** Whether v is enclosed in a pair of bars */
+        public static boolean isBarQuoted(String v) {
+            return v.length() >= 2 && v.charAt(0) == '|' && v.charAt(v.length()-1) == '|';
         }
 
         /** Returns the unique string for this symbol (e.g. modulo enclosing bars) */
@@ -283,18 +301,6 @@ public abstract class SMTExpr implements IExpr {
         public boolean isOK() { return value.equals(Response.OK) || value.equals(Response.EMPTY.value()); }
 
         @Override public boolean isError() { return false; }
-
-//        // FIXME - do we want these?
-//        public static class Parameter extends Symbol implements IParameter {
-//            public Parameter(ISymbol s) { super(s.toString()); pos = s.pos(); }
-//        }
-//
-//        public static class LetParameter extends Symbol implements ILetParameter {
-//
-//
-//            public LetParameter(ISymbol s) { super(s.toString()); pos = s.pos();  }
-//        }
-
     }
 
     /** Represents a function-application expression: a qualified identifier applied to a list of argument expressions. */
@@ -341,17 +347,18 @@ public abstract class SMTExpr implements IExpr {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof IBinaryLiteral)) return false;
-            return ((IBinaryLiteral)o).intValue().equals(intValue);
+            IBinaryLiteral b = (IBinaryLiteral)o;
+            return b.length() == length && b.intValue().equals(intValue);
         }
 
         @Override
-        public int hashCode() { return intValue.hashCode(); }
+        public int hashCode() { return 31*length + intValue.hashCode(); }
 
         @Override
         public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
     }
 
-    /** Represents an SMT-LIB hex literal (e.g. {@code #xDEAD}); the value string contains only lowercase hex digits. */
+    /** Represents an SMT-LIB hex literal (e.g. {@code #xDEAD}); the value string holds the hex digits as written. */
     static public class HexLiteral extends Literal<String> implements IHexLiteral {
         protected int length; // in hex digits
         protected BigInteger intValue;
@@ -373,11 +380,12 @@ public abstract class SMTExpr implements IExpr {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof IHexLiteral)) return false;
-            return ((IHexLiteral)o).intValue().equals(intValue);
+            IHexLiteral h = (IHexLiteral)o;
+            return h.length() == length && h.intValue().equals(intValue);
         }
 
         @Override
-        public int hashCode() { return value.hashCode(); }
+        public int hashCode() { return 31*length + intValue.hashCode(); }
 
         @Override
         public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }
@@ -681,13 +689,17 @@ public abstract class SMTExpr implements IExpr {
         /** The name of the logic */
         protected ISymbol logicName;
 
-        /** The logic's attributes */
+        /** The logic's attributes — last occurrence wins for duplicate keywords */
         protected Map<IKeyword,IAttribute<?>> attributes = new HashMap<IKeyword,IAttribute<?>>();
+
+        /** All logic attributes in source order, preserving duplicates */
+        protected List<IAttribute<?>> attributesList = new ArrayList<>();
 
         /** Creates a logic */
         public Logic(SMT.Configuration smtConfig, ISymbol name, Collection<IAttribute<?>> attributes) {
             this.smtConfig = smtConfig;
             this.logicName = name;
+            this.attributesList.addAll(attributes);
             for (IAttribute<?> attr: attributes) {
                 this.attributes.put(attr.keyword(),attr);
             }
@@ -700,6 +712,9 @@ public abstract class SMTExpr implements IExpr {
         /** The attributes, as a Map, keyed by the keyword in the attribute */
         @Override
         public Map<IKeyword,IAttribute<?>> attributes() { return attributes; }
+
+        @Override
+        public List<IAttribute<?>> attributeList() { return attributesList; }
 
         /** The value of a given attribute */
         @Override
@@ -750,6 +765,9 @@ public abstract class SMTExpr implements IExpr {
         @Override
         public Map<IKeyword,IAttribute<?>> attributes() { return attributes; }
 
+        @Override
+        public List<IAttribute<?>> attributeList() { return attributesList; }
+
         /** The value of a given attribute (last occurrence wins for duplicate keywords) */
         @Override
         public /*@Nullable*/ IAttributeValue value(IKeyword keyword) {
@@ -797,14 +815,24 @@ public abstract class SMTExpr implements IExpr {
         protected ISymbol constructor;
         protected List<ISymbol> params;
 
+        /** Whether the pattern was written as (c), in parentheses with no variables */
+        protected boolean emptyParentheses = false;
+
         /** Creates a pattern from the given constructor symbol and variable list. */
         public Pattern(ISymbol constructor, List<ISymbol> params) {
             this.constructor = constructor;
             this.params = params;
         }
 
+        /** Creates a pattern that is written in parentheses even if it has no variables, as (c) */
+        public Pattern(ISymbol constructor, List<ISymbol> params, boolean parenthesized) {
+            this(constructor, params);
+            this.emptyParentheses = parenthesized && params.isEmpty();
+        }
+
         @Override public ISymbol constructor() { return constructor; }
         @Override public List<ISymbol> params() { return params; }
+        @Override public boolean parenthesized() { return emptyParentheses || !params.isEmpty(); }
 
         @Override
         public <T> T accept(org.smtlib.IVisitor<T> v) throws IVisitor.VisitorException { return v.visit(this); }

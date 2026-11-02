@@ -43,7 +43,7 @@ import org.smtlib.sexpr.Sexpr;
  * are solver-side results, built via {@code IResponse.IFactory} in Java code (e.g. a
  * {@code get-value} command execution), never parsed from command/logic/theory text - so
  * they need direct construction too.
- * <li>{@code Sexpr.Token}/{@code Sexpr.Expr} (in {@code org.smtlib.sexpr.Sexpr}) are never
+ * <li>{@code Sexpr.Token} (in {@code org.smtlib.sexpr.Sexpr}) is never
  * constructed by the parser either - the parser builds the real typed leaf AST classes
  * directly instead of going through {@code ISexpr.IToken} (see issue #84, which removed
  * {@code ISexpr.IFactory} on this basis but kept {@code Sexpr.Token} itself as legitimate
@@ -85,22 +85,20 @@ public class PrinterCoverageTest {
 
     @Test
     public void fcnSort() throws Exception {
-        // Not real SMT-LIB syntax - function signatures are only ever written via
-        // declare-fun's own separate argument-list/result-sort fields. This is purely
-        // an internal diagnostic form (e.g. Utils.java's symbol-table error messages).
+        // Printed as the SMT-LIB 2.7 map sort; a constant's function sort is just its sort
         ISort fcnSort = config.sortFactory.createFcnSort(
                 new ISort[] { config.sortFactory.Bool(), config.sortFactory.Bool() },
                 config.sortFactory.Bool());
-        Assert.assertEquals("(Bool Bool) -> Bool", fcnSort.toString());
+        Assert.assertEquals("(-> Bool Bool Bool)", fcnSort.toString());
+        ISort constSort = config.sortFactory.createFcnSort(new ISort[0], config.sortFactory.Bool());
+        Assert.assertEquals("Bool", constSort.toString());
     }
 
     /** Parses a (logic ...) definition and confirms the printed form exactly reproduces
-     * the input. Deliberately uses a single attribute: ILogic/ITheory keep attributes in a
-     * {@code HashMap}, so with more than one attribute present, print order relative to the
-     * source is not guaranteed. */
+     * the input: attributes in source order, duplicate keywords kept. */
     @Test
     public void logicRoundTrip() throws Exception {
-        String text = "(logic MyTestLogic :written-by \"Cesare Tinelli\")";
+        String text = "(logic MyTestLogic :written-by \"Cesare Tinelli\" :extensions \"e\" :notes \"a\" :date \"x\" :notes \"b\" :smt-lib-version 2.7)";
         ISource source = config.smtFactory.createSource(text, "logicRoundTrip");
         IParser parser = new org.smtlib.sexpr.Parser(config, source);
         ILogic logic = parser.parseLogic();
@@ -111,10 +109,10 @@ public class PrinterCoverageTest {
     }
 
     /** Parses a (theory ...) definition and confirms the printed form exactly reproduces
-     * the input. See {@link #logicRoundTrip()} for why only one attribute is used. */
+     * the input: attributes in source order, duplicate keywords kept. */
     @Test
     public void theoryRoundTrip() throws Exception {
-        String text = "(theory MyTestTheory :written-by \"Cesare Tinelli\")";
+        String text = "(theory MyTestTheory :written-by \"Cesare Tinelli\" :definition \"d\" :notes \"a\" :date \"x\" :notes \"b\" :smt-lib-version 2.7)";
         ISource source = config.smtFactory.createSource(text, "theoryRoundTrip");
         IParser parser = new org.smtlib.sexpr.Parser(config, source);
         ITheory theory = parser.parseTheory();
@@ -283,9 +281,19 @@ public class PrinterCoverageTest {
 
     @Test
     public void unsatAssumptionsResponse() throws Exception {
-        List<ISymbol> names = Collections.singletonList(config.exprFactory.symbol("a"));
-        IResponse.IUnsatAssumptionsResponse r = config.responseFactory.get_unsat_assumptions_response(names);
+        List<IExpr> assumptions = Collections.singletonList(config.exprFactory.symbol("a"));
+        IResponse.IUnsatAssumptionsResponse r = config.responseFactory.get_unsat_assumptions_response(assumptions);
         Assert.assertEquals("(a )", r.toString());
+    }
+
+    /** {@link org.smtlib.sexpr.Parser#parseTermList()}, for {@code AbstractSolver.get_unsat_assumptions()}:
+     *  an unsat assumption may be a negated symbol (A59). */
+    @Test
+    public void parseTermList() throws Exception {
+        ISource source = config.smtFactory.createSource("(p (not q))", "parseTermList");
+        List<IExpr> assumptions = new org.smtlib.sexpr.Parser(config, source).parseTermList();
+        IResponse.IUnsatAssumptionsResponse r = config.responseFactory.get_unsat_assumptions_response(assumptions);
+        Assert.assertEquals("(p (not q) )", r.toString());
     }
 
     @Test
@@ -300,12 +308,6 @@ public class PrinterCoverageTest {
     public void sexprToken() throws Exception {
         Sexpr.Token<String> token = new Sexpr.Token<>("hello");
         Assert.assertEquals("hello", token.toString());
-    }
-
-    @Test
-    public void sexprExpr() throws Exception {
-        Sexpr.Expr wrapped = new Sexpr.Expr(config.exprFactory.symbol("wrapped"));
-        Assert.assertEquals("wrapped", wrapped.toString());
     }
 
     /** {@link Printer.WithLines} has no callers anywhere in the codebase; this confirms it

@@ -1,0 +1,11 @@
+success
+success
+(error "at line 5, column 19: syntax error: declare-datatypes is not a command")
+(error "at line 6, column 20: undefined sort constructor: Lst")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

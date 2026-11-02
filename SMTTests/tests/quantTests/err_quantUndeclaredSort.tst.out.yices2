@@ -1,0 +1,3 @@
+(error "logic AUFLIA is not supported")
+(error "at line 3, column 21: undefined sort: Foo")
+(error "The solver process has exited")

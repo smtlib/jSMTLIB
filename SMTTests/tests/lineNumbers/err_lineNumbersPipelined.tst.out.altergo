@@ -1,0 +1,31 @@
+success
+success
+success
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")
+success
+(error "Error on typing errors (code 4)")
+"hello"
+(error "Error on typing errors (code 4)")
+true
+(error "Error on typing errors (code 4)")
+false
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")
+success
+success
+(error "Error on typing errors (code 4)")
+success
+(error "Error on typing errors (code 4)")
+success
+(error "Error on typing errors (code 4)")
+unknown
+(error "Produce assignments disabled; add (set-option :produce-assignments true)")
+(error "Error on typing errors (code 4)")
+success
+success
+success
+(error "Error on typing errors (code 4)")
+(error "Error on typing errors (code 4)")

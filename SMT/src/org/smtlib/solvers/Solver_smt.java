@@ -68,7 +68,9 @@ public class Solver_smt extends AbstractSolver implements ISolver {
             //if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
             // Can't turn off printing success, or we get no feedback
             //if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
-            solverProcess.sendAndListen("(set-option :print-success true)");
+            solverProcess.sendAndListen("(set-option :print-success true)", "\n");
+            IResponse seed = sendSeed();
+            if (seed != null) return seed;
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
             return smtConfig.responseFactory.success();
         } catch (Exception e) {

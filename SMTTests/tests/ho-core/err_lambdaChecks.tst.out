@@ -1,0 +1,5 @@
+success
+success
+(error "Parameter list has a duplicate name: x")
+(error "No such sort symbol declared: Foo")
+(error "No matching declaration for function symbol +. Available signatures: (+ Int Int) -> Int :left-assoc; (+ Real Real) -> Real :left-assoc")

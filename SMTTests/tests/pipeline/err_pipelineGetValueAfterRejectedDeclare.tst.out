@@ -1,0 +1,8 @@
+success
+success
+success
+success
+sat
+(error "line 9 column 22: invalid declaration, constant 'x' (with the given signature) already declared")
+((x true))
+( ( define-fun x ( ) Bool true ) )
