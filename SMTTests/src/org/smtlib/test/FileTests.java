@@ -326,8 +326,8 @@ public class FileTests extends LogicTests {
         // platform's binary (e.g. a Windows-only miscompiled sort width), and should not
         // be silently shadowed by a same-tier plain file that isn't expected to coexist
         // with it for the same test/solver/platform anyway.
-        // A .lenient golden (the solver accepts what jSMTLIB rejects, but the standard
-        // allows it) is looked up exactly where .bad is.
+        // A .lenient golden (the solver's only non-conformance is accepting a construct the
+        // standard does not include) is looked up exactly where .bad is.
         List<String> candidates = new ArrayList<String>();
         String resolved = resolvedName(solvername);
         if (resolved != null) addSolverCandidates(candidates, base + ext + "." + resolved);
