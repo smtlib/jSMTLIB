@@ -7,5 +7,5 @@
 (assert (= f g))
 (assert (= h h))
 (assert (= (lambda ((x Int)) (f x)) (lambda ((x Int)) (g x))))
-; Solver bugs (.bad goldens): z3 4.8.12 and later accept (= f g), treating functions as
-; arrays; yices2 accepts it too (and answers unsat here).
+; z3 4.8.12 and later accept (= f g), treating functions as arrays, and yices2 accepts it
+; too (.lenient); yices2 also rejects lambda, which ALL includes (.bad).

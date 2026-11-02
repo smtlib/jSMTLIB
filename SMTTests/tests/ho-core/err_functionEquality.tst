@@ -7,5 +7,5 @@
 (assert (= (g 0) 2))
 (assert (= f g))
 (check-sat)
-; Solver bugs (.bad goldens): z3 4.8.12 and later accept (= f g), treating functions as
+; Leniency (.lenient goldens): z3 4.8.12 and later accept (= f g), treating functions as
 ; arrays; yices2 accepts it too (and answers unsat here).
