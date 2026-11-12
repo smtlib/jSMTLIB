@@ -10,6 +10,9 @@ SMTLIB_JAR := $(SMTROOT)/jSMTLIB.jar
 JAVAC := javac
 JAR   := jar
 
+## Compiler warnings fail the build only if JSMTLIB_WERROR is set (e.g. make JSMTLIB_WERROR=1), as in SMT/buildRelease
+WERROR := $(if $(JSMTLIB_WERROR),-Werror)
+
 ## LSP4J jars (downloaded into libs/ on first build)
 LIBS          := $(LSPROOT)/libs
 LSP4J_JAR     := $(LIBS)/org.eclipse.lsp4j-1.0.0.jar
@@ -36,7 +39,7 @@ libs:
 ## Compile the LSP server
 compile: libs
 	@mkdir -p $(CLASSES)
-	$(JAVAC) -Xlint:all \
+	$(JAVAC) -Xlint:all $(WERROR) \
 	    -cp $(SMTLIB_JAR):$(LSP4J_CP) \
 	    -d $(CLASSES) \
 	    $(JAVASRC)
