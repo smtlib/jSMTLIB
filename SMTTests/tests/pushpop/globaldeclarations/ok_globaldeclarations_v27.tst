@@ -1,5 +1,5 @@
 ; with global declarations, define-const and declare-sort-parameter survive pop and
-; reset-assertions (#166)
+; reset-assertions (#166); x has sort parameter X as its sort, so it is used with as (#178)
 (set-info :smt-lib-version 2.7)
 (set-option :global-declarations true)
 (set-logic QF_UF)
@@ -9,6 +9,6 @@
 (declare-fun f (X) X)
 (pop 1)
 (declare-fun x () X)
-(assert (and m (= (f x) x)))
+(assert (and m (= (f (as x X)) (as x X))))
 (reset-assertions)
-(assert (and m (= (f (f x)) x)))
+(assert (and m (= (f (f (as x X))) (as x X))))

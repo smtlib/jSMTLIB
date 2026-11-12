@@ -1,7 +1,7 @@
 success
 success
 success
+unsupported
 success
-success
-success
-unsat
+(error "No such sort symbol declared: A")
+unknown

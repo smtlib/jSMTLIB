@@ -313,6 +313,9 @@ public abstract class Sort extends Pos.Printable implements ISort {
             for (ISort s: sortParameters) {
                 params.add(s.substitute(map));
             }
+            // A sort name that stands for a sort parameter (declare-sort-parameter) is substituted as it
+            ISort expanded = expand();
+            if (expanded instanceof IParameter) return expanded.substitute(map);
             Application e = new Application(id,params);
             e.definition(this.definition());
             return e;

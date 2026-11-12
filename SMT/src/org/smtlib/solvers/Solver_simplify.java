@@ -394,22 +394,21 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     public IResponse declare_fun(Ideclare_fun cmd) {
         IResponse res = declareFunLocal(cmd);
         if (res.isError()) return res;
-        if (cmd.resultSort().isBool()) addBoolRange(cmd.symbol(), cmd.argSorts().size());
+        addRange(cmd.symbol(), cmd.argSorts().size(), cmd.resultSort());
         return res;
     }
 
-    /** A Bool-valued function is a term function in Simplify, its values |@true| and |@false|; this
-     *  adds that constraint, which pop removes with the declaration unless declarations are global */
-    private void addBoolRange(ISymbol f, int arity) {
+    /** A Bool-valued function is a term function in Simplify, its values |@true| and |@false|, and a
+     *  function of a declared sort has values of that sort (see {@link Translator#sortRange}); this adds
+     *  that constraint, which pop removes with the declaration unless declarations are global */
+    private void addRange(ISymbol f, int arity, ISort resultSort) {
         String name = new Translator(smtConfig).name(f);
-        String axiom;
-        if (arity == 0) {
-            axiom = Translator.boolRange(name);
-        } else {
-            StringBuilder vars = new StringBuilder();
-            for (int i = 0; i < arity; i++) vars.append(" X").append(i);
-            axiom = "(FORALL (" + vars.substring(1) + ") " + Translator.boolRange("(" + name + vars + ")") + ")";
-        }
+        StringBuilder vars = new StringBuilder();
+        for (int i = 0; i < arity; i++) vars.append(" X").append(i);
+        String app = arity == 0 ? name : "(" + name + vars + ")";
+        String range = resultSort.isBool() ? Translator.boolRange(app) : Translator.sortRange(app, resultSort, symTable);
+        if (range == null) return;
+        String axiom = arity == 0 ? range : "(FORALL (" + vars.substring(1) + ") " + range + ")";
         if (isGlobal()) globalAxioms = globalAxioms + " \n" + axiom;
         else conjunction = conjunction + " \n" + axiom;
     }
@@ -418,7 +417,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     public IResponse define_fun(Idefine_fun cmd) {
         IResponse res = defineFunLocal(cmd);
         if (res.isError()) return res;
-        if (cmd.resultSort().isBool()) addBoolRange(cmd.symbol(), cmd.parameters().size());
+        addRange(cmd.symbol(), cmd.parameters().size(), cmd.resultSort());
         // Define by an axiom: (= f body) for a constant,
         // (forall (params) (= (f params) body)) otherwise.
         // FIXME - inline definitions instead (#164)
@@ -683,7 +682,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,null,null);
             if (symTable.add(entry, isGlobal(), smtConfig.relax)) {
                 checkSatStatus = null;
-                if (cmd.resultSort().isBool()) addBoolRange(cmd.symbol(), 0);
+                addRange(cmd.symbol(), 0, cmd.resultSort());
                 return smtConfig.responseFactory.success();
             } else {
                 return smtConfig.responseFactory.error("Symbol " + encodedName + " is already defined",cmd.symbol().pos());
@@ -778,20 +777,14 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         }
     }
 
-    /** See {@link Solver_test#declare_sort_parameter(ICommand.Ideclare_sort_parameter)}. */
+    /** Unsupported: Simplify has no sorts, so the instances of a polymorphic function would be one function
+     *  (#178). */
     @Override
     public IResponse declare_sort_parameter(Ideclare_sort_parameter cmd) {
         if (logicSet == null) {
             return smtConfig.responseFactory.error("The logic must be set before a declare-sort-parameter command is issued", cmd.pos());
         }
-        List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable, cmd.sortSymbol(), null, null);
-        if (!list.isEmpty()) return list.get(0);
-        boolean b = symTable.lookupSort(cmd.sortSymbol()) != null;
-        if (b) return smtConfig.responseFactory.error("The identifier is already declared to be a sort: " +
-                                smtConfig.defaultPrinter.toString(cmd.sortSymbol()), cmd.sortSymbol().pos());
-        symTable.addSortParameter(cmd.sortSymbol(), isGlobal());
-        checkSatStatus = null;
-        return smtConfig.responseFactory.success();
+        return smtConfig.responseFactory.unsupported();
     }
 
     /** See {@link Solver_test#define_sort(ICommand.Idefine_sort)}. */
@@ -924,7 +917,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     }
 
     public /*@Nullable*/String translate(IExpr expr) throws IVisitor.VisitorException {
-        Translator t = new Translator(smtConfig, "ALL".equals(logicSet));
+        Translator t = new Translator(smtConfig, "ALL".equals(logicSet), symTable);
         String s = expr.accept(t);
         if (s == null || t.definitions.isEmpty()) return s;
         return "(AND " + s + " " + String.join(" ", t.definitions) + ")";
@@ -1057,13 +1050,17 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         /** The definitions of the names of :named terms translated so far, as formulas */
         final List<String> definitions = new ArrayList<String>();
 
+        /** For the sorts of quantified variables (see {@link #sortRange}); null when only names are translated */
+        final private /*@Nullable*/ SymbolTable symTable;
+
         public Translator(SMT.Configuration smtConfig) {
-            this(smtConfig, false);
+            this(smtConfig, false, null);
         }
 
-        public Translator(SMT.Configuration smtConfig, boolean allLogic) {
+        public Translator(SMT.Configuration smtConfig, boolean allLogic, /*@Nullable*/ SymbolTable symTable) {
             this.smtConfig = smtConfig;
             this.allLogic = allLogic;
+            this.symTable = symTable;
         }
 
         private void checkSort(/*@Nullable*/ ISort s, IPos pos) throws VisitorException {
@@ -1103,6 +1100,19 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         /** The constraint that term t, a Bool value, is |@true| or |@false| */
         static String boolRange(String t) {
             return "(OR (EQ " + t + " |@true|) (EQ " + t + " |@false|))";
+        }
+
+        /** The constraint that term t is a value of sort s, if s is a declared sort; else null. Simplify has
+         *  no sorts, so a quantifier over a declared sort is guarded by it, which the values of that sort's
+         *  constants and functions satisfy (see addRange); unguarded, a quantifier over U would range over
+         *  every value, and e.g. making U a singleton would make every sort one (#178). */
+        static /*@Nullable*/ String sortRange(String t, ISort s, SymbolTable symTable) {
+            s = s.expand();
+            if (!(s instanceof IApplication)) return null;
+            IApplication a = (IApplication) s;
+            if (symTable.isLogicSymbol(a.family().headSymbol(), true)) return null;
+            String n = "@sort?" + a.toString().replace("?", "??").replace(" ", "?s");
+            return "(EQ (|" + n + "| " + t + ") |@true|)";
         }
 
         /** Background axioms for Bool values as terms: |@false| differs from |@true|, and each term
@@ -1445,7 +1455,8 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
                 String n = freshName(d.parameter());
                 scope.put(d.parameter().value(), n);
                 sb.append(n).append(" ");
-                if (d.sort().isBool()) guard.append(" ").append(boolRange(n));
+                String range = d.sort().isBool() ? boolRange(n) : symTable == null ? null : sortRange(n, d.sort(), symTable);
+                if (range != null) guard.append(" ").append(range);
             }
             sb.append(") ");
             bound.push(scope);

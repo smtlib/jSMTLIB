@@ -1,0 +1,12 @@
+success
+success
+success
+success
+success
+unsupported
+(error "No such sort symbol declared: X")
+success
+(error "No such sort symbol declared: X")
+(error "No such sort symbol declared: X")
+success
+(error "No such sort symbol declared: X")

@@ -1,3 +1,5 @@
+(declare-fun f (A) A)
+                ^
 (assert (= (f b) (not b)))
            ^^^^^
 (assert (= (f n) (+ n 1)))
