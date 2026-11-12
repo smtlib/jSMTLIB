@@ -2,6 +2,6 @@ success
 success
 success
 success
-(error "The function symbol f takes one argument")
-(error "The function symbol h takes two arguments")
+(error "The function symbol f takes one argument and cannot be used as a term without arguments")
+(error "The function symbol h takes two arguments and cannot be used as a term without arguments")
 success

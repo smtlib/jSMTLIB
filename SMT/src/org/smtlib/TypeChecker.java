@@ -1202,6 +1202,11 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 // A declared function is not a term (SMT-LIB 2.7 Remark 10); lookup's reason says so
                 StringBuilder reason = new StringBuilder();
                 symTable.lookup(e, new LinkedList<ISort>(), null, reason);
+                List<SymbolTable.Entry> entries = symTable.lookup(e);
+                if (reason.length() > 0 && entries != null && entries.size() == 1
+                        && entries.get(0).sort.argSorts().length > 0) {
+                    reason.append(" and cannot be used as a term without arguments");
+                }
                 error(reason.length() > 0 ? reason.toString() : "Unknown constant symbol " + value, e.pos());
                 return null;
             } else if (SymbolTable.containsParameter(sort.resultSort())) {
