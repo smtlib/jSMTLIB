@@ -5,4 +5,4 @@ success
 success
 unsat
 (error "<stdin>:10:13: Function x is already defined.")
-(a1 a2 )
+(a1 a2)

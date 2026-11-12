@@ -1,3 +1,3 @@
 success
-(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:34: unexpected keyword ':pattern'
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:3:33: unexpected keyword ':pattern'
 ")

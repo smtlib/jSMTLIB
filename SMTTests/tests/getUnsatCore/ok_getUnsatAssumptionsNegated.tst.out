@@ -4,4 +4,4 @@ success
 success
 success
 unsat
-(p (not q) )
+(p (not q))

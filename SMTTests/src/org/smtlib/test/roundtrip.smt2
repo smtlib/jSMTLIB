@@ -18,31 +18,31 @@
 (assert (not true))
 (assert (and true false))
 (assert (or true false true))
-(assert (forall ((x Bool) ) x))
-(assert (forall ((x Bool) (y Bool) ) (and x y)))
-(assert (exists ((x Bool) ) x))
-(assert (let ((z true) ) z))
+(assert (forall ((x Bool)) x))
+(assert (forall ((x Bool) (y Bool)) (and x y)))
+(assert (exists ((x Bool)) x))
+(assert (let ((z true)) z))
 (assert (! true :named myassertion))
 
 ; check-sat family: 1 and 2 elements in the assumption list
 ; (parseListTerms rejects empty lists, so 0-element write() branch is unreachable)
 (check-sat)
-(check-sat-assuming ( p))
-(check-sat-assuming ( p q))
+(check-sat-assuming (p))
+(check-sat-assuming (p q))
 
 ; declare-const and declare-fun: 0, 1, and 2 argument sorts
 (declare-const c Bool)
 (declare-fun f () Bool)
-(declare-fun g (Bool ) Bool)
-(declare-fun h (Int Bool ) Int)
+(declare-fun g (Bool) Bool)
+(declare-fun h (Int Bool) Int)
 
 ; declare-datatype: non-parametric (symbols null) and parametric (symbols non-null)
 ; Note: datatype body uses trailing space before ')' per printer convention
-(declare-datatype Color ((red) (green) (blue) ))
-(declare-datatype Option ( par (A ) ((some (val A)) (none) ) ))
+(declare-datatype Color ((red) (green) (blue)))
+(declare-datatype Option (par (A) ((some (val A)) (none))))
 
 ; declare-datatypes: parallel sort-decl and datatype lists (space after '(' per printer)
-(declare-datatypes ( (Color 0)) ( ((red) (green) (blue) )))
+(declare-datatypes ((Color 0)) (((red) (green) (blue))))
 
 ; declare-sort: arity 0 and arity > 0
 (declare-sort MySort 0)
@@ -56,17 +56,17 @@
 
 ; define-fun: 0 and 2 parameters
 (define-fun f0 () Bool true)
-(define-fun f1 ((p Bool)(q Bool)) Bool (and p q))
+(define-fun f1 ((p Bool) (q Bool)) Bool (and p q))
 
 ; define-fun-rec: 1 parameter (same write format as define-fun)
 (define-fun-rec f2 ((x Bool)) Bool (not x))
 
 ; define-funs-rec: two parallel lists (decl list and body list, each with trailing space)
-(define-funs-rec ((f () Bool) ) (true ))
+(define-funs-rec ((f () Bool)) (true))
 
 ; define-sort: 0 and 1 sort parameters (note trailing space inside paren)
 (define-sort MyAlias () Bool)
-(define-sort MySub (B ) Bool)
+(define-sort MySub (B) Bool)
 
 ; echo: exercises IStringLiteral via arg.toString()
 (echo "hello")
@@ -87,8 +87,8 @@
 (get-option :print-success)
 
 ; get-value: 1 and 2 expressions (note leading space inside paren)
-(get-value ( x))
-(get-value ( x y))
+(get-value (x))
+(get-value (x y))
 
 ; push/pop: numeral argument
 (pop 1)
@@ -108,27 +108,27 @@
 (assert #x0a)
 
 ; IMatch, IMatchCase, IPattern: bare constructor patterns and constructor-with-params patterns
-(assert (match c ( (red true) (blue false))))
-(assert (match c ( ((cons h t) h) (nil 0))))
+(assert (match c ((red true) (blue false))))
+(assert (match c (((cons h t) h) (nil 0))))
 
 ; match pattern wildcard: _ as a bare default-case pattern (parsePatternSymbol's wildcard branch)
-(assert (match c ( (red true) (_ false))))
+(assert (match c ((red true) (_ false))))
 
 ; ISexpr.ISeq: s-expression sequence as a set-info attribute value
-(set-info :x ( a b c ))
+(set-info :x (a b c))
 
 ; IParameterizedIdentifier: indexed literal (_ bvN M) and indexed sort (_ BitVec N)
 (assert (_ bv5 8))
-(declare-fun bvf ((_ BitVec 32) ) (_ BitVec 32))
+(declare-fun bvf ((_ BitVec 32)) (_ BitVec 32))
 
 ; IAsIdentifier: (as identifier sort) for type-qualified constants
 (assert (as x Bool))
 
 ; IApplication with sort parameters: covers the parameters.size()>0 branch in visit(IApplication)
-(declare-fun arr ((Array Int Bool) ) Bool)
+(declare-fun arr ((Array Int Bool)) Bool)
 
 ; IApplication with a parameterized-identifier head: covers the else branch in parseSort
-(declare-fun fsorted (((_ SomeSort 2) Int) ) Bool)
+(declare-fun fsorted (((_ SomeSort 2) Int)) Bool)
 
 ; IAttributedExpr with two attributes: covers the multi-attribute loop
 (assert (! true :named foo :weight 3))
@@ -140,17 +140,17 @@
 (assert (! true :chainable :named foo))
 
 ; parseAttribute branch: keyword followed by '(' — parseSexpr path (line 816)
-(assert (! true :x ( a b c )))
+(assert (! true :x (a b c)))
 
 ; :pattern attribute: value is a list of terms (IExpr.IPatternTerms)
-(assert (forall ((x Int) ) (! (> x 0) :pattern ((> x 0)))))
+(assert (forall ((x Int)) (! (> x 0) :pattern ((> x 0)))))
 ; :pattern attribute with a multi-pattern of two terms
-(assert (forall ((x Int) ) (! (> x 0) :pattern ((> x 0) (< x 10)))))
+(assert (forall ((x Int)) (! (> x 0) :pattern ((> x 0) (< x 10)))))
 
 ; let with two bindings: covers the multi-binding loop in visit(ILet)
-(assert (let ((x true) (y false) ) (and x y)))
+(assert (let ((x true) (y false)) (and x y)))
 
 ; IFunctionDeclaration with one parameter: covers non-empty parameter loop in visit(IFunctionDeclaration)
-(define-funs-rec ((g ((x Bool) ) Bool) ) ((not x) ))
+(define-funs-rec ((g ((x Bool)) Bool)) ((not x)))
 
 ; trailing comment to verify EOF handling

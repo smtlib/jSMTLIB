@@ -3,6 +3,6 @@ success
 success
 success
 unknown
-(:reason-unknown incomplete )
+(:reason-unknown incomplete)
 (error "The get-model command is only valid if :produce-models has been enabled")
 (error "The get-value command is only valid if :produce-models has been enabled")

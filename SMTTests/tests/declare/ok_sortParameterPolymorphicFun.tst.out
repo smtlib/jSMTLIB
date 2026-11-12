@@ -10,4 +10,4 @@ success
 success
 success
 sat
-(error "line 16 column 17: unknown constant f (Bool) ")
+(error "line 16 column 16: unknown constant f (Bool) ")

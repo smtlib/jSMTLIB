@@ -17,7 +17,7 @@ EX 10
 (declare-fun y () Bool)
 EX 0
 (get-info :name)
-SMT: (:name "test" )
+SMT: (:name "test")
 EX 5
 send: (declare-fun z () Bool)
 (declare-fun z () Bool)

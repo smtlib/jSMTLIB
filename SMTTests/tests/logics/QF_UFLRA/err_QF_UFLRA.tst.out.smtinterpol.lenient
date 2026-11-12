@@ -1,5 +1,5 @@
 success
 success
 success
-(error "<stdin>:6:39: Quantifier in quantifier-free logic")
+(error "<stdin>:6:38: Quantifier in quantifier-free logic")
 success

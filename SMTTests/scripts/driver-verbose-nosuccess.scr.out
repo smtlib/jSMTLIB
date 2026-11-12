@@ -10,7 +10,7 @@ EX 0
 SMT: (error "Unknown command: xxx")
 EX 10
 EX 0
-SMT: (:name "test" )
+SMT: (:name "test")
 EX 5
 send: (declare-fun z () Bool)
 SMT: success

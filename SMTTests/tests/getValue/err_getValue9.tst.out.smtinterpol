@@ -1,4 +1,4 @@
 success
 success
 success
-(error "<stdin>:5:15: Assertion stack has been modified since last check-sat!")
+(error "<stdin>:5:14: Assertion stack has been modified since last check-sat!")

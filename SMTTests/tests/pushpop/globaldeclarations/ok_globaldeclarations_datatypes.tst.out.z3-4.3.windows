@@ -2,7 +2,7 @@ unsupported
 success
 success
 unsupported
-(error "line 7 column 21: invalid sort parameter, symbol or ')' expected")
+(error "line 7 column 20: invalid sort parameter, symbol or ')' expected")
 unsupported
 unsupported
 success

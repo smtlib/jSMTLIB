@@ -1,4 +1,4 @@
-(:authors "Aina Niemetz, Mathias Preiner, and contributors" )
-(:name "Bitwuzla" )
-(:version "0.9.1" )
-(:error-behavior immediate-exit )
+(:authors "Aina Niemetz, Mathias Preiner, and contributors")
+(:name "Bitwuzla")
+(:version "0.9.1")
+(:error-behavior immediate-exit)
