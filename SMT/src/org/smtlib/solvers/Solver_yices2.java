@@ -10,6 +10,7 @@ package org.smtlib.solvers;
 //   get-values get-assignment get-proof get-unsat-core
 //   some error detection and handling
 
+import java.io.IOException;
 import org.smtlib.*;
 import org.smtlib.IExpr.IKeyword;
 
@@ -71,22 +72,19 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
     }
 
     @Override
-    public IResponse start() {
-        try {
-            solverProcess.start(false);
-            // FIXME - enable the following lines when the Z3 solver supports them
-//            if (smtConfig.solverVerbosity > 0) solverProcess.sendNoListen("(set-option :verbosity ",Integer.toString(smtConfig.solverVerbosity),")");
-//            if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
-            // Can't turn off printing success, or we get no feedback
-//            solverProcess.sendAndListen("(set-option :print-success true)\n"); // Z3 4.4.0 needs this because it mistakenly has the default for :print-success as false
-            //if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
-            IResponse seed = sendSeed();
-            if (seed != null) return seed;
-            if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started yices2 ");
-            return smtConfig.responseFactory.success();
-        } catch (Exception e) {
-            return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
-        }
+    protected IResponse afterStart() throws IOException {
+        // FIXME - enable the following lines when the Z3 solver supports them
+//        if (smtConfig.solverVerbosity > 0) solverProcess.sendNoListen("(set-option :verbosity ",Integer.toString(smtConfig.solverVerbosity),")");
+//        if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
+        // Can't turn off printing success, or we get no feedback
+//        solverProcess.sendAndListen("(set-option :print-success true)\n"); // Z3 4.4.0 needs this because it mistakenly has the default for :print-success as false
+        //if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
+        return sendSeed();
+    }
+
+    @Override
+    protected String startedName() {
+        return "yices2 ";
     }
 
     // parseResponse() used to be overridden here (pushed down from Solver_smt) for two

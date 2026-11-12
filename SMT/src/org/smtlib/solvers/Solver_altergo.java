@@ -73,15 +73,9 @@ public class Solver_altergo extends AbstractSolver implements ISolver {
     }
 
     @Override
-    public IResponse start() {
-        try {
-            solverProcess.start(false);
-            reportSeedIgnored();
-            if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
-            return smtConfig.responseFactory.success();
-        } catch (Exception e) {
-            return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
-        }
+    protected IResponse afterStart() {
+        reportSeedIgnored();
+        return null;
     }
 
     /** Alt-Ergo writes nothing for a successful command and answers {@code (set-option :print-success

@@ -1097,10 +1097,30 @@ public class AbstractSolver implements ISolver {
         }
     }
 
-    /** @see org.smtlib.ISolver#start() */
+    /** Starts the solver process, then runs {@link #afterStart()}; a failure is reported as an error
+     *  naming the executable. Adapters whose start sequence differs override this.
+     *  @see org.smtlib.ISolver#start() */
     @Override
     public IResponse start() {
-        throw new UnsupportedOperationException("AbstractSolver.start");
+        try {
+            solverProcess.start(false);
+            IResponse r = afterStart();
+            if (r != null) return r;
+            if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + startedName());
+            return smtConfig.responseFactory.success();
+        } catch (Exception e) {
+            return smtConfig.responseFactory.error("Failed to start process " + solverProcess.app[0] + " : " + e.getMessage());
+        }
+    }
+
+    /** The adapter's setup once the process has started; an error response stops start(), null continues */
+    protected /*@Nullable*/ IResponse afterStart() throws Exception {
+        return null;
+    }
+
+    /** The name in start()'s "#Started" diagnostic */
+    protected String startedName() {
+        return smtConfig.solvername;
     }
 
     /** Passes --seed, if given, as the standard :random-seed option, for an adapter whose solver uses

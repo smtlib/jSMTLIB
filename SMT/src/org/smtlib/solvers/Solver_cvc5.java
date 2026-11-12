@@ -136,17 +136,6 @@ public class Solver_cvc5 extends AbstractSolver implements ISolver {
         solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
     }
 
-    @Override
-    public IResponse start() {
-        try {
-            solverProcess.start(false);
-            if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
-            return smtConfig.responseFactory.success();
-        } catch (Exception e) {
-            return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
-        }
-    }
-
     /** See the class Javadoc: wraps a bare-symbol answer for a string-typed option
      *  (Utils.stringOptions -- currently just :regular-output-channel and
      *  :diagnostic-output-channel) into a proper SMT-LIB string literal with the same

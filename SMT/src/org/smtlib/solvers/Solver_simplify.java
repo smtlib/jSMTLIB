@@ -118,6 +118,8 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         solverProcess = new SolverProcess(cmds,">\t",smtConfig.logfile,StandardCharsets.UTF_8);
     }
 
+    /** Overrides AbstractSolver.start(): Simplify is started listening (start(true)), and a failure is
+     *  reported by the process itself rather than as a start error */
     @Override
     public IResponse start() {
         assertionSetStack.add(0,new LinkedList<IExpr>());

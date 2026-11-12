@@ -5,6 +5,7 @@
  */
 package org.smtlib.solvers;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -107,17 +108,11 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
     }
 
     @Override
-    public IResponse start() {
-        try {
-            solverProcess.start(false);
-            if (needsPrintSuccessPriming) {
-                solverProcess.sendAndListen("(set-option :print-success true)\n");
-            }
-            if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
-            return smtConfig.responseFactory.success();
-        } catch (Exception e) {
-            return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
+    protected IResponse afterStart() throws IOException {
+        if (needsPrintSuccessPriming) {
+            solverProcess.sendAndListen("(set-option :print-success true)\n");
         }
+        return null;
     }
 
     /** z3 reports a query stopped by its per-query time limit, -t:, with :reason-unknown "canceled" in incremental
