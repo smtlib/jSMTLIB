@@ -1,0 +1,7 @@
+name: jSMTLIB CodeQL configuration
+
+# Analyze the library and the language server; tests and experiments are excluded. In build-mode none
+# this also limits extraction.
+paths:
+  - SMT/src
+  - SMTlsp/src

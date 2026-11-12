@@ -88,10 +88,9 @@ public class FileTests extends LogicTests {
     @Override
     public void init() {
         smt = new SMT();
-        // Pre-populates props (including test-only fallback entries -- see
-        // readPropertiesAndAddDefaults()) so processCommandLine()'s own read in exec() below
-        // is a no-op (guarded by props == null) rather than silently discarding this.
-        smt.smtConfig.props = readPropertiesAndAddDefaults(smt);
+        // Pre-populates props, so processCommandLine()'s own read in exec() below is a no-op
+        // (guarded by props == null).
+        smt.smtConfig.props = smt.smtConfig.readProperties();
         // solvername itself is passed to exec() as a real --solver argument in checkFile(),
         // not set here -- see checkFile()'s own comment for why.
     }

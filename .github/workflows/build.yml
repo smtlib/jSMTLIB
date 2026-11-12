@@ -97,6 +97,10 @@ jobs:
     - name: Build jSMTLIB
       uses: ./ACTIONS/.github/actions/jsmtlib-build/
 
+    ## Also downloads the LSP's jars from Maven Central (SMTlsp/fetch-jars) on every run
+    - name: Build and test the language server
+      run: make -C jSMTLIB/SMTTests/lsp
+
     - name: Upload github artifact
       uses: actions/upload-artifact@v7
       with:

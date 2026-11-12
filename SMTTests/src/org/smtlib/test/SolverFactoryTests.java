@@ -52,6 +52,25 @@ public class SolverFactoryTests {
         }
     }
 
+    /** #197: an API caller that has not read jsmtlib.properties still gets its entries. smtinterpol needs
+     *  its .command entry, so without them it cannot be created at all. */
+    @Test
+    public void createSolverReadsPropertiesWhenUnset() throws Exception {
+        String dir = System.getenv("SMT_SOLVER_DIR");
+        Assume.assumeTrue("smtinterpol not available", dir != null && new File(dir, "smtinterpol-2.5.jar").isFile());
+
+        SMT.Configuration config = new SMT.Configuration();
+        Assert.assertNull("precondition: properties not yet read", config.props);
+        ISolver solver = config.createSolver("smtinterpol", null);
+        try {
+            Assert.assertFalse("start", solver.start().isError());
+            Assert.assertEquals(config.responseFactory.success(), solver.set_logic("QF_UF", null));
+            Assert.assertEquals(config.responseFactory.sat(), solver.check_sat());
+        } finally {
+            solver.exit();
+        }
+    }
+
     // SMT.resolveExecutablePath: simple names are found in the solver folder (else on the PATH);
     // relative paths with a directory part are relative to the current directory.
 
