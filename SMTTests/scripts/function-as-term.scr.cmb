@@ -1,0 +1,18 @@
+success
+success
+success
+(assert (= f f))
+           ^
+(error "The function symbol f takes one argument and cannot be used as a term without arguments (function-valued terms need a logic with HO-Core)")
+(assert (= h h))
+           ^
+(error "The function symbol h takes two arguments and cannot be used as a term without arguments (function-valued terms need a logic with HO-Core)")
+success
+success
+success
+(assert (= f f))
+           ^
+(error "The function symbol f takes one argument and cannot be used as a term without arguments; for a function-valued term, declare f as a constant of sort (-> Int Int), or use (lambda ((x Int)) (f x))")
+(assert (= h h))
+           ^
+(error "The function symbol h takes two arguments and cannot be used as a term without arguments; for a function-valued term, declare h as a constant of sort (-> Int Bool Int), or use (lambda ((x1 Int) (x2 Bool)) (h x1 x2))")
