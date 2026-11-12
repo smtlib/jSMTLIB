@@ -2,7 +2,7 @@ success
 success
 "after declare-fun"
 success
-(:error-behavior continued-execution )
+(:error-behavior continued-execution)
 success
 true
 success

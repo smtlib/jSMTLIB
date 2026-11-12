@@ -164,12 +164,12 @@ public class PrinterCoverageTest {
      *  {@link #parseAssertionList()}, for {@code AbstractSolver.get_assignment()}. */
     @Test
     public void parseAssignmentList() throws Exception {
-        String text = "((p true)(q false))";
+        String text = "((p true) (q false))";
         ISource source = config.smtFactory.createSource(text, "parseAssignmentList");
         org.smtlib.sexpr.Parser parser = new org.smtlib.sexpr.Parser(config, source);
         List<IResponse.IPair<ISymbol, Boolean>> pairs = parser.parseAssignmentList();
         IResponse.IAssignmentResponse r = config.responseFactory.get_assignment_response(pairs);
-        Assert.assertEquals("((p true)(q false))", r.toString());
+        Assert.assertEquals("((p true) (q false))", r.toString());
     }
 
     private IResponse.IProofResponse proof(String text) throws Exception {
@@ -198,19 +198,19 @@ public class PrinterCoverageTest {
 
     @Test
     public void seqDeep() throws Exception {
-        // visit(ISeq) at a depth beyond the Java stack (#132); it pads inside the parentheses
+        // visit(ISeq) at a depth beyond the Java stack (#132)
         int n = 50000;
         StringBuilder text = new StringBuilder();
         StringBuilder expected = new StringBuilder();
         for (int i = 0; i < n; i++) {
             text.append("(a ");
-            expected.append("( a ");
+            expected.append("(a ");
         }
         text.append("b");
         expected.append("b");
         for (int i = 0; i < n; i++) {
             text.append(")");
-            expected.append(" )");
+            expected.append(")");
         }
         ISource source = config.smtFactory.createSource(text.toString(), "seq");
         org.smtlib.sexpr.ISexpr seq = new org.smtlib.sexpr.Parser(config, source).parseSexpr();
@@ -251,19 +251,19 @@ public class PrinterCoverageTest {
      *  and printed as {@code "( ( x 1 ) )"} instead of the canonical {@code "((x 1))"}. */
     @Test
     public void parseValueList() throws Exception {
-        String text = "((x 1)(y 2))";
+        String text = "((x 1) (y 2))";
         ISource source = config.smtFactory.createSource(text, "parseValueList");
         org.smtlib.sexpr.Parser parser = new org.smtlib.sexpr.Parser(config, source);
         List<IResponse.IPair<IExpr, IExpr>> pairs = parser.parseValueList();
         IResponse.IValueResponse r = config.responseFactory.get_value_response(pairs);
-        Assert.assertEquals("((x 1)(y 2))", r.toString());
+        Assert.assertEquals("((x 1) (y 2))", r.toString());
     }
 
     @Test
     public void unsatCoreResponse() throws Exception {
         List<ISymbol> names = Collections.singletonList(config.exprFactory.symbol("a"));
         IResponse.IUnsatCoreResponse r = config.responseFactory.get_unsat_core_response(names);
-        Assert.assertEquals("(a )", r.toString());
+        Assert.assertEquals("(a)", r.toString());
     }
 
     /** {@link org.smtlib.sexpr.Parser#parseSymbolList()} — same rationale as
@@ -276,14 +276,14 @@ public class PrinterCoverageTest {
         org.smtlib.sexpr.Parser parser = new org.smtlib.sexpr.Parser(config, source);
         List<ISymbol> names = parser.parseSymbolList();
         IResponse.IUnsatCoreResponse r = config.responseFactory.get_unsat_core_response(names);
-        Assert.assertEquals("(a b )", r.toString());
+        Assert.assertEquals("(a b)", r.toString());
     }
 
     @Test
     public void unsatAssumptionsResponse() throws Exception {
         List<IExpr> assumptions = Collections.singletonList(config.exprFactory.symbol("a"));
         IResponse.IUnsatAssumptionsResponse r = config.responseFactory.get_unsat_assumptions_response(assumptions);
-        Assert.assertEquals("(a )", r.toString());
+        Assert.assertEquals("(a)", r.toString());
     }
 
     /** {@link org.smtlib.sexpr.Parser#parseTermList()}, for {@code AbstractSolver.get_unsat_assumptions()}:
@@ -293,7 +293,7 @@ public class PrinterCoverageTest {
         ISource source = config.smtFactory.createSource("(p (not q))", "parseTermList");
         List<IExpr> assumptions = new org.smtlib.sexpr.Parser(config, source).parseTermList();
         IResponse.IUnsatAssumptionsResponse r = config.responseFactory.get_unsat_assumptions_response(assumptions);
-        Assert.assertEquals("(p (not q) )", r.toString());
+        Assert.assertEquals("(p (not q))", r.toString());
     }
 
     @Test
@@ -301,7 +301,7 @@ public class PrinterCoverageTest {
         IAttribute<?> attr = config.exprFactory.attribute(
                 config.exprFactory.keyword(":status"), config.exprFactory.symbol("sat"));
         IResponse.IAttributeList r = config.responseFactory.get_info_response(attr);
-        Assert.assertEquals("(:status sat )", r.toString());
+        Assert.assertEquals("(:status sat)", r.toString());
     }
 
     @Test

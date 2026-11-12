@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "line 14 column 46: Sort mismatch at argument #1 for function (declare-fun and (Bool Bool) Bool) supplied sort is X")
+(error "line 14 column 45: Sort mismatch at argument #1 for function (declare-fun and (Bool Bool) Bool) supplied sort is X")

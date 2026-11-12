@@ -10,7 +10,7 @@ sat
 success
 success
 unsat
-(a b )
+(a b)
 success
 sat
 ((x 3))

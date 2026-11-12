@@ -1,8 +1,8 @@
 success
-(:name "Z3" )
+(:name "Z3")
 success
-(:authors "Leonardo de Moura and Nikolaj Bjorner" )
+(:authors "Leonardo de Moura and Nikolaj Bjorner")
 success
-(:version "4.3.2" )
+(:version "4.3.2")
 success
-(:error-behavior continued-execution )
+(:error-behavior continued-execution)

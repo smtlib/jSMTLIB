@@ -3,37 +3,37 @@ success
 success
 success
 success
-(:assertion-stack-levels 0 )
+(:assertion-stack-levels 0)
 (error "get-assertions is not supported")
 success
 success
-(:assertion-stack-levels 1 )
+(:assertion-stack-levels 1)
 (error "get-assertions is not supported")
 success
 success
-(:assertion-stack-levels 2 )
+(:assertion-stack-levels 2)
 (error "get-assertions is not supported")
 success
-(:assertion-stack-levels 1 )
-(error "get-assertions is not supported")
-success
-success
-(:assertion-stack-levels 3 )
-(error "get-assertions is not supported")
-success
-(:assertion-stack-levels 1 )
-(error "get-assertions is not supported")
-success
-(:assertion-stack-levels 0 )
+(:assertion-stack-levels 1)
 (error "get-assertions is not supported")
 success
 success
-success
-(:assertion-stack-levels 1 )
+(:assertion-stack-levels 3)
 (error "get-assertions is not supported")
 success
-(:assertion-stack-levels 0 )
+(:assertion-stack-levels 1)
+(error "get-assertions is not supported")
+success
+(:assertion-stack-levels 0)
+(error "get-assertions is not supported")
+success
+success
+success
+(:assertion-stack-levels 1)
+(error "get-assertions is not supported")
+success
+(:assertion-stack-levels 0)
 unsupported
 success
-(:assertion-stack-levels 0 )
+(:assertion-stack-levels 0)
 (error "get-assertions is not supported")

@@ -15,7 +15,7 @@ success
 success
 (error "line 18 column 21: invalid declaration, named expression already defined with this name m")
 (error "line 19 column 14: invalid sort declaration, sort already declared/defined")
-(error "line 20 column 24: invalid declaration, function 'f' (with the given signature) already declared")
+(error "line 20 column 23: invalid declaration, function 'f' (with the given signature) already declared")
 success
 (error "line 22 column 22: invalid declaration, named expression already defined with this name m")
 (error "line 23 column 14: invalid sort declaration, sort already declared/defined")

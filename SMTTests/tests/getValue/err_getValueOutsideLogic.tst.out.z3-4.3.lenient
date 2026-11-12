@@ -2,6 +2,6 @@ success
 success
 success
 sat
-((x 0)((+ x 1) 1))
+((x 0) ((+ x 1) 1))
 (((* x x) 0))
-(error "line 10 column 41: invalid get-value term, term must be ground and must not contain quantifiers")
+(error "line 10 column 40: invalid get-value term, term must be ground and must not contain quantifiers")

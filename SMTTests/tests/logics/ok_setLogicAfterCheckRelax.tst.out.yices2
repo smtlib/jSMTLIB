@@ -5,6 +5,6 @@ success
 success
 sat
 (error "the logic is already set")
-( ( define-fun p ( ) Bool true ) )
+((define-fun p () Bool true))
 success
 unsat

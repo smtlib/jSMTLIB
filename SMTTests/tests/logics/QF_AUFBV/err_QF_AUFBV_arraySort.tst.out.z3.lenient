@@ -1,7 +1,7 @@
 success
 success
 success
-(error "line 5 column 34: logic supports only arrays from bitvectors to bitvectors")
+(error "line 5 column 33: logic supports only arrays from bitvectors to bitvectors")
 success
 success
 success

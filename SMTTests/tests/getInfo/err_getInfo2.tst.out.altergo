@@ -1,5 +1,5 @@
 (error "Invalid (get-info :reason-unknown)")
-(:steps VALUE )
+(:steps VALUE)
 success
 (error "Invalid (get-info :reason-unknown)")
-(:steps VALUE )
+(:steps VALUE)

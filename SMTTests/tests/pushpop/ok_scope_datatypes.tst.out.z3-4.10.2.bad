@@ -23,9 +23,9 @@ success
 success
 success
 (error "line 27 column 25: sort already defined Color")
-(error "line 28 column 28: sort already defined Tree")
+(error "line 28 column 27: sort already defined Tree")
 success
-(error "line 30 column 43: invalid function declaration reference, unknown function node")
+(error "line 30 column 42: invalid function declaration reference, unknown function node")
 success
 (error "line 32 column 14: invalid sort declaration, sort already declared/defined")
 (error "line 33 column 14: invalid sort declaration, sort already declared/defined")

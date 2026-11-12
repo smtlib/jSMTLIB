@@ -1,4 +1,4 @@
-(:authors "Alt-Ergo developers" )
-(:name "Alt-Ergo" )
-(:version v2.6.3 )
-(:error-behavior continued-execution )
+(:authors "Alt-Ergo developers")
+(:name "Alt-Ergo")
+(:version v2.6.3)
+(:error-behavior continued-execution)

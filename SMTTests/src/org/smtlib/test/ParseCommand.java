@@ -110,7 +110,7 @@ public class ParseCommand {
 
     @Test
     public void declare_fun2() throws Exception {
-        testCommand("(declare-fun c (Bool ) Bool)");
+        testCommand("(declare-fun c (Bool) Bool)");
     }
 
     @Test
@@ -130,7 +130,7 @@ public class ParseCommand {
 
     @Test
     public void define_fun() throws Exception {
-        testCommand("(define-fun f ((p Bool)(q Bool)) Bool (and p q))");
+        testCommand("(define-fun f ((p Bool) (q Bool)) Bool (and p q))");
     }
 
     @Test
@@ -151,12 +151,12 @@ public class ParseCommand {
     @Test
     public void define_fun_reserved_word_ok() throws Exception {
         config.relax = true;
-        testCommand("(define-fun check-sat ((p Bool)(q Bool)) Bool (and p q))");
+        testCommand("(define-fun check-sat ((p Bool) (q Bool)) Bool (and p q))");
     }
 
     @Test
     public void define_sort() throws Exception {
-        testCommand("(define-sort MySort (B ) Bool)");
+        testCommand("(define-sort MySort (B) Bool)");
     }
 
     @Test
@@ -177,7 +177,7 @@ public class ParseCommand {
     @Test
     public void define_sort_reserved_word_ok() throws Exception {
         config.relax = true;
-        testCommand("(define-sort check-sat (B ) Bool)");
+        testCommand("(define-sort check-sat (B) Bool)");
     }
 
     @Test
@@ -269,7 +269,7 @@ public class ParseCommand {
 
     @Test
     public void get_value() throws Exception {
-        testCommand("(get-value ( x))");
+        testCommand("(get-value (x))");
     }
 
     @Test
@@ -290,17 +290,17 @@ public class ParseCommand {
 
     @Test
     public void declare_datatype_nonpar() throws Exception {
-        testCommand("(declare-datatype Color ((red) (green) (blue) ))");
+        testCommand("(declare-datatype Color ((red) (green) (blue)))");
     }
 
     @Test
     public void declare_datatype_par() throws Exception {
-        testCommand("(declare-datatype Option ( par (A ) ((some (val A)) (none) ) ))");
+        testCommand("(declare-datatype Option (par (A) ((some (val A)) (none))))");
     }
 
     @Test
     public void declare_datatypes() throws Exception {
-        testCommand("(declare-datatypes ( (Color 0)) ( ((red) (green) (blue) )))");
+        testCommand("(declare-datatypes ((Color 0)) (((red) (green) (blue))))");
     }
 
     @Test
@@ -317,7 +317,7 @@ public class ParseCommand {
 
     @Test
     public void define_funs_rec() throws Exception {
-        testCommand("(define-funs-rec ((f () Bool) ) (true ))");
+        testCommand("(define-funs-rec ((f () Bool)) (true))");
     }
 
     @Test
@@ -363,7 +363,7 @@ public class ParseCommand {
 
     @Test
     public void declare_datatype_recursive_wellfounded() throws Exception {
-        testCommand("(declare-datatype List ((nil) (cons (head Int) (tail List)) ))");
+        testCommand("(declare-datatype List ((nil) (cons (head Int) (tail List))))");
     }
 
     @Test

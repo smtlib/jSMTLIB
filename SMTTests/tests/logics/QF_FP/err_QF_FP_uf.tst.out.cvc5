@@ -1,2 +1,2 @@
 success
-(error "Parse Error: <shell>:5.24: Functions (of non-zero arity) cannot be declared in logic QF_FP. Try including UF or adding the prefix HO_.")
+(error "Parse Error: <shell>:5.23: Functions (of non-zero arity) cannot be declared in logic QF_FP. Try including UF or adding the prefix HO_.")

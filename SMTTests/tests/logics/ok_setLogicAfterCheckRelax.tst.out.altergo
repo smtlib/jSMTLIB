@@ -5,6 +5,6 @@ success
 success
 unknown
 (error "Invalid action during Sat mode: Command set-logic")
-( ( define-fun p ( ) Bool true ) )
+((define-fun p () Bool true))
 success
 unsat
