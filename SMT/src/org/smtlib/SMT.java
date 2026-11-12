@@ -520,7 +520,8 @@ public class SMT {
          *  CLI-flavored {@code error()}/{@code usage()} reporting: any resolution or construction
          *  failure is reported as a thrown {@link ISolver.CreationException} instead, leaving it
          *  to the caller to start the returned solver (via {@link ISolver#start()}) and decide how
-         *  to report a creation failure.
+         *  to report a creation failure. If {@link #props} has not been set, the jsmtlib.properties
+         *  files are read into it first, as the CLI does.
          * @param solvername the name of the solver to use
          * @param executable the executable path, or null to resolve one from jsmtlib.properties
          *        or (absent any properties entry) from the solver name itself
@@ -529,6 +530,7 @@ public class SMT {
          *         resolved, or construction otherwise fails
          */
         public ISolver createSolver(/*@NonNull*/ String solvername, /*@Nullable*/ String executable) throws ISolver.CreationException {
+            if (props == null) props = readProperties();
             SolverResolver.Resolution r = SolverResolver.resolve(props, solvername, executable,
                     SMT.platformName(), System.getenv("SMT_SOLVER_DIR"), SolverResolver::forName);
             Class<?> adapterClass = r.adapterClass();

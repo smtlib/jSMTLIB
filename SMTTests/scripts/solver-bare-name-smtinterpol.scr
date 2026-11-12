@@ -1,0 +1,4 @@
+### A bare solver name resolves through its unversioned jsmtlib.properties entries (#197):
+### smtinterpol, launched by a .command, must not need its version in the name
+##EXITCODE 0
+$SMT_CMD --solver smtinterpol --text "(set-logic QF_UF)(declare-const p Bool)(assert p)(check-sat)"
