@@ -25,6 +25,10 @@ import org.smtlib.SMT;
  *
  * Error messages are formatted as SMT-LIB responses: (error "...").
  * usage() output follows immediately on the same stream.
+ * <p>
+ * JUnit rather than .tst or .scr (#145): these check exit codes and missing option arguments, which a
+ * .tst cannot express, write temporary logic files, and override the protected doParser; as .scr
+ * tests, at a JVM per run, they would be much slower.
  */
 public class SMTCommandLineTests {
 
