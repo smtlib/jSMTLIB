@@ -893,6 +893,8 @@ public class AbstractSolver implements ISolver {
 
     /** Output that no pending command can take */
     private void reportOutOfStep(String text) {
+        // the solver's report that its whole-run limit ended it is not out of step
+        if (endedByTimeLimit && isTimeLimitResponse(text)) return;
         outOfStep = true;
         smtConfig.log.logError(smtConfig.responseFactory.error("Unexpected output from the solver: " + text.trim()));
     }
