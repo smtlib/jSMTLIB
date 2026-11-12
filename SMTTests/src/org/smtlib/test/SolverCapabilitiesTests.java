@@ -15,7 +15,7 @@ public class SolverCapabilitiesTests {
     private static final String P = "org.smtlib.solver_";
 
     /** The solver names configured in jsmtlib.properties, each of which must record every capability */
-    private static final String[] BUILT_IN = { "z3", "z3-4.3", "z3-4.5.0", "z3-4.6.0", "z3-4.7.1", "z3-4.8.12",
+    private static final String[] BUILT_IN = { "z3", "z3-4.3", "z3-4.3.1", "z3-4.5.0", "z3-4.6.0", "z3-4.7.1", "z3-4.8.12",
         "z3-4.16.0", "cvc5", "cvc5-1.3.2",
         "yices2", "yices2-2.6.5", "yices2-2.7.0", "smtinterpol-2.5", "bitwuzla", "simplify", "altergo" };
 
@@ -121,6 +121,8 @@ public class SolverCapabilitiesTests {
         Assert.assertEquals(Support.YES, SolverCapabilities.supports("cvc5", "strings"));
         Assert.assertEquals(Support.YES, SolverCapabilities.supports("z3-4.12.6", Capability.FLOATING_POINT));
         Assert.assertEquals(Support.NO, SolverCapabilities.supports("z3-4.3", Capability.FLOATING_POINT));
+        Assert.assertEquals(Support.NO, SolverCapabilities.supports("z3-4.3.1", Capability.STRINGS));
+        Assert.assertEquals(Support.NO, SolverCapabilities.supports("z3-4.3.1", Capability.FLOATING_POINT));
         Assert.assertEquals(Support.NO, SolverCapabilities.supports("z3-4.7.1", Capability.STRINGS));
         Assert.assertEquals(Support.YES, SolverCapabilities.supports("z3-4.7.1", Capability.DATATYPES));
         Assert.assertEquals(Support.NO, SolverCapabilities.supports("z3-4.6.0", Capability.DATATYPES));
