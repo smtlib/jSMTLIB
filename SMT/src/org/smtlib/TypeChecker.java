@@ -166,7 +166,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         } catch (IVisitor.VisitorException e) {
             f.error("Error while checking sort abbreviation: " + e.getMessage(),id.pos());
         } catch (Exception e) {
-            f.error("INTERNAL ERROR: Exception while checking a sort abbreviation: " + e,expr.pos());
+            f.error("INTERNAL ERROR: Exception while checking a sort abbreviation: " + e,id.pos());
         } finally {
             symTable.pop();
         }

@@ -656,7 +656,7 @@ public class Utils {
             if (smtConfig.smtlib != null) {
                 SMTLIB cv = smtConfig.smtlib;
                 SMTLIB latest = SMTLIB.values()[SMTLIB.values().length - 1];
-                if (cv != null && cv != latest) candidates.add(cv.id + "/" + filename);
+                if (cv != latest) candidates.add(cv.id + "/" + filename);
             }
             candidates.add(filename);
             for (String candidate : candidates) {
