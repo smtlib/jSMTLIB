@@ -45,14 +45,13 @@
 #   - z3-4.8.12 through 5.1.0, cvc5-1.3.2, yices2:      timeout
 #   - z3-4.5.0/4.6.0/4.7.1 (older z3, one L):            canceled
 #   - SMTInterpol-2.5 (two Ls):                          cancelled
-#   - z3-4.3:                                            smt  <- see below, NOT accepted
+#   - z3-4.3:                                            smt ...  <- see below
 #
 # z3-4.3's raw response is not valid SMT-LIB syntax to begin with: an unquoted,
 # multi-word value, e.g. (:reason-unknown smt tactic failed to show goal to be
-# sat/unsat) -- a :reason-unknown value must be a single token. jSMTLIB returns such a
-# reply whole, as the raw s-expression "( :reason-unknown smt tactic ... )" (#172; it used
-# to keep only the first word, "smt"). Either way it doesn't name the timeout, so it is
-# reported as INFO for z3-4.3 below.
+# sat/unsat) -- a :reason-unknown value must be a single token. Its adapter makes the
+# words one string literal (#94). The wording doesn't name the timeout, so only that
+# form is asserted for z3-4.3 below.
 #
 # Solver list is a small, deliberately FIXED set -- not ${SMT_TEST_SOLVERS} -- chosen to
 # be present on every one of the 5 CI platforms (confirmed directly against the
@@ -190,16 +189,16 @@ _run_check() {
             echo "PASS: $_name: get-info :reason-unknown attributes it to the timeout ($_reason)"
             ;;
         smt|smt\ *)
-            # Known, pre-existing z3-4.3 non-conformance, not a test-design flaw: its raw
-            # response is an unquoted multi-word value (e.g. "smt tactic failed to show
-            # goal to be sat/unsat"), which is not valid SMT-LIB syntax for a
-            # :reason-unknown value to begin with (must be a single token). Confirmed genuinely platform-variable on
-            # top of that (this exact wording on macOS; a clean "timeout" on Linux x64
-            # per an earlier CI run) -- unlike every other solver here, z3-4.3's wording
-            # itself isn't stable enough to assert on, so it's demoted to informational
-            # rather than failing the whole script over a single already-tracked defect.
+            # z3-4.3's own wording (e.g. "smt tactic failed to show goal to be sat/unsat" on macOS, a
+            # clean "timeout" on Linux x64) varies by platform, so only its form is asserted: several
+            # words must arrive as one string literal, as its adapter makes them (#94)
             if [ "$_name" = "z3-4.3" ]; then
-                echo "INFO: $_name: get-info :reason-unknown gives its own known-non-conformant wording (got: $_reason) -- not asserted"
+                if echo "$_reasonline" | grep -Eq '^\( ?:reason-unknown "[^"]*" ?\)$'; then
+                    echo "PASS: $_name: get-info :reason-unknown gives its own wording as one string literal"
+                else
+                    (( _fail++ ))
+                    echo "FAIL: $_name: get-info :reason-unknown is not well formed (got: $_reasonline)"
+                fi
             else
                 (( _fail++ ))
                 echo "FAIL: $_name: get-info :reason-unknown does not attribute it to the timeout (got: $_reason)"

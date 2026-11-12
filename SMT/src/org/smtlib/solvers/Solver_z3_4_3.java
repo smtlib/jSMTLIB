@@ -540,10 +540,24 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         try {
             String response = sendRaw(cmd);
             if (smtConfig.testing) response = normalizeForTesting(response, key);
+            if (Utils.REASON_UNKNOWN.equals(key)) response = quoteReasonWords(response);
             return parse(Shape.VALUE, cmd, response);
         } catch (IOException e) {
             return sendFailure("Error writing to solver: " + cmd, e);
         }
+    }
+
+    /** A :reason-unknown response, with the parenthesis-free text of its value in group 1 */
+    private static final Pattern REASON = Pattern.compile("\\s*\\(\\s*:reason-unknown\\s+([^()\"|]*)\\)\\s*");
+
+    /** z3 4.3 gives :reason-unknown as several unquoted words, e.g. (:reason-unknown smt tactic failed to show
+     *  goal to be sat/unsat), which is not SMT-LIB; this makes them one string literal (#94) */
+    static String quoteReasonWords(String response) {
+        Matcher m = REASON.matcher(response);
+        if (!m.matches()) return response;
+        String words = m.group(1).trim();
+        if (!words.matches(".*\\s.*")) return response;
+        return "(:reason-unknown \"" + words + "\")";
     }
 
     /** z3 4.3 writes echo's text unquoted, so where it ends cannot be found (#136); the response
