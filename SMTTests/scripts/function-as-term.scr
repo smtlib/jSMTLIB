@@ -1,0 +1,9 @@
+### #191: a declared function used as a term. Without HO-Core the message says function-valued terms need
+### it; with HO-Core (ALL) it suggests a map-sorted constant or a lambda, built from the signature.
+##EXITCODE 1
+$SMT_CMD --solver test --text "(set-logic QF_UF)(declare-fun f (Bool) Bool)(declare-fun h (Bool Bool) Bool)
+(assert (= f f))
+(assert (= h h))"
+$SMT_CMD --solver test --text "(set-logic ALL)(declare-fun f (Int) Int)(declare-fun h (Int Bool) Int)
+(assert (= f f))
+(assert (= h h))"

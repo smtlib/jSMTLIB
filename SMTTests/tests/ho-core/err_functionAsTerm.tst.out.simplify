@@ -2,6 +2,6 @@ success
 success
 success
 success
-(error "The function symbol f takes one argument and cannot be used as a term without arguments")
-(error "The function symbol h takes two arguments and cannot be used as a term without arguments")
+(error "The function symbol f takes one argument and cannot be used as a term without arguments; for a function-valued term, declare f as a constant of sort (-> Int Int), or use (lambda ((x Int)) (f x))")
+(error "The function symbol h takes two arguments and cannot be used as a term without arguments; for a function-valued term, declare h as a constant of sort (-> Int Int Int), or use (lambda ((x1 Int) (x2 Int)) (h x1 x2))")
 (error "The simplify solver does not support higher-order functions")

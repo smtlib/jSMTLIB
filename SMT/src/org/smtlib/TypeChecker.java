@@ -1205,7 +1205,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 List<SymbolTable.Entry> entries = symTable.lookup(e);
                 if (reason.length() > 0 && entries != null && entries.size() == 1
                         && entries.get(0).sort.argSorts().length > 0) {
-                    reason.append(" and cannot be used as a term without arguments");
+                    reason.append(" and cannot be used as a term without arguments").append(functionAsTermHint(e, entries.get(0).sort));
                 }
                 error(reason.length() > 0 ? reason.toString() : "Unknown constant symbol " + value, e.pos());
                 return null;
@@ -1272,6 +1272,25 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
     @Override
     public /*@Nullable*/ ISort visit(IError e) {
         return null;
+    }
+
+    /** For a declared function f used as a term (#191): with HO-Core, how to write a function-valued term
+     *  instead (a constant of the map sort, or a lambda); without it, that such terms need HO-Core */
+    private String functionAsTermHint(ISymbol f, IFcnSort sig) {
+        if (symTable.lookupSort(Utils.ARROW) == null) return " (function-valued terms need a logic with HO-Core)";
+        ISort[] args = sig.argSorts();
+        StringBuilder sort = new StringBuilder("(->");
+        StringBuilder vars = new StringBuilder();
+        StringBuilder app = new StringBuilder("(").append(pr(f));
+        for (int i = 0; i < args.length; i++) {
+            String x = args.length == 1 ? "x" : "x" + (i + 1);
+            sort.append(' ').append(pr(args[i]));
+            vars.append(i == 0 ? "" : " ").append('(').append(x).append(' ').append(pr(args[i])).append(')');
+            app.append(' ').append(x);
+        }
+        sort.append(' ').append(pr(sig.resultSort())).append(')');
+        return "; for a function-valued term, declare " + pr(f) + " as a constant of sort " + sort
+                + ", or use (lambda (" + vars + ") " + app + "))";
     }
 
     /** Checks that pid has exactly {@code count} indices and all are INumeral.
