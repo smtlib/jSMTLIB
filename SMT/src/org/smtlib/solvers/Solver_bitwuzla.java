@@ -91,6 +91,10 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
     public Solver_bitwuzla(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
         this.smtConfig = smtConfig;
         cmds = command;
+        if (smtConfig.seed != 0) { // --seed applies here too (#194)
+            cmds = withArgs(cmds, "--seed", Integer.toString(smtConfig.seed));
+            options.put(Utils.RANDOM_SEED, smtConfig.exprFactory.numeral(smtConfig.seed)); // for get_option
+        }
         solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
     }
 

@@ -90,8 +90,9 @@ public class Solver_test implements ISolver {
         assertionSetStack.add(0,new LinkedList<IExpr>());
         symTable.clear(false);
         logicSet = null;
-        // Set all options and info to default values
+        // Set all options and info to default values, the seed to --seed's (#194)
         options.putAll(smt().utils.defaults);
+        if (smtConfig.seed != 0) options.put(Utils.RANDOM_SEED, smtConfig.exprFactory.numeral(smtConfig.seed));
         ((Response.Factory)smtConfig.responseFactory).printSuccess = true;
         smtConfig.verbose = 0;
         smtConfig.log.setChannels(smtConfig.stdout, smtConfig.stderr);

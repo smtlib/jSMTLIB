@@ -133,6 +133,7 @@ public class Solver_cvc5 extends AbstractSolver implements ISolver {
     public Solver_cvc5(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
         this.smtConfig = smtConfig;
         cmds = command;
+        if (smtConfig.seed != 0) cmds = withArgs(cmds, "--seed", "" + smtConfig.seed); // --seed applies here too (#194)
         solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
     }
 

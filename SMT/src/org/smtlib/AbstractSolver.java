@@ -1125,14 +1125,25 @@ public class AbstractSolver implements ISolver {
         return smtConfig.solvername;
     }
 
+    /** Whether start() passed --seed as the :random-seed option (see sendSeed), which reset passes again */
+    private boolean seedSentAsOption = false;
+
     /** Passes --seed, if given, as the standard :random-seed option, for an adapter whose solver uses
      *  that option; called from start(), while :print-success is true. Returns an error if the solver
      *  rejects it, else null. */
     protected /*@Nullable*/ IResponse sendSeed() throws IOException {
         if (smtConfig.seed == 0) return null;
+        seedSentAsOption = true;
         String reply = solverProcess.sendAndListen("(set-option :random-seed " + smtConfig.seed + ")\n").trim();
         if (reply.equals("success")) return null;
         return smtConfig.responseFactory.error("The solver rejected --seed " + smtConfig.seed + ": " + reply);
+    }
+
+    /** The command line with the given arguments added at its end */
+    protected static String[] withArgs(String[] cmd, String... args) {
+        String[] result = java.util.Arrays.copyOf(cmd, cmd.length + args.length);
+        System.arraycopy(args, 0, result, cmd.length, args.length);
+        return result;
     }
 
     /** Reports that --seed, if given, is ignored, for an adapter whose solver has no random seed */
@@ -1187,7 +1198,19 @@ public class AbstractSolver implements ISolver {
         checkSatStatus = null;
         checkMade = false;
         clearChanges();
-        return sendCommand(smtConfig.commandFactory.reset());
+        IResponse response = sendCommand(smtConfig.commandFactory.reset());
+        if (seedSentAsOption) {
+            // A reset returns the seed to its value at start, --seed, as for a solver given it on its
+            // command line (#194); the responses pending (pipelining) are read first
+            readPipelined(true);
+            try {
+                IResponse rejected = sendSeed();
+                if (rejected != null) smtConfig.log.logDiag("#" + smtConfig.solvername + ": --seed after reset: " + rejected);
+            } catch (IOException e) {
+                // the solver has stopped; its next command reports that
+            }
+        }
+        return response;
     }
 
     /** @see org.smtlib.ISolver#reset_assertions() */

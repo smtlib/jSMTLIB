@@ -158,6 +158,28 @@ public class SolverFactoryTests {
         }
     }
 
+    /** --seed reaches a solver started by a .command property too (#194), as it does one started by
+     *  executable (read from the adapter's command line; nothing is started) */
+    @Test
+    public void seedReachesCommandProperty() throws Exception {
+        String[][] cases = {
+            {"z3-4.16.0", "smt.random_seed=7"}, {"cvc5-1.3.2", "--seed 7"}, {"bitwuzla", "--seed 7"},
+        };
+        for (String[] c: cases) {
+            SMT.Configuration config = new SMT.Configuration();
+            config.props = config.readProperties();
+            config.props.setProperty("org.smtlib.solver_" + c[0] + ".command", "/no/such/solver,--some-flag");
+            config.seed = 7;
+            ISolver solver = config.createSolver(c[0], null);
+            java.lang.reflect.Field process = org.smtlib.AbstractSolver.class.getDeclaredField("solverProcess");
+            process.setAccessible(true);
+            java.lang.reflect.Field app = org.smtlib.SolverProcess.class.getDeclaredField("app");
+            app.setAccessible(true);
+            String line = String.join(" ", (String[]) app.get(process.get(solver)));
+            Assert.assertTrue(c[0] + ": " + line, line.contains(c[1]));
+        }
+    }
+
     /** An adapter that does not name itself is named by its class (#140); creating it starts nothing */
     @Test
     public void defaultSolverNameIsTheAdapterClass() throws Exception {
