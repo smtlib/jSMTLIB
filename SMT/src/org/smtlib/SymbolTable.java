@@ -150,11 +150,6 @@ public class SymbolTable {
             if (!hasNext()) throw new NoSuchElementException();
             return entryIter.next();
         }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
     }
 
     /** Constructs an empty symbol table */

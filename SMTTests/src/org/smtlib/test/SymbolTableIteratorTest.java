@@ -10,9 +10,9 @@ import org.junit.rules.Timeout;
 import org.smtlib.SMT;
 import org.smtlib.SymbolTable;
 
-/** Covers {@link SymbolTable.Iterator}'s two exceptional paths, neither of which a normal
- *  for-each traversal (the only way the iterator is otherwise used) ever reaches:
- *  {@code next()} past the end, and {@code remove()}, which is unconditionally unsupported. */
+/** {@link SymbolTable.Iterator}'s next() past the end, which a for-each traversal (the only way the
+ *  iterator is otherwise used) never reaches. remove() is java.util.Iterator's default, which
+ *  throws UnsupportedOperationException (#146). */
 public class SymbolTableIteratorTest {
 
     @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
@@ -26,18 +26,6 @@ public class SymbolTableIteratorTest {
             it.next();
             Assert.fail("next() past the end should throw NoSuchElementException");
         } catch (NoSuchElementException e) {
-            // expected
-        }
-    }
-
-    @Test
-    public void removeIsUnsupported() {
-        SymbolTable table = new SymbolTable(new SMT.Configuration());
-        SymbolTable.Iterator it = table.iterator();
-        try {
-            it.remove();
-            Assert.fail("remove() should throw UnsupportedOperationException");
-        } catch (UnsupportedOperationException e) {
             // expected
         }
     }

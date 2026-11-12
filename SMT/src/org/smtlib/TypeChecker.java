@@ -1280,6 +1280,8 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 
     @Override
     public /*@Nullable*/ ISort visit(IError e) {
+        // parsed text never gets here (a parse error stops the command); an API-built term can (#146)
+        error("The expression contains an error node: " + e.value(), e.pos());
         return null;
     }
 
@@ -1905,7 +1907,8 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 
     @Override
     public /*@Nullable*/ ISort visit(ISort.IFcnSort s) throws IVisitor.VisitorException {
-        error("INTERNAL ERROR - unexpected type-checking of a ISort.IFcnSort " + s, s.pos());// FIXME - check sort
+        // a symbol-table signature, never parsed as a sort; an API-built declaration can use one (#146)
+        error("A function signature is not a sort: " + s, s.pos());
         return null;
     }
 
