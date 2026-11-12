@@ -136,7 +136,7 @@ public class AbstractSolver implements ISolver {
     }
 
     /** As {@link #logSolverDiagnostics()}; all includes an unended last line, for when the solver is stopped */
-    private void logSolverDiagnostics(boolean all) {
+    protected void logSolverDiagnostics(boolean all) {
         if (solverProcess == null) return;
         String diag = solverProcess.takeDiagnosticOutput(all);
         if (diag.trim().isEmpty()) return;

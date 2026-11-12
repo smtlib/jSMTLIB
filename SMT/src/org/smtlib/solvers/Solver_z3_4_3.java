@@ -194,6 +194,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     public IResponse exit() {
         try {
             solverProcess.sendAndListen("(exit)\n");
+            logSolverDiagnostics(true);
             solverProcess.exit();
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended Z3 ");
             return successOrEmpty(smtConfig);
@@ -202,6 +203,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             // z3-4.3's raw responses to begin with -- see the class-level history in
             // Solver_z3_recent's javadoc), so a silently-closed connection reaches the
             // same successOrEmpty() outcome as a normal response, not an error.
+            logSolverDiagnostics(true);
             solverProcess.exit();
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended Z3 ");
             return successOrEmpty(smtConfig);
