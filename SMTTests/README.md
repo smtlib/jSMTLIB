@@ -83,7 +83,7 @@ SMTTests/
   typechecks/            .tst files exercising jSMTLIB's own TypeChecker, run by TypeCheckTests
   scripts/               .scr files: shell-driven scenarios, run by ScriptTests
   bin/                   compiled .class output (javac -d target)
-  lsp/libs/               junit-4.13.2.jar, hamcrest-core-1.3.jar
+  lsp/libs/              junit and hamcrest jars, fetched per lsp/libs.sha256 (not in git)
 ```
 
 ### `tests/` — `.tst` files, grouped by topic

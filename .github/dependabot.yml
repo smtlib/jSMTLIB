@@ -1,0 +1,13 @@
+## Weekly pull requests updating the actions the workflows and the local composite actions use.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directories:
+      - /
+      - /.github/actions/*
+    target-branch: dev
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: [ "*" ]
