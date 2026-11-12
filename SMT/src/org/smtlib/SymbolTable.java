@@ -26,7 +26,7 @@ import org.smtlib.ISort.IParameter;
  *  Deliberately a concrete class rather than an interface: there is exactly one implementation,
  *  constructed directly by every caller, with no substitutability need to abstract over. See
  *  issue #36. */
-public class SymbolTable {
+public final class SymbolTable {
 
     /** true if the bit-vector theory has been set */
     // Used only while we have BitVec built in

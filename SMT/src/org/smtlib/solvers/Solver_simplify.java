@@ -102,7 +102,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     /** Constructor with standard signature for invocation through reflection */
     public Solver_simplify(SMT.Configuration smtConfig, String executable) {
         this.smtConfig = smtConfig;
-        options.putAll(smt().utils.defaults);
+        options.putAll(smtConfig.utils.defaults);
         this.symTable = new SymbolTable(smtConfig);
         cmds[0] = executable;
         solverProcess = new SolverProcess(cmds,">\t",smtConfig.logfile,StandardCharsets.UTF_8);
@@ -112,7 +112,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
      *  the executable form adds */
     public Solver_simplify(SMT.Configuration smtConfig, String[] command) {
         this.smtConfig = smtConfig;
-        options.putAll(smt().utils.defaults);
+        options.putAll(smtConfig.utils.defaults);
         this.symTable = new SymbolTable(smtConfig);
         cmds = command;
         solverProcess = new SolverProcess(cmds,">\t",smtConfig.logfile,StandardCharsets.UTF_8);

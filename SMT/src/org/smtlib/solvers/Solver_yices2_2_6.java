@@ -11,13 +11,11 @@ public class Solver_yices2_2_6 extends Solver_yices2 {
         super(smtConfig, command);
     }
 
-    public Solver_yices2_2_6(SMT.Configuration smtConfig, /*@NonNull*/ String command) {
-        super(smtConfig, command);
+    public Solver_yices2_2_6(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
+        super(smtConfig, withModelFormat(command(smtConfig, executable)));
     }
 
-    @Override
-    public String[] cmd(String exec) {
-        String[] args = super.cmd(exec);
+    private static String[] withModelFormat(String[] args) {
         String[] result = java.util.Arrays.copyOf(args, args.length + 1);
         result[args.length] = "--smt2-model-format";
         return result;

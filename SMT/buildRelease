@@ -52,7 +52,7 @@ fi
 echo Compiling sources
 find src -name "*.java" > "$stage/sources.txt"
 ## this-escape: constructors that call overridable methods, which the solver adapters rely on
-"$JAVA_HOME/bin/javac" -Xlint:all,-this-escape -Xdoclint:all,-missing -d "$CLASSDIR" @"$stage/sources.txt"
+"$JAVA_HOME/bin/javac" -Xlint:all -Xdoclint:all,-missing -d "$CLASSDIR" @"$stage/sources.txt"
 echo Assembling release
 mkdir -p "$stage/resources/org/smtlib/resources"
 cp src/org/smtlib/resources/version.properties "$stage/resources/org/smtlib/resources/version.properties"

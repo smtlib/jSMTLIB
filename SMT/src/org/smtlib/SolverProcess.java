@@ -155,7 +155,7 @@ public class SolverProcess {
     }
 
     /** Enables changing the command-line; must be called prior to start() */
-    public void setCmd(String[] cmd) {
+    public final void setCmd(String[] cmd) {
         this.app = cmd;
         try {
             if (log != null && cmd != null) {
@@ -686,7 +686,7 @@ public class SolverProcess {
      *  thread, via a queue implementation that already provides the necessary locking and
      *  visibility guarantees. No manual synchronized/wait/notify is needed.
      */
-    public static class StreamGobbler extends Thread {
+    public static final class StreamGobbler extends Thread {
 
         /** One handoff from the gobbler thread to a consumer: either a complete chunk of text
          * (an end-marker match, or a raw read for streams with no end marker), a signal that

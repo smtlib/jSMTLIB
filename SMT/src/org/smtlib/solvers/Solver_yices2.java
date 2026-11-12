@@ -39,11 +39,12 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
     }
 
     /** Creates an instance of the yices2 solver */
-    public Solver_yices2(SMT.Configuration smtConfig, /*@NonNull*/ String command) {
-        super(smtConfig, command);
+    public Solver_yices2(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
+        super(smtConfig, command(smtConfig, executable));
     }
 
-    public String[] cmd(String exec) {
+    /** The command line for the executable */
+    static String[] command(SMT.Configuration smtConfig, String exec) {
         java.util.List<String> args = new java.util.ArrayList<String>(
                 java.util.Arrays.asList(exec, "--incremental", "--interactive"));
         // yices2 has exactly one timeout flag, --timeout=<seconds>, applying per check-sat
@@ -113,7 +114,7 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
     // every real sat/unsat result with "unknown". Removed; AbstractSolver's default
     // check_sat() (just "(check-sat)", trusted as-is) is correct. The timeout it used to
     // apply via a runtime "(set-timeout N)" command is now applied at startup instead,
-    // via the --timeout=N CLI flag (see cmd()), matching how Solver_z3_recent applies
+    // via the --timeout=N CLI flag (see command()), matching how Solver_z3_recent applies
     // its timeout as a CLI flag rather than a runtime command.
 
     /** yices2 answers get-info :status with the last set-info :status value, but with

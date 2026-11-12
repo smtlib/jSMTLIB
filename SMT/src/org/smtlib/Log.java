@@ -30,7 +30,7 @@ public class Log {
      * StandardListener */
     public Log(SMT.Configuration smtConfig) {
         this.smtConfig = smtConfig;
-        addListener(new StandardListener());
+        listeners.add(new StandardListener());
     }
 
     /** This is an interface to be implemented by any Object that wants to hear log

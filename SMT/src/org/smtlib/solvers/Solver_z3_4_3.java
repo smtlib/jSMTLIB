@@ -100,7 +100,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         options.putAll(smtConfig.utils.defaults);
         cmds = withTimeoutArgs(cmds, smtConfig, isWindows);
         solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
-        responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
+        responseParser = new org.smtlib.sexpr.Parser(smtConfig,new Pos.Source("",null));
     }
 
     /** Creates an instance of the Z3 solver */
@@ -117,7 +117,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         }
         cmds = withTimeoutArgs(cmds, smtConfig, isWindows);
         solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
-        responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source("",null));
+        responseParser = new org.smtlib.sexpr.Parser(smtConfig,new Pos.Source("",null));
     }
 
     /** Appends z3-4.3's own timeout flags for smtConfig's two jSMTLIB-level, seconds-based
@@ -366,7 +366,11 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         return super.check_sat();
     }
 
+    // javac's this-escape lint: the method reference this::translate hands 'this' to Assumptions while a
+    // subclass (e.g. Solver_z3_4_3_2) may not yet be initialized. Not a problem: Assumptions only stores the
+    // reference; translate is first called by a check command, after construction has finished.
     /** The assumptions of the most recent check command, if it was check-sat-assuming */
+    @SuppressWarnings("this-escape")
     private final Solver_z3_recent.Assumptions assumptions = new Solver_z3_recent.Assumptions(this::translate);
 
     /** z3 4.3 answers unsupported for check-sat-assuming, so it is sent as z3's legacy
