@@ -29,6 +29,8 @@ on:
 env:
   ## The github branch that was pushed
   BRANCH: ${{ github.ref_name }}
+  ## Set to 1 to make compiler warnings fail the build (SMT/buildRelease, SMTlsp/Makefile); off by default (#198)
+  JSMTLIB_WERROR: ''
 
 jobs:
   prepare:
