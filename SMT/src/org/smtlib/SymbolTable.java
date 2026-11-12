@@ -341,6 +341,10 @@ public class SymbolTable {
                                     : pf.indices().size() == 1 ? pf.indices().get(0).pos()
                                     : pf.head().pos());
                 }
+                String tooLarge = Utils.indexTooLarge((INumeral) pf.indices().get(0));
+                if (tooLarge != null) {
+                    return smtConfig.sortFactory.createErrorDefinition(name,tooLarge,pf.indices().get(0).pos());
+                }
                 if (((INumeral) pf.indices().get(0)).intValue() == 0) {
                     return smtConfig.sortFactory.createErrorDefinition(name,"A bit-vector sort must have a length of at least 1",pf.indices().get(0).pos());
                 }
@@ -354,6 +358,12 @@ public class SymbolTable {
                             pf.indices().size() == 2 && !(pf.indices().get(0) instanceof INumeral) ? pf.indices().get(0).pos()
                                     : pf.indices().size() > 0 ? pf.indices().get(pf.indices().size()-1).pos()
                                     : pf.head().pos());
+                }
+                for (int i = 0; i < 2; i++) {
+                    String tooLarge = Utils.indexTooLarge((INumeral) pf.indices().get(i));
+                    if (tooLarge != null) {
+                        return smtConfig.sortFactory.createErrorDefinition(name,tooLarge,pf.indices().get(i).pos());
+                    }
                 }
                 int eb = ((INumeral) pf.indices().get(0)).intValue();
                 int sb = ((INumeral) pf.indices().get(1)).intValue();

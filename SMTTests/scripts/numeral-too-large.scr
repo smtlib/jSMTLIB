@@ -1,0 +1,18 @@
+### #188: a numeral used where jSMTLIB needs an int (an index or a bit-vector width) must not wrap at 2^31.
+### Each too-large index and each too-large resulting width is an error; 2^32 as a divisor is not zero.
+##EXITCODE 0
+$SMT_CMD --solver test --text "(set-logic QF_BV)(declare-fun x () (_ BitVec 8))
+(declare-fun y () (_ BitVec 4294967296))
+(declare-fun z () (_ BitVec 4294967297))
+(assert (= ((_ extract 4294967296 0) x) #b0))
+(assert (= ((_ zero_extend 4294967296) x) x))
+(assert (= ((_ repeat 4294967297) x) x))
+(assert (= (_ bv1 4294967297) (_ bv1 4294967297)))
+(declare-fun w () (_ BitVec 2147483647))
+(assert (= (concat w w) (concat w w)))
+(assert (= ((_ repeat 2) w) ((_ repeat 2) w)))
+(assert (= ((_ zero_extend 1) w) ((_ zero_extend 1) w)))
+(assert (= ((_ extract 2147483646 0) w) w))"
+$SMT_CMD --solver test --text "(set-logic QF_FP)(declare-fun f () (_ FloatingPoint 4294967296 5))
+(assert (fp.isNaN (_ NaN 4294967298 4)))"
+$SMT_CMD --solver test --text "(set-logic QF_LRA)(declare-fun r () Real)(assert (= r (/ 1 4294967296)))"

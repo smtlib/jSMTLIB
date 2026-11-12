@@ -1,0 +1,19 @@
+success
+success
+(error "The index 4294967296 is too large (at most 2147483647)")
+(error "The index 4294967297 is too large (at most 2147483647)")
+(error "The index 4294967296 is too large (at most 2147483647)")
+(error "The index 4294967296 is too large (at most 2147483647)")
+(error "The index 4294967297 is too large (at most 2147483647)")
+(error "The index 4294967297 is too large (at most 2147483647)")
+success
+(error "The bit-vector width 4294967294 is too large (at most 2147483647)")
+(error "The bit-vector width 4294967294 is too large (at most 2147483647)")
+(error "The bit-vector width 2147483648 is too large (at most 2147483647)")
+success
+success
+(error "The index 4294967296 is too large (at most 2147483647)")
+(error "The index 4294967298 is too large (at most 2147483647)")
+success
+success
+success

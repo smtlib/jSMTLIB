@@ -1,0 +1,41 @@
+success
+success
+(declare-fun y () (_ BitVec 4294967296))
+                            ^^^^^^^^^^
+(error "The index 4294967296 is too large (at most 2147483647)")
+(declare-fun z () (_ BitVec 4294967297))
+                            ^^^^^^^^^^
+(error "The index 4294967297 is too large (at most 2147483647)")
+(assert (= ((_ extract 4294967296 0) x) #b0))
+                       ^^^^^^^^^^
+(error "The index 4294967296 is too large (at most 2147483647)")
+(assert (= ((_ zero_extend 4294967296) x) x))
+                           ^^^^^^^^^^
+(error "The index 4294967296 is too large (at most 2147483647)")
+(assert (= ((_ repeat 4294967297) x) x))
+                      ^^^^^^^^^^
+(error "The index 4294967297 is too large (at most 2147483647)")
+(assert (= (_ bv1 4294967297) (_ bv1 4294967297)))
+                  ^^^^^^^^^^
+(error "The index 4294967297 is too large (at most 2147483647)")
+success
+(assert (= (concat w w) (concat w w)))
+           ^^^^^^^^^^^^
+(error "The bit-vector width 4294967294 is too large (at most 2147483647)")
+(assert (= ((_ repeat 2) w) ((_ repeat 2) w)))
+           ^^^^^^^^^^^^^^^^
+(error "The bit-vector width 4294967294 is too large (at most 2147483647)")
+(assert (= ((_ zero_extend 1) w) ((_ zero_extend 1) w)))
+           ^^^^^^^^^^^^^^^^^^^^^
+(error "The bit-vector width 2147483648 is too large (at most 2147483647)")
+success
+success
+(set-logic QF_FP)(declare-fun f () (_ FloatingPoint 4294967296 5))
+                                                    ^^^^^^^^^^
+(error "The index 4294967296 is too large (at most 2147483647)")
+(assert (fp.isNaN (_ NaN 4294967298 4)))
+                         ^^^^^^^^^^
+(error "The index 4294967298 is too large (at most 2147483647)")
+success
+success
+success

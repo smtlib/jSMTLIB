@@ -1129,4 +1129,10 @@ public class Utils {
         System.out.println(e.getMessage());
         e.printStackTrace(System.out);
     }
+
+    /** An error message if the numeral, used as an index, is too large for an int (#188); else null */
+    public static /*@Nullable*/ String indexTooLarge(IExpr.INumeral n) {
+        return n.value().bitLength() > 31
+                ? "The index " + n.value() + " is too large (at most " + Integer.MAX_VALUE + ")" : null;
+    }
 }
