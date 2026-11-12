@@ -185,6 +185,11 @@ public final class SymbolTable {
                 ctorStack.remove(0);
             }
         } else {
+            // the logic and its theories go too (#194)
+            logicInUse = null;
+            bitVectorTheorySet = false;
+            realsIntsTheorySet = false;
+            floatingPointTheorySet = false;
             logicFunctions.clear();
             logicSorts.clear();
             sortStack = new LinkedList<Map<IIdentifier,ISort.IDefinition>>();
