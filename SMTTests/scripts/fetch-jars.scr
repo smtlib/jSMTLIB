@@ -1,0 +1,53 @@
+##EXITCODE 0
+## SMTlsp/fetch-jars against stand-in repositories (no network): download, offline reuse, fallback to the local
+## Maven repository, checksum mismatch, a jar found nowhere; then the real manifests' format and their jar names'
+## use in the builds. Each run works in a fresh temporary directory, which is left for the OS to clean up.
+T=$(mktemp -d)
+TP=$T
+command -v cygpath >/dev/null 2>&1 && TP=$(cygpath -m "$T")
+REPO="file://$TP/repo"
+NOWHERE="file://$TP/nowhere"
+FJ=../SMTlsp/fetch-jars
+if command -v sha256sum >/dev/null 2>&1; then sha() { sha256sum "$1" | cut -c1-64; }
+else sha() { shasum -a 256 "$1" | cut -c1-64; }
+fi
+mkdir -p "$T/repo/g/a/1" "$T/m2/g/b/1" "$T/libs"
+printf 'jar a' > "$T/repo/g/a/1/a-1.jar"
+printf 'jar b' > "$T/m2/g/b/1/b-1.jar"
+echo "$(sha "$T/repo/g/a/1/a-1.jar")  g/a/1/a-1.jar" > "$T/a.sha256"
+echo "$(sha "$T/m2/g/b/1/b-1.jar")  g/b/1/b-1.jar" > "$T/b.sha256"
+echo "0000000000000000000000000000000000000000000000000000000000000000  g/c/1/c-1.jar" > "$T/c.sha256"
+
+# Runs fetch-jars; prints its exit code and its own messages, with the temporary paths made constant
+fj() {
+    FETCH_JARS_MAVEN=$1 FETCH_JARS_M2="$T/m2" bash "$FJ" "$T/libs" "$2" 2> "$T/err"
+    echo "exit $?"
+    grep '^fetch-jars' "$T/err" | sed -e "s|$TP|T|g" -e "s|$T|T|g"
+}
+
+echo "== download"
+fj "$REPO" "$T/a.sha256"; cat "$T/libs/a-1.jar"; echo
+echo "== present, offline"
+fj "$NOWHERE" "$T/a.sha256"
+echo "== missing, offline, in the local Maven repository"
+fj "$NOWHERE" "$T/b.sha256"; cat "$T/libs/b-1.jar"; echo
+echo "== checksum mismatch"
+printf 'tampered' >> "$T/libs/a-1.jar"
+fj "$NOWHERE" "$T/a.sha256"; [ -f "$T/libs/a-1.jar" ] || echo "a-1.jar removed"
+echo "== missing everywhere"
+fj "$NOWHERE" "$T/c.sha256"
+
+echo "== real manifests"
+for m in ../SMTlsp/libs.sha256 lsp/libs.sha256; do
+    grep -v '^#' "$m" | grep -Ev '^[0-9a-f]{64}  [A-Za-z0-9._/-]+\.jar$' | sed "s|^|bad line in $m: |"
+done
+for j in $(grep -v '^#' ../SMTlsp/libs.sha256 | sed 's|.*/||'); do
+    grep -q "$j" ../SMTlsp/Makefile || echo "$j is not in SMTlsp/Makefile"
+    grep -q "$j" ../SMTlsp/smtlib-lsp || echo "$j is not in SMTlsp/smtlib-lsp"
+    grep -q "$j" lsp/Makefile || echo "$j is not in lsp/Makefile"
+done
+for j in $(grep -v '^#' lsp/libs.sha256 | sed 's|.*/||'); do
+    grep -q "$j" runjunits || echo "$j is not in runjunits"
+    grep -q "$j" lsp/Makefile || echo "$j is not in lsp/Makefile"
+done
+echo "done"

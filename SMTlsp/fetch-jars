@@ -1,0 +1,43 @@
+#!/bin/bash
+## Usage: fetch-jars <dir> <manifest>
+## Ensures <dir> holds each jar the manifest lists ("<sha256>  <Maven repository path>" per line) and that
+## each jar's SHA-256 matches. A jar already present needs no network, so an offline build works once the
+## jars have been fetched. A missing jar is downloaded from Maven Central or, failing that (e.g. offline),
+## copied with a warning from the local Maven repository. Exits 1 if any jar is missing or does not match.
+## FETCH_JARS_MAVEN and FETCH_JARS_M2 override the two repository locations (used by the tests).
+set -uo pipefail
+dir=$1
+manifest=$2
+MAVEN=${FETCH_JARS_MAVEN:-https://repo1.maven.org/maven2}
+M2=${FETCH_JARS_M2:-$HOME/.m2/repository}
+if command -v sha256sum >/dev/null 2>&1; then sha() { sha256sum "$1" | cut -c1-64; }
+else sha() { shasum -a 256 "$1" | cut -c1-64; }
+fi
+mkdir -p "$dir"
+status=0
+while read -r hash path; do
+    [ -z "$hash" ] && continue
+    case "$hash" in \#*) continue ;; esac
+    jar="$dir/$(basename "$path")"
+    if [ ! -f "$jar" ]; then
+        if curl --fail --silent --show-error --connect-timeout 10 --max-time 300 -o "$jar.tmp" "$MAVEN/$path"; then
+            mv "$jar.tmp" "$jar"
+        elif [ -f "$M2/$path" ]; then
+            rm -f "$jar.tmp"
+            echo "fetch-jars: WARNING: could not download $MAVEN/$path; using $M2/$path" >&2
+            cp "$M2/$path" "$jar"
+        else
+            rm -f "$jar.tmp"
+            echo "fetch-jars: ERROR: $jar is missing and could not be downloaded from $MAVEN/$path" \
+                 "(offline?) or found in $M2" >&2
+            status=1
+            continue
+        fi
+    fi
+    if [ "$(sha "$jar")" != "$hash" ]; then
+        echo "fetch-jars: ERROR: SHA-256 mismatch for $jar (expected $hash); removed it" >&2
+        rm -f "$jar"
+        status=1
+    fi
+done < "$manifest"
+exit $status

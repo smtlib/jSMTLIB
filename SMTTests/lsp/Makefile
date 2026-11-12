@@ -11,9 +11,8 @@ LSP_JAR     := $(LSPROOT)/build/smtlib-lsp.jar
 LSP_SRCS    := $(shell find $(LSPROOT)/src -name '*.java')
 
 ## LSP4J + Gson (same versions as SMTlsp/Makefile)
-LSP4J_VERSION := 1.0.0
 LSPLIBS       := $(LSPROOT)/libs
-LSP4J_CP      := $(LSPLIBS)/org.eclipse.lsp4j-$(LSP4J_VERSION).jar:$(LSPLIBS)/org.eclipse.lsp4j.jsonrpc-$(LSP4J_VERSION).jar:$(LSPLIBS)/gson-2.11.0.jar
+LSP4J_CP      := $(LSPLIBS)/org.eclipse.lsp4j-1.0.0.jar:$(LSPLIBS)/org.eclipse.lsp4j.jsonrpc-1.0.0.jar:$(LSPLIBS)/gson-2.11.0.jar
 
 ## JUnit 4 (downloaded on first build)
 LIBS          := $(TESTROOT)/libs
@@ -21,7 +20,6 @@ JUNIT_JAR     := $(LIBS)/junit-4.13.2.jar
 HAMCREST_JAR  := $(LIBS)/hamcrest-core-1.3.jar
 JUNIT_CP      := $(JUNIT_JAR):$(HAMCREST_JAR)
 
-MAVEN := https://repo1.maven.org/maven2
 JAVAC := javac
 JAVA  := java
 
@@ -49,16 +47,9 @@ LOG_FILES := $(patsubst %,$(RESULT_DIR)/%.log,$(TEST_CLASSES))
 
 all: run-tests
 
-## Download JUnit from Maven Central when not present
-libs: $(JUNIT_JAR) $(HAMCREST_JAR)
-
-$(JUNIT_JAR):
-	@mkdir -p $(LIBS)
-	curl --fail --show-error -s -o $@.tmp $(MAVEN)/junit/junit/4.13.2/junit-4.13.2.jar && mv $@.tmp $@ || (rm -f $@.tmp; false)
-
-$(HAMCREST_JAR):
-	@mkdir -p $(LIBS)
-	curl --fail --show-error -s -o $@.tmp $(MAVEN)/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar && mv $@.tmp $@ || (rm -f $@.tmp; false)
+## Fetch JUnit and Hamcrest from Maven Central into libs/ if absent, checking each SHA-256 (libs.sha256)
+libs:
+	bash $(LSPROOT)/fetch-jars $(LIBS) $(TESTROOT)/libs.sha256
 
 ## Build the LSP server jar when sources are newer than the jar
 $(LSP_JAR): $(LSP_SRCS)

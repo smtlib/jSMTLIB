@@ -1,0 +1,18 @@
+== download
+exit 0
+jar a
+== present, offline
+exit 0
+== missing, offline, in the local Maven repository
+exit 0
+fetch-jars: WARNING: could not download file://T/nowhere/g/b/1/b-1.jar; using T/m2/g/b/1/b-1.jar
+jar b
+== checksum mismatch
+exit 1
+fetch-jars: ERROR: SHA-256 mismatch for T/libs/a-1.jar (expected 8ebbf2293c51b5f2c57b3718f35ad156f84f09474410689a2eaebd8709a60bcb); removed it
+a-1.jar removed
+== missing everywhere
+exit 1
+fetch-jars: ERROR: T/libs/c-1.jar is missing and could not be downloaded from file://T/nowhere/g/c/1/c-1.jar (offline?) or found in T/m2
+== real manifests
+done
