@@ -13,9 +13,9 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.rules.Timeout;
 import org.smtlib.SMT;
 
-/** Flat replies (success, unsupported, an empty line) to structured commands, and the solver
- *  log file, through the command-line tool and a stub solver (FlatAnswerProcess) that gives
- *  them (#140). The log file is set through the API: no command-line option sets it. */
+/** The solver log file, through the command-line tool and a stub solver (FlatAnswerProcess) that gives
+ *  flat replies to structured commands (#140). The log file is set through the API: no command-line
+ *  option sets it. The flat replies themselves are tests/solverProtocol/err_flatReplies*.tst (#145). */
 public class FlatResponseTests {
 
     @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
@@ -24,9 +24,6 @@ public class FlatResponseTests {
     private static final String SAT_SCRIPT = "(set-option :produce-assertions true)\n(set-option :produce-models true)\n"
             + "(set-option :produce-assignments true)\n(set-logic QF_UF)\n(declare-fun p () Bool)\n(check-sat)\n"
             + "(get-assertions)\n(get-value (p))\n(get-assignment)\n";
-    private static final String UNSAT_SCRIPT = "(set-option :produce-unsat-cores true)\n"
-            + "(set-option :produce-unsat-assumptions true)\n(set-logic QF_UF)\n(check-sat)\n"
-            + "(get-unsat-core)\n(get-unsat-assumptions)\n";
 
     /** The output of the command-line tool on the script, with the stub answering check-sat
      *  with checkSat, and the solver log written to logfile if not null */
@@ -46,25 +43,6 @@ public class FlatResponseTests {
         smt.cleanup();
         out.flush();
         return outBuf.toString().replace("\r\n", "\n");
-    }
-
-    /** get-assertions answered "success" and get-value answered with an empty line are out of step
-     *  (#149); get-assignment's "unsupported" is passed on */
-    @Test
-    public void flatRepliesAfterSat() {
-        Assert.assertEquals("success\nsuccess\nsuccess\nsuccess\nsuccess\nsat\n(get-assertions)\n^^^^^^^^^^^^^^^^\n"
-                + "(error \"Out of step: the response to (get-assertions) was success\")\n"
-                + "(get-value (p))\n^^^^^^^^^^^^^^^\n(error \"Out of step: the response to (get-value ( p)) was empty\")\n"
-                + "unsupported\n",
-                run("sat", SAT_SCRIPT, null));
-    }
-
-    /** As above for get-unsat-core ("success", out of step) and get-unsat-assumptions ("unsupported") */
-    @Test
-    public void flatRepliesAfterUnsat() {
-        Assert.assertEquals("success\nsuccess\nsuccess\nunsat\n(get-unsat-core)\n^^^^^^^^^^^^^^^^\n"
-                + "(error \"Out of step: the response to (get-unsat-core) was success\")\nunsupported\n",
-                run("unsat", UNSAT_SCRIPT, null));
     }
 
     /** The log records the command, everything sent and received, and the exit */

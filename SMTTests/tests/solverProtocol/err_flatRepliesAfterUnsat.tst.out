@@ -1,0 +1,6 @@
+success
+success
+success
+unsat
+(error "Out of step: the response to (get-unsat-core) was success")
+unsupported
