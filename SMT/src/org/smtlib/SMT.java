@@ -676,7 +676,15 @@ public class SMT {
                         p = smtConfig.smtFactory.createParser(smtConfig,src);
                         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Starting file " + file);
                         pipelineInput = true;
-                        int e = doParser(p);
+                        int e;
+                        try {
+                            e = doParser(p);
+                        } finally {
+                            // standard input stays open
+                            if (!stdin) {
+                                try { rdr.close(); } catch (IOException ex) { /* nothing to recover */ }
+                            }
+                        }
                         // Exit code 2 (an unrecoverable/internal failure) always survives a
                         // later file's lesser code -- once set, no subsequent file's result
                         // (0 or 1) is allowed to downgrade it back.
@@ -1100,7 +1108,14 @@ public class SMT {
                     usage();
                     return 1;
                 }
-                options.port = Integer.valueOf(args[i++]).intValue();
+                String a = args[i++];
+                try {
+                    options.port = Integer.parseInt(a);
+                } catch (NumberFormatException e) {
+                    error("The --port option expects an integer argument: " + a);
+                    usage();
+                    return 1;
+                }
 
             } else if ("--text".equals(s)) {
                 if (i >= args.length) {

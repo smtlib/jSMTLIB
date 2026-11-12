@@ -313,8 +313,6 @@ public abstract class Sort extends Pos.Printable implements ISort {
             for (ISort s: sortParameters) {
                 params.add(s.substitute(map));
             }
-            ISort s = map.get(id);
-            if (s != null) return s;
             Application e = new Application(id,params);
             e.definition(this.definition());
             return e;
