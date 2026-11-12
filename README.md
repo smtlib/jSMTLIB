@@ -14,8 +14,8 @@ an API, a language server and an Eclipse plugin, with adapters to many SMT solve
 
 ## License
 
-jSMTLIB is licensed under the [Apache License 2.0](LICENSE). The Eclipse feature (`SMTFeature`) is licensed
-under the Eclipse Public License 1.0, as stated in its `feature.xml`.
+jSMTLIB is licensed under the [Apache License 2.0](LICENSE). The Eclipse plug-in is licensed under the
+[Eclipse Public License 2.0](https://www.eclipse.org/legal/epl-2.0/), as stated in `SMTFeature/feature.xml`.
 
 ## Acknowledgment
 

@@ -51,12 +51,15 @@ fi
 
 echo Compiling sources
 find src -name "*.java" > "$stage/sources.txt"
-"$JAVA_HOME/bin/javac" -Xdoclint:all,-missing -d "$CLASSDIR" @"$stage/sources.txt"
+## this-escape: constructors that call overridable methods, which the solver adapters rely on
+"$JAVA_HOME/bin/javac" -Xlint:all,-this-escape -Xdoclint:all,-missing -d "$CLASSDIR" @"$stage/sources.txt"
 echo Assembling release
 mkdir -p "$stage/resources/org/smtlib/resources"
 cp src/org/smtlib/resources/version.properties "$stage/resources/org/smtlib/resources/version.properties"
 cp -r logics/. "$stage/resources/"
 cp jsmtlib.properties "$stage/resources/jsmtlib.properties"
+mkdir -p "$stage/resources/META-INF"
+cp LICENSE "$stage/resources/META-INF/LICENSE"
 echo "Manifest-Version: 1.0" > "$stage/manifest"
 echo "Main-Class: org.smtlib.SMT" >> "$stage/manifest"
 ## CLASSDIR is $stage/classes by default (nothing else ever writes there), but if it's
@@ -72,6 +75,6 @@ echo "Main-Class: org.smtlib.SMT" >> "$stage/manifest"
 ## rather than given once up front.
 find "$CLASSDIR" -name "*.class" | sed "s|^$CLASSDIR/||;s|^|-C $CLASSDIR |" > "$stage/classlist.txt"
 "$JAVA_HOME/bin/jar" -cfm jSMTLIB.jar "$stage/manifest" @"$stage/classlist.txt" -C "$stage/resources" .
-"$JAVA_HOME/bin/jar" -cf jSMTLIB-sources.jar -C src .
+"$JAVA_HOME/bin/jar" -cf jSMTLIB-sources.jar -C src . LICENSE
 make javadoc 2>&1 | grep -v Generating
 echo Build complete

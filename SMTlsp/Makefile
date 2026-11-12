@@ -49,7 +49,7 @@ $(GSON_JAR):
 ## Compile the LSP server
 compile: libs
 	@mkdir -p $(CLASSES)
-	$(JAVAC) \
+	$(JAVAC) -Xlint:all \
 	    -cp $(SMTLIB_JAR):$(LSP4J_CP) \
 	    -d $(CLASSES) \
 	    $(JAVASRC)
