@@ -19,8 +19,8 @@ for editing and interacting with SMT-LIB scripts and SMT solvers.
 
 The jSMTLIB Eclipse plug-in (org.smtlib.plugin.SMTPlugin) is licensed under the Eclipse Public
 License 2.0 (https://www.eclipse.org/legal/epl-2.0/), whose text follows. The jSMTLIB library it
-includes (org.smtlib.SMT) is licensed under the Apache License 2.0
-(https://www.apache.org/licenses/LICENSE-2.0).
+includes (org.smtlib.SMT) is licensed under the Apache License 2.0 with LLVM Exceptions
+(https://www.apache.org/licenses/LICENSE-2.0, https://spdx.org/licenses/LLVM-exception.html).
 
 Eclipse Public License - v 2.0
 
