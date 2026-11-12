@@ -71,9 +71,9 @@ public class SMT {
          */
 
         // javac's this-escape lint: 'this' goes to the factories, Printer and Utils before a subclass of
-        // Configuration is initialized. They store it, except that Utils' constructor calls atLeastVersion();
-        // so a subclass overriding atLeastVersion/currentVersion must not rely on its own fields there.
-        // Configuration stays open to subclassing (e.g. to override readProperties).
+        // Configuration is initialized. Not a problem: they only store it, calling none of its methods (#201
+        // moved Utils' version checks to where options are used). Configuration stays open to subclassing
+        // (e.g. to override readProperties).
         /** Creates a default configuration, initialized from org.smtlib.impl */
         @SuppressWarnings("this-escape")
         public Configuration() {

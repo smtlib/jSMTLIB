@@ -66,13 +66,26 @@ public class Solver_test implements ISolver {
      */
     public Solver_test(SMT.Configuration smtConfig, String exec) {
         this.smtConfig = smtConfig;
-        options.putAll(smtConfig.utils.defaults);
+        putDefaults(options, smtConfig.utils);
         if (smtConfig.seed != 0) options.put(Utils.RANDOM_SEED, smtConfig.exprFactory.numeral(smtConfig.seed));
         this.symTable = new SymbolTable(smtConfig);
     }
 
     private boolean isGlobal() {
-        return Utils.TRUE.equals(options.get(Utils.GLOBAL_DECLARATIONS));
+        return smtConfig.utils.isOption(Utils.GLOBAL_DECLARATIONS) && Utils.TRUE.equals(options.get(Utils.GLOBAL_DECLARATIONS));
+    }
+
+    /** Puts the default option values in options, except for options a later SMT-LIB version introduced,
+     *  whose defaults get_option gives only if the configured version has them (#201) */
+    static void putDefaults(Map<String,IAttributeValue> options, Utils utils) {
+        options.putAll(utils.defaults);
+        options.keySet().removeAll(Utils.optionSince.keySet());
+    }
+
+    /** The value of the option: as set, else its default if the configured version has it, else null */
+    static /*@Nullable*/ IAttributeValue optionValue(Map<String,IAttributeValue> options, Utils utils, String option) {
+        IAttributeValue value = options.get(option);
+        return value != null || !utils.isOption(option) ? value : utils.defaults.get(option);
     }
 
     /** No process to start: overrides AbstractSolver.start() */
@@ -91,7 +104,7 @@ public class Solver_test implements ISolver {
         symTable.clear(false);
         logicSet = null;
         // Set all options and info to default values
-        options.putAll(smt().utils.defaults);
+        putDefaults(options, smtConfig.utils);
         ((Response.Factory)smtConfig.responseFactory).printSuccess = true;
         smtConfig.verbose = 0;
         smtConfig.log.setChannels(smtConfig.stdout, smtConfig.stderr);
@@ -186,7 +199,7 @@ public class Solver_test implements ISolver {
             return smtConfig.responseFactory.error("The logic must be set before a get-assertions command is issued");
         }
         // FIXME - do we really want to call get-option here? it involves going to the solver?
-        if (!smtConfig.relax && !Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSERTIONS)))) {
+        if (!smtConfig.relax && !Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.produceAssertionsKey(smtConfig))))) {
             return smtConfig.responseFactory.error("The get-assertions command is only valid if " + Utils.produceAssertionsKey(smtConfig) + " has been enabled");
         }
         List<IExpr> combined = new LinkedList<IExpr>();
@@ -391,7 +404,7 @@ public class Solver_test implements ISolver {
             }
         }
         // --relax allows a start-mode-only option to be set after set-logic
-        if (logicSet != null && !smtConfig.relax && Utils.startModeOptions.contains(option)) {
+        if (logicSet != null && !smtConfig.relax && Utils.startModeOptions.contains(option) && smtConfig.utils.isOption(option)) {
             return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
         }
         if (Utils.VERBOSITY.equals(option)) {
@@ -424,8 +437,7 @@ public class Solver_test implements ISolver {
     public IResponse get_option(IKeyword key) {
         String v = key.value();
         if (Utils.INTERACTIVE_MODE.equals(v) && !smtConfig.isVersion(SMTLIB.V20)) v = Utils.PRODUCE_ASSERTIONS;
-        IAttributeValue value = options.get(v);
-        //if (smtConfig.isVersion(SMTLIB.V20))
+        IAttributeValue value = optionValue(options, smtConfig.utils, v);
         if (value == null) return smtConfig.responseFactory.unsupported();
         return value;
     }

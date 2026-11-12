@@ -102,7 +102,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     /** Constructor with standard signature for invocation through reflection */
     public Solver_simplify(SMT.Configuration smtConfig, String executable) {
         this.smtConfig = smtConfig;
-        options.putAll(smtConfig.utils.defaults);
+        Solver_test.putDefaults(options, smtConfig.utils);
         this.symTable = new SymbolTable(smtConfig);
         cmds[0] = executable;
         solverProcess = new SolverProcess(cmds,">\t",smtConfig.logfile,StandardCharsets.UTF_8);
@@ -112,7 +112,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
      *  the executable form adds */
     public Solver_simplify(SMT.Configuration smtConfig, String[] command) {
         this.smtConfig = smtConfig;
-        options.putAll(smtConfig.utils.defaults);
+        Solver_test.putDefaults(options, smtConfig.utils);
         this.symTable = new SymbolTable(smtConfig);
         cmds = command;
         solverProcess = new SolverProcess(cmds,">\t",smtConfig.logfile,StandardCharsets.UTF_8);
@@ -194,7 +194,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
     /** True if :global-declarations has been set. */
     private boolean isGlobal() {
-        return Utils.TRUE.equals(options.get(Utils.GLOBAL_DECLARATIONS));
+        return smtConfig.utils.isOption(Utils.GLOBAL_DECLARATIONS) && Utils.TRUE.equals(options.get(Utils.GLOBAL_DECLARATIONS));
     }
 
     /** See {@link Solver_test#encode}. */
@@ -215,7 +215,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         symTable.clear(false);
         globalAxioms = "";
         logicSet = null;
-        options.putAll(smt().utils.defaults);
+        Solver_test.putDefaults(options, smtConfig.utils);
         ((org.smtlib.impl.Response.Factory)smtConfig.responseFactory).printSuccess = true;
         smtConfig.verbose = 0;
         smtConfig.log.setChannels(smtConfig.stdout, smtConfig.stderr);
@@ -530,7 +530,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     public IResponse get_option(IKeyword key) {
         String option = key.value();
         if (Utils.INTERACTIVE_MODE.equals(option) && !smtConfig.isVersion(SMTLIB.V20)) option = Utils.PRODUCE_ASSERTIONS;
-        IAttributeValue value = options.get(option);
+        IAttributeValue value = Solver_test.optionValue(options, smtConfig.utils, option);
         if (value == null) return smtConfig.responseFactory.unsupported();
         return value;
     }
@@ -577,7 +577,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         if (logicSet == null) {
             return smtConfig.responseFactory.error("The logic must be set before a get-assertions command is issued");
         }
-        if (!smtConfig.relax && !Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.PRODUCE_ASSERTIONS)))) {
+        if (!smtConfig.relax && !Utils.TRUE.equals(get_option(smtConfig.exprFactory.keyword(Utils.produceAssertionsKey(smtConfig))))) {
             return smtConfig.responseFactory.error("The get-assertions command is only valid if " + Utils.produceAssertionsKey(smtConfig) + " has been enabled");
         }
         List<IExpr> combined = new LinkedList<IExpr>();
@@ -880,7 +880,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
                 ((org.smtlib.impl.Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
             }
         }
-        if (logicSet != null && !smtConfig.relax && Utils.startModeOptions.contains(option)) {
+        if (logicSet != null && !smtConfig.relax && Utils.startModeOptions.contains(option) && smtConfig.utils.isOption(option)) {
             return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
         }
         if (Utils.VERBOSITY.equals(option)) {
