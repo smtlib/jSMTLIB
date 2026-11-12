@@ -17,6 +17,8 @@ Changes are made by pull request against the `dev` branch. `master` holds releas
   [Solvers](https://github.com/smtlib/Solvers) repository, located by `SMT_SOLVER_DIR`
   (see [SMTTests/README.md](SMTTests/README.md)).
 - CI builds and tests each push to `dev` and `master` on Linux, macOS and Windows.
+- `make codeql` (in `SMT/`) runs CodeQL's security and code-quality queries locally; it needs the CodeQL CLI.
+  CI runs the security queries on each push to `dev` and `master`.
 
 ## Requirements for a pull request
 
