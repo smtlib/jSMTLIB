@@ -66,7 +66,7 @@ public class Solver_test implements ISolver {
      */
     public Solver_test(SMT.Configuration smtConfig, String exec) {
         this.smtConfig = smtConfig;
-        options.putAll(smt().utils.defaults);
+        options.putAll(smtConfig.utils.defaults);
         if (smtConfig.seed != 0) options.put(Utils.RANDOM_SEED, smtConfig.exprFactory.numeral(smtConfig.seed));
         this.symTable = new SymbolTable(smtConfig);
     }

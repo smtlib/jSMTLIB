@@ -158,7 +158,7 @@ public abstract class Response {
     }
 
     /** Implements the IResponse.IError interface */
-    static public class Error extends Pos.Printable implements IResponse.IError {
+    static public final class Error extends Pos.Printable implements IResponse.IError {
 
         private String msg;
 

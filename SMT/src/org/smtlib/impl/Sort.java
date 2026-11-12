@@ -411,7 +411,7 @@ public abstract class Sort extends Pos.Printable implements ISort {
     }
 
     /** Represents a Sort parameter, such as in either the parameter list or the expression of a Sort abbreviation */
-    static public class Parameter extends Sort implements IParameter {
+    static public final class Parameter extends Sort implements IParameter {
         protected IExpr.ISymbol symbol;
 
         /** Creates a sort parameter for the given symbol name. */
@@ -473,7 +473,7 @@ public abstract class Sort extends Pos.Printable implements ISort {
     }
 
     /** A placeholder sort definition used when a sort declaration is ill-formed, to suppress cascading errors. */
-    static public class ErrorDefinition extends Pos.Printable implements ISort.IErrorDefinition {
+    static public final class ErrorDefinition extends Pos.Printable implements ISort.IErrorDefinition {
         protected IIdentifier id;
         protected String error;
 

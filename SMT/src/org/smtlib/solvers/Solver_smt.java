@@ -39,26 +39,15 @@ public class Solver_smt extends AbstractSolver implements ISolver {
 
     /** Creates an instance of the adapter */
     public Solver_smt(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
-        this.smtConfig = smtConfig;
-        cmds = cmd(executable);
-        // prompt() returns "\n": Solver_z3_recent's own class doc independently confirms
-        // this is the right end marker for a solver that (like every adapter this class
-        // still supports) doesn't print an interactive prompt.
-        solverProcess = new SolverProcess(cmds,prompt(),smtConfig.logfile,StandardCharsets.UTF_8);
+        this(smtConfig, new String[] { executable });
     }
 
+    /** Launches the given command; a subclass computes its command before calling this (#198) */
     public Solver_smt(SMT.Configuration smtConfig, /*@NonNull*/ String[] args) {
         this.smtConfig = smtConfig;
         cmds = args;
-        solverProcess = new SolverProcess(cmds,prompt(),smtConfig.logfile,StandardCharsets.UTF_8);
-    }
-
-    public String[] cmd(String exec) {
-        return new String[] { exec };
-    }
-
-    public String prompt() {
-        return "\n";
+        // "\n": the solvers this adapter serves print no interactive prompt (as Solver_z3_recent's doc says)
+        solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
     }
 
     @Override

@@ -70,7 +70,12 @@ public class SMT {
          *         edit extractOptions
          */
 
+        // javac's this-escape lint: 'this' goes to the factories, Printer and Utils before a subclass of
+        // Configuration is initialized. They store it, except that Utils' constructor calls atLeastVersion();
+        // so a subclass overriding atLeastVersion/currentVersion must not rely on its own fields there.
+        // Configuration stays open to subclassing (e.g. to override readProperties).
         /** Creates a default configuration, initialized from org.smtlib.impl */
+        @SuppressWarnings("this-escape")
         public Configuration() {
             // Initialize all the factories to use the concrete implementations in
             // the app package
@@ -273,7 +278,9 @@ public class SMT {
          * ignored if the text option is set. */
         public int port = -1;
 
+        // javac's this-escape lint: Log's constructor only stores 'this', so a subclass's state is not read early
         /** The log to use for regular, error, and diagnostic output */
+        @SuppressWarnings("this-escape")
         public /*@NonNull*/ Log log = new Log(this);
 
         /** Properties loaded from the jsmtlib.properties file(s); see {@link #readProperties()}. */
@@ -291,8 +298,8 @@ public class SMT {
          *  does not escape the capture. */
         public /*@NonNull*/ java.io.PrintStream stderr = System.err;
 
-        /** The utils object to use for utility methods */
-        public /*@NonNull*/ Utils utils = new Utils(this);
+        /** The utils object to use for utility methods; set by the constructor (Factory.initFactories) */
+        public /*@NonNull*/ Utils utils;
 
         /** When true, allows some convenience relaxations of the SMTLIB standard; when
          *  false, the standard is strictly enforced.
