@@ -4,4 +4,4 @@ success
 success
 success
 success
-(error "line 8 column 24: unknown constant select (I I) ")
+(error "line 8 column 25: unknown constant select (I I) ")

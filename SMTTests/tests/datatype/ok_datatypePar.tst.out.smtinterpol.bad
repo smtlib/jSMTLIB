@@ -7,5 +7,5 @@ success
 success
 success
 success
-(error "<stdin>:12:17: Application of function null does not type check.")
-(error "<stdin>:13:14: Application of function null does not type check.")
+(error "<stdin>:12:18: Application of function null does not type check.")
+(error "<stdin>:13:15: Application of function null does not type check.")

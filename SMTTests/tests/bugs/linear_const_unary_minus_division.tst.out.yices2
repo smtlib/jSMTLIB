@@ -3,5 +3,5 @@ success
 success
 success
 (error "logic AUFLIRA is not supported")
-(error "at line 9, column 19: undefined sort: Real")
+(error "at line 9, column 18: undefined sort: Real")
 (error "The solver process has exited")

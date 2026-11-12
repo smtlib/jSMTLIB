@@ -1,3 +1,3 @@
 success
 success
-(error "line 4 column 27: logic does not support nonlinear arithmetic")
+(error "line 4 column 28: logic does not support nonlinear arithmetic")

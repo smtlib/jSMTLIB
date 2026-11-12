@@ -2,12 +2,12 @@ success
 success
 success
 unsupported
-(error "line 8 column 16: Parsing function declaration. Expecting sort list '(': unknown sort 'A'")
+(error "line 8 column 17: Parsing function declaration. Expecting sort list '(': unknown sort 'A'")
 success
 success
-(error "line 11 column 15: unknown function/constant f")
-(error "line 12 column 15: unknown function/constant f")
+(error "line 11 column 16: unknown function/constant f")
+(error "line 12 column 16: unknown function/constant f")
 success
 success
 sat
-(error "line 16 column 16: unknown function/constant f")
+(error "line 16 column 17: unknown function/constant f")

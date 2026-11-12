@@ -1,6 +1,6 @@
 success
 success
 success
-(error "<stdin>:5:12: Builtin function _ does not support argument sorts ()")
-(error "<stdin>:6:12: Builtin function _ does not support argument sorts ()")
-(error "<stdin>:7:12: Application of function null does not type check.")
+(error "<stdin>:5:13: Builtin function _ does not support argument sorts ()")
+(error "<stdin>:6:13: Builtin function _ does not support argument sorts ()")
+(error "<stdin>:7:13: Application of function null does not type check.")

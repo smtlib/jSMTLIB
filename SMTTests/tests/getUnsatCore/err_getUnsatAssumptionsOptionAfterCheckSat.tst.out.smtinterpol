@@ -2,5 +2,5 @@ success
 success
 success
 unsat
-(error "<stdin>:7:12: Option :produce-unsat-assumptions can only be changed before setting the logic")
-(error "<stdin>:8:22: Set option :produce-unsat-assumptions to true before using get-unsat-assumptions")
+(error "<stdin>:7:13: Option :produce-unsat-assumptions can only be changed before setting the logic")
+(error "<stdin>:8:23: Set option :produce-unsat-assumptions to true before using get-unsat-assumptions")

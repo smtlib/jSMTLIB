@@ -7,7 +7,7 @@ success
 success
 (error "line 12 column 24: logic only supports difference arithmetic")
 (error "line 14 column 22: logic only supports difference arithmetic")
-(error "line 15 column 19: logic only supports difference arithmetic")
-(error "line 16 column 23: logic only supports difference arithmetic")
-(error "line 17 column 23: logic only supports difference arithmetic")
-(error "line 18 column 17: unknown function/constant abs")
+(error "line 15 column 20: logic only supports difference arithmetic")
+(error "line 16 column 24: logic only supports difference arithmetic")
+(error "line 17 column 24: logic only supports difference arithmetic")
+(error "line 18 column 18: unknown function/constant abs")

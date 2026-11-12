@@ -1,4 +1,4 @@
 success
 true
 false
-(error "<stdin>:5:8: Unknown function symbol z.")
+(error "<stdin>:5:9: Unknown function symbol z.")

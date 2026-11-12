@@ -1,2 +1,2 @@
 success
-(error "line 4 column 38: minimum number of significand bits is 1")
+(error "line 4 column 39: minimum number of significand bits is 1")

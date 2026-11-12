@@ -1,5 +1,5 @@
 success
 success
 unsat
-(error "<stdin>:5:12: Option :produce-unsat-cores can only be changed before setting the logic")
-(error "<stdin>:6:15: Set option :produce-unsat-cores to true before using get-unsat-cores")
+(error "<stdin>:5:13: Option :produce-unsat-cores can only be changed before setting the logic")
+(error "<stdin>:6:16: Set option :produce-unsat-cores to true before using get-unsat-cores")

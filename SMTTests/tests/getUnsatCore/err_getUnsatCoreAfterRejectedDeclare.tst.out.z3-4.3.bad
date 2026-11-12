@@ -4,5 +4,5 @@ success
 success
 success
 unsat
-(error "line 9 column 21: invalid declaration, constant 'x' (whith the given signature) already declared")
-(error "line 10 column 15: unsat core is not available")
+(error "line 9 column 22: invalid declaration, constant 'x' (whith the given signature) already declared")
+(error "line 10 column 16: unsat core is not available")

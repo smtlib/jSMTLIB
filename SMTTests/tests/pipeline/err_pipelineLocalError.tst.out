@@ -1,6 +1,6 @@
 success
 success
-(error "line 4 column 13: unknown constant undeclared")
+(error "line 4 column 14: unknown constant undeclared")
 success
 success
 sat

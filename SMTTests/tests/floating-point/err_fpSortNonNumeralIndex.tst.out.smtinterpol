@@ -1,2 +1,2 @@
 success
-(error "<stdin>:3:18: Undeclared sort ((_ FloatingPoint [eb, 24]) 0)")
+(error "<stdin>:3:19: Undeclared sort ((_ FloatingPoint [eb, 24]) 0)")

@@ -1,4 +1,4 @@
 success
 unsupported
-(error "line 4 column 18: Invalid function declaration: unknown sort 'L'")
-(error "line 5 column 15: unknown constant l")
+(error "line 4 column 18: Invalid constant declaration: unknown sort 'L'")
+(error "line 5 column 16: unknown constant l")

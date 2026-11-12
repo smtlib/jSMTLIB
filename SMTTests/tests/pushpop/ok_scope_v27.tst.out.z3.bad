@@ -3,7 +3,7 @@ success
 success
 success
 unsupported
-(error "line 8 column 16: Parsing function declaration. Expecting sort list '(': unknown sort 'X'")
+(error "line 8 column 17: Parsing function declaration. Expecting sort list '(': unknown sort 'X'")
 success
 success
 success
@@ -14,9 +14,9 @@ unsupported
 success
 success
 (error "line 18 column 21: invalid declaration, named expression already defined with this name m")
-(error "line 19 column 14: invalid sort declaration, sort already declared/defined")
-(error "line 20 column 23: invalid declaration, function 'f' (with the given signature) already declared")
+(error "line 19 column 15: invalid sort declaration, sort already declared/defined")
+(error "line 20 column 24: invalid declaration, function 'f' (with the given signature) already declared")
 success
 (error "line 22 column 22: invalid declaration, named expression already defined with this name m")
-(error "line 23 column 14: invalid sort declaration, sort already declared/defined")
-(error "line 24 column 22: invalid number of parameters to sort constructor")
+(error "line 23 column 15: invalid sort declaration, sort already declared/defined")
+(error "line 24 column 23: invalid number of parameters to sort constructor")

@@ -1,4 +1,4 @@
 success
 success
 success
-(error "line 5 column 19: unknown sort 'Array'")
+(error "line 5 column 20: unknown sort 'Array'")

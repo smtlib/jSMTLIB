@@ -1,4 +1,4 @@
 success
 success
 success
-(error "line 5 column 81: patterns cannot be variables or quantifiers")
+(error "line 5 column 82: patterns cannot be variables or quantifiers")

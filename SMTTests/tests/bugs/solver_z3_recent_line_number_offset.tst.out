@@ -1,6 +1,6 @@
 success
 success
-(error "line 12 column 24: unknown constant undeclaredfun (Int) ")
+(error "line 12 column 25: unknown constant undeclaredfun (Int) ")
 sat
 success
 success

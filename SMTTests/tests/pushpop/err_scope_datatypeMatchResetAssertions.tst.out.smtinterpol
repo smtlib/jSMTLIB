@@ -3,4 +3,4 @@ success
 success
 success
 success
-(error "<stdin>:7:9: Match term must be of a datatype sort.")
+(error "<stdin>:7:10: Match term must be of a datatype sort.")

@@ -1,3 +1,3 @@
 success
 success
-(error "line 4 column 23: unknown sort 'Foo'")
+(error "line 4 column 24: unknown sort 'Foo'")

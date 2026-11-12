@@ -1,4 +1,4 @@
 success
 success
-(error "<stdin>:4:1: Syntax Error")
+(error "<stdin>:4:2: Syntax Error")
 success

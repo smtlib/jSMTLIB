@@ -1,5 +1,5 @@
 success
-(error "line 4 column 27: unknown function/constant str.<=")
+(error "line 4 column 28: unknown function/constant str.<=")
 sat
-(error "line 6 column 27: unknown function/constant str.<=")
+(error "line 6 column 28: unknown function/constant str.<=")
 sat

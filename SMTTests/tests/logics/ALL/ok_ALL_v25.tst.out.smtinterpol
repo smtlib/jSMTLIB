@@ -8,4 +8,4 @@ success
 success
 success
 success
-(error "<stdin>:12:23: Unsupported internal sort: (_ FloatingPoint 8 24)")
+(error "<stdin>:12:24: Unsupported internal sort: (_ FloatingPoint 8 24)")

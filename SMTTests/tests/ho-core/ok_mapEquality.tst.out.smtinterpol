@@ -1,6 +1,6 @@
 success
 success
 success
-(error "<stdin>:5:15: Unsupported internal sort: (-> Int Int)")
-(error "<stdin>:6:17: Unknown function symbol @.")
+(error "<stdin>:5:16: Unsupported internal sort: (-> Int Int)")
+(error "<stdin>:6:18: Unknown function symbol @.")
 sat
