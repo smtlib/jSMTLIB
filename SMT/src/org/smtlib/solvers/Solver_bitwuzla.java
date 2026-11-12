@@ -5,6 +5,7 @@
  */
 package org.smtlib.solvers;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -94,19 +95,13 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
     }
 
     @Override
-    public IResponse start() {
-        try {
-            solverProcess.start(false);
-            // Bitwuzla's own :print-success default is false (unlike e.g. cvc5, which
-            // has a CLI flag for this) -- without explicitly turning it on at the wire
-            // level, ordinary accepted commands (set-logic, declare-const, assert, ...)
-            // produce no response at all, and sendAndListen just hangs waiting for one.
-            solverProcess.sendAndListen("(set-option :print-success true)\n");
-            if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
-            return smtConfig.responseFactory.success();
-        } catch (Exception e) {
-            return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
-        }
+    protected IResponse afterStart() throws IOException {
+        // Bitwuzla's own :print-success default is false (unlike e.g. cvc5, which
+        // has a CLI flag for this) -- without explicitly turning it on at the wire
+        // level, ordinary accepted commands (set-logic, declare-const, assert, ...)
+        // produce no response at all, and sendAndListen just hangs waiting for one.
+        solverProcess.sendAndListen("(set-option :print-success true)\n");
+        return null;
     }
 
     @Override

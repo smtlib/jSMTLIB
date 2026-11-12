@@ -5,6 +5,7 @@
  */
 package org.smtlib.solvers;
 
+import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 
@@ -61,21 +62,13 @@ public class Solver_smt extends AbstractSolver implements ISolver {
     }
 
     @Override
-    public IResponse start() {
-        try {
-            solverProcess.start(false);
-            if (smtConfig.solverVerbosity > 0) solverProcess.sendNoListen("(set-option :verbosity ",Integer.toString(smtConfig.solverVerbosity),")");
-            //if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
-            // Can't turn off printing success, or we get no feedback
-            //if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
-            solverProcess.sendAndListen("(set-option :print-success true)", "\n");
-            IResponse seed = sendSeed();
-            if (seed != null) return seed;
-            if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
-            return smtConfig.responseFactory.success();
-        } catch (Exception e) {
-            return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
-        }
+    protected IResponse afterStart() throws IOException {
+        if (smtConfig.solverVerbosity > 0) solverProcess.sendNoListen("(set-option :verbosity ",Integer.toString(smtConfig.solverVerbosity),")");
+        //if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
+        // Can't turn off printing success, or we get no feedback
+        //if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
+        solverProcess.sendAndListen("(set-option :print-success true)", "\n");
+        return sendSeed();
     }
 
     /** Translates an S-expression into SMT syntax; this solver uses the standard

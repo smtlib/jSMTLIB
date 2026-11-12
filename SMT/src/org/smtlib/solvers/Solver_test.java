@@ -75,6 +75,7 @@ public class Solver_test implements ISolver {
         return Utils.TRUE.equals(options.get(Utils.GLOBAL_DECLARATIONS));
     }
 
+    /** No process to start: overrides AbstractSolver.start() */
     @Override
     public IResponse start() {
         assertionSetStack.add(0,new LinkedList<IExpr>());

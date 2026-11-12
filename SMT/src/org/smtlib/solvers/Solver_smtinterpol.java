@@ -5,6 +5,7 @@
  */
 package org.smtlib.solvers;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import org.smtlib.*;
@@ -79,15 +80,12 @@ public class Solver_smtinterpol extends AbstractSolver implements ISolver {
         if (jar > 0 && jar < cmds.length && !new java.io.File(cmds[jar]).isFile()) {
             return smtConfig.responseFactory.error("Failed to start process " + cmds[jar] + " : no such jar file");
         }
-        try {
-            solverProcess.start(false);
-            IResponse seed = sendSeed();
-            if (seed != null) return seed;
-            if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + smtConfig.solvername);
-            return smtConfig.responseFactory.success();
-        } catch (Exception e) {
-            return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
-        }
+        return super.start();
+    }
+
+    @Override
+    protected IResponse afterStart() throws IOException {
+        return sendSeed();
     }
 
     // The checks below correct SMTInterpol 2.5 answering get- commands that SMT-LIB makes errors; it

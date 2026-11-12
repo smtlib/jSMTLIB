@@ -175,20 +175,19 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
 
     @Override
-    public IResponse start() {
-        try {
-            solverProcess.start(false);
-            // FIXME - enable the following lines when the Z3 solver supports them
-//            if (smtConfig.solverVerbosity > 0) solverProcess.sendNoListen("(set-option :verbosity ",Integer.toString(smtConfig.solverVerbosity),")");
-//            if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
-            // Can't turn off printing success, or we get no feedback
-            solverProcess.sendAndListen("(set-option :print-success true)\n"); // Z3 4.3.0 needs this because it mistakenly has the default for :print-success as false
-            //if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
-            if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started "+name()+" ");
-            return smtConfig.responseFactory.success();
-        } catch (Exception e) {
-            return smtConfig.responseFactory.error("Failed to start process " + cmds[0] + " : " + e.getMessage());
-        }
+    protected IResponse afterStart() throws IOException {
+        // FIXME - enable the following lines when the Z3 solver supports them
+//        if (smtConfig.solverVerbosity > 0) solverProcess.sendNoListen("(set-option :verbosity ",Integer.toString(smtConfig.solverVerbosity),")");
+//        if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
+        // Can't turn off printing success, or we get no feedback
+        solverProcess.sendAndListen("(set-option :print-success true)\n"); // Z3 4.3.0 needs this because it mistakenly has the default for :print-success as false
+        //if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
+        return null;
+    }
+
+    @Override
+    protected String startedName() {
+        return name() + " ";
     }
 
     @Override
