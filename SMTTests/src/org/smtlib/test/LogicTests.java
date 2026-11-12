@@ -6,7 +6,6 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
@@ -101,50 +100,11 @@ public class LogicTests {
     public void teardown() {
     }
 
-    private void loadSimplifyBinary(Properties props) {
-        final String os = System.getProperty("os.name").toLowerCase();
-        final String solver_binary_location;
-        final ClassLoader loader = this.getClass().getClassLoader();
-
-        if (os.contains("win")) {
-            solver_binary_location = loader.getResource("windows/Simplify-1.5.4.exe").getPath();
-        } else if (os.contains("mac")) {
-            solver_binary_location = loader.getResource("mac/Simplify-1.5.5.macosx").getPath();
-        } else {
-            solver_binary_location = loader.getResource("linux/Simplify-1.5.4.linux").getPath();
-        }
-        props.setProperty("org.smtlib.solver_simplify.exec", solver_binary_location);
-    }
-
-    private void loadZ3Binary(Properties props) {
-        final String os = System.getProperty("os.name").toLowerCase();
-        final String solver_binary_location;
-        final ClassLoader loader = this.getClass().getClassLoader();
-
-        if (os.contains("win")) {
-            solver_binary_location = loader.getResource("windows/z3-4.8.5/z3-4.8.5.exe").getPath();
-        } else if (os.contains("mac")) {
-            solver_binary_location = loader.getResource("mac/z3-4.8.5/z3-4.8.5.macosx").getPath();
-        } else {
-            solver_binary_location = loader.getResource("linux/z3-4.8.5/z3-4.8.5.linux").getPath();
-        }
-        props.setProperty("org.smtlib.solver_z3_4_8_5.exec", solver_binary_location);
-    }
-
-    protected Properties readPropertiesAndAddDefaults(SMT smt) {
-        Properties props = smt.smtConfig.readProperties();
-        if (props.isEmpty()) {
-            loadSimplifyBinary(props);
-            loadZ3Binary(props);
-        }
-        return props;
-    }
-
     public void init() {
         smt = new SMT();
         // We're not reading the command-line so we have to set items ourselves
         // Executable paths are taken from the properties
-        smt.smtConfig.props = readPropertiesAndAddDefaults(smt);
+        smt.smtConfig.props = smt.smtConfig.readProperties();
         listener = new JUnitListener();
         smt.smtConfig.log.clearListeners();
         smt.smtConfig.log.addListener(listener);
@@ -220,7 +180,7 @@ public class LogicTests {
         System.setOut(new PrintStream(ba));
         try {
             SMT smt = new SMT();
-            smt.smtConfig.props = readPropertiesAndAddDefaults(smt);
+            smt.smtConfig.props = smt.smtConfig.readProperties();
             smt.smtConfig.text = input;
             PrintStream both = new PrintStream(ba);
             smt.smtConfig.log.setChannels(both, both);
