@@ -1,8 +1,8 @@
 success
 success
-success
-success
-success
-(error "c has result sort A, expected Int (from the `as` qualifier)")
-(error "c has result sort A, expected Bool (from the `as` qualifier)")
+unsupported
+(error "No such sort symbol declared: A")
+(error "Unknown constant symbol c")
+(error "Unknown constant symbol c")
+(error "Unknown constant symbol c")
 unknown

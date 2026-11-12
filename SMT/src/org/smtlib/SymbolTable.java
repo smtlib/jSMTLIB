@@ -673,7 +673,9 @@ public class SymbolTable {
             }
         }
         ISort result = entry.sort.resultSort().substitute(bindings);
-        if (containsParameter(result)) {
+        // A parameter bound to a sort that is itself a parameter (e.g. A, from a variable of sort A
+        // in a quantifier over A) is determined; only an unbound one is not
+        if (!bindings.keySet().containsAll(parametersIn(entry.sort.resultSort(), new LinkedList<ISort.IParameter>()))) {
             throw new NoMatch("The sort of " + smtConfig.defaultPrinter.toString(entry.name)
                     + " is not determined by its arguments; qualify it with as");
         }
@@ -783,13 +785,19 @@ public class SymbolTable {
 
     /** Whether the sort contains a sort parameter. */
     public static boolean containsParameter(ISort sort) {
-        if (sort instanceof ISort.IParameter) return true;
-        if (sort instanceof ISort.IApplication) {
-            for (ISort p: ((ISort.IApplication) sort).parameters()) {
-                if (containsParameter(p)) return true;
-            }
+        return !parametersIn(sort, new LinkedList<ISort.IParameter>()).isEmpty();
+    }
+
+    /** Adds to found, in order of first occurrence, the sort parameters the sort contains, including
+     *  those a sort name stands for (declare-sort-parameter); returns found. */
+    private static List<ISort.IParameter> parametersIn(ISort sort, List<ISort.IParameter> found) {
+        if (sort instanceof ISort.IApplication) sort = ((ISort.IApplication) sort).expand();
+        if (sort instanceof ISort.IParameter) {
+            if (!found.contains(sort)) found.add((ISort.IParameter) sort);
+        } else if (sort instanceof ISort.IApplication) {
+            for (ISort p: ((ISort.IApplication) sort).parameters()) parametersIn(p, found);
         }
-        return false;
+        return found;
     }
 
     /** The signature of the arity-n function name, instantiated so that its result sort is
@@ -901,6 +909,14 @@ public class SymbolTable {
      * @param entry the Entry to add
      */
     public void add(Entry entry, boolean global) {
+        // A declaration over sort parameters (declare-sort-parameter) is polymorphic in them:
+        // each use instantiates them (SMT-LIB 2.7, 3.6.3)
+        if (entry.parameters == null) {
+            List<ISort.IParameter> params = new LinkedList<ISort.IParameter>();
+            for (ISort s: entry.sort.argSorts()) parametersIn(s, params);
+            parametersIn(entry.sort.resultSort(), params);
+            if (!params.isEmpty()) entry.parameters = params;
+        }
         Map<IIdentifier,List<Entry>> lnames = names;
         if (global) {
             lnames = symStack.get(symStack.size()-1);

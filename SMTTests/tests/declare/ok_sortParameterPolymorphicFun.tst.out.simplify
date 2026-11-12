@@ -1,13 +1,13 @@
 success
 unsupported
 success
+unsupported
+(error "No such sort symbol declared: A")
 success
 success
-success
-success
-(error "Argument 1 of f has sort Bool, expected A")
-(error "Argument 1 of f has sort Int, expected A")
+(error "Unknown predicate symbol f with argument types Bool")
+(error "Unknown predicate symbol f with argument types Int")
 success
 success
 unknown
-(error "Argument 1 of f has sort Bool, expected A")
+(error "Unknown predicate symbol f with argument types Bool")
