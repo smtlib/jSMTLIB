@@ -235,4 +235,74 @@ public class WholeRunTimeoutTests {
     public void cvc5PerQueryLimit() throws Exception {
         checkPerQueryLimit("cvc5-1.3.2");
     }
+
+    // alt-ergo (#189): one --timelimit, whole-run or (with --timelimit-per-goal) per goal. It gives up on the
+    // nonlinear HARD_QUERY at once (incomplete), so these use the pigeonhole query. Its builds are for linux-x64
+    // and macos-arm64; elsewhere these are skipped.
+
+    /** At the whole-run limit alt-ergo answers unknown, then (error "timeout"), and is ended by a signal */
+    @Test
+    public void altergoWholeRunLimit() throws Exception {
+        checkWholeRunLimit("altergo", "alt-ergo-2.6.3", pigeonholeQuery());
+    }
+
+    /** The per-query limit: unknown, with reason (:timeout :proof-search); alt-ergo keeps running */
+    @Test
+    public void altergoPerQueryLimit() throws Exception {
+        SMT.Configuration config = new SMT.Configuration();
+        config.timeout = 1;
+        ISolver solver = start(config, "altergo", "alt-ergo-2.6.3");
+        try {
+            IResponse r = run(config, solver, pigeonholeQuery());
+            Assert.assertEquals("check-sat at the per-query limit", config.responseFactory.unknown(), r);
+            IResponse reason = solver.get_info(config.exprFactory.keyword(":reason-unknown"));
+            Assert.assertTrue("reason for unknown: " + reason, reason.toString().contains("timeout"));
+            Assert.assertEquals("a later check-sat", config.responseFactory.unknown(), solver.check_sat());
+        } finally {
+            IResponse r = solver.exit();
+            Assert.assertFalse("exit: " + r, r.isError());
+        }
+    }
+
+    /** Unlike the other solvers' whole-run limits, alt-ergo's counts only solving time: it does not end alt-ergo
+     *  while it is idle */
+    @Test
+    public void altergoWholeRunLimitNotWhileIdle() throws Exception {
+        SMT.Configuration config = new SMT.Configuration();
+        config.timeoutTotal = 1;
+        ISolver solver = start(config, "altergo", "alt-ergo-2.6.3");
+        try {
+            IResponse r = run(config, solver, "(set-logic QF_UF)\n(declare-fun p () Bool)\n(assert p)\n(check-sat)\n");
+            Assert.assertEquals("an easy check-sat", config.responseFactory.unknown(), r);
+            Thread.sleep(2000); // idle past the 1-second limit
+            Assert.assertEquals("check-sat after idling", config.responseFactory.unknown(), solver.check_sat());
+        } finally {
+            IResponse r = solver.exit();
+            Assert.assertFalse("exit: " + r, r.isError());
+        }
+    }
+
+    /** A fractional limit reaches alt-ergo as is, not rounded up to whole seconds */
+    @Test
+    public void altergoFractionalLimit() throws Exception {
+        SMT.Configuration config = new SMT.Configuration();
+        config.timeout = 0.5;
+        java.util.List<String> perQuery = java.util.Arrays.asList(new AltergoCommand(config).command());
+        Assert.assertTrue("per-query: " + perQuery, perQuery.contains("--timelimit=0.5") && perQuery.contains("--timelimit-per-goal"));
+        config = new SMT.Configuration();
+        config.timeoutTotal = 2;
+        java.util.List<String> wholeRun = java.util.Arrays.asList(new AltergoCommand(config).command());
+        Assert.assertTrue("whole-run: " + wholeRun, wholeRun.contains("--timelimit=2") && !wholeRun.contains("--timelimit-per-goal"));
+    }
+
+    /** Exposes the command line Solver_altergo builds; the process is never started */
+    private static class AltergoCommand extends org.smtlib.solvers.Solver_altergo {
+        AltergoCommand(SMT.Configuration config) {
+            super(config, "alt-ergo");
+        }
+
+        String[] command() {
+            return cmds;
+        }
+    }
 }

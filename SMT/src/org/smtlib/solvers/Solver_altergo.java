@@ -43,16 +43,33 @@ public class Solver_altergo extends AbstractSolver implements ISolver {
         // modifier), since it's the more commonly useful of the two; a distinct whole-run
         // value given at the same time can't also be honored on this solver.
         if (smtConfig.timeout > 0) {
-            args.add("--timelimit=" + (int)Math.ceil(smtConfig.timeout));
+            args.add("--timelimit=" + seconds(smtConfig.timeout));
             args.add("--timelimit-per-goal");
             if (smtConfig.timeoutTotal > 0 && smtConfig.timeoutTotal != smtConfig.timeout) {
                 smtConfig.log.logDiag("#alt-ergo has only one timeout value, shared between per-query and whole-run; only the per-query --timeout (" + smtConfig.timeout + "s) is applied, the whole-run --timeout-total (" + smtConfig.timeoutTotal + "s) is ignored");
             }
         } else if (smtConfig.timeoutTotal > 0) {
-            args.add("--timelimit=" + (int)Math.ceil(smtConfig.timeoutTotal));
+            args.add("--timelimit=" + seconds(smtConfig.timeoutTotal));
         }
         cmds = args.toArray(new String[args.size()]);
         solverProcess = newProcess(cmds);
+    }
+
+    /** A time limit as alt-ergo takes it: 2 or 0.5, not 2.0 */
+    private static String seconds(double limit) {
+        return java.math.BigDecimal.valueOf(limit).stripTrailingZeros().toPlainString();
+    }
+
+    /** At its whole-run limit (no --timelimit-per-goal), alt-ergo answers the check-sat unknown, writes
+     *  (error "timeout") and is ended by a signal; the per-goal limit gives unknown with reason
+     *  (:timeout :proof-search) and alt-ergo carries on. The whole-run limit counts solving time only, so it
+     *  does not end alt-ergo while it is idle. */
+    @Override
+    protected boolean isTimeLimitResponse(String rawResponse) {
+        if (rawResponse.contains("(error \"timeout\")")) return true;
+        // the unknown can be read before the error: it is the limit only if alt-ergo then ends
+        if (!rawResponse.trim().equals("unknown") || solverProcess == null) return false;
+        return solverProcess.waitForEnd(200);
     }
 
     /** Alt-Ergo's stderr holds only diagnostics: ; comment lines, which are ignored anyway, and, before an
