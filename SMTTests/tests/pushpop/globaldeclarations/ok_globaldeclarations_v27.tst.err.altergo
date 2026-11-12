@@ -1,5 +1,3 @@
-(define-const m Bool true)
-^^^^^^^^^^^^^^^^^^^^^^^^^^
 (declare-sort-parameter X)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 (declare-fun f (X) X)

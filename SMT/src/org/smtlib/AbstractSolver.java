@@ -282,7 +282,24 @@ public class AbstractSolver implements ISolver {
     protected String translate(INode sexpr) throws IVisitor.VisitorException {
         StringWriter sw = new StringWriter();
         org.smtlib.sexpr.Printer.write(smtConfig, sw, sexpr);
-        return sw.toString();
+        String text = sw.toString();
+        if (!hasDefineConst() && sexpr instanceof ICommand.Idefine_const c) text = asDefineFun(text, c);
+        return text;
+    }
+
+    /** Whether the solver has define-const (SMT-LIB 2.7); if not, translate sends the define-fun it
+     *  abbreviates */
+    protected boolean hasDefineConst() {
+        return true;
+    }
+
+    /** The printed (define-const m S t) as (define-fun  m()S t): the same length, so the solver's
+     *  columns for S and t, and all that follows, match the source; m's is one less */
+    private String asDefineFun(String printed, ICommand.Idefine_const cmd) {
+        String symbol = smtConfig.defaultPrinter.toString(cmd.symbol());
+        String prefix = "(define-const " + symbol + " ";
+        if (!printed.startsWith(prefix)) return "(define-fun " + symbol + " () " + printed.substring(("(define-const " + symbol).length()).trim();
+        return "(define-fun  " + symbol + "()" + printed.substring(prefix.length());
     }
 
     /** Parses the solver's raw response text. The base behavior assumes the response is

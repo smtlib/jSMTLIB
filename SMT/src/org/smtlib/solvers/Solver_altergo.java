@@ -64,6 +64,12 @@ public class Solver_altergo extends AbstractSolver implements ISolver {
      *  (error "timeout") and is ended by a signal; the per-goal limit gives unknown with reason
      *  (:timeout :proof-search) and alt-ergo carries on. The whole-run limit counts solving time only, so it
      *  does not end alt-ergo while it is idle. */
+    /** Alt-Ergo 2.6.3 has no define-const */
+    @Override
+    protected boolean hasDefineConst() {
+        return false;
+    }
+
     @Override
     protected boolean isTimeLimitResponse(String rawResponse) {
         if (rawResponse.contains("(error \"timeout\")")) return true;
