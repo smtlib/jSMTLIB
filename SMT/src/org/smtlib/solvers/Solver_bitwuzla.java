@@ -64,11 +64,6 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
     public Solver_bitwuzla(SMT.Configuration smtConfig, /*@NonNull*/ String executable) {
         this.smtConfig = smtConfig;
         List<String> args = new java.util.ArrayList<String>(Arrays.asList(executable,"--lang","smt2"));
-        if (smtConfig.seed != 0) {
-            args.add("--seed");
-            args.add(Integer.toString(smtConfig.seed));
-            options.put(Utils.RANDOM_SEED, smtConfig.exprFactory.numeral(smtConfig.seed)); // for get_option
-        }
         if (smtConfig.timeout > 0) {
             // --time-limit-per is a per-check-sat timeout in milliseconds (matching
             // smtConfig.timeout's per-query semantics, as opposed to --time-limit,
@@ -91,11 +86,15 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
     public Solver_bitwuzla(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
         this.smtConfig = smtConfig;
         cmds = command;
-        if (smtConfig.seed != 0) { // --seed applies here too (#194)
-            cmds = withArgs(cmds, "--seed", Integer.toString(smtConfig.seed));
-            options.put(Utils.RANDOM_SEED, smtConfig.exprFactory.numeral(smtConfig.seed)); // for get_option
-        }
         solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
+    }
+
+    /** --seed is also kept for get_option, which bitwuzla does not support */
+    @Override
+    protected /*@Nullable*/ IResponse sendSeed() throws IOException {
+        IResponse r = super.sendSeed();
+        if (r == null && smtConfig.seed != 0) options.put(Utils.RANDOM_SEED, smtConfig.exprFactory.numeral(smtConfig.seed));
+        return r;
     }
 
     @Override

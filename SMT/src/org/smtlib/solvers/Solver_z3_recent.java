@@ -75,12 +75,6 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
         } else {
             cmds = cmds_unix;
         }
-        if (smtConfig.seed != 0) {
-            // z3 accepts the standard :random-seed but does not use it (4.5.0 to 5.1.0); smt.random_seed is its seed
-            List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
-            args.add("smt.random_seed=" + smtConfig.seed);
-            cmds = args.toArray(new String[args.size()]);
-        }
         double timeout = smtConfig.timeout;
         double timeoutTotal = smtConfig.timeoutTotal;
         if (timeout > 0 || timeoutTotal > 0) {
@@ -104,8 +98,18 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
     public Solver_z3_recent(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
         this.smtConfig = smtConfig;
         cmds = command;
-        if (smtConfig.seed != 0) cmds = withArgs(cmds, "smt.random_seed=" + smtConfig.seed); // --seed applies here too (#194)
         solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
+    }
+
+    /** z3 accepts the standard :random-seed but does not use it (4.5.0 to 5.1.0, #202); smt.random_seed
+     *  is its seed, so --seed sets that too */
+    @Override
+    protected /*@Nullable*/ IResponse sendSeed() throws IOException {
+        IResponse r = super.sendSeed();
+        if (r != null || smtConfig.seed == 0) return r;
+        String reply = solverProcess.sendAndListen("(set-option :smt.random_seed " + smtConfig.seed + ")\n").trim();
+        if (reply.equals("success")) return null;
+        return smtConfig.responseFactory.error("The solver rejected --seed " + smtConfig.seed + ": " + reply);
     }
 
     @Override

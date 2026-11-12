@@ -1108,6 +1108,11 @@ public class AbstractSolver implements ISolver {
             solverProcess.start(false);
             IResponse r = afterStart();
             if (r != null) return r;
+            // --seed (or a configured seed) is set at startup with the standard option (#194)
+            if (hasSeedOption()) {
+                r = sendSeed();
+                if (r != null) return r;
+            }
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + startedName());
             return smtConfig.responseFactory.success();
         } catch (Exception e) {
@@ -1125,25 +1130,19 @@ public class AbstractSolver implements ISolver {
         return smtConfig.solvername;
     }
 
-    /** Whether start() passed --seed as the :random-seed option (see sendSeed), which reset passes again */
-    private boolean seedSentAsOption = false;
+    /** Whether the solver has the standard :random-seed option, through which start() passes --seed;
+     *  an adapter whose solver has none reports --seed ignored instead */
+    protected boolean hasSeedOption() {
+        return true;
+    }
 
-    /** Passes --seed, if given, as the standard :random-seed option, for an adapter whose solver uses
-     *  that option; called from start(), while :print-success is true. Returns an error if the solver
-     *  rejects it, else null. */
+    /** Passes --seed, if given, as the standard :random-seed option; called from start(), after
+     *  afterStart(), while :print-success is true. Returns an error if the solver rejects it, else null. */
     protected /*@Nullable*/ IResponse sendSeed() throws IOException {
         if (smtConfig.seed == 0) return null;
-        seedSentAsOption = true;
         String reply = solverProcess.sendAndListen("(set-option :random-seed " + smtConfig.seed + ")\n").trim();
         if (reply.equals("success")) return null;
         return smtConfig.responseFactory.error("The solver rejected --seed " + smtConfig.seed + ": " + reply);
-    }
-
-    /** The command line with the given arguments added at its end */
-    protected static String[] withArgs(String[] cmd, String... args) {
-        String[] result = java.util.Arrays.copyOf(cmd, cmd.length + args.length);
-        System.arraycopy(args, 0, result, cmd.length, args.length);
-        return result;
     }
 
     /** Reports that --seed, if given, is ignored, for an adapter whose solver has no random seed */
@@ -1198,19 +1197,7 @@ public class AbstractSolver implements ISolver {
         checkSatStatus = null;
         checkMade = false;
         clearChanges();
-        IResponse response = sendCommand(smtConfig.commandFactory.reset());
-        if (seedSentAsOption) {
-            // A reset returns the seed to its value at start, --seed, as for a solver given it on its
-            // command line (#194); the responses pending (pipelining) are read first
-            readPipelined(true);
-            try {
-                IResponse rejected = sendSeed();
-                if (rejected != null) smtConfig.log.logDiag("#" + smtConfig.solvername + ": --seed after reset: " + rejected);
-            } catch (IOException e) {
-                // the solver has stopped; its next command reports that
-            }
-        }
-        return response;
+        return sendCommand(smtConfig.commandFactory.reset());
     }
 
     /** @see org.smtlib.ISolver#reset_assertions() */

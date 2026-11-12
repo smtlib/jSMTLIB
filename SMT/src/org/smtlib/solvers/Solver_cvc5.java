@@ -106,12 +106,6 @@ public class Solver_cvc5 extends AbstractSolver implements ISolver {
         } else {
             cmds = cmds_unix;
         }
-        if (smtConfig.seed != 0) {
-            List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
-            args.add("--seed");
-            args.add("" + smtConfig.seed);
-            cmds = args.toArray(new String[args.size()]);
-        }
         double timeout = smtConfig.timeout;
         double timeoutTotal = smtConfig.timeoutTotal;
         if (timeout > 0 || timeoutTotal > 0) {
@@ -133,7 +127,6 @@ public class Solver_cvc5 extends AbstractSolver implements ISolver {
     public Solver_cvc5(SMT.Configuration smtConfig, /*@NonNull*/ String[] command) {
         this.smtConfig = smtConfig;
         cmds = command;
-        if (smtConfig.seed != 0) cmds = withArgs(cmds, "--seed", "" + smtConfig.seed); // --seed applies here too (#194)
         solverProcess = new SolverProcess(cmds,"\n",smtConfig.logfile,StandardCharsets.UTF_8);
     }
 
