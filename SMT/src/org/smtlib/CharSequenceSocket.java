@@ -25,7 +25,7 @@ import java.net.Socket;
  *
  */
 
-// FIXME - review
+// FIXME - end of input is never reported (#30); whether socket mode stays is #139
 public class CharSequenceSocket extends CharSequenceInfinite {
 
     /** The socket from which characters are read */
@@ -71,7 +71,7 @@ public class CharSequenceSocket extends CharSequenceInfinite {
 
                 // Create the input and output streams
                 // FIXME - use a listener?
-                // FIXME - are there any other exceptions?  what if the connection is unexpectedly broken
+                // FIXME - a connection broken unexpectedly is not handled (#30, #139)
                 smtConfig.log.setChannels(new PrintStream(clientSocket.getOutputStream(),true), smtConfig.log.getDiag());
                 rdr = new BufferedReader(
                         new InputStreamReader(

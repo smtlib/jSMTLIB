@@ -716,9 +716,6 @@ public class SMT {
      *  not the socket or standard input, whose client needs each command's response at once */
     protected boolean pipelineInput = false;
 
-    protected int doParser(IParser p) { 
-        return doParser(p,true);
-    }
 
     /** Whether the input is exhausted; Ctrl-X met while looking ahead discards the partial input,
      *  as it does inside parseCommand */
@@ -794,20 +791,15 @@ public class SMT {
     /** The response from the most recently executed command; used to export results in interactive mode. */
     public IResponse lastResponse = null;
 
-    // FIXME - 'restart' is now always true: execCommand(), the only caller that passed
-    // false, was deleted as dead code (its "reuse the active solver" contract could not
-    // work anyway, since this method unconditionally force-exits the solver before
-    // returning). Either drop the parameter or restore a real incremental-use caller.
-    protected int doParser(IParser p, boolean restart) {
-        // FIXME - checkMode is assigned but never read; javac does not warn about this.
-        boolean checkMode = Utils.TEST_SOLVER.equals(smtConfig.solvername);
+    /** Executes the parser's commands with a newly started solver, which is ended before returning */
+    protected int doParser(IParser p) {
         boolean abortMode = smtConfig.abort;
 
-        if (restart && solver != null) {
+        if (solver != null) {
             solver.exit();
             solver = null;
         }
-        if (restart || solver == null) solver = startSolver(smtConfig, smtConfig.solvername, smtConfig.executable);
+        solver = startSolver(smtConfig, smtConfig.solvername, smtConfig.executable);
         if (solver == null) return 1;
         IKeyword printSuccessKW = smtConfig.exprFactory.keyword(Utils.PRINT_SUCCESS);
         if (smtConfig.nosuccess) {
