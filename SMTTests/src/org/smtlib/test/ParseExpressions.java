@@ -199,4 +199,15 @@ public class ParseExpressions {
         testSExpr("#xdeaf");
     }
 
+    /** #188: a numeral beyond int range gives Integer.MAX_VALUE, never a wrapped value; value() stays exact */
+    @Test
+    public void numeralIntValueSaturates() {
+        IExpr.IFactory f = new SMT.Configuration().exprFactory;
+        java.math.BigInteger big = java.math.BigInteger.ONE.shiftLeft(32);
+        Assert.assertEquals(Integer.MAX_VALUE, f.numeral(big.toString()).intValue());
+        Assert.assertEquals(big, f.numeral(big.toString()).value());
+        Assert.assertEquals(Integer.MAX_VALUE, f.numeral(big.add(java.math.BigInteger.ONE).toString()).intValue());
+        Assert.assertEquals(Integer.MAX_VALUE, f.numeral(Integer.MAX_VALUE).intValue());
+        Assert.assertEquals(7, f.numeral(7).intValue());
+    }
 }

@@ -131,7 +131,9 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
         /*@ pure */
         BigInteger value();
 
+        /** The value as an int, or Integer.MAX_VALUE if it is larger (never wrapped) */
         //@ ensures value().compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) <= 0 ==> value().intValue() == \result;
+        //@ ensures value().compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0 ==> \result == Integer.MAX_VALUE;
         //@ ensures \result >= 0;
         /*@ pure */
         int intValue();

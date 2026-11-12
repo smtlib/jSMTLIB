@@ -753,8 +753,8 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 error("The argument must have a BitVec sort, not " + pr(ss),e.args().get(1).pos());
                 return null;
             }
-            s = makeBitVec(bitvecSize(s)+bitvecSize(ss));
-            return save(e,s);
+            s = makeBitVec((long)bitvecSize(s)+bitvecSize(ss), e.pos());
+            return s == null ? null : save(e,s);
         }
         if (symTable.bitVectorTheorySet && symTable.realsIntsTheorySet &&
                 (head.equals(Utils.UBV_TO_INT) || head.equals(Utils.SBV_TO_INT))) {
@@ -847,8 +847,8 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 error("The numeral may not be 0 in a repeat",pid.indices().get(0).pos());
                 return null;
             }
-            s = makeBitVec(val*bitvecSize(s));
-            return save(e,s);
+            s = makeBitVec((long)val*bitvecSize(s), e.pos());
+            return s == null ? null : save(e,s);
 
         }
 
@@ -868,8 +868,8 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             IParameterizedIdentifier pid = (IParameterizedIdentifier)head;
             if (!checkNumeralIndices(pid, 1, "Expected exactly one numeral in a " + pheadSymbol + " identifier")) return null;
             int val = ((INumeral) pid.indices().get(0)).intValue();
-            s = makeBitVec(val+bitvecSize(s));
-            return save(e,s);
+            s = makeBitVec((long)val+bitvecSize(s), e.pos());
+            return s == null ? null : save(e,s);
 
         }
         if (useext && symTable.bitVectorTheorySet &&
@@ -1124,6 +1124,15 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         return ((INumeral) pid.indices().get(0)).intValue();
     }
 
+    /** makeBitVec(length), or an error at pos (and null) if length is too large for an int */
+    private /*@Nullable*/ ISort makeBitVec(long length, IPos pos) throws IVisitor.VisitorException {
+        if (length > Integer.MAX_VALUE) {
+            error("The bit-vector width " + length + " is too large (at most " + Integer.MAX_VALUE + ")", pos);
+            return null;
+        }
+        return makeBitVec((int)length);
+    }
+
     private ISort makeBitVec(int length) throws IVisitor.VisitorException {
         List<IExpr.IIndex> nums = new LinkedList<IExpr.IIndex>();
         nums.add(smtConfig.exprFactory.numeral(length));
@@ -1275,6 +1284,10 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         if (pid.indices().size() != count) { error(errorMsg, pid.pos()); return false; }
         for (IIndex idx : pid.indices()) {
             if (!(idx instanceof INumeral)) { error(errorMsg, pid.pos()); return false; }
+        }
+        for (IIndex idx : pid.indices()) {
+            String tooLarge = Utils.indexTooLarge((INumeral)idx);
+            if (tooLarge != null) { error(tooLarge, idx.pos()); return false; }
         }
         return true;
     }

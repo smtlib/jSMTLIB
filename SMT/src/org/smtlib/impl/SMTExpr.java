@@ -32,13 +32,13 @@ public abstract class SMTExpr implements IExpr {
 
     /** This class represents an SMT Numeral expression or syntax token */
     static public class Numeral extends Literal<BigInteger> implements INumeral {
-        /** A value equivalent to the BigInteger, when it is in range. */
+        /** The value, or Integer.MAX_VALUE if it is larger */
         protected int number;
 
-        /** Constructs a Numeral with the given value. */  // FIXME - test with too big a number
+        /** Constructs a Numeral with the given value. */
         public Numeral(BigInteger i) {
             super(i);
-            number = value.intValue();
+            number = value.bitLength() > 31 ? Integer.MAX_VALUE : value.intValue();
         }
 
         /** Constructs a Numeral with the given value. */
