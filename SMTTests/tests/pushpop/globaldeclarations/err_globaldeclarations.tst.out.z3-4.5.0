@@ -1,5 +1,5 @@
 success
 success
 success
-(error "Error writing to solver: (reset-assertions) java.io.IOException: Interrupted while waiting for solver output")
-(error "Error writing to solver: (declare-fun a () Bool) java.io.IOException: Interrupted while waiting for solver output")
+success
+(error "line 6 column 23: invalid declaration, constant 'a' (with the given signature) already declared")

@@ -1,0 +1,5 @@
+(error "state of the most recent check-sat command is not known")
+(:max-memory VALUE :memory VALUE :num-allocs VALUE)
+(error "line 4 column 12: logic must be set before initialization")
+(error "state of the most recent check-sat command is not known")
+(:max-memory VALUE :memory VALUE :num-allocs VALUE)

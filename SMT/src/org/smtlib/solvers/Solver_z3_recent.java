@@ -83,6 +83,20 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
         return before5_1;
     }
 
+    /** Whether this z3 is a version before 4.10; null until first needed */
+    private /*@Nullable*/ Boolean before4_10 = null;
+
+    /** z3 before 4.10 does not escape a quote inside the string it echoes ("q"(r" for "q""(r"), so the
+     *  reply may never balance (#210); such an echo is answered here with its argument */
+    @Override
+    public IResponse echo(org.smtlib.IExpr.IStringLiteral arg) {
+        if (arg.value().indexOf('"') >= 0) {
+            if (before4_10 == null) before4_10 = versionBefore(cmds[0], 4, 10);
+            if (before4_10) return arg;
+        }
+        return super.echo(arg);
+    }
+
     /** Whether the z3 executable's version (from "z3 -version", e.g. "Z3 version 4.16.0 - 64 bit") is
      *  before major.minor; false if it cannot be told */
     static boolean versionBefore(String executable, int major, int minor) {
