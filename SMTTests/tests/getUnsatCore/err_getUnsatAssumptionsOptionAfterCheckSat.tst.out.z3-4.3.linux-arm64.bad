@@ -2,5 +2,5 @@ success
 success
 success
 sat
-unsupported
+(error "The value of the :produce-unsat-assumptions option must be set before the set-logic command")
 unsupported

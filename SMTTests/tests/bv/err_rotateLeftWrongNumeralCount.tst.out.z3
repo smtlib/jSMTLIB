@@ -1,3 +1,3 @@
 success
 success
-(error "line 4 column 40: rotate left expects one integer parameter")
+(error "line 4 column 41: rotate left expects one integer parameter")

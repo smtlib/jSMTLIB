@@ -1,4 +1,4 @@
 success
 success
 success
-(error "<stdin>:5:5: Not enough levels on assertion stack")
+(error "<stdin>:5:6: Not enough levels on assertion stack")

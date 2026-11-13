@@ -6,6 +6,6 @@ success
 success
 success
 unsat
-(error "<stdin>:13:10: Context is inconsistent")
-(error "<stdin>:14:14: Context is inconsistent")
+(error "<stdin>:13:11: Context is inconsistent")
+(error "<stdin>:14:15: Context is inconsistent")
 (error "The get-assignment command is only valid immediately after check-sat returned sat or unknown")

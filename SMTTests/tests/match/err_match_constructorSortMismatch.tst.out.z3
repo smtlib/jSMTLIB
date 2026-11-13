@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "line 6 column 30: invalid function declaration reference, unknown indexed function node")
+(error "line 6 column 31: invalid function declaration reference, unknown indexed function node")

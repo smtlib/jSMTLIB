@@ -13,7 +13,8 @@ import java.nio.CharBuffer;
  * <P>
  * The characters 
  * read are held in an internal char array, whose size grows as needed; it starts as initialSize and
- * is expanded to currentSize*sizeMultiple + sizeIncrease whenever needed.
+ * is expanded to currentSize*sizeMultiple + sizeIncrease whenever needed, up to maxBufferSize; input
+ * longer than that is an error.
  * <P>
  * The CharSequenceReader is an unconventional CharSequence in that its length() is not known; 
  * whether this will cause problems
@@ -63,6 +64,13 @@ public abstract class CharSequenceInfinite implements CharSequence {
     //@ invariant sizeMultiple >= 1 && (sizeIncrease==0 ==> sizeMultiple > 1);
     protected double sizeMultiple;
 
+    /** The largest array the JVM can be relied on to allocate (as in the JDK's own collections) */
+    public static final int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
+
+    /** The largest the internal char array may grow; input beyond it is an error (#192 item 14) */
+    //@ invariant maxBufferSize > 0;
+    protected int maxBufferSize = MAX_BUFFER_SIZE;
+
     /** The internal char array that holds characters as they are read */
     protected char /*@NonNull*/[] buf;
 
@@ -93,7 +101,8 @@ public abstract class CharSequenceInfinite implements CharSequence {
             if (index >= buf.length) {
                 // We need +1 because one needs a buffer of at least size 2 to include index=1
                 // We add an additional +1 so that there is room to hold an End-of-input character if necessary
-                expandBuffer(index+2);
+                // (in long, as index + 2 can exceed Integer.MAX_VALUE)
+                expandBuffer(index + 2L);
             }
             try {
                 while (amountRead <= index) {
@@ -127,23 +136,29 @@ public abstract class CharSequenceInfinite implements CharSequence {
     //@ ensures buf[0..\old(amountRead)-1] == \old(buf[0..amountRead-1]);
     abstract protected boolean readChars() throws java.io.IOException ;
 
-    /** This expands the buffer to be at least as large as the argument; the buffer is expanded
-     * even if it is already of adequate size.
-     * 
+    /** This expands the buffer to be at least as large as the argument, and at most maxBufferSize; the
+     * buffer is expanded even if it is already of adequate size. The growth is computed in double and
+     * long and capped before narrowing to int, so it cannot overflow.
+     *
      * @param newSize minimum size of the expanded buffer
      */
     //@ requires newSize > 0;
     //@ modifies buf;
-    //@ ensures buf.length >= newSize && buf.length > \old(buf.length);
+    //@ ensures buf.length >= newSize && buf.length > \old(buf.length) && buf.length <= maxBufferSize;
     //@ ensures (\forall int i; 0<=i && i<amountRead; buf[i] == \old(buf[i]));
-    private void expandBuffer(int newSize) {
-        int newlength = buf.length;
+    //@ signals (RuntimeException) newSize > maxBufferSize;
+    private void expandBuffer(long newSize) {
+        if (newSize > maxBufferSize) {
+            throw new RuntimeException(new IOException("The input is longer than the allowed maximum of "
+                    + maxBufferSize + " characters"));
+        }
+        long newlength = buf.length;
         do {
-            // FIXME - the following computation is not good enough
-            int k = (int) Math.ceil(newlength*sizeMultiple+sizeIncrease);
-            newlength = (k <= newlength) ? newlength+100 : k; // check for both bad parameters and for integer overflow
+            double grown = Math.ceil(newlength*sizeMultiple + sizeIncrease);
+            // +100 if sizeMultiple and sizeIncrease do not grow it; at most maxBufferSize
+            newlength = Math.min(maxBufferSize, grown > newlength ? (long) grown : newlength + 100);
         } while (newSize > newlength);
-        char[] nbuf = new char[newlength];
+        char[] nbuf = new char[Math.toIntExact(newlength)]; // throws, rather than wraps, if the cap ever exceeds int
         System.arraycopy(buf,0,nbuf,0,amountRead);
         buf = nbuf;
     }

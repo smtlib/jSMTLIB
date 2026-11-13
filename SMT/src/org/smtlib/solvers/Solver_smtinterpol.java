@@ -37,7 +37,7 @@ public class Solver_smtinterpol extends AbstractSolver implements ISolver {
 
     /** SMTInterpol's error messages begin "{@code <stdin>:L:C:}", counting the lines of its whole input */
     private static final java.util.List<java.util.regex.Pattern> LINE_NUMBERS =
-            java.util.List.of(java.util.regex.Pattern.compile("(<stdin>:)(\\d+)(:)"));
+            java.util.List.of(java.util.regex.Pattern.compile("(<stdin>:)(\\d+)(:)(\\d+)"));
 
     /** SMTInterpol 2.5 has no define-const */
     @Override
@@ -48,6 +48,12 @@ public class Solver_smtinterpol extends AbstractSolver implements ISolver {
     @Override
     protected java.util.List<java.util.regex.Pattern> lineNumberPatterns() {
         return LINE_NUMBERS;
+    }
+
+    /** SMTInterpol counts columns from 0 */
+    @Override
+    protected int columnCorrection() {
+        return 1;
     }
 
     /** Creates an instance of the solver. The base launch command ("java -jar
@@ -89,10 +95,6 @@ public class Solver_smtinterpol extends AbstractSolver implements ISolver {
         return super.start();
     }
 
-    @Override
-    protected IResponse afterStart() throws IOException {
-        return sendSeed();
-    }
 
     // The checks below correct SMTInterpol 2.5 answering get- commands that SMT-LIB makes errors; it
     // reports the other cases itself. It answers get-model and get-value with :produce-models off,

@@ -80,7 +80,7 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
         // Can't turn off printing success, or we get no feedback
 //        solverProcess.sendAndListen("(set-option :print-success true)\n"); // Z3 4.4.0 needs this because it mistakenly has the default for :print-success as false
         //if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
-        return sendSeed();
+        return null;
     }
 
     @Override
@@ -98,7 +98,7 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
     // in a bogus error response. AbstractSolver's default (a real S-expression parse) is
     // correct for current yices2.
     //
-    // get_option() used to be overridden here too, unwrapping a Response.Seq that current
+    // get_option() used to be overridden here too, unwrapping a Response.AttributeList that current
     // yices2 apparently no longer produces: tried 13 different option keys (booleans,
     // strings, numerals, unsupported cases) against a real yices2 binary and never
     // triggered the wrapped shape the override was unwrapping. Removed rather than kept as

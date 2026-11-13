@@ -1,3 +1,3 @@
 success
 success
-(error "line 4 column 15: unsat core is not available")
+(error "line 4 column 16: unsat core is not available")

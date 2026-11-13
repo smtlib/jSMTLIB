@@ -4,4 +4,4 @@ success
 sat
 ((x 0) ((+ x 1) 1))
 (((* x x) 0))
-(error "<stdin>:10:39: Quantifiers not supported in model evaluation")
+(error "<stdin>:10:40: Quantifiers not supported in model evaluation")

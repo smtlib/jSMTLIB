@@ -401,6 +401,10 @@ public class SMTCommandLineTests {
         assertError(run("--port", "fast"), "The --port option expects an integer argument: fast");
     }
 
+    @Test public void portEmpty() {
+        assertError(run("--port", ""), "The --port option expects an integer argument: ");
+    }
+
     @Test public void timeoutNonNumeric() {
         assertError(run("--timeout", "fast"), "The --timeout option expects a numeric value, in seconds: fast");
     }

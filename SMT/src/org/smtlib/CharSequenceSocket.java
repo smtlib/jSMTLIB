@@ -17,15 +17,15 @@ import java.net.Socket;
  * read are held in an internal char array, whose size grows as needed; it starts as initialSize and
  * is expanded to currentSize*sizeMultiple + sizeIncrease whenever needed.
  * <P>
- * The CharSequenceReader is an unconventional CharSequence in that its length() is not known; 
+ * The CharSequenceSocket is an unconventional CharSequence in that its length() is not known; 
  * whether this will cause problems
- * in some uses of the CharSequenceReader is unknown.  The user should not use the value of length()
+ * in some uses of the CharSequenceSocket is unknown.  The user should not use the value of length()
  * directly; it seems to work in the ways it is called from Pattern.matcher.
  * @author David R. Cok
  *
  */
 
-// FIXME - review
+// FIXME - end of input is never reported (#30); whether socket mode stays is #139
 public class CharSequenceSocket extends CharSequenceInfinite {
 
     /** The socket from which characters are read */
@@ -58,6 +58,11 @@ public class CharSequenceSocket extends CharSequenceInfinite {
     /** Internal state - the current Reader for fetching characters */
     private /*@Nullable*/ Reader rdr = null;
 
+    /** Unlike the superclass contract, this never returns false: the reader reads "forever", that is,
+     * until it is explicitly closed. One SMT session spans a series of client connections, so when a
+     * client disconnects (or sends a 0 char) this waits for the next client rather than reporting end
+     * of input. The session ends only on (exit) or when the server process is stopped (#30).
+     */
     //@ requires !needsNewConnection => rdr != null;
     @Override
     protected boolean readChars() throws java.io.IOException {
@@ -71,7 +76,7 @@ public class CharSequenceSocket extends CharSequenceInfinite {
 
                 // Create the input and output streams
                 // FIXME - use a listener?
-                // FIXME - are there any other exceptions?  what if the connection is unexpectedly broken
+                // FIXME - a connection broken unexpectedly is not handled (#30, #139)
                 smtConfig.log.setChannels(new PrintStream(clientSocket.getOutputStream(),true), smtConfig.log.getDiag());
                 rdr = new BufferedReader(
                         new InputStreamReader(

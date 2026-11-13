@@ -3,5 +3,5 @@ success
 success
 unsupported
 success
-(error "line 9 column 25: invalid sorted variables: unknown sort 'A'")
+(error "line 9 column 26: invalid sorted variables: unknown sort 'A'")
 sat

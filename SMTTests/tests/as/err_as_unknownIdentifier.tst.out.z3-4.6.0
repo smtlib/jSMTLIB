@@ -1,2 +1,2 @@
 success
-(error "line 3 column 36: unknown function/constant zzz")
+(error "line 3 column 37: unknown function/constant zzz")

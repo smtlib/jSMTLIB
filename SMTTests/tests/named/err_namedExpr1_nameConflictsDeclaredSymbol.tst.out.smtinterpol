@@ -1,4 +1,4 @@
 success
 success
 success
-(error "<stdin>:5:22: Function q is already defined.")
+(error "<stdin>:5:23: Function q is already defined.")

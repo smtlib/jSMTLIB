@@ -1,5 +1,5 @@
 (error "unknown logic: QF_EIA")
-(error "at line 3, column 19: undefined sort: Int")
+(error "at line 3, column 18: undefined sort: Int")
 (error "The solver process has exited")
 (error "The solver process has exited")
 (error "The solver process has exited")

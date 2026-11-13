@@ -1,7 +1,7 @@
 success
 success
-(error "<stdin>:5:12: Option :produce-proofs can only be changed before setting the logic")
-(error "<stdin>:6:12: Option :produce-unsat-cores can only be changed before setting the logic")
-(error "<stdin>:7:12: Option :produce-assignments can only be changed before setting the logic")
-(error "<stdin>:8:12: Option :produce-unsat-assumptions can only be changed before setting the logic")
+(error "<stdin>:5:13: Option :produce-proofs can only be changed before setting the logic")
+(error "<stdin>:6:13: Option :produce-unsat-cores can only be changed before setting the logic")
+(error "<stdin>:7:13: Option :produce-assignments can only be changed before setting the logic")
+(error "<stdin>:8:13: Option :produce-unsat-assumptions can only be changed before setting the logic")
 success

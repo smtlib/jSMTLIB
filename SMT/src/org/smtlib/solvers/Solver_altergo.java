@@ -101,6 +101,12 @@ public class Solver_altergo extends AbstractSolver implements ISolver {
         return null;
     }
 
+    /** Alt-Ergo has no random seed */
+    @Override
+    protected boolean hasSeedOption() {
+        return false;
+    }
+
     /** Alt-Ergo writes nothing for a successful command and answers {@code (set-option :print-success
      *  true)} with unsupported; its commands are therefore sent as when pipelining, each followed by an
      *  echo that marks the end of its response */

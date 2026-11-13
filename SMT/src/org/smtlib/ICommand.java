@@ -223,7 +223,8 @@ public interface ICommand extends INode, IPos.IPosable {
          * org.smtlib.solvers.Solver_test#declare_fun} branches on null-vs-non-null directly to
          * decide whether --relax is required, and a par-form's parameter list is never actually
          * empty in practice (the grammar requires {@code param+}), so there is no "empty
-         * par-form" state this could be confused with. */   // FIXME - still experimental?
+         * par-form" state this could be confused with. */
+        // FIXME - still needed, now that SMT-LIB 2.7's sort parameters give polymorphism (#178)?
         default List<ISort.IParameter> parameters() { return null; }
     }
 

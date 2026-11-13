@@ -1,7 +1,7 @@
 success
 success
 success
-(error "<stdin>:8:13: Unknown function symbol undeclared.")
+(error "<stdin>:8:14: Unknown function symbol undeclared.")
 success
 "after the error"
 success

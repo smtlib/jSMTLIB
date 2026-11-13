@@ -1,4 +1,4 @@
 success
 success
 success
-(error "line 5 column 28: sort already defined Color")
+(error "line 5 column 29: sort already defined Color")

@@ -545,6 +545,42 @@ public class SolverProcess {
         return linesSent + 1;
     }
 
+    /** Whether the last complete line sent ended in a comment (see {@link #nextLineFollowsComment}) */
+    private boolean afterCommentLine = false;
+    /** The state of the line being sent: whether a comment has begun on it, and whether a string
+     *  literal or quoted symbol is open (in which a ; begins no comment) */
+    private boolean lineHasComment = false, inString = false, inBars = false;
+
+    /** Whether the line the next text sent starts on directly follows a line that ended in a comment
+     *  (z3 before 5.1.0 counts columns one higher on such a line, #196) */
+    public boolean nextLineFollowsComment() {
+        return afterCommentLine;
+    }
+
+    /** Counts the lines in text sent, noting which end in a comment */
+    private void scanSent(String text) {
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '\n') {
+                linesSent++;
+                afterCommentLine = lineHasComment;
+                lineHasComment = false;
+            } else if (lineHasComment) {
+                // the rest of the line is comment
+            } else if (inString) {
+                if (c == '"') inString = false;
+            } else if (inBars) {
+                if (c == '|') inBars = false;
+            } else if (c == '"') {
+                inString = true;
+            } else if (c == '|') {
+                inBars = true;
+            } else if (c == ';') {
+                lineHasComment = true;
+            }
+        }
+    }
+
     /** Sends all the given text arguments, then (if listen is true) listens for the designated end marker text */
     public /*@Nullable*/ String send(boolean listen, String ... args) throws IOException {
         // Read once: exit() on another thread may null them (#156)
@@ -590,7 +626,7 @@ public class SolverProcess {
         try {
             for (String arg: args) {
                 to.write(arg);
-                for (int i = 0; i < arg.length(); i++) if (arg.charAt(i) == '\n') linesSent++;
+                scanSent(arg);
             }
             to.flush();
         } catch (IOException e) {

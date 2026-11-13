@@ -20,7 +20,7 @@ import org.smtlib.*;
  *  (against cvc5 1.3.2), none of the CVC4-era workarounds a previous version of this
  *  class used to need still apply: cvc5 handles Bool-sorted quantifiers natively (no
  *  translate() workaround needed), get-value/
- *  get-option return clean standard-shaped responses (no Response.Seq workaround
+ *  get-option return clean standard-shaped responses (no Response.AttributeList workaround
  *  needed), and get-info/get-option round-trip through AbstractSolver's generic
  *  parseResponse without issue -- with one exception, {@link #get_option}, described
  *  below.
@@ -105,12 +105,6 @@ public class Solver_cvc5 extends AbstractSolver implements ISolver {
             cmds = cmds_mac;
         } else {
             cmds = cmds_unix;
-        }
-        if (smtConfig.seed != 0) {
-            List<String> args = new java.util.ArrayList<String>(Arrays.asList(cmds));
-            args.add("--seed");
-            args.add("" + smtConfig.seed);
-            cmds = args.toArray(new String[args.size()]);
         }
         double timeout = smtConfig.timeout;
         double timeoutTotal = smtConfig.timeoutTotal;

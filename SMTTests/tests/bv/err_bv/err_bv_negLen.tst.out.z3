@@ -1,2 +1,2 @@
 success
-(error "line 3 column 28: invalid indexed sort, integer or ')' expected")
+(error "line 3 column 29: invalid indexed sort, integer or ')' expected")

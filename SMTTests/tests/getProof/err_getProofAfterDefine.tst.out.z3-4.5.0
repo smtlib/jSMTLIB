@@ -5,4 +5,4 @@ success
 success
 unsat
 success
-(error "line 10 column 10: proof is not available")
+(error "line 10 column 11: proof is not available")

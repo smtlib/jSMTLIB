@@ -157,12 +157,14 @@ public class Pos implements IPos {
             return this.chars.charAt(pos);
         }
 
-        // FIXME - what about empty lines
+        /** A line terminator belongs to the line it ends (#192), so the beginning of an empty line is its
+         *  terminator's position */
         @Override
         public int lineBeginning(int pos) {
             int p = pos;
             if (p >= chars().length()) p = chars().length()-1; // If the length is indeterminate, length() should be INT_MAX
             if (p > 0 && charAt(p) == '\n' && charAt(p-1) == '\r') --p;
+            if (p >= 0 && (charAt(p) == '\n' || charAt(p) == '\r')) --p;
             char c;
             while (p >= 0 && (c=charAt(p)) != '\n' && c != '\r') --p;
             return p+1;
