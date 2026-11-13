@@ -3,7 +3,7 @@ success
 success
 success
 sat
-(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:8:14: symbol 'x' already defined at line 5 column 14
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:8:16: symbol 'x' already defined at line 5 column 16
 ")
 (error "The solver process has exited")
 (error "The solver process has exited")

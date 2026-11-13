@@ -4,6 +4,6 @@ success
 success
 success
 unsat
-(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:10:14: symbol 'x' already defined at line 6 column 14
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:10:16: symbol 'x' already defined at line 6 column 16
 ")
 (error "The solver process has exited")

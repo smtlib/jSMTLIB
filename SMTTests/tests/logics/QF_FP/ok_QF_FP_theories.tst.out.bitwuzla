@@ -1,5 +1,5 @@
 success
-(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:19: invalid sort 'Real'
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:18: invalid sort 'Real'
 ")
 (error "The solver process has exited")
 (error "The solver process has exited")
