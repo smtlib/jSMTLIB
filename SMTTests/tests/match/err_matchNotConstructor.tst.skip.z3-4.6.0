@@ -1,5 +1,3 @@
-z3-4.6.0 hangs (times out, does not respond at all) on (match ...), confirmed
-reproducible via direct invocation (consistent EXIT 124/timeout, not an
-intermittent race) -- this build predates z3's SMT-LIB2 match-expression
-support and apparently doesn't error cleanly on the unrecognized syntax, it
-just stops responding. No golden captures a hang meaningfully; skip instead.
+z3-4.6.0 mishandles the singular declare-datatype: its reply arrives only after the next input, and the
+datatype is never declared (later uses report an unknown sort). declare-datatypes and match work.
+Checked directly 2026-11-13.
