@@ -633,6 +633,9 @@ public class AbstractSolver implements ISolver {
      *  {@link #readPipelined(boolean)} with true itself before executing a command that is checked
      *  against an earlier response (such as get-value against check-sat). */
     public IResponse sendPipelined(ICommand cmd) {
+        // as in execute: once the solver has exited, the adapter's own checks are not reached
+        IResponse exited = exitedResponse();
+        if (exited != null) return exited;
         capturing = true;
         try {
             return cmd.execute(this);
