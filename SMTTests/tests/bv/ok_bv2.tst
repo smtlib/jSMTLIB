@@ -1,4 +1,4 @@
-; checks the sorts of bit-vector functions
+; checks the sorts of bit-vector functions only: the assertions are not mutually consistent, so there is no check-sat (ok_bvOps.tst checks values)
 (set-logic QF_BV)
 (declare-fun t () (_ BitVec 3))
 (declare-fun x () (_ BitVec 3))
