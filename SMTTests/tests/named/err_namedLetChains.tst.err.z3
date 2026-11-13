@@ -1,0 +1,8 @@
+(assert (forall ((q Bool)) (let ((r (and q p))) (! r :named N1)))) ; error - r is bound to an open term
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (forall ((q Bool)) (let ((r q)) (let ((s r)) (! s :named N2))))) ; error - s is r is q
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (forall ((q Bool)) (let ((r q)) (! (and r p) :named N3)))) ; error
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (forall ((q Bool)) (let ((r p)) (! (and r q) :named N4)))) ; error - q is free in the named term
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
