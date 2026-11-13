@@ -1,2 +1,2 @@
 success
-(error "line 3 column 29: bit-vector size must be greater than zero")
+(error "line 3 column 30: bit-vector size must be greater than zero")
