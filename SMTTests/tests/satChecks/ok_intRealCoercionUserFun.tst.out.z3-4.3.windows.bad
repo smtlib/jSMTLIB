@@ -1,0 +1,22 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "line 16 column 23: invalid macro application, sort mismatch f")
+sat
+success
+success
+(error "line 20 column 23: invalid macro application, sort mismatch m")
+sat
+success
+success
+(error "line 24 column 20: invalid function application for g, sort mismatch on argument at position 1, expected Real but given Int")
+sat
+success
