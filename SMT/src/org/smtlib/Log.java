@@ -390,6 +390,11 @@ public class Log {
         int b;
         StringBuilder sb = new StringBuilder();
         b = source.lineBeginning(s);
+        // A span that continues past its first line's terminator is marked only to that line's end,
+        // then "..."; one ending at the terminator (e.g. at end of data) keeps its caret there
+        String firstLine = source.textLine(s);
+        boolean continues = e > b + firstLine.length();
+        if (continues) e = b + firstLine.replaceAll("[\\r\\n]+$", "").length();
         String prefix = "";
         String suffix = "";
         int start = 0;
@@ -430,6 +435,7 @@ public class Log {
         while (b++ < e) {
             sb.append('^');
         }
+        if (continues) sb.append("...");
         return sb.toString();
     }
 
