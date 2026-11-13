@@ -411,10 +411,10 @@ public class Parser extends Lexer implements IParser {
     public ISexpr parseSexpr() throws ParserException {
         if (isEOD()) return null;
         ILexToken t = getToken();
-        if (t.toString() == IPLexToken.RP) {
+        if (t.isRP()) {
             throw new ParserException("Unexpected right parenthesis",t.pos());
         }
-        if (t.toString() == IPLexToken.LP) {
+        if (t.isLP()) {
             boolean saved = smtConfig.topLevel;
             try {
                 smtConfig.topLevel = false;
@@ -444,16 +444,16 @@ public class Parser extends Lexer implements IParser {
 
         while (true) {
             ILexToken token = getToken();
-            if (token.toString() == IPLexToken.RP) {
+            if (token.isRP()) {
                 seq.setPos(pos(lp.pos(),token.pos()));
                 if (open.isEmpty()) return seq;
                 Sexpr.Seq done = seq;
                 seq = open.pop();
                 lp = lps.pop();
                 seq.sexprs().add(done);
-            } else if (token.toString() == IPLexToken.EMPTY) {
+            } else if (token.isEOD()) {
                 throw new IParser.ParserException("Unbalanced parentheses at end of input",pos(lp.pos(),lp.pos()));
-            } else if (token.toString() == IPLexToken.LP) {
+            } else if (token.isLP()) {
                 open.push(seq);
                 lps.push(lp);
                 seq = new Sexpr.Seq();
@@ -1101,15 +1101,15 @@ public class Parser extends Lexer implements IParser {
                     pos(lp.pos().charStart(),currentPos()));
         } catch (IllegalAccessException e) {
             // error - could not create a new instance
-            throw error("An exception occured when instantiating class " + clazzName + ": " + e,
+            throw error("An exception occurred when instantiating class " + clazzName + ": " + e,
                     pos(lp.pos().charStart(),currentPos()));
         } catch (InstantiationException e) {
             // error - could not create a new instance
-            throw error("An exception occured when instantiating class " + clazzName + ": " + e,
+            throw error("An exception occurred when instantiating class " + clazzName + ": " + e,
                     pos(lp.pos().charStart(),currentPos()));
         } catch (InvocationTargetException e) {
             // error - could not create a new instance
-            throw error("An exception occured when instantiating class " + clazzName + ": " + e,
+            throw error("An exception occurred when instantiating class " + clazzName + ": " + e,
                     pos(lp.pos().charStart(),currentPos()));
         }
         return new SMTExpr.Logic(smtConfig,name,attributes);

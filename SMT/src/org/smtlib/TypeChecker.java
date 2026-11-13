@@ -67,14 +67,11 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 
     private ISymbol isClosed = null;
 
-    /** Lazily-built, reused across every IDecimal/IStringLiteral this instance visits --
-     *  see {@link #visit(IDecimal)}/{@link #visit(IStringLiteral)}. A fresh TypeChecker
-     *  instance is created per type-check call, so this only helps within a single
-     *  expression tree (e.g. multiple numeric literals in one arithmetic expression), not
-     *  across separate calls -- still a real, common case, and cheaper than reconstructing
-     *  the same symbol from scratch for every literal node visited. */
-    private ISymbol decimalSortSymbol;
-    private ISymbol stringSortSymbol;
+    /** The names under which a theory declares the sort of numeral, decimal and string literals
+     *  (e.g. Ints' (NUMERAL Int)); each literal is sorted by looking its class's name up. */
+    private static final ISymbol NUMERAL_SYM = new SMTExpr.Symbol("NUMERAL".intern());
+    private static final ISymbol DECIMAL_SYM = new SMTExpr.Symbol("DECIMAL".intern());
+    private static final ISymbol STRING_SYM = new SMTExpr.Symbol("STRING".intern());
 
     /** Constructs a formula typechecker from the current symbol table; sorts computed while
      * checking are recorded directly on each IExpr node via IExpr.setSort(). */
@@ -417,7 +414,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
     @Override
     public /*@Nullable*/ ISort visit(INumeral e) {
         if (e.value().signum() < 0) error("A numeral may not be negative: " + e.value(), e.pos());
-        IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("NUMERAL"));
+        IFcnSort sort = symTable.lookup(0,NUMERAL_SYM);
         if (sort == null) error("No sort specified for numeral",e.pos());
         return save(e,sort == null ? null : sort.resultSort());
     }
@@ -1204,7 +1201,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
     /** Returns the Int sort as installed by the active theories (Ints/Reals_Ints), or
      * null if none is installed -- mirrors how numeral literals are sorted (visit(INumeral)). */
     private /*@Nullable*/ ISort makeInt() {
-        IFcnSort sort = symTable.lookup(0,smtConfig.exprFactory.symbol("NUMERAL"));
+        IFcnSort sort = symTable.lookup(0,NUMERAL_SYM);
         return sort == null ? null : sort.resultSort();
     }
 
@@ -1254,8 +1251,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
     @Override
     public /*@Nullable*/ISort visit(IDecimal e) {
         if (e.value().signum() < 0) error("A decimal may not be negative: " + e.value().toPlainString(), e.pos());
-        if (decimalSortSymbol == null) decimalSortSymbol = smtConfig.exprFactory.symbol("DECIMAL");
-        IFcnSort sort = symTable.lookup(0,decimalSortSymbol);
+        IFcnSort sort = symTable.lookup(0,DECIMAL_SYM);
         if (sort == null) result.add(smtConfig.responseFactory.error("No sort specified for decimal literal",e.pos()));
         return save(e,sort == null ? null : sort.resultSort());
     }
@@ -1285,8 +1281,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             int c = e.value().chars().filter(ch -> !smtConfig.isOKString(String.valueOf((char)ch))).findFirst().getAsInt();
             error("A string literal may not contain the character with code " + c, e.pos());
         }
-        if (stringSortSymbol == null) stringSortSymbol = smtConfig.exprFactory.symbol("STRING");
-        IFcnSort sort = symTable.lookup(0,stringSortSymbol);
+        IFcnSort sort = symTable.lookup(0,STRING_SYM);
         if (sort == null) result.add(smtConfig.responseFactory.error("No sort specified for string-literal",e.pos()));
         return save(e,sort == null ? null : sort.resultSort());
     }
@@ -1402,8 +1397,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         }
 
         if (Utils.CHAR.equals(e.head())) {
-            if (stringSortSymbol == null) stringSortSymbol = smtConfig.exprFactory.symbol("STRING");
-            IFcnSort ssort = symTable.lookup(0,stringSortSymbol);
+                IFcnSort ssort = symTable.lookup(0,STRING_SYM);
             if (ssort != null) return checkChar(e, ssort.resultSort());
         }
         if ((sort=symTable.lookup(0,e))==null) {

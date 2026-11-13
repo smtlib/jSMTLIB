@@ -1,0 +1,8 @@
+success
+success
+(error "Parse Error: <shell>:6.61: Cannot name a term in a binder (e.g., quantifiers, definitions)")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

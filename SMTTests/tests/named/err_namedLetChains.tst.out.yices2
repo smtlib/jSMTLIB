@@ -1,0 +1,8 @@
+success
+success
+(error "at line 6, column 110: invalid :named attribute (name is already used)")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
