@@ -1,0 +1,26 @@
+; Int arguments to user-defined two-parameter Real functions beyond the stated one-Int-one-Real case
+; (#211 item 3): two Ints, and a function with both Int and Real parameters.
+; Each check is unsat if the solver reads an Int argument as Real (to_real); a solver that rejects
+; the term reports an error and the check is sat. Int q = 1, r = 2; Real a = 0.5, b = 1.5. See #211.
+(set-logic AUFNIRA)
+(declare-fun q () Int)
+(declare-fun r () Int)
+(declare-fun a () Real)
+(declare-fun b () Real)
+(assert (and (= q 1) (= r 2) (= a 0.5) (= b 1.5)))
+(define-fun f ((x Real) (y Real)) Real (+ x y))
+(define-fun m ((i Int) (x Real)) Real (+ (to_real i) x))
+(declare-fun g (Real Real) Bool)
+(assert (g 1.0 2.0))
+(push 1)
+(assert (not (= (f q r) 3.0)))
+(check-sat)
+(pop 1)
+(push 1)
+(assert (not (= (m q q) 2.0)))
+(check-sat)
+(pop 1)
+(push 1)
+(assert (not (g q r)))
+(check-sat)
+(pop 1)

@@ -1,0 +1,29 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "Parse Error: <shell>:15.25: argument type is not the type of the function's argument type:
+argument:  q
+has type:  Int
+not type: Real
+in term : (g a b q)")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

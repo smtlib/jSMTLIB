@@ -1,0 +1,30 @@
+success
+success
+success
+success
+success
+success
+success
+(error "line 11 column 28: invalid function application, sort mismatch on argument at position 2")
+sat
+success
+success
+(error "line 15 column 28: invalid function application, sort mismatch on argument at position 2")
+sat
+success
+success
+(error "line 19 column 40: invalid rational value passed as an integer")
+sat
+success
+success
+success
+(error "line 24 column 11: invalid rational value passed as an integer")
+success
+success
+success
+unsat
+success
+success
+success
+unsat
+success

@@ -1014,14 +1014,8 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         }
         StringBuilder reason = new StringBuilder();
         ISort matchedResultSort = symTable.lookup(head,argSorts,resultSort,reason);
-        if (matchedResultSort == null && symTable.realsIntsTheorySet && widensToReal(head, argSorts)) {
-            List<ISort> newargs = new LinkedList<ISort>();
-            ISort realSort = makeReal();
-            for (ISort sort: argSorts) newargs.add(isIntSort(sort) ? realSort : sort);
-            // A throwaway StringBuilder, so that `reason` still explains the failure against
-            // the argument sorts as written if this retry fails too
-            ISort retryResultSort = symTable.lookup(head,newargs,resultSort,new StringBuilder());
-            if (retryResultSort != null) matchedResultSort = retryResultSort;
+        if (matchedResultSort == null && symTable.realsIntsTheorySet) {
+            matchedResultSort = lookupReadingIntAsReal(head, argSorts, resultSort);
         }
         if (matchedResultSort == null) {
             String msg;
@@ -1093,30 +1087,37 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         return Utils.BITVEC_SYM.equals(pid.head());
     }
 
-    /** Whether an application of head to arguments of these sorts may read its Int arguments
-     *  as Real, per the :extensions of AUFLIRA and AUFNIRA: for op of rank (op Real Real s),
-     *  t1 of sort Int and t of sort Real, (op t1 t) and (op t t1) mean (op (to_real t1) t) and
-     *  (op t (to_real t1)); (/ t1 t2) with t1, t2 Int means (/ (to_real t1) (to_real t2)).
-     *  More than two arguments qualify only as the n-ary form of a binary :left-assoc,
-     *  :right-assoc, :chainable or :pairwise operator (Sec. 3.6.2), i.e. when head has no
-     *  declaration of that arity; the lookup with Int read as Real then decides the rest. */
-    private boolean widensToReal(IIdentifier head, List<ISort> argSorts) {
-        int n = argSorts.size();
-        if (n < 2) return false;
-        boolean hasReal = false;
-        for (ISort sort: argSorts) {
-            if (isRealSort(sort)) hasReal = true;
-            else if (!isIntSort(sort)) return false;
-        }
-        if (!hasReal && !Utils.SLASH.equals(head)) return false;
-        if (n == 2) return true;
+    /** With Ints and Reals (Reals_Ints), an application that matches no signature as written is
+     *  retried with Int arguments read as Real (to_real). AUFLIRA's and AUFNIRA's :extensions state
+     *  this for (op Real Real s) with one Int and one Real argument, and for (/ Int Int); jSMTLIB
+     *  applies it to every arity, to polymorphic =, distinct and ite, and to every logic with
+     *  Reals_Ints (#211). The first retry reads every Int as Real; the second, for a function with
+     *  both Int and Real parameters, only the Ints whose parameter is Real. Returns the result
+     *  sort, or null if neither retry matches; the caller's reason then explains the failure
+     *  against the sorts as written. */
+    private /*@Nullable*/ ISort lookupReadingIntAsReal(IIdentifier head, List<ISort> argSorts, /*@Nullable*/ ISort resultSort) throws IVisitor.VisitorException {
+        boolean hasInt = false;
+        for (ISort sort: argSorts) if (isIntSort(sort)) hasInt = true;
+        if (!hasInt) return null;
+        ISort realSort = makeReal();
+        List<ISort> allReal = new LinkedList<ISort>();
+        for (ISort sort: argSorts) allReal.add(isIntSort(sort) ? realSort : sort);
+        ISort result = symTable.lookup(head,allReal,resultSort,new StringBuilder());
+        if (result != null) return result;
         List<SymbolTable.Entry> entries = symTable.lookup(head);
-        if (entries != null) {
-            for (SymbolTable.Entry entry: entries) {
-                if (entry.sort.argSorts().length == n) return false;
+        if (entries == null) return null;
+        for (SymbolTable.Entry entry: entries) {
+            ISort[] declared = entry.sort.argSorts();
+            if (entry.parameters != null || declared.length != argSorts.size()) continue;
+            List<ISort> args = new LinkedList<ISort>();
+            for (int k = 0; k < declared.length; k++) {
+                ISort sort = argSorts.get(k);
+                args.add(isIntSort(sort) && isRealSort(declared[k]) ? realSort : sort);
             }
+            result = symTable.lookup(head,args,resultSort,new StringBuilder());
+            if (result != null) return result;
         }
-        return true;
+        return null;
     }
 
     // Real/Int sort checks are only needed here, for the Int-to-Real coercion rule
