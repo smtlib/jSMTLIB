@@ -1361,6 +1361,10 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             if (!checkNumeralIndices(e, 1, "Expected exactly one numeral in a bv identifier")) return null;
             int size = ((INumeral) e.indices().get(0)).intValue();
             BigInteger value = new BigInteger(pname.substring(2));
+            if (size < 1) {
+                error("A bit-vector sort must have a length of at least 1",e.indices().get(0).pos());
+                return null;
+            }
             if (value.bitLength() > size) {
                 error("The value of the bitvector constant is too large for the given size (" + value.bitLength() + " vs. " + size + " bits)",e.pos());
                 return null;

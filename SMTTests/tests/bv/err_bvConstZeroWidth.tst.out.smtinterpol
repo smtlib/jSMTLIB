@@ -1,0 +1,3 @@
+success
+(error "<stdin>:3:16: Unknown function symbol bv1.")
+(error "The solver process has exited")

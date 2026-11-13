@@ -1,0 +1,3 @@
+success
+(error "at line 3, column 19: size must be positive in bitvector constant")
+(error "The solver process has exited")
