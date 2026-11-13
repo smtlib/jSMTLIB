@@ -158,7 +158,7 @@ public abstract class CharSequenceInfinite implements CharSequence {
             // +100 if sizeMultiple and sizeIncrease do not grow it; at most maxBufferSize
             newlength = Math.min(maxBufferSize, grown > newlength ? (long) grown : newlength + 100);
         } while (newSize > newlength);
-        char[] nbuf = new char[(int) newlength];
+        char[] nbuf = new char[Math.toIntExact(newlength)]; // throws, rather than wraps, if the cap ever exceeds int
         System.arraycopy(buf,0,nbuf,0,amountRead);
         buf = nbuf;
     }
