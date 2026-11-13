@@ -1,13 +1,7 @@
-/*
- * This file is part of the SMT project.
- * Copyright 2010 David R. Cok
- * Created August 2010
- */
-package org.smtlib.sexpr;
+package org.smtlib;
 
-import org.smtlib.IParser;
 import org.smtlib.IParser.ParserException;
-import org.smtlib.SMT;
+import org.smtlib.sexpr.ILexToken;
 
 /** Reading the lexical tokens of a source, one at a time, with one token of lookahead. Lexer
  *  implements it, and IParser extends it. */

@@ -20,7 +20,7 @@ import org.smtlib.sexpr.Parser;
  * of the concrete syntax being used; a specific implementation of this interface
  * will implement a specific concrete syntax for the SMT-LIB abstract syntax.
  */
-public interface IParser extends org.smtlib.sexpr.ILexer {
+public interface IParser extends ILexer {
     // FIXME - where are errors logged? or are they in the ParserException
 
     /** Returns the configuration with which the parser was instantiated. */

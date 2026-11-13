@@ -8,7 +8,7 @@ import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.smtlib.SMT;
 import org.smtlib.sexpr.ILexToken;
-import org.smtlib.sexpr.ILexer;
+import org.smtlib.ILexer;
 
 /**
  * ILexer.getToken(config, text) returns the first token of text, with positions in text. A JUnit
