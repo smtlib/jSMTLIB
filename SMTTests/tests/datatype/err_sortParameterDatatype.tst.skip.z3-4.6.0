@@ -1,0 +1,2 @@
+z3-4.6.0 holds its reply to a successful declare-datatype until more input arrives, so the
+last declaration (M) times out (checked directly, 2026-11-12).

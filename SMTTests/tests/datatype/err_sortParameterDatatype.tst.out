@@ -1,0 +1,6 @@
+success
+success
+success
+(error "A datatype's selector sort may not contain the sort parameter A, which is not one of the datatype's own")
+(error "A datatype's selector sort may not contain the sort parameter A, which is not one of the datatype's own")
+success

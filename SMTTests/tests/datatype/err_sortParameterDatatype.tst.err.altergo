@@ -1,0 +1,6 @@
+(declare-sort-parameter A)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-datatype D ((mk (f A))))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-datatype L (par (X) ((nil) (cons (hd A) (tl (L X))))))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

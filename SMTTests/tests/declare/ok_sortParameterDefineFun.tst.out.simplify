@@ -1,0 +1,10 @@
+success
+success
+unsupported
+(error "No such sort symbol declared: A")
+(error "No such sort symbol declared: A")
+(error "Unknown predicate symbol g with argument types Int")
+(error "Unknown predicate symbol g with argument types Bool")
+(error "Unknown predicate symbol h with argument types Int")
+(error "Unknown predicate symbol h with argument types Bool")
+unknown

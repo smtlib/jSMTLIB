@@ -656,7 +656,7 @@ public final class SymbolTable {
      * a parameter that no argument determines, e.g. E in (as nil (Lst E)). */
     private ISort matchExact(Entry entry, List<ISort> argSorts, /*@Nullable*/ ISort resultSort) {
         ISort[] declaredArgs = entry.sort.argSorts();
-        if (entry.parameters == null) {
+        if (entry.parameters == null || entry.parameters.isEmpty()) {
             for (int i = 0; i < declaredArgs.length; i++) {
                 if (!declaredArgs[i].equals(argSorts.get(i))) {
                     throw new NoMatch("Argument " + (i+1) + " of " + smtConfig.defaultPrinter.toString(entry.name)
@@ -793,6 +793,24 @@ public final class SymbolTable {
         throw new NoMatch(nm + " does not accept more than two arguments");
     }
 
+    /** Whether the constant name (as lookup(0, name) finds it) is polymorphic in a sort parameter of its
+     *  sort, so that a use of it must give its sort with as (SMT-LIB 2.7, 3.6.3) */
+    public boolean undeterminedConstant(IIdentifier name) {
+        for (Map<IIdentifier,List<Entry>> set: symStack) {
+            List<Entry> entrylist = set.get(name);
+            if (entrylist == null) continue;
+            for (Entry e: entrylist) {
+                if (e.sort.argSorts().length != 0) continue;
+                if (e.parameters == null || e.parameters.isEmpty()) return false;
+                for (ISort.IParameter p: parametersIn(e.sort.resultSort(), new LinkedList<ISort.IParameter>())) {
+                    if (e.parameters.contains(p)) return true;
+                }
+                return false;
+            }
+        }
+        return false;
+    }
+
     /** Whether the sort contains a sort parameter. */
     public static boolean containsParameter(ISort sort) {
         return !parametersIn(sort, new LinkedList<ISort.IParameter>()).isEmpty();
@@ -800,7 +818,7 @@ public final class SymbolTable {
 
     /** Adds to found, in order of first occurrence, the sort parameters the sort contains, including
      *  those a sort name stands for (declare-sort-parameter); returns found. */
-    private static List<ISort.IParameter> parametersIn(ISort sort, List<ISort.IParameter> found) {
+    public static List<ISort.IParameter> parametersIn(ISort sort, List<ISort.IParameter> found) {
         if (sort instanceof ISort.IApplication) sort = ((ISort.IApplication) sort).expand();
         if (sort instanceof ISort.IParameter) {
             if (!found.contains(sort)) found.add((ISort.IParameter) sort);

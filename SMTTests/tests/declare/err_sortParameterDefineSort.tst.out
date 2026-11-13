@@ -1,0 +1,5 @@
+success
+success
+success
+(error "A sort definition may not contain the global sort parameter A")
+success

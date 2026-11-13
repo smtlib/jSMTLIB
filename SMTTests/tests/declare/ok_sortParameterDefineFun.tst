@@ -1,0 +1,12 @@
+; A definition over a sort parameter is polymorphic, as a declaration is (SMT-LIB 2.7, 4.2.3): within it
+; x has sort A, and g and h apply at Int and at Bool (#178)
+(set-info :smt-lib-version 2.7)
+(set-logic ALL)
+(declare-sort-parameter A)
+(define-fun g ((x A)) A x)
+(define-fun-rec h ((x A)) A x)
+(assert (= (g 1) 1))
+(assert (g true))
+(assert (= (h 2) 2))
+(assert (h true))
+(check-sat)
