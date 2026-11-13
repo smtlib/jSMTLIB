@@ -39,6 +39,12 @@ public class Solver_smtinterpol extends AbstractSolver implements ISolver {
     private static final java.util.List<java.util.regex.Pattern> LINE_NUMBERS =
             java.util.List.of(java.util.regex.Pattern.compile("(<stdin>:)(\\d+)(:)(\\d+)"));
 
+    /** SMTInterpol 2.5 has no define-const */
+    @Override
+    protected boolean hasDefineConst() {
+        return false;
+    }
+
     @Override
     protected java.util.List<java.util.regex.Pattern> lineNumberPatterns() {
         return LINE_NUMBERS;

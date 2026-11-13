@@ -1,0 +1,2 @@
+(define-const x Bool (and true z))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
