@@ -1,0 +1,10 @@
+(set-logic AUFNIRA)
+           ^^^^^^^
+(declare-fun q () Int)
+^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun a () Real)
+^^^^^^^^^^^^^^^^^^^^^^^
+(assert (= a q))
+^^^^^^^^^^^^^^^^
+(assert (= q a))
+^^^^^^^^^^^^^^^^

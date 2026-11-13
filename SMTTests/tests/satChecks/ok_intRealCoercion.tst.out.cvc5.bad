@@ -1,0 +1,5 @@
+success
+success
+success
+(error "Parse Error: <shell>:7.16: Due to strict parsing, we require the arguments of GEQ to have the same type")
+(error "The solver process has exited")
