@@ -9,7 +9,7 @@ import org.smtlib.impl.Response;
 
 
 /** A {@link Log.IListener} used by the parsing/type-checking test base classes
- *  (e.g. {@link LogicsBase}, {@link ParseCommand}, {@link ParseExpressions},
+ *  (e.g. {@link ParseCommand}, {@link ParseExpressions},
  *  {@link ParseExpressionErrors}, {@link RoundTripTest}, {@link LogicTests}) to capture
  *  errors reported through {@code smtConfig.log} rather than printing them.
  *
