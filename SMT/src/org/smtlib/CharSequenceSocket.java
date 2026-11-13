@@ -17,9 +17,9 @@ import java.net.Socket;
  * read are held in an internal char array, whose size grows as needed; it starts as initialSize and
  * is expanded to currentSize*sizeMultiple + sizeIncrease whenever needed.
  * <P>
- * The CharSequenceReader is an unconventional CharSequence in that its length() is not known; 
+ * The CharSequenceSocket is an unconventional CharSequence in that its length() is not known; 
  * whether this will cause problems
- * in some uses of the CharSequenceReader is unknown.  The user should not use the value of length()
+ * in some uses of the CharSequenceSocket is unknown.  The user should not use the value of length()
  * directly; it seems to work in the ways it is called from Pattern.matcher.
  * @author David R. Cok
  *
@@ -58,6 +58,10 @@ public class CharSequenceSocket extends CharSequenceInfinite {
     /** Internal state - the current Reader for fetching characters */
     private /*@Nullable*/ Reader rdr = null;
 
+    /** Unlike the superclass contract, this never returns false: one SMT session spans a series of
+     * client connections, so when a client disconnects (or sends a 0 char) this waits for the next
+     * client rather than reporting end of input. The session ends only on (exit) (#30).
+     */
     //@ requires !needsNewConnection => rdr != null;
     @Override
     protected boolean readChars() throws java.io.IOException {
