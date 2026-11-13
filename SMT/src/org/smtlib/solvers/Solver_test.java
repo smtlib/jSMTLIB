@@ -253,7 +253,7 @@ public class Solver_test implements ISolver {
         }
         for (IExpr e: exprs) {
             List<IResponse> responses = TypeChecker.check(symTable, e);
-            if (!responses.isEmpty()) return responses.get(0); // FIXME - return all?
+            if (!responses.isEmpty()) return responses.get(0); // FIXME - return all errors (#116)
         }
 
         checkSatStatus = statusResult();
@@ -511,7 +511,7 @@ public class Solver_test implements ISolver {
                 return smtConfig.responseFactory.error("Symbol " + encodedName + " is already defined",cmd.symbol().pos());
             }
         } else {
-            return list.get(0); // FIXME - return all?
+            return list.get(0); // FIXME - return all errors (#116)
         }
     }
 
@@ -554,7 +554,7 @@ public class Solver_test implements ISolver {
                 return smtConfig.responseFactory.error("Symbol " + encodedName + " is already defined",cmd.symbol().pos());
             }
         } else {
-            return list.get(0); // FIXME - return all?
+            return list.get(0); // FIXME - return all errors (#116)
         }
     }
 
@@ -587,7 +587,7 @@ public class Solver_test implements ISolver {
                 return smtConfig.responseFactory.error("Symbol " + encodedName + " is already defined",cmd.symbol().pos());
             }
         } else {
-            return list.get(0); // FIXME - return all?
+            return list.get(0); // FIXME - return all errors (#116)
         }
     }
 
@@ -636,7 +636,7 @@ public class Solver_test implements ISolver {
             checkSatStatus = null;
             return smtConfig.responseFactory.success();
         } else {
-            return list.get(0); // FIXME - return all errors?
+            return list.get(0); // FIXME - return all errors (#116)
         }
     }
 
@@ -671,7 +671,7 @@ public class Solver_test implements ISolver {
                 return smtConfig.responseFactory.success();
             }
         } else {
-            return list.get(0); // FIXME - return all errors?
+            return list.get(0); // FIXME - return all errors (#116)
         }
     }
 

@@ -21,7 +21,7 @@ import org.smtlib.solvers.Solver_test;
 /** Implements the non-standard what command.  This command takes an arbitrary number of
  * arguments, all Symbols, and prints the Sort of each one; if there are no arguments,
  * the command prints all of the defined ids.
- * FIXME - the output is not in SExpr form.
+ * FIXME - the output is not in s-expression form (#81).
  * @author David R. Cok
  *
  */
