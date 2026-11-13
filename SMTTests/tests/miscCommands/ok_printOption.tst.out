@@ -1,0 +1,11 @@
+; OPTIONS: --print
+; --print parses and type-checks each command, with no solver process, and prints it with the default
+; printer in place of its response (#205 item 46)
+(set-option :produce-models true)
+(set-logic QF_UFLIA)
+(declare-fun f (Int Int) Int)
+(define-fun g ((x Int)) Int (+ x 1))
+(assert (= (f 1 2) (g 3)))
+(check-sat)
+(get-value ((f 1 2)))
+(exit)

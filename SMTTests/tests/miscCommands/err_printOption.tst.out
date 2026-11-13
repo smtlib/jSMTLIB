@@ -1,0 +1,7 @@
+; OPTIONS: --print
+; --print reports a command that does not type-check, as usual, and prints the others (#205 item 46)
+(set-logic QF_LIA)
+(declare-const x Int)
+(error "Argument 2 of + has sort Bool, expected Int")
+(error "Unknown constant symbol y")
+(assert (> x 0))
