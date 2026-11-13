@@ -20,7 +20,7 @@ import org.smtlib.*;
  *  (against cvc5 1.3.2), none of the CVC4-era workarounds a previous version of this
  *  class used to need still apply: cvc5 handles Bool-sorted quantifiers natively (no
  *  translate() workaround needed), get-value/
- *  get-option return clean standard-shaped responses (no Response.Seq workaround
+ *  get-option return clean standard-shaped responses (no Response.AttributeList workaround
  *  needed), and get-info/get-option round-trip through AbstractSolver's generic
  *  parseResponse without issue -- with one exception, {@link #get_option}, described
  *  below.
