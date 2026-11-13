@@ -1,0 +1,5 @@
+; (reset) returns the output channels to those at startup (#205 item 35)
+(set-option :regular-output-channel "stderr")
+(echo "to stderr")
+(reset)
+(echo "to stdout")

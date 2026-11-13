@@ -59,7 +59,6 @@ public class AbstractSolver implements ISolver {
 
     final protected IKeyword printSuccess;
 
-    protected boolean printSuccessResponse = true;
 
     /** The object that interacts with external processes */
     protected SolverProcess solverProcess;
@@ -623,7 +622,8 @@ public class AbstractSolver implements ISolver {
                 || cmd instanceof Iassert || cmd instanceof Ipush || cmd instanceof Ipop
                 || cmd instanceof Icheck_sat || cmd instanceof Icheck_sat_assuming
                 || cmd instanceof Iset_logic || cmd instanceof Iset_info
-                || cmd instanceof Ireset || cmd instanceof Ireset_assertions;
+                || cmd instanceof Ireset_assertions;
+        // not reset: it is followed by the startup settings (see applyStartupSettings), sent and read in turn
     }
 
     /** Executes a command for which {@link #pipelines(ICommand)} is true, sending it to the solver
@@ -1152,22 +1152,46 @@ public class AbstractSolver implements ISolver {
      *  @see org.smtlib.ISolver#start() */
     @Override
     public IResponse start() {
-        nosuccessAtStart = smtConfig.nosuccess;
+        recordStartupSettings();
         try {
             solverProcess.start(false);
             IResponse r = afterStart();
             if (r != null) return r;
-            // --seed (or a configured seed) is set at startup with the standard option (#194)
-            if (hasSeedOption()) {
-                r = sendSeed();
-                if (r != null) return r;
-            }
+            r = applyStartupSettings();
+            if (r != null) return r;
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + startedName());
             return smtConfig.responseFactory.success();
         } catch (Exception e) {
             return smtConfig.responseFactory.error("Failed to start process " + solverProcess.app[0] + " : " + e.getMessage());
         }
     }
+
+    /** Records the startup values that {@link #applyStartupSettings()} restores: -q and the output channels
+     *  (--out, --diag) as they are when the solver starts */
+    protected void recordStartupSettings() {
+        nosuccessAtStart = smtConfig.nosuccess;
+        outAtStart = smtConfig.log.getOut();
+        diagAtStart = smtConfig.log.getDiag();
+    }
+
+    /** Applies the command-line settings that correspond to SMT-LIB options, at start and again after each (reset),
+     *  which returns every option to its default: -q (:print-success) and --out/--diag (the output channels), which
+     *  jSMTLIB handles itself, and --seed (:random-seed), which is sent. Settings that a solver takes on its own
+     *  command line (the timeouts) are not sent. An adapter overrides this where its solver differs. Returns an
+     *  error if the solver rejects a setting, else null. */
+    protected /*@Nullable*/ IResponse applyStartupSettings() throws IOException {
+        smtConfig.nosuccess = nosuccessAtStart;
+        smtConfig.log.setChannels(outAtStart, diagAtStart);
+        options.remove(Utils.REGULAR_OUTPUT_CHANNEL);
+        options.remove(Utils.DIAGNOSTIC_OUTPUT_CHANNEL);
+        return hasSeedOption() ? sendSeed() : null;
+    }
+
+    /** The value of {@code smtConfig.nosuccess} when the solver started */
+    protected boolean nosuccessAtStart;
+
+    /** The output channels when the solver started */
+    protected java.io.PrintStream outAtStart, diagAtStart;
 
     /** The adapter's setup once the process has started; an error response stops start(), null continues */
     protected /*@Nullable*/ IResponse afterStart() throws Exception {
@@ -1185,8 +1209,8 @@ public class AbstractSolver implements ISolver {
         return true;
     }
 
-    /** Passes --seed, if given, as the standard :random-seed option; called from start(), after
-     *  afterStart(), while :print-success is true. Returns an error if the solver rejects it, else null. */
+    /** Passes --seed, if given, as the standard :random-seed option; called from applyStartupSettings(), at start
+     *  after afterStart() and after each (reset), while :print-success is true. Returns an error if the solver rejects it, else null. */
     protected /*@Nullable*/ IResponse sendSeed() throws IOException {
         if (smtConfig.seed == 0) return null;
         String reply = solverProcess.sendAndListen("(set-option :random-seed " + smtConfig.seed + ")\n").trim();
@@ -1246,13 +1270,17 @@ public class AbstractSolver implements ISolver {
         checkSatStatus = null;
         checkMade = false;
         clearChanges();
-        // :print-success returns to its value at startup (from -q), which the reset's own response follows
+        // set before sending: the reset's own response, which an adapter may make while sending it, follows -q
         smtConfig.nosuccess = nosuccessAtStart;
-        return sendCommand(smtConfig.commandFactory.reset());
+        IResponse r = sendCommand(smtConfig.commandFactory.reset());
+        if (r.isError()) return r;
+        try {
+            IResponse s = applyStartupSettings();
+            return s != null ? s : r;
+        } catch (IOException e) {
+            return sendFailure("Error writing to solver: (reset)", e);
+        }
     }
-
-    /** The value of {@code smtConfig.nosuccess} when the solver started, which (reset) restores */
-    protected boolean nosuccessAtStart;
 
     /** @see org.smtlib.ISolver#reset_assertions() */
     @Override

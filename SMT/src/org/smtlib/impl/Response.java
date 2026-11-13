@@ -53,8 +53,6 @@ public abstract class Response {
 
     /** Implements the IResponse.IFactory interface */
     static public class Factory implements IResponse.IFactory {
-        public boolean printSuccess = true;
-
         SMT.Configuration smtConfig;
         public Factory(SMT.Configuration smtConfig) { this.smtConfig = smtConfig; }
 
@@ -68,7 +66,7 @@ public abstract class Response {
         public IResponse empty() { return EMPTY; }
 
         @Override
-        public IResponse success() { return printSuccess ? SUCCESS : EMPTY; }
+        public IResponse success() { return SUCCESS; }
 
         @Override
         public IResponse unsupported() { return UNSUPPORTED; }

@@ -235,11 +235,6 @@ public class SMT {
          *  (AbstractSolver.executePipelined) */
         public boolean pipeline = false;
 
-        /** This field is set from the command-line; if set, then sets the logic used by the solver,
-         * as if the first command were the corresponding set-logic command.
-         */
-        /*@Nullable*/ public String logic;
-
         /** The solver to use */
         /*@Nullable*/ public String solvername = null;
 
@@ -805,11 +800,6 @@ public class SMT {
         }
         solver = startSolver(smtConfig, smtConfig.solvername, smtConfig.executable);
         if (solver == null) return 1;
-        IKeyword printSuccessKW = smtConfig.exprFactory.keyword(Utils.PRINT_SUCCESS);
-        if (smtConfig.nosuccess) {
-            solver.set_option(printSuccessKW,Utils.FALSE);
-        }
-        if (smtConfig.logic != null) solver.set_logic(smtConfig.logic,null);
         // FIXME: if (smtConfig.verboseSolver)
         int retcode = 0;
         // :smt-lib-version may only be set as the first command of a script, or immediately

@@ -118,16 +118,23 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         solverProcess = new SolverProcess(cmds,">\t",smtConfig.logfile,StandardCharsets.UTF_8);
     }
 
+    /** Simplify has no random seed (start reports --seed ignored) */
+    @Override
+    protected boolean hasSeedOption() {
+        return false;
+    }
+
     /** Overrides AbstractSolver.start(): Simplify is started listening (start(true)), and a failure is
      *  reported by the process itself rather than as a start error */
     @Override
     public IResponse start() {
-        nosuccessAtStart = smtConfig.nosuccess;
+        recordStartupSettings();
         assertionSetStack.add(0,new LinkedList<IExpr>());
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#start " + solverName());
         solverProcess.start(true);
         reportSeedIgnored();
         try {
+            applyStartupSettings();
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started simplify");
             solverProcess.sendAndListen("(BG_PUSH (FORALL (B X Y) (IMPLIES (EQ B |@true|) (EQ (" + ite_term + " B X Y) X))))\n");
             solverProcess.sendAndListen("(BG_PUSH (FORALL (B X Y) (IMPLIES (NEQ B |@true|) (EQ (" + ite_term + " B X Y) Y))))\n");
@@ -217,10 +224,11 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         globalAxioms = "";
         logicSet = null;
         Solver_test.putDefaults(options, smtConfig.utils);
-        // :print-success returns to its value at startup (from -q)
-        smtConfig.nosuccess = nosuccessAtStart;
-        ((org.smtlib.impl.Response.Factory)smtConfig.responseFactory).printSuccess = !nosuccessAtStart;
-        smtConfig.log.setChannels(smtConfig.stdout, smtConfig.stderr);
+        try {
+            applyStartupSettings();
+        } catch (IOException e) {
+            return smtConfig.responseFactory.error("Failed to reapply the startup settings: " + e.getMessage());
+        }
         checkSatStatus = null;
         return smtConfig.responseFactory.success();
     }
@@ -532,6 +540,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     public IResponse get_option(IKeyword key) {
         String option = key.value();
         if (Utils.INTERACTIVE_MODE.equals(option) && !smtConfig.isVersion(SMTLIB.V20)) option = Utils.PRODUCE_ASSERTIONS;
+        if (Utils.PRINT_SUCCESS.equals(option)) return smtConfig.nosuccess ? Utils.FALSE : Utils.TRUE;
         IAttributeValue value = Solver_test.optionValue(options, smtConfig.utils, option);
         if (value == null) return smtConfig.responseFactory.unsupported();
         return value;
@@ -879,7 +888,6 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
                 return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'", value.pos());
             } else {
-                ((org.smtlib.impl.Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
                 smtConfig.nosuccess = Utils.FALSE.equals(value);
             }
         }
