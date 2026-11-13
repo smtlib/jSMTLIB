@@ -407,13 +407,10 @@ public class Lexer {
         return null;
     }
 
-    /** Returns the first token found in the given text */
+    /** Returns the first token found in the given text, lexed on its own (positions refer to text);
+     *  this Lexer's own source is not touched */
     public ILexToken getToken(String text)  throws ParserException {
-        if (!text.isEmpty() && text.charAt(0) == '"') {
-            return new LexStringLiteral(smtConfig,text,true);
-        }
-        Matcher matcher = combined.matcher(text);
-        return getToken(matcher);
+        return new Lexer(smtConfig, new Pos.Source(text, null)).getToken();
     }
 
     /** Returns the next lexical token, advancing the scanner.
@@ -656,7 +653,7 @@ public class Lexer {
                 throw new SMT.InternalException("Failed to report which regular expression matched: "
                         + " " + b + " " + e + " " + s);
             }
-            if (csr != null) matcher.region(end,csr.length());
+            matcher.region(end,csr.length());
         } else {
             // The matcher did not find a match starting at matcher.regionStart(). A guard, not
             // known to be reached (no test reaches it): the catch-all error group 20 matches any
