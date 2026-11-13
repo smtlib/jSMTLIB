@@ -58,9 +58,10 @@ public class CharSequenceSocket extends CharSequenceInfinite {
     /** Internal state - the current Reader for fetching characters */
     private /*@Nullable*/ Reader rdr = null;
 
-    /** Unlike the superclass contract, this never returns false: one SMT session spans a series of
-     * client connections, so when a client disconnects (or sends a 0 char) this waits for the next
-     * client rather than reporting end of input. The session ends only on (exit) (#30).
+    /** Unlike the superclass contract, this never returns false: the reader reads "forever", that is,
+     * until it is explicitly closed. One SMT session spans a series of client connections, so when a
+     * client disconnects (or sends a 0 char) this waits for the next client rather than reporting end
+     * of input. The session ends only on (exit) or when the server process is stopped (#30).
      */
     //@ requires !needsNewConnection => rdr != null;
     @Override
