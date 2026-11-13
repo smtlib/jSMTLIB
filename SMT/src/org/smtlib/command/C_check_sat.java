@@ -5,6 +5,8 @@
  */
 package org.smtlib.command;
 
+import java.io.IOException;
+
 
 import org.smtlib.ICommand.Icheck_sat;
 import org.smtlib.IResponse;
@@ -20,7 +22,7 @@ public class C_check_sat extends Command implements Icheck_sat {
     }
 
     /** Parses the arguments of the command, producing a new command instance */
-    static public /*@Nullable*/ C_check_sat parse(Parser p) {
+    static public /*@Nullable*/ C_check_sat parse(Parser p) throws IOException {
         return p.checkNoArg() ? new C_check_sat() : null;
     }
 

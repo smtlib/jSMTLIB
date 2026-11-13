@@ -4,6 +4,8 @@
  * Created August 2010
  */package org.smtlib.command;
 
+import java.io.IOException;
+
 
 import org.smtlib.ICommand.Iget_option;
 import org.smtlib.IExpr.IKeyword;
@@ -38,7 +40,7 @@ public class C_get_option extends Command implements Iget_option {
     }
 
     /** Creates a command instance by parsing the concrete S-expression syntax */
-    static public C_get_option parse(Parser p) throws ParserException {
+    static public C_get_option parse(Parser p) throws IOException, ParserException {
         IKeyword key = p.parseKeyword();
         return new C_get_option(key);
     }

@@ -5,6 +5,8 @@
  */
 package org.smtlib.command;
 
+import java.io.IOException;
+
 
 import org.smtlib.ICommand.Iget_unsat_core;
 import org.smtlib.IParser.ParserException;
@@ -21,7 +23,7 @@ public class C_get_unsat_core extends Command implements Iget_unsat_core {
     }
 
     /** Parses the command, producing a new command instance */
-    static public /*@Nullable*/ C_get_unsat_core parse(Parser p) throws ParserException {
+    static public /*@Nullable*/ C_get_unsat_core parse(Parser p) throws IOException, ParserException {
         return p.checkNoArg() ? new C_get_unsat_core() : null;
     }
 

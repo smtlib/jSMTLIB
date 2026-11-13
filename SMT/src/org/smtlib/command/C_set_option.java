@@ -5,6 +5,8 @@
  */
 package org.smtlib.command;
 
+import java.io.IOException;
+
 
 import org.smtlib.ICommand.Iset_option;
 import org.smtlib.*;
@@ -45,7 +47,7 @@ public class C_set_option extends Command implements Iset_option {
     }
 
     /** Creates a command instance by parsing the concrete S-expression syntax */
-    static public C_set_option parse(Parser p) throws ParserException  {
+    static public C_set_option parse(Parser p) throws IOException, ParserException {
         IKeyword key = p.parseKeyword();
         IAttributeValue value = p.parseAttributeValue();
         C_set_option c = new C_set_option(key,value);

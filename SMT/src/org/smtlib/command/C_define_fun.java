@@ -5,6 +5,8 @@
  */
 package org.smtlib.command;
 
+import java.io.IOException;
+
 import java.util.List;
 
 import org.smtlib.ICommand.Idefine_fun;
@@ -62,7 +64,7 @@ public class C_define_fun extends Command implements Idefine_fun {
     }
 
     /** Parses the command arguments and creates a command instance */
-    static public C_define_fun parse(Parser p) throws ParserException {
+    static public C_define_fun parse(Parser p) throws IOException, ParserException {
         ISymbol name = p.parseSymbol();
         List<IDeclaration> list = p.parseList(p::parseDeclaration, "declaration", true);
         ISort resultSort = p.parseSort(null);

@@ -5,6 +5,8 @@
  */
 package org.smtlib.command;
 
+import java.io.IOException;
+
 import java.util.List;
 
 import org.smtlib.ICommand.Idefine_funs_rec;
@@ -39,7 +41,7 @@ public class C_define_funs_rec extends Command implements Idefine_funs_rec {
     }
 
     /** Parses the command arguments and creates a command instance */
-    static public C_define_funs_rec parse(Parser p) throws ParserException {
+    static public C_define_funs_rec parse(Parser p) throws IOException, ParserException {
         List<IFunctionDeclaration> decls = p.parseList(p::parseFunctionDeclaration, "function declaration", false);
         List<IExpr> bodies = p.parseList(p::parseExpr, "term", false);
         return new C_define_funs_rec(decls, bodies);

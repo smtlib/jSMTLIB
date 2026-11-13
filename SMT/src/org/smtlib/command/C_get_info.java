@@ -5,6 +5,8 @@
  */
 package org.smtlib.command;
 
+import java.io.IOException;
+
 
 import org.smtlib.ICommand.Iget_info;
 import org.smtlib.IExpr.IKeyword;
@@ -36,7 +38,7 @@ public class C_get_info extends Command implements Iget_info {
     }
 
     /** Creates a command instance by parsing the concrete S-expression syntax */
-    static public C_get_info parse(Parser p) throws ParserException {
+    static public C_get_info parse(Parser p) throws IOException, ParserException {
         IKeyword key = p.parseKeyword();
         return new C_get_info(key);
     }

@@ -135,7 +135,7 @@ public class LogicTests {
                 if (!Utils.FALSE.equals(r)) {
                     Assert.assertEquals(result,smt.smtConfig.defaultPrinter.toString(res));
                 }
-            } catch (ParserException e) {
+            } catch (ParserException | java.io.IOException e) {
                 Assert.assertTrue(e.toString(),false);
             }
         } else {

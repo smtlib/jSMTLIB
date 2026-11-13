@@ -5,6 +5,8 @@
  */
 package org.smtlib.command;
 
+import java.io.IOException;
+
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -121,7 +123,7 @@ public class C_declare_fun extends Command implements Ideclare_fun {
      *   declare-fun command name, rather than inventing a different, unrelated syntax or a
      *   wholly new top-level command name. SMT-LIB's declare-fun has no par form at all
      *   (par otherwise only appears in declare-datatype's own constructor lists). */
-    static public C_declare_fun parse(Parser p) throws ParserException {
+    static public C_declare_fun parse(Parser p) throws IOException, ParserException {
         ISymbol tok = p.parseSymbolOrReservedWord("Expected a function symbol or 'par' here, not a #");
         if (Utils.PAR.equals(tok.value())) {
             List<IParameter> parameters = p.parseList(
