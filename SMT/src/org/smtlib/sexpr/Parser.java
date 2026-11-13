@@ -206,7 +206,7 @@ public class Parser extends Lexer implements IParser {
                     //
                     // The same isEOD() call also populates sameLineTrailingText, if the
                     // whitespace/comment run it just scanned started on the same physical line
-                    // as whatever token preceded it (see Lexer.getToken(Matcher)) -- i.e. it
+                    // as whatever token preceded it (see Lexer.getNextToken()) -- i.e. it
                     // shares a line with the command this Parser most recently returned, not
                     // with whatever is parsed next. Attach it there now, at exactly the point
                     // this lookahead already happened before this feature existed, so that
@@ -895,8 +895,8 @@ public class Parser extends Lexer implements IParser {
     /** Reports a vertical tab or form feed between tokens (except with --relax), which is then read as
      *  white space, and a keyword that is not a colon followed by a simple symbol (#185) */
     @Override
-    protected ILexToken getToken(java.util.regex.Matcher m) throws ParserException {
-        ILexToken token = super.getToken(m);
+    protected ILexToken getNextToken() throws ParserException {
+        ILexToken token = super.getNextToken();
         if (badWhitespace != null) {
             IPos p = badWhitespace;
             badWhitespace = null;

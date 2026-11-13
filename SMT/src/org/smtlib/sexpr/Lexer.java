@@ -234,7 +234,7 @@ public class Lexer {
      * long (>~1000 characters) strings.  One would not think that there was a recursive call
      * for each character, but it appears that there is.  It may be that a redesign of the regex 
      * would help, but instead, I just changed the regex to match the opening quote - then we
-     * scan the string by hand and adjust the matcher position afterwards (see the matcher.group(k=7) case in getToken(Matcher)).
+     * scan the string by hand and adjust the matcher position afterwards (see the matcher.group(k=7) case in getNextToken()).
      */
     public static final Pattern combined = Pattern.compile(
             "((?:" + rgxWhiteSpace + "|" + rgxComment + ")*)((" // group 1: first skip all whitespace and comments // group 2: the whole token
@@ -407,10 +407,12 @@ public class Lexer {
         return null;
     }
 
-    /** Returns the first token found in the given text, lexed on its own (positions refer to text);
-     *  this Lexer's own source is not touched */
-    public ILexToken getToken(String text)  throws ParserException {
-        return new Lexer(smtConfig, new Pos.Source(text, null)).getToken();
+    /** Returns the first token in text, read by a parser from config's factory, so positions refer
+     *  to text and the parser's lexical checks (which log their errors) apply. Requires a factory
+     *  whose parsers are Lexers, as this package's is. */
+    public static ILexToken getToken(SMT.Configuration config, String text) throws ParserException {
+        IParser parser = config.smtFactory.createParser(config, config.smtFactory.createSource(text, null));
+        return ((Lexer)parser).getToken();
     }
 
     /** Returns the next lexical token, advancing the scanner.
@@ -423,11 +425,12 @@ public class Lexer {
             nextToken = null;
             return token;
         }
-        return getToken(matcher);
+        return getNextToken();
     }
 
-    /** Returns the next token found in the given matcher, advancing the matcher */
-    protected ILexToken getToken(Matcher matcher) throws ParserException {
+    /** Scans the next token from this Lexer's source, advancing its matcher; getToken() and
+     *  peekToken() add the lookahead */
+    protected ILexToken getNextToken() throws ParserException {
         ILexToken token = null;
         if (matcher.lookingAt()) {
             prefixCommentText = null;
