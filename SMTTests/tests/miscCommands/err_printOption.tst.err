@@ -1,0 +1,4 @@
+(assert (+ x true))
+        ^^^^^^^^^^
+(assert (> y 0))
+           ^

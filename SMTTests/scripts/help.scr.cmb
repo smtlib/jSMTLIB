@@ -34,6 +34,8 @@ The recognized options are these:
         applied as a best-effort per-query limit instead
     --seed <int> : seed for the solver's random number generator, if it has one (0, the default, sets none)
     --echo : if enabled, commands are echoed to diagnostic output when successfully parsed
+    --print : if enabled, each command is parsed, type-checked and printed with the default printer,
+        in place of its response; no solver is started (--solver, --exec and --pipeline are ignored)
     --abort : if enabled, an error causes immediate exit (on interactive standard input, the rest of its line is skipped)
     --pipeline : if enabled, commands in file (including -) or --text input are sent to the solver without
         waiting for each response where possible; the output is the same

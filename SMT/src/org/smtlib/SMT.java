@@ -232,6 +232,10 @@ public class SMT {
         /** True if the application is to echo commands as it executes them; only applies in interactiveMode mode */
         public boolean echo = false;
 
+        /** If true (--print), each command is parsed and type-checked, without a solver process, and printed
+         *  with the default printer in place of its response */
+        public boolean print = false;
+
         /** If true, commands are sent to the solver without waiting for each response where that is
          *  possible (AbstractSolver.sendPipelined), and the responses are read as they arrive: by the
          *  command-line tool for file or --text input (--pipeline), and by IScript.execute
@@ -938,7 +942,9 @@ public class SMT {
                         if (pipelineFailed) retcode = 1;
                         continue;
                     }
-                    if (report(command, result)) {
+                    if (smtConfig.print && !result.isError()) {
+                        smtConfig.log.logOut(smtConfig.defaultPrinter.toString(command).stripTrailing());
+                    } else if (report(command, result)) {
                         retcode = 1;
                         if (abortMode) {
                             if (!smtConfig.interactive) {
@@ -1155,6 +1161,8 @@ public class SMT {
                 return -1;
             } else if ("--echo".equals(s)) {
                 options.echo = true;
+            } else if ("--print".equals(s)) {
+                options.print = true;
             } else if ("--nosuccess".equals(s) || "-q".equals(s)) {
                 options.nosuccess = true;
             } else if ("--abort".equals(s)) {
@@ -1262,6 +1270,12 @@ public class SMT {
             return 1;
         }
 
+        if (options.print) {
+            // type-checked by the test solver, which needs no process
+            options.solvername = Utils.TEST_SOLVER;
+            options.executable = null;
+            options.pipeline = false;
+        }
         if (options.solvername == null) {
             if (options.executable != null) {
                 error("If you specify an executable, you must also specify a solver");
@@ -1480,6 +1494,8 @@ public class SMT {
                 "applied as a best-effort per-query limit instead"),
         new Opt("--seed", null, "<int>", "seed for the solver's random number generator, if it has one (0, the default, sets none)"),
         new Opt("--echo", null, null, "if enabled, commands are echoed to diagnostic output when successfully parsed"),
+        new Opt("--print", null, null, "if enabled, each command is parsed, type-checked and printed with the default printer,",
+                "in place of its response; no solver is started (--solver, --exec and --pipeline are ignored)"),
         new Opt("--abort", null, null, "if enabled, an error causes immediate exit (on interactive standard input, the rest of its line is skipped)"),
         new Opt("--pipeline", null, null, "if enabled, commands in file (including -) or --text input are sent to the solver without",
                 "waiting for each response where possible; the output is the same"),
