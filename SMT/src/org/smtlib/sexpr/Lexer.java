@@ -26,7 +26,7 @@ import org.smtlib.impl.SMTExpr.Symbol;
 
 /** Converts character sequences (from ISource) into tokens, presuming the standard SMT-LIBv2 concrete syntax.
  * It is intended to be used as a base class for a parser, but could also be used by inclusion. */
-public class Lexer {
+public class Lexer implements ILexer {
 
     /** An interface used for punctuation tokens that can be retrieved from the parser input.*/
     public static interface IPLexToken extends ILexToken {
@@ -405,14 +405,6 @@ public class Lexer {
             }
         }
         return null;
-    }
-
-    /** Returns the first token in text, read by a parser from config's factory, so positions refer
-     *  to text and the parser's lexical checks (which log their errors) apply. Requires a factory
-     *  whose parsers are Lexers, as this package's is. */
-    public static ILexToken getToken(SMT.Configuration config, String text) throws ParserException {
-        IParser parser = config.smtFactory.createParser(config, config.smtFactory.createSource(text, null));
-        return ((Lexer)parser).getToken();
     }
 
     /** Returns the next lexical token, advancing the scanner.
