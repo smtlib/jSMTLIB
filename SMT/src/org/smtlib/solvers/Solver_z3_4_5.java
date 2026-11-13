@@ -20,6 +20,12 @@ public class Solver_z3_4_5 extends Solver_z3_recent {
         super(smtConfig, command);
     }
 
+    /** As every z3 before 5.1.0 (#196) */
+    @Override
+    protected boolean columnsHigherAfterComment() {
+        return true;
+    }
+
     /** z3 4.5 reports the get- commands after a declare or define itself, except after declare-datatype(s)
      *  (probed 2026-10-29) */
     @Override

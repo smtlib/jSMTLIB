@@ -1,3 +1,3 @@
 success
 success
-(error "line 4 column 13: invalid sort definition, sort already declared/defined")
+(error "line 4 column 14: invalid sort definition, sort already declared/defined")

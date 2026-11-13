@@ -7,6 +7,6 @@ success
 unknown
 success
 success
-(error "line 13 column 20: unknown sort 'A'")
+(error "line 13 column 21: unknown sort 'A'")
 sat
 success

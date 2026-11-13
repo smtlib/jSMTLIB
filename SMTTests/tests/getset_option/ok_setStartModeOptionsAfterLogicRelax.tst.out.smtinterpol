@@ -1,4 +1,4 @@
 success
 success
-(error "<stdin>:5:12: Option :produce-assertions can only be changed before setting the logic")
+(error "<stdin>:5:13: Option :produce-assertions can only be changed before setting the logic")
 true

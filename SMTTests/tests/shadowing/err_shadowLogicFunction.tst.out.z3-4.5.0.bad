@@ -6,6 +6,6 @@ success
 success
 success
 unsupported
-(error "line 10 column 15: unknown constant nil")
-(error "line 11 column 15: unknown constant nil")
+(error "line 10 column 16: unknown constant nil")
+(error "line 11 column 16: unknown constant nil")
 success

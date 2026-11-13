@@ -1,8 +1,8 @@
 success
 success
 unsupported
-(error "line 7 column 18: Invalid function declaration: unknown sort 'A'")
-(error "line 8 column 11: unknown constant c")
-(error "line 9 column 22: unknown constant cInt ")
-(error "line 10 column 19: unknown constant cBool ")
+(error "line 7 column 18: Invalid constant declaration: unknown sort 'A'")
+(error "line 8 column 12: unknown constant c")
+(error "line 9 column 23: unknown constant cInt ")
+(error "line 10 column 20: unknown constant cBool ")
 sat

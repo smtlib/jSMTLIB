@@ -7,5 +7,5 @@ success
 success
 success
 success
-(error "line 12 column 31: unknown constant mk-pair (Int Bool) ")
-(error "line 13 column 28: unknown constant mk-pair ((Lst Int) Bool) ")
+(error "line 12 column 32: unknown constant mk-pair (Int Bool) ")
+(error "line 13 column 29: unknown constant mk-pair ((Lst Int) Bool) ")

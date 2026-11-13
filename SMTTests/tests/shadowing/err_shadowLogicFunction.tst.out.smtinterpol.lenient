@@ -4,7 +4,7 @@ success
 success
 success
 success
-(error "<stdin>:8:1: Syntax Error")
+(error "<stdin>:8:2: Syntax Error")
 success
 success
 success

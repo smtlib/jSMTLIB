@@ -4,5 +4,5 @@ success
 success
 success
 unsat
-(error "<stdin>:9:13: Function x is already defined.")
+(error "<stdin>:9:16: Function x is already defined.")
 (a1 a2)

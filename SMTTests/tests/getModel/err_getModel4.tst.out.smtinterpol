@@ -3,4 +3,4 @@ success
 success
 success
 unsat
-(error "<stdin>:7:10: Context is inconsistent")
+(error "<stdin>:7:11: Context is inconsistent")

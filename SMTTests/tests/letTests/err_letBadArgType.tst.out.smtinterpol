@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "<stdin>:6:31: Application of function (not Bool Bool) does not type check.")
+(error "<stdin>:6:32: Application of function (not Bool Bool) does not type check.")

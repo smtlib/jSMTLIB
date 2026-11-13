@@ -6,4 +6,4 @@ success
 success
 success
 success
-(error "<stdin>:10:15: Builtin function store does not support argument sorts ()")
+(error "<stdin>:10:16: Builtin function store does not support argument sorts ()")

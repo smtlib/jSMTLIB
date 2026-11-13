@@ -2,10 +2,10 @@ success
 success
 success
 success
-(error "<stdin>:7:40: Unsupported internal sort: (_ FloatingPoint 8 24)")
-(error "<stdin>:8:40: Unsupported internal sort: (_ FloatingPoint 8 24)")
-(error "<stdin>:9:42: Unsupported internal sort: (_ FloatingPoint 8 24)")
-(error "<stdin>:10:32: Unsupported internal sort: (_ FloatingPoint 8 24)")
-(error "<stdin>:11:32: Unsupported internal sort: (_ FloatingPoint 8 24)")
-(error "<stdin>:12:34: Unsupported internal sort: (_ FloatingPoint 8 24)")
+(error "<stdin>:7:41: Unsupported internal sort: (_ FloatingPoint 8 24)")
+(error "<stdin>:8:41: Unsupported internal sort: (_ FloatingPoint 8 24)")
+(error "<stdin>:9:43: Unsupported internal sort: (_ FloatingPoint 8 24)")
+(error "<stdin>:10:33: Unsupported internal sort: (_ FloatingPoint 8 24)")
+(error "<stdin>:11:33: Unsupported internal sort: (_ FloatingPoint 8 24)")
+(error "<stdin>:12:35: Unsupported internal sort: (_ FloatingPoint 8 24)")
 sat

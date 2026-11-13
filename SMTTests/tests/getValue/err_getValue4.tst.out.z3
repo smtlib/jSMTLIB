@@ -3,4 +3,4 @@ success
 success
 success
 unsat
-(error "line 7 column 14: model is not available")
+(error "line 7 column 15: model is not available")

@@ -1,2 +1,2 @@
 success
-(error "line 3 column 29: unknown sort 'BitVecx'")
+(error "line 3 column 30: unknown sort 'BitVecx'")
