@@ -126,8 +126,9 @@ jobs:
     # macos-15-x86_64 over 20 minutes and into this exact timeout (run 35530298789).
     # Raised to keep real headroom over the new, coverage-instrumented normal runtime
     # rather than shrinking that headroom to nothing. Raised from 35 when the windows leg,
-    # then ~34.5 minutes, crossed it (run 40435920011).
-    timeout-minutes: 45
+    # then ~34.5 minutes, crossed it (run 40435920011), and from 45 when it, then ~44
+    # minutes, crossed that (run 43463155515).
+    timeout-minutes: 60
     strategy:
       matrix:
         include:
