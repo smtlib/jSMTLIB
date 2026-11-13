@@ -1,0 +1,8 @@
+success
+success
+(error "The expression must be linear: (* (- (/ 1 2)) x)")
+(error "The expression must be linear: (* x (- (/ 1 2)))")
+(error "The expression must be linear: (* (- (- 2)) x)")
+success
+success
+success
