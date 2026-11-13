@@ -1,0 +1,35 @@
+success
+success
+unsupported
+(error "line 6 column 21: invalid sort parameter, symbol or ')' expected")
+(error "line 7 column 19: Invalid function declaration: unknown sort 'Color'")
+(error "line 8 column 19: Invalid function declaration: unknown sort 'Tree'")
+(error "line 9 column 12: unknown constant c")
+(error "line 10 column 17: unknown constant t")
+(error "line 11 column 16: unknown constant t")
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+unsupported
+(error "line 28 column 21: invalid sort parameter, symbol or ')' expected")
+(error "line 29 column 19: Invalid function declaration: unknown sort 'Tree'")
+(error "line 30 column 16: unknown constant t")
+success
+success
+success
+success
+success
+success
+success

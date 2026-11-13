@@ -1,0 +1,22 @@
+success
+success
+success
+success
+unsupported
+(error "line 8 column 17: Parsing function declaration. Expecting sort list '(': unknown sort 'X'")
+success
+success
+success
+success
+success
+(error "line 14 column 17: Invalid constant definition: unknown sort 'Bool'")
+unsupported
+(error "line 16 column 17: Parsing function declaration. Expecting sort list '(': unknown sort 'X'")
+success
+success
+success
+success
+success
+(error "line 22 column 18: Invalid constant declaration: unknown sort 'Real'")
+success
+success
