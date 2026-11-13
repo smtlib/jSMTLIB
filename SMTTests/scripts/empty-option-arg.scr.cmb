@@ -32,6 +32,7 @@ Usage: java org.smtlib.SMT [args] [file]
        --timeout-total [-T] <seconds>
        --seed <int>
        --echo
+       --print
        --abort
        --pipeline
        --no-pipeline
