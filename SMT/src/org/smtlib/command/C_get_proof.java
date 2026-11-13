@@ -5,6 +5,8 @@
  */
 package org.smtlib.command;
 
+import java.io.IOException;
+
 
 import org.smtlib.ICommand.Iget_proof;
 import org.smtlib.IParser.ParserException;
@@ -21,7 +23,7 @@ public class C_get_proof extends Command implements Iget_proof {
     }
 
     /** Parses the command, producing a new command instance */
-    static public /*@Nullable*/ C_get_proof parse(Parser p) throws ParserException {
+    static public /*@Nullable*/ C_get_proof parse(Parser p) throws IOException, ParserException {
         return p.checkNoArg() ? new C_get_proof() : null;
     }
 

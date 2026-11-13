@@ -5,6 +5,8 @@
  */
 package org.smtlib.command;
 
+import java.io.IOException;
+
 
 import org.smtlib.ICommand.Ireset_assertions;
 import org.smtlib.IParser.ParserException;
@@ -21,7 +23,7 @@ public class C_reset_assertions extends Command implements Ireset_assertions {
     }
 
     /** Parses the arguments of the command, producing a new command instance */
-    static public /*@Nullable*/ C_reset_assertions parse(Parser p) throws ParserException {
+    static public /*@Nullable*/ C_reset_assertions parse(Parser p) throws IOException, ParserException {
         return p.checkNoArg() ? new C_reset_assertions() : null;
     }
 

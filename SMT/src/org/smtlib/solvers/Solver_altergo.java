@@ -222,7 +222,7 @@ public class Solver_altergo extends AbstractSolver implements ISolver {
         try {
             return smtConfig.responseFactory.get_assignment_response(
                     new org.smtlib.sexpr.Parser(smtConfig, new org.smtlib.impl.Pos.Source(text, null)).parseAssignmentList());
-        } catch (IParser.ParserException e) {
+        } catch (IParser.ParserException | java.io.IOException e) {
             return smtConfig.responseFactory.error("Unexpected output from the solver: " + text);
         }
     }

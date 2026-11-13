@@ -5,6 +5,7 @@
  */
 package org.smtlib.sexpr;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.regex.Matcher;
@@ -39,23 +40,27 @@ public class Lexer implements ILexer {
 
     /** Skips the rest of the current line, including a token already looked ahead at, resetting the
      *  matcher to point to the line termination character */
-    public void abortLine() {
-        nextToken = null;
-        int i = matcher.regionStart();
-        // Checking i < csr.length() on every iteration (rather than snapshotting the bound
-        // once) matters for a growing/interactive source (CharSequenceInfinite): its
-        // length() reports Integer.MAX_VALUE until charAt() itself lazily discovers true
-        // end-of-input, so the fresh check picks up that update on the very call that
-        // produces it. Checking for CharSequenceInfinite.endChar handles that same
-        // true-end-of-input case explicitly: once discovered, charAt() returns endChar for
-        // every subsequent index forever, which is otherwise indistinguishable from more
-        // ordinary characters still arriving.
-        while (i < csr.length()) {
-            char c = csr.charAt(i);
-            if (c == '\r' || c == '\n' || c == CharSequenceInfinite.endChar) break;
-            ++i;
+    public void abortLine() throws IOException {
+        try {
+            nextToken = null;
+            int i = matcher.regionStart();
+            // Checking i < csr.length() on every iteration (rather than snapshotting the bound
+            // once) matters for a growing/interactive source (CharSequenceInfinite): its
+            // length() reports Integer.MAX_VALUE until charAt() itself lazily discovers true
+            // end-of-input, so the fresh check picks up that update on the very call that
+            // produces it. Checking for CharSequenceInfinite.endChar handles that same
+            // true-end-of-input case explicitly: once discovered, charAt() returns endChar for
+            // every subsequent index forever, which is otherwise indistinguishable from more
+            // ordinary characters still arriving.
+            while (i < csr.length()) {
+                char c = csr.charAt(i);
+                if (c == '\r' || c == '\n' || c == CharSequenceInfinite.endChar) break;
+                ++i;
+            }
+            matcher.region(i,csr.length());
+        } catch (RuntimeException e) {
+            throw readFailure(e);
         }
-        matcher.region(i,csr.length());
     }
 
     /** Creates a Lexer using an SMT configuration object and a source for
@@ -336,7 +341,7 @@ public class Lexer implements ILexer {
      * a subsequent call to getToken will return the same token.
      * @throws ParserException if something bad or an intentional abort happens
      */
-    public ILexToken peekToken() throws ParserException {
+    public ILexToken peekToken() throws IOException, ParserException {
         if (nextToken == null) nextToken = getToken();
         return nextToken;
     }
@@ -346,7 +351,7 @@ public class Lexer implements ILexer {
      * not match, the scanner is not advanced.
      * @throws ParserException if something bad or an intentional abort happens
      */
-    public ILexToken getToken(Class<?> clazz) throws ParserException {
+    public ILexToken getToken(Class<?> clazz) throws IOException, ParserException {
         ILexToken token = peekToken();
         if (clazz.isAssignableFrom(token.getClass())) {
             return getToken();
@@ -360,7 +365,7 @@ public class Lexer implements ILexer {
     }
 
     /** Returns true if the next token is the end-of-data */
-    public boolean isEOD() throws ParserException {
+    public boolean isEOD() throws IOException, ParserException {
         return peekToken().isEOD();
     }
 
@@ -368,7 +373,7 @@ public class Lexer implements ILexer {
     /** Reads and discards tokens until an unmatched right parenthesis or end-of-data is read
      * @return the position of the right parenthesis or end-of-data
      */
-    public IPos skipThruRP() throws ParserException {
+    public IPos skipThruRP() throws IOException, ParserException {
         int n = 1;
         ILexToken t;
         while (!isEOD()) {
@@ -380,12 +385,12 @@ public class Lexer implements ILexer {
     }
 
     /** Returns true if the next token is a left parenthesis (without consuming it) */
-    public boolean isLP() throws ParserException {
+    public boolean isLP() throws IOException, ParserException {
         return peekToken().isLP();
     }
 
     /** Returns true if the next token is a right parenthesis (without consuming it) */
-    public boolean isRP() throws ParserException {
+    public boolean isRP() throws IOException, ParserException {
         return peekToken().isRP();
     }
 
@@ -410,14 +415,25 @@ public class Lexer implements ILexer {
     /** Returns the next lexical token, advancing the scanner.
      * @throws ParserException if something bad or an intentional abort happens
      */
-    public ILexToken getToken() throws ParserException {
+    public ILexToken getToken() throws IOException, ParserException {
         ILexToken token = null;
         if (nextToken != null) {
             token = nextToken;
             nextToken = null;
             return token;
         }
-        return getNextToken();
+        try {
+            return getNextToken();
+        } catch (RuntimeException e) {
+            throw readFailure(e);
+        }
+    }
+
+    /** The IOException a CharSequenceInfinite wraps (CharSequence.charAt cannot throw a checked
+     *  exception) when reading input fails; any other RuntimeException is rethrown */
+    private static IOException readFailure(RuntimeException e) {
+        if (e.getCause() instanceof IOException) return (IOException)e.getCause();
+        throw e;
     }
 
     /** Scans the next token from this Lexer's source, advancing its matcher; getToken() and
@@ -634,7 +650,7 @@ public class Lexer implements ILexer {
                 // A guard, not known to be reached (no test reaches it): group 1 takes all
                 // whitespace and comments, after which some token group always matches
                 matcher.region(end,csr.length());
-                return getToken();
+                return getNextToken();
             } else {
                 // Nothing matched - this should not have happened.
                 // lookingAt should not have returned true if no group matched
@@ -656,7 +672,7 @@ public class Lexer implements ILexer {
             int b = matcher.regionStart();
             int e = matcher.regionEnd();
             matcher.region(b+1,e);
-            return getToken();
+            return getNextToken();
         }
         return token;
     }

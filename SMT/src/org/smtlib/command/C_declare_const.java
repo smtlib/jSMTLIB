@@ -5,6 +5,8 @@
  */
 package org.smtlib.command;
 
+import java.io.IOException;
+
 import java.util.Collections;
 
 import org.smtlib.ICommand.Ideclare_const;
@@ -32,7 +34,7 @@ public class C_declare_const extends C_declare_fun implements Ideclare_const {
     }
 
     /** Parses the arguments of the command, producing a new command instance */
-    static public C_declare_const parse(Parser p) throws ParserException {
+    static public C_declare_const parse(Parser p) throws IOException, ParserException {
         ISymbol symbol = p.parseSymbol();
         ISort result = p.parseSort(null);
         return new C_declare_const(symbol,result);

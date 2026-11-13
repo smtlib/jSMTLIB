@@ -5,6 +5,8 @@
  */
 package org.smtlib.command;
 
+import java.io.IOException;
+
 
 import org.smtlib.ICommand.Iecho;
 import org.smtlib.IParser.ParserException;
@@ -31,7 +33,7 @@ public class C_echo extends Command implements Iecho {
     }
 
     /** Parses the arguments of the command, producing a new command instance */
-    static public C_echo parse(Parser p) throws ParserException {
+    static public C_echo parse(Parser p) throws IOException, ParserException {
         IStringLiteral expr = p.parseStringLiteral();
         return new C_echo(expr);
     }

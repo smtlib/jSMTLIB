@@ -5,6 +5,8 @@
  */
 package org.smtlib.command;
 
+import java.io.IOException;
+
 import java.util.List;
 
 import org.smtlib.ICommand.Iget_value;
@@ -38,7 +40,7 @@ public class C_get_value extends Command implements Iget_value {
     }
 
     /** Parses the command, producing a new command instance */
-    static public C_get_value parse(Parser p) throws ParserException {
+    static public C_get_value parse(Parser p) throws IOException, ParserException {
         List<IExpr> list = p.parseListTerms(p);
         return new C_get_value(list);
     }

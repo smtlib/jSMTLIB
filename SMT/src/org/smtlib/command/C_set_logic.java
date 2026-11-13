@@ -5,6 +5,8 @@
  */
 package org.smtlib.command;
 
+import java.io.IOException;
+
 import org.smtlib.ICommand.Iset_logic;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.IParser.ParserException;
@@ -37,7 +39,7 @@ public class C_set_logic extends Command implements Iset_logic {
     }
 
     /** Creates a command instance by parsing the S-expression concrete syntax */
-    static public C_set_logic parse(Parser p) throws ParserException {
+    static public C_set_logic parse(Parser p) throws IOException, ParserException {
         ISymbol logic = p.parseSymbol();
         return new C_set_logic(logic);
     }

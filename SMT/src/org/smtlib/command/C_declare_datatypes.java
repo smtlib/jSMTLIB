@@ -5,6 +5,8 @@
  */
 package org.smtlib.command;
 
+import java.io.IOException;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -43,7 +45,7 @@ public class C_declare_datatypes extends Command implements Ideclare_datatypes {
     }
 
     /** Parses the arguments: ( (symbol numeral)+ ) ( datatype_dec+ ) */
-    static public C_declare_datatypes parse(Parser p) throws ParserException {
+    static public C_declare_datatypes parse(Parser p) throws IOException, ParserException {
         List<ISortDeclaration> sortDecls = new LinkedList<>();
         p.parseLP();
         while (!p.isRP() && !p.isEOD()) {

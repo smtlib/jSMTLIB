@@ -39,10 +39,10 @@ public interface IParser extends ILexer {
     /** Parse an attribute (keyword with optional value), returning null with error messages
      * if an error occurs.
      */
-    /*@Nullable*/IExpr.IAttribute<?> parseAttribute() throws ParserException;
+    /*@Nullable*/IExpr.IAttribute<?> parseAttribute() throws IOException, ParserException;
 
     /** Parses a value for an attribute, returning null with error messages if an error occurs */
-    /*@Nullable*/IAttributeValue parseAttributeValue() throws ParserException;
+    /*@Nullable*/IAttributeValue parseAttributeValue() throws IOException, ParserException;
 
     /** Parses an SMT-LIB command, if the parser is looking at text representing
      * a valid SMT-LIB command; returns null and logs errors if the text is not a
@@ -66,52 +66,52 @@ public interface IParser extends ILexer {
     /*@Nullable*/ ICommand.IScript parseScript() throws IOException, ParserException;
 
     /** Parses a term or formula; return null and log an error response if there is no term or formula */
-    /*@Nullable*/ IExpr parseExpr()  throws ParserException;
+    /*@Nullable*/ IExpr parseExpr()  throws IOException, ParserException;
 
     /** Parse an SMT-LIB symbol; return null and log an error response if there is no symbol */
-    /*@Nullable*/ IExpr.ISymbol parseSymbol()  throws ParserException;
+    /*@Nullable*/ IExpr.ISymbol parseSymbol()  throws IOException, ParserException;
 
     /** Parse an SMT-LIB literal of any kind; return null and log an error response if there is no literal */
-    /*@Nullable*/ IExpr.ILiteral parseLiteral()  throws ParserException;
+    /*@Nullable*/ IExpr.ILiteral parseLiteral()  throws IOException, ParserException;
 
     /** Parse an SMT-LIB numeral; return null and log an error response if there is no numeral */
-    /*@Nullable*/ IExpr.INumeral parseNumeral()  throws ParserException;
+    /*@Nullable*/ IExpr.INumeral parseNumeral()  throws IOException, ParserException;
 
     /** Parse an SMT-LIB decimal literal; return null and log an error response if there is no numeral */
-    /*@Nullable*/ IExpr.IDecimal parseDecimal()  throws ParserException;
+    /*@Nullable*/ IExpr.IDecimal parseDecimal()  throws IOException, ParserException;
 
     /** Parse an SMT-LIB binary literal; return null and log an error response if there is no numeral */
-    /*@Nullable*/ IExpr.IBinaryLiteral parseBinary()  throws ParserException;
+    /*@Nullable*/ IExpr.IBinaryLiteral parseBinary()  throws IOException, ParserException;
 
     /** Parse an SMT-LIB hex literal; return null and log an error response if there is no numeral */
-    /*@Nullable*/ IExpr.IHexLiteral parseHex()  throws ParserException;
+    /*@Nullable*/ IExpr.IHexLiteral parseHex()  throws IOException, ParserException;
 
     /** Parse an SMT-LIB string literal; return null and log an error response if there is no valid string literal */
-    /*@Nullable*/ IExpr.IStringLiteral parseStringLiteral()  throws ParserException;
+    /*@Nullable*/ IExpr.IStringLiteral parseStringLiteral()  throws IOException, ParserException;
 
     /** Parse an SMT-LIB keyword; return null and log an error response if there is no valid keyword */
-    /*@Nullable*/ IExpr.IKeyword parseKeyword()  throws ParserException;
+    /*@Nullable*/ IExpr.IKeyword parseKeyword()  throws IOException, ParserException;
 
     /** Parses a qualified identifier (either a symbol, a parameterized identifier, or an as identifier)
      * from the token stream, returning null (with logged error messages) if there is not one.
      */
-    /*@Nullable*/ IQualifiedIdentifier parseQualifiedIdentifier() throws ParserException;
+    /*@Nullable*/ IQualifiedIdentifier parseQualifiedIdentifier() throws IOException, ParserException;
 
     /** Parses an identifier (either a symbol or a parameterized identifier)
      * from the token stream, returning null (with logged error messages) if there is not one.
      */
-    /*@Nullable*/ IIdentifier parseIdentifier() throws ParserException;
+    /*@Nullable*/ IIdentifier parseIdentifier() throws IOException, ParserException;
 
     /** Parses a sort, returning null with error messages if a valid sort is not in the 
      * next parser tokens.
      */
-    /*@Nullable*/ ISort parseSort(List<ISort.IParameter> parameters) throws ParserException;
+    /*@Nullable*/ ISort parseSort(List<ISort.IParameter> parameters) throws IOException, ParserException;
 
     /** Parse an SMT-LIB logic; return null and log an error response if there is no valid logic definition */
-    /*@Nullable*/ ILogic parseLogic() throws ParserException;
+    /*@Nullable*/ ILogic parseLogic() throws IOException, ParserException;
 
     /** Parse an SMT-LIB theory; return null and log an error response if there is no valid theory definition */
-    /*@Nullable*/ ITheory parseTheory() throws ParserException;
+    /*@Nullable*/ ITheory parseTheory() throws IOException, ParserException;
 
     /** Parses a binding "(id expression)", returning null with error messages if an error occurs */
     /*@Nullable*/ IBinding parseBinding() throws IOException, ParserException;
@@ -120,13 +120,13 @@ public interface IParser extends ILexer {
     /*@Nullable*/ ISort.IDatatype parseDatatype() throws IOException, ParserException;
 
     /** Parses a selector declaration "(symbol sort)" */
-    /*@Nullable*/ IExpr.ISelector parseSelector() throws ParserException;
+    /*@Nullable*/ IExpr.ISelector parseSelector() throws IOException, ParserException;
 
     /** Parses a constructor declaration "(symbol selector*)" */
-    /*@Nullable*/ IExpr.IConstructor parseConstructor() throws ParserException;
+    /*@Nullable*/ IExpr.IConstructor parseConstructor() throws IOException, ParserException;
 
     /** Parses a function declaration "(symbol (sorted_var*) sort)" used in define-funs-rec */
-    /*@Nullable*/ IExpr.IFunctionDeclaration parseFunctionDeclaration() throws ParserException;
+    /*@Nullable*/ IExpr.IFunctionDeclaration parseFunctionDeclaration() throws IOException, ParserException;
 
     /** Parses a declaration "(id sort)", returning null with error messages if an error occurs */
     /*@Nullable*/ IDeclaration parseDeclaration() throws IOException, ParserException;
@@ -195,23 +195,23 @@ public interface IParser extends ILexer {
     /** Functional interface for a lambda that parses one element from a Parser. */
     @FunctionalInterface
     public interface ElementParser<T> {
-        T parse() throws ParserException;
+        T parse() throws IOException, ParserException;
     }
 
     /** Parses a parenthesized list of terms from the given parser. */
-    public default List<IExpr> parseListTerms(Parser p) throws ParserException {
+    public default List<IExpr> parseListTerms(Parser p) throws IOException, ParserException {
         return p.parseList(p::parseExpr, "term", false);
     }
 
     /** Parses a parenthesized list of datatype declarations from the given parser. */
-    public default List<ISort.IDatatype> parseListDatatypes(Parser p) throws ParserException {
+    public default List<ISort.IDatatype> parseListDatatypes(Parser p) throws IOException, ParserException {
         return p.parseList(p::parseDatatype, "datatype declaration", false);
     }
 
     /** Checks that a user-defined symbol does not begin with the reserved characters {@code @} or {@code .};
      *  throws a ParserException if the check fails.
      */
-    public default void checkUserId(ISymbol id) throws ParserException {
+    public default void checkUserId(ISymbol id) throws IOException, ParserException {
         String v = id.value();
         if (v.length() == 0) {
             throw new ParserException("User-defined symbols may not be empty strings", id.pos());

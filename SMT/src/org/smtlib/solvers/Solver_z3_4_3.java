@@ -276,7 +276,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
     /** Parses a list-valued response */
     private interface ListParser {
-        IResponse parse(org.smtlib.sexpr.Parser p) throws ParserException;
+        IResponse parse(org.smtlib.sexpr.Parser p) throws IOException, ParserException;
     }
 
     /** Sends a get- command whose answer is a list and returns it structured, as the other adapters do
@@ -288,7 +288,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         if (!isFlatResponse(r) && !r.contains("(error")) {
             try {
                 return lp.parse(new org.smtlib.sexpr.Parser(smtConfig, new Pos.Source(r, null)));
-            } catch (ParserException e) {
+            } catch (ParserException | IOException e) {
                 // fall through to the generic handling below
             }
         }
@@ -333,7 +333,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             }
             responseParser = new org.smtlib.sexpr.Parser(smt(),new Pos.Source(response,null));
             return responseParser.parseResponse(response);
-        } catch (ParserException e) {
+        } catch (ParserException | IOException e) {
             return smtConfig.responseFactory.error("ParserException while parsing response: " + response + " " + e);
         }
     }

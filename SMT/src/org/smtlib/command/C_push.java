@@ -5,6 +5,8 @@
  */
 package org.smtlib.command;
 
+import java.io.IOException;
+
 
 import org.smtlib.ICommand.Ipush;
 import org.smtlib.IExpr.INumeral;
@@ -44,7 +46,7 @@ public class C_push extends Command implements Ipush {
     }
 
     /** Parses the arguments of the command, producing a new command instance */
-    static public C_push parse(Parser p) throws ParserException {
+    static public C_push parse(Parser p) throws IOException, ParserException {
         INumeral num = p.parseNumeral();
         return new C_push(num);
     }

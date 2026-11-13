@@ -5,6 +5,8 @@
  */
 package org.smtlib.command;
 
+import java.io.IOException;
+
 import java.util.List;
 
 import org.smtlib.ICommand.Icheck_sat_assuming;
@@ -24,7 +26,7 @@ public class C_check_sat_assuming extends Command implements Icheck_sat_assuming
     }
 
     /** Parses the arguments of the command, producing a new command instance */
-    static public C_check_sat_assuming parse(Parser p) throws ParserException {
+    static public C_check_sat_assuming parse(Parser p) throws IOException, ParserException {
         // Not p.parseListTerms(p): that shared default hard-codes allowEmpty=false, which
         // is right for get-value's ( <term>+ ) grammar but wrong here -- check-sat-assuming's
         // own grammar is ( <prop_literal>* ), zero or more, equivalent to a plain check-sat

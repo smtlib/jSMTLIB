@@ -5,6 +5,8 @@
  */
 package org.smtlib.command;
 
+import java.io.IOException;
+
 import java.util.List;
 
 import org.smtlib.ICommand.Idefine_sort;
@@ -48,7 +50,7 @@ public class C_define_sort extends Command implements Idefine_sort {
     }
 
     /** Parses the command arguments and creates a command instance */
-    static public C_define_sort parse(Parser p) throws ParserException {
+    static public C_define_sort parse(Parser p) throws IOException, ParserException {
         ISymbol name = p.parseSymbol();
         List<IParameter> list = p.parseList(
                 () -> p.smt().sortFactory.createSortParameter(p.parseSymbol()), "parameter", true);

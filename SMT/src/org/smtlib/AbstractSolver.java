@@ -339,7 +339,7 @@ public class AbstractSolver implements ISolver {
         if (response.contains("(error")) response = withSourceLines(response);
         try {
             return new Parser(smtConfig, new org.smtlib.impl.Pos.Source(response, null)).parseResponse(response);
-        } catch (IParser.ParserException e) {
+        } catch (IParser.ParserException | java.io.IOException e) {
             return smtConfig.responseFactory.error("ParserException while parsing response: " + response + " " + e);
         }
     }

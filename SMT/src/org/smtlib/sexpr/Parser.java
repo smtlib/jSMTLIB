@@ -5,6 +5,8 @@
  */
 package org.smtlib.sexpr;
 
+import java.io.IOException;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -83,7 +85,7 @@ public class Parser extends Lexer implements IParser {
 
     // See the documentation in the interface
     @Override
-    public /*@Nullable*/ICommand.IScript parseScript() {
+    public /*@Nullable*/ICommand.IScript parseScript() throws IOException {
         // FIXME - review/fix the following comment
         // NOTE: interactive is set false here because it is only ever used for parsing exec scripts
         // if it is used to parse top-level scripts, we have to pass in the appropriate value
@@ -179,7 +181,7 @@ public class Parser extends Lexer implements IParser {
     //@ nullable
     /*@Nullable*/
     /*@Mutable*/
-    public Command parseCommand() {
+    public Command parseCommand() throws IOException {
         boolean savedTopLevel = smtConfig.topLevel;
         commandHasError = false;
         commandHasLexicalError = false;
@@ -317,6 +319,9 @@ public class Parser extends Lexer implements IParser {
                         if (target instanceof IParser.AbortInputException) {
                             throw (IParser.AbortInputException) target;
                         }
+                        if (target instanceof IOException) {
+                            throw (IOException) target;
+                        }
                         ex.printStackTrace(smtConfig.log.getDiag());
                         if (target instanceof StackOverflowError) {
                             lastError = smtConfig.log.logError(smtConfig.responseFactory.error("Stack overflow occurred while parsing input", sym.pos()));
@@ -363,6 +368,8 @@ public class Parser extends Lexer implements IParser {
                 }
                 break;
             }
+        } catch (IOException e) {
+            throw e; // a failed read, not a parse error
         } catch (Exception e) {
             IPos pos = new Pos(0,0,null);
             lastError = smtConfig.responseFactory.error("Error while parsing command: " + e,pos);
@@ -376,7 +383,7 @@ public class Parser extends Lexer implements IParser {
 
     /** A helper check, called by command-specific parse methods in which the commands have no arguments */
     //@ requires savedlp != null && commandName != null;
-    public boolean checkNoArg() {
+    public boolean checkNoArg() throws IOException {
         try {
             if (!isRP()) {
                 if (isEOD()) {
@@ -408,7 +415,7 @@ public class Parser extends Lexer implements IParser {
      */
     // FIXME - should this log errors and return null instead of throwing an exception?
     /*@Nullable*/
-    public ISexpr parseSexpr() throws ParserException {
+    public ISexpr parseSexpr() throws IOException, ParserException {
         if (isEOD()) return null;
         ILexToken t = getToken();
         if (t.isRP()) {
@@ -435,7 +442,7 @@ public class Parser extends Lexer implements IParser {
      * @return a SExpr.Seq containing the sequence of SExpr seen
      * @throws ParserException FIXME - no more of these?
      */
-    public Sexpr.Seq parseSeq(ILexToken lp) throws ParserException {
+    public Sexpr.Seq parseSeq(ILexToken lp) throws IOException, ParserException {
         // Iterative, with explicit stacks of open lists and their left parentheses, since
         // solver output such as a z3 proof can nest deeper than the Java stack allows
         java.util.ArrayDeque<Sexpr.Seq> open = new java.util.ArrayDeque<>();
@@ -473,7 +480,7 @@ public class Parser extends Lexer implements IParser {
      * from the token stream, returning null (with logged error messages) if there is not one.
      */
     @Override
-    public /*@Nullable*/IQualifiedIdentifier parseQualifiedIdentifier() throws ParserException {
+    public /*@Nullable*/IQualifiedIdentifier parseQualifiedIdentifier() throws IOException, ParserException {
         if (!isLP()) {
             return parseSymbol();
         } else {
@@ -494,7 +501,7 @@ public class Parser extends Lexer implements IParser {
     /** Parses an 'as' identifier, presuming the left-paren and the 'as' are already parsed,
      * from the token stream, returning null (with logged error messages) if there is not one.
      */
-    private /*@Nullable*/ IAsIdentifier parseAsIdentifierRest(ILexToken lp) throws ParserException {
+    private /*@Nullable*/ IAsIdentifier parseAsIdentifierRest(ILexToken lp) throws IOException, ParserException {
         IIdentifier name = parseIdentifier();
         ISort sort = parseSort(null);
         ILexToken rp = parseRP();
@@ -505,7 +512,7 @@ public class Parser extends Lexer implements IParser {
     /** Parses an identifier (either symbol or parameterized identifier) from the token
      * stream, returning null with logged error messages if there is not one.
      */
-    public /*@Nullable*/IIdentifier parseIdentifier() throws ParserException {
+    public /*@Nullable*/IIdentifier parseIdentifier() throws IOException, ParserException {
         if (!isLP()) {
             return parseSymbol();
         } else {
@@ -526,7 +533,7 @@ public class Parser extends Lexer implements IParser {
      * @return the token or null
      * @throws ParserException if unrecoverable error occurs
      */
-    private IIdentifier parseIdentifierRest(ILexToken lp) throws ParserException {
+    private IIdentifier parseIdentifierRest(ILexToken lp) throws IOException, ParserException {
         ISymbol name = parseSymbol();
         List<IIndex> indices = new LinkedList<IIndex>();
         do {
@@ -553,7 +560,7 @@ public class Parser extends Lexer implements IParser {
      * expression in the token stream.
      */
     @Override
-    public /*@Nullable*/IExpr parseExpr() throws ParserException {
+    public /*@Nullable*/IExpr parseExpr() throws IOException, ParserException {
         // Here we suffer a bit for using a hand-written top-down parser.
         // An IExpr can be
         //        literal
@@ -639,18 +646,18 @@ public class Parser extends Lexer implements IParser {
     }
 
     /** Parses a parenthesized sequence of IDeclaration items */
-    public List<IDeclaration> parseDeclarations() throws ParserException {
+    public List<IDeclaration> parseDeclarations() throws IOException, ParserException {
         return parseList(this::parseDeclaration, "declaration", true);
     }
 
     /** Parses a parenthesized sequence of let-bindings */
-    public List<IBinding> parseBindings() throws ParserException {
+    public List<IBinding> parseBindings() throws IOException, ParserException {
         return parseList(this::parseBinding, "binding", true);
     }
 
     /** Parses a selector declaration "(symbol sort)" */
     @Override
-    public IExpr.ISelector parseSelector() throws ParserException {
+    public IExpr.ISelector parseSelector() throws IOException, ParserException {
         ILexToken lp = parseLP();
         ISymbol symbol = parseSymbol();
         ISort sort = parseSort(null);
@@ -660,7 +667,7 @@ public class Parser extends Lexer implements IParser {
 
     /** Parses a constructor declaration "(symbol selector*)" */
     @Override
-    public IExpr.IConstructor parseConstructor() throws ParserException {
+    public IExpr.IConstructor parseConstructor() throws IOException, ParserException {
         ILexToken lp = parseLP();
         ISymbol symbol = parseSymbol();
         List<IExpr.ISelector> selectors = new LinkedList<>();
@@ -673,7 +680,7 @@ public class Parser extends Lexer implements IParser {
 
     /** Parses a datatype declaration: "( constructor+ )" or "( par ( symbol+ ) ( constructor+ ) )" */
     @Override
-    public ISort.IDatatype parseDatatype() throws ParserException {
+    public ISort.IDatatype parseDatatype() throws IOException, ParserException {
         ILexToken lp = parseLP();
         List<IExpr.IConstructor> constructors = new LinkedList<>();
         List<IExpr.ISymbol> typeParams = null;
@@ -694,7 +701,7 @@ public class Parser extends Lexer implements IParser {
 
     /** Parses a function declaration "( symbol ( sorted_var* ) sort )" used in define-funs-rec */
     @Override
-    public IExpr.IFunctionDeclaration parseFunctionDeclaration() throws ParserException {
+    public IExpr.IFunctionDeclaration parseFunctionDeclaration() throws IOException, ParserException {
         ILexToken lp = parseLP();
         ISymbol symbol = parseSymbol();
         List<IDeclaration> params = parseList(this::parseDeclaration, "declaration", true);
@@ -708,7 +715,7 @@ public class Parser extends Lexer implements IParser {
 
     /** Parses a declaration "(id sort)", returning null with error messages if an error occurs */
     @Override
-    public IDeclaration parseDeclaration() throws ParserException {
+    public IDeclaration parseDeclaration() throws IOException, ParserException {
         ILexToken lp = parseLP();
         ISymbol sym = parseSymbol();
         ISort sort = parseSort(null);
@@ -718,7 +725,7 @@ public class Parser extends Lexer implements IParser {
 
     /** Parses a binding "(id expression)", returning null with error messages if an error occurs */
     @Override
-    public IBinding parseBinding() throws ParserException {
+    public IBinding parseBinding() throws IOException, ParserException {
         ILexToken lp = parseLP();
         ISymbol sym = parseSymbol();
         IExpr expr = parseExpr();
@@ -731,7 +738,7 @@ public class Parser extends Lexer implements IParser {
      * @param kind  singular noun describing the element type (e.g. "term"), used in error messages
      * @param allowEmpty  if false, throws when the list is empty
      */
-    public <T> List<T> parseList(IParser.ElementParser<T> elementParser, String kind, boolean allowEmpty) throws ParserException {
+    public <T> List<T> parseList(IParser.ElementParser<T> elementParser, String kind, boolean allowEmpty) throws IOException, ParserException {
         ILexToken next = peekToken();
         if (!next.isLP()) throw new ParserException("Expected a parenthesized list of " + kind + "s beginning here", next.pos());
         ILexToken lp = parseLP();
@@ -746,7 +753,7 @@ public class Parser extends Lexer implements IParser {
 
     /** Parses a symbol, returning null with messages and not advancing the parser if an error occurs */
     @Override
-    public /*@Nullable*/Symbol parseSymbol() throws ParserException {
+    public /*@Nullable*/Symbol parseSymbol() throws IOException, ParserException {
         return parseSymbol("Expected a symbol here, not a #");
     }
 
@@ -755,7 +762,7 @@ public class Parser extends Lexer implements IParser {
      * is given by the argument; it may contain a '#' character that will be replaced by the
      * kind() of the token actually observed; if the argument is null, no error message is
      * emitted. */
-    public /*@Nullable*/Symbol parseSymbol(/*@Nullable*/String msg) throws ParserException {
+    public /*@Nullable*/Symbol parseSymbol(/*@Nullable*/String msg) throws IOException, ParserException {
         ILexToken token = peekToken();
         if (token instanceof Symbol) {
             ISymbol sym = (ISymbol)token;
@@ -773,7 +780,7 @@ public class Parser extends Lexer implements IParser {
     /** Parses a symbol or a reserved word, returning null with messages if an error occurs.  The error message
      * is given by the argument; it may contain a '#' character that will be replaced by the
      * kind() of the token actually observed. */
-    public /*@Nullable*/Symbol parseSymbolOrReservedWord(String msg) throws ParserException {
+    public /*@Nullable*/Symbol parseSymbolOrReservedWord(String msg) throws IOException, ParserException {
         ILexToken token = getToken();
         if (token instanceof Symbol) return (Symbol)token;
         throw error(msg, token);
@@ -781,7 +788,7 @@ public class Parser extends Lexer implements IParser {
 
     /** Parses a literal, returning null with error messages if an error occurs. */
     @Override
-    public /*@Nullable*/ILiteral parseLiteral() throws ParserException {
+    public /*@Nullable*/ILiteral parseLiteral() throws IOException, ParserException {
         ILexToken token = getToken();
         if (token instanceof ILiteral) return (ILiteral)token;
         throw error("Expected a literal here, instead of a #", token);
@@ -790,7 +797,7 @@ public class Parser extends Lexer implements IParser {
     /** Parses a numeral, returning null with error messages if an error occurs; if
      * the next token is not a numeral, the token is not consumed, */
     @Override
-    public /*@Nullable*/INumeral parseNumeral() throws ParserException {
+    public /*@Nullable*/INumeral parseNumeral() throws IOException, ParserException {
         ILexToken token = getToken(INumeral.class);
         if (token instanceof INumeral) return (INumeral)token;
         throw error("Expected a numeral here, instead of a #", token);
@@ -799,7 +806,7 @@ public class Parser extends Lexer implements IParser {
     /** Parses a decimal, returning null with the given message if an error occurs; if
      * the next token is not a decimal, the token is not consumed, */
     @Override
-    public IDecimal parseDecimal() throws ParserException {
+    public IDecimal parseDecimal() throws IOException, ParserException {
         ILexToken token = getToken(IDecimal.class);
         if (token instanceof IDecimal) return (IDecimal)token;
         throw error("Expected a decimal here, instead of a #", token);
@@ -808,7 +815,7 @@ public class Parser extends Lexer implements IParser {
     /** Parses a binary literal, returning null with the given message if an error occurs; if
      * the next token is not a binary literal, the token is not consumed, */
     @Override
-    public IBinaryLiteral parseBinary() throws ParserException {
+    public IBinaryLiteral parseBinary() throws IOException, ParserException {
         ILexToken token = getToken(IBinaryLiteral.class);
         if (token instanceof IBinaryLiteral) return (IBinaryLiteral)token;
         throw error("Expected a binary literal here, instead of a #", token);
@@ -817,7 +824,7 @@ public class Parser extends Lexer implements IParser {
     /** Parses a hex literal, returning null with the given message if an error occurs; if
      * the next token is not a hex literal, the token is not consumed, */
     @Override
-    public IHexLiteral parseHex() throws ParserException {
+    public IHexLiteral parseHex() throws IOException, ParserException {
         ILexToken token = getToken(IHexLiteral.class);
         if (token instanceof IHexLiteral) return (IHexLiteral)token;
         throw error("Expected a hex literal here, instead of a #", token);
@@ -826,7 +833,7 @@ public class Parser extends Lexer implements IParser {
     /** Parses a string literal, returning null with an error message if an error occurs; if
      * the next token is not a string literal, the token is not consumed, */
     @Override
-    public /*@Nullable*/StringLiteral parseStringLiteral() throws ParserException {
+    public /*@Nullable*/StringLiteral parseStringLiteral() throws IOException, ParserException {
         ILexToken token = getToken(IStringLiteral.class);
         if (token instanceof StringLiteral) return (StringLiteral)token;
         throw error("Expected a string literal here, instead of a #", token);
@@ -835,7 +842,7 @@ public class Parser extends Lexer implements IParser {
     /** Parses a keyword, returning null with an error message if an error occurs; if
      * the next token is not a keyword, the token is not consumed. */
     @Override
-    public /*@Nullable*/Keyword parseKeyword() throws ParserException {
+    public /*@Nullable*/Keyword parseKeyword() throws IOException, ParserException {
         ILexToken token = getToken(Keyword.class);
         if (token instanceof Keyword) return (Keyword)token;
         throw error("Expected a keyword (beginning with a colon) here, instead of a #", token);
@@ -853,7 +860,7 @@ public class Parser extends Lexer implements IParser {
     //        ( symbol sort+ )
     //        ( ( _ symbol numeral+ ) sort+ )
     @Override
-    public /*@Nullable*/Sort parseSort(List<ISort.IParameter> parameters) throws ParserException {
+    public /*@Nullable*/Sort parseSort(List<ISort.IParameter> parameters) throws IOException, ParserException {
         if (!isLP()) {
             Symbol sym = parseSymbol();
             if (parameters != null) {
@@ -923,7 +930,7 @@ public class Parser extends Lexer implements IParser {
     /** Parses sequence of sorts up to a right-parenthesis, returning null with error messages
      * if an error occurs.
      */
-    public /*@Nullable*/List<ISort> parseSortList(List<ISort.IParameter> parameters) throws ParserException {
+    public /*@Nullable*/List<ISort> parseSortList(List<ISort.IParameter> parameters) throws IOException, ParserException {
         List<ISort> list = new LinkedList<ISort>();
         while (!isRP()) {
             if (isEOD()) {
@@ -939,7 +946,7 @@ public class Parser extends Lexer implements IParser {
      * if an error occurs.
      */
     @Override
-    public /*@Nullable*/IAttributeValue parseAttributeValue() throws ParserException {
+    public /*@Nullable*/IAttributeValue parseAttributeValue() throws IOException, ParserException {
         if (!isLP()) {
             if (isRP()) {
                 throw new ParserException("Expected an attribute value here, instead of a )",
@@ -966,7 +973,7 @@ public class Parser extends Lexer implements IParser {
     }
 
     /** A symbol attribute value may not be a reserved word (the grammar says symbol) */
-    private void checkNotReserved(ILexToken t) throws ParserException {
+    private void checkNotReserved(ILexToken t) throws IOException, ParserException {
         if (t instanceof Symbol && smtConfig.isReservedWord(((Symbol)t).value())) {
             throw error("A reserved word may not be used as a symbol here: " + t.toString(), t.pos());
         }
@@ -976,12 +983,12 @@ public class Parser extends Lexer implements IParser {
      * if an error occurs.
      */
     @Override
-    public /*@Nullable*/IExpr.IAttribute<?> parseAttribute() throws ParserException {
+    public /*@Nullable*/IExpr.IAttribute<?> parseAttribute() throws IOException, ParserException {
         return parseAttributeRest(parseKeyword());
     }
 
     /** Parses the (optional) value of an attribute whose keyword has already been parsed. */
-    protected /*@Nullable*/IExpr.IAttribute<?> parseAttributeRest(IKeyword keyword) throws ParserException {
+    protected /*@Nullable*/IExpr.IAttribute<?> parseAttributeRest(IKeyword keyword) throws IOException, ParserException {
         if (isRP() || isEOD()) {
             return setPos(smtConfig.exprFactory.attribute(keyword),keyword.pos());
         }
@@ -1010,7 +1017,7 @@ public class Parser extends Lexer implements IParser {
     /** Parse a sequence of attributes (keyword with optional value) terminated by a right parenthesis, returning null with error messages
      * if an error occurs.
      */
-    public /*@Nullable*/List<IExpr.IAttribute<?>> parseAttributeSequence() throws ParserException {
+    public /*@Nullable*/List<IExpr.IAttribute<?>> parseAttributeSequence() throws IOException, ParserException {
         List<IExpr.IAttribute<?>> list = new LinkedList<IExpr.IAttribute<?>>();
         while (!isRP()) {
             if (isEOD()) {
@@ -1029,7 +1036,7 @@ public class Parser extends Lexer implements IParser {
      * {@link IExpr.IPatternTerms} -- the same representation the expression factory builds.
      * A {@code :pattern} value that is not a list is left for the TypeChecker to report.
      */
-    public /*@Nullable*/List<IExpr.IAttribute<?>> parseTermAttributeSequence() throws ParserException {
+    public /*@Nullable*/List<IExpr.IAttribute<?>> parseTermAttributeSequence() throws IOException, ParserException {
         List<IExpr.IAttribute<?>> list = new LinkedList<IExpr.IAttribute<?>>();
         while (!isRP()) {
             if (isEOD()) {
@@ -1067,7 +1074,7 @@ public class Parser extends Lexer implements IParser {
      * performed in this call (the rest is done in loadLogic).
      */
     @Override
-    public /*@Nullable*/ ILogic parseLogic() throws ParserException {
+    public /*@Nullable*/ ILogic parseLogic() throws IOException, ParserException {
         ILexToken lp = parseLP();
         ISymbol sym = parseSymbol();
         if (!Utils.LOGIC.equals(sym.value())) {
@@ -1120,7 +1127,7 @@ public class Parser extends Lexer implements IParser {
      * performed in this call (the rest is done in loadTheory).
      */
     @Override
-    public /*@Nullable*/ ITheory parseTheory() throws ParserException {
+    public /*@Nullable*/ ITheory parseTheory() throws IOException, ParserException {
         ILexToken lp = parseLP();
         ISymbol sym = parseSymbol();
         if (!Utils.THEORY.equals(sym.value())) {
@@ -1138,22 +1145,22 @@ public class Parser extends Lexer implements IParser {
     }
 
     /** Parses a parenthesized list of terms, as returned by a get-assertions response. */
-    public List<IExpr> parseAssertionList() throws ParserException {
+    public List<IExpr> parseAssertionList() throws IOException, ParserException {
         return parseList(this::parseExpr, "assertion", true);
     }
 
     /** Parses a parenthesized list of terms, as returned by a get-unsat-assumptions response. */
-    public List<IExpr> parseTermList() throws ParserException {
+    public List<IExpr> parseTermList() throws IOException, ParserException {
         return parseList(this::parseExpr, "term", true);
     }
 
     /** Parses a parenthesized list of names, as returned by a get-unsat-core response. */
-    public List<ISymbol> parseSymbolList() throws ParserException {
+    public List<ISymbol> parseSymbolList() throws IOException, ParserException {
         return parseList(this::parseSymbol, "name", true);
     }
 
     /** Parses one {@code (term value)} pair, as found in a get-value response. */
-    public IResponse.IPair<IExpr,IExpr> parseValuePair() throws ParserException {
+    public IResponse.IPair<IExpr,IExpr> parseValuePair() throws IOException, ParserException {
         parseLP();
         IExpr term = parseExpr();
         IExpr value = parseExpr();
@@ -1163,12 +1170,12 @@ public class Parser extends Lexer implements IParser {
 
     /** Parses a parenthesized list of {@code (term value)} pairs, as returned by a
      *  get-value response. */
-    public List<IResponse.IPair<IExpr,IExpr>> parseValueList() throws ParserException {
+    public List<IResponse.IPair<IExpr,IExpr>> parseValueList() throws IOException, ParserException {
         return parseList(this::parseValuePair, "value pair", false);
     }
 
     /** Parses one {@code (symbol bool)} pair, as found in a get-assignment response. */
-    public IResponse.IPair<ISymbol,Boolean> parseAssignmentPair() throws ParserException {
+    public IResponse.IPair<ISymbol,Boolean> parseAssignmentPair() throws IOException, ParserException {
         parseLP();
         ISymbol sym = parseSymbol();
         ISymbol val = parseSymbol();
@@ -1181,7 +1188,7 @@ public class Parser extends Lexer implements IParser {
 
     /** Parses a parenthesized list of {@code (symbol bool)} pairs, as returned by a
      *  get-assignment response. */
-    public List<IResponse.IPair<ISymbol,Boolean>> parseAssignmentList() throws ParserException {
+    public List<IResponse.IPair<ISymbol,Boolean>> parseAssignmentList() throws IOException, ParserException {
         return parseList(this::parseAssignmentPair, "assignment", true);
     }
 
@@ -1189,7 +1196,7 @@ public class Parser extends Lexer implements IParser {
     public static final String UNEXPECTED_RESPONSE = "Unexpected response from the solver: ";
 
     //@Override // FIXME - put this in the interface
-    public /*@Nullable*/ IResponse parseResponse(String response) throws ParserException {
+    public /*@Nullable*/ IResponse parseResponse(String response) throws IOException, ParserException {
         IResponse.IFactory f = smtConfig.responseFactory;
         response = response.trim();
         if ("".equals(response)) return f.empty();
@@ -1244,7 +1251,7 @@ public class Parser extends Lexer implements IParser {
     /** Parses a left parenthesis, returning null and emitting an error message
      *  if there isn't one (and the next token is not consumed)
      */
-    public /*@Nullable*/ILexToken parseLP() throws ParserException {
+    public /*@Nullable*/ILexToken parseLP() throws IOException, ParserException {
         ILexToken token = peekToken();
         if (token.isLP()) return getToken();
         throw error("Expected a left parenthesis here, instead of a #", token);
@@ -1253,7 +1260,7 @@ public class Parser extends Lexer implements IParser {
     /** Parses a right parenthesis, returning null and emitting an error message
      *  if there isn't one (and the next token is not consumed)
      */
-    public /*@Nullable*/ILexToken parseRP() throws ParserException {
+    public /*@Nullable*/ILexToken parseRP() throws IOException, ParserException {
         ILexToken token = peekToken();
         if (token.isRP()) return getToken();
         throw error("Expected a right parenthesis here, instead of a #", token);
@@ -1277,7 +1284,7 @@ public class Parser extends Lexer implements IParser {
     }
 
     /** Parses a single match case: "(pattern term)" */
-    public IExpr.IMatchCase parseMatchCase() throws ParserException {
+    public IExpr.IMatchCase parseMatchCase() throws IOException, ParserException {
         ILexToken lp = parseLP();
         IExpr.IPattern pattern = parsePattern();
         IExpr body = parseExpr();
@@ -1286,7 +1293,7 @@ public class Parser extends Lexer implements IParser {
     }
 
     /** Parses a match pattern: either a bare symbol (or wildcard _) or "(symbol symbol*)" where params may include _ */
-    public IExpr.IPattern parsePattern() throws ParserException {
+    public IExpr.IPattern parsePattern() throws IOException, ParserException {
         if (!isLP()) {
             ISymbol sym = parsePatternSymbol();
             return setPos(smtConfig.exprFactory.pattern(sym, new LinkedList<>()), sym.pos());
@@ -1313,7 +1320,7 @@ public class Parser extends Lexer implements IParser {
     }
 
     /** Parses a symbol in pattern position: accepts _ as a wildcard (reserved elsewhere) */
-    private Symbol parsePatternSymbol() throws ParserException {
+    private Symbol parsePatternSymbol() throws IOException, ParserException {
         ILexToken token = peekToken();
         if (token instanceof Symbol && Utils.WILDCARD.equals(((Symbol)token).value())) {
             return (Symbol) getToken();

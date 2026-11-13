@@ -5,6 +5,8 @@
  */
 package org.smtlib.command;
 
+import java.io.IOException;
+
 
 import org.smtlib.ICommand.Iset_info;
 import org.smtlib.IExpr.IKeyword;
@@ -41,7 +43,7 @@ public class C_set_info extends Command implements Iset_info {
     }
 
     /** Creates a command instance by parsing the concrete S-expression syntax */
-    static public C_set_info parse(Parser p) throws ParserException  {
+    static public C_set_info parse(Parser p) throws IOException, ParserException {
         IKeyword key = p.parseKeyword();
         IAttributeValue value = p.parseAttributeValue();
         return new C_set_info(key,value);
