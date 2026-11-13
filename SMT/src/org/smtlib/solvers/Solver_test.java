@@ -11,7 +11,6 @@ import org.smtlib.*;
 import org.smtlib.ICommand.*;
 import org.smtlib.IExpr.*;
 import org.smtlib.SMT.Configuration.SMTLIB;
-import org.smtlib.impl.Response;
 
 /** This class is a Solver implementation that simply type-checks formulae and checks that
  * commands are used correctly; it does not do any proving.
@@ -50,6 +49,20 @@ public class Solver_test implements ISolver {
      */
     protected /*@Nullable*/IResponse checkSatStatus = null;
 
+    /** The value of {@code smtConfig.nosuccess} when the solver started */
+    protected boolean nosuccessAtStart;
+
+    /** The output channels when the solver started */
+    protected java.io.PrintStream outAtStart, diagAtStart;
+
+    /** Applies the command-line settings that correspond to SMT-LIB options, at start and again after each
+     *  (reset), as AbstractSolver.applyStartupSettings does: -q, --out, --diag and --seed */
+    protected void applyStartupSettings() {
+        smtConfig.nosuccess = nosuccessAtStart;
+        smtConfig.log.setChannels(outAtStart, diagAtStart);
+        if (smtConfig.seed != 0) options.put(Utils.RANDOM_SEED, smtConfig.exprFactory.numeral(smtConfig.seed));
+    }
+
     @Override
     public /*@Nullable*/IResponse checkSatStatus() { return checkSatStatus; }
 
@@ -67,7 +80,6 @@ public class Solver_test implements ISolver {
     public Solver_test(SMT.Configuration smtConfig, String exec) {
         this.smtConfig = smtConfig;
         putDefaults(options, smtConfig.utils);
-        if (smtConfig.seed != 0) options.put(Utils.RANDOM_SEED, smtConfig.exprFactory.numeral(smtConfig.seed));
         this.symTable = new SymbolTable(smtConfig);
     }
 
@@ -91,6 +103,10 @@ public class Solver_test implements ISolver {
     /** No process to start: overrides AbstractSolver.start() */
     @Override
     public IResponse start() {
+        nosuccessAtStart = smtConfig.nosuccess;
+        outAtStart = smtConfig.log.getOut();
+        diagAtStart = smtConfig.log.getDiag();
+        applyStartupSettings();
         assertionSetStack.add(0,new LinkedList<IExpr>());
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#start " + solverName());
         return smtConfig.responseFactory.success();
@@ -105,9 +121,7 @@ public class Solver_test implements ISolver {
         logicSet = null;
         // Set all options and info to default values
         putDefaults(options, smtConfig.utils);
-        ((Response.Factory)smtConfig.responseFactory).printSuccess = true;
-        smtConfig.verbose = 0;
-        smtConfig.log.setChannels(smtConfig.stdout, smtConfig.stderr);
+        applyStartupSettings();
         checkSatStatus = null;
 
         return smtConfig.responseFactory.success();
@@ -399,17 +413,15 @@ public class Solver_test implements ISolver {
                 // value was already validated (see issue #41).
                 return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'", value.pos());
             } else {
-                // FIXME - make this more abstract
-                ((Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
+                smtConfig.nosuccess = Utils.FALSE.equals(value);
             }
         }
         // --relax allows a start-mode-only option to be set after set-logic
         if (logicSet != null && !smtConfig.relax && Utils.startModeOptions.contains(option) && smtConfig.utils.isOption(option)) {
             return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
         }
-        if (Utils.VERBOSITY.equals(option)) {
-            smtConfig.verbose = (value instanceof INumeral) ? ((INumeral)value).intValue() : 0;
-        } else if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
+        // :verbosity is the solver's option, kept below; it does not change jSMTLIB's --verbose
+        if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
             // Actually, v should never be anything but IStringLiteral - that should
             // be checked during parsing
             String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : Utils.STDERR;
@@ -437,6 +449,7 @@ public class Solver_test implements ISolver {
     public IResponse get_option(IKeyword key) {
         String v = key.value();
         if (Utils.INTERACTIVE_MODE.equals(v) && !smtConfig.isVersion(SMTLIB.V20)) v = Utils.PRODUCE_ASSERTIONS;
+        if (Utils.PRINT_SUCCESS.equals(v)) return smtConfig.nosuccess ? Utils.FALSE : Utils.TRUE;
         IAttributeValue value = optionValue(options, smtConfig.utils, v);
         if (value == null) return smtConfig.responseFactory.unsupported();
         return value;

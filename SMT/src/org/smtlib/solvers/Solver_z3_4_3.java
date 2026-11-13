@@ -29,7 +29,6 @@ import org.smtlib.ICommand.Idefine_sort;
 import org.smtlib.IExpr.IFcnExpr;
 import org.smtlib.IExpr.IIdentifier;
 import org.smtlib.IExpr.IKeyword;
-import org.smtlib.IExpr.INumeral;
 import org.smtlib.IExpr.IQualifiedIdentifier;
 import org.smtlib.IExpr.IStringLiteral;
 import org.smtlib.IParser.ParserException;
@@ -189,7 +188,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     protected IResponse afterStart() throws IOException {
         // FIXME - enable the following lines when the Z3 solver supports them
-//        if (smtConfig.solverVerbosity > 0) solverProcess.sendNoListen("(set-option :verbosity ",Integer.toString(smtConfig.solverVerbosity),")");
 //        if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
         // Can't turn off printing success, or we get no feedback
         solverProcess.sendAndListen("(set-option :print-success true)\n"); // Z3 4.3.0 needs this because it mistakenly has the default for :print-success as false
@@ -502,9 +500,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         String option = key.value();
         if (logicSet && !smtConfig.relax && Utils.startModeOptions.contains(option)) {
             return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
-        }
-        if (Utils.VERBOSITY.equals(option)) {
-            smtConfig.verbose = (value instanceof INumeral) ? ((INumeral)value).intValue() : 0;
         }
         // Save the options on our side as well
         options.put(Utils.INTERACTIVE_MODE.equals(option) && !smtConfig.isVersion(SMTLIB.V20) ? Utils.PRODUCE_ASSERTIONS : option,value);

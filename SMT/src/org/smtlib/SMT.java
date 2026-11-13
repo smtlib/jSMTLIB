@@ -205,9 +205,6 @@ public class SMT {
         /** True to emit diagnostic output through the SMT-LIB diagnostic channel */
         public int verbose = 0;
 
-        /** The verbosity level of the SMT solver */
-        public int solverVerbosity = 0;
-
         /** The soft, per-query timeout, in seconds (fractional allowed), set via -t/--timeout;
          *  &lt;=0 means no timeout. See {@link #timeoutTotal} for the whole-run counterpart.
          *  jSMTLIB expresses both values in seconds regardless of solver; each solver adapter
@@ -237,11 +234,6 @@ public class SMT {
          *  command-line tool for file or --text input (--pipeline), and by IScript.execute
          *  (AbstractSolver.executePipelined) */
         public boolean pipeline = false;
-
-        /** This field is set from the command-line; if set, then sets the logic used by the solver,
-         * as if the first command were the corresponding set-logic command.
-         */
-        /*@Nullable*/ public String logic;
 
         /** The solver to use */
         /*@Nullable*/ public String solvername = null;
@@ -808,11 +800,6 @@ public class SMT {
         }
         solver = startSolver(smtConfig, smtConfig.solvername, smtConfig.executable);
         if (solver == null) return 1;
-        IKeyword printSuccessKW = smtConfig.exprFactory.keyword(Utils.PRINT_SUCCESS);
-        if (smtConfig.nosuccess) {
-            solver.set_option(printSuccessKW,Utils.FALSE);
-        }
-        if (smtConfig.logic != null) solver.set_logic(smtConfig.logic,null);
         // FIXME: if (smtConfig.verboseSolver)
         int retcode = 0;
         // :smt-lib-version may only be set as the first command of a script, or immediately
