@@ -1,0 +1,7 @@
+; (reset) returns :print-success to its value at startup, true here (#205 item 35)
+(set-option :print-success false)
+(set-logic QF_UF)
+(reset)
+(set-logic QF_UF)
+(declare-const p Bool)
+(check-sat)

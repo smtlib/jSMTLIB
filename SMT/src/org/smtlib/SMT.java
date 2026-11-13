@@ -205,9 +205,6 @@ public class SMT {
         /** True to emit diagnostic output through the SMT-LIB diagnostic channel */
         public int verbose = 0;
 
-        /** The verbosity level of the SMT solver */
-        public int solverVerbosity = 0;
-
         /** The soft, per-query timeout, in seconds (fractional allowed), set via -t/--timeout;
          *  &lt;=0 means no timeout. See {@link #timeoutTotal} for the whole-run counterpart.
          *  jSMTLIB expresses both values in seconds regardless of solver; each solver adapter

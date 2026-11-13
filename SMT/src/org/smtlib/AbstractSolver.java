@@ -1152,6 +1152,7 @@ public class AbstractSolver implements ISolver {
      *  @see org.smtlib.ISolver#start() */
     @Override
     public IResponse start() {
+        nosuccessAtStart = smtConfig.nosuccess;
         try {
             solverProcess.start(false);
             IResponse r = afterStart();
@@ -1245,8 +1246,13 @@ public class AbstractSolver implements ISolver {
         checkSatStatus = null;
         checkMade = false;
         clearChanges();
+        // :print-success returns to its value at startup (from -q), which the reset's own response follows
+        smtConfig.nosuccess = nosuccessAtStart;
         return sendCommand(smtConfig.commandFactory.reset());
     }
+
+    /** The value of {@code smtConfig.nosuccess} when the solver started, which (reset) restores */
+    protected boolean nosuccessAtStart;
 
     /** @see org.smtlib.ISolver#reset_assertions() */
     @Override

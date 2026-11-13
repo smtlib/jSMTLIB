@@ -122,6 +122,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
      *  reported by the process itself rather than as a start error */
     @Override
     public IResponse start() {
+        nosuccessAtStart = smtConfig.nosuccess;
         assertionSetStack.add(0,new LinkedList<IExpr>());
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#start " + solverName());
         solverProcess.start(true);
@@ -216,8 +217,9 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         globalAxioms = "";
         logicSet = null;
         Solver_test.putDefaults(options, smtConfig.utils);
-        ((org.smtlib.impl.Response.Factory)smtConfig.responseFactory).printSuccess = true;
-        smtConfig.verbose = 0;
+        // :print-success returns to its value at startup (from -q)
+        smtConfig.nosuccess = nosuccessAtStart;
+        ((org.smtlib.impl.Response.Factory)smtConfig.responseFactory).printSuccess = !nosuccessAtStart;
         smtConfig.log.setChannels(smtConfig.stdout, smtConfig.stderr);
         checkSatStatus = null;
         return smtConfig.responseFactory.success();
@@ -878,14 +880,14 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
                 return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'", value.pos());
             } else {
                 ((org.smtlib.impl.Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
+                smtConfig.nosuccess = Utils.FALSE.equals(value);
             }
         }
         if (logicSet != null && !smtConfig.relax && Utils.startModeOptions.contains(option) && smtConfig.utils.isOption(option)) {
             return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
         }
-        if (Utils.VERBOSITY.equals(option)) {
-            smtConfig.verbose = (value instanceof INumeral) ? ((INumeral)value).intValue() : 0;
-        } else if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
+        // :verbosity is the solver's option, kept below; it does not change jSMTLIB's --verbose
+        if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
             String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : Utils.STDERR;
             try {
                 smtConfig.log.setDiagnosticOutputChannel(name);

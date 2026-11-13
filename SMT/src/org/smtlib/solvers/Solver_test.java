@@ -50,6 +50,9 @@ public class Solver_test implements ISolver {
      */
     protected /*@Nullable*/IResponse checkSatStatus = null;
 
+    /** The value of {@code smtConfig.nosuccess} when the solver started, which (reset) restores */
+    protected boolean nosuccessAtStart;
+
     @Override
     public /*@Nullable*/IResponse checkSatStatus() { return checkSatStatus; }
 
@@ -91,6 +94,7 @@ public class Solver_test implements ISolver {
     /** No process to start: overrides AbstractSolver.start() */
     @Override
     public IResponse start() {
+        nosuccessAtStart = smtConfig.nosuccess;
         assertionSetStack.add(0,new LinkedList<IExpr>());
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#start " + solverName());
         return smtConfig.responseFactory.success();
@@ -105,8 +109,9 @@ public class Solver_test implements ISolver {
         logicSet = null;
         // Set all options and info to default values
         putDefaults(options, smtConfig.utils);
-        ((Response.Factory)smtConfig.responseFactory).printSuccess = true;
-        smtConfig.verbose = 0;
+        // :print-success returns to its value at startup (from -q)
+        smtConfig.nosuccess = nosuccessAtStart;
+        ((Response.Factory)smtConfig.responseFactory).printSuccess = !nosuccessAtStart;
         smtConfig.log.setChannels(smtConfig.stdout, smtConfig.stderr);
         checkSatStatus = null;
 
@@ -401,15 +406,15 @@ public class Solver_test implements ISolver {
             } else {
                 // FIXME - make this more abstract
                 ((Response.Factory)smtConfig.responseFactory).printSuccess = !Utils.FALSE.equals(value);
+                smtConfig.nosuccess = Utils.FALSE.equals(value);
             }
         }
         // --relax allows a start-mode-only option to be set after set-logic
         if (logicSet != null && !smtConfig.relax && Utils.startModeOptions.contains(option) && smtConfig.utils.isOption(option)) {
             return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
         }
-        if (Utils.VERBOSITY.equals(option)) {
-            smtConfig.verbose = (value instanceof INumeral) ? ((INumeral)value).intValue() : 0;
-        } else if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
+        // :verbosity is the solver's option, kept below; it does not change jSMTLIB's --verbose
+        if (Utils.DIAGNOSTIC_OUTPUT_CHANNEL.equals(option)) {
             // Actually, v should never be anything but IStringLiteral - that should
             // be checked during parsing
             String name = (value instanceof IStringLiteral)? ((IStringLiteral)value).value() : Utils.STDERR;
