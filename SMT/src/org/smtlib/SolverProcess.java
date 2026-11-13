@@ -235,23 +235,14 @@ public class SolverProcess {
         // In some cases, the endMarker is just an eol, but the ojutput can be a long
         // S-expression broken up with eols. SO we must recognize an end of input only
         // if the parentheses are balanced.
-        i = sb.indexOf("(");
-        if (i < 0) return true;
-        int count = 1;
-        // Tracks whether the scan is currently inside a double-quoted string literal, so
-        // that a stray '(' or ')' in a solver's own error-message prose (e.g. z3's
-        // "Expecting sort list '(': ...") doesn't permanently unbalance the paren count and
-        // make this recognizer wait forever. A doubled "" (SMT-LIB's escaped-quote form)
-        // toggles twice with nothing in between, so this naive per-character toggle still
-        // ends up in the right state without needing full escape-aware parsing. Scanning
-        // from the start of the buffer (not just from i) keeps the in-string state correct
-        // even if a quote appears before the first '('.
+        // Parentheses inside a string literal (an echoed string, or error prose such as z3's
+        // "Expecting sort list '(': ...") are not counted, else they could unbalance the count
+        // and make this recognizer wait forever. A doubled "" (SMT-LIB's escaped quote)
+        // toggles twice, so a per-character toggle suffices. An excess ')' cannot be
+        // balanced by waiting, so it also ends the reply.
+        int count = 0;
         boolean inString = false;
-        for (int j = 0; j < i; ++j) {
-            if (sb.charAt(j) == '"') inString = !inString;
-        }
-        i++;
-        for (; i < sblen; ++i) {
+        for (i = 0; i < sblen; ++i) {
             char c = sb.charAt(i);
             if (c == '"') {
                 inString = !inString;
@@ -263,7 +254,7 @@ public class SolverProcess {
         // badFormat lets a caller (e.g. get_info on :reason-unknown) declare in advance that
         // the upcoming response text may contain literal unbalanced parentheses, so we do not
         // wait forever for a balance that will never come.
-        return badFormat || count == 0;
+        return badFormat || count <= 0;
     }
 
     /** Listens to the process's standard output until the designated endMarker is read,
