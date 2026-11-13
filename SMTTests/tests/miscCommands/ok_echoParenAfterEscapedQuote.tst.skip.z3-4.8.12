@@ -1,0 +1,1 @@
+z3 before 4.10 does not escape an embedded quote when echoing ("q"(r"), so the reply never balances

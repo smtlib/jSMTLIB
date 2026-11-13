@@ -407,13 +407,10 @@ public class Lexer {
         return null;
     }
 
-    /** Returns the first token found in the given text */
+    /** Returns the first token found in the given text, lexed on its own (positions refer to text);
+     *  this Lexer's own source is not touched */
     public ILexToken getToken(String text)  throws ParserException {
-        if (!text.isEmpty() && text.charAt(0) == '"') {
-            return new LexStringLiteral(smtConfig,text,true);
-        }
-        Matcher matcher = combined.matcher(text);
-        return getToken(matcher);
+        return new Lexer(smtConfig, new Pos.Source(text, null)).getToken();
     }
 
     /** Returns the next lexical token, advancing the scanner.
@@ -499,16 +496,13 @@ public class Lexer {
                 token = this.RP(matcher.start(k));
             } else if ((matched = matcher.group(k=5)) != null) { // numeral
                 pos = pos(matcher.start(k),matcher.end(k));
-                //token = factory.numeral(matched,pos);
                 token = setPos(new LexNumeral(new BigInteger(matched)),pos);
                 end = matcher.end(k);
             } else if ((matched = matcher.group(k=6)) != null) { // simple symbol
                 pos = pos(matcher.start(k),matcher.end(k));
-                //token = factory.symbol(matched,pos); 
                 token = setPos(new LexSymbol(matched),pos);
             } else if ((matched = matcher.group(k=8)) != null) { // bar-quoted symbol
                 pos = pos(matcher.start(k),matcher.end(k));
-                //token = factory.symbol(matched,pos);
                 token = quotedSymbolError(matched, matcher.start(k));
                 if (token == null) token = setPos(new LexSymbol(matched),pos);
             } else if ((matched = matcher.group(k=7)) != null) { // string 
@@ -601,11 +595,10 @@ public class Lexer {
                 }
             } else if ((matched = matcher.group(k=9)) != null) { // colon-initiated keyword
                 pos = pos(matcher.start(k),matcher.end(k));
-                //token = factory.keyword(matched,pos);
                 token = setPos(new LexKeyword(matched),pos);
             } else if ((matched = matcher.group(k=10)) != null) { // decimal
                 pos = pos(matcher.start(k),matcher.end(k));
-                //token = factory.decimal(matched,pos);   // FIXME - use a factory everywhere?
+                // FIXME - use a factory everywhere?
                 token = setPos(new LexDecimal(new BigDecimal(matched)),pos);
                 end = matcher.end(k);
             } else if ((matched = matcher.group(k=11)) != null) {
@@ -621,40 +614,27 @@ public class Lexer {
                 token = this.EOD(matcher.start(k));
             } else if ((matched = matcher.group(k=16)) != null) {
                 pos = pos(matcher.start(k),matcher.end(k));
-                //token = factory.error(matched,pos);
                 token = quotedSymbolError(matched, matcher.start(k));
                 if (token == null) token = setPos(new LexError("Bar(|)-enclosed symbol is not terminated: " + matched),pos);
-//                matcher.region(end,csr.length());
-//                throw new SyntaxException("Invalid token: " + matched,token.pos());
             } else if ((matched = matcher.group(k=17)) != null) {
                 pos = pos(matcher.start(k),matcher.end(k));
-                //token = factory.error(matched,pos);
                 String msg = "Incorrect format for a number - no leading zeros allowed: ";
                 token = setPos(new LexError(msg + matched),pos);
                 end = matcher.end(k);
-//                matcher.region(end,csr.length());
-//                throw new SyntaxException("Leading zeros are not allowed: " + matched,token.pos());
             } else if ((matched = matcher.group(k=18)) != null) {
                 // This case no longer matches since we made a special case of string matching.
                 pos = pos(matcher.start(k),matcher.end(k));
-                //token = factory.error(matched,pos);
                 token = setPos(new LexError(matched),pos);
-                //smtConfig.log.logError(smtConfig.responseFactory.error("Invalid string: " + matched));
                 matcher.region(end,csr.length());
                 // FIXME - decide whether to throw exceptions or emit error messages and error tokens
                 throw new SyntaxException(("Invalid string: " + matched),token.pos());
             } else if ((matched = matcher.group(k=19)) != null) {
-                //System.out.println("Killed");
                 matcher.region(end,csr.length());
                 throw new AbortInputException();
             } else if ((matched = matcher.group(k=20)) != null) {
                 pos = pos(matcher.start(k),matcher.end(k));
-                //token = factory.error(matched,pos);
                 if (matched.charAt(0) < ' ') matched = "(ASCII char " + (int)matched.charAt(0) + " (decimal))";
                 token = setPos(new LexError("Invalid token: " + matched),pos);
-//                matcher.region(end,csr.length());
-//                throw new SyntaxException("Invalid token: " + matched,token.pos());
-                //SMT.out.println(smtConfig.responseFactory.error("Invalid token: " + matched));
             } else if ((matched = matcher.group(k=21)) != null) {
                 // A guard, not known to be reached (no test reaches it): group 1 takes all
                 // whitespace and comments, after which some token group always matches
@@ -670,11 +650,10 @@ public class Lexer {
                 if (matcher.group(1) != null) end = matcher.end(1);
                 else end = matcher.end();
                 matcher.region(end > b? end: b+1,csr.length());
-                //String group = matcher.group();
                 throw new SMT.InternalException("Failed to report which regular expression matched: "
                         + " " + b + " " + e + " " + s);
             }
-            if (csr != null) matcher.region(end,csr.length());
+            matcher.region(end,csr.length());
         } else {
             // The matcher did not find a match starting at matcher.regionStart(). A guard, not
             // known to be reached (no test reaches it): the catch-all error group 20 matches any
@@ -683,16 +662,6 @@ public class Lexer {
             int e = matcher.regionEnd();
             matcher.region(b+1,e);
             return getToken();
-            // Nothing matched - this should not have happened.
-            // There is an error in the regular expression, since it is not even
-            // reporting an error token.
-//            int n = matcher.groupCount();
-//            String gr = matcher.group(2);
-//            gr = matcher.group(1);
-//            gr = matcher.group(0);
-//            String s = csr.subSequence(b,e>b+100?b+100:e).toString();
-//            throw new SMT.InternalException("Failed to report any match: something is wrong with the regular expression used for parsing "
-//                    + matcher.regionStart() + " " + matcher.regionEnd() + " " + s);
         }
         return token;
     }
