@@ -1,0 +1,25 @@
+; An Int argument to a one-argument Real function, user-defined or is_int. The correct behavior is
+; unclear: the :extensions sugar is stated only for (op Real Real s) and /. jSMTLIB reads it as to_real (#211).
+; Each check is unsat if the solver reads an Int argument as Real (to_real); a solver that rejects
+; the term reports an error and the check is sat. Int q = 1, r = 2; Real a = 0.5, b = 1.5. See #211.
+(set-logic AUFNIRA)
+(declare-fun q () Int)
+(declare-fun r () Int)
+(declare-fun a () Real)
+(declare-fun b () Real)
+(assert (and (= q 1) (= r 2) (= a 0.5) (= b 1.5)))
+(define-fun h ((x Real)) Real (* 2.0 x))
+(declare-fun p (Real) Bool)
+(assert (p 1.0))
+(push 1)
+(assert (not (= (h q) 2.0)))
+(check-sat)
+(pop 1)
+(push 1)
+(assert (not (is_int q)))
+(check-sat)
+(pop 1)
+(push 1)
+(assert (not (p q)))
+(check-sat)
+(pop 1)

@@ -1,0 +1,22 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "line 16 column 23: unknown function/constant f")
+sat
+success
+success
+(error "line 20 column 23: unknown function/constant m")
+sat
+success
+success
+(error "line 24 column 20: Sort mismatch at argument #1 for function (declare-fun g (Real Real) Bool) supplied sort is Int")
+sat
+success

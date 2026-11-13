@@ -1,0 +1,30 @@
+success
+success
+success
+success
+success
+success
+success
+(error "line 11 column 28: Sort mismatch at argument #2 for function (declare-fun = (Real Real) Bool) supplied sort is Int")
+sat
+success
+success
+(error "line 15 column 28: Sort mismatch at argument #1 for function (declare-fun = (Real Real) Bool) supplied sort is Int")
+sat
+success
+success
+(error "line 19 column 38: Sort mismatch at argument #1 for function (declare-fun = (Real Real) Bool) supplied sort is Int")
+sat
+success
+success
+(error "line 23 column 38: Sort mismatch at argument #2 for function (declare-fun = (Real Real) Bool) supplied sort is Int")
+sat
+success
+success
+(error "line 27 column 27: Sort mismatch between first argument and argument 2")
+sat
+success
+success
+(error "line 31 column 29: Sort mismatch between first argument and argument 3")
+sat
+success

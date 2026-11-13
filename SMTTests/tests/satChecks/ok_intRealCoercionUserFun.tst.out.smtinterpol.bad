@@ -1,0 +1,22 @@
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+success
+(error "<stdin>:16:18: Application of function null does not type check.")
+sat
+success
+success
+(error "<stdin>:20:18: Application of function null does not type check.")
+sat
+success
+success
+(error "<stdin>:24:15: Application of function null does not type check.")
+sat
+success
