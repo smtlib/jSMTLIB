@@ -455,7 +455,6 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         // fall through to the general lookup below like any other declared function, with
         // SymbolTable.lookup()'s `reason` output giving as specific a message as these
         // hardcoded branches used to (see its doc comment).
-        boolean useext = true;
         if (bvperhaps) {
             if (head.equals(Utils.BVNOT) || head.equals(Utils.BVNEG)) {
                 if (argSorts.size() != 1) {
@@ -471,7 +470,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 
             } else if (head.equals(Utils.BVAND) || head.equals(Utils.BVOR)
                     || head.equals(Utils.BVADD) || head.equals(Utils.BVMUL)
-                    || (useext && head.equals(Utils.BVXOR))) {
+                    || head.equals(Utils.BVXOR)) {
                 // bvand, bvor, bvadd, bvmul are :left-assoc per FixedSizeBitVectors.smt2's
                 // :funs-description prose, and bvxor per QF_BV.smt2's (informal text, not parsed :funs data -- see
                 // Utils.loadFuns -- so unlike +/-/*'s generic SymbolTable.lookup() left-assoc
@@ -506,11 +505,9 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 return save(e,s);
             } else if (head.equals(Utils.BVUDIV) || head.equals(Utils.BVUREM)
                     || head.equals(Utils.BVSHL) || head.equals(Utils.BVLSHR) ||
-                    (useext && (head.equals(Utils.BVNAND) || head.equals(Utils.BVNOR) || head.equals(Utils.BVXNOR)
-                            || head.equals(Utils.BVSUB) || head.equals(Utils.BVSDIV) || head.equals(Utils.BVSREM) || head.equals(Utils.BVSMOD)
-                            || head.equals(Utils.BVASHR) || head.equals(Utils.BVCOMP)
-                    ))
-                    ) {
+                    head.equals(Utils.BVNAND) || head.equals(Utils.BVNOR) || head.equals(Utils.BVXNOR)
+                    || head.equals(Utils.BVSUB) || head.equals(Utils.BVSDIV) || head.equals(Utils.BVSREM) || head.equals(Utils.BVSMOD)
+                    || head.equals(Utils.BVASHR) || head.equals(Utils.BVCOMP)) {
                 if (argSorts.size() != 2) {
                     error(" The " + name + " function should have two arguments",head.pos());
                     return null;
@@ -534,12 +531,10 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                     return save(e,s);
                 }
                 return save(e,s);
-            } else if (head.equals(Utils.BVULT) || (useext && (head.equals(Utils.BVULE) || head.equals(Utils.BVUGT) || head.equals(Utils.BVUGE)
+            } else if (head.equals(Utils.BVULT) || head.equals(Utils.BVULE) || head.equals(Utils.BVUGT) || head.equals(Utils.BVUGE)
                     || head.equals(Utils.BVSLT) || head.equals(Utils.BVSLE) || head.equals(Utils.BVSGT) || head.equals(Utils.BVSGE)
                     || head.equals(Utils.BVUADDO) || head.equals(Utils.BVSADDO) || head.equals(Utils.BVUMULO) || head.equals(Utils.BVSMULO)
-                    || head.equals(Utils.BVUSUBO) || head.equals(Utils.BVSSUBO) || head.equals(Utils.BVSDIVO)
-                    )
-                    )) {
+                    || head.equals(Utils.BVUSUBO) || head.equals(Utils.BVSSUBO) || head.equals(Utils.BVSDIVO)) {
                 if (argSorts.size() != 2) {
                     error(" The " + name + " function should have two arguments",head.pos());
                     return null;
@@ -561,7 +556,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 ISort b = smtConfig.sortFactory.Bool(); // FIXME - get something from the symbol table?
                 b.accept(this);
                 return save(e,b);
-            } else if (useext && head.equals(Utils.BVNEGO)) {
+            } else if (head.equals(Utils.BVNEGO)) {
                 if (argSorts.size() != 1) {
                     error(" The " + name + " function should have one argument",head.pos());
                     return null;
@@ -844,7 +839,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             return save(e,s);
 
         }
-        if (useext && symTable.bitVectorTheorySet &&
+        if (symTable.bitVectorTheorySet &&
                 head instanceof IParameterizedIdentifier &&
                 Utils.REPEAT.equals(pheadSymbol)) {
             if (argSorts.size() != 1) {
@@ -868,7 +863,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 
         }
 
-        if (useext && symTable.bitVectorTheorySet &&
+        if (symTable.bitVectorTheorySet &&
                 head instanceof IParameterizedIdentifier &&
                 (Utils.ZERO_EXTEND.equals(pheadSymbol) || Utils.SIGN_EXTEND.equals(pheadSymbol)
                 )) {
@@ -888,7 +883,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             return s == null ? null : save(e,s);
 
         }
-        if (useext && symTable.bitVectorTheorySet &&
+        if (symTable.bitVectorTheorySet &&
                 head instanceof IParameterizedIdentifier &&
                 (Utils.ROTATE_LEFT.equals(pheadSymbol) || Utils.ROTATE_RIGHT.equals(pheadSymbol)
                 )) {
@@ -1366,9 +1361,8 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
     public /*@Nullable*/ ISort visit(IParameterizedIdentifier e) throws IVisitor.VisitorException {
         requireVersionForSymbolIndex(e);
         IFcnSort sort = null;
-        boolean useext = true;
         String pname = e.head().value();
-        if (useext && symTable.bitVectorTheorySet &&
+        if (symTable.bitVectorTheorySet &&
                 (pname.matches("bv(0|[1-9][0-9]*)") // TODO - allow leading zeros?
                 )) {
             if (!checkNumeralIndices(e, 1, "Expected exactly one numeral in a bv identifier")) return null;
@@ -1385,7 +1379,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             ISort s = makeBitVec(size);
             return save(e,s);
         }
-        if (useext && symTable.floatingPointTheorySet &&
+        if (symTable.floatingPointTheorySet &&
                 (Utils.FP_POS_INF.equals(e.head()) || Utils.FP_NEG_INF.equals(e.head())
                 || Utils.FP_POS_ZERO.equals(e.head()) || Utils.FP_NEG_ZERO.equals(e.head())
                 || Utils.FP_NAN.equals(e.head()))) {

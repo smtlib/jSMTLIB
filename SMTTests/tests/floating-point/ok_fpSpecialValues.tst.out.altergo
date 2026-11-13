@@ -1,0 +1,7 @@
+success
+(error "Fatal Error: Unsupported Feature: Application Term fp.isinfinite plus_infinity")
+(error "Fatal Error: Unsupported Feature: Application Term fp.isinfinite minus_infinity")
+(error "Fatal Error: Unsupported Feature: Application Term fp.iszero plus_zero")
+(error "Fatal Error: Unsupported Feature: Application Term fp.isnegative minus_zero")
+(error "Fatal Error: Unsupported Feature: Application Term fp.isnan nan")
+unknown
