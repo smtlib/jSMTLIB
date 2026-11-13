@@ -55,7 +55,7 @@ public class FlatResponseTests {
         Assert.assertTrue(text, text.contains("org.smtlib.test.FlatAnswerProcess sat"));
         Assert.assertTrue(text, text.contains("(set-option :print-success true)\n;OUT: success\n")); // #142
         Assert.assertTrue(text, text.contains("(set-logic QF_UF)\n;OUT: success\n"));
-        Assert.assertTrue(text, text.contains("(get-value ( p))\n;OUT: \n"));
+        Assert.assertTrue(text, text.contains("(get-value (p))\n;OUT: \n"));
         Assert.assertTrue(text, text.contains("(get-assignment)\n;OUT: unsupported\n"));
         Assert.assertTrue(text, text.trim().endsWith(";;Exiting solver"));
     }

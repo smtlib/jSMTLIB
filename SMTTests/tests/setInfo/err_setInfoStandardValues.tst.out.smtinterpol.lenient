@@ -1,4 +1,4 @@
-(error "<stdin>:2:10: Unknown SMT-LIB version")
+(error "<stdin>:2:11: Unknown SMT-LIB version")
 success
 success
 success

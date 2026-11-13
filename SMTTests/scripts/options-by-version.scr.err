@@ -1,0 +1,4 @@
+(assert p)
+        ^
+(set-option :global-declarations 1)
+                                 ^

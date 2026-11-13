@@ -1,5 +1,5 @@
-(error "<stdin>:2:25: Status not unknown")
-(:all-statistics ( ) )
+(error "<stdin>:2:26: Status not unknown")
+(:all-statistics ())
 success
-(error "<stdin>:5:25: Status not unknown")
-(:all-statistics ( ( :Core ( ( Conflicts VALUE ) ( Propagations VALUE ) ( Theory_propagations VALUE ) ( Decides VALUE ) ( Random_splits VALUE ) ( Num_Atoms VALUE ) ( Solved_Atoms VALUE ) ( Clauses VALUE ) ( Axioms VALUE ) ( Times ( ( Explain VALUE ) ( Propagation VALUE ) ( Set VALUE ) ( Check VALUE ) ( Backtrack VALUE ) ) ) ) ) ( :CC ( ( Merges VALUE ) ( Closure VALUE ) ( Times ( ( Invert VALUE ) ( Eq VALUE ) ( Closure VALUE ) ( SetRep VALUE ) ) ) ) ) ) )
+(error "<stdin>:5:26: Status not unknown")
+(:all-statistics ((:Core ((Conflicts VALUE) (Propagations VALUE) (Theory_propagations VALUE) (Decides VALUE) (Random_splits VALUE) (Num_Atoms VALUE) (Solved_Atoms VALUE) (Clauses VALUE) (Axioms VALUE) (Times ((Explain VALUE) (Propagation VALUE) (Set VALUE) (Check VALUE) (Backtrack VALUE))))) (:CC ((Merges VALUE) (Closure VALUE) (Times ((Invert VALUE) (Eq VALUE) (Closure VALUE) (SetRep VALUE)))))))

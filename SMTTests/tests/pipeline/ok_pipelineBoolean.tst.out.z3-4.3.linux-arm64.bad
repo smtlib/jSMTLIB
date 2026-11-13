@@ -11,4 +11,4 @@ sat
 success
 success
 sat
-((p true)(q false))
+((p true) (q false))

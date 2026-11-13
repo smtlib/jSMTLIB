@@ -1,5 +1,5 @@
 (error "no info for :zzz")
 success
-(:zzz 5 )
+(:zzz 5)
 success
-(:zzz ( + a s ) )
+(:zzz (+ a s))

@@ -1,2 +1,2 @@
 success
-(error "line 5 column 17: Invalid function definition: unknown sort 'BadSort'")
+(error "line 5 column 18: Invalid function definition: unknown sort 'BadSort'")

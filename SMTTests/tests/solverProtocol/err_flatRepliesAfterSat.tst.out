@@ -5,5 +5,5 @@ success
 success
 sat
 (error "Out of step: the response to (get-assertions) was success")
-(error "Out of step: the response to (get-value ( p)) was empty")
+(error "Out of step: the response to (get-value (p)) was empty")
 unsupported

@@ -7,4 +7,4 @@ success
 (error "line 8 column 38: named expression already defined")
 success
 success
-(error "line 11 column 57: invalid named expression, expression contains free variables")
+(error "line 11 column 56: invalid named expression, expression contains free variables")

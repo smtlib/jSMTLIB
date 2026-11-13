@@ -37,11 +37,17 @@ public class Solver_smtinterpol extends AbstractSolver implements ISolver {
 
     /** SMTInterpol's error messages begin "{@code <stdin>:L:C:}", counting the lines of its whole input */
     private static final java.util.List<java.util.regex.Pattern> LINE_NUMBERS =
-            java.util.List.of(java.util.regex.Pattern.compile("(<stdin>:)(\\d+)(:)"));
+            java.util.List.of(java.util.regex.Pattern.compile("(<stdin>:)(\\d+)(:)(\\d+)"));
 
     @Override
     protected java.util.List<java.util.regex.Pattern> lineNumberPatterns() {
         return LINE_NUMBERS;
+    }
+
+    /** SMTInterpol counts columns from 0 */
+    @Override
+    protected int columnCorrection() {
+        return 1;
     }
 
     /** Creates an instance of the solver. The base launch command ("java -jar

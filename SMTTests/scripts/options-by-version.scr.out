@@ -1,0 +1,17 @@
+success
+success
+unsupported
+success
+success
+success
+success
+success
+success
+success
+(
+true
+)
+(error "Unknown constant symbol p")
+success
+(error "Expected true or false as the value of :global-declarations")
+false

@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.smtlib.*;
@@ -58,11 +59,44 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
     protected final boolean needsPrintSuccessPriming = !isWindows && !isMac;
 
     /** z3 reports "line N column C" in its error messages, counting the lines of its whole input */
-    private static final List<Pattern> LINE_NUMBERS = List.of(Pattern.compile("(line )(\\d+)( column)"));
+    private static final List<Pattern> LINE_NUMBERS = List.of(Pattern.compile("(line )(\\d+)( column )(\\d+)"));
 
     @Override
     protected List<Pattern> lineNumberPatterns() {
         return LINE_NUMBERS;
+    }
+
+    /** z3 counts columns from 0 */
+    @Override
+    protected int columnCorrection() {
+        return 1;
+    }
+
+    /** Whether this z3 is a version before 5.1.0; null until first needed */
+    private /*@Nullable*/ Boolean before5_1 = null;
+
+    /** z3 before 5.1.0 counts columns one higher on the line after a comment line (#196). This adapter
+     *  serves several versions, so the executable is asked its version the first time it matters. */
+    @Override
+    protected boolean columnsHigherAfterComment() {
+        if (before5_1 == null) before5_1 = versionBefore(cmds[0], 5, 1);
+        return before5_1;
+    }
+
+    /** Whether the z3 executable's version (from "z3 -version", e.g. "Z3 version 4.16.0 - 64 bit") is
+     *  before major.minor; false if it cannot be told */
+    static boolean versionBefore(String executable, int major, int minor) {
+        try {
+            Process p = new ProcessBuilder(executable, "-version").redirectErrorStream(true).start();
+            String out = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            p.waitFor();
+            Matcher m = Pattern.compile("version (\\d+)\\.(\\d+)").matcher(out);
+            if (!m.find()) return false;
+            int ma = Integer.parseInt(m.group(1)), mi = Integer.parseInt(m.group(2));
+            return ma < major || (ma == major && mi < minor);
+        } catch (IOException | InterruptedException e) {
+            return false;
+        }
     }
 
     /** Creates an instance of the solver */

@@ -1,2 +1,2 @@
 success
-(error "line 5 column 8: unknown constant z")
+(error "line 5 column 9: unknown constant z")

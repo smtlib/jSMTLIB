@@ -11,7 +11,10 @@
 
 Changes are made by pull request against the `dev` branch. `master` holds releases.
 
-- The build needs a JDK and `make`. In `SMT/`, `make build` builds `jSMTLIB.jar`.
+- The build needs a JDK and `make`. In `SMT/`, `make build` builds `jSMTLIB.jar`. It compiles with
+  `-Xlint:all`; warnings do not fail the build unless `JSMTLIB_WERROR=1` is set
+  (`JSMTLIB_WERROR=1 make build`, likewise for `SMTlsp`; in CI, the `JSMTLIB_WERROR` setting at the top of
+  `.github/workflows/build.yml`).
 - `make test` (in `SMT/` or `SMTTests/`) runs the JUnit suite against the built jar. By default it uses only
   jSMTLIB's built-in test solver; `SMT_TEST_SOLVERS` adds real solvers, whose binaries come from the
   [Solvers](https://github.com/smtlib/Solvers) repository, located by `SMT_SOLVER_DIR`

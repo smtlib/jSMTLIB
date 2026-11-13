@@ -6,5 +6,5 @@ success
 success
 (error "<stdin>:8:39: Cannot name open terms")
 (error "<stdin>:9:40: Cannot name open terms")
-(error "<stdin>:10:60: Cannot name open terms")
-(error "<stdin>:11:58: Cannot name open terms")
+(error "<stdin>:10:59: Cannot name open terms")
+(error "<stdin>:11:57: Cannot name open terms")

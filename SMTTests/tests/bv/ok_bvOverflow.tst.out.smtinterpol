@@ -1,9 +1,9 @@
 success
 success
 success
-(error "<stdin>:5:18: Unsupported internal function bvnego")
-(error "<stdin>:6:21: Unsupported internal function bvuaddo")
-(error "<stdin>:7:21: Unsupported internal function bvsaddo")
-(error "<stdin>:8:21: Unsupported internal function bvumulo")
-(error "<stdin>:9:21: Unsupported internal function bvsmulo")
+(error "<stdin>:5:19: Unsupported internal function bvnego")
+(error "<stdin>:6:22: Unsupported internal function bvuaddo")
+(error "<stdin>:7:22: Unsupported internal function bvsaddo")
+(error "<stdin>:8:22: Unsupported internal function bvumulo")
+(error "<stdin>:9:22: Unsupported internal function bvsmulo")
 sat

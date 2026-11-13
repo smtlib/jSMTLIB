@@ -1,7 +1,7 @@
 success
 success
 success
-(error "Parse Error: <shell>:5.41: Cannot name a term in a binder (e.g., quantifiers, definitions)")
+(error "Parse Error: <shell>:5.40: Cannot name a term in a binder (e.g., quantifiers, definitions)")
 (error "The solver process has exited")
 (error "The solver process has exited")
 (error "The solver process has exited")

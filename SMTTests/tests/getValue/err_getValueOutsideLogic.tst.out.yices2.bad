@@ -2,6 +2,6 @@ success
 success
 success
 sat
-((x 0)((+ x 1) 1))
+((x 0) ((+ x 1) 1))
 (((* x x) 0))
-(((forall ((y Int) ) (> y x)) ???))
+(((forall ((y Int)) (> y x)) ???))

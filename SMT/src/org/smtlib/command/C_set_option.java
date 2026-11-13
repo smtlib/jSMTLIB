@@ -82,7 +82,9 @@ public class C_set_option extends Command implements Iset_option {
      */
     public IResponse.IError checkOptionType(Configuration smtConfig, IKeyword keyword, IAttributeValue t) {
         String key = keyword.value();
-        if (smtConfig.utils.boolOptions.contains(key)) {
+        if (!smtConfig.utils.isOption(key)) {
+            // a standard option from a later SMT-LIB version: unknown in this one
+        } else if (smtConfig.utils.boolOptions.contains(key)) {
             if (t instanceof IExpr.ISymbol && (((IExpr.ISymbol)t).value().equals("true") || ((IExpr.ISymbol)t).value().equals("false"))) return null;
             return smtConfig.responseFactory.error("Expected true or false as the value of " + keyword,t.pos());
         } else if (smtConfig.utils.stringOptions.contains(key)) {

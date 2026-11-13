@@ -1,3 +1,3 @@
-(:all-statistics ( ) )
+(:all-statistics ())
 success
-(:all-statistics ( ( :Core ( ( Conflicts VALUE ) ( Propagations VALUE ) ( Theory_propagations VALUE ) ( Decides VALUE ) ( Random_splits VALUE ) ( Num_Atoms VALUE ) ( Solved_Atoms VALUE ) ( Clauses VALUE ) ( Axioms VALUE ) ( Times ( ( Explain VALUE ) ( Propagation VALUE ) ( Set VALUE ) ( Check VALUE ) ( Backtrack VALUE ) ) ) ) ) ( :CC ( ( Merges VALUE ) ( Closure VALUE ) ( Times ( ( Invert VALUE ) ( Eq VALUE ) ( Closure VALUE ) ( SetRep VALUE ) ) ) ) ) ) )
+(:all-statistics ((:Core ((Conflicts VALUE) (Propagations VALUE) (Theory_propagations VALUE) (Decides VALUE) (Random_splits VALUE) (Num_Atoms VALUE) (Solved_Atoms VALUE) (Clauses VALUE) (Axioms VALUE) (Times ((Explain VALUE) (Propagation VALUE) (Set VALUE) (Check VALUE) (Backtrack VALUE))))) (:CC ((Merges VALUE) (Closure VALUE) (Times ((Invert VALUE) (Eq VALUE) (Closure VALUE) (SetRep VALUE)))))))

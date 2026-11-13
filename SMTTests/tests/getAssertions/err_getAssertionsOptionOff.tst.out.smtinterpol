@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "<stdin>:6:15: Set option :interactive-mode to true to get assertions!")
+(error "<stdin>:6:16: Set option :interactive-mode to true to get assertions!")

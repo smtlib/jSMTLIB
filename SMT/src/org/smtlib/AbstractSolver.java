@@ -76,6 +76,10 @@ public class AbstractSolver implements ISolver {
      *  An adapter rewrites the line numbers in its solver's messages with {@link #withSourceLines}. */
     protected int linesOffset = 0;
 
+    /** Whether the command whose response is being read was sent on the line directly after a comment
+     *  line (see {@link SolverProcess#nextLineFollowsComment}); set with linesOffset */
+    protected boolean followsComment = false;
+
     /** The source line of the command being executed (see {@link #setSourceLine}); a command
      *  without one counts as the line after the previous command */
     private int sourceLine = 0;
@@ -114,6 +118,7 @@ public class AbstractSolver implements ISolver {
             if (!linesGiven) sourceLine++;
             int solverLine = nextSolverLine();
             linesOffset = solverLine - sourceLine;
+            followsComment = solverProcess.nextLineFollowsComment();
             if (reportsEarlierLines()) {
                 java.util.Map.Entry<Integer,Integer> last = offsetsFrom.lastEntry();
                 if (last == null || last.getValue() != linesOffset) offsetsFrom.put(solverLine, linesOffset);
@@ -151,19 +156,39 @@ public class AbstractSolver implements ISolver {
     }
 
     /** Patterns matching the line numbers in this solver's messages about the command answered: group 1
-     *  is the text before the number, group 2 the number, group 3 the text after it */
+     *  is the text before the number, group 2 the number, group 3 the text after it, and an optional
+     *  group 4 the column number that follows */
     protected java.util.List<java.util.regex.Pattern> lineNumberPatterns() {
         return java.util.List.of();
     }
 
-    /** The text with each line number lineNumberPatterns finds in it rewritten as a source line (see linesOffset) */
+    /** What to add to a column number this solver reports so that columns count from 1, as lines do:
+     *  1 for a solver whose columns count from 0 (#196) */
+    protected int columnCorrection() {
+        return 0;
+    }
+
+    /** Whether this solver's columns are one higher than usual on the line directly after a comment
+     *  line (z3 before 5.1.0, #196), so that no correction is needed there */
+    protected boolean columnsHigherAfterComment() {
+        return false;
+    }
+
+    /** The text with each line number lineNumberPatterns finds in it rewritten as a source line (see
+     *  linesOffset), and each column number found with it counting from 1 */
     protected String withSourceLines(String text) {
         for (java.util.regex.Pattern p: lineNumberPatterns()) {
             java.util.regex.Matcher m = p.matcher(text);
             StringBuilder sb = new StringBuilder();
             while (m.find()) {
                 int n = Integer.parseInt(m.group(2));
-                m.appendReplacement(sb, java.util.regex.Matcher.quoteReplacement(m.group(1) + (n - linesOffset) + m.group(3)));
+                String column = "";
+                if (m.groupCount() >= 4 && m.group(4) != null) {
+                    int correction = columnCorrection();
+                    if (correction != 0 && followsComment && columnsHigherAfterComment()) correction = 0;
+                    column = String.valueOf(Integer.parseInt(m.group(4)) + correction);
+                }
+                m.appendReplacement(sb, java.util.regex.Matcher.quoteReplacement(m.group(1) + (n - linesOffset) + m.group(3) + column));
             }
             m.appendTail(sb);
             text = sb.toString();
@@ -525,15 +550,18 @@ public class AbstractSolver implements ISolver {
         final /*@Nullable*/ String marker;
         /** linesOffset for the command */
         final int linesOffset;
+        /** followsComment for the command */
+        final boolean followsComment;
         /** For get-info when testing, the flag whose response is scrubbed (see normalizeForTesting); else null */
         final /*@Nullable*/ IKeyword scrub;
         private /*@Nullable*/ IResponse response = null;
 
-        Pending(String sent, Shape shape, /*@Nullable*/ String marker, int linesOffset, /*@Nullable*/ IKeyword scrub) {
+        Pending(String sent, Shape shape, /*@Nullable*/ String marker, int linesOffset, boolean followsComment, /*@Nullable*/ IKeyword scrub) {
             this.sent = sent;
             this.shape = shape;
             this.marker = marker;
             this.linesOffset = linesOffset;
+            this.followsComment = followsComment;
             this.scrub = scrub;
         }
 
@@ -659,13 +687,13 @@ public class AbstractSolver implements ISolver {
         Pending p;
         try {
             sendScriptText(false, translatedCmd, "\n");
-            p = new Pending(translatedCmd, shape, null, linesOffset, scrub);
+            p = new Pending(translatedCmd, shape, null, linesOffset, followsComment, scrub);
             pending.add(p);
             // so that a response (e.g. an error) is matched to its own command
             if (!solverPrintsSuccess()) sendBarrier();
         } catch (IOException e) {
             // The solver has stopped: report it as for any command sent after that
-            p = new Pending(translatedCmd, shape, null, linesOffset, scrub);
+            p = new Pending(translatedCmd, shape, null, linesOffset, followsComment, scrub);
             p.response = sendFailure("Error writing to solver: " + translatedCmd, e);
         }
         return p;
@@ -834,7 +862,7 @@ public class AbstractSolver implements ISolver {
         String sent = "(echo \"" + marker + "\")";
         try {
             solverProcess.sendNoListen(sent, "\n");
-            pending.add(new Pending(sent, Shape.ANY, marker, linesOffset, null));
+            pending.add(new Pending(sent, Shape.ANY, marker, linesOffset, false, null));
         } catch (IOException e) {
             // The solver has stopped; the pending commands are resolved as its output ends
         }
@@ -1008,12 +1036,15 @@ public class AbstractSolver implements ISolver {
         // Logged at once, as when not pipelining: an adapter may parse with the output redirected.
         // Line numbers in it are those of p's command, sent before the commands sent since.
         int current = linesOffset;
+        boolean currentFollowsComment = followsComment;
         linesOffset = p.linesOffset;
+        followsComment = p.followsComment;
         IResponse result;
         try {
             result = smtConfig.log.unheld(() -> parseResponse(text));
         } finally {
             linesOffset = current;
+            followsComment = currentFollowsComment;
         }
         if (result == null) {
             return smtConfig.responseFactory.error("Could not parse response from the solver for: " + p.sent + " -- raw response: " + text);
@@ -1269,9 +1300,9 @@ public class AbstractSolver implements ISolver {
     /** @see org.smtlib.ISolver#declare_const(ICommand.Ideclare_const)  */
     @Override
     public IResponse declare_const(Ideclare_const cmd) {
-        // declare-const is syntactic sugar for declare-fun with an empty argument list
-        return declare_fun(smtConfig.commandFactory.declare_fun(
-                cmd.symbol(), new java.util.ArrayList<>(), cmd.resultSort()));
+        // Sent as is, so the solver's error columns match the source; an adapter whose solver lacks
+        // declare-const would send the declare-fun it is sugar for (#196)
+        return sendChange(StackChange.DECLARE_FUN, cmd);
     }
 
     /** @see org.smtlib.ISolver#declare_fun(ICommand.Ideclare_fun)  */

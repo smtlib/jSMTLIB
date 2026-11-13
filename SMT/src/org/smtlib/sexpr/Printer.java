@@ -247,12 +247,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
     @Override
     public Void visit(IForall e) throws IVisitor.VisitorException {
-        append("(" + Utils.FORALL + " (");
-        for (IDeclaration a: e.parameters()) {
-            a.accept(this);
-            append(" ");
-        }
-        append(") ");
+        append("(" + Utils.FORALL + " ");
+        list(e.parameters(), a -> a.accept(this));
+        append(" ");
         e.expr().accept(this);
         append(")");
         return null;
@@ -260,12 +257,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
     @Override
     public Void visit(IExists e) throws IVisitor.VisitorException {
-        append("(" + Utils.EXISTS + " (");
-        for (IDeclaration a: e.parameters()) {
-            a.accept(this);
-            append(" ");
-        }
-        append(") ");
+        append("(" + Utils.EXISTS + " ");
+        list(e.parameters(), a -> a.accept(this));
+        append(" ");
         e.expr().accept(this);
         append(")");
         return null;
@@ -273,12 +267,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
     @Override
     public Void visit(ILambda e) throws IVisitor.VisitorException {
-        append("(" + Utils.LAMBDA + " (");
-        for (IDeclaration a: e.parameters()) {
-            a.accept(this);
-            append(" ");
-        }
-        append(") ");
+        append("(" + Utils.LAMBDA + " ");
+        list(e.parameters(), a -> a.accept(this));
+        append(" ");
         e.expr().accept(this);
         append(")");
         return null;
@@ -286,12 +277,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
     @Override
     public Void visit(ILet e) throws IVisitor.VisitorException {
-        append("(" + Utils.LET + " (");
-        for (IBinding a: e.bindings()) {
-            a.accept(this);
-            append(" ");
-        }
-        append(") ");
+        append("(" + Utils.LET + " ");
+        list(e.bindings(), a -> a.accept(this));
+        append(" ");
         e.expr().accept(this);
         append(")");
         return null;
@@ -301,12 +289,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     public Void visit(IExpr.IMatch e) throws IVisitor.VisitorException {
         append("(match ");
         e.expr().accept(this);
-        append(" (");
-        for (IExpr.IMatchCase mc : e.cases()) {
-            append(" ");
-            mc.accept(this);
-        }
-        append("))");
+        append(" ");
+        list(e.cases(), mc -> mc.accept(this));
+        append(")");
         return null;
     }
 
@@ -386,9 +371,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     public Void visit(IExpr.IFunctionDeclaration e) throws IVisitor.VisitorException {
         append("(");
         e.symbol().accept(this);
-        append(" (");
-        for (IExpr.IDeclaration d : e.parameters()) { d.accept(this); append(" "); }
-        append(") ");
+        append(" ");
+        list(e.parameters(), d -> d.accept(this));
+        append(" ");
         e.sort().accept(this);
         append(")");
         return null;
@@ -562,9 +547,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     @Override
     public Void visit(ICommand.Icheck_sat_assuming e) throws IVisitor.VisitorException {
         return printCommand(e, () -> {
-            append("(");
-            for (IExpr x : e.terms()) { append(" "); x.accept(this); }
-            append(")");
+            list(e.terms(), x -> x.accept(this));
         });
     }
 
@@ -589,11 +572,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     @Override
     public Void visit(ICommand.Ideclare_datatypes e) throws IVisitor.VisitorException {
         return printCommand(e, () -> {
-            append("(");
-            for (IExpr.ISortDeclaration sd : e.sortDeclarations()) { append(" "); sd.accept(this); }
-            append(") (");
-            for (ISort.IDatatype dt : e.datatypes()) { append(" "); dt.accept(this); }
-            append(")");
+            list(e.sortDeclarations(), sd -> sd.accept(this));
+            append(" ");
+            list(e.datatypes(), dt -> dt.accept(this));
         });
     }
 
@@ -601,9 +582,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     public Void visit(ICommand.Ideclare_fun e) throws IVisitor.VisitorException {
         return printCommand(e, () -> {
             e.symbol().accept(this);
-            append(" (");
-            for (ISort s : e.argSorts()) { s.accept(this); append(" "); }
-            append(") ");
+            append(" ");
+            list(e.argSorts(), x -> x.accept(this));
+            append(" ");
             e.resultSort().accept(this);
         });
     }
@@ -637,9 +618,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     public Void visit(ICommand.Idefine_fun e) throws IVisitor.VisitorException {
         return printCommand(e, () -> {
             e.symbol().accept(this);
-            append(" (");
-            for (IExpr.IDeclaration d : e.parameters()) d.accept(this);
-            append(") ");
+            append(" ");
+            list(e.parameters(), d -> d.accept(this));
+            append(" ");
             e.resultSort().accept(this);
             append(" ");
             e.expression().accept(this);
@@ -650,9 +631,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     public Void visit(ICommand.Idefine_fun_rec e) throws IVisitor.VisitorException {
         return printCommand(e, () -> {
             e.symbol().accept(this);
-            append(" (");
-            for (IExpr.IDeclaration d : e.parameters()) d.accept(this);
-            append(") ");
+            append(" ");
+            list(e.parameters(), d -> d.accept(this));
+            append(" ");
             e.resultSort().accept(this);
             append(" ");
             e.expression().accept(this);
@@ -662,11 +643,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     @Override
     public Void visit(ICommand.Idefine_funs_rec e) throws IVisitor.VisitorException {
         return printCommand(e, () -> {
-            append("(");
-            for (IExpr.IFunctionDeclaration d : e.declarations()) { d.accept(this); append(" "); }
-            append(") (");
-            for (IExpr body : e.bodies()) { body.accept(this); append(" "); }
-            append(")");
+            list(e.declarations(), d -> d.accept(this));
+            append(" ");
+            list(e.bodies(), body -> body.accept(this));
         });
     }
 
@@ -674,9 +653,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     public Void visit(ICommand.Idefine_sort e) throws IVisitor.VisitorException {
         return printCommand(e, () -> {
             e.sortSymbol().accept(this);
-            append(" (");
-            for (ISort.IParameter d : e.parameters()) { d.accept(this); append(" "); }
-            append(") ");
+            append(" ");
+            list(e.parameters(), d -> d.accept(this));
+            append(" ");
             e.expression().accept(this);
         });
     }
@@ -776,9 +755,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     @Override
     public Void visit(ICommand.Iget_value e) throws IVisitor.VisitorException {
         return printCommand(e, () -> {
-            append("(");
-            for (IExpr x : e.exprs()) { append(" "); x.accept(this); }
-            append(")");
+            list(e.exprs(), x -> x.accept(this));
         });
     }
 
@@ -838,14 +815,9 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     public Void visit(IAbbreviation s) throws IVisitor.VisitorException {
         append("(");
         s.identifier().accept(this);
-        append(" (");
-        boolean first = true;
-        for (ISort.IParameter p: s.parameters()) {
-            if (!first) append(" ");
-            p.accept(this);
-            first = false;
-        }
-        append(") ");
+        append(" ");
+        list(s.parameters(), p -> p.accept(this));
+        append(" ");
         s.sortExpression().accept(this);
         append(")");
         return null;
@@ -955,16 +927,14 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
     @Override
     public Void visit(IAssignmentResponse e) throws IVisitor.VisitorException {
-        append("(");
-        for (IResponse.IPair<ISymbol,Boolean> p : e.assignments()) {
+        list(e.assignments(), p -> {
             append("(");
             p.first().accept(this);
             append(" ");
             // SMT-LIB prints the value as true or false, which is how Java prints the Boolean second() always is
             append(p.second().toString());
             append(")");
-        }
-        append(")");
+        });
         return null;
     }
 
@@ -978,20 +948,20 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
             append("(");
             append(eol);
             for (ISexpr x : ((ISexpr.ISeq)proof).sexprs()) {
-                printList(x, false);
+                printList(x);
                 append(eol);
             }
             append(")");
         } else {
-            printList(proof, false);
+            printList(proof);
         }
         return null;
     }
 
-    /** Prints a list, padded as visit(ISeq) does ("( a b )") or compactly ("(a b)"); iterative,
+    /** Prints a list, "(a b)"; iterative,
      *  since solver output such as a proof can nest deeper than the Java stack allows (#132).
      *  Nested lists are printed here, not through visit(ISeq). */
-    private void printList(ISexpr e, boolean padded) throws IVisitor.VisitorException {
+    private void printList(ISexpr e) throws IVisitor.VisitorException {
         // Iterators, not indexes: a parsed list is a LinkedList
         java.util.ArrayDeque<java.util.Iterator<ISexpr>> open = new java.util.ArrayDeque<>();
         ISexpr next = e;
@@ -1001,10 +971,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
                 java.util.Iterator<ISexpr> it = ((ISexpr.ISeq)next).sexprs().iterator();
                 next = it.hasNext() ? it.next() : null;
                 open.push(it);
-                if (next != null) {
-                    if (padded) append(" ");
-                    continue;
-                }
+                if (next != null) continue;
             } else {
                 next.accept(this);
             }
@@ -1014,7 +981,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
                     append(" ");
                     next = open.peek().next();
                 } else {
-                    append(padded ? " )" : ")");
+                    append(")");
                     open.pop();
                 }
             }
@@ -1024,48 +991,31 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
 
     @Override
     public Void visit(IValueResponse e) throws IVisitor.VisitorException {
-        append("(");
-        for (IResponse.IPair<IExpr,IExpr> p : e.values()) {
+        list(e.values(), p -> {
             append("(");
             p.first().accept(this);
             append(" ");
             p.second().accept(this);
             append(")");
-        }
-        append(")");
+        });
         return null;
     }
 
     @Override
     public Void visit(IUnsatCoreResponse e) throws IVisitor.VisitorException {
-        append("(");
-        for (ISymbol n : e.names()) {
-            n.accept(this);
-            append(" ");
-        }
-        append(")");
+        list(e.names(), n -> n.accept(this));
         return null;
     }
 
     @Override
     public Void visit(IResponse.IUnsatAssumptionsResponse e) throws IVisitor.VisitorException {
-        append("(");
-        for (IExpr n : e.assumptions()) {
-            n.accept(this);
-            append(" ");
-        }
-        append(")");
+        list(e.assumptions(), n -> n.accept(this));
         return null;
     }
 
     @Override
     public Void visit(IAttributeList e) throws IVisitor.VisitorException {
-        append("(");
-        for (IAttribute<?> n : e.attributes()) {
-            n.accept(this);
-            append(" ");
-        }
-        append(")");
+        list(e.attributes(), n -> n.accept(this));
         return null;
     }
 
@@ -1095,24 +1045,45 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
         return false;
     }
 
+    /** Prints one element of a list */
+    @FunctionalInterface
+    protected interface ElementPrinter<T> {
+        void print(T element) throws IVisitor.VisitorException;
+    }
+
+    /** Prints the elements as a list, "(a b c)": one space between elements, none inside the
+     *  parentheses -- the spacing of every list this printer writes (#180) */
+    protected <T> void list(Iterable<? extends T> elements, ElementPrinter<T> printer) throws IVisitor.VisitorException {
+        append("(");
+        boolean first = true;
+        for (T element: elements) {
+            if (!first) append(" ");
+            first = false;
+            printer.print(element);
+        }
+        append(")");
+    }
+
+    protected <T> void list(T[] elements, ElementPrinter<T> printer) throws IVisitor.VisitorException {
+        list(java.util.Arrays.asList(elements), printer);
+    }
+
     @Override
     public Void visit(ISexpr.ISeq e) throws IVisitor.VisitorException {
-        printList(e, true);
+        printList(e);
         return null;
     }
 
     @Override
     public Void visit(ISort.IDatatype e) throws VisitorException {
         if (e.symbols() != null) {
-            append("( par (");
-            for (IExpr.ISymbol s : e.symbols()) { s.accept(this); append(" "); }
-            append(") (");
-            for (IExpr.IConstructor c : e.constructors()) { c.accept(this); append(" "); }
-            append(") )");
-        } else {
-            append("(");
-            for (IExpr.IConstructor c : e.constructors()) { c.accept(this); append(" "); }
+            append("(par ");
+            list(e.symbols(), x -> x.accept(this));
+            append(" ");
+            list(e.constructors(), c -> c.accept(this));
             append(")");
+        } else {
+            list(e.constructors(), c -> c.accept(this));
         }
         return null;
     }

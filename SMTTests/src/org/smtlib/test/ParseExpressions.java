@@ -145,17 +145,17 @@ public class ParseExpressions {
 
     @Test
     public void forall() throws Exception {
-        testExpr("(forall ((a Bool) ) (or a b))");
+        testExpr("(forall ((a Bool)) (or a b))");
     }
 
     @Test
     public void exists() throws Exception {
-        testExpr("(exists ((a Bool) (b Bool) ) (or a b))");
+        testExpr("(exists ((a Bool) (b Bool)) (or a b))");
     }
 
     @Test
     public void let() throws Exception {
-        testExpr("(let ((a 5) (b true) ) (ite b a 9))");
+        testExpr("(let ((a 5) (b true)) (ite b a 9))");
     }
 
     @Test
@@ -165,7 +165,7 @@ public class ParseExpressions {
 
     @Test
     public void sexprSeq() throws Exception {
-        testSExpr("( x 1 2.3 \"qwe\" #b10 #xab )");
+        testSExpr("(x 1 2.3 \"qwe\" #b10 #xab)");
     }
 
     @Test

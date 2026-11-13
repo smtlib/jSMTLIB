@@ -5,5 +5,5 @@ success
 success
 success
 unsat
-(a1 )
-(p (not q) )
+(a1)
+(p (not q))

@@ -1,9 +1,9 @@
 success
 success
 success
-(error "<stdin>:5:22: Function q is already defined.")
+(error "<stdin>:5:23: Function q is already defined.")
 success
-(error "<stdin>:7:22: Function P is already defined.")
-(error "<stdin>:8:13: Function P is already defined.")
-(error "<stdin>:9:43: Function P is already defined.")
+(error "<stdin>:7:23: Function P is already defined.")
+(error "<stdin>:8:14: Function P is already defined.")
+(error "<stdin>:9:44: Function P is already defined.")
 success

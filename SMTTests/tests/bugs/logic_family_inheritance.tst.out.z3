@@ -4,7 +4,7 @@ success
 success
 success
 success
-(error "line 10 column 21: logic does not support nonlinear arithmetic")
+(error "line 10 column 22: logic does not support nonlinear arithmetic")
 success
 success
 success
@@ -22,7 +22,7 @@ success
 success
 success
 success
-(error "line 28 column 21: logic does not support nonlinear arithmetic")
+(error "line 28 column 22: logic does not support nonlinear arithmetic")
 success
 success
 success

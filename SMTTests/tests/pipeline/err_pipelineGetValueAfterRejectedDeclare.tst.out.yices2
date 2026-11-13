@@ -3,6 +3,6 @@ success
 success
 success
 sat
-(error "at line 9, column 14: can't redefine term: x")
+(error "at line 9, column 16: can't redefine term: x")
 (error "The solver process has exited")
 (error "The solver process has exited")

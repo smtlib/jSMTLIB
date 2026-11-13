@@ -3,5 +3,5 @@ success
 success
 unsupported
 success
-(error "line 9 column 25: unknown sort 'A'")
+(error "line 9 column 26: unknown sort 'A'")
 unknown

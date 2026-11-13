@@ -49,11 +49,23 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     protected String name() { return "z3-4.3"; }
 
     /** z3 reports "line N column C" in its error messages, counting the lines of its whole input */
-    private static final List<Pattern> LINE_NUMBERS = List.of(Pattern.compile("(line )(\\d+)( column)"));
+    private static final List<Pattern> LINE_NUMBERS = List.of(Pattern.compile("(line )(\\d+)( column )(\\d+)"));
 
     @Override
     protected List<Pattern> lineNumberPatterns() {
         return LINE_NUMBERS;
+    }
+
+    /** z3 counts columns from 0 */
+    @Override
+    protected int columnCorrection() {
+        return 1;
+    }
+
+    /** As every z3 before 5.1.0 (#196) */
+    @Override
+    protected boolean columnsHigherAfterComment() {
+        return true;
     }
 
     /** The command-line arguments for launching the Z3 solver */

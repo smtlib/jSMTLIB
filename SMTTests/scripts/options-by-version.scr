@@ -1,0 +1,18 @@
+### #201: an option introduced in SMT-LIB 2.5 (:global-declarations, :produce-assertions) is, under 2.0, an unknown
+### option: not type-checked, no default, not acted on; get-assertions is gated by :interactive-mode. 2.6 for contrast.
+##EXITCODE 1
+$SMT_CMD --solver test --text "(set-info :smt-lib-version 2.0)
+(set-option :global-declarations 1)
+(get-option :produce-assertions)
+(set-option :global-declarations true)
+(set-option :interactive-mode true)
+(set-logic QF_UF)
+(push 1)
+(declare-fun p () Bool)
+(pop 1)
+(assert true)
+(get-assertions)
+(assert p)"
+$SMT_CMD --solver test --text "(set-info :smt-lib-version 2.6)
+(set-option :global-declarations 1)
+(get-option :produce-assertions)"

@@ -1,7 +1,7 @@
 success
-(error "<stdin>:4:95: Undeclared sort (Undeclared 0)")
-(error "<stdin>:5:14: Sort Lst already exists.")
-(error "<stdin>:6:14: Sort T already exists.")
+(error "<stdin>:4:90: Undeclared sort (Undeclared 0)")
+(error "<stdin>:5:15: Sort Lst already exists.")
+(error "<stdin>:6:15: Sort T already exists.")
 success
 success
 success

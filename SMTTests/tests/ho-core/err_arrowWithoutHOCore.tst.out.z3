@@ -1,3 +1,3 @@
 success
 success
-(error "line 6 column 19: unknown sort '->'")
+(error "line 6 column 20: unknown sort '->'")

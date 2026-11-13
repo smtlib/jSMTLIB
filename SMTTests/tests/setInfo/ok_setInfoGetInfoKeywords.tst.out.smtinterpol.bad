@@ -1,8 +1,8 @@
 success
-(:name "SMTInterpol" )
+(:name "SMTInterpol")
 success
-(:authors "Juergen Christ, Jochen Hoenicke, Alexander Nutz, and Tanja Schindler" )
+(:authors "Juergen Christ, Jochen Hoenicke, Alexander Nutz, and Tanja Schindler")
 success
-(:version "2.5-1453-gedae1f37" )
-(error "<stdin>:8:10: Value should be continued-execution or immediate-exit")
-(:error-behavior continued-execution )
+(:version "2.5-1453-gedae1f37")
+(error "<stdin>:8:11: Value should be continued-execution or immediate-exit")
+(:error-behavior continued-execution)

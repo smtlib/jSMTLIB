@@ -89,6 +89,19 @@ public class Utils {
     /** The string designating an option item */
     public static final String GLOBAL_DECLARATIONS = ":global-declarations";
 
+    /** The standard options introduced after SMT-LIB 2.0, with their version; the option tables
+     *  (boolOptions, defaults) list them all, and {@link #isOption} says whether one exists in the
+     *  configured version, which is known only once a script sets it (#201) */
+    public static final Map<String,SMTLIB> optionSince = Map.of(PRODUCE_ASSERTIONS, SMTLIB.V25,
+            GLOBAL_DECLARATIONS, SMTLIB.V25);
+
+    /** False for a standard option that the configured SMT-LIB version does not have yet; such an
+     *  option is then an unknown one (not type-checked, no default, not acted on) */
+    public boolean isOption(String option) {
+        SMTLIB since = optionSince.get(option);
+        return since == null || smtConfig.atLeastVersion(since);
+    }
+
     /** The string designating an option item */
     public static final String RANDOM_SEED = ":random-seed";
 
@@ -585,8 +598,8 @@ public class Utils {
             boolOptions.add(PRINT_SUCCESS);
             boolOptions.add(EXPAND_DEFINITIONS); // Is deprecated in V2.5, but we keep it anyway
             boolOptions.add(INTERACTIVE_MODE);
-            if (smtConfig.atLeastVersion(SMTLIB.V25)) boolOptions.add(PRODUCE_ASSERTIONS);
-            if (smtConfig.atLeastVersion(SMTLIB.V25)) boolOptions.add(GLOBAL_DECLARATIONS);
+            boolOptions.add(PRODUCE_ASSERTIONS);
+            boolOptions.add(GLOBAL_DECLARATIONS);
             boolOptions.add(PRODUCE_PROOFS);
             boolOptions.add(PRODUCE_UNSAT_CORES);
             boolOptions.add(PRODUCE_UNSAT_ASSUMPTIONS);
@@ -600,8 +613,8 @@ public class Utils {
             defaults.put(PRINT_SUCCESS, TRUE);
             defaults.put(EXPAND_DEFINITIONS, FALSE); 
             defaults.put(INTERACTIVE_MODE, FALSE);
-            if (smtConfig.atLeastVersion(SMTLIB.V25)) defaults.put(PRODUCE_ASSERTIONS, FALSE);
-            if (smtConfig.atLeastVersion(SMTLIB.V25)) defaults.put(GLOBAL_DECLARATIONS, FALSE);
+            defaults.put(PRODUCE_ASSERTIONS, FALSE);
+            defaults.put(GLOBAL_DECLARATIONS, FALSE);
             defaults.put(PRODUCE_PROOFS, FALSE);
             defaults.put(PRODUCE_UNSAT_CORES, FALSE);
             defaults.put(PRODUCE_UNSAT_ASSUMPTIONS, FALSE);

@@ -102,18 +102,14 @@ public class Printer extends org.smtlib.sexpr.Printer {
             if (params.get(i).sort().isBool()) { idx = i; break; }
         }
         if (idx < 0) {
-            try {
-                if (params.isEmpty()) {
-                    body.accept(this);
-                } else {
-                    w.append("(" + keyword + " (");
-                    for (IDeclaration a: params) { a.accept(this); w.append(" "); }
-                    w.append(") ");
-                    body.accept(this);
-                    w.append(")");
-                }
-            } catch (IOException ex) {
-                throw new IVisitor.VisitorException(ex,pos);
+            if (params.isEmpty()) {
+                body.accept(this);
+            } else {
+                append("(" + keyword + " ");
+                list(params, a -> a.accept(this));
+                append(" ");
+                body.accept(this);
+                append(")");
             }
             return;
         }
