@@ -20,14 +20,11 @@ import org.smtlib.sexpr.Parser;
  * of the concrete syntax being used; a specific implementation of this interface
  * will implement a specific concrete syntax for the SMT-LIB abstract syntax.
  */
-public interface IParser {
+public interface IParser extends org.smtlib.sexpr.ILexer {
     // FIXME - where are errors logged? or are they in the ParserException
 
     /** Returns the configuration with which the parser was instantiated. */
     SMT.Configuration smt();
-
-    /** Returns true if the parser is at the end of data */
-    boolean isEOD() throws IOException, ParserException;
 
     /** Returns the most recent error, or null */
     IResponse.IError lastError(); // FIXME - is this used?
@@ -38,9 +35,6 @@ public interface IParser {
 
     /** Returns true if one of the errors commandHasError() reports was an invalid character */
     boolean commandHasLexicalError();
-
-    /** Skips remainder of current line */
-    void abortLine();
 
     /** Parse an attribute (keyword with optional value), returning null with error messages
      * if an error occurs.

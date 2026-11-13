@@ -8,10 +8,10 @@ import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.smtlib.SMT;
 import org.smtlib.sexpr.ILexToken;
-import org.smtlib.sexpr.Lexer;
+import org.smtlib.sexpr.ILexer;
 
 /**
- * Lexer.getToken(config, text) returns the first token of text, with positions in text. A JUnit
+ * ILexer.getToken(config, text) returns the first token of text, with positions in text. A JUnit
  * test: getToken(config, text) is API with no command-line route.
  */
 public class LexerGetTokenStringTest {
@@ -19,7 +19,7 @@ public class LexerGetTokenStringTest {
     @Rule public Timeout timeout = new Timeout(1, TimeUnit.MINUTES);
 
     private static void check(SMT.Configuration config, String text, String kind) throws Exception {
-        ILexToken token = Lexer.getToken(config, text);
+        ILexToken token = ILexer.getToken(config, text);
         Assert.assertEquals(text, kind, token.kind());
         Assert.assertEquals(text, text, token.pos().source().chars().toString());
     }
