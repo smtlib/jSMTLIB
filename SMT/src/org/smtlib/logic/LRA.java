@@ -18,13 +18,16 @@ public class LRA extends Logic {
         super(smtConfig,name,attributes);
     }
 
+    /** Whether expr is a coefficient as the LRA logics' :extensions define it: m, (- m), d, (- d), or
+     *  (/ c n) with c an integer coefficient and n a nonzero numeral. (- (/ 1 2)) is not one (#186). */
     public boolean isConst(IExpr expr) {
         if (expr instanceof IExpr.INumeral) return true;
         if (expr instanceof IExpr.IDecimal) return true;
         if (!(expr instanceof IExpr.IFcnExpr)) return false;
         IExpr.IFcnExpr f = (IExpr.IFcnExpr)expr;
         if (Utils.MINUS.equals(f.head()) && f.args().size() == 1) {
-            return isConst(f.args().get(0));
+            IExpr arg = f.args().get(0);
+            return arg instanceof IExpr.INumeral || arg instanceof IExpr.IDecimal;
         }
         if (Utils.SLASH.equals(f.head()) && f.args().size() == 2) {
             expr = f.args().get(0);
