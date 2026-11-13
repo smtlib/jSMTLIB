@@ -84,8 +84,8 @@ public class Lexer implements ILexer {
             pos = new Pos(cp,cp+1,source);
         }
         @Override public boolean isError() { return false; }
-        @Override public boolean isLP()  { return chars == IPLexToken.LP; }
-        @Override public boolean isRP()  { return chars == IPLexToken.RP; }
+        @Override public boolean isLP()  { return IPLexToken.LP.equals(chars); }
+        @Override public boolean isRP()  { return IPLexToken.RP.equals(chars); }
         @Override
         public String toString() { return chars; }
         @Override

@@ -75,6 +75,7 @@ public class SolverProcess {
         private static final long serialVersionUID = 1L;
 
         public ProverException(String s) { super(s); }
+        public ProverException(String s, Throwable cause) { super(s, cause); }
     }
 
     /** Thrown when a command gets literally no response from the solver -- either because
@@ -217,9 +218,9 @@ public class SolverProcess {
             // "error=N, description" to "Exec failed, error: N (description) ".
             // Normalize to the older form so test output is stable across JVM versions.
             String msg = e.getMessage().replaceAll("Exec failed, error: (\\d+) \\((.+?)\\)\\s*$", "error=$1, $2");
-            throw new ProverException(msg);
+            throw new ProverException(msg, e);
         } catch (RuntimeException e) {
-            throw new ProverException(e.getMessage());
+            throw new ProverException(e.getMessage(), e);
         }
     }
 
