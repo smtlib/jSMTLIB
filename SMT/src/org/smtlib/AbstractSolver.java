@@ -1172,6 +1172,8 @@ public class AbstractSolver implements ISolver {
         nosuccessAtStart = smtConfig.nosuccess;
         outAtStart = smtConfig.log.getOut();
         diagAtStart = smtConfig.log.getDiag();
+        regularChannelAtStart = options.get(Utils.REGULAR_OUTPUT_CHANNEL);
+        diagnosticChannelAtStart = options.get(Utils.DIAGNOSTIC_OUTPUT_CHANNEL);
     }
 
     /** Applies the command-line settings that correspond to SMT-LIB options, at start and again after each (reset),
@@ -1182,8 +1184,8 @@ public class AbstractSolver implements ISolver {
     protected /*@Nullable*/ IResponse applyStartupSettings() throws IOException {
         smtConfig.nosuccess = nosuccessAtStart;
         smtConfig.log.setChannels(outAtStart, diagAtStart);
-        options.remove(Utils.REGULAR_OUTPUT_CHANNEL);
-        options.remove(Utils.DIAGNOSTIC_OUTPUT_CHANNEL);
+        restoreOption(Utils.REGULAR_OUTPUT_CHANNEL, regularChannelAtStart);
+        restoreOption(Utils.DIAGNOSTIC_OUTPUT_CHANNEL, diagnosticChannelAtStart);
         return hasSeedOption() ? sendSeed() : null;
     }
 
@@ -1192,6 +1194,14 @@ public class AbstractSolver implements ISolver {
 
     /** The output channels when the solver started */
     protected java.io.PrintStream outAtStart, diagAtStart;
+
+    /** The cached channel options when the solver started (an adapter may cache their defaults); null if none */
+    protected /*@Nullable*/ IAttributeValue regularChannelAtStart, diagnosticChannelAtStart;
+
+    private void restoreOption(String option, /*@Nullable*/ IAttributeValue value) {
+        if (value == null) options.remove(option);
+        else options.put(option, value);
+    }
 
     /** The adapter's setup once the process has started; an error response stops start(), null continues */
     protected /*@Nullable*/ IResponse afterStart() throws Exception {
