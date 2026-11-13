@@ -1,0 +1,4 @@
+(error "The simplify solver does not support the QF_BV logic")
+success
+success
+(error "No sort specified for a hex literal")
