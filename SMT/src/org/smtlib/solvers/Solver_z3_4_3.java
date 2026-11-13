@@ -206,6 +206,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     public IResponse exit() {
         try {
             solverProcess.sendAndListen("(exit)\n");
+            logSolverDiagnostics(true);
             solverProcess.exit();
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended Z3 ");
             return successOrEmpty(smtConfig);
@@ -214,6 +215,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             // z3-4.3's raw responses to begin with -- see the class-level history in
             // Solver_z3_recent's javadoc), so a silently-closed connection reaches the
             // same successOrEmpty() outcome as a normal response, not an error.
+            logSolverDiagnostics(true);
             solverProcess.exit();
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Ended Z3 ");
             return successOrEmpty(smtConfig);
@@ -493,15 +495,12 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         }
     }
 
-    /** z3 4.3 accepts :interactive-mode, :produce-assertions and the other :produce- options after
-     *  set-logic, which SMT-LIB forbids, so that is reported here; values are kept here for
-     *  get_option. */
+    /** z3 4.3 accepts start-mode options after set-logic, which SMT-LIB forbids, so that is reported
+     *  here (unless --relax); values are kept here for get_option. */
     @Override
     protected IResponse set_option_impl(IKeyword key, IAttributeValue value) {
         String option = key.value();
-        if (logicSet && (Utils.INTERACTIVE_MODE.equals(option) || Utils.PRODUCE_ASSERTIONS.equals(option)
-                || Utils.PRODUCE_ASSIGNMENTS.equals(option) || Utils.PRODUCE_PROOFS.equals(option)
-                || Utils.PRODUCE_UNSAT_CORES.equals(option) || Utils.PRODUCE_MODELS.equals(option))) {
+        if (logicSet && !smtConfig.relax && Utils.startModeOptions.contains(option)) {
             return smtConfig.responseFactory.error("The value of the " + option + " option must be set before the set-logic command");
         }
         if (Utils.VERBOSITY.equals(option)) {

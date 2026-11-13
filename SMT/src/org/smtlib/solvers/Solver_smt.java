@@ -57,7 +57,7 @@ public class Solver_smt extends AbstractSolver implements ISolver {
         // Can't turn off printing success, or we get no feedback
         //if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
         solverProcess.sendAndListen("(set-option :print-success true)", "\n");
-        return sendSeed();
+        return null;
     }
 
     /** Translates an S-expression into SMT syntax; this solver uses the standard

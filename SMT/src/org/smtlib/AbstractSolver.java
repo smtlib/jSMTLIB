@@ -141,7 +141,7 @@ public class AbstractSolver implements ISolver {
     }
 
     /** As {@link #logSolverDiagnostics()}; all includes an unended last line, for when the solver is stopped */
-    private void logSolverDiagnostics(boolean all) {
+    protected void logSolverDiagnostics(boolean all) {
         if (solverProcess == null) return;
         String diag = solverProcess.takeDiagnosticOutput(all);
         if (diag.trim().isEmpty()) return;
@@ -1139,6 +1139,11 @@ public class AbstractSolver implements ISolver {
             solverProcess.start(false);
             IResponse r = afterStart();
             if (r != null) return r;
+            // --seed (or a configured seed) is set at startup with the standard option (#194)
+            if (hasSeedOption()) {
+                r = sendSeed();
+                if (r != null) return r;
+            }
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started " + startedName());
             return smtConfig.responseFactory.success();
         } catch (Exception e) {
@@ -1156,9 +1161,14 @@ public class AbstractSolver implements ISolver {
         return smtConfig.solvername;
     }
 
-    /** Passes --seed, if given, as the standard :random-seed option, for an adapter whose solver uses
-     *  that option; called from start(), while :print-success is true. Returns an error if the solver
-     *  rejects it, else null. */
+    /** Whether the solver has the standard :random-seed option, through which start() passes --seed;
+     *  an adapter whose solver has none reports --seed ignored instead */
+    protected boolean hasSeedOption() {
+        return true;
+    }
+
+    /** Passes --seed, if given, as the standard :random-seed option; called from start(), after
+     *  afterStart(), while :print-success is true. Returns an error if the solver rejects it, else null. */
     protected /*@Nullable*/ IResponse sendSeed() throws IOException {
         if (smtConfig.seed == 0) return null;
         String reply = solverProcess.sendAndListen("(set-option :random-seed " + smtConfig.seed + ")\n").trim();

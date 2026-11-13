@@ -1,0 +1,5 @@
+; reset forgets the logic and its theories: after it, QF_UF has no bit-vector literals (#194 item 8)
+(set-logic QF_BV)
+(reset)
+(set-logic QF_UF)
+(assert (= #x0 #x0))

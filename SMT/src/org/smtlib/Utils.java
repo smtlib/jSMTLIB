@@ -135,8 +135,9 @@ public class Utils {
     /** The string designating an option item */
     public static final String PRODUCE_MODELS = ":produce-models";
 
-    /** The standard options that may be set only in start mode, i.e. before set-logic (SMT-LIB 2.7, 4.1.7) */
-    public static final Set<String> startModeOptions = Set.of(GLOBAL_DECLARATIONS, INTERACTIVE_MODE,
+    /** The standard options that may be set only in start mode, i.e. before set-logic (SMT-LIB 2.7, 4.1.7;
+     *  :expand-definitions, SMT-LIB 2.0 only) */
+    public static final Set<String> startModeOptions = Set.of(EXPAND_DEFINITIONS, GLOBAL_DECLARATIONS, INTERACTIVE_MODE,
             PRODUCE_ASSERTIONS, PRODUCE_ASSIGNMENTS, PRODUCE_MODELS, PRODUCE_PROOFS, PRODUCE_UNSAT_ASSUMPTIONS,
             PRODUCE_UNSAT_CORES, RANDOM_SEED);
 

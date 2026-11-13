@@ -89,10 +89,6 @@ public class Solver_smtinterpol extends AbstractSolver implements ISolver {
         return super.start();
     }
 
-    @Override
-    protected IResponse afterStart() throws IOException {
-        return sendSeed();
-    }
 
     // The checks below correct SMTInterpol 2.5 answering get- commands that SMT-LIB makes errors; it
     // reports the other cases itself. It answers get-model and get-value with :produce-models off,
