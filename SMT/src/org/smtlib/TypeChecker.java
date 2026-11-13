@@ -456,9 +456,10 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 return save(e,s);
 
             } else if (head.equals(Utils.BVAND) || head.equals(Utils.BVOR)
-                    || head.equals(Utils.BVADD) || head.equals(Utils.BVMUL)) {
+                    || head.equals(Utils.BVADD) || head.equals(Utils.BVMUL)
+                    || (useext && head.equals(Utils.BVXOR))) {
                 // bvand, bvor, bvadd, bvmul are :left-assoc per FixedSizeBitVectors.smt2's
-                // :funs-description prose (informal text, not parsed :funs data -- see
+                // :funs-description prose, and bvxor per QF_BV.smt2's (informal text, not parsed :funs data -- see
                 // Utils.loadFuns -- so unlike +/-/*'s generic SymbolTable.lookup() left-assoc
                 // handling, these schematic BV ops need the check spelled out here): SMT-LIB
                 // Sec. 3.7.2 says (f t1 t2 t3 ...) with n > 2 is sugar for (f (f t1 t2) t3) ...,
@@ -491,7 +492,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 return save(e,s);
             } else if (head.equals(Utils.BVUDIV) || head.equals(Utils.BVUREM)
                     || head.equals(Utils.BVSHL) || head.equals(Utils.BVLSHR) ||
-                    (useext && (head.equals(Utils.BVNAND) || head.equals(Utils.BVNOR) || head.equals(Utils.BVXOR) || head.equals(Utils.BVXNOR)
+                    (useext && (head.equals(Utils.BVNAND) || head.equals(Utils.BVNOR) || head.equals(Utils.BVXNOR)
                             || head.equals(Utils.BVSUB) || head.equals(Utils.BVSDIV) || head.equals(Utils.BVSREM) || head.equals(Utils.BVSMOD)
                             || head.equals(Utils.BVASHR) || head.equals(Utils.BVCOMP)
                     ))
@@ -522,6 +523,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             } else if (head.equals(Utils.BVULT) || (useext && (head.equals(Utils.BVULE) || head.equals(Utils.BVUGT) || head.equals(Utils.BVUGE)
                     || head.equals(Utils.BVSLT) || head.equals(Utils.BVSLE) || head.equals(Utils.BVSGT) || head.equals(Utils.BVSGE)
                     || head.equals(Utils.BVUADDO) || head.equals(Utils.BVSADDO) || head.equals(Utils.BVUMULO) || head.equals(Utils.BVSMULO)
+                    || head.equals(Utils.BVUSUBO) || head.equals(Utils.BVSSUBO) || head.equals(Utils.BVSDIVO)
                     )
                     )) {
                 if (argSorts.size() != 2) {

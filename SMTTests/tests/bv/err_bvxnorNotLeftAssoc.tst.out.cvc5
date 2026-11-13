@@ -1,0 +1,3 @@
+success
+success
+(error "Parse Error: <shell>:4.27: invalid kind 'BITVECTOR_XNOR', expected Terms with kind BITVECTOR_XNOR must have at least 2 children and at most 2 children (the one under construction has 3)")

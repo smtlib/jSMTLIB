@@ -316,6 +316,10 @@ public class Utils {
     static public final ISymbol BVSADDO = new SMTExpr.Symbol("bvsaddo".intern());
     static public final ISymbol BVUMULO = new SMTExpr.Symbol("bvumulo".intern());
     static public final ISymbol BVSMULO = new SMTExpr.Symbol("bvsmulo".intern());
+    /** QF_BV overflow predicates added in 2023. */
+    static public final ISymbol BVUSUBO = new SMTExpr.Symbol("bvusubo".intern());
+    static public final ISymbol BVSSUBO = new SMTExpr.Symbol("bvssubo".intern());
+    static public final ISymbol BVSDIVO = new SMTExpr.Symbol("bvsdivo".intern());
 
     /** Canonical ISymbol form of BITVEC, for structural comparison against a parsed
      * identifier's head symbol (see TypeChecker.isBitVec() and SymbolTable's bit-vector

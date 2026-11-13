@@ -1,0 +1,5 @@
+success
+success
+success
+success
+(error "<stdin>:7:15: Builtin function bvxor does not support argument sorts ()")
