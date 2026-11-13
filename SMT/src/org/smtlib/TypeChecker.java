@@ -161,6 +161,21 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 }
             }
             if (!errors && expr != null) expr.accept(f);
+            // A sort definition may contain only its own sort parameters, no global one (SMT-LIB 2.7, 4.2.3)
+            if (!errors && expr != null && f.result.isEmpty()) {
+                List<ISort.IParameter> own = new LinkedList<>();
+                if (params != null) for (ISort.IParameter p : params) {
+                    own.add(p);
+                    own.add((ISort.IParameter) symTable.lookupSort(p.symbol()));
+                }
+                for (ISort.IParameter p : SymbolTable.parametersIn(expr, new LinkedList<ISort.IParameter>())) {
+                    if (!own.contains(p)) {
+                        f.error("A sort definition may not contain the global sort parameter "
+                                + symTable.smtConfig.defaultPrinter.toString(p.symbol()), expr.pos());
+                        break;
+                    }
+                }
+            }
             // After the type check, which links the abbreviations in expr to their definitions
             if (f.result.isEmpty()) symTable.logicInUse.checkSortDeclaration(id,params,expr);
         } catch (IVisitor.VisitorException e) {
@@ -214,7 +229,9 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 f.shadowsLogic(p.parameter(), false);
                 if (p.sort().accept(f) != null) {
                     ISort.IFcnSort fs = symTable.smtConfig.sortFactory.createFcnSort(new ISort[0],p.sort());
-                    SymbolTable.Entry entry = new SymbolTable.Entry(p.parameter(),fs,null,null);
+                    // a parameter of a definition is a variable, of a sort that may be a sort parameter, not
+                    // a polymorphic constant: an empty parameter list says so (#178)
+                    SymbolTable.Entry entry = new SymbolTable.Entry(p.parameter(),fs,null,java.util.List.of());
                     symTable.add(entry, false, true);
                 }
             }
@@ -1218,7 +1235,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 }
                 error(reason.length() > 0 ? reason.toString() : "Unknown constant symbol " + value, e.pos());
                 return null;
-            } else if (SymbolTable.containsParameter(sort.resultSort())) {
+            } else if (symTable.undeterminedConstant(e)) {
                 error("The sort of " + value + " is not determined; qualify it with as", e.pos());
                 return null;
             } else if ((ambiguous = symTable.ambiguousConstant(e)) != null) {

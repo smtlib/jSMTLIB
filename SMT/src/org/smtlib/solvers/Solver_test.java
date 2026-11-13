@@ -749,6 +749,16 @@ public class Solver_test implements ISolver {
                 for (ISelector sel : ctor.selectors()) argSorts.add(sel.sort());
                 ISort.IFcnSort ctorSort = TypeChecker.resolveFcnSort(symTable, ctor.symbol(), argSorts, declaredSort, ctor.symbol().pos(), errs);
                 if (ctorSort == null) return errs.get(0);
+                // Selector sorts may contain only the datatype's own sort parameters (SMT-LIB 2.7, 4.2.3)
+                for (int k = 0; k < ctorSort.argSorts().length; k++) {
+                    for (ISort.IParameter p : SymbolTable.parametersIn(ctorSort.argSorts()[k], new java.util.LinkedList<ISort.IParameter>())) {
+                        if (params == null || !params.contains(p)) {
+                            return smtConfig.responseFactory.error("A datatype's selector sort may not contain the sort parameter "
+                                    + smtConfig.defaultPrinter.toString(p.symbol()) + ", which is not one of the datatype's own",
+                                    ctor.selectors().get(k).sort().pos());
+                        }
+                    }
+                }
                 entries.add(new SymbolTable.Entry(ctor.symbol(), ctorSort, null, params));
                 ctorList.add(ctor.symbol());
                 IExpr.IIdentifier tester = smtConfig.exprFactory.id(smtConfig.exprFactory.symbol(Utils.IS),
