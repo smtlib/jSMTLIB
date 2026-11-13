@@ -11,7 +11,7 @@
 (declare-fun x () Bool)
 ^^^^^^^^^^^^^^^^^^^^^^^
 (declare-fun
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^...
 (declare-fun x () Bool) (declare-fun x () Bool)
 ^^^^^^^^^^^^^^^^^^^^^^^
 (declare-fun x () Bool) (declare-fun x () Bool)
