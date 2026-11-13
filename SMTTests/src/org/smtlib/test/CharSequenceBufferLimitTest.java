@@ -61,7 +61,7 @@ public class CharSequenceBufferLimitTest {
             Assert.fail("expected an error beyond the maximum buffer size");
         } catch (RuntimeException e) {
             Assert.assertTrue(String.valueOf(e.getCause()), e.getCause() instanceof IOException
-                    && e.getCause().getMessage().equals("The input is longer than the maximum of 50 characters"));
+                    && e.getCause().getMessage().equals("The input is longer than the allowed maximum of 50 characters"));
         }
     }
 

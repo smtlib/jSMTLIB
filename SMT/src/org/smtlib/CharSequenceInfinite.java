@@ -149,7 +149,7 @@ public abstract class CharSequenceInfinite implements CharSequence {
     //@ signals (RuntimeException) newSize > maxBufferSize;
     private void expandBuffer(long newSize) {
         if (newSize > maxBufferSize) {
-            throw new RuntimeException(new IOException("The input is longer than the maximum of "
+            throw new RuntimeException(new IOException("The input is longer than the allowed maximum of "
                     + maxBufferSize + " characters"));
         }
         long newlength = buf.length;
