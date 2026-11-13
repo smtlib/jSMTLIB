@@ -1,0 +1,14 @@
+success
+success
+success
+success
+(error "line 7 column 21: unknown constant bvusubo ((_ BitVec 4) (_ BitVec 4)) ")
+(error "line 8 column 21: unknown constant bvssubo ((_ BitVec 4) (_ BitVec 4)) ")
+sat
+(error "line 10 column 21: unknown constant bvsdivo ((_ BitVec 4) (_ BitVec 4)) ")
+sat
+success
+success
+(error "line 14 column 35: unknown constant bvusubo ((_ BitVec 4) (_ BitVec 4)) ")
+sat
+success

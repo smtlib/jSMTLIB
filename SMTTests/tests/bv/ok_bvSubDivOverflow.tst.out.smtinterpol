@@ -1,0 +1,14 @@
+success
+success
+success
+success
+(error "<stdin>:7:22: Unsupported internal function bvusubo")
+(error "<stdin>:8:22: Unsupported internal function bvssubo")
+sat
+(error "<stdin>:10:22: Unsupported internal function bvsdivo")
+sat
+success
+success
+(error "<stdin>:14:146: Unsupported internal function bvusubo")
+sat
+success
