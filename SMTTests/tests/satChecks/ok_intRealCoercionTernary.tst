@@ -1,5 +1,5 @@
 ; Int arguments to three-argument functions: user-defined Real functions and ite. The correct behavior is
-; unclear: the :extensions sugar is stated only for (op Real Real s) and /. jSMTLIB reads them as to_real (#211).
+; unclear: the :extensions sugar is stated only for (op Real Real s) and /. jSMTLIB reads them as to_real, taken as correct; .bad goldens mark solvers that differ (#211).
 ; Each check is unsat if the solver reads an Int argument as Real (to_real); a solver that rejects
 ; the term reports an error and the check is sat. Int q = 1, r = 2; Real a = 0.5, b = 1.5. See #211.
 (set-logic AUFNIRA)
