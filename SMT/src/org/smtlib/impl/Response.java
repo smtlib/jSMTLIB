@@ -108,12 +108,12 @@ public abstract class Response {
 
         @Override
         public IResponse.IAttributeList get_info_response(IAttribute<? extends IAttributeValue> attr) {
-            return new Seq(attr);
+            return new AttributeList(attr);
         }
 
         @Override
         public IResponse.IAttributeList get_info_response(List<IAttribute<? extends IAttributeValue>> attributes) {
-            return new Seq(attributes);
+            return new AttributeList(attributes);
         }
 
         @Override
@@ -310,15 +310,15 @@ public abstract class Response {
         }
     }
 
-    /** Implementation of IAttributeList: a list of attributes returned by get-info. */
-    static public class Seq extends Pos.Printable implements IAttributeList {
+    /** Implementation of IAttributeList: the attributes of a get-info response (named Seq before #162). */
+    static public class AttributeList extends Pos.Printable implements IAttributeList {
         List<IAttribute<? extends IAttributeValue>> list = new LinkedList<IAttribute<? extends IAttributeValue>>();
 
-        public <T extends IAttributeValue> Seq(IAttribute<T> attr) {
+        public <T extends IAttributeValue> AttributeList(IAttribute<T> attr) {
             list.add(attr);
         }
 
-        public Seq(List<IAttribute<? extends IAttributeValue>> list) {
+        public AttributeList(List<IAttribute<? extends IAttributeValue>> list) {
             this.list = list;
         }
 

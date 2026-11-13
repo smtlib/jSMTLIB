@@ -98,7 +98,7 @@ public class Solver_yices2 extends Solver_smt implements ISolver {
     // in a bogus error response. AbstractSolver's default (a real S-expression parse) is
     // correct for current yices2.
     //
-    // get_option() used to be overridden here too, unwrapping a Response.Seq that current
+    // get_option() used to be overridden here too, unwrapping a Response.AttributeList that current
     // yices2 apparently no longer produces: tried 13 different option keys (booleans,
     // strings, numerals, unsupported cases) against a real yices2 binary and never
     // triggered the wrapped shape the override was unwrapping. Removed rather than kept as
