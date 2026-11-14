@@ -555,6 +555,8 @@ public class Solver_test implements ISolver {
             // user-declared function opt into the same :left-assoc/etc. n-ary sugar and
             // par-polymorphism SymbolTable.lookup() already applies to theory-declared ones.
             SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,cmd.attributes(),cmd.parameters());
+            String bad = symTable.checkAttributes(entry);
+            if (bad != null) return smtConfig.responseFactory.error(bad, cmd.symbol().pos());
             // --relax experimentally allows overloading a user-declared symbol (standard
             // SMT-LIB permits this only for background-scope, theory-declared symbols) --
             // always allowed for a par declaration specifically, since requiring it to also be

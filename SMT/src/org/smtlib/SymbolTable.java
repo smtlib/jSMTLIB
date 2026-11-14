@@ -934,6 +934,90 @@ public final class SymbolTable {
      *  objects: every call site here passes a literal attribute name, and the list scanned is
      *  always tiny, so there is no correctness or performance benefit to keyword-object lookup
      *  -- just more ceremony at each call site. See issue #36. */
+    /** The function attributes with predefined meaning (SMT-LIB 3.7) */
+    static public final List<String> ASSOC_ATTRIBUTES = List.of(":left-assoc", ":right-assoc", ":chainable", ":pairwise");
+
+    /** Checks an entry's :left-assoc, :right-assoc, :chainable and :pairwise attributes (#217):
+     *  each takes no value, at most one is present, and the rank fits it -- (A B A), (A B B) or
+     *  (A A Bool). For a par entry, the result must unify with argument 1 (or 2) of a copy with
+     *  fresh parameters, which accepts HO-Core's (@ (-> A B) A B :left-assoc). Other attributes
+     *  are user-defined and allowed. Returns an error message, or null if all is well. */
+    public /*@Nullable*/ String checkAttributes(Entry entry) {
+        if (entry.attributes == null) return null;
+        String nm = smtConfig.defaultPrinter.toString(entry.name);
+        String found = null;
+        for (IExpr.IAttribute<?> a: entry.attributes) {
+            String kw = a.keyword().value();
+            if (!ASSOC_ATTRIBUTES.contains(kw)) continue;
+            if (a.attrValue() != null) return "The " + kw + " attribute takes no value (declaration of " + nm + ")";
+            if (found != null) return "The declaration of " + nm + " has more than one of :left-assoc, :right-assoc, :chainable and :pairwise";
+            found = kw;
+        }
+        if (found == null) return null;
+        ISort[] args = entry.sort.argSorts();
+        if (args.length != 2) return "The " + found + " attribute of " + nm + " needs exactly two argument sorts";
+        ISort result = entry.sort.resultSort();
+        boolean ok;
+        String form;
+        if (found.equals(":left-assoc") || found.equals(":right-assoc")) {
+            boolean left = found.equals(":left-assoc");
+            form = left ? "(A B A)" : "(A B B)";
+            ISort arg = args[left ? 0 : 1];
+            if (entry.parameters == null || entry.parameters.isEmpty()) {
+                ok = result.equals(arg);
+            } else {
+                Map<ISort.IParameter,ISort> fresh = new HashMap<ISort.IParameter,ISort>();
+                for (ISort.IParameter p: entry.parameters) fresh.put(p, smtConfig.sortFactory.createSortParameter(p.symbol()));
+                ok = unifiable(result, arg.substitute(fresh), new HashMap<ISort.IParameter,ISort>());
+            }
+        } else {
+            form = "(A A Bool)";
+            ok = args[0].equals(args[1]) && result.isBool();
+        }
+        return ok ? null : "The " + found + " attribute of " + nm + " needs a rank of the form " + form;
+    }
+
+    /** Two-sided unification of sorts (parameters on either side), extending the substitution s */
+    private boolean unifiable(ISort a, ISort b, Map<ISort.IParameter,ISort> s) {
+        a = resolve(a, s);
+        b = resolve(b, s);
+        if (a instanceof ISort.IParameter) return a == b || bind((ISort.IParameter) a, b, s);
+        if (b instanceof ISort.IParameter) return bind((ISort.IParameter) b, a, s);
+        if (a instanceof ISort.IApplication && b instanceof ISort.IApplication) {
+            ISort.IApplication aa = (ISort.IApplication) a;
+            ISort.IApplication bb = (ISort.IApplication) b;
+            if (!aa.family().equals(bb.family()) || aa.parameters().size() != bb.parameters().size()) return false;
+            for (int i = 0; i < aa.parameters().size(); i++) {
+                if (!unifiable(aa.parameters().get(i), bb.parameters().get(i), s)) return false;
+            }
+            return true;
+        }
+        return a.equals(b);
+    }
+
+    private static ISort resolve(ISort x, Map<ISort.IParameter,ISort> s) {
+        while (true) {
+            if (x instanceof ISort.IApplication) x = ((ISort.IApplication) x).expand();
+            if (!(x instanceof ISort.IParameter) || !s.containsKey(x)) return x;
+            x = s.get(x);
+        }
+    }
+
+    private static boolean bind(ISort.IParameter p, ISort t, Map<ISort.IParameter,ISort> s) {
+        if (occurs(p, t, s)) return false;
+        s.put(p, t);
+        return true;
+    }
+
+    private static boolean occurs(ISort.IParameter p, ISort t, Map<ISort.IParameter,ISort> s) {
+        t = resolve(t, s);
+        if (t == p) return true;
+        if (t instanceof ISort.IApplication) {
+            for (ISort c: ((ISort.IApplication) t).parameters()) if (occurs(p, c, s)) return true;
+        }
+        return false;
+    }
+
     private boolean hasAttribute(Entry entry, String attr) {
         if (entry.attributes != null) {
             for (IExpr.IAttribute<?> a: entry.attributes) {
