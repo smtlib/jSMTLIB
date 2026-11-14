@@ -113,6 +113,15 @@ public interface ISort extends INode, IPosable {
          * HO-Core.smt2); empty (never null) if there are none. */
         //@ pure
         List<IExpr.IAttribute<?>> attributes();
+
+        /** Whether this sort symbol is declared with the given attribute keyword (e.g. ":right-assoc") */
+        //@ pure
+        default boolean hasAttribute(String keyword) {
+            for (IExpr.IAttribute<?> a : attributes()) {
+                if (a.keyword().value().equals(keyword)) return true;
+            }
+            return false;
+        }
     }
 
     /** This interface represents a new Sort symbol designating an

@@ -230,18 +230,14 @@ public abstract class Sort extends Pos.Printable implements ISort {
                 }
                 while (ss instanceof Application) {
                     Application app = (Application)ss;
-                    // -> is declared :right-assoc (SMT-LIB Sec. 3.7.2): a flat application
-                    // with more than its declared 2-ary arity, e.g. (-> A B C), is sugar for
-                    // the right-nested (-> A (-> B C)). TypeChecker.visit(ISort.IApplication)
-                    // already accepts this where a -> sort expression is first type-checked,
-                    // but the properly-folded value it computes there isn't always what ends
-                    // up stored and later reused -- e.g. declare-fun stores cmd.resultSort(),
-                    // the original still-flat parsed AST node (with definition() never set),
-                    // directly, not TypeChecker's replacement -- so a flat, un-folded ->
-                    // application can still reach here, e.g. via an equals() comparison
-                    // against a properly-nested value. Fold on demand rather than assume any
-                    // -> application already has the canonical (<=2-parameter) shape.
-                    if (Utils.ARROW.equals(app.family().headSymbol()) && app.parameters().size() > 2) {
+                    // A flat application of a 2-ary :right-assoc family, e.g. (-> A B C), is
+                    // sugar for the right-nested (-> A (-> B C)). TypeChecker folds it when it
+                    // checks the sort, but the flat AST node is what some commands keep (e.g.
+                    // declare-fun's cmd.resultSort()), so it is folded here too; TypeChecker
+                    // attaches the family to the flat node for this.
+                    if (app.definition() instanceof IFamily && ((IFamily)app.definition()).hasAttribute(":right-assoc")
+                            && app.parameters().size() > 2) {
+                        IFamily fam = (IFamily)app.definition();
                         List<ISort> params = app.parameters();
                         ISort result = params.get(params.size() - 1);
                         for (int i = params.size() - 2; i >= 0; i--) {
@@ -249,7 +245,7 @@ public abstract class Sort extends Pos.Printable implements ISort {
                             pair.add(params.get(i));
                             pair.add(result);
                             Application step = new Application(app.family(), pair);
-                            step.definition(new Family(app.family(), new Numeral(2), null));
+                            step.definition(fam);
                             result = step;
                         }
                         return result;

@@ -1451,18 +1451,10 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             return null;
         }
         if (args.size() != def.intArity()) {
-            // -> is declared :right-assoc in HO-Core.smt2 -- (-> t1 t2 t3) means
-            // (-> t1 (-> t2 t3)) (SMT-LIB Sec. 3.7.2). This is a narrow, ->-specific
-            // special case, not a general :right-assoc/:left-assoc mechanism: there is
-            // currently no sort-level attribute data model at all to generalize from --
-            // Utils.loadTheory()'s :sorts loop only ever reads a declaration's name and
-            // arity, never any trailing attribute, and ISort.IDefinition/Sort.Family have
-            // no attributes field the way SymbolTable.Entry does for functions. -> is also
-            // the only sort declared with any attribute in any shipped theory file (checked
-            // every :sorts declaration), so there is no present need to generalize this the
-            // way @ needed a real fix (six theory functions needed par-polymorphism there,
-            // not just one).
-            if (Utils.ARROW.equals(f.headSymbol()) && def.intArity() == 2 && args.size() > 2 && !errors) {
+            // A 2-ary sort declared :right-assoc (as -> is in HO-Core) takes the n-ary sugar
+            // (s t1 t2 t3) = (s t1 (s t2 t3)) (#203)
+            if (def instanceof ISort.IFamily && ((ISort.IFamily)def).hasAttribute(":right-assoc")
+                    && def.intArity() == 2 && args.size() > 2 && !errors) {
                 // newargs (not args) since these are the already-type-checked sorts, folded
                 // right-to-left with the same Family.eval() the base 2-arg case already uses
                 ISort result = newargs.get(newargs.size() - 1);
@@ -1472,6 +1464,8 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                     pair.add(result);
                     result = def.eval(pair);
                 }
+                // so that Sort.Application.expand can fold this flat form where it is kept as written
+                s.definition(def);
                 return result;
             }
             error("The sort symbol " + pr(f) + " expects " + def.intArity()
