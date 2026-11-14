@@ -636,12 +636,21 @@ public class AbstractSolver implements ISolver {
         // as in execute: once the solver has exited, the adapter's own checks are not reached
         IResponse exited = exitedResponse();
         if (exited != null) return exited;
+        IResponse response;
         capturing = true;
         try {
-            return cmd.execute(this);
+            response = cmd.execute(this);
         } finally {
             capturing = false;
         }
+        // Answered without being sent (e.g. unsupported): as when not pipelining, an earlier
+        // command's response may show that the solver has exited
+        if (!(response instanceof Pending) && hasPending()) {
+            readPipelined(true);
+            exited = exitedResponse();
+            if (exited != null) return exited;
+        }
+        return response;
     }
 
     /** Executes the commands in order, as a script does: returns the first error, or else the last
