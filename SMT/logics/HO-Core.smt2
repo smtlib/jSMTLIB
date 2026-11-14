@@ -13,7 +13,8 @@
  ; documented par_fun_symbol_decl grammar does not allow (attribute* only trails the whole
  ; declaration, after all of sort+). Moved to that position so it's parseable; check with
  ; this theory file's original authors whether the upstream text agrees or whether this
- ; placement had some other intended meaning.
+ ; placement had some other intended meaning. The SMT-LIB 2.7 reference (Figure 3.6) has the
+ ; same nesting; reported upstream in jSMTLIB #219.
  :funs ( (par (A B) (@ (-> A B) A B :left-assoc) ) )
 
  :definition
