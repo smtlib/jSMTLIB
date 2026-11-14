@@ -1,0 +1,9 @@
+(set-info :source "a string ; not a comment (nor a list)")
+(declare-fun |a ; b (c)| () Bool)
+(declare-fun |multi
+line| () Bool)
+(assert (or |a ; b (c)| |multi
+line|))
+(echo "two
+lines ""quoted""")
+(declare-fun |π| () Bool)

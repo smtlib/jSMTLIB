@@ -1,0 +1,27 @@
+; Comments between every pair of tokens of a command, own-line and same-line
+(set-logic ; a
+  QF_LIA ; b
+) ; c
+( ; d
+  define-fun ; e
+  f ; f
+  ( ; g
+   ( ; h
+     a ; i
+     Int ; j
+   ) ; k
+  ) ; l
+  Int ; m
+  ( ; n
+    + ; o
+    a ; p
+    1 ; q
+  ) ; r
+) ; s
+(assert
+  ; own-line before the term
+  (> (f 2)
+    ; own-line between arguments
+    0)
+  ; own-line before the closing parenthesis
+)

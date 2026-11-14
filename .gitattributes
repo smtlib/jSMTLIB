@@ -1,3 +1,6 @@
 # Set the default behavior, in case people don't have core.autocrlf set.
 * text=auto
 * eol=lf
+
+# The pretty-printing corpus tests line ends and other white space: keep its inputs byte for byte (#222)
+SMTTests/tests/prettyprint/*.smt2 -text

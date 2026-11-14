@@ -1,0 +1,1 @@
+; CR-only line ends(set-logic   QF_UF) ; same line; own line(check-sat)
