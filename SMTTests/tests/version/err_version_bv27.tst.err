@@ -1,0 +1,8 @@
+(assert (bvnego x))
+         ^^^^^^
+(assert (bvuaddo x x))
+         ^^^^^^^
+(assert (= (ubv_to_int x) 0))
+            ^^^^^^^^^^
+(assert (= ((_ int_to_bv 4) 3) x))
+            ^^^^^^^^^^^^^^^

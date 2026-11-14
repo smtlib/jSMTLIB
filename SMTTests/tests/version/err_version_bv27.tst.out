@@ -1,0 +1,8 @@
+success
+success
+success
+(error "The bvnego function requires SMT-LIB V2.7 or later")
+(error "The bvuaddo function requires SMT-LIB V2.7 or later")
+(error "The ubv_to_int function requires SMT-LIB V2.7 or later")
+(error "The (_ int_to_bv 4) function requires SMT-LIB V2.7 or later")
+success
