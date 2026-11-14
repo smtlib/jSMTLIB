@@ -852,6 +852,7 @@ public class Utils {
             // each theory clear the flags the previous ones set.
             symTable.bitVectorTheorySet |= theoryName.equals("Fixed_Size_BitVectors") || theoryName.equals("FixedSizeBitVectors");
             symTable.realsIntsTheorySet |= theoryName.equals("Reals_Ints");
+            symTable.intsTheorySet |= theoryName.equals("Ints");
             symTable.floatingPointTheorySet |= theoryName.equals("FloatingPoint");
         }
         return response;
@@ -901,6 +902,7 @@ public class Utils {
                     // plain assignment would leave only the last theory's flag set.
                     symTable.bitVectorTheorySet |= tname.equals("Fixed_Size_BitVectors") || tname.equals("FixedSizeBitVectors");
                     symTable.realsIntsTheorySet |= tname.equals("Reals_Ints");
+                    symTable.intsTheorySet |= tname.equals("Ints");
                     symTable.floatingPointTheorySet |= tname.equals("FloatingPoint");
                 }
             } else {

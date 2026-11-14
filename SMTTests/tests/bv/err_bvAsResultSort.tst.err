@@ -1,0 +1,8 @@
+(assert (= ((as bvadd (_ BitVec 16)) x x) x))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert ((as bvult (_ BitVec 1)) x x))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(assert (= ((as fp.abs Float64) y) y))
+           ^^^^^^^^^^^^^^^^^^^^^^^
+(assert (= ((as (_ extract 3 0) (_ BitVec 8)) x) #x00))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

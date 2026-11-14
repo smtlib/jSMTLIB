@@ -1,0 +1,11 @@
+success
+success
+success
+success
+(error "bvadd has result sort (_ BitVec 8), expected (_ BitVec 16) (from the `as` qualifier)")
+success
+(error "bvult has result sort Bool, expected (_ BitVec 1) (from the `as` qualifier)")
+success
+(error "fp.abs has result sort Float32, expected (_ FloatingPoint 11 53) (from the `as` qualifier)")
+success
+(error "(_ extract 3 0) has result sort (_ BitVec 4), expected (_ BitVec 8) (from the `as` qualifier)")
