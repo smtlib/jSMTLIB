@@ -1,0 +1,10 @@
+(error "The --set-option option expects a keyword and a value: :produce-models (Expected an attribute value here, instead of a ))")
+exit 1
+(error "The --set-option option expects a keyword and a value: :produce-models true false (Too many arguments or extraneous material after the command or missing right parenthesis)")
+exit 1
+(error "The --set-option option expects a keyword and a value: :print-success 3 (Expected true or false as the value of :print-success)")
+exit 1
+(error "The --set-option option expects a keyword and a value: --text (Expected a keyword (beginning with a colon) here, instead of a symbol)")
+exit 1
+(error "test failed to start: The solver rejected --set-option ':regular-output-channel ""/nonexistent-dir-216/out""': Failed to open or write to the regular output /nonexistent-dir-216/out (No such file or directory)")
+exit 1

@@ -263,6 +263,28 @@ public class SMT {
         /** If non-zero, a seed to pass to the solver to initialize its random number generator (--seed, non-negative) */
         public int seed = 0;
 
+        /** The arguments of --set-option (a keyword and a value), in command-line order */
+        public List<String> setOptionTexts = new ArrayList<>();
+
+        /** --set-option's arguments as set-option commands, parsed once the command line is read; sent to the
+         *  solver at start and after each (reset) (see {@link #applySetOptions}) */
+        public List<ICommand.Iset_option> setOptions = new ArrayList<>();
+
+        /** Sends the --set-option options to the solver, in order; returns an error naming the first one it
+         *  rejects, else null. One it does not support is reported on the diagnostic output. */
+        public /*@Nullable*/ IResponse applySetOptions(ISolver solver) {
+            for (int k = 0; k < setOptions.size(); k++) {
+                IResponse r = setOptions.get(k).execute(solver);
+                if (responseFactory.unsupported().equals(r)) {
+                    log.logDiag("#" + solvername + " does not support --set-option '" + setOptionTexts.get(k) + "'");
+                } else if (r.isError()) {
+                    return responseFactory.error("The solver rejected --set-option '" + setOptionTexts.get(k) + "': "
+                            + ((IResponse.IError)r).errorMsg());
+                }
+            }
+            return null;
+        }
+
         // FIXME - review the use of out/diag/log/stdout/stderr
 
         /** If non-null, the file name (or 'stdout'/'stderr') to use for regular output. */
@@ -1044,6 +1066,18 @@ public class SMT {
     }
 
     /** Parses the command-line, setting any option in the given configuration argument. */
+    /** Keeps the first error message logged (used while parsing --set-option arguments) */
+    private static class ErrorCapture implements Log.IListener {
+        /*@Nullable*/ String first = null;
+        @Override public void logOut(String msg) {}
+        @Override public void logOutNoln(String msg) {}
+        @Override public void logOut(IResponse result) {}
+        @Override public void logError(String msg) { if (first == null) first = msg; }
+        @Override public void logError(IResponse.IError result) { if (first == null) first = result.errorMsg(); }
+        @Override public void logDiag(String msg) {}
+        @Override public void indent(String chars) {}
+    }
+
     public int processCommandLine(String[] args, SMT.Configuration options) {
         //smtConfig.log.logDiag("#Start processing command-line");
         // Handle smtConfig
@@ -1194,6 +1228,13 @@ public class SMT {
                     usage();
                     return 1;
                 }
+            } else if ("--set-option".equals(s)) {
+                if (i >= args.length) {
+                    error("The --set-option option expects an argument: a keyword and a value");
+                    usage();
+                    return 1;
+                }
+                options.setOptionTexts.add(args[i++]);
             } else if ("--seed".equals(s)) {
                 options.seed = 0;
                 if (i >= args.length) {
@@ -1250,6 +1291,35 @@ public class SMT {
         if (options.props == null) options.props = options.readProperties();
 
         if (options.logicPath == null) options.logicPath = trimToNull(options.props.getProperty(Utils.PROPS_LOGIC_PATH));
+
+        // Parsed now, under the command line's other settings (e.g. --smtlib), as set-option commands would be
+        options.setOptions.clear();
+        for (String text: options.setOptionTexts) {
+            String reason = null;
+            ICommand c = null;
+            // the parser's error, about text the user did not write, becomes the reason in one message
+            List<Log.IListener> saved = new ArrayList<>(options.log.listeners);
+            ErrorCapture capture = new ErrorCapture();
+            options.log.listeners.clear();
+            options.log.addListener(capture);
+            try {
+                IParser p = options.smtFactory.createParser(options, options.smtFactory.createSource("(set-option " + text + ")", null));
+                c = p.parseCommand();
+                if (c != null && !p.isEOD()) c = null;
+            } catch (IOException | ParserException e) {
+                reason = e.getMessage();
+            } finally {
+                options.log.listeners.clear();
+                options.log.listeners.addAll(saved);
+            }
+            if (!(c instanceof ICommand.Iset_option so)) {
+                if (reason == null) reason = capture.first;
+                error("The --set-option option expects a keyword and a value: " + text + (reason == null ? "" : " (" + reason + ")"));
+                usage();
+                return 1;
+            }
+            options.setOptions.add(so);
+        }
 
         if (options.files != null && !options.files.isEmpty() && options.port >= 0) {
             error("You may not specify both a port and file input");
@@ -1479,6 +1549,8 @@ public class SMT {
         new Opt("--timeout-total", "-T", "<seconds>", "timeout for the solver's whole run (its process lifetime), also always given here in seconds",
                 "likewise converted to each solver's own unit/flag, or, if that solver has no whole-run option,",
                 "applied as a best-effort per-query limit instead"),
+        new Opt("--set-option", null, "\"<keyword> <value>\"", "an SMT-LIB option, set at start and after each (reset), e.g. --set-option ':produce-models true';",
+                "may be repeated"),
         new Opt("--seed", null, "<int>", "seed for the solver's random number generator, if it has one (0, the default, sets none)"),
         new Opt("--echo", null, null, "if enabled, commands are echoed to diagnostic output when successfully parsed"),
         new Opt("--print", null, null, "if enabled, each command is parsed, type-checked and printed with the default printer,",
