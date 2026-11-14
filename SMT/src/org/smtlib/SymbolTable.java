@@ -277,8 +277,14 @@ public final class SymbolTable {
      * @return true if successfully added, false if already present
      */
     public boolean addSortParameter(ISymbol symbol, boolean global) {
+        return addSortParameter(smtConfig.sortFactory.createSortParameter(symbol), global);
+    }
+
+    /** As addSortParameter(ISymbol, boolean), binding the parameter's name to the given parameter object itself */
+    public boolean addSortParameter(ISort.IParameter param, boolean global) {
+        ISymbol symbol = param.symbol();
         Map<IIdentifier, ISort.IDefinition> target = global ? sortStack.get(sortStack.size()-1) : sorts;
-        ISort.IDefinition previous = target.put(symbol, smtConfig.sortFactory.createSortParameter(symbol));
+        ISort.IDefinition previous = target.put(symbol, param);
         if (previous == null) return true;
         target.put(symbol, previous);
         return false;
