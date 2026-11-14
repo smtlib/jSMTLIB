@@ -1,4 +1,4 @@
 success
 success
 success
-(error "The index of fp.to_ubv must be greater than 0")
+(error "(_ fp.to_ubv 0) would have the sort (_ BitVec 0), but a bit-vector sort must have a length of at least 1")

@@ -35,6 +35,9 @@ public final class SymbolTable {
     /** true if the RealsInts theory is set (which allows implicit promotion of ints to reals) */
     public boolean realsIntsTheorySet = false;
 
+    /** true if the Ints theory is set */
+    public boolean intsTheorySet = false;
+
     /** true if the FloatingPoint theory has been set */
     // Used only while we have FloatingPoint built in
     public boolean floatingPointTheorySet = false;
@@ -189,6 +192,7 @@ public final class SymbolTable {
             logicInUse = null;
             bitVectorTheorySet = false;
             realsIntsTheorySet = false;
+            intsTheorySet = false;
             floatingPointTheorySet = false;
             logicFunctions.clear();
             logicSorts.clear();

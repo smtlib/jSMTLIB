@@ -29,7 +29,7 @@ final class TheorySignatures {
             return switch (this) {
                 case BV -> st.bitVectorTheorySet;
                 case FP -> st.floatingPointTheorySet;
-                case BV_INTS -> st.bitVectorTheorySet && st.realsIntsTheorySet;
+                case BV_INTS -> st.bitVectorTheorySet && (st.intsTheorySet || st.realsIntsTheorySet);
                 case FP_BV -> st.floatingPointTheorySet && st.bitVectorTheorySet;
             };
         }
@@ -109,8 +109,15 @@ final class TheorySignatures {
     /** The name under which (_ bvN m) is tabulated */
     private static final String BV_CONSTANT = "bv<N>";
 
-    private static final Check POSITIVE_INDEX = (head, ix, w) ->
-            ix[0] > 0 ? null : Problem.atIndex(0, "The index of " + head + " must be greater than 0");
+    /** For an identifier whose result is a bit-vector of a width that is 0 if its first index is 0 */
+    private static final Check NONZERO_WIDTH = (head, ix, w) -> ix[0] > 0 ? null : zeroWidth(head, ix);
+
+    private static Problem zeroWidth(String head, int[] ix) {
+        StringBuilder id = new StringBuilder("(_ ").append(head);
+        for (int i : ix) id.append(' ').append(i);
+        return Problem.atIndex(0, id.append(") would have the sort (_ BitVec 0), but a bit-vector sort must have")
+                .append(" a length of at least 1").toString());
+    }
 
     private static final Widths FROM_INDICES = (w, ix) -> new long[]{ ix[0], ix[1] };
 
@@ -134,15 +141,15 @@ final class TheorySignatures {
                                 + ix[0] + " vs. " + w[0])
                         : null)
                 .returnsBitVec((w, ix) -> new long[]{ ix[0] - ix[1] + 1 }),
-        fn(Set.of("int_to_bv"), Theories.BV_INTS, Kind.INT).indexed(1).check(POSITIVE_INDEX)
+        fn(Set.of("int_to_bv"), Theories.BV_INTS, Kind.INT).indexed(1).check(NONZERO_WIDTH)
                 .returnsBitVec((w, ix) -> new long[]{ ix[0] }).since(SMTLIB.V27),
-        fn(Set.of("repeat"), Theories.BV, Kind.BV).indexed(1).check(POSITIVE_INDEX)
+        fn(Set.of("repeat"), Theories.BV, Kind.BV).indexed(1).check(NONZERO_WIDTH)
                 .returnsBitVec((w, ix) -> new long[]{ (long)ix[0] * w[0] }),
         fn(Set.of("zero_extend", "sign_extend"), Theories.BV, Kind.BV).indexed(1)
                 .returnsBitVec((w, ix) -> new long[]{ (long)w[0] + ix[0] }),
         fn(Set.of("rotate_left", "rotate_right"), Theories.BV, Kind.BV).indexed(1),
         constant(Set.of(BV_CONSTANT), Theories.BV, 1)
-                .check((head, ix, w) -> ix[0] < 1 ? Problem.atIndex(0, "The index of " + head + " must be greater than 0")
+                .check((head, ix, w) -> ix[0] < 1 ? zeroWidth(head, ix)
                         : new java.math.BigInteger(head.substring(2)).bitLength() > ix[0]
                         ? Problem.whole("The value of the bitvector constant is too large for the given size ("
                                 + new java.math.BigInteger(head.substring(2)).bitLength() + " vs. " + ix[0] + " bits)")
@@ -161,7 +168,7 @@ final class TheorySignatures {
         fn(Set.of("fp.isNormal", "fp.isSubnormal", "fp.isZero", "fp.isInfinite", "fp.isNaN", "fp.isNegative",
                 "fp.isPositive"), Theories.FP, Kind.FP).returns(Result.BOOL),
         fn(Set.of("fp.to_real"), Theories.FP, Kind.FP).returns(Result.REAL),
-        fn(Set.of("fp.to_ubv", "fp.to_sbv"), Theories.FP_BV, Kind.RM, Kind.FP).indexed(1).check(POSITIVE_INDEX)
+        fn(Set.of("fp.to_ubv", "fp.to_sbv"), Theories.FP_BV, Kind.RM, Kind.FP).indexed(1).check(NONZERO_WIDTH)
                 .returnsBitVec((w, ix) -> new long[]{ ix[0] }),
         fn(Set.of("to_fp_unsigned"), Theories.FP_BV, Kind.RM, Kind.BV).indexed(2).returnsFloatingPoint(FROM_INDICES),
         fn(Set.of("to_fp"), Theories.FP, Kind.BV).indexed(2)

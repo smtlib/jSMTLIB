@@ -454,7 +454,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         // SymbolTable.lookup()'s `reason` output giving as specific a message as these
         // hardcoded branches used to (see its doc comment).
         List<TheorySignatures.Sig> sigs = TheorySignatures.lookup(head, false, symTable);
-        if (sigs != null) return checkTheoryApplication(e, head, name, sigs, argSorts);
+        if (sigs != null) return checkTheoryApplication(e, head, name, sigs, argSorts, resultSort);
 
         // (m t ...) for a map m abbreviates (@ m t ...) (SMT-LIB 2.7 Sec. 3.9)
         ISort mapSort = mapSort(head);
@@ -777,9 +777,11 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 
     /** Checks an application of a bit-vector or floating-point function against its signatures
      *  (TheorySignatures), in this order: version, argument count, the sort of each argument,
-     *  matching sorts, indices; returns the result sort, or null after reporting an error */
+     *  matching sorts, indices, the `as` qualifier's sort (asSort, if not null); returns the result
+     *  sort, or null after reporting an error */
     private /*@Nullable*/ ISort checkTheoryApplication(IFcnExpr e, IIdentifier head, String name,
-            List<TheorySignatures.Sig> sigs, List<ISort> argSorts) throws IVisitor.VisitorException {
+            List<TheorySignatures.Sig> sigs, List<ISort> argSorts, /*@Nullable*/ ISort asSort)
+            throws IVisitor.VisitorException {
         if (!theoryVersion(sigs.get(0), name, head)) return null;
         TheorySignatures.Sig sig = null;
         for (TheorySignatures.Sig s : sigs) if (s.fits(argSorts.size())) sig = s;
@@ -810,7 +812,12 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         int[] indices = theoryIndices(sig, head, name, e, argSorts, widths);
         if (indices == null) return null;
         ISort result = theoryResult(sig, first, widths, indices, e.pos());
-        return result == null ? null : save(e, result);
+        if (result == null) return null;
+        if (asSort != null && !asSort.equals(result)) {
+            error(name + " has result sort " + pr(result) + ", expected " + pr(asSort) + " (from the `as` qualifier)", e.pos());
+            return null;
+        }
+        return save(e, result);
     }
 
     /** Checks an indexed bit-vector or floating-point constant against its signature */
