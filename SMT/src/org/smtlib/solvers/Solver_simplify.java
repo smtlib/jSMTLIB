@@ -830,7 +830,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         if (logicSet == null) {
             return smtConfig.responseFactory.error("The logic must be set before a pop command is issued");
         }
-        if (number < 0) throw new SMT.InternalException("Internal bug: A pop command called with a negative argument: " + number);
+        if (number < 0) return smtConfig.responseFactory.error("A numeral may not be negative: " + number);
         if (assertionSetStack.size() <= number) {
             return smtConfig.responseFactory.error("The argument to a pop command is too large: " + number + " vs. a maximum of " + (assertionSetStack.size()-1));
         } else {
@@ -856,7 +856,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         if (logicSet == null) {
             return smtConfig.responseFactory.error("The logic must be set before a push command is issued");
         }
-        if (number < 0) throw new SMT.InternalException("Internal bug: A push command called with a negative argument: " + number);
+        if (number < 0) return smtConfig.responseFactory.error("A numeral may not be negative: " + number);
         int n = number;
         while (--n >= 0) {
             assertionSetStack.add(0,new LinkedList<IExpr>());
