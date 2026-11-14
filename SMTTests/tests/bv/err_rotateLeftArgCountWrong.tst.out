@@ -1,4 +1,4 @@
 success
 success
 success
-(error " The (_ rotate_left 1) function should have one argument")
+(error "The (_ rotate_left 1) function should have one argument")

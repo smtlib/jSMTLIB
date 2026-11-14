@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error " The bvnot function should have one argument")
+(error "The bvnot function should have one argument")

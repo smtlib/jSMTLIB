@@ -56,11 +56,13 @@ public class Solver_test implements ISolver {
     protected java.io.PrintStream outAtStart, diagAtStart;
 
     /** Applies the command-line settings that correspond to SMT-LIB options, at start and again after each
-     *  (reset), as AbstractSolver.applyStartupSettings does: -q, --out, --diag and --seed */
-    protected void applyStartupSettings() {
+     *  (reset), as AbstractSolver.applyStartupSettings does: -q, --out, --diag, --seed and --set-option. Returns an
+     *  error if a --set-option option is rejected, else null. */
+    protected /*@Nullable*/ IResponse applyStartupSettings() {
         smtConfig.nosuccess = nosuccessAtStart;
         smtConfig.log.setChannels(outAtStart, diagAtStart);
         if (smtConfig.seed != 0) options.put(Utils.RANDOM_SEED, smtConfig.exprFactory.numeral(smtConfig.seed));
+        return smtConfig.applySetOptions(this);
     }
 
     @Override
@@ -106,8 +108,9 @@ public class Solver_test implements ISolver {
         nosuccessAtStart = smtConfig.nosuccess;
         outAtStart = smtConfig.log.getOut();
         diagAtStart = smtConfig.log.getDiag();
-        applyStartupSettings();
         assertionSetStack.add(0,new LinkedList<IExpr>());
+        IResponse r = applyStartupSettings();
+        if (r != null) return r;
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#start " + solverName());
         return smtConfig.responseFactory.success();
     }
@@ -121,10 +124,9 @@ public class Solver_test implements ISolver {
         logicSet = null;
         // Set all options and info to default values
         putDefaults(options, smtConfig.utils);
-        applyStartupSettings();
         checkSatStatus = null;
-
-        return smtConfig.responseFactory.success();
+        IResponse r = applyStartupSettings();
+        return r != null ? r : smtConfig.responseFactory.success();
     }
 
     @Override public void comment(String comment) {
@@ -350,7 +352,7 @@ public class Solver_test implements ISolver {
         if (logicSet == null) {
             return smtConfig.responseFactory.error("The logic must be set before a pop command is issued");
         }
-        if (number < 0) throw new SMT.InternalException("Internal bug: A pop command called with a negative argument: " + number);
+        if (number < 0) return smtConfig.responseFactory.error("A numeral may not be negative: " + number);
         if (assertionSetStack.size() <= number) {
             return smtConfig.responseFactory.error("The argument to a pop command is too large: " + number + " vs. a maximum of " + (assertionSetStack.size()-1));
         } else {
@@ -375,7 +377,7 @@ public class Solver_test implements ISolver {
         if (logicSet == null) {
             return smtConfig.responseFactory.error("The logic must be set before a push command is issued");
         }
-        if (number < 0) throw new SMT.InternalException("Internal bug: A push command called with a negative argument: " + number);
+        if (number < 0) return smtConfig.responseFactory.error("A numeral may not be negative: " + number);
         while (--number >= 0) { 
             assertionSetStack.add(0,new LinkedList<IExpr>()); 
             symTable.push(); 
@@ -545,7 +547,7 @@ public class Solver_test implements ISolver {
             return smtConfig.responseFactory.error("Function attributes on declare-fun require --relax", cmd.symbol().pos());
         }
         String encodedName = encode(cmd.symbol());
-        List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.argSorts(),cmd.resultSort(),cmd.pos());
+        List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.parameters(), cmd.argSorts(), cmd.resultSort(), cmd.pos());
         if (list.isEmpty()) {
             ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(cmd.argSorts().toArray(new ISort[cmd.argSorts().size()]),cmd.resultSort());
             // cmd.attributes() is never null (empty if none); cmd.parameters() is only ever
@@ -553,6 +555,8 @@ public class Solver_test implements ISolver {
             // user-declared function opt into the same :left-assoc/etc. n-ary sugar and
             // par-polymorphism SymbolTable.lookup() already applies to theory-declared ones.
             SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,cmd.attributes(),cmd.parameters());
+            String bad = symTable.checkAttributes(entry);
+            if (bad != null) return smtConfig.responseFactory.error(bad, cmd.symbol().pos());
             // --relax experimentally allows overloading a user-declared symbol (standard
             // SMT-LIB permits this only for background-scope, theory-declared symbols) --
             // always allowed for a par declaration specifically, since requiring it to also be

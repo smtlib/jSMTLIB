@@ -1,3 +1,3 @@
 success
 success
-(error " The fp.fma function should have four arguments")
+(error "The fp.fma function should have four arguments")

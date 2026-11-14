@@ -134,7 +134,8 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         solverProcess.start(true);
         reportSeedIgnored();
         try {
-            applyStartupSettings();
+            IResponse settings = applyStartupSettings();
+            if (settings != null) return settings;
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started simplify");
             solverProcess.sendAndListen("(BG_PUSH (FORALL (B X Y) (IMPLIES (EQ B |@true|) (EQ (" + ite_term + " B X Y) X))))\n");
             solverProcess.sendAndListen("(BG_PUSH (FORALL (B X Y) (IMPLIES (NEQ B |@true|) (EQ (" + ite_term + " B X Y) Y))))\n");
@@ -224,12 +225,13 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         globalAxioms = "";
         logicSet = null;
         Solver_test.putDefaults(options, smtConfig.utils);
+        checkSatStatus = null;
         try {
-            applyStartupSettings();
+            IResponse settings = applyStartupSettings();
+            if (settings != null) return settings;
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Failed to reapply the startup settings: " + e.getMessage());
         }
-        checkSatStatus = null;
         return smtConfig.responseFactory.success();
     }
 
@@ -721,10 +723,12 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("Function attributes on declare-fun require --relax", cmd.symbol().pos());
         }
         String encodedName = encode(cmd.symbol());
-        List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.argSorts(),cmd.resultSort(),cmd.pos());
+        List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.parameters(), cmd.argSorts(), cmd.resultSort(), cmd.pos());
         if (list.isEmpty()) {
             ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(cmd.argSorts().toArray(new ISort[cmd.argSorts().size()]),cmd.resultSort());
             SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,cmd.attributes(),cmd.parameters());
+            String bad = symTable.checkAttributes(entry);
+            if (bad != null) return smtConfig.responseFactory.error(bad, cmd.symbol().pos());
             if (symTable.add(entry, isGlobal(), cmd.parameters() != null || smtConfig.relax)) {
                 checkSatStatus = null;
                 return smtConfig.responseFactory.success();
@@ -828,7 +832,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         if (logicSet == null) {
             return smtConfig.responseFactory.error("The logic must be set before a pop command is issued");
         }
-        if (number < 0) throw new SMT.InternalException("Internal bug: A pop command called with a negative argument: " + number);
+        if (number < 0) return smtConfig.responseFactory.error("A numeral may not be negative: " + number);
         if (assertionSetStack.size() <= number) {
             return smtConfig.responseFactory.error("The argument to a pop command is too large: " + number + " vs. a maximum of " + (assertionSetStack.size()-1));
         } else {
@@ -854,7 +858,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         if (logicSet == null) {
             return smtConfig.responseFactory.error("The logic must be set before a push command is issued");
         }
-        if (number < 0) throw new SMT.InternalException("Internal bug: A push command called with a negative argument: " + number);
+        if (number < 0) return smtConfig.responseFactory.error("A numeral may not be negative: " + number);
         int n = number;
         while (--n >= 0) {
             assertionSetStack.add(0,new LinkedList<IExpr>());

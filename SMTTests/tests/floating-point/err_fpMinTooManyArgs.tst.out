@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error " The fp.min function should have two arguments")
+(error "The fp.min function should have two arguments")

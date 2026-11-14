@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error " The bvudiv function should have two arguments")
+(error "The bvudiv function should have two arguments")

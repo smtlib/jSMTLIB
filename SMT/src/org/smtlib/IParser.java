@@ -203,21 +203,4 @@ public interface IParser extends ILexer {
         return p.parseList(p::parseExpr, "term", false);
     }
 
-    /** Parses a parenthesized list of datatype declarations from the given parser. */
-    public default List<ISort.IDatatype> parseListDatatypes(Parser p) throws IOException, ParserException {
-        return p.parseList(p::parseDatatype, "datatype declaration", false);
-    }
-
-    /** Checks that a user-defined symbol does not begin with the reserved characters {@code @} or {@code .};
-     *  throws a ParserException if the check fails.
-     */
-    public default void checkUserId(ISymbol id) throws IOException, ParserException {
-        String v = id.value();
-        if (v.length() == 0) {
-            throw new ParserException("User-defined symbols may not be empty strings", id.pos());
-        } else if (v.charAt(0) == '@' || v.charAt(0) == '.') {
-            throw new ParserException("User-defined symbols may not begin with . or @", id.pos());
-        }
-    }
-
 }

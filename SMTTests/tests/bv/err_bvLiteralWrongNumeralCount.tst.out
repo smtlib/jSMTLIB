@@ -1,2 +1,2 @@
 success
-(error "Expected exactly one numeral in a bv identifier")
+(error "The bv3 identifier should have one numeral index")

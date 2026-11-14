@@ -1,2 +1,2 @@
 success
-(error " The to_fp function should have one or two arguments")
+(error "The (_ to_fp 8 24) function should have one or two arguments")

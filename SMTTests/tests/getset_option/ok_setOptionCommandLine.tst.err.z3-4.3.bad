@@ -1,0 +1,4 @@
+#z3-4.3 does not support --set-option ':global-declarations true'
+(assert x)
+^^^^^^^^^^
+#z3-4.3 does not support --set-option ':global-declarations true'

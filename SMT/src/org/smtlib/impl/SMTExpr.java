@@ -18,6 +18,9 @@ import org.smtlib.IVisitor.VisitorException;
  * they are used by commands and expressions. */
 public abstract class SMTExpr implements IExpr {
 
+    /** Constructor for subclasses */
+    protected SMTExpr() {}
+
     /** Abstract base class for all literal value AST nodes; holds the typed value and provides a shared implementation. */
     static abstract public class Literal<T> extends Pos.AbstractExpr {
         protected T value;

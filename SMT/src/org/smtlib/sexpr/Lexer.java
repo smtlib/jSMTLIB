@@ -163,13 +163,13 @@ public class Lexer implements ILexer {
 
     /** The source of input used in this lexer; typically a different
      * lexer object will be used for each source (e.g. different file, string,
-     * port, etc.) of input data.
+     * etc.) of input data.
      */
     final private ISource source;
 
     /** The source of input used in this lexer; typically a different
      * lexer object will be used for each source (e.g. different file, string,
-     * port, etc.) of input data.
+     * etc.) of input data.
      */
     final public ISource source() { return source; }
 

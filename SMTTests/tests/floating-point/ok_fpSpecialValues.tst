@@ -1,0 +1,8 @@
+; Each of the five FP special constants (_ +oo|-oo|+zero|-zero|NaN eb sb) type-checks as (_ FloatingPoint eb sb)
+(set-logic ALL)
+(assert (fp.isInfinite (_ +oo 8 24)))
+(assert (fp.isInfinite (_ -oo 8 24)))
+(assert (fp.isZero (_ +zero 8 24)))
+(assert (fp.isNegative (_ -zero 8 24)))
+(assert (fp.isNaN (_ NaN 8 24)))
+(check-sat)

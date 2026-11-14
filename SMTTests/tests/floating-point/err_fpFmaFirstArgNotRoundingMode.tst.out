@@ -1,4 +1,4 @@
 success
 success
 success
-(error "The first argument of fp.fma must have RoundingMode sort, not Bool")
+(error "The first argument of fp.fma must have the RoundingMode sort, not Bool")

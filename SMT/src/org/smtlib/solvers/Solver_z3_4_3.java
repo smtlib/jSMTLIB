@@ -436,7 +436,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         if (!logicSet) {
             return smtConfig.responseFactory.error("The logic must be set before a pop command is issued");
         }
-        if (number < 0) throw new SMT.InternalException("Internal bug: A pop command called with a negative argument: " + number);
         if (number == 0) return  successOrEmpty(smtConfig);
         try {
             // No client-side bound check: z3-4.3 validates a pop count against its own stack
@@ -452,7 +451,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         if (!logicSet) {
             return smtConfig.responseFactory.error("The logic must be set before a push command is issued");
         }
-        if (number < 0) throw new SMT.InternalException("Internal bug: A push command called with a negative argument: " + number);
         if (number == 0) return recordChange(StackChange.PUSH, smtConfig.responseFactory.success());
         try {
             // Used to convert any push() error into success whenever !isWindows (issue #53),

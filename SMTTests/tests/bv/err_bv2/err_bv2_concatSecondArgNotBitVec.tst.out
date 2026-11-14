@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "The argument must have a BitVec sort, not Bool")
+(error "The second argument of concat must have a BitVec sort, not Bool")

@@ -23,8 +23,7 @@ The recognized options are these:
         (default is to use the internal, built-in definitions)
     --out <filename or 'stdout' or 'stderr'> : where to send normal and error output
     --diag <filename or 'stdout' or 'stderr'> : where to send verbose (diagnostic) output
-    --port <int> : which port to use for client-server communication
-    --text <string> : text to process (ignoring file and port input)
+    --text <string> : text to process (ignoring file input)
     -t, --timeout <seconds> : soft per-query timeout, always given here in seconds (fractional values allowed)
         each solver adapter converts this value to whatever unit and flag that solver actually uses
         (e.g. milliseconds instead of seconds), and, for a solver with no per-query option at all,
@@ -32,6 +31,8 @@ The recognized options are these:
     -T, --timeout-total <seconds> : timeout for the solver's whole run (its process lifetime), also always given here in seconds
         likewise converted to each solver's own unit/flag, or, if that solver has no whole-run option,
         applied as a best-effort per-query limit instead
+    --set-option "<keyword> <value>" : an SMT-LIB option, set at start and after each (reset), e.g. --set-option ':produce-models true';
+        may be repeated
     --seed <int> : seed for the solver's random number generator, if it has one (0, the default, sets none)
     --echo : if enabled, commands are echoed to diagnostic output when successfully parsed
     --print : if enabled, each command is parsed, type-checked and printed with the default printer,

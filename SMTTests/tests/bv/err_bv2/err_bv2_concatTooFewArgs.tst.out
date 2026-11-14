@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error " The concat function should have two arguments")
+(error "The concat function should have two arguments")

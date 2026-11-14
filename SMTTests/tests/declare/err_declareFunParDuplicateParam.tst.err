@@ -1,0 +1,2 @@
+(declare-fun par (X X) (h X X))
+                    ^

@@ -21,6 +21,9 @@ import org.smtlib.impl.Pos;
  */
 public class Factory implements IParser.IFactory {
 
+    /** Creates a factory for parsers and printers of the SMT-LIB concrete syntax */
+    public Factory() {}
+
     @Override
     public Parser createParser(SMT.Configuration smtConfig, ISource source) {
         return new Parser(smtConfig, source);

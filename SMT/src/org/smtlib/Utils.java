@@ -852,6 +852,7 @@ public class Utils {
             // each theory clear the flags the previous ones set.
             symTable.bitVectorTheorySet |= theoryName.equals("Fixed_Size_BitVectors") || theoryName.equals("FixedSizeBitVectors");
             symTable.realsIntsTheorySet |= theoryName.equals("Reals_Ints");
+            symTable.intsTheorySet |= theoryName.equals("Ints");
             symTable.floatingPointTheorySet |= theoryName.equals("FloatingPoint");
         }
         return response;
@@ -901,6 +902,7 @@ public class Utils {
                     // plain assignment would leave only the last theory's flag set.
                     symTable.bitVectorTheorySet |= tname.equals("Fixed_Size_BitVectors") || tname.equals("FixedSizeBitVectors");
                     symTable.realsIntsTheorySet |= tname.equals("Reals_Ints");
+                    symTable.intsTheorySet |= tname.equals("Ints");
                     symTable.floatingPointTheorySet |= tname.equals("FloatingPoint");
                 }
             } else {
@@ -932,6 +934,20 @@ public class Utils {
                     return smtConfig.responseFactory.error("Ill-formed attribute in the declaration of sort " + name + ": " + key);
                 }
                 List<IExpr.IAttribute<?>> attrs = parseAttributeTail(iter2, key);
+                for (IExpr.IAttribute<?> a : attrs) {
+                    String kw = a.keyword().value();
+                    if (kw.equals(":right-assoc")) {
+                        if (a.attrValue() != null) {
+                            return smtConfig.responseFactory.error("The :right-assoc attribute takes no value (declaration of sort " + name + "), in theory " + theoryName);
+                        }
+                        if (arity.intValue() != 2) {
+                            return smtConfig.responseFactory.error("The :right-assoc attribute of sort " + name + " needs arity 2, in theory " + theoryName);
+                        }
+                    } else if (SymbolTable.ASSOC_ATTRIBUTES.contains(kw)) {
+                        smtConfig.log.logDiag("WARNING: The " + kw + " attribute has no meaning on a sort declaration and is ignored (sort "
+                                + name + ", in theory " + theoryName + ")");
+                    }
+                }
                 symTable.addLogicSymbol(name, true);
                 // Float16/Float32/Float64/Float128 are synonyms for (_ FloatingPoint eb sb)
                 // instances, which SymbolTable.lookupSort provides; registered here they would
@@ -1022,8 +1038,11 @@ public class Utils {
             ISort result = sorts.remove(sorts.size() - 1);
             List<IExpr.IAttribute<?>> attrs = parseAttributeTail(iter2, key);
             ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(sorts.toArray(new ISort[sorts.size()]), result);
+            SymbolTable.Entry entry = new SymbolTable.Entry(sym, fcnSort, attrs, null);
+            String bad = symTable.checkAttributes(entry);
+            if (bad != null) return smtConfig.responseFactory.error(bad + ", in theory " + theoryName);
             symTable.addLogicSymbol(sym, false);
-            boolean b = symTable.add(new SymbolTable.Entry(sym, fcnSort, attrs, null), true, true);
+            boolean b = symTable.add(entry, true, true);
             if (!b) return smtConfig.responseFactory.error("Failed to add to symbol table: " + smtConfig.defaultPrinter.toString(sym) + " " + smtConfig.defaultPrinter.toString(fcnSort));
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Added symbol " + name);
         }
@@ -1081,8 +1100,11 @@ public class Utils {
             ISort result = sorts.remove(sorts.size() - 1);
             List<IExpr.IAttribute<?>> attrs = parseAttributeTail(iter2, key);
             ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(sorts.toArray(new ISort[sorts.size()]), result);
+            SymbolTable.Entry entry = new SymbolTable.Entry(sym, fcnSort, attrs, params);
+            String bad = symTable.checkAttributes(entry);
+            if (bad != null) return smtConfig.responseFactory.error(bad + ", in theory " + theoryName);
             symTable.addLogicSymbol(sym, false);
-            boolean b = symTable.add(new SymbolTable.Entry(sym, fcnSort, attrs, params), true, true);
+            boolean b = symTable.add(entry, true, true);
             if (!b) return smtConfig.responseFactory.error("Failed to add to symbol table: " + smtConfig.defaultPrinter.toString(sym));
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Added symbol " + sym.value());
         } finally {

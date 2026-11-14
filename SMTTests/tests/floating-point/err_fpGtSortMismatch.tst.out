@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "The argument must have a FloatingPoint sort, not Bool")
+(error "The third argument of fp.gt must have a FloatingPoint sort, not Bool")

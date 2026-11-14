@@ -1,0 +1,8 @@
+### --set-option takes a keyword and a value for a set-option command: a malformed argument is a command-line
+### error, and an option the solver rejects at start is reported (#216). Only the first line of each case is kept.
+##EXITCODE 0
+$SMT_CMD --solver test --set-option ":produce-models" --text "(set-logic QF_UF)" 2>&1 | head -1; echo "exit ${PIPESTATUS[0]}"
+$SMT_CMD --solver test --set-option ":produce-models true false" --text "(set-logic QF_UF)" 2>&1 | head -1; echo "exit ${PIPESTATUS[0]}"
+$SMT_CMD --solver test --set-option ":print-success 3" --text "(set-logic QF_UF)" 2>&1 | head -1; echo "exit ${PIPESTATUS[0]}"
+$SMT_CMD --solver test --set-option --text "(set-logic QF_UF)" 2>&1 | head -1; echo "exit ${PIPESTATUS[0]}"
+$SMT_CMD --solver test --set-option ':regular-output-channel "/nonexistent-dir-216/out"' --text "(set-logic QF_UF)" 2>&1 | head -1; echo "exit ${PIPESTATUS[0]}"

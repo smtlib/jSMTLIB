@@ -1181,7 +1181,8 @@ public class AbstractSolver implements ISolver {
 
     /** Applies the command-line settings that correspond to SMT-LIB options, at start and again after each (reset),
      *  which returns every option to its default: -q (:print-success) and --out/--diag (the output channels), which
-     *  jSMTLIB handles itself, and --seed (:random-seed), which is sent. Settings that a solver takes on its own
+     *  jSMTLIB handles itself, --seed (:random-seed), which is sent, and the --set-option options, which go through
+     *  set_option as the script's set-option commands do. Settings that a solver takes on its own
      *  command line (the timeouts) are not sent. An adapter overrides this where its solver differs. Returns an
      *  error if the solver rejects a setting, else null. */
     protected /*@Nullable*/ IResponse applyStartupSettings() throws IOException {
@@ -1189,7 +1190,14 @@ public class AbstractSolver implements ISolver {
         smtConfig.log.setChannels(outAtStart, diagAtStart);
         restoreOption(Utils.REGULAR_OUTPUT_CHANNEL, regularChannelAtStart);
         restoreOption(Utils.DIAGNOSTIC_OUTPUT_CHANNEL, diagnosticChannelAtStart);
-        return hasSeedOption() ? sendSeed() : null;
+        IResponse r = hasSeedOption() ? sendSeed() : null;
+        if (r != null) return r;
+        ownQueries++; // no script lines
+        try {
+            return smtConfig.applySetOptions(this);
+        } finally {
+            ownQueries--;
+        }
     }
 
     /** The value of {@code smtConfig.nosuccess} when the solver started */

@@ -1,0 +1,12 @@
+; OPTIONS: --set-option ":global-declarations true" --set-option ":produce-assignments true"
+; --set-option options are sent at start and again after (reset), which returns every option to its default (#216)
+(get-option :global-declarations)
+(get-option :produce-assignments)
+(set-logic QF_UF)
+(push 1)
+(declare-const x Bool)
+(pop 1)
+(assert x)
+(reset)
+(get-option :global-declarations)
+(get-option :produce-assignments)

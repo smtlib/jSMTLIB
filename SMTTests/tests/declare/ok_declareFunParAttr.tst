@@ -4,4 +4,4 @@
 ; way to reach that particular call; an ordinary, non-par declare-fun's attributes are
 ; parsed by the other branch instead).
 (set-logic QF_UF)
-(declare-fun par (A) (f A A :left-assoc))
+(declare-fun par (A) (f A A A :left-assoc))

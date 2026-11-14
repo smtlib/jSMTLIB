@@ -1,0 +1,8 @@
+(declare-fun f (Int Int) Bool :left-assoc)
+             ^
+(declare-fun g (Int) Int :right-assoc)
+             ^
+(declare-fun h (Int Int) Bool :chainable :pairwise)
+             ^
+(declare-fun k (Int Int) Bool :pairwise 1)
+             ^

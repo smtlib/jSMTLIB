@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "The argument must have a BitVec sort, not Bool")
+(error "The argument of bvnot must have a BitVec sort, not Bool")
