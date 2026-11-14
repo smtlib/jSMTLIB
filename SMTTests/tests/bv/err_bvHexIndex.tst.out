@@ -1,6 +1,6 @@
 success
 (error "A bit-vector sort must have exactly one numeral")
 success
-(error "Expected exactly two numerals in an extract identifier")
-(error "Expected exactly one numeral in a bv identifier")
-(error "Expected exactly one numeral in a repeat identifier")
+(error "The extract identifier should have two numeral indices")
+(error "The bv1 identifier should have one numeral index")
+(error "The repeat identifier should have one numeral index")

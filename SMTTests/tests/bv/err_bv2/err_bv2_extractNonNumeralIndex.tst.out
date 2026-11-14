@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error "Expected exactly two numerals in an extract identifier")
+(error "The extract identifier should have two numeral indices")

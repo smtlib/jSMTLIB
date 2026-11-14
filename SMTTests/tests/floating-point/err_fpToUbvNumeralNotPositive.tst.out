@@ -1,4 +1,4 @@
 success
 success
 success
-(error "The numeral must be greater than 0")
+(error "The index of fp.to_ubv must be greater than 0")
