@@ -727,6 +727,8 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         if (list.isEmpty()) {
             ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(cmd.argSorts().toArray(new ISort[cmd.argSorts().size()]),cmd.resultSort());
             SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,cmd.attributes(),cmd.parameters());
+            String bad = symTable.checkAttributes(entry);
+            if (bad != null) return smtConfig.responseFactory.error(bad, cmd.symbol().pos());
             if (symTable.add(entry, isGlobal(), cmd.parameters() != null || smtConfig.relax)) {
                 checkSatStatus = null;
                 return smtConfig.responseFactory.success();

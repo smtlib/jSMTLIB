@@ -1,0 +1,6 @@
+success
+(error "The :left-assoc attribute of f needs a rank of the form (A B A)")
+(error "The :right-assoc attribute of g needs exactly two argument sorts")
+(error "The declaration of h has more than one of :left-assoc, :right-assoc, :chainable and :pairwise")
+(error "The :pairwise attribute takes no value (declaration of k)")
+success
