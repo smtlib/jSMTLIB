@@ -721,7 +721,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             return smtConfig.responseFactory.error("Function attributes on declare-fun require --relax", cmd.symbol().pos());
         }
         String encodedName = encode(cmd.symbol());
-        List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.argSorts(),cmd.resultSort(),cmd.pos());
+        List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.parameters(), cmd.argSorts(), cmd.resultSort(), cmd.pos());
         if (list.isEmpty()) {
             ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(cmd.argSorts().toArray(new ISort[cmd.argSorts().size()]),cmd.resultSort());
             SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,cmd.attributes(),cmd.parameters());

@@ -151,7 +151,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         try {
             if (params != null) for (ISort.IParameter p : params) {
                 if (f.shadowsLogic(p.symbol(), true)) errors = true;
-                boolean b = symTable.addSortParameter(p.symbol(), false);
+                boolean b = symTable.addSortParameter(p, false);
                 if (!b) {
                     f.error("Duplicate sort parameters: " + p.symbol(),p.pos());
                     errors = true;
@@ -160,11 +160,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             if (!errors && expr != null) expr.accept(f);
             // A sort definition may contain only its own sort parameters, no global one (SMT-LIB 2.7, 4.2.3)
             if (!errors && expr != null && f.result.isEmpty()) {
-                List<ISort.IParameter> own = new LinkedList<>();
-                if (params != null) for (ISort.IParameter p : params) {
-                    own.add(p);
-                    own.add((ISort.IParameter) symTable.lookupSort(p.symbol()));
-                }
+                List<ISort.IParameter> own = params != null ? params : List.of();
                 for (ISort.IParameter p : SymbolTable.parametersIn(expr, new LinkedList<ISort.IParameter>())) {
                     if (!own.contains(p)) {
                         f.error("A sort definition may not contain the global sort parameter "
@@ -188,6 +184,27 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
     public static List<IResponse> checkFcn(SymbolTable symTable, IIdentifier id, List<ISort> sorts, ISort result, IPos pos) {
         List<IResponse> errors = new LinkedList<IResponse>();
         resolveFcnSort(symTable, id, sorts, result, pos, errors);
+        return errors;
+    }
+
+    /** Checks a declare-fun par signature: as checkFcn, with the command's own sort parameters
+     *  in scope, so a sort that names one means that parameter (#209); params may be null. */
+    public static List<IResponse> checkFcn(SymbolTable symTable, IIdentifier id, /*@Nullable*/ List<ISort.IParameter> params,
+            List<ISort> sorts, ISort result, IPos pos) {
+        if (params == null) return checkFcn(symTable, id, sorts, result, pos);
+        List<IResponse> errors = new LinkedList<IResponse>();
+        symTable.push();
+        try {
+            for (ISort.IParameter p : params) {
+                if (!symTable.addSortParameter(p, false)) {
+                    errors.add(symTable.smtConfig.responseFactory.error("Duplicate sort parameters: " + p.symbol(), p.pos()));
+                    return errors;
+                }
+            }
+            resolveFcnSort(symTable, id, sorts, result, pos, errors);
+        } finally {
+            symTable.pop();
+        }
         return errors;
     }
 

@@ -545,7 +545,7 @@ public class Solver_test implements ISolver {
             return smtConfig.responseFactory.error("Function attributes on declare-fun require --relax", cmd.symbol().pos());
         }
         String encodedName = encode(cmd.symbol());
-        List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.argSorts(),cmd.resultSort(),cmd.pos());
+        List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.parameters(), cmd.argSorts(), cmd.resultSort(), cmd.pos());
         if (list.isEmpty()) {
             ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(cmd.argSorts().toArray(new ISort[cmd.argSorts().size()]),cmd.resultSort());
             // cmd.attributes() is never null (empty if none); cmd.parameters() is only ever
