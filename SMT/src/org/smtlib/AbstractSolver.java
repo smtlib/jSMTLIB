@@ -1040,8 +1040,18 @@ public class AbstractSolver implements ISolver {
                 continue;
             } else {
                 // an atom: ends at whitespace or a delimiter
+                int atomStart = i;
                 while (i < n && !Character.isWhitespace(s.charAt(i)) && "()\";|".indexOf(s.charAt(i)) < 0) i++;
                 if (i >= n) return -1; // it may continue
+                // an atom that is no SMT-LIB token (e.g. bitwuzla's "[error]") starts non-SMT-LIB text,
+                // which runs to the end of its line, as a reply does when not pipelining (#214)
+                for (int k = atomStart; k < i; k++) {
+                    char a = s.charAt(k);
+                    if (!Character.isLetterOrDigit(a) && "~!@$%^&*_-+=<>.?/:#".indexOf(a) < 0) {
+                        while (i < n && s.charAt(i) != '\n') i++;
+                        return i >= n ? -1 : i;
+                    }
+                }
                 return i;
             }
             if (depth <= 0) return i;
