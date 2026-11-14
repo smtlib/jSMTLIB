@@ -275,8 +275,8 @@ not yet started, blocked on (b).
 Shell-driven scenarios that need more than one `$SMT_CMD` invocation, or
 specific command-line flags, in a single test — things `.tst`'s single-process
 model can't express. `ScriptTests` discovers and runs every `.scr` file.
-Examples: `logic-validation.scr` (4-part `-L` path scenario), `driver-*.scr`,
-`interactive-*.scr`, `port-*.scr`, `props*.scr` (properties-file resolution).
+Examples: `logic-validation.scr` (4-part `-L` path scenario),
+`interactive-*.scr`, `props*.scr` (properties-file resolution).
 
 ---
 

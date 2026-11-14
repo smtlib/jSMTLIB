@@ -25,7 +25,7 @@ if [ -n "${COV++}" ]; then
     ## Windows-form path there -- same reason ./setup cygpath-converts SMT_JAR/COV_CLASSES.
     ## Can't reuse ./setup's own $PLATFORM for this, though: runjunits deliberately sources
     ## setup-coverage BEFORE setup (so COV_AGENT already has a value when setup builds
-    ## SMT_CMD/SMT_DRIVER), which means $PLATFORM isn't set yet at this point -- hence the
+    ## SMT_CMD), which means $PLATFORM isn't set yet at this point -- hence the
     ## separate uname check here, duplicating setup's own platform-detection idiom instead
     ## of depending on its output order. Confirmed via CI (run 35530298789) that skipping
     ## this conversion doesn't error, doesn't hang, and doesn't fail any test -- the agent
@@ -48,7 +48,7 @@ if [ -n "${COV++}" ]; then
     ##  - COV_MAIN_AGENT, for runjunits' own JVM: its destfile only ever receives what runs
     ##    OUTSIDE any test (class init, @Parameters, @BeforeClass) -- the listener reads out
     ##    and resets each test's own counters itself, through JaCoCo's runtime API.
-    ##  - COV_AGENT, for child JVMs (setup bakes it into SMT_CMD/SMT_DRIVER): its destfile
+    ##  - COV_AGENT, for child JVMs (setup bakes it into SMT_CMD): its destfile
     ##    holds a literal @COV_TEST@ placeholder, which runscript replaces with the current
     ##    test's file stem (read from cov/by-test/.current-test, written by the listener),
     ##    so a child JVM's coverage lands in the file of the test that spawned it (and its

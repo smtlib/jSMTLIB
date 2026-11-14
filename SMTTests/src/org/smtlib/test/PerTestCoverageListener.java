@@ -34,7 +34,7 @@ import org.junit.runner.notification.RunListener;
  *  Anything left after the last test is written to _outside-tests.exec by the agent's own
  *  shutdown hook, as usual.
  *
- *  Child JVMs (ScriptTests' $SMT_CMD/$SMT_DRIVER invocations, via runscript) can't be
+ *  Child JVMs (ScriptTests' $SMT_CMD invocations, via runscript) can't be
  *  reset from here. Instead, this listener writes the current test's file stem to
  *  {@code <dir>/.current-test}; runscript substitutes it into the child agent's destfile,
  *  so each child JVM appends its own session to the same per-test file. JaCoCo's exec

@@ -8,7 +8,6 @@ package org.smtlib;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.net.ServerSocket;
 import java.net.URL;
 import java.security.CodeSource;
 import java.util.*;
@@ -254,7 +253,7 @@ public class SMT {
         /*@Nullable*/ public List<String> files = new LinkedList<String>();
 
         /** A string containing the SMT-LIB commands to use; if null the given file is used; if non-null
-         * this text is used instead of the content of the file or the input from a port.
+         * this text is used instead of the content of the file.
          * A typical use is when the SMT text is generated rather than read.
          */
         /*@Nullable*/ public String text = null;
@@ -293,10 +292,6 @@ public class SMT {
         /*@Nullable*/ public String out = null;
         /** If non-null, the file name (or 'stdout'/'stderr') to use for diagnostic output. */
         /*@Nullable*/ public String diag = null;
-
-        /** The port to use for socket communications; a port > 0 supersedes any file value, but is
-         * ignored if the text option is set. */
-        public int port = -1;
 
         // javac's this-escape lint: Log's constructor only stores 'this', so a subclass's state is not read early
         /** The log to use for regular, error, and diagnostic output */
@@ -653,27 +648,6 @@ public class SMT {
                 pipelineInput = true;
                 return doParser(p);
 
-            } else if (smtConfig.port >= 0) {
-                // If port is set, use the input from the socket.  We still set interactive to true,
-                // so that the prompt is sent back on the socket and the client knows that the communication
-                // has been received and responded to.
-                smtConfig.interactive = false;
-                ServerSocket serverSocket;
-                try {
-                    serverSocket = new ServerSocket(smtConfig.port);
-                } catch (IOException e) {
-                    smtConfig.log.getOut().println("Could not listen on port: " + smtConfig.port + " " + e.getMessage());
-                    return 1;
-                }
-
-                warnPipelineIgnored("--port input");
-                CharSequenceSocket csq = new CharSequenceSocket(smtConfig,serverSocket,100000,0,2);
-                csq.prompter = new Prompter(smtConfig);
-                if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Start parsing");
-                src = smtConfig.smtFactory.createSource(csq, null);
-                p = smtConfig.smtFactory.createParser(smtConfig,src);
-                return doParser(p);
-
             } else if (smtConfig.files == null || smtConfig.files.isEmpty()) {
                 // No files listed - use standard input
                 smtConfig.interactive = true;
@@ -740,7 +714,7 @@ public class SMT {
     }
 
     /** Whether the input being processed may be pipelined (with --pipeline): file and --text input,
-     *  not the socket or standard input, whose client needs each command's response at once */
+     *  not interactive standard input, whose client needs each command's response at once */
     protected boolean pipelineInput = false;
 
 
@@ -1132,21 +1106,6 @@ public class SMT {
                 options.out = args[i++];
                 if (blankArgument(options.out, "--out")) return 1;
 
-            } else if ("--port".equals(s)) {
-                if (i >= args.length) {
-                    error("The --port option expects an argument");
-                    usage();
-                    return 1;
-                }
-                String a = args[i++];
-                try {
-                    options.port = Integer.parseInt(a);
-                } catch (NumberFormatException e) {
-                    error("The --port option expects an integer argument: " + a);
-                    usage();
-                    return 1;
-                }
-
             } else if ("--text".equals(s)) {
                 if (i >= args.length) {
                     error("The --text option expects an argument");
@@ -1321,12 +1280,6 @@ public class SMT {
                 return 1;
             }
             options.setOptions.add(so);
-        }
-
-        if (options.files != null && !options.files.isEmpty() && options.port >= 0) {
-            error("You may not specify both a port and file input");
-            usage();
-            return 1;
         }
 
         if (options.print) {
@@ -1542,8 +1495,7 @@ public class SMT {
                 "(default is to use the internal, built-in definitions)"),
         new Opt("--out", null, "<filename or 'stdout' or 'stderr'>", "where to send normal and error output"),
         new Opt("--diag", null, "<filename or 'stdout' or 'stderr'>", "where to send verbose (diagnostic) output"),
-        new Opt("--port", null, "<int>", "which port to use for client-server communication"),
-        new Opt("--text", null, "<string>", "text to process (ignoring file and port input)"),
+        new Opt("--text", null, "<string>", "text to process (ignoring file input)"),
         new Opt("--timeout", "-t", "<seconds>", "soft per-query timeout, always given here in seconds (fractional values allowed)",
                 "each solver adapter converts this value to whatever unit and flag that solver actually uses",
                 "(e.g. milliseconds instead of seconds), and, for a solver with no per-query option at all,",

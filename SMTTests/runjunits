@@ -6,7 +6,7 @@
 cd "$(dirname "$0")" || exit 1
 trap 'exit 130' INT
 # setup-coverage must be sourced BEFORE setup so that COV_AGENT is already set
-# when setup constructs SMT_CMD / SMT_DRIVER.  That way any JVM processes spawned
+# when setup constructs SMT_CMD.  That way any JVM processes spawned
 # by ScriptTests (via $SMT_CMD) are also instrumented.
 if [ -n "${COV++}" ]; then
     source ./setup-coverage junits
