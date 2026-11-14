@@ -782,9 +782,14 @@ public class AbstractSolver implements ISolver {
         return text.substring(0, end);
     }
 
-    /** Reports output read beyond the responses to the pipelined commands */
+    /** Reports output read beyond the responses to the pipelined commands, but for comment lines (z3 writes
+     *  some), which are not responses (as in matchUnread) */
     private void reportLeftover() {
-        String extra = unread.toString().trim();
+        StringBuilder sb = new StringBuilder();
+        for (String line: unread.toString().split("\n", -1)) {
+            if (!line.stripLeading().startsWith(";")) sb.append(line).append('\n');
+        }
+        String extra = sb.toString().trim();
         unread.setLength(0);
         if (!extra.isEmpty()) reportOutOfStep(extra);
     }
