@@ -211,17 +211,17 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         return id.toString();
     }
 
-    /** Transplanted from {@link Solver_test#reset()}: this class has no real process
-     *  operation to ask for a reset (Simplify's protocol has no such concept), so this
-     *  remains an entirely local, client-side reset exactly as it was as an inherited
-     *  Solver_test method -- it does not, and did not before this restructuring, reset any
-     *  BG_PUSH state already accumulated in the real Simplify process itself. */
+    /** A local reset: Simplify's protocol has no reset. The BG_PUSH (EQ 0 0) levels of open
+     *  scopes stay in the process, which is harmless since they are trivially true. */
     @Override
     public IResponse reset() {
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#reset " + solverName());
         assertionSetStack.clear();
         assertionSetStack.add(0,new LinkedList<IExpr>());
         symTable.clear(false);
+        conjunction = "";
+        pushesStack.clear();
+        pushesStack.add("");
         globalAxioms = "";
         logicSet = null;
         Solver_test.putDefaults(options, smtConfig.utils);
@@ -248,6 +248,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             // ignore - clearing sorts is best-effort hygiene, not correctness-critical
         }
         assertionSetStack.get(0).clear();
+        conjunction = "";
         if (!isGlobal()) {
             symTable.clear(true);
         }
@@ -450,7 +451,9 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         try {
             axiom.accept(tc);
             if (!tc.result.isEmpty()) return tc.result.get(0);
-            conjunction = conjunction + " \n" + translate(axiom);
+            // A global definition outlives pop and reset-assertions, so its axiom does too
+            if (isGlobal()) globalAxioms = globalAxioms + " \n" + translate(axiom);
+            else conjunction = conjunction + " \n" + translate(axiom);
         } catch (VisitorException e) {
             return smtConfig.responseFactory.error(e.getMessage(),e.pos);
         }
