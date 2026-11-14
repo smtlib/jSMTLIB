@@ -15,6 +15,9 @@ import org.smtlib.sexpr.Printer;
 /** This abstract class is the base class for all commands within this implementation. */
 public abstract class Command extends Pos.Printable implements ICommand {
 
+    /** Constructor for subclasses */
+    protected Command() {}
+
     /** Whitespace/comment text, if any, that appeared on the same physical source line
      *  immediately after this command's closing parenthesis (before the next line
      *  terminator) -- typically a trailing "; comment". Captured separately from a

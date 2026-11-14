@@ -66,6 +66,8 @@ public class Log {
      * are reflected here as well.
      */
     public class StandardListener implements IListener {
+        /** Creates a listener that writes to this log's output and diagnostic streams */
+        public StandardListener() {}
         /** The current indent prefix (see {@link IListener#indent}), used by {@link #logError(IResponse.IError)}
          *  below to align an error-location caret diagram with the prompt the user actually saw it after. */
         protected String prompt = "";

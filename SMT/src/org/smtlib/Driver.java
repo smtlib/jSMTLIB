@@ -17,6 +17,9 @@ import java.util.List;
 /** The Driver class is a client that can send commands to the SMT application acting as a server. */
 public class Driver {
 
+    /** Creates a driver; {@link #exec(String[])} runs it */
+    public Driver() {}
+
     // These constants are exit codes emitted from the application
 
     /** The exit code corresponding to a 'success' response to an SMT-LIB command */

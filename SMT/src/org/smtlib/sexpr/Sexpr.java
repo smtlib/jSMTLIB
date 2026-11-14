@@ -14,6 +14,9 @@ import org.smtlib.impl.Pos;
 /** This is the root class for S-expressions in the concrete syntax */
 public abstract class Sexpr extends Pos.Printable implements ISexpr {
 
+    /** Constructor for subclasses */
+    protected Sexpr() {}
+
     /** The class corresponding to sequences of S-expressions */
     public static class Seq extends Sexpr implements ISeq {
         protected List<ISexpr> sexprs;

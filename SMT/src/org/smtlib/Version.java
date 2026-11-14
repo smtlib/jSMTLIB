@@ -6,6 +6,7 @@ import java.util.ResourceBundle;
  *  resource bundle.
  */
 public class Version {
+    private Version() {}
     private static final String versionRBName = "org.smtlib.resources.version";
     private static ResourceBundle versionRB;
 

@@ -44,6 +44,8 @@ public class Pos implements IPos {
     /** An implementation of IPosable, holding an instance of Pos,
      *  that can be used as a base class if necessary */
     public static class Posable implements IPosable {
+        /** Creates an object with no position */
+        public Posable() {}
         protected /*@Nullable*/ IPos pos;
         @Override
         public IPos pos() { return pos; }
@@ -74,6 +76,8 @@ public class Pos implements IPos {
      *  rules," which is all a debugger/IDE display can reasonably do without knowing
      *  which real Configuration actually owns this node. */
     public static abstract class Printable extends Posable implements INode {
+        /** Constructor for subclasses */
+        protected Printable() {}
         @Override
         public String toString() {
             return org.smtlib.sexpr.Printer.write(new SMT.Configuration(), this);
@@ -83,6 +87,8 @@ public class Pos implements IPos {
     /** A Printable that also implements IExpr, additionally holding the sort computed for
      *  the expression by the type checker (null if not yet, or never, computed). */
     public static abstract class AbstractExpr extends Printable implements IExpr {
+        /** Constructor for subclasses */
+        protected AbstractExpr() {}
         protected /*@Nullable*/ ISort sort;
         @Override
         public /*@Nullable*/ ISort sort() { return sort; }

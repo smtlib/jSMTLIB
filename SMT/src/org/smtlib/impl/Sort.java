@@ -16,6 +16,9 @@ import org.smtlib.impl.SMTExpr.Symbol;
 /** This class implements the abstract ISort interface */
 public abstract class Sort extends Pos.Printable implements ISort {
 
+    /** Constructor for subclasses */
+    protected Sort() {}
+
     /** Returns true iff the receiver is a Sort expression designating the pre-defined Bool sort */
     @Override
     public boolean isBool() {

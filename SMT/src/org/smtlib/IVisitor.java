@@ -121,6 +121,9 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
      */
     public class TreeVisitor</*@Nullable*/T> implements IVisitor</*@Nullable*/T> {
 
+        /** Creates a visitor that walks the whole tree */
+        public TreeVisitor() {}
+
         @Override
         public /*@Nullable*/T visit(IAttribute<?> e) throws VisitorException {
             e.keyword().accept(this);

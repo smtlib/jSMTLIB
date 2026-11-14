@@ -41,6 +41,8 @@ import org.smtlib.IParser.ParserException;
  * interfaces for Log/Utils, isn't supported by any of the extension points above.
  */
 public class SMT {
+    /** Creates an SMT application object with a default configuration */
+    public SMT() {}
 
 //    public SMT() {
 //        this(Utils.SMTLIB_VERSION_CURRENT);
