@@ -1,3 +1,0 @@
-SMT: success
-SMT: success
-WARNING: --pipeline applies only to files (including - for standard input) and --text input; it is ignored for --port input

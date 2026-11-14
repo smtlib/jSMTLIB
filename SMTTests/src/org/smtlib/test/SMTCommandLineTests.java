@@ -353,8 +353,9 @@ public class SMTCommandLineTests {
         assertError(run("--out"), "The --out option expects an argument");
     }
 
-    @Test public void portMissingArg() {
-        assertError(run("--port"), "The --port option expects an argument");
+    @Test public void portRemoved() {
+        // #139: the --port server mode was removed
+        assertError(run("--port", "8080"), "Unknown option: --port");
     }
 
     @Test public void textMissingArg() {
@@ -397,14 +398,6 @@ public class SMTCommandLineTests {
         assertError(run("--seed", "-1"), "The --seed option expects a non-negative integer value: -1");
     }
 
-    @Test public void portNonInteger() {
-        assertError(run("--port", "fast"), "The --port option expects an integer argument: fast");
-    }
-
-    @Test public void portEmpty() {
-        assertError(run("--port", ""), "The --port option expects an integer argument: ");
-    }
-
     @Test public void timeoutNonNumeric() {
         assertError(run("--timeout", "fast"), "The --timeout option expects a numeric value, in seconds: fast");
     }
@@ -424,11 +417,6 @@ public class SMTCommandLineTests {
     // -----------------------------------------------------------------------
     // Conflicting or incompatible options
     // -----------------------------------------------------------------------
-
-    @Test public void portAndFileConflict() {
-        assertError(run("--port", "8080", "somefile.smt2"),
-            "You may not specify both a port and file input");
-    }
 
     @Test public void execWithoutSolver() {
         assertError(run("--exec", "/some/path"),
