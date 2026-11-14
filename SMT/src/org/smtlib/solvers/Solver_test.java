@@ -56,11 +56,13 @@ public class Solver_test implements ISolver {
     protected java.io.PrintStream outAtStart, diagAtStart;
 
     /** Applies the command-line settings that correspond to SMT-LIB options, at start and again after each
-     *  (reset), as AbstractSolver.applyStartupSettings does: -q, --out, --diag and --seed */
-    protected void applyStartupSettings() {
+     *  (reset), as AbstractSolver.applyStartupSettings does: -q, --out, --diag, --seed and --set-option. Returns an
+     *  error if a --set-option option is rejected, else null. */
+    protected /*@Nullable*/ IResponse applyStartupSettings() {
         smtConfig.nosuccess = nosuccessAtStart;
         smtConfig.log.setChannels(outAtStart, diagAtStart);
         if (smtConfig.seed != 0) options.put(Utils.RANDOM_SEED, smtConfig.exprFactory.numeral(smtConfig.seed));
+        return smtConfig.applySetOptions(this);
     }
 
     @Override
@@ -106,8 +108,9 @@ public class Solver_test implements ISolver {
         nosuccessAtStart = smtConfig.nosuccess;
         outAtStart = smtConfig.log.getOut();
         diagAtStart = smtConfig.log.getDiag();
-        applyStartupSettings();
         assertionSetStack.add(0,new LinkedList<IExpr>());
+        IResponse r = applyStartupSettings();
+        if (r != null) return r;
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#start " + solverName());
         return smtConfig.responseFactory.success();
     }
@@ -121,10 +124,9 @@ public class Solver_test implements ISolver {
         logicSet = null;
         // Set all options and info to default values
         putDefaults(options, smtConfig.utils);
-        applyStartupSettings();
         checkSatStatus = null;
-
-        return smtConfig.responseFactory.success();
+        IResponse r = applyStartupSettings();
+        return r != null ? r : smtConfig.responseFactory.success();
     }
 
     @Override public void comment(String comment) {

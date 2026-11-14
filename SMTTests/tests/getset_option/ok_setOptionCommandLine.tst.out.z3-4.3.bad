@@ -1,0 +1,10 @@
+false
+true
+success
+success
+success
+success
+(error "line 9 column 9: unknown constant x")
+success
+false
+true

@@ -30,6 +30,7 @@ Usage: java org.smtlib.SMT [args] [file]
        --text <string>
        --timeout [-t] <seconds>
        --timeout-total [-T] <seconds>
+       --set-option "<keyword> <value>"
        --seed <int>
        --echo
        --print

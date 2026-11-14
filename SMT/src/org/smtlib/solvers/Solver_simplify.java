@@ -134,7 +134,8 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         solverProcess.start(true);
         reportSeedIgnored();
         try {
-            applyStartupSettings();
+            IResponse settings = applyStartupSettings();
+            if (settings != null) return settings;
             if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Started simplify");
             solverProcess.sendAndListen("(BG_PUSH (FORALL (B X Y) (IMPLIES (EQ B |@true|) (EQ (" + ite_term + " B X Y) X))))\n");
             solverProcess.sendAndListen("(BG_PUSH (FORALL (B X Y) (IMPLIES (NEQ B |@true|) (EQ (" + ite_term + " B X Y) Y))))\n");
@@ -224,12 +225,13 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         globalAxioms = "";
         logicSet = null;
         Solver_test.putDefaults(options, smtConfig.utils);
+        checkSatStatus = null;
         try {
-            applyStartupSettings();
+            IResponse settings = applyStartupSettings();
+            if (settings != null) return settings;
         } catch (IOException e) {
             return smtConfig.responseFactory.error("Failed to reapply the startup settings: " + e.getMessage());
         }
-        checkSatStatus = null;
         return smtConfig.responseFactory.success();
     }
 

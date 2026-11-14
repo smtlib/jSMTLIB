@@ -32,6 +32,8 @@ The recognized options are these:
     -T, --timeout-total <seconds> : timeout for the solver's whole run (its process lifetime), also always given here in seconds
         likewise converted to each solver's own unit/flag, or, if that solver has no whole-run option,
         applied as a best-effort per-query limit instead
+    --set-option "<keyword> <value>" : an SMT-LIB option, set at start and after each (reset), e.g. --set-option ':produce-models true';
+        may be repeated
     --seed <int> : seed for the solver's random number generator, if it has one (0, the default, sets none)
     --echo : if enabled, commands are echoed to diagnostic output when successfully parsed
     --print : if enabled, each command is parsed, type-checked and printed with the default printer,

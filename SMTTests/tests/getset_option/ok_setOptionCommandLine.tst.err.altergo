@@ -1,0 +1,4 @@
+#altergo does not support --set-option ':global-declarations true'
+(assert x)
+^^^^^^^^^^
+#altergo does not support --set-option ':global-declarations true'
