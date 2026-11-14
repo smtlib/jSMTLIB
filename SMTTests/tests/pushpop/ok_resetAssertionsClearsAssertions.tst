@@ -1,0 +1,8 @@
+; reset-assertions removes the assertions at level 0 too: the last check-sat is sat (#165)
+(set-logic QF_UF)
+(declare-fun q () Bool)
+(assert q)
+(assert (not q))
+(check-sat)
+(reset-assertions)
+(check-sat)
