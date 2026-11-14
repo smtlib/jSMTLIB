@@ -1,4 +1,4 @@
 success
 success
 success
-(error "The first argument of to_fp_unsigned must have RoundingMode sort, not Bool")
+(error "The first argument of (_ to_fp_unsigned 8 24) must have the RoundingMode sort, not Bool")

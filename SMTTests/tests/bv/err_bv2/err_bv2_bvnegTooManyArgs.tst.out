@@ -2,4 +2,4 @@ success
 success
 success
 success
-(error " The bvneg function should have one argument")
+(error "The bvneg function should have one argument")
