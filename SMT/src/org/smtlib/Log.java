@@ -357,6 +357,16 @@ public class Log {
         listeners.add(listener);
     }
 
+    /** Gives this log (a clone's) the listeners of the given one (the original's), so that messages
+     *  logged through a cloned configuration reach the same listeners (#221): each StandardListener is
+     *  replaced by this log's own, which writes to this log's channels; any other listener is shared.
+     *  Listeners added to either log later are not copied. */
+    void listenLike(Log original) {
+        IListener own = new StandardListener();
+        listeners.clear();
+        for (IListener l : original.listeners) listeners.add(l instanceof StandardListener ? own : l);
+    }
+
     /** Clears all listeners */
     public void clearListeners() {
         listeners.clear();

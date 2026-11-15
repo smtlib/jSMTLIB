@@ -95,7 +95,8 @@ public class SMT {
          *  would silently mutate the original too, contradicting this class's own "Separate
          *  instances of SMT objects can be run independently and in parallel" design goal
          *  (see the class Javadoc). commands/reservedWords/reservedWordsNotCommands/utils/log
-         *  are each given their own fresh copy below for exactly this reason. */
+         *  are each given their own fresh copy below for exactly this reason. The clone's log
+         *  has its own channels but delivers to the original's listeners (see Log.listenLike). */
         public Configuration clone() throws CloneNotSupportedException {
             Configuration c = (Configuration)super.clone();
             //c.commandExtensionPrefixes = Array.copy(commandExtensionPrefixes);
@@ -103,6 +104,7 @@ public class SMT {
             c.commands.putAll(commands);
             c.log = new Log(c);
             c.log.setChannels(log.getOut(), log.getDiag());
+            c.log.listenLike(log);
             c.reservedWords = new HashSet<String>();
             c.reservedWords.addAll(reservedWords);
             c.reservedWordsNotCommands = new HashSet<String>();
