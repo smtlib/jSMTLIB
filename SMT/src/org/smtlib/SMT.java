@@ -703,7 +703,7 @@ public class SMT {
             }
         } finally {
             pipelineInput = false;
-            cleanup();
+            if (!keepSolver) cleanup();
         }
     }
 
@@ -794,16 +794,41 @@ public class SMT {
     /** The response from the most recently executed command; used to export results in interactive mode. */
     public IResponse lastResponse = null;
 
-    /** Executes the parser's commands with a newly started solver, which is ended before returning */
-    protected int doParser(IParser p) {
-        boolean abortMode = smtConfig.abort;
+    /** If true, exec() leaves its solver running at the end of the input (unless the input exited it),
+     *  for {@link #continueWith}; {@link #cleanup()} ends it (#224) */
+    public boolean keepSolver = false;
 
+    /**
+     * Runs the commands of the text on the solver that exec() kept (see {@link #keepSolver}), exactly as
+     * script commands are run and reported, and returns an exit code with exec()'s meaning. Reports an
+     * error and returns 1 if no solver is kept.
+     */
+    public int continueWith(String text) {
+        if (solver == null) {
+            error("There is no solver to continue with: set keepSolver before exec() to keep it");
+            return 1;
+        }
+        smtConfig.interactive = false;
+        ISource src = smtConfig.smtFactory.createSource(new CharSequenceReader(new StringReader(text), 100000, 0, 2), null);
+        return runCommands(smtConfig.smtFactory.createParser(smtConfig, src), false);
+    }
+
+    /** Executes the parser's commands with a newly started solver, which is ended before returning
+     *  unless {@link #keepSolver} is set */
+    protected int doParser(IParser p) {
         if (solver != null) {
             solver.exit();
             solver = null;
         }
         solver = startSolver(smtConfig, smtConfig.solvername, smtConfig.executable);
         if (solver == null) return 1;
+        return runCommands(p, true);
+    }
+
+    /** Executes the parser's commands on the solver, at the start of a script or continuing one; the
+     *  solver is then ended, unless keepSolver is set and the commands did not exit it */
+    private int runCommands(IParser p, boolean atStart) {
+        boolean abortMode = smtConfig.abort;
         // FIXME: if (smtConfig.verboseSolver)
         int retcode = 0;
         // :smt-lib-version may only be set as the first command of a script, or immediately
@@ -811,7 +836,8 @@ public class SMT {
         // the standard does not explicitly address this case) -- tracked here rather than in
         // the solver itself, since this is about script structure, not solver state, and
         // applies uniformly regardless of which solver backend is in use.
-        boolean smtlibVersionAllowed = true;
+        boolean smtlibVersionAllowed = atStart;
+        boolean scriptExited = false;
         // With --pipeline, the solver that sends commands without waiting; their responses are
         // printed, in order, as they are read (see Log.hold)
         AbstractSolver pipeliner = smtConfig.pipeline && pipelineInput && solver instanceof AbstractSolver as ? as : null;
@@ -953,6 +979,7 @@ public class SMT {
                     }
                 }
             }
+            scriptExited = command instanceof ICommand.Iexit;
             finishPipelined(pipeliner);
             checkSatStatus = solver.checkSatStatus();
         } catch (IOException e) {
@@ -971,8 +998,10 @@ public class SMT {
         finishPipelined(pipeliner);
         if (pipeliner != null && pipeliner.outOfStep()) pipelineFailed = true;
         if (pipelineFailed && retcode == 0) retcode = 1;
-        solver.forceExit();  // Just in case the solver was not explicitly exited
-        solver = null;
+        if (!keepSolver || scriptExited) {
+            solver.forceExit();  // Just in case the solver was not explicitly exited
+            solver = null;
+        }
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#Exiting program");
         return retcode;
     }
