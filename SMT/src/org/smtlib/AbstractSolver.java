@@ -646,7 +646,14 @@ public class AbstractSolver implements ISolver {
         // Answered without being sent (e.g. unsupported): as when not pipelining, an earlier
         // command's response may show that the solver has exited
         if (!(response instanceof Pending) && hasPending()) {
+            List<Pending> earlier = new java.util.ArrayList<>(pending);
             readPipelined(true);
+            // A solver that exits after an error may still be exiting when the error is read; nothing is sent
+            // here whose failure would wait for that, so wait for it here (bounded)
+            if (selfReportsImmediateExit() && solverProcess != null
+                    && earlier.stream().anyMatch(p -> p.isReady() && p.response().isError())) {
+                solverProcess.waitForEnd(END_WAIT_MILLIS);
+            }
             exited = exitedResponse();
             if (exited != null) return exited;
         }
