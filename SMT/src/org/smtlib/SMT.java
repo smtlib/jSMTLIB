@@ -1464,72 +1464,112 @@ public class SMT {
         return s.isEmpty() ? null : s;
     }
 
-    /** Describes one command-line option, as a single source of truth rendered by both
-     *  {@link #usage()} (a short reminder, shown alongside a command-line error) and
-     *  {@link #help()} (the full explanation, shown on {@code --help}) -- previously
-     *  each was a separate hand-written block of {@code println}s repeating nearly the
-     *  same option list, with no way to keep them in sync as options changed. */
-    private static class Opt {
-        final String longFlag;
-        final /*@Nullable*/ String shortFlag;
-        final /*@Nullable*/ String argSpec;
-        /** One or more description lines for help(); the first is shown alongside the
-         *  flag itself, any further lines as indented continuation lines. */
-        final String[] description;
-        Opt(String longFlag, /*@Nullable*/ String shortFlag, /*@Nullable*/ String argSpec, String... description) {
-            this.longFlag = longFlag;
-            this.shortFlag = shortFlag;
-            this.argSpec = argSpec;
-            this.description = description;
+    /** The kinds of value a command-line option takes */
+    public enum OptionKind {
+        /** no value: the option is present or not */ FLAG,
+        /** a non-negative integer */ INTEGER,
+        /** a number, perhaps fractional */ NUMBER,
+        /** any text */ STRING,
+        /** a file or directory */ PATH,
+        /** a solver name */ SOLVER,
+        /** an SMT-LIB option: a keyword and a value */ SMTLIB_OPTION,
+        /** a file name, or stdout or stderr */ CHANNEL
+    }
+
+    /**
+     * A command-line option: its long name and, if any, short name; the kind of value it takes; whether it
+     * may be repeated; the argument placeholder that --help prints; how to read its value from a
+     * configuration (see {@link #valueIn}); and the description lines that --help prints. The single source
+     * for {@link SMT#usage()}, {@link SMT#help()} and any program that presents the options, such as an
+     * editor's settings page.
+     */
+    public record Option(String name, /*@Nullable*/ String shortName, OptionKind kind, boolean repeatable,
+            /*@Nullable*/ String argSpec, java.util.function.Function<Configuration, Object> reader,
+            List<String> description) {
+
+        /**
+         * The option's value in the configuration: a Boolean for a flag, an Integer, a Double, a String,
+         * or for a repeatable option the list of its arguments in order; null if it is not set, and for
+         * --help and --version, which are actions rather than settings
+         */
+        public /*@Nullable*/ Object valueIn(Configuration c) {
+            return reader.apply(c);
         }
     }
 
-    private static final Opt[] OPTIONS = {
-        new Opt("--help", "-h", null, "prints this help message and exits"),
-        new Opt("--version", null, null, "prints the version of this application and exits"),
-        new Opt("--verbose", null, "<int>", "enables verbose mode, so more stuff is printed",
-                "-v (with no argument) is shorthand for --verbose 1"),
-        new Opt("--solver", "-s", "<solvername>", "indicates the SMT solver to use (or 'test')",
-                "The name of the adaptor class is \"org.smtlib.solvers.Solver_\" + <name>"),
-        new Opt("--exec", "-e", "<path>", "indicates the SMT solver executable to use",
-                "The argument is the pathname of the executable for the named solver"),
-        new Opt("--logics", "-L", "<path>", "the directory containing SMT-LIB logic and theory definitions",
-                "(default is to use the internal, built-in definitions)"),
-        new Opt("--out", null, "<filename or 'stdout' or 'stderr'>", "where to send normal and error output"),
-        new Opt("--diag", null, "<filename or 'stdout' or 'stderr'>", "where to send verbose (diagnostic) output"),
-        new Opt("--text", null, "<string>", "text to process (ignoring file input)"),
-        new Opt("--timeout", "-t", "<seconds>", "soft per-query timeout, always given here in seconds (fractional values allowed)",
+    private static final List<Option> OPTIONS = List.of(
+        new Option("--help", "-h", OptionKind.FLAG, false, null, c -> null,
+                List.of("prints this help message and exits")),
+        new Option("--version", null, OptionKind.FLAG, false, null, c -> null,
+                List.of("prints the version of this application and exits")),
+        new Option("--verbose", null, OptionKind.INTEGER, false, "<int>", c -> c.verbose,
+                List.of("enables verbose mode, so more stuff is printed",
+                "-v (with no argument) is shorthand for --verbose 1")),
+        new Option("--solver", "-s", OptionKind.SOLVER, false, "<solvername>", c -> c.solvername,
+                List.of("indicates the SMT solver to use (or 'test')",
+                "The name of the adaptor class is \"org.smtlib.solvers.Solver_\" + <name>")),
+        new Option("--exec", "-e", OptionKind.PATH, false, "<path>", c -> c.executable,
+                List.of("indicates the SMT solver executable to use",
+                "The argument is the pathname of the executable for the named solver")),
+        new Option("--logics", "-L", OptionKind.PATH, false, "<path>", c -> c.logicPath,
+                List.of("the directory containing SMT-LIB logic and theory definitions",
+                "(default is to use the internal, built-in definitions)")),
+        new Option("--out", null, OptionKind.CHANNEL, false, "<filename or 'stdout' or 'stderr'>", c -> c.out,
+                List.of("where to send normal and error output")),
+        new Option("--diag", null, OptionKind.CHANNEL, false, "<filename or 'stdout' or 'stderr'>", c -> c.diag,
+                List.of("where to send verbose (diagnostic) output")),
+        new Option("--text", null, OptionKind.STRING, false, "<string>", c -> c.text,
+                List.of("text to process (ignoring file input)")),
+        new Option("--timeout", "-t", OptionKind.NUMBER, false, "<seconds>", c -> c.timeout > 0 ? c.timeout : null,
+                List.of("soft per-query timeout, always given here in seconds (fractional values allowed)",
                 "each solver adapter converts this value to whatever unit and flag that solver actually uses",
                 "(e.g. milliseconds instead of seconds), and, for a solver with no per-query option at all,",
-                "applies it as a best-effort whole-run limit instead"),
-        new Opt("--timeout-total", "-T", "<seconds>", "timeout for the solver's whole run (its process lifetime), also always given here in seconds",
+                "applies it as a best-effort whole-run limit instead")),
+        new Option("--timeout-total", "-T", OptionKind.NUMBER, false, "<seconds>", c -> c.timeoutTotal > 0 ? c.timeoutTotal : null,
+                List.of("timeout for the solver's whole run (its process lifetime), also always given here in seconds",
                 "likewise converted to each solver's own unit/flag, or, if that solver has no whole-run option,",
-                "applied as a best-effort per-query limit instead"),
-        new Opt("--set-option", null, "\"<keyword> <value>\"", "an SMT-LIB option, set at start and after each (reset), e.g. --set-option ':produce-models true';",
-                "may be repeated"),
-        new Opt("--seed", null, "<int>", "seed for the solver's random number generator, if it has one (0, the default, sets none)"),
-        new Opt("--echo", null, null, "if enabled, commands are echoed to diagnostic output when successfully parsed"),
-        new Opt("--print", null, null, "if enabled, each command is parsed, type-checked and printed with the default printer,",
-                "in place of its response; no solver is started (--solver, --exec and --pipeline are ignored)"),
-        new Opt("--abort", null, null, "if enabled, an error causes immediate exit (on interactive standard input, the rest of its line is skipped)"),
-        new Opt("--pipeline", null, null, "if enabled, commands in file (including -) or --text input are sent to the solver without",
-                "waiting for each response where possible; the output is the same"),
-        new Opt("--no-pipeline", null, null, "each command waits for its response before the next is sent (the default)"),
-        new Opt("--noshow", null, null, "if enabled, error location information is not shown"),
-        new Opt("--nosuccess", "-q", null, "if enabled, 'success' responses are suppressed"),
-        new Opt("--relax", "-r", null, "if enabled, extensions to strict SMT-LIB are permitted"),
-        new Opt("--testing", null, null, "if enabled, non-deterministic content in a solver's get-info response",
-                "(elapsed-time, memory usage) is replaced by a fixed placeholder, for reproducible test output"),
-    };
+                "applied as a best-effort per-query limit instead")),
+        new Option("--set-option", null, OptionKind.SMTLIB_OPTION, true, "\"<keyword> <value>\"", c -> List.copyOf(c.setOptionTexts),
+                List.of("an SMT-LIB option, set at start and after each (reset), e.g. --set-option ':produce-models true';",
+                "may be repeated")),
+        new Option("--seed", null, OptionKind.INTEGER, false, "<int>", c -> c.seed != 0 ? c.seed : null,
+                List.of("seed for the solver's random number generator, if it has one (0, the default, sets none)")),
+        new Option("--echo", null, OptionKind.FLAG, false, null, c -> c.echo,
+                List.of("if enabled, commands are echoed to diagnostic output when successfully parsed")),
+        new Option("--print", null, OptionKind.FLAG, false, null, c -> c.print,
+                List.of("if enabled, each command is parsed, type-checked and printed with the default printer,",
+                "in place of its response; no solver is started (--solver, --exec and --pipeline are ignored)")),
+        new Option("--abort", null, OptionKind.FLAG, false, null, c -> c.abort,
+                List.of("if enabled, an error causes immediate exit (on interactive standard input, the rest of its line is skipped)")),
+        new Option("--pipeline", null, OptionKind.FLAG, false, null, c -> c.pipeline,
+                List.of("if enabled, commands in file (including -) or --text input are sent to the solver without",
+                "waiting for each response where possible; the output is the same")),
+        new Option("--no-pipeline", null, OptionKind.FLAG, false, null, c -> !c.pipeline,
+                List.of("each command waits for its response before the next is sent (the default)")),
+        new Option("--noshow", null, OptionKind.FLAG, false, null, c -> c.noshow,
+                List.of("if enabled, error location information is not shown")),
+        new Option("--nosuccess", "-q", OptionKind.FLAG, false, null, c -> c.nosuccess,
+                List.of("if enabled, 'success' responses are suppressed")),
+        new Option("--relax", "-r", OptionKind.FLAG, false, null, c -> c.relax,
+                List.of("if enabled, extensions to strict SMT-LIB are permitted")),
+        new Option("--testing", null, OptionKind.FLAG, false, null, c -> c.testing,
+                List.of("if enabled, non-deterministic content in a solver's get-info response",
+                "(elapsed-time, memory usage) is replaced by a fixed placeholder, for reproducible test output"))
+    );
+
+    /** The command-line options, in the order --help lists them */
+    public static List<Option> options() {
+        return OPTIONS;
+    }
 
     /** Prints a summary of the command-line arguments */
     public void usage() {
         java.io.PrintStream out = smtConfig.log.getOut();
         out.println("Usage: java org.smtlib.SMT [args] [file]");
-        for (Opt o : OPTIONS) {
-            StringBuilder sb = new StringBuilder("       ").append(o.longFlag);
-            if (o.shortFlag != null) sb.append(" [").append(o.shortFlag).append("]");
-            if (o.argSpec != null) sb.append(" ").append(o.argSpec);
+        for (Option o : OPTIONS) {
+            StringBuilder sb = new StringBuilder("       ").append(o.name());
+            if (o.shortName() != null) sb.append(" [").append(o.shortName()).append("]");
+            if (o.argSpec() != null) sb.append(" ").append(o.argSpec());
             out.println(sb);
         }
         out.println("       -v is shorthand for --verbose 1");
@@ -1551,15 +1591,15 @@ public class SMT {
         out.println("Option names have a long version, beginning with --");
         out.println("    and an abbreviated version, beginning with a single -.");
         out.println("The recognized options are these:");
-        for (Opt o : OPTIONS) {
+        for (Option o : OPTIONS) {
             StringBuilder sb = new StringBuilder("    ");
-            if (o.shortFlag != null) sb.append(o.shortFlag).append(", ");
-            sb.append(o.longFlag);
-            if (o.argSpec != null) sb.append(" ").append(o.argSpec);
-            sb.append(" : ").append(o.description[0]);
+            if (o.shortName() != null) sb.append(o.shortName()).append(", ");
+            sb.append(o.name());
+            if (o.argSpec() != null) sb.append(" ").append(o.argSpec());
+            sb.append(" : ").append(o.description().get(0));
             out.println(sb);
-            for (int i = 1; i < o.description.length; i++) {
-                out.println("        " + o.description[i]);
+            for (int i = 1; i < o.description().size(); i++) {
+                out.println("        " + o.description().get(i));
             }
         }
         out.println("This software is Copyright 2010-2027 by David R. Cok. The accompanying LICENSE ");
