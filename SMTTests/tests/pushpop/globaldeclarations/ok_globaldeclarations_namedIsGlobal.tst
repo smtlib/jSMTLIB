@@ -1,0 +1,11 @@
+; A :named label is a definition, so under :global-declarations it outlives pop with its definition:
+; the check-sat is unsat (#225)
+(set-option :global-declarations true)
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(assert p)
+(push 1)
+(assert (! p :named n))
+(pop 1)
+(assert (not n))
+(check-sat)

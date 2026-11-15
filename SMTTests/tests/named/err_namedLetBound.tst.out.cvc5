@@ -1,0 +1,2 @@
+success
+(error "Parse Error: <shell>:4.45: Cannot name a term in a binder (e.g., quantifiers, definitions)")

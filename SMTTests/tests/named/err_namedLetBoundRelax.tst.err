@@ -1,0 +1,3 @@
+WARNING: The expression being named is not closed - this symbol is a let-bound variable: y
+(assert (forall ((q U)) (let ((r q)) (! (= r r) :named e))))
+                                           ^

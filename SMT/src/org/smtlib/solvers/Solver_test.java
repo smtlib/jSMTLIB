@@ -189,7 +189,7 @@ public class Solver_test implements ISolver {
         if (logicSet == null) {
             return smtConfig.responseFactory.error("The logic must be set before an assert command is issued");
         }
-        List<IResponse> errs = TypeChecker.checkAssertion(this.symTable,expr);
+        List<IResponse> errs = TypeChecker.checkAssertion(this.symTable,expr,isGlobal());
         if (errs != null && !errs.isEmpty()) {
             // The SMT-LIB response protocol accommodates only one response per command --
             // (error <string>) is a single object, not a list -- so at most one error message

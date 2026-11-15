@@ -67,6 +67,18 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
 
     private ISymbol isClosed = null;
 
+    /** For each enclosing :named term, innermost first: the variable bindings in scope where it starts, and the
+     *  first reference within it to one of them. A named term must be closed (SMT-LIB 4.1.6), so such a
+     *  reference is an error, except that with --relax a let-bound variable whose value is closed draws only a
+     *  warning (whether the let is expanded first is an SMT-LIB ambiguity) */
+    private static final class NamedFrame {
+        final Set<Variable> outer = Collections.newSetFromMap(new IdentityHashMap<Variable,Boolean>());
+        /*@Nullable*/ ISymbol open = null;
+        /*@Nullable*/ ISymbol letBound = null;
+    }
+
+    private final Deque<NamedFrame> namedFrames = new ArrayDeque<NamedFrame>();
+
     /** The names under which a theory declares the sort of numeral, decimal and string literals
      *  (e.g. Ints' (NUMERAL Int)); each literal is sorted by looking its class's name up. */
     private static final ISymbol NUMERAL_SYM = new SMTExpr.Symbol("NUMERAL".intern());
@@ -376,6 +388,12 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
      * {@link #check(SymbolTable,IExpr)}, this checks the expression within a pushed scope that is
      * merged into the enclosing scope on success (or popped on error). */
     public static List<IResponse> checkAssertion(SymbolTable symTable, IExpr expr) {
+        return checkAssertion(symTable, expr, false);
+    }
+
+    /** As {@link #checkAssertion(SymbolTable, IExpr)}; the expression's :named labels are definitions, so they
+     *  are global if global (:global-declarations) is true */
+    public static List<IResponse> checkAssertion(SymbolTable symTable, IExpr expr, boolean global) {
         TypeChecker f = new TypeChecker(symTable);
         symTable.push();
         try {
@@ -388,7 +406,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             } catch (IVisitor.VisitorException e) {
                 f.error(e.getMessage(), e.pos());
             }
-            if (f.result.isEmpty()) symTable.merge();
+            if (f.result.isEmpty()) symTable.merge(global);
         } catch (IVisitor.VisitorException e) {
             f.error("Visitor Exception: " + e.getMessage(), e.pos());
         } catch (Exception e) {
@@ -695,6 +713,14 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             Variable v = currentScope.get(e);
             if (v != null) {
                 if (isClosed == null && !v.closed) isClosed = e;
+                for (NamedFrame f: namedFrames) {
+                    if (!f.outer.contains(v)) continue;
+                    if (v.expression != null && v.closed) {
+                        if (f.letBound == null) f.letBound = e;
+                    } else if (f.open == null) {
+                        f.open = e;
+                    }
+                }
                 return save(e,v.sort);
             }
             if ((sort=symTable.lookup(0,e))==null) {
@@ -1038,10 +1064,11 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
     @Override
     public /*@Nullable*/ ISort visit(IAttributedExpr e) throws IVisitor.VisitorException {
         boolean isQuantifierBody = e == quantifierBody;
-        ISymbol savedIsClosed = isClosed;
-        isClosed = null;
         boolean errors = false;
         ISort resultSort = null;
+        NamedFrame frame = new NamedFrame();
+        frame.outer.addAll(currentScope.values());
+        namedFrames.addFirst(frame);
         try {
             resultSort = save(e,e.expr().accept(this));
             if (e.attributes().isEmpty()) {
@@ -1069,9 +1096,13 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                         result.add(smtConfig.responseFactory.error("Symbol " + v.toString() + " is already defined",v.pos()));
                         errors = true;
                     }
-                    if (isClosed != null) {
-                        result.add(smtConfig.responseFactory.error("The expression being named is not closed - this symbol is a variable: " + smtConfig.defaultPrinter.toString(isClosed),isClosed.pos()));
+                    ISymbol open = frame.open != null ? frame.open : smtConfig.relax ? null : frame.letBound;
+                    if (open != null) {
+                        result.add(smtConfig.responseFactory.error("The expression being named is not closed - this symbol is a variable: " + smtConfig.defaultPrinter.toString(open),open.pos()));
                         errors = true;
+                    } else if (frame.letBound != null) {
+                        smtConfig.log.logDiag("WARNING: The expression being named is not closed - this symbol is a let-bound variable: "
+                                + smtConfig.defaultPrinter.toString(frame.letBound));
                     }
                 } else if (name.equals(":pattern")) {
                     IAttributeValue v = a.attrValue();
@@ -1092,7 +1123,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 }
             }
         } finally {
-            isClosed = isClosed == null ? savedIsClosed : isClosed;
+            namedFrames.removeFirst();
         }
         if (errors) return null;
         return resultSort;
@@ -1256,15 +1287,9 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                     anyErrors = true;
                 }
                 IExpr expr = decl.expr();
-                // Whether referencing this let-bound variable is itself closed depends on
-                // whether ITS OWN defining expression is closed -- not just on the mere
-                // existence of that expression (a stale check this used to make: a
-                // non-null expression was treated as automatically closed regardless of
-                // its content, missing e.g. (forall ((q Bool)) (let ((r q)) ...)), where
-                // r's value q is itself an outer free variable). Save/restore isClosed
-                // around checking expr the same way visit(IAttributedExpr) does, so this
-                // nested check doesn't consume or duplicate an outer :named check's own
-                // tracking.
+                // The variable's value is closed if it refers to no quantifier- or match-bound variable,
+                // directly or through another let: e.g. in (forall ((q Bool)) (let ((r q)) ...)) r's is not.
+                // With --relax, a :named term may refer to a let-bound variable whose value is closed.
                 ISymbol savedIsClosed = isClosed;
                 isClosed = null;
                 ISort s = expr.accept(this);
