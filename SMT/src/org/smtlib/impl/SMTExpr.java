@@ -199,6 +199,11 @@ public abstract class SMTExpr implements IExpr {
 
     /** This class represents an SMT parameterized-identifier AST (e.g. {@code (_ BitVec 32)}). */
     static public class ParameterizedIdentifier extends Pos.AbstractExpr implements IParameterizedIdentifier {
+
+        /** The identifier that declares what this one names (#226) */
+        protected /*@Nullable*/ IIdentifier declaration;
+        @Override public /*@Nullable*/ IIdentifier declaration() { return declaration; }
+        @Override public void setDeclaration(/*@Nullable*/ IIdentifier declaration) { this.declaration = declaration; }
         protected ISymbol head;
         protected List<IIndex> indices;
 
@@ -256,6 +261,11 @@ public abstract class SMTExpr implements IExpr {
 
     /** This class represents an SMT Symbol */
     static public class Symbol extends Pos.AbstractExpr implements ISymbol {
+
+        /** The identifier that declares what this one names (#226) */
+        protected /*@Nullable*/ IIdentifier declaration;
+        @Override public /*@Nullable*/ IIdentifier declaration() { return declaration; }
+        @Override public void setDeclaration(/*@Nullable*/ IIdentifier declaration) { this.declaration = declaration; }
 
         // FIXME - this incorporates some concrete syntax
 

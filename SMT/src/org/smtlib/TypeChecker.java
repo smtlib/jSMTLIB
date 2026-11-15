@@ -436,10 +436,10 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             @Override public Void visit(ILambda e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
             @Override public Void visit(ILet e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
             @Override public Void visit(INumeral e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
-            @Override public Void visit(IParameterizedIdentifier e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
+            @Override public Void visit(IParameterizedIdentifier e) throws IVisitor.VisitorException { e.setSort(null); e.setDeclaration(null); return super.visit(e); }
             @Override public Void visit(IAsIdentifier e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
             @Override public Void visit(IStringLiteral e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
-            @Override public Void visit(ISymbol e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
+            @Override public Void visit(ISymbol e) throws IVisitor.VisitorException { e.setSort(null); e.setDeclaration(null); return super.visit(e); }
             @Override public Void visit(IError e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
             @Override public Void visit(IMatch e) throws IVisitor.VisitorException { e.setSort(null); return super.visit(e); }
         });
@@ -501,10 +501,13 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             head = Utils.AT;
         }
         StringBuilder reason = new StringBuilder();
-        ISort matchedResultSort = symTable.lookup(head,argSorts,resultSort,reason);
-        if (matchedResultSort == null && symTable.realsIntsTheorySet) {
-            matchedResultSort = lookupReadingIntAsReal(head, argSorts, resultSort);
+        SymbolTable.Match match = symTable.lookupMatch(head,argSorts,resultSort,reason);
+        if (match == null && symTable.realsIntsTheorySet) {
+            match = lookupReadingIntAsReal(head, argSorts, resultSort);
         }
+        ISort matchedResultSort = match == null ? null : match.resultSort();
+        // the head as written (not the @ a map application is read as) is linked to its declaration
+        if (match != null && mapSort == null) head.setDeclaration(match.entry().name);
         if (matchedResultSort == null) {
             String msg;
             if (reason.length() > 0) {
@@ -546,16 +549,21 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
     private /*@Nullable*/ ISort mapSort(IIdentifier head) {
         if (!(head instanceof ISymbol)) return null;
         ISort s;
+        IIdentifier declaration;
         Variable v = currentScope.get((ISymbol)head);
         if (v != null) {
             s = v.sort;
+            declaration = v.symbol;
         } else {
-            IFcnSort fs = symTable.lookup(0, head);
-            s = fs == null ? null : fs.resultSort();
+            SymbolTable.Entry entry = symTable.lookupEntry(0, head);
+            s = entry == null ? null : entry.sort.resultSort();
+            declaration = entry == null ? null : entry.name;
         }
         if (s == null) return null;
         ISort x = s.expand();
-        return (x instanceof ISort.IApplication && Utils.ARROW.equals(((ISort.IApplication)x).family().headSymbol())) ? s : null;
+        if (!(x instanceof ISort.IApplication && Utils.ARROW.equals(((ISort.IApplication)x).family().headSymbol()))) return null;
+        head.setDeclaration(declaration);
+        return s;
     }
 
     private boolean isBitVec(ISort s) {
@@ -583,14 +591,14 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
      *  both Int and Real parameters, only the Ints whose parameter is Real. Returns the result
      *  sort, or null if neither retry matches; the caller's reason then explains the failure
      *  against the sorts as written. */
-    private /*@Nullable*/ ISort lookupReadingIntAsReal(IIdentifier head, List<ISort> argSorts, /*@Nullable*/ ISort resultSort) throws IVisitor.VisitorException {
+    private /*@Nullable*/ SymbolTable.Match lookupReadingIntAsReal(IIdentifier head, List<ISort> argSorts, /*@Nullable*/ ISort resultSort) throws IVisitor.VisitorException {
         boolean hasInt = false;
         for (ISort sort: argSorts) if (isIntSort(sort)) hasInt = true;
         if (!hasInt) return null;
         ISort realSort = makeReal();
         List<ISort> allReal = new LinkedList<ISort>();
         for (ISort sort: argSorts) allReal.add(isIntSort(sort) ? realSort : sort);
-        ISort result = symTable.lookup(head,allReal,resultSort,new StringBuilder());
+        SymbolTable.Match result = symTable.lookupMatch(head,allReal,resultSort,new StringBuilder());
         if (result != null) return result;
         List<SymbolTable.Entry> entries = symTable.lookup(head);
         if (entries == null) return null;
@@ -602,7 +610,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 ISort sort = argSorts.get(k);
                 args.add(isIntSort(sort) && isRealSort(declared[k]) ? realSort : sort);
             }
-            result = symTable.lookup(head,args,resultSort,new StringBuilder());
+            result = symTable.lookupMatch(head,args,resultSort,new StringBuilder());
             if (result != null) return result;
         }
         return null;
@@ -699,7 +707,6 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
     @Override
     /*@checkers.igj.quals.ReadOnly*/
     public /*@Nullable*/ ISort visit(ISymbol e) {
-        IFcnSort sort = null;
         String ambiguous;
         String value = e.value();
         if (Utils.WILDCARD.equals(value)) {
@@ -721,9 +728,11 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                         f.open = e;
                     }
                 }
+                e.setDeclaration(v.symbol);
                 return save(e,v.sort);
             }
-            if ((sort=symTable.lookup(0,e))==null) {
+            SymbolTable.Entry entry = symTable.lookupEntry(0,e);
+            if (entry == null) {
                 // A declared function is not a term (SMT-LIB 2.7 Remark 10); lookup's reason says so
                 StringBuilder reason = new StringBuilder();
                 symTable.lookup(e, new LinkedList<ISort>(), null, reason);
@@ -741,7 +750,8 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 error(ambiguous, e.pos());
                 return null;
             } else {
-                return save(e,sort.resultSort());
+                e.setDeclaration(entry.name);
+                return save(e,entry.sort.resultSort());
             }
         }
     }

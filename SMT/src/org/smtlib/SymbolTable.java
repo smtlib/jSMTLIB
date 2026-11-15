@@ -443,11 +443,17 @@ public final class SymbolTable {
      */
     /*@Nullable*/
     public IFcnSort lookup(int arity, IIdentifier name) {
+        Entry e = lookupEntry(arity, name);
+        return e == null ? null : e.sort;
+    }
+
+    /** As {@link #lookup(int, IIdentifier)}, returning the entry found (#226), or null */
+    public /*@Nullable*/ Entry lookupEntry(int arity, IIdentifier name) {
         for (Map<IIdentifier,List<Entry>> set: symStack) {
             List<Entry> entrylist = set.get(name);
             if (entrylist != null) {
                 for (Entry e: entrylist) {
-                    if (e.sort.argSorts().length == arity) return e.sort;
+                    if (e.sort.argSorts().length == arity) return e;
                 }
             }
         }
@@ -494,6 +500,16 @@ public final class SymbolTable {
     // next -- overloading means a unification/equality failure is not itself an error.
     /*@Nullable*/
     public ISort lookup(IIdentifier name, List<ISort> argSorts, ISort resultSort, /*@Nullable*/ StringBuilder reason) {
+        Match m = lookupMatch(name, argSorts, resultSort, reason);
+        return m == null ? null : m.resultSort();
+    }
+
+    /** The declaration a use matched, and the use's result sort (#226) */
+    public record Match(Entry entry, ISort resultSort) {}
+
+    /** As {@link #lookup(IIdentifier, List, ISort, StringBuilder)}, returning the entry matched with the
+     *  result sort (#226), or null */
+    public /*@Nullable*/ Match lookupMatch(IIdentifier name, List<ISort> argSorts, ISort resultSort, /*@Nullable*/ StringBuilder reason) {
         int arity = argSorts.size();
         for (Map<IIdentifier,List<Entry>> set: symStack) {
             List<Entry> entrylist = set.get(name);
@@ -539,7 +555,7 @@ public final class SymbolTable {
                 if (reason != null) reason.append(ambiguity(name, matches));
                 return null;
             }
-            if (found != null) return foundResult;
+            if (found != null) return new Match(found, foundResult);
 
             // Check for left-assoc etc.
             if (arity <= 2) {
@@ -551,7 +567,7 @@ public final class SymbolTable {
                 tried.add(entry);
                 try {
                     ISort assocResult = matchAssociative(entry, argSorts);
-                    if (resultSort == null || resultSort.equals(assocResult)) return assocResult;
+                    if (resultSort == null || resultSort.equals(assocResult)) return new Match(entry, assocResult);
                     failures.add(smtConfig.defaultPrinter.toString(name) + " has result sort " + smtConfig.defaultPrinter.toString(assocResult)
                             + ", expected " + smtConfig.defaultPrinter.toString(resultSort) + " (from the `as` qualifier)");
                 } catch (NoMatch nm) {

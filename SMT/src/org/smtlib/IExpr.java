@@ -267,6 +267,14 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
         @Override
         ISymbol headSymbol();
 
+        /** The identifier that declares the function or constant this one names, as type checking found
+         *  it (#226): the symbol of a declaring command, a binder's variable, a function parameter, or a
+         *  theory's declaration; null if none was recorded (e.g. not yet checked, a sort name, or a
+         *  theory symbol checked by TheorySignatures) */
+        /*@Nullable*/ IIdentifier declaration();
+
+        /** Records the identifier that declares what this one names (see {@link #declaration()}) */
+        void setDeclaration(/*@Nullable*/ IIdentifier declaration);
     }
 
     /** This interface represents SMT-LIB identifiers that are sort qualifiers on function ids */
