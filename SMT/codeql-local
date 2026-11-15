@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Runs CodeQL's security and code-quality queries on jSMTLIB locally, as the CodeQL workflow's manual
+# security-and-quality run does (scope and exclusions: ../.github/codeql/codeql-config.yml). No build is
+# needed. Needs the CodeQL CLI: codeql on the PATH (e.g. brew install --cask codeql), or CODEQL=<path to
+# codeql>; and python3. Prints a summary; writes to SMT/temp/codeql/ every finding (results.txt), the SARIF
+# (results.sarif) and CodeQL's own output (codeql.log). Run by `make codeql`.
+set -euo pipefail
+
+smt=$(cd "$(dirname "$0")" && pwd)
+root=$(dirname "$smt")
+CODEQL=${CODEQL:-codeql}
+command -v "$CODEQL" > /dev/null || {
+    echo "CodeQL CLI not found; install it (brew install --cask codeql) or set CODEQL=<path>" >&2
+    exit 1
+}
+config="$root/.github/codeql/codeql-config.yml"
+out="$smt/temp/codeql"
+log="$out/codeql.log"
+mkdir -p "$out"
+: > "$log"
+
+# An explicit suite overrides the config's query-filters, so the suite run here applies them itself.
+suite="$out/suite.qls"
+{
+    echo "- import: codeql-suites/java-security-and-quality.qls"
+    echo "  from: codeql/java-queries"
+    sed -n '/^query-filters:/,/^[^ ]/{/^  /s/^  //p;}' "$config"
+} > "$suite"
+
+run() {
+    "$CODEQL" "$@" >> "$log" 2>&1 || {
+        tail -20 "$log" >&2
+        echo "codeql $1 $2 failed; full output in $log" >&2
+        exit 1
+    }
+}
+echo "Creating the CodeQL database (output in $log)"
+run database create "$out/db" --overwrite --language=java --build-mode=none \
+    --source-root="$root" --codescanning-config="$config"
+echo "Running the queries"
+run database analyze "$out/db" --download --threads=0 "$suite" \
+    --format=sarif-latest --output="$out/results.sarif"
+
+python3 -I "$smt/codeql-summary.py" "$out/results.sarif" "$out/results.txt"
