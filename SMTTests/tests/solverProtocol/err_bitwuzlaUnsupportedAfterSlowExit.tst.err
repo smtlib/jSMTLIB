@@ -1,0 +1,6 @@
+(assert true)
+^^^^^^^^^^^^^
+(define-fun-rec f ((x Int)) Int x)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(check-sat)
+^^^^^^^^^^^
