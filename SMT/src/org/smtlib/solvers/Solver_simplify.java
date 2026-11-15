@@ -178,7 +178,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         if (logicSet == null) {
             return smtConfig.responseFactory.error("The logic must be set before an assert command is issued");
         }
-        List<IResponse> errs = TypeChecker.checkAssertion(this.symTable,expr);
+        List<IResponse> errs = TypeChecker.checkAssertion(this.symTable,expr,isGlobal());
         if (errs != null && !errs.isEmpty()) {
             return errs.get(0);
         }
@@ -188,11 +188,17 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         assertionSetStack.get(0).add(expr);
         checkSatStatus = null;
         try {
-            String translatedSexpr = translate(expr);
+            Translator t = new Translator(smtConfig, "ALL".equals(logicSet), symTable);
+            String translatedSexpr = expr.accept(t);
             if (translatedSexpr == null) {
                 return smtConfig.responseFactory.error("Failure in translating expression: " + smtConfig.defaultPrinter.toString(expr), expr.pos());
             }
             conjunction = conjunction + " \n" + translatedSexpr;
+            // The definitions of the assertion's :named labels, global as the labels are (#225)
+            for (String d: t.definitions) {
+                if (isGlobal()) globalAxioms = globalAxioms + " \n" + d;
+                else conjunction = conjunction + " \n" + d;
+            }
             //String s = solverProcess.sendAndListen("(BG_PUSH ",translatedSexpr," )\r\n");
             //System.out.println("HEARD: " + s);
         } catch (VisitorException e) {

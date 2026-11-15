@@ -1,0 +1,8 @@
+success
+success
+(error "<stdin>:7:64: Cannot name open terms")
+(error "<stdin>:8:69: Cannot name open terms")
+(error "<stdin>:9:64: Cannot name open terms")
+(error "<stdin>:10:64: Cannot name open terms")
+(error "<stdin>:11:56: Cannot name open terms")
+(error "<stdin>:12:69: Cannot name open terms")

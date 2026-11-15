@@ -1,0 +1,8 @@
+success
+success
+(error "line 7 column 63: invalid named expression, expression contains free variables")
+(error "line 8 column 68: invalid named expression, expression contains free variables")
+(error "line 9 column 63: invalid named expression, expression contains free variables")
+(error "line 10 column 63: invalid named expression, expression contains free variables")
+success
+success

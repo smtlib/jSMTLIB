@@ -6,7 +6,7 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (assert (forall ((q Bool)) (let ((r p)) (! (and r q) :named N4)))) ; error - q is free in the named term
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(assert (forall ((q Bool)) (let ((q p)) (! q :named N5)))) ; OK - q is rebound to p
+(assert (forall ((q Bool)) (let ((q p)) (! q :named N5)))) ; error - q is let-bound (to p)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(assert (forall ((q Bool)) (let ((r p)) (let ((s r)) (! s :named N6))))) ; OK
+(assert (forall ((q Bool)) (let ((r p)) (let ((s r)) (! s :named N6))))) ; error - s is let-bound
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

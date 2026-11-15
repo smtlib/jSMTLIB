@@ -1,0 +1,7 @@
+; Without :global-declarations a :named label is removed by pop: the last assert is an error (#225)
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(push 1)
+(assert (! p :named n))
+(pop 1)
+(assert n)

@@ -241,13 +241,18 @@ public final class SymbolTable {
      * is no shadowing of symbols; the top sort scope is discarded.
      */ // TODO - say more about why this is used/needed; also review this
     public void merge() {
+        merge(false);
+    }
+
+    /** As {@link #merge()}, adding the top scope's symbols to the background (global) scope if global is true */
+    public void merge(boolean global) {
         Map<IIdentifier,List<SymbolTable.Entry>> oldnames = names;
         pop();
         // Put everything in oldnames into the current top
         for (List<SymbolTable.Entry> ee: oldnames.values()) {
             for (SymbolTable.Entry entry: ee) {
                 // We have already checked that there is no shadowing
-                add(entry, false);
+                add(entry, global);
             }
         }
     }
