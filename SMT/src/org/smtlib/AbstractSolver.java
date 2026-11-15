@@ -216,22 +216,23 @@ public class AbstractSolver implements ISolver {
      *  guessing from the error's content whether the process will actually exit. */
     protected boolean selfReportsImmediateExit() { return false; }
 
-    /** Called with each response parsed from the solver. After an error response from a
-     *  {@link #selfReportsImmediateExit()} solver, gives its process a moment to finish exiting
-     *  (see {@link #IMMEDIATE_EXIT_SETTLE_MILLIS}). If the error is one after which the solver
-     *  no longer processes input ({@link #errorStopsSolver(IResponse)}) and the process is
-     *  still alive, it is stopped, since a later command -- or exit() -- would otherwise wait
-     *  forever for a reply. Only the OS process is stopped; the adapter is left as it is, so
-     *  later commands answer that the solver process has exited and exit() cleans up
-     *  normally. */
+    /** Called with each response parsed from the solver, pipelined or not. After an error after which
+     *  the solver no longer processes input ({@link #errorStopsSolver(IResponse)}), its process is
+     *  stopped now if it is still running -- whether it was about to exit or not, every later command
+     *  then answers that the solver process has exited, and exit() cleans up normally (only the OS
+     *  process is stopped; the adapter is left as it is). After another error from a
+     *  {@link #selfReportsImmediateExit()} solver, whose process may or may not exit, the process is
+     *  given a moment to finish exiting if it is going to (see {@link #IMMEDIATE_EXIT_SETTLE_MILLIS}). */
     protected /*@Nullable*/ IResponse checkImmediateExit(/*@Nullable*/ IResponse result) {
-        if (result != null && result.isError() && selfReportsImmediateExit()) {
+        if (result == null || !result.isError()) return result;
+        if (solverProcess != null && errorStopsSolver(result)) {
+            solverProcess.stopIfRunning();
+        } else if (selfReportsImmediateExit()) {
             try {
                 Thread.sleep(IMMEDIATE_EXIT_SETTLE_MILLIS);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-            if (solverProcess != null && errorStopsSolver(result)) solverProcess.stopIfRunning();
         }
         return result;
     }
@@ -243,11 +244,10 @@ public class AbstractSolver implements ISolver {
     }
 
     /** How long to pause after an error response from a {@link #selfReportsImmediateExit()}
-     *  solver, before letting the next command reach {@link SolverProcess}'s liveness check
-     *  -- long enough that a process which is genuinely exiting has, in practice, finished
-     *  doing so by the time that check runs. Only paid on error responses, not on the
-     *  (much more frequent) non-error path, so this does not affect ordinary solving
-     *  performance. */
+     *  solver that does not certainly stop it, before letting the next command reach
+     *  {@link SolverProcess}'s liveness check -- usually long enough for a process that is exiting
+     *  to have done so, but a heuristic: an error known to stop the solver is handled
+     *  deterministically instead (see {@link #checkImmediateExit}). Only paid on error responses. */
     private static final long IMMEDIATE_EXIT_SETTLE_MILLIS = 50;
 
     @Override
@@ -646,14 +646,8 @@ public class AbstractSolver implements ISolver {
         // Answered without being sent (e.g. unsupported): as when not pipelining, an earlier
         // command's response may show that the solver has exited
         if (!(response instanceof Pending) && hasPending()) {
-            List<Pending> earlier = new java.util.ArrayList<>(pending);
+            // reading them stops the process after an error that stops the solver (checkImmediateExit)
             readPipelined(true);
-            // A solver that exits after an error may still be exiting when the error is read; nothing is sent
-            // here whose failure would wait for that, so wait for it here (bounded)
-            if (selfReportsImmediateExit() && solverProcess != null
-                    && earlier.stream().anyMatch(p -> p.isReady() && p.response().isError())) {
-                solverProcess.waitForEnd(END_WAIT_MILLIS);
-            }
             exited = exitedResponse();
             if (exited != null) return exited;
         }

@@ -57,6 +57,20 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
     @Override
     protected boolean selfReportsImmediateExit() { return true; }
 
+    /** Bitwuzla processes no more input after any error it reports (see 2) above), so its process is
+     *  stopped as soon as such an error is read, rather than racing its own exit. Its errors are its
+     *  "[error] ..." lines (see 3) above and {@link #parseResponse}); an error that jSMTLIB reports about
+     *  other output (e.g. text that is not a response) leaves it running. */
+    @Override
+    protected boolean errorStopsSolver(IResponse error) {
+        if (!(error instanceof IResponse.IError e)) return false;
+        String msg = e.errorMsg();
+        return msg.startsWith(NON_SMTLIB) && msg.substring(NON_SMTLIB.length()).trim().startsWith("[error]");
+    }
+
+    /** The start of the message of an error made from Bitwuzla's non-SMT-LIB output */
+    private static final String NON_SMTLIB = "Unexpected (non-SMT-LIB) response from bitwuzla: ";
+
     /** The command-line arguments for launching the solver. */
     protected String cmds[];
 
@@ -113,7 +127,7 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
         try {
             result = super.parseResponse(response);
         } catch (RuntimeException e) {
-            return smtConfig.responseFactory.error("Unexpected (non-SMT-LIB) response from bitwuzla: " + rewriteStdinLine(response));
+            return smtConfig.responseFactory.error(NON_SMTLIB + rewriteStdinLine(response));
         }
         // Parser.parseResponse's fallback for response text that doesn't match any
         // recognized shape (success/sat/error/.../get-info attribute list) just returns
@@ -127,7 +141,7 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
         // (#118), with a generic message and bitwuzla's own line number, so that is replaced too.
         if (result != null && result.isError() && (!(result instanceof IResponse.IError)
                 || ((IResponse.IError)result).errorMsg().startsWith(org.smtlib.sexpr.Parser.UNEXPECTED_RESPONSE))) {
-            return smtConfig.responseFactory.error("Unexpected (non-SMT-LIB) response from bitwuzla: " + rewriteStdinLine(response));
+            return smtConfig.responseFactory.error(NON_SMTLIB + rewriteStdinLine(response));
         }
         return result;
     }
