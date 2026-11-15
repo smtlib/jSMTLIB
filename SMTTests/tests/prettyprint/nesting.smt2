@@ -1,0 +1,9 @@
+; Deep nesting, long lines and the binders
+(set-logic ALL)
+(declare-datatypes ((List 1)) ((par (T) ((nil) (cons (head T) (tail (List T)))))))
+(declare-fun xs () (List Int))
+(define-fun-rec len ((l (List Int))) Int (match l ((nil 0) ((cons h t) (+ 1 (len t))))))
+(assert (forall ((x Int) (y Int) (z Int)) (=> (and (> x 0) (> y 0) (> z 0)) (> (+ (* x x) (* y y) (* z z) (* 2 x y) (* 2 y z) (* 2 x z)) 0))))
+(assert (let ((a (+ 1 2 3 4 5 6 7 8 9 10)) (b (* 1 2 3 4 5 6 7 8 9 10)) (c (- 100 1 2 3 4 5 6 7 8 9))) (> (+ a b c) (len xs))))
+(assert (! (> (len (cons 1 (cons 2 (cons 3 (cons 4 (cons 5 (cons 6 (cons 7 (cons 8 nil))))))))) 0) :named nonEmpty :pattern ((len xs))))
+(check-sat-assuming (nonEmpty (> (len xs) 100000000000000000000) (< (len xs) 100000000000000000000)))

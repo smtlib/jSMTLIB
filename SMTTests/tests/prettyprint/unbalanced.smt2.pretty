@@ -1,0 +1,4 @@
+; A stray closing parenthesis and an unclosed list are printed with their tokens kept
+(set-logic QF_UF)
+)
+(assert (and true (not false)
