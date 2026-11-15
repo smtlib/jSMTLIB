@@ -142,19 +142,14 @@ public class SolverFactoryTests {
     /** A .command property works with every adapter (#147): each has a command-array constructor */
     @Test
     public void commandPropertyWorksForEveryAdapter() throws Exception {
-        String[][] cases = {
-            {"cvc5-1.3.2", "Solver_cvc5"}, {"bitwuzla", "Solver_bitwuzla"}, {"z3-4.16.0", "Solver_z3_recent"},
-            {"z3-4.3.2", "Solver_z3_4_3_2"}, {"simplify", "Solver_simplify"}, {"altergo", "Solver_altergo"},
-            {"yices2-2.7.0", "Solver_yices2"}, {"yices2-2.6.5", "Solver_yices2_2_6"},
-            {"smtinterpol-2.5", "Solver_smtinterpol"},
-            {"no-such-solver", "Solver_smt"},
-        };
-        for (String[] c: cases) {
+        for (String adapter: BuiltInSolversTests.adapterClasses()) {
+            if (adapter.equals("Solver_test")) continue; // the test pseudo-solver runs no process
             SMT.Configuration config = new SMT.Configuration();
             config.props = config.readProperties();
-            config.props.setProperty("org.smtlib.solver_" + c[0] + ".command", "/no/such/solver,--some-flag");
-            ISolver solver = config.createSolver(c[0], null);
-            Assert.assertEquals(c[0], "org.smtlib.solvers." + c[1], solver.getClass().getName());
+            config.props.setProperty("org.smtlib.solver_some-solver.adapter", "org.smtlib.solvers." + adapter);
+            config.props.setProperty("org.smtlib.solver_some-solver.command", "/no/such/solver,--some-flag");
+            ISolver solver = config.createSolver("some-solver", null);
+            Assert.assertEquals("org.smtlib.solvers." + adapter, solver.getClass().getName());
         }
     }
 
