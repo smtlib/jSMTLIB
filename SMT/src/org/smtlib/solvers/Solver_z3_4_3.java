@@ -187,11 +187,8 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
 
     @Override
     protected IResponse afterStart() throws IOException {
-        // FIXME - enable the following lines when the Z3 solver supports them
-//        if (!smtConfig.batch) solverProcess.sendNoListen("(set-option :interactive-mode true)"); // FIXME - not sure we can do this - we'll lose the feedback
         // Can't turn off printing success, or we get no feedback
         solverProcess.sendAndListen("(set-option :print-success true)\n"); // Z3 4.3.0 needs this because it mistakenly has the default for :print-success as false
-        //if (smtConfig.nosuccess) solverProcess.sendAndListen("(set-option :print-success false)");
         return null;
     }
 
@@ -314,8 +311,6 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
         try {
             if (ERROR_RESPONSE.matcher(response).find()) {
                 response = withSourceLines(response);
-                // Z3 returns an s-expr (always?)
-                //Pattern p = Pattern.compile("\\p{Space}*\\(\\p{Blank}*error\\p{Blank}+\"(([\\p{Space}\\p{Print}^[\\\"\\\\]]|\\\\\")*)\"\\p{Blank}*\\)\\p{Space}*");
                 // The message is that of each (error "...") in turn, or the whole text if something else comes first.
                 // The alternatives are disjoint (the class excludes '"' and '\'), so the possessive *+ loses nothing.
                 Pattern p = Pattern.compile("\\p{Space}*\\(\\p{Blank}*error\\p{Blank}+\"(([\\p{Print}\\p{Space}&&[^\"\\\\]]|\\\\\")*+)\"\\p{Blank}*\\)");
