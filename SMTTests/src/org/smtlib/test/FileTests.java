@@ -381,38 +381,14 @@ public class FileTests extends LogicTests {
             return;
         }
 
-        String cmpExpected = filterIOExceptionLines(expected);
-        String cmpActual   = filterIOExceptionLines(actual);
-
-        if (!cmpExpected.equals(cmpActual)) {
+        if (!expected.equals(actual)) {
             writeActual(ext, actual);
             Assert.assertEquals(
                 tstFile.getName() + " / " + solvername + " " + ext,
-                cmpExpected, cmpActual);
+                expected, actual);
         }
         // On success: do not write .actual (and delete any stale one)
         new File(actualPath(ext)).delete();
-    }
-
-    /** Drops lines containing {@code java.io.IOException:} or
-     *  {@code SolverProcess$NoResponseException:} -- these appear in an "Error writing to
-     *  solver: ..." response when a script keeps sending commands to a solver process that
-     *  has already exited/closed its pipe (e.g. after an unsupported construct kills it).
-     *  Which of a script's remaining commands land inside that race window (and so surface
-     *  one of these) depends on OS-level timing of the underlying pipe failure and is not
-     *  reproducible run to run, even for the identical script against the identical solver
-     *  binary -- unlike the get-info non-determinism handled by
-     *  AbstractSolver#normalizeForTesting(), this can't be scrubbed at the source, since
-     *  it's not response content at all -- it's the *absence* of a response, racing against
-     *  however many of a script's remaining commands land after the solver has already
-     *  exited. Such a command now answers "The solver process has exited" (not dropped).
-     *  runtest's _filtered drops the same lines; keep the two in sync. */
-    private static String filterIOExceptionLines(String s) {
-        StringBuilder sb = new StringBuilder();
-        for (String line : s.split("\n", -1)) {
-            if (!line.contains("java.io.IOException:") && !line.contains("SolverProcess$NoResponseException:")) sb.append(line).append('\n');
-        }
-        return sb.toString();
     }
 
     // -----------------------------------------------------------------------

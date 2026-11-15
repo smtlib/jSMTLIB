@@ -45,6 +45,17 @@ public class PipelineResponseTests {
     }
 
     @Test
+    public void nonSmtlibTextRunsToItsLineEnd() {
+        // a word that is no SMT-LIB token (here bitwuzla's "[error]") starts non-SMT-LIB text, read as
+        // one reply up to its line end, as when not pipelining (#214)
+        Assert.assertEquals(java.util.List.of("[error] <stdin>:2:9: expected Bool term", "sat"),
+                split("[error] <stdin>:2:9: expected Bool term\nsat\n"));
+        // SMT-LIB atoms on one line remain separate replies
+        Assert.assertEquals(java.util.List.of("success", "success"), split("success success\n"));
+        Assert.assertEquals(-1, AbstractSolver.responseEnd("[error] not yet ended", 0));
+    }
+
+    @Test
     public void incompleteResponses() {
         Assert.assertEquals(-1, AbstractSolver.responseEnd("(error \"unfinished", 0));
         Assert.assertEquals(-1, AbstractSolver.responseEnd("((x 1)\n", 0));

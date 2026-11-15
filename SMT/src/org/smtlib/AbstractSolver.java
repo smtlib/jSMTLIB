@@ -636,12 +636,21 @@ public class AbstractSolver implements ISolver {
         // as in execute: once the solver has exited, the adapter's own checks are not reached
         IResponse exited = exitedResponse();
         if (exited != null) return exited;
+        IResponse response;
         capturing = true;
         try {
-            return cmd.execute(this);
+            response = cmd.execute(this);
         } finally {
             capturing = false;
         }
+        // Answered without being sent (e.g. unsupported): as when not pipelining, an earlier
+        // command's response may show that the solver has exited
+        if (!(response instanceof Pending) && hasPending()) {
+            readPipelined(true);
+            exited = exitedResponse();
+            if (exited != null) return exited;
+        }
+        return response;
     }
 
     /** Executes the commands in order, as a script does: returns the first error, or else the last
@@ -782,9 +791,14 @@ public class AbstractSolver implements ISolver {
         return text.substring(0, end);
     }
 
-    /** Reports output read beyond the responses to the pipelined commands */
+    /** Reports output read beyond the responses to the pipelined commands, but for comment lines (z3 writes
+     *  some), which are not responses (as in matchUnread) */
     private void reportLeftover() {
-        String extra = unread.toString().trim();
+        StringBuilder sb = new StringBuilder();
+        for (String line: unread.toString().split("\n", -1)) {
+            if (!line.stripLeading().startsWith(";")) sb.append(line).append('\n');
+        }
+        String extra = sb.toString().trim();
         unread.setLength(0);
         if (!extra.isEmpty()) reportOutOfStep(extra);
     }
@@ -1040,8 +1054,18 @@ public class AbstractSolver implements ISolver {
                 continue;
             } else {
                 // an atom: ends at whitespace or a delimiter
+                int atomStart = i;
                 while (i < n && !Character.isWhitespace(s.charAt(i)) && "()\";|".indexOf(s.charAt(i)) < 0) i++;
                 if (i >= n) return -1; // it may continue
+                // an atom that is no SMT-LIB token (e.g. bitwuzla's "[error]") starts non-SMT-LIB text,
+                // which runs to the end of its line, as a reply does when not pipelining (#214)
+                for (int k = atomStart; k < i; k++) {
+                    char a = s.charAt(k);
+                    if (!Character.isLetterOrDigit(a) && "~!@$%^&*_-+=<>.?/:#".indexOf(a) < 0) {
+                        while (i < n && s.charAt(i) != '\n') i++;
+                        return i >= n ? -1 : i;
+                    }
+                }
                 return i;
             }
             if (depth <= 0) return i;

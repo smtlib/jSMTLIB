@@ -164,12 +164,6 @@ if [[ "$PLATFORM" == "windows" ]]; then
     tr -d '\r' < "$erractual" > "$erractual.tmp" && mv "$erractual.tmp" "$erractual"
 fi
 
-### A command sent to a solver that has exited once got an "Error writing to solver" response
-### naming an exception that depended on timing, so both sides drop such lines before an
-### exact comparison, as FileTests.filterIOExceptionLines does (#150). Such a command now
-### answers "The solver process has exited", which is compared.
-_filtered() { grep -v -e 'java.io.IOException:' -e 'SolverProcess\$NoResponseException:' "$1"; }
-
 ### The goldens named for one solver name, given "<test>.<ext>.<name>", in priority order
 _solver_candidates() { echo "$1.$PLATFORM_ARCH.bad" "$1.$PLATFORM_ARCH.lenient" "$1.$PLATFORM_ARCH" "$1.$PLATFORM.bad" "$1.$PLATFORM.lenient" "$1.$PLATFORM" "$1" "$1.bad" "$1.lenient"; }
 
@@ -187,7 +181,7 @@ errok=0
 while true; do ## The while true is just to allow a break from the inner test loop
     for f in "${err_candidates[@]}"; do
       if [ -e "$f" ]; then
-        diff <(_filtered "$erractual") <(_filtered "$f")
+        diff "$erractual" "$f"
         errok=$?
         if [ $errok == 0 ]; then
           rm -f "$erractual"
@@ -228,7 +222,7 @@ comparison=""
 while true; do ## The while true is just to allow a break from the inner test loop
     for f in "${out_candidates[@]}"; do
       if [ -e "$f" ]; then
-        diff <(_filtered "$outactual") <(_filtered "$f")
+        diff "$outactual" "$f"
         diffresult=$?
         comparison="$f"
         break 2
