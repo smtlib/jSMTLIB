@@ -1,0 +1,4 @@
+success
+success
+success
+(error "<stdin>:6:47: Application of function null does not type check.")

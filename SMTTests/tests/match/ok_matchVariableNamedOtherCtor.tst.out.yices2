@@ -1,0 +1,4 @@
+success
+(error "at line 3, column 19: syntax error: declare-datatypes is not a command")
+(error "at line 5, column 19: undefined sort constructor: M")
+(error "The solver process has exited")

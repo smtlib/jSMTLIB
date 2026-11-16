@@ -1,0 +1,6 @@
+success
+success
+success
+success
+(error "Right-associative application of r fails at argument 2: has sort Int, expected sort family Array")
+(error "Right-associative application of r fails at argument 3: has sort Int, expected sort family Array")
