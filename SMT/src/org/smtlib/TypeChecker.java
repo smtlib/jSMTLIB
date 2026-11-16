@@ -184,7 +184,8 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             // After the type check, which links the abbreviations in expr to their definitions
             if (f.result.isEmpty()) symTable.logicInUse.checkSortDeclaration(id,params,expr);
         } catch (IVisitor.VisitorException e) {
-            f.error(id.pos(),"Error while checking sort abbreviation: " + e.getMessage());
+            // expr is null for declare-sort (and declare-sort-parameter), which is not an abbreviation
+            f.error(id.pos(), expr == null ? e.getMessage() : "Error while checking sort abbreviation: " + e.getMessage());
         } catch (Exception e) {
             f.error(id.pos(),"INTERNAL ERROR: Exception while checking a sort abbreviation: " + e);
         } finally {
