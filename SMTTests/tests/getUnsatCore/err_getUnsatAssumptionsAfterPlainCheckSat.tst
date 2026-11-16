@@ -9,7 +9,9 @@
 ;
 ; Real solvers vary since none of jSMTLIB's own precondition logic applies to them
 ; (each forwards straight to its native process); cvc5 and bitwuzla natively support
-; get-unsat-assumptions after a plain check-sat and answer "()".
+; get-unsat-assumptions after a plain check-sat and answer "()", as do z3 4.6.0 and later. A plain
+; check-sat is a check-sat-assuming with no assumptions (SMT-LIB 2.7, 4.2.5), so "()" is the right
+; answer: z3 4.5.0's "unsupported", after it accepted the option, is .bad; z3 4.3 rejects the option.
 (set-option :produce-unsat-assumptions true)
 (set-logic QF_UF)
 (set-info :status unsat)

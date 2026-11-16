@@ -1,0 +1,16 @@
+(assert (match t ((leaf true) ((node v k) (= (head (fcons t k)) leaf)))))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(reset-assertions)
+^^^^^^^^^^^^^^^^^^
+(declare-sort Color 0)
+^^^^^^^^^^^^^^^^^^^^^^
+(declare-sort Tree 0)
+^^^^^^^^^^^^^^^^^^^^^
+(declare-fun red () Int)
+^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun node () Int)
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun val () Int)
+^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun head () Int)
+^^^^^^^^^^^^^^^^^^^^^^^^^

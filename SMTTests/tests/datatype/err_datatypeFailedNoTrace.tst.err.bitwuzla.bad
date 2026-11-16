@@ -1,0 +1,12 @@
+(declare-fun nil () Int)
+^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun cons () Int)
+^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun hd () Int)
+^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun tl () Int)
+^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun mk () Int)
+^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun f () Int)
+^^^^^^^^^^^^^^^^^^^^^^

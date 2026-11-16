@@ -1,0 +1,8 @@
+(declare-sort-parameter X)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun f (X) X)
+^^^^^^^^^^^^^^^^^^^^^
+(declare-sort-parameter X)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+(declare-fun f (X) X)
+^^^^^^^^^^^^^^^^^^^^^
