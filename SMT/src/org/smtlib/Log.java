@@ -59,7 +59,7 @@ public class Log {
 
         /** Called when a warning is logged; pos is the position of the text it concerns, or null. By default,
          *  logs "WARNING: " + msg as a diagnostic. */
-        default public void logWarning(String msg, /*@Nullable*//*@ReadOnly*/ IPos pos) {
+        default public void logWarning(/*@Nullable*//*@ReadOnly*/ IPos pos, String msg) {
             logDiag("WARNING: " + msg);
         }
 
@@ -131,7 +131,7 @@ public class Log {
         /** Writes the location of the text concerned, as {@link #logError(IResponse.IError)} does, then the
          *  warning, to the diag stream */
         @Override
-        public void logWarning(String msg, /*@Nullable*//*@ReadOnly*/ IPos pos) {
+        public void logWarning(/*@Nullable*//*@ReadOnly*/ IPos pos, String msg) {
             if (pos != null && pos.source() != null && !smtConfig.noshow) {
                 diag.println(locationIndication(pos,prompt,smtConfig));
             }
@@ -361,10 +361,10 @@ public class Log {
     }
 
     /** Reports a warning to any listeners, with the position of the text it concerns (null if none) */
-    public void logWarning(/*@NonNull*/ String message, /*@Nullable*//*@ReadOnly*/ IPos pos) {
-        if (hold(() -> logWarning(message, pos))) return;
+    public void logWarning(/*@Nullable*//*@ReadOnly*/ IPos pos, /*@NonNull*/ String message) {
+        if (hold(() -> logWarning(pos, message))) return;
         for (IListener listener: listeners) {
-            listener.logWarning(message, pos);
+            listener.logWarning(pos, message);
         }
     }
 

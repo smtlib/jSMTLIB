@@ -710,8 +710,8 @@ public class SMT {
     /** Warns, with --pipeline, that it does not apply to the given input */
     private void warnPipelineIgnored(String input) {
         if (smtConfig.pipeline) {
-            smtConfig.log.logWarning("--pipeline applies only to files (including - for standard input)"
-                    + " and --text input; it is ignored for " + input, null);
+            smtConfig.log.logWarning(null, "--pipeline applies only to files (including - for standard input)"
+                    + " and --text input; it is ignored for " + input);
         }
     }
 
@@ -936,8 +936,8 @@ public class SMT {
                                 smtConfig.smtlib = SMT.Configuration.SMTLIB.find("V" + v);
                                 if (smtConfig.smtlib == null) {
                                     SMT.Configuration.SMTLIB[] all = SMT.Configuration.SMTLIB.values();
-                                    smtConfig.log.logWarning("SMT-LIB version " + v + " is not one jSMTLIB knows; using " + all[all.length-1],
-                                            si.value().pos());
+                                    smtConfig.log.logWarning(si.value().pos(),
+                                            "SMT-LIB version " + v + " is not one jSMTLIB knows; using " + all[all.length-1]);
                                 }
                             }
                         }

@@ -58,8 +58,8 @@ public class QF_RDL extends DifferenceLogic {
             d = f.args().get(0);
         }
         if (!(d instanceof IExpr.IDecimal)) return false;
-        smtConfig.log.logWarning("A QF_RDL constant should be a numeral or a negated numeral, not a decimal: "
-                + smtConfig.defaultPrinter.toString(atom), c.pos());
+        smtConfig.log.logWarning(c.pos(), "A QF_RDL constant should be a numeral or a negated numeral, not a decimal: "
+                + smtConfig.defaultPrinter.toString(atom));
         return true;
     }
 

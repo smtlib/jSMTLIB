@@ -35,7 +35,7 @@ public class PositionedWarningsTests {
         @Override public void logError(IResponse.IError result) {}
         @Override public void logDiag(String msg) { diags.add(msg); }
         @Override public void indent(String chars) {}
-        @Override public void logWarning(String msg, IPos pos) {
+        @Override public void logWarning(IPos pos, String msg) {
             String text = pos == null || pos.source() == null ? "-"
                     : pos.source().chars().subSequence(pos.charStart(), pos.charEnd()).toString();
             warnings.add(msg + " @ " + text);
@@ -145,7 +145,7 @@ public class PositionedWarningsTests {
             @Override public void logDiag(String msg) { diags.add(msg); }
             @Override public void indent(String chars) {}
         };
-        listener.logWarning("something", null);
+        listener.logWarning(null, "something");
         Assert.assertEquals(List.of("WARNING: something"), diags);
     }
 }

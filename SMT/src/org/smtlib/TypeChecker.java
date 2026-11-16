@@ -1111,8 +1111,9 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                         result.add(smtConfig.responseFactory.error(open.pos(),"The expression being named is not closed - this symbol is a variable: " + smtConfig.defaultPrinter.toString(open)));
                         errors = true;
                     } else if (frame.letBound != null) {
-                        smtConfig.log.logWarning("The expression being named is not closed - this symbol is a let-bound variable: "
-                                + smtConfig.defaultPrinter.toString(frame.letBound), frame.letBound.pos());
+                        smtConfig.log.logWarning(frame.letBound.pos(),
+                                "The expression being named is not closed - this symbol is a let-bound variable: "
+                                + smtConfig.defaultPrinter.toString(frame.letBound));
                     }
                 } else if (name.equals(":pattern")) {
                     IAttributeValue v = a.attrValue();
