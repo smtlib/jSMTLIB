@@ -179,8 +179,16 @@ cov-analyze-by-test:
 ## Merge every per-test file back into one data set and report it, exactly like
 ## cov-report does for cov-test -- a check that splitting lost nothing: its totals should
 ## match cov-report's for the same code and SMT_TEST_SOLVERS.
+## A full run's ~17000 files are too many for one command line, so they are merged in batches
+## into part files in a temporary directory, which are then merged. The result is written to a
+## new file and moved into place: jacococli merge appends to an existing destfile.
 cov-report-by-test: cov/report-classes
-	java -jar jacoco/lib/jacococli.jar merge --quiet cov/by-test/*.exec --destfile cov/by-test-merged.exec
+	parts=$$(mktemp -d) && \
+	(cd cov/by-test && find . -maxdepth 1 -name '*.exec' -print0 | PARTS=$$parts xargs -0 -n 1000 sh -c \
+		'java -jar "$$0" merge --quiet "$$@" --destfile "$$(mktemp "$$PARTS/part-XXXXXX")"' \
+		$(CURDIR)/jacoco/lib/jacococli.jar) && \
+	java -jar jacoco/lib/jacococli.jar merge --quiet $$parts/part-* --destfile $$parts/merged.exec && \
+	mv -f $$parts/merged.exec cov/by-test-merged.exec
 	java -jar jacoco/lib/jacococli.jar report cov/by-test-merged.exec \
 		--classfiles $(COV_CLASSES) \
 		--classfiles cov/report-classes \
