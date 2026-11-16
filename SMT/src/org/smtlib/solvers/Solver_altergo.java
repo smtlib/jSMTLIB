@@ -152,8 +152,8 @@ public class Solver_altergo extends AbstractSolver implements ISolver {
     public IResponse get_option(IKeyword key) {
         if (key.equals(printSuccess)) return smtConfig.nosuccess ? Utils.FALSE : Utils.TRUE;
         String opt = key.value();
-        IAttributeValue value = options.get(opt);
-        if (value == null) value = smtConfig.utils.defaults.get(opt);
+        // as set, else the default of an option the configured version has (not one it removed or lacks)
+        IAttributeValue value = Solver_test.optionValue(options, smtConfig.utils, opt);
         if (value == null) return smtConfig.responseFactory.unsupported();
         return value;
     }

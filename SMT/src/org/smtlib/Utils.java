@@ -95,11 +95,19 @@ public class Utils {
     public static final Map<String,SMTLIB> optionSince = Map.of(PRODUCE_ASSERTIONS, SMTLIB.V25,
             GLOBAL_DECLARATIONS, SMTLIB.V25);
 
-    /** False for a standard option that the configured SMT-LIB version does not have yet; such an
-     *  option is then an unknown one (not type-checked, no default, not acted on) */
+    /** False for a standard option that the configured SMT-LIB version does not have (yet, or any more,
+     *  unless --relax keeps it); such an option is then an unknown one (not type-checked, no default,
+     *  not acted on) */
     public boolean isOption(String option) {
         SMTLIB since = optionSince.get(option);
-        return since == null || smtConfig.atLeastVersion(since);
+        if (since != null && !smtConfig.atLeastVersion(since)) return false;
+        return !isRemovedOption(option);
+    }
+
+    /** Whether the option is one the configured SMT-LIB version removed, and --relax does not keep it */
+    public boolean isRemovedOption(String option) {
+        SMTLIB until = optionUntil.get(option);
+        return until != null && smtConfig.atLeastVersion(until) && !smtConfig.relax;
     }
 
     /** The string designating an option item */
@@ -113,6 +121,9 @@ public class Utils {
 
     /** The string designating an option item */
     public static final String EXPAND_DEFINITIONS = ":expand-definitions";
+
+    /** The standard options a later SMT-LIB version removed, with the version that removed them */
+    public static final Map<String,SMTLIB> optionUntil = Map.of(EXPAND_DEFINITIONS, SMTLIB.V25);
 
     /** The string designating an option item */
     public static final String REGULAR_OUTPUT_CHANNEL = ":regular-output-channel";
@@ -600,7 +611,7 @@ public class Utils {
         {
             // Initializing all the standard smtConfig keywords
             boolOptions.add(PRINT_SUCCESS);
-            boolOptions.add(EXPAND_DEFINITIONS); // Is deprecated in V2.5, but we keep it anyway
+            boolOptions.add(EXPAND_DEFINITIONS); // SMT-LIB 2.0 only (optionUntil)
             boolOptions.add(INTERACTIVE_MODE);
             boolOptions.add(PRODUCE_ASSERTIONS);
             boolOptions.add(GLOBAL_DECLARATIONS);

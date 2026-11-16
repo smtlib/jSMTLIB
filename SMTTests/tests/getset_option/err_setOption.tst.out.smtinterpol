@@ -2,7 +2,6 @@
 (error "Expected a numeral as the value of :verbosity")
 (error "Expected a string as the value of :regular-output-channel")
 (error "Expected a string as the value of :diagnostic-output-channel")
-(error "Expected true or false as the value of :expand-definitions")
 (error "Expected true or false as the value of :produce-proofs")
 (error "Expected true or false as the value of :produce-models")
 (error "Expected true or false as the value of :produce-assignments")

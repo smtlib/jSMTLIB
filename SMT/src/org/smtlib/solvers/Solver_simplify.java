@@ -541,7 +541,8 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         if (option.value().equals(Utils.PRODUCE_MODELS)) return smtConfig.responseFactory.unsupported();
         if (option.value().equals(Utils.PRODUCE_PROOFS)) return smtConfig.responseFactory.unsupported();
         if (option.value().equals(Utils.PRODUCE_UNSAT_CORES)) return smtConfig.responseFactory.unsupported();
-//        if (option.value().equals(":expand-definitions") && smtConfig.atLeastVersion(SMTLIB.V25)) return smtConfig.responseFactory.unsupported();
+        // an option the configured version removed (e.g. :expand-definitions from 2.5) is unknown
+        if (smtConfig.utils.isRemovedOption(option.value())) return smtConfig.responseFactory.unsupported();
 
         return setOptionLocal(option,value);
     }
