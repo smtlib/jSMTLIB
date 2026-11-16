@@ -1,0 +1,9 @@
+#yices2 has no whole-run timeout option; approximating with a per-query --timeout of 600.0s (the requested whole-run value)
+success
+sat
+#smtinterpol has no whole-run timeout option; approximating with a per-query -t of 600.0s (the requested whole-run value)
+success
+sat
+#smtinterpol has no whole-run timeout option; only the per-query -t (1.0s) is applied, the whole-run --timeout-total (600.0s) is ignored
+success
+sat

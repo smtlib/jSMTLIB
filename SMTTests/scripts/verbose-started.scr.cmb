@@ -1,0 +1,18 @@
+#reading properties (own jar) from jar:file:$INSTALL/jSMTLIB.jar!/jsmtlib.properties
+#reading properties (jar sibling) from $INSTALL/jsmtlib.properties
+#Start parsing text input
+#Started yices2 
+#Command to execute: (set-logic QF_UF)
+success
+#Command to execute: (check-sat)
+sat
+#Exiting program
+#reading properties (own jar) from jar:file:$INSTALL/jSMTLIB.jar!/jsmtlib.properties
+#reading properties (jar sibling) from $INSTALL/jsmtlib.properties
+#Start parsing text input
+#Started z3
+#Command to execute: (set-logic QF_UF)
+success
+#Command to execute: (check-sat)
+sat
+#Exiting program

@@ -1,0 +1,8 @@
+### z3 4.3 configured by a .command property: --seed is appended to that command as -rs:N, and -v
+### names the adapter in the #Started line (coverage 2026-11-16)
+##EXITCODE 0
+echo "org.smtlib.solver_z3-4.3.command=%exec%,-smt2,-in" > "$HOME/jsmtlib.properties"
+$SMT_CMD -v --solver z3-4.3 --seed 5 --text "(get-option :random-seed)(exit)" 2>&1
+_rc=$?
+rm -f "$HOME/jsmtlib.properties"
+exit $_rc
