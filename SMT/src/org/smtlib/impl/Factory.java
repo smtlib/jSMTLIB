@@ -209,6 +209,16 @@ public class Factory implements IExpr.IFactory, ISort.IFactory, ICommand.IFactor
     }
 
     @Override
+    public ILogic logic(ISymbol name, java.util.Collection<IAttribute<?>> attributes) {
+        return new SMTExpr.Logic(smtConfig, name, attributes);
+    }
+
+    @Override
+    public ITheory theory(ISymbol name, java.util.Collection<IAttribute<?>> attributes) {
+        return new SMTExpr.Theory(name, attributes);
+    }
+
+    @Override
     public IAttributedExpr attributedExpr(IExpr e,
             List<IAttribute<?>> attributes) {
         return new AttributedExpr(e,attributes);

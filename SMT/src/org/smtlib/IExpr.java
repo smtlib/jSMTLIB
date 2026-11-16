@@ -50,6 +50,11 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
         IAttribute<?> attribute(IKeyword k);
         /** Creates an attribute with a keyword and a value. */
         <T extends IAttributeValue> IAttribute<T> attribute(IKeyword k, T value);
+        /** Creates a logic definition, (logic name attributes...), as the parser makes one for a logic
+         *  without a class of its own (#163 item 3) */
+        ILogic logic(ISymbol name, java.util.Collection<IAttribute<?>> attributes);
+        /** Creates a theory definition, (theory name attributes...) (#163 item 3) */
+        ITheory theory(ISymbol name, java.util.Collection<IAttribute<?>> attributes);
         /** Creates an attributed expression (an expression with a positive number of attributes). */
         //@ requires attributes.size() > 0;
         IAttributedExpr attributedExpr(IExpr e, List<IAttribute<?>> attributes);
