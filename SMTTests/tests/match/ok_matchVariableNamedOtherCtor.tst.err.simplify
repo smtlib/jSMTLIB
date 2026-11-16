@@ -1,0 +1,4 @@
+(declare-const m (M Int))
+                  ^
+(assert (= 0 (match m ((nil 0) ((some v) v)))))
+                    ^

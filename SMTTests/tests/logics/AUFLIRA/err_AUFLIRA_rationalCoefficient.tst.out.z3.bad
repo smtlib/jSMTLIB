@@ -1,0 +1,5 @@
+success
+success
+(error "line 4 column 21: Sort mismatch at argument #1 for function (declare-fun / (Real Real) Real) supplied sort is Int")
+(error "line 5 column 21: Sort mismatch at argument #1 for function (declare-fun / (Real Real) Real) supplied sort is Int")
+(error "line 6 column 24: Sort mismatch at argument #2 for function (declare-fun * (Int Int) Int) supplied sort is Real")

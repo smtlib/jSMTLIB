@@ -1,0 +1,4 @@
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:4:41: expected bit-vector term at index 10 as argument to 'bvadd'
+")

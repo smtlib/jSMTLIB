@@ -1,0 +1,5 @@
+success
+success
+(error "line 4 column 21: invalid function application, sort mismatch on argument at position 1")
+(error "line 5 column 21: invalid function application, sort mismatch on argument at position 1")
+(error "line 6 column 24: invalid function application, sort mismatch on argument at position 2")

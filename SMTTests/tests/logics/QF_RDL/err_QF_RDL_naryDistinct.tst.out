@@ -1,0 +1,5 @@
+success
+success
+success
+success
+(error "Invalid operation in RDL logic: (distinct x y z)")
