@@ -93,7 +93,9 @@ public class Solver_test implements ISolver {
      *  whose defaults get_option gives only if the configured version has them (#201) */
     static void putDefaults(Map<String,IAttributeValue> options, Utils utils) {
         options.putAll(utils.defaults);
+        // their defaults depend on the version, known only once a script sets it (see optionValue)
         options.keySet().removeAll(Utils.optionSince.keySet());
+        options.keySet().removeAll(Utils.optionUntil.keySet());
     }
 
     /** The value of the option: as set, else its default if the configured version has it, else null */
@@ -406,6 +408,8 @@ public class Solver_test implements ISolver {
     @Override
     public IResponse set_option(IKeyword key, IAttributeValue value) { // FIXME - only strictlyl supported options
         String option = key.value();
+        // an option the configured version removed (e.g. :expand-definitions from 2.5) is unknown
+        if (smtConfig.utils.isRemovedOption(option)) return smtConfig.responseFactory.unsupported();
         if (Utils.PRINT_SUCCESS.equals(option)) {
             if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
                 // C_set_option.parse() already rejects this eagerly for any text-driven

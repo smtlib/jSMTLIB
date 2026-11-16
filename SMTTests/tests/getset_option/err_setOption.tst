@@ -3,7 +3,6 @@
 (set-option :verbosity true)
 (set-option :regular-output-channel true)
 (set-option :diagnostic-output-channel false)
-(set-option :expand-definitions 0)
 (set-option :produce-proofs 0)
 (set-option :produce-models 0)
 (set-option :produce-assignments 0)

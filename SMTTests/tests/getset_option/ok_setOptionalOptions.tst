@@ -1,6 +1,4 @@
 ; tests setting options
-(set-option :expand-definitions true)
-(get-option :expand-definitions)
 (set-option :interactive-mode true)
 (get-option :interactive-mode)
 (set-option :random-seed 1)

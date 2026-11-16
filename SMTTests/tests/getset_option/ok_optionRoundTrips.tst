@@ -1,0 +1,10 @@
+; Options set to a value and back, each read back with get-option (#163 item 10; :print-success is in
+; ok_printSuccess, the other :produce- options in ok_set_produceOptions)
+(set-option :produce-assertions true)
+(get-option :produce-assertions)
+(set-option :produce-assertions false)
+(get-option :produce-assertions)
+(set-option :random-seed 5)
+(get-option :random-seed)
+(set-option :random-seed 0)
+(get-option :random-seed)
