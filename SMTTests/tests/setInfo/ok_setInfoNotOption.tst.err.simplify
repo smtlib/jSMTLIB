@@ -1,0 +1,6 @@
+(set-info :produce-models true)
+          ^^^^^^^^^^^^^^^
+WARNING: :produce-models is not a standard set-info attribute
+(set-info :global-declarations true)
+          ^^^^^^^^^^^^^^^^^^^^
+WARNING: :global-declarations is not a standard set-info attribute

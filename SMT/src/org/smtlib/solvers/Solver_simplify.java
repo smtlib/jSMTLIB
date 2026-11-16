@@ -938,7 +938,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         if (!Utils.setInfoKeywords.contains(key)) {
             smtConfig.log.logWarning(key.pos(), smtConfig.defaultPrinter.toString(key) + " is not a standard set-info attribute");
         }
-        options.put(key.value(),value);
+        // nothing reads set-info values here; they are not options (#233)
         return smtConfig.responseFactory.success();
     }
 
