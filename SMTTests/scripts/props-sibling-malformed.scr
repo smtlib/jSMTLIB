@@ -1,0 +1,10 @@
+### A malformed jsmtlib.properties beside the jar is reported, and the run goes on (coverage 2026-11-16)
+##EXITCODE 0
+mkdir "$HOME/jar"
+cp "$SMT_JAR" "$HOME/jar/jSMTLIB.jar"
+printf 'key=\\u00ZZ\n' > "$HOME/jar/jsmtlib.properties"
+java ${COV_AGENT:-} -cp "$HOME/jar/jSMTLIB.jar" org.smtlib.SMT --solver test --text "(exit)"
+_rc=$?
+rm -f "$HOME/jar/jSMTLIB.jar" "$HOME/jar/jsmtlib.properties"
+rmdir "$HOME/jar"
+exit $_rc

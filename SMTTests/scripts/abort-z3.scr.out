@@ -1,0 +1,15 @@
+== interactive
+success
+success
+        ^^^
+(error "A function application must have at least one argument")
+sat
+>  [exit 1]
+== standard input as a file
+success
+success
+(assert (p))
+        ^^^
+(error "A function application must have at least one argument")
+Aborting because of a parsing error
+ [exit 1]

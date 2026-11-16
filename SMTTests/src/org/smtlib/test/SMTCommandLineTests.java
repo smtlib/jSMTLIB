@@ -291,6 +291,69 @@ public class SMTCommandLineTests {
         } finally { cleanTmpDir(tmpDir); }
     }
 
+    @Test public void allLogicTheoryNotFound() throws Exception {
+        // ALL finds its theories by another path (the versioned copy, if any)
+        File tmpDir = Files.createTempDirectory("smtlogics").toFile();
+        try {
+            writeTempLogic(tmpDir, "ALL", "2.7", "NOSUCHTHEORY");
+            assertError(run("-L", tmpDir.getAbsolutePath(),
+                            "--solver", "test", "--text", "(set-logic ALL)"),
+                "No logic file found for NOSUCHTHEORY");
+        } finally { cleanTmpDir(tmpDir); }
+    }
+
+    /** Loads logic L, whose one theory T has the given attributes between its version and definition,
+     *  and checks that the expected error is reported */
+    private void assertTheoryError(String attributes, String expectedPhrase) throws Exception {
+        File tmpDir = Files.createTempDirectory("smtlogics").toFile();
+        try {
+            writeTempLogic(tmpDir, "L", "2.7", "T");
+            try (java.io.PrintWriter pw = new java.io.PrintWriter(new File(tmpDir, "T.smt2"))) {
+                pw.println("(theory T :smt-lib-version 2.7 " + attributes + " :definition \"t\")");
+            }
+            assertError(run("-L", tmpDir.getAbsolutePath(),
+                            "--solver", "test", "--text", "(set-logic L)"),
+                expectedPhrase);
+        } finally { cleanTmpDir(tmpDir); }
+    }
+
+    @Test public void theorySortsNotAList() throws Exception {
+        assertTheoryError(":sorts S :funs ()", "The list of sorts in theory T is ill-formed: S");
+    }
+
+    @Test public void theorySortAttributeNotKeyword() throws Exception {
+        assertTheoryError(":sorts ((S 0 x)) :funs ()", "Ill-formed attribute in the declaration of sort S: x");
+    }
+
+    @Test public void theoryEmptyFunDecl() throws Exception {
+        assertTheoryError(":funs (())", "Ill-formed function declaration in theory T: ()");
+    }
+
+    @Test public void theoryFunSortNotASort() throws Exception {
+        assertTheoryError(":funs ((f 1))", "Unknown sort given: 1");
+    }
+
+    @Test public void theoryParFunMissingDecl() throws Exception {
+        assertTheoryError(":funs ((par (A)))", "Ill-formed par function declaration in theory T: (par (A))");
+    }
+
+    @Test public void theoryParFunNameNotSymbol() throws Exception {
+        assertTheoryError(":funs ((par (A) (1 A)))", "Ill-formed par function declaration in theory T: (par (A) (1 A))");
+    }
+
+    @Test public void theoryParFunParameterNotSymbol() throws Exception {
+        assertTheoryError(":funs ((par (1) (f A)))", "Ill-formed parameter in theory T: 1");
+    }
+
+    @Test public void theoryParFunDuplicateParameter() throws Exception {
+        assertTheoryError(":funs ((par (A A) (f A)))", "Duplicate parameter A in theory T");
+    }
+
+    @Test public void theoryParFunNoResultSort() throws Exception {
+        assertTheoryError(":funs ((par (A) (f :left-assoc)))",
+            "Ill-formed par function declaration in theory T (expected at least a result sort)");
+    }
+
     @Test public void logicWrongFirstKeyword() throws Exception {
         // Logic file starts with wrong keyword instead of "logic"
         File tmpDir = Files.createTempDirectory("smtlogics").toFile();
@@ -376,6 +439,10 @@ public class SMTCommandLineTests {
 
     @Test public void timeoutTotalMissingArg() {
         assertError(run("--timeout-total"), "The --timeout-total option expects a numeric argument, in seconds");
+    }
+
+    @Test public void setOptionMissingArg() {
+        assertError(run("--set-option"), "The --set-option option expects an argument: a keyword and a value");
     }
 
     // -----------------------------------------------------------------------
