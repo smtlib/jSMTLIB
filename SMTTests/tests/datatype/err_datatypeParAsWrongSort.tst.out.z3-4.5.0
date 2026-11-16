@@ -1,0 +1,5 @@
+success
+(error "line 3 column 21: invalid sort parameter, symbol or ')' expected")
+(error "line 4 column 20: unknown sort 'Lst'")
+(error "line 5 column 12: unknown constant l")
+(error "line 6 column 26: unknown constant nil")

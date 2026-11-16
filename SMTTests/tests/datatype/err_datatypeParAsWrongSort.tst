@@ -1,0 +1,6 @@
+; (as c S) on a constant of a par datatype: S must be an instance of c's sort (#235)
+(set-logic ALL)
+(declare-datatypes ((Lst 1)) ((par (E) ((nil) (cons (hd E) (tl (Lst E)))))))
+(declare-fun l () (Lst Int))
+(assert (= l (as nil (Lst Int))))
+(assert (= 0 (as nil Int)))
