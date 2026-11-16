@@ -914,7 +914,8 @@ public final class SymbolTable {
             }
             return bindings;
         }
-        if (declared instanceof ISort.IApplication) {
+        // A nullary sort (e.g. Int) is a sort, not a family: compared by equality below
+        if (declared instanceof ISort.IApplication && !((ISort.IApplication) declared).parameters().isEmpty()) {
             ISort.IApplication da = (ISort.IApplication) declared;
             if (!(actual instanceof ISort.IApplication) || !da.family().equals(((ISort.IApplication)actual).family())) {
                 throw new NoMatch("has sort " + smtConfig.defaultPrinter.toString(actual)
