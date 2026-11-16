@@ -30,7 +30,7 @@ public class NegativePushPopApiTests {
     private static void checkLocal(SMT.Configuration config, ISolver solver) {
         IExpr.IFactory f = config.exprFactory;
         ICommand.IFactory cf = config.commandFactory;
-        Assert.assertTrue(solver.set_logic("QF_UF", null).isOK());
+        Assert.assertTrue(solver.set_logic(null, "QF_UF").isOK());
         assertNegativeError(solver.push(-1));
         assertNegativeError(solver.pop(-1));
         assertNegativeError(cf.push(f.numeral(-1)).execute(solver));
@@ -65,7 +65,7 @@ public class NegativePushPopApiTests {
             { solverProcess = fake; }
         };
         fake.reply = "success\n";
-        Assert.assertTrue(solver.set_logic("QF_UF", null).isOK());
+        Assert.assertTrue(solver.set_logic(null, "QF_UF").isOK());
         for (String cmd : new String[]{"push", "pop"}) {
             fake.reply = "(error \"line 2 column 5: invalid " + cmd + " command\")\n";
             IResponse r = cmd.equals("push") ? solver.push(-1) : solver.pop(-1);

@@ -59,7 +59,7 @@ public class ApiSortParameterNamesTests {
 
     /** define-sort T (A) (Array A Bool); (T Bool) is (Array Bool Bool) */
     private void defineSort(ISolver s) {
-        ok(s.set_logic("ALL", null));
+        ok(s.set_logic(null, "ALL"));
         ISort.IParameter a = sf.createSortParameter(f.symbol("A"));
         ok(cf.define_sort(f.symbol("T"), Arrays.asList(a), named("Array", named("A"), sf.Bool())).execute(s));
         ok(cf.declare_const(f.symbol("x"), named("T", sf.Bool())).execute(s));
@@ -70,7 +70,7 @@ public class ApiSortParameterNamesTests {
 
     /** declare-fun par (P) (g P P); (g 1) is an Int */
     private void declareFunPar(ISolver s) {
-        ok(s.set_logic("ALL", null));
+        ok(s.set_logic(null, "ALL"));
         ISort.IParameter p = sf.createSortParameter(f.symbol("P"));
         ok(new C_declare_fun(f.symbol("g"), Arrays.asList(named("P")), named("P"), List.of(), Arrays.asList(p)).execute(s));
         IExpr g1 = f.fcn(f.symbol("g"), f.numeral(1));

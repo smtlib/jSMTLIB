@@ -50,11 +50,11 @@ public class LRA extends Logic {
                 IQualifiedIdentifier fcn = e.head();
                 if (Utils.MULT.equals(fcn)) {
                     List<IExpr> factors = nonCoefficients(e, LRA.this::isConst);
-                    if (factors.size() > 1) throw restrictionError("The expression must be linear", e);
+                    if (factors.size() > 1) throw restrictionError(e, "The expression must be linear");
                     for (IExpr f : factors) f.accept(this);
                 } else if (Utils.SLASH.equals(fcn)) {
                     if (!nonCoefficients(e, LRA.this::isConst).isEmpty()) {
-                        throw restrictionError("The expression must be linear", e);
+                        throw restrictionError(e, "The expression must be linear");
                     }
                 } else {
                     super.visit(e); // checks all the arguments

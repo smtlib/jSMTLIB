@@ -24,7 +24,7 @@ public class QF_AUFLIA extends Logic {
 
     public void validExpression(IExpr expression) throws IVisitor.VisitorException {
         noQuantifiers(expression);
-        if (!isLinearInteger(expression)) throw new IVisitor.VisitorException("Integer expressions must be linear in this logic",expression.pos());
+        if (!isLinearInteger(expression)) throw new IVisitor.VisitorException(expression.pos(),"Integer expressions must be linear in this logic");
     }
 
     @Override

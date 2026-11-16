@@ -98,7 +98,7 @@ public class SolverZ343PushPopStackDepthBugTest {
         // rejection message for this exact scenario.
         canned.add("(error \"line 3 column 6: invalid pop command, argument is greater than the current stack depth\")\n");
         TestableSolver solver = new TestableSolver(new SMT.Configuration(), canned);
-        solver.set_logic("QF_UF", null);
+        solver.set_logic(null, "QF_UF");
 
         IResponse r = solver.pop(1);
 
@@ -120,10 +120,10 @@ public class SolverZ343PushPopStackDepthBugTest {
         SMT.Configuration config = new SMT.Configuration();
         config.relax = true;
         TestableSolver solver = new TestableSolver(config, canned);
-        solver.set_logic("QF_UF", null);
+        solver.set_logic(null, "QF_UF");
         solver.push(2);
 
-        IResponse r = solver.set_logic("QF_UF", null);
+        IResponse r = solver.set_logic(null, "QF_UF");
 
         Assert.assertTrue("z3-4.3's own rejection must be the response", r.isError());
         for (String s : solver.fake.sent) Assert.assertFalse("no pop may be sent: " + s, s.contains("pop"));
@@ -152,10 +152,10 @@ public class SolverZ343PushPopStackDepthBugTest {
         canned.add("success\n"); // (reset)
         canned.add("success\n"); // (set-logic ...)
         TestableSolver solver = new TestableSolver(new SMT.Configuration(), canned);
-        solver.set_logic("QF_UF", null);
+        solver.set_logic(null, "QF_UF");
         solver.reset();
 
-        IResponse r = solver.set_logic("QF_UF", null);
+        IResponse r = solver.set_logic(null, "QF_UF");
 
         Assert.assertFalse(r.isError());
         Assert.assertEquals(3, solver.fake.sent.size());
@@ -167,7 +167,7 @@ public class SolverZ343PushPopStackDepthBugTest {
         canned.add("success\n"); // (set-logic ...)
         canned.add("success\n"); // (assert ...)
         TestableSolver solver = new TestableSolver(new SMT.Configuration(), canned);
-        solver.set_logic("QF_UF", null);
+        solver.set_logic(null, "QF_UF");
 
         IResponse r = solver.assertExpr(new SMT.Configuration().exprFactory.symbol("true"));
 

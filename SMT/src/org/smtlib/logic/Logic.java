@@ -31,11 +31,11 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
         IVisitor<Void> visitor = new IVisitor.TreeVisitor<Void>() {
             @Override
             public Void visit(IForall e) throws IVisitor.VisitorException {
-                throw new IVisitor.VisitorException("A quantified expression is not allowed in the " + logicName + " logic",e.pos());
+                throw new IVisitor.VisitorException(e.pos(),"A quantified expression is not allowed in the " + logicName + " logic");
             }
             @Override
             public Void visit(IExists e) throws IVisitor.VisitorException {
-                throw new IVisitor.VisitorException("A quantified expression is not allowed in the " + logicName + " logic",e.pos());
+                throw new IVisitor.VisitorException(e.pos(),"A quantified expression is not allowed in the " + logicName + " logic");
             }
         };
         expression.accept(visitor);
@@ -46,7 +46,7 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
             @Override
             public Void visit(IExpr.IFcnExpr e) throws IVisitor.VisitorException {
                 if (Utils.EXP.equals(e.head()))
-                    throw new IVisitor.VisitorException("The exponentiation operator ** is not allowed in the " + logicName + " logic", e.pos());
+                    throw new IVisitor.VisitorException(e.pos(), "The exponentiation operator ** is not allowed in the " + logicName + " logic");
                 return super.visit(e);
             }
         };
@@ -56,12 +56,12 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
     public void noFunctions(IExpr.IIdentifier id, List<ISort> argSorts, ISort resultSort, /*@Nullable*/IExpr definition) throws IVisitor.VisitorException {
         // May declare constants, but not functions without definitions
         if (argSorts.size() != 0 && definition == null) 
-            throw new IVisitor.VisitorException("Declarations of uninterpreted functions are not allowed in this logic",id.pos());
+            throw new IVisitor.VisitorException(id.pos(),"Declarations of uninterpreted functions are not allowed in this logic");
 
     }
 
     public void noSorts(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {
-        if (expr == null) throw new IVisitor.VisitorException("New sorts are not allowed in this logic",id.pos());
+        if (expr == null) throw new IVisitor.VisitorException(id.pos(),"New sorts are not allowed in this logic");
     }
 
     /** Builds a VisitorException for a restriction violation (e.g. QF_IDL/QF_RDL's
@@ -69,8 +69,8 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
      *  expression's own printed text, not just an abstract description of the rule it
      *  broke -- several subclasses' checks used to throw the bare message alone, each with
      *  its own "// FIXME" noting the expression text was meant to be included but wasn't. */
-    protected IVisitor.VisitorException restrictionError(String message, IExpr e) {
-        return new IVisitor.VisitorException(message + ": " + smtConfig.defaultPrinter.toString(e), e.pos());
+    protected IVisitor.VisitorException restrictionError(IExpr e, String message) {
+        return new IVisitor.VisitorException(e.pos(), message + ": " + smtConfig.defaultPrinter.toString(e));
     }
 
     /** Creates the sort expression {@code name(params...)}, e.g. {@code sortApp("Array", intSort, intSort)}
@@ -97,7 +97,7 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
         if (!(s instanceof ISort.IApplication)) return;
         ISort.IApplication app = (ISort.IApplication) s;
         if (Utils.ARRAY.equals(app.family().headSymbol()) && !hasSortParameter(app) && !allowedArraySort(app)) {
-            throw new IVisitor.VisitorException("Array sorts must be " + allowedArraySorts() + " in this logic", pos);
+            throw new IVisitor.VisitorException(pos, "Array sorts must be " + allowedArraySorts() + " in this logic");
         }
         for (ISort param : app.parameters()) {
             checkArraySorts(param, pos);
@@ -201,10 +201,10 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
                     if (Utils.MULT.equals(fcn)) {
                         List<IExpr> factors = nonCoefficients(e, Logic.this::isInteger);
                         if (factors.size() > 1 || (factors.size() == 1 && !isFreeConstant(factors.get(0))))
-                            throw new IVisitor.VisitorException("nonlinear", null);
+                            throw new IVisitor.VisitorException(null, "nonlinear");
                         return null;
                     } else if (Utils.DIV.equals(fcn) || Utils.MOD.equals(fcn) || Utils.ABS.equals(fcn)) {
-                        throw new IVisitor.VisitorException("nonlinear", null);
+                        throw new IVisitor.VisitorException(null, "nonlinear");
                     }
                     return super.visit(e);
                 }
@@ -225,11 +225,11 @@ public abstract class Logic extends SMTExpr.Logic implements ILanguage {
                     if (Utils.MULT.equals(fcn)) {
                         List<IExpr> factors = nonCoefficients(e, Logic.this::isRealConst);
                         if (factors.size() > 1 || (factors.size() == 1 && !isFreeConstant(factors.get(0))))
-                            throw new IVisitor.VisitorException("nonlinear", null);
+                            throw new IVisitor.VisitorException(null, "nonlinear");
                         return null;
                     } else if (Utils.SLASH.equals(fcn)) {
                         if (!nonCoefficients(e, Logic.this::isRealConst).isEmpty())
-                            throw new IVisitor.VisitorException("nonlinear", null);
+                            throw new IVisitor.VisitorException(null, "nonlinear");
                         return null;
                     }
                     return super.visit(e);

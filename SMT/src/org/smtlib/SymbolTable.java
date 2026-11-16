@@ -351,17 +351,17 @@ public final class SymbolTable {
             IParameterizedIdentifier pf = (IParameterizedIdentifier)name;
             if (bitVectorTheorySet && Utils.BITVEC_SYM.equals(pf.head())) {
                 if (pf.indices().size() != 1 || !(pf.indices().get(0) instanceof INumeral)) {
-                    return smtConfig.sortFactory.createErrorDefinition(name,"A bit-vector sort must have exactly one numeral",
-                            pf.indices().size() > 1 ? pf.indices().get(1).pos()
+                    return smtConfig.sortFactory.createErrorDefinition(name,pf.indices().size() > 1 ? pf.indices().get(1).pos()
                                     : pf.indices().size() == 1 ? pf.indices().get(0).pos()
-                                    : pf.head().pos());
+                                    : pf.head().pos(),
+                            "A bit-vector sort must have exactly one numeral");
                 }
                 String tooLarge = Utils.indexTooLarge((INumeral) pf.indices().get(0));
                 if (tooLarge != null) {
-                    return smtConfig.sortFactory.createErrorDefinition(name,tooLarge,pf.indices().get(0).pos());
+                    return smtConfig.sortFactory.createErrorDefinition(name,pf.indices().get(0).pos(),tooLarge);
                 }
                 if (((INumeral) pf.indices().get(0)).intValue() == 0) {
-                    return smtConfig.sortFactory.createErrorDefinition(name,"A bit-vector sort must have a length of at least 1",pf.indices().get(0).pos());
+                    return smtConfig.sortFactory.createErrorDefinition(name,pf.indices().get(0).pos(),"A bit-vector sort must have a length of at least 1");
                 }
                 ISort.IDefinition def = smtConfig.sortFactory.createSortFamily(name,smtConfig.exprFactory.numeral(0),null);
                 sorts.put(name, def);
@@ -369,22 +369,22 @@ public final class SymbolTable {
             }
             if (floatingPointTheorySet && Utils.FLOATINGPOINT_SYM.equals(pf.head())) {
                 if (pf.indices().size() != 2 || !(pf.indices().get(0) instanceof INumeral) || !(pf.indices().get(1) instanceof INumeral)) {
-                    return smtConfig.sortFactory.createErrorDefinition(name,"A FloatingPoint sort must have exactly two numerals (eb sb)",
-                            pf.indices().size() == 2 && !(pf.indices().get(0) instanceof INumeral) ? pf.indices().get(0).pos()
+                    return smtConfig.sortFactory.createErrorDefinition(name,pf.indices().size() == 2 && !(pf.indices().get(0) instanceof INumeral) ? pf.indices().get(0).pos()
                                     : pf.indices().size() > 0 ? pf.indices().get(pf.indices().size()-1).pos()
-                                    : pf.head().pos());
+                                    : pf.head().pos(),
+                            "A FloatingPoint sort must have exactly two numerals (eb sb)");
                 }
                 for (int i = 0; i < 2; i++) {
                     String tooLarge = Utils.indexTooLarge((INumeral) pf.indices().get(i));
                     if (tooLarge != null) {
-                        return smtConfig.sortFactory.createErrorDefinition(name,tooLarge,pf.indices().get(i).pos());
+                        return smtConfig.sortFactory.createErrorDefinition(name,pf.indices().get(i).pos(),tooLarge);
                     }
                 }
                 int eb = ((INumeral) pf.indices().get(0)).intValue();
                 int sb = ((INumeral) pf.indices().get(1)).intValue();
                 if (eb <= 1 || sb <= 1) {
-                    return smtConfig.sortFactory.createErrorDefinition(name,"A FloatingPoint sort must have exponent and significand sizes greater than 1",
-                            (eb <= 1 ? pf.indices().get(0) : pf.indices().get(1)).pos());
+                    return smtConfig.sortFactory.createErrorDefinition(name,(eb <= 1 ? pf.indices().get(0) : pf.indices().get(1)).pos(),
+                            "A FloatingPoint sort must have exponent and significand sizes greater than 1");
                 }
                 ISort.IDefinition def = smtConfig.sortFactory.createSortFamily(name,smtConfig.exprFactory.numeral(0),null);
                 sorts.put(name, def);

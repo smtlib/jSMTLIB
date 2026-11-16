@@ -291,7 +291,7 @@ public class AbstractSolver implements ISolver {
             // true/false can't just be assumed to be "false" the way the previous
             // !value.toString().equals("true") check silently did.
             if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
-                return smtConfig.responseFactory.error("The value of the " + key.value() + " option must be 'true' or 'false'", value.pos());
+                return smtConfig.responseFactory.error(value.pos(), "The value of the " + key.value() + " option must be 'true' or 'false'");
             }
             smtConfig.nosuccess = Utils.FALSE.equals(value);
             return successOrEmpty(smtConfig);
@@ -589,7 +589,7 @@ public class AbstractSolver implements ISolver {
         @Override public boolean isOK() { return false; }
         @Override public boolean isError() { return false; }
         @Override public <T> T accept(IVisitor<T> v) throws IVisitor.VisitorException {
-            throw new IVisitor.VisitorException("A pipelined response has not been read yet", null);
+            throw new IVisitor.VisitorException(null, "A pipelined response has not been read yet");
         }
         @Override public String toString() { return response == null ? "<pending>" : response.toString(); }
     }
@@ -1304,9 +1304,9 @@ public class AbstractSolver implements ISolver {
 
     /** A set-logic the solver accepts ends sat or unsat mode; one it rejects (as SMT-LIB requires
      *  outside start mode) changes nothing.
-     *  @see org.smtlib.ISolver#set_logic(String,IPos) */
+     *  @see org.smtlib.ISolver#set_logic(IPos,String) */
     @Override
-    public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
+    public IResponse set_logic(/*@Nullable*/ IPos pos, String logicName) {
         return sendChange(StackChange.SET_LOGIC, smtConfig.commandFactory.set_logic(smtConfig.exprFactory.symbol(logicName)));
     }
 
@@ -1437,7 +1437,7 @@ public class AbstractSolver implements ISolver {
             try {
                 smtConfig.log.setRegularOutputChannel(name);
             } catch (IOException e) {
-                return smtConfig.responseFactory.error("Failed to open regular output: " + e.getMessage(), value.pos());
+                return smtConfig.responseFactory.error(value.pos(), "Failed to open regular output: " + e.getMessage());
             }
             options.put(option, value);
             return successOrEmpty(smtConfig);
@@ -1447,7 +1447,7 @@ public class AbstractSolver implements ISolver {
             try {
                 smtConfig.log.setDiagnosticOutputChannel(name);
             } catch (IOException e) {
-                return smtConfig.responseFactory.error("Failed to open diagnostic output: " + e.getMessage(), value.pos());
+                return smtConfig.responseFactory.error(value.pos(), "Failed to open diagnostic output: " + e.getMessage());
             }
             options.put(option, value);
             return successOrEmpty(smtConfig);

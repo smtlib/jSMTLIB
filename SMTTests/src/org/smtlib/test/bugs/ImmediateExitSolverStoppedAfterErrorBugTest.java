@@ -52,7 +52,7 @@ public class ImmediateExitSolverStoppedAfterErrorBugTest {
         Assert.assertFalse(solver.start().isError());
         try {
             Assert.assertFalse(solver.set_option(f.keyword(":produce-models"), f.symbol("true")).isError());
-            Assert.assertFalse(solver.set_logic("ALL", null).isError());
+            Assert.assertFalse(solver.set_logic(null, "ALL").isError());
             ISort intSort = config.sortFactory.createSortExpression(f.symbol("Int"), new ISort[0]);
             Assert.assertFalse(solver.declare_fun(config.commandFactory.declare_fun(f.symbol("x"), new ArrayList<>(), intSort)).isError());
             Assert.assertEquals("sat", config.defaultPrinter.toString(solver.check_sat()));

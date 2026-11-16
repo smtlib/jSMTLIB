@@ -64,7 +64,7 @@ public class SolverFactoryTests {
         ISolver solver = config.createSolver("smtinterpol", null);
         try {
             Assert.assertFalse("start", solver.start().isError());
-            Assert.assertEquals(config.responseFactory.success(), solver.set_logic("QF_UF", null));
+            Assert.assertEquals(config.responseFactory.success(), solver.set_logic(null, "QF_UF"));
             Assert.assertEquals(config.responseFactory.sat(), solver.check_sat());
         } finally {
             solver.exit();
