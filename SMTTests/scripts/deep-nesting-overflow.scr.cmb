@@ -1,0 +1,5 @@
+success
+(set-logic ALL)(assert (not (not (not (not (not (not (not (not (not (not (not (not (not (not (not (not (not (not (not (not (not (not (not (not (not (n...
+                ^^^^^^
+(error "Stack overflow occurred while parsing input")
+"after"

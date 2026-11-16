@@ -322,7 +322,7 @@ public class Parser extends Lexer implements IParser {
                         if (target instanceof IOException) {
                             throw (IOException) target;
                         }
-                        ex.printStackTrace(smtConfig.log.getDiag());
+                        // Resource exhaustion is reported by its error alone; a stack trace is noise
                         if (target instanceof StackOverflowError) {
                             lastError = smtConfig.log.logError(smtConfig.responseFactory.error(sym.pos(), "Stack overflow occurred while parsing input"));
                             throw new ParserException(null,null);
@@ -330,6 +330,7 @@ public class Parser extends Lexer implements IParser {
                             lastError = smtConfig.log.logError(smtConfig.responseFactory.error(sym.pos(), "Out of memory error occurred while parsing input"));
                             throw new ParserException(null,null);
                         } else {
+                            ex.printStackTrace(smtConfig.log.getDiag());
                             lastError = smtConfig.log.logError(smtConfig.responseFactory.error(sym.pos(), target.toString()));
                             target.printStackTrace(smtConfig.log.getDiag());
                         }
