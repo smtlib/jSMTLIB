@@ -49,13 +49,13 @@ public class C_what extends Command implements Iwhat {
     /** Parses the input concrete S-expression syntax to produce a command instance */
     static public C_what parse(Parser p) throws IOException, ParserException {
         if (!p.smt().relax) {
-            throw error(p.smt(),"Invalid SMT-LIB command: " + commandName, p.commandName.pos());
+            throw error(p.smt(),p.commandName.pos(), "Invalid SMT-LIB command: " + commandName);
         }
         List<IIdentifier> ids = new LinkedList<IIdentifier>();
         while (!p.isRP()) {
             if (p.isEOD()) {
-                throw new ParserException("Unexpected end of data while parsing a what command",
-                        p.savedlp == null ? null : p.pos(p.savedlp.pos().charStart(),p.currentPos()));
+                throw new ParserException(p.savedlp == null ? null : p.pos(p.savedlp.pos().charStart(),p.currentPos()),
+                        "Unexpected end of data while parsing a what command");
             }
             ids.add(p.parseIdentifier());
         }
@@ -78,7 +78,7 @@ public class C_what extends Command implements Iwhat {
     public IResponse execute(ISolver solver) {
         SMT.Configuration smtConfig = solver.smt();
         if (!(solver instanceof Solver_test)) {
-            return smtConfig.responseFactory.error("This kind of solver (" + solver.getClass() + ") is not able to execute a what command",null);
+            return smtConfig.responseFactory.error(null,"This kind of solver (" + solver.getClass() + ") is not able to execute a what command");
         }
         IPrinter printer = smtConfig.defaultPrinter;
         SymbolTable symTable = ((Solver_test)solver).symTable; 

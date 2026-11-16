@@ -40,7 +40,7 @@ public class ParseExpressionErrors {
         } catch (ParserException ex) {
             // Reported here, at the top level, as parseCommand() does; the lexer reports
             // nothing itself (#148).
-            if (ex.getMessage() != null) config.log.logError(config.responseFactory.error(ex.getMessage(),ex.pos()));
+            if (ex.getMessage() != null) config.log.logError(config.responseFactory.error(ex.pos(),ex.getMessage()));
         }
         Assert.assertTrue("Response was not an error",listener.msgs.get(0) instanceof IResponse.IError);
         // Fails loudly rather than silently checking only the first of several errors, the
@@ -69,7 +69,7 @@ public class ParseExpressionErrors {
         } catch (ParserException ex) {
             // Reported here, at the top level, as parseCommand() does; the lexer reports
             // nothing itself (#148).
-            if (ex.getMessage() != null) config.log.logError(config.responseFactory.error(ex.getMessage(),ex.pos()));
+            if (ex.getMessage() != null) config.log.logError(config.responseFactory.error(ex.pos(),ex.getMessage()));
         }
         StringWriter sw = new StringWriter();
         if (e != null) org.smtlib.sexpr.Printer.write(config,sw,e);

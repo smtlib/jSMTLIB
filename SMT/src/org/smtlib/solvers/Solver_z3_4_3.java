@@ -463,7 +463,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     }
 
     @Override
-    public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
+    public IResponse set_logic(/*@Nullable*/ IPos pos, String logicName) {
         // Which logics are accepted is left to z3 4.3 (it answers success, ignoring a logic it does not know)
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#set-logic " + logicName);
         boolean all = logicName.equals("ALL");
@@ -482,7 +482,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             if (!r.isError()) logicSent = true;
             return r;
         } catch (IOException e) {
-            return sendFailure(e, smtConfig.responseFactory.error("Error writing to Z3 solver: " + e, pos));
+            return sendFailure(e, smtConfig.responseFactory.error(pos, "Error writing to Z3 solver: " + e));
         }
     }
 
@@ -590,7 +590,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     public IResponse declare_const(Ideclare_const cmd) {
         if (!logicSet) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-const command is issued", cmd.pos());
+            return smtConfig.responseFactory.error(cmd.pos(), "The logic must be set before a declare-const command is issued");
         }
         try {
             return recordChange(StackChange.DECLARE_FUN, send(Shape.SUCCESS, translate(cmd)));
@@ -604,7 +604,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     public IResponse declare_fun(Ideclare_fun cmd) {
         if (!logicSet) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-fun command is issued", cmd.pos());
+            return smtConfig.responseFactory.error(cmd.pos(), "The logic must be set before a declare-fun command is issued");
         }
         try {
             return recordChange(StackChange.DECLARE_FUN, send(Shape.SUCCESS, translate(cmd)));
@@ -619,7 +619,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     public IResponse define_fun(Idefine_fun cmd) {
         if (!logicSet) {
-            return smtConfig.responseFactory.error("The logic must be set before a " + cmd.commandName() + " command is issued", cmd.pos());
+            return smtConfig.responseFactory.error(cmd.pos(), "The logic must be set before a " + cmd.commandName() + " command is issued");
         }
         try {
             return recordChange(StackChange.DEFINE_FUN, send(Shape.SUCCESS, translate(cmd)));
@@ -633,7 +633,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     public IResponse declare_sort(Ideclare_sort cmd) {
         if (!logicSet) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-sort command is issued", cmd.pos());
+            return smtConfig.responseFactory.error(cmd.pos(), "The logic must be set before a declare-sort command is issued");
         }
         try {
             return recordChange(StackChange.DECLARE_SORT, send(Shape.SUCCESS, translate(cmd)));
@@ -647,7 +647,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
     @Override
     public IResponse define_sort(Idefine_sort cmd) {
         if (!logicSet) {
-            return smtConfig.responseFactory.error("The logic must be set before a define-sort command is issued", cmd.pos());
+            return smtConfig.responseFactory.error(cmd.pos(), "The logic must be set before a define-sort command is issued");
         }
         try {
             return recordChange(StackChange.DEFINE_SORT, send(Shape.SUCCESS, translate(cmd)));
@@ -689,7 +689,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             return sendList("(get-unsat-core)", p -> {
                 List<IExpr.ISymbol> names = new java.util.ArrayList<>();
                 for (IExpr e : unsatCoreElements(p.parseTermList())) {
-                    if (!(e instanceof IExpr.ISymbol name)) throw new ParserException("not a label: " + e, null);
+                    if (!(e instanceof IExpr.ISymbol name)) throw new ParserException(null, "not a label: " + e);
                     names.add(name);
                 }
                 return smtConfig.responseFactory.get_unsat_core_response(names);
@@ -750,7 +750,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
             // z3 4.3 rejects - with more than two arguments ("wrong number of arguments"), so it is
             // written left-associated. (Its other n-ary operators are accepted as is.)
             Iterator<IExpr> iter = e.args().iterator();
-            if (!iter.hasNext()) throw new VisitorException("Did not expect an empty argument list",e.pos());
+            if (!iter.hasNext()) throw new VisitorException(e.pos(),"Did not expect an empty argument list");
             IQualifiedIdentifier fcn = e.head();
             int length = e.args().size();
             if (length > 2 && (fcn instanceof IIdentifier) && fcn.toString().equals("-")) {
@@ -776,7 +776,7 @@ public class Solver_z3_4_3 extends AbstractSolver implements ISolver {
                     iter.next().accept(this);
                     w.append(")");
                 } catch (IOException ex) {
-                    throw new IVisitor.VisitorException(ex,null); // FIXME - null ?
+                    throw new IVisitor.VisitorException(null,ex); // FIXME - null ?
                 }
             }
         }

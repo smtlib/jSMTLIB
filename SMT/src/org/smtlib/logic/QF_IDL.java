@@ -29,20 +29,20 @@ public class QF_IDL extends DifferenceLogic {
     protected void checkAtom(IExpr.IFcnExpr e, IExpr lhs, IExpr rhs) throws IVisitor.VisitorException {
         if (lhs instanceof ISymbol) {
             if (rhs instanceof ISymbol) return;
-            throw restrictionError("rhs must be a symbol if the lhs is a symbol", e);
+            throw restrictionError(e, "rhs must be a symbol if the lhs is a symbol");
         }
         if (!(lhs instanceof IExpr.IFcnExpr) || !Utils.MINUS.equals(((IExpr.IFcnExpr)lhs).head())) {
-            throw restrictionError("lhs must be a symbol or a difference", e);
+            throw restrictionError(e, "lhs must be a symbol or a difference");
         }
         if (!isDifferenceOfSymbols(lhs)) {
-            throw restrictionError("differences must be difference of symbols", e);
+            throw restrictionError(e, "differences must be difference of symbols");
         }
         if (rhs instanceof INumeral) return;
         if (!(rhs instanceof IExpr.IFcnExpr)) {
-            throw restrictionError("The rhs must be an integer", e);
+            throw restrictionError(e, "The rhs must be an integer");
         }
         if (!isInteger(rhs)) {
-            throw restrictionError("The rhs must be a numeral or negation of numeral", e);
+            throw restrictionError(e, "The rhs must be a numeral or negation of numeral");
         }
     }
 

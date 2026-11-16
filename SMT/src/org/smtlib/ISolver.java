@@ -86,11 +86,11 @@ public interface ISolver {
     void comment(String comment);
 
     /** Sets the logic the solver should use.
-     * @param logicName the name of the logic
      * @param pos source position used only for error messages; may be null
+     * @param logicName the name of the logic
      * @return success or unsupported or an SMT error response
      */
-    IResponse set_logic(String logicName, /*@Nullable*/ IPos pos);
+    IResponse set_logic(/*@Nullable*/ IPos pos, String logicName);
 
     /** Adds the given number of empty assertion-stack frames to the solver state.
      * @param number non-negative number of frames to push

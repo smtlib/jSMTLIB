@@ -41,7 +41,7 @@ public interface IResponse extends INode {
     /** The factory interface for creating the standard IResponse singleton and structured instances. */
     public static interface IFactory {
         IError error(String msg);
-        IError error(String msg, /*@Nullable*//*@ReadOnly*/ IPos pos);
+        IError error(/*@Nullable*//*@ReadOnly*/ IPos pos, String msg);
         IResponse empty();
         IResponse success();
         IResponse unsupported();

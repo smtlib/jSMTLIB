@@ -191,7 +191,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             Translator t = new Translator(smtConfig, "ALL".equals(logicSet), symTable);
             String translatedSexpr = expr.accept(t);
             if (translatedSexpr == null) {
-                return smtConfig.responseFactory.error("Failure in translating expression: " + smtConfig.defaultPrinter.toString(expr), expr.pos());
+                return smtConfig.responseFactory.error(expr.pos(), "Failure in translating expression: " + smtConfig.defaultPrinter.toString(expr));
             }
             conjunction = conjunction + " \n" + translatedSexpr;
             // The definitions of the assertion's :named labels, global as the labels are (#225)
@@ -202,7 +202,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             //String s = solverProcess.sendAndListen("(BG_PUSH ",translatedSexpr," )\r\n");
             //System.out.println("HEARD: " + s);
         } catch (VisitorException e) {
-            return smtConfig.responseFactory.error(e.getMessage(),e.pos);
+            return smtConfig.responseFactory.error(e.pos,e.getMessage());
         }
         return smtConfig.responseFactory.success();
     }
@@ -306,7 +306,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     @Override
     public IResponse define_fun_rec(Idefine_fun_rec cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a define-fun-rec command is issued", cmd.pos());
+            return smtConfig.responseFactory.error(cmd.pos(), "The logic must be set before a define-fun-rec command is issued");
         }
         List<IResponse> list = TypeChecker.checkFcnRec(symTable, isGlobal(), cmd.symbol(),
                 cmd.parameters(), cmd.resultSort(), cmd.expression());
@@ -318,7 +318,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     @Override
     public IResponse define_funs_rec(Idefine_funs_rec cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a define-funs-rec command is issued", cmd.pos());
+            return smtConfig.responseFactory.error(cmd.pos(), "The logic must be set before a define-funs-rec command is issued");
         }
         List<IResponse> list = TypeChecker.checkFcnsRec(symTable, isGlobal(),
                 cmd.declarations(), cmd.bodies());
@@ -339,7 +339,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     @Override
     public IResponse declare_datatype(Ideclare_datatype cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-datatype command is issued", cmd.pos());
+            return smtConfig.responseFactory.error(cmd.pos(), "The logic must be set before a declare-datatype command is issued");
         }
         List<IResponse> nameErrors = TypeChecker.validateDatatypeNames(symTable, smtConfig,
                 Collections.singletonList(cmd.sortDeclaration()),
@@ -352,7 +352,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     @Override
     public IResponse declare_datatypes(Ideclare_datatypes cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-datatypes command is issued", cmd.pos());
+            return smtConfig.responseFactory.error(cmd.pos(), "The logic must be set before a declare-datatypes command is issued");
         }
         List<IResponse> nameErrors = TypeChecker.validateDatatypeNames(symTable, smtConfig,
                 cmd.sortDeclarations(), cmd.datatypes());
@@ -461,7 +461,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             if (isGlobal()) globalAxioms = globalAxioms + " \n" + translate(axiom);
             else conjunction = conjunction + " \n" + translate(axiom);
         } catch (VisitorException e) {
-            return smtConfig.responseFactory.error(e.getMessage(),e.pos);
+            return smtConfig.responseFactory.error(e.pos,e.getMessage());
         }
         checkSatStatus = null;
         return res;
@@ -518,12 +518,12 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     private boolean unknownIncomplete = false;
 
     @Override
-    public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
+    public IResponse set_logic(/*@Nullable*/ IPos pos, String logicName) {
         if (!supportedLogics.matcher(logicName).matches()) {
-            return smtConfig.responseFactory.error("The simplify solver does not support the " + logicName + " logic",pos);
+            return smtConfig.responseFactory.error(pos,"The simplify solver does not support the " + logicName + " logic");
         }
         boolean lSet = logicSet != null;
-        IResponse status = setLogicLocal(logicName,pos);
+        IResponse status = setLogicLocal(pos,logicName);
         if (!status.isOK()) return status;
         if (lSet) {
             pushesStack.clear();
@@ -697,7 +697,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     @Override
     public IResponse declare_const(Ideclare_const cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-const command is issued", cmd.pos());
+            return smtConfig.responseFactory.error(cmd.pos(), "The logic must be set before a declare-const command is issued");
         }
         String encodedName = encode(cmd.symbol());
         List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), new LinkedList<ISort>(), cmd.resultSort(),cmd.pos());
@@ -709,7 +709,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
                 addRange(cmd.symbol(), 0, cmd.resultSort());
                 return smtConfig.responseFactory.success();
             } else {
-                return smtConfig.responseFactory.error("Symbol " + encodedName + " is already defined",cmd.symbol().pos());
+                return smtConfig.responseFactory.error(cmd.symbol().pos(),"Symbol " + encodedName + " is already defined");
             }
         } else {
             return list.get(0);
@@ -723,13 +723,13 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
      *  restructuring. */
     private IResponse declareFunLocal(Ideclare_fun cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-fun command is issued", cmd.pos());
+            return smtConfig.responseFactory.error(cmd.pos(), "The logic must be set before a declare-fun command is issued");
         }
         if (cmd.parameters() != null && !smtConfig.relax) {
-            return smtConfig.responseFactory.error("A par-polymorphic function declaration requires --relax", cmd.symbol().pos());
+            return smtConfig.responseFactory.error(cmd.symbol().pos(), "A par-polymorphic function declaration requires --relax");
         }
         if (!cmd.attributes().isEmpty() && !smtConfig.relax) {
-            return smtConfig.responseFactory.error("Function attributes on declare-fun require --relax", cmd.symbol().pos());
+            return smtConfig.responseFactory.error(cmd.symbol().pos(), "Function attributes on declare-fun require --relax");
         }
         String encodedName = encode(cmd.symbol());
         List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.parameters(), cmd.argSorts(), cmd.resultSort(), cmd.pos());
@@ -737,12 +737,12 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             ISort.IFcnSort fcnSort = smtConfig.sortFactory.createFcnSort(cmd.argSorts().toArray(new ISort[cmd.argSorts().size()]),cmd.resultSort());
             SymbolTable.Entry entry = new SymbolTable.Entry(cmd.symbol(),fcnSort,cmd.attributes(),cmd.parameters());
             String bad = symTable.checkAttributes(entry);
-            if (bad != null) return smtConfig.responseFactory.error(bad, cmd.symbol().pos());
+            if (bad != null) return smtConfig.responseFactory.error(cmd.symbol().pos(), bad);
             if (symTable.add(entry, isGlobal(), cmd.parameters() != null || smtConfig.relax)) {
                 checkSatStatus = null;
                 return smtConfig.responseFactory.success();
             } else {
-                return smtConfig.responseFactory.error("Symbol " + encodedName + " is already defined",cmd.symbol().pos());
+                return smtConfig.responseFactory.error(cmd.symbol().pos(),"Symbol " + encodedName + " is already defined");
             }
         } else {
             return list.get(0);
@@ -759,7 +759,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
      *  as {@link #declareFunLocal}, for the same reason. */
     private IResponse defineFunLocal(Idefine_fun cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a " + cmd.commandName() + " command is issued", cmd.pos());
+            return smtConfig.responseFactory.error(cmd.pos(), "The logic must be set before a " + cmd.commandName() + " command is issued");
         }
         String encodedName = encode(cmd.symbol());
         List<IResponse> list = TypeChecker.checkFcn(symTable, cmd.symbol(), cmd.parameters(),cmd.resultSort(),cmd.expression());
@@ -776,7 +776,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
                 checkSatStatus = null;
                 return smtConfig.responseFactory.success();
             } else {
-                return smtConfig.responseFactory.error("Symbol " + encodedName + " is already defined",cmd.symbol().pos());
+                return smtConfig.responseFactory.error(cmd.symbol().pos(),"Symbol " + encodedName + " is already defined");
             }
         } else {
             return list.get(0);
@@ -787,15 +787,15 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     @Override
     public IResponse declare_sort(Ideclare_sort cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-sort command is issued", cmd.pos());
+            return smtConfig.responseFactory.error(cmd.pos(), "The logic must be set before a declare-sort command is issued");
         }
         List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable,cmd.sortSymbol(),null,null);
         boolean b = list.isEmpty();
         if (b) {
             INumeral sortArity = cmd.arity();
             b = symTable.addSortDefinition(cmd.sortSymbol(), sortArity, null, isGlobal());
-            if (!b) return smtConfig.responseFactory.error("The identifier is already declared to be a sort: " +
-                    smtConfig.defaultPrinter.toString(cmd.sortSymbol()), cmd.sortSymbol().pos());
+            if (!b) return smtConfig.responseFactory.error(cmd.sortSymbol().pos(), "The identifier is already declared to be a sort: " +
+                    smtConfig.defaultPrinter.toString(cmd.sortSymbol()));
             checkSatStatus = null;
             return smtConfig.responseFactory.success();
         } else {
@@ -808,7 +808,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     @Override
     public IResponse declare_sort_parameter(Ideclare_sort_parameter cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a declare-sort-parameter command is issued", cmd.pos());
+            return smtConfig.responseFactory.error(cmd.pos(), "The logic must be set before a declare-sort-parameter command is issued");
         }
         return smtConfig.responseFactory.unsupported();
     }
@@ -817,14 +817,14 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     @Override
     public IResponse define_sort(Idefine_sort cmd) {
         if (logicSet == null) {
-            return smtConfig.responseFactory.error("The logic must be set before a define-sort command is issued", cmd.pos());
+            return smtConfig.responseFactory.error(cmd.pos(), "The logic must be set before a define-sort command is issued");
         }
         List<IResponse> list = TypeChecker.checkSortAbbreviation(symTable,cmd.sortSymbol(),cmd.parameters(),cmd.expression());
         boolean b = list.isEmpty();
         if (b) {
             b = symTable.addSortDefinition(cmd.sortSymbol(), cmd.parameters(), cmd.expression(), isGlobal());
-            if (!b) return smtConfig.responseFactory.error("The identifier is already declared to be a sort: " +
-                smtConfig.defaultPrinter.toString(cmd.sortSymbol()), cmd.sortSymbol().pos());
+            if (!b) return smtConfig.responseFactory.error(cmd.sortSymbol().pos(), "The identifier is already declared to be a sort: " +
+                smtConfig.defaultPrinter.toString(cmd.sortSymbol()));
             else {
                 checkSatStatus = null;
                 return smtConfig.responseFactory.success();
@@ -878,8 +878,8 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         return smtConfig.responseFactory.success();
     }
 
-    /** See {@link Solver_test#set_logic(String,IPos)}. */
-    private IResponse setLogicLocal(String logicName, /*@Nullable*/ IPos pos) {
+    /** See {@link Solver_test#set_logic(IPos,String)}. */
+    private IResponse setLogicLocal(/*@Nullable*/ IPos pos, String logicName) {
         if (smtConfig.verbose != 0) smtConfig.log.logDiag("#set-logic " + logicName);
         if (logicSet != null) {
             if (!smtConfig.relax) return smtConfig.responseFactory.error("Logic is already set");
@@ -899,7 +899,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         String option = key.value();
         if (Utils.PRINT_SUCCESS.equals(option)) {
             if (!(Utils.TRUE.equals(value) || Utils.FALSE.equals(value))) {
-                return smtConfig.responseFactory.error("The value of the " + option + " option must be 'true' or 'false'", value.pos());
+                return smtConfig.responseFactory.error(value.pos(), "The value of the " + option + " option must be 'true' or 'false'");
             } else {
                 smtConfig.nosuccess = Utils.FALSE.equals(value);
             }
@@ -913,14 +913,14 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             try {
                 smtConfig.log.setDiagnosticOutputChannel(name);
             } catch (java.io.IOException e) {
-                return smtConfig.responseFactory.error("Failed to open or write to the diagnostic output " + e.getMessage(),value.pos());
+                return smtConfig.responseFactory.error(value.pos(),"Failed to open or write to the diagnostic output " + e.getMessage());
             }
         } else if (Utils.REGULAR_OUTPUT_CHANNEL.equals(option)) {
             String name = (value instanceof IStringLiteral)?((IStringLiteral)value).value() : Utils.STDOUT;
             try {
                 smtConfig.log.setRegularOutputChannel(name);
             } catch (java.io.IOException e) {
-                return smtConfig.responseFactory.error("Failed to open or write to the regular output " + e.getMessage(),value.pos());
+                return smtConfig.responseFactory.error(value.pos(),"Failed to open or write to the regular output " + e.getMessage());
             }
         }
         if (Utils.INTERACTIVE_MODE.equals(option) && !smtConfig.isVersion(SMTLIB.V20)) option = Utils.PRODUCE_ASSERTIONS;
@@ -933,7 +933,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
     public IResponse set_info(IKeyword key, IAttributeValue value) {
         // set-info takes any attribute and does not affect get-info
         String invalid = Utils.invalidSetInfoValue(key, value);
-        if (invalid != null) return smtConfig.responseFactory.error(invalid, value.pos());
+        if (invalid != null) return smtConfig.responseFactory.error(value.pos(), invalid);
         if (!Utils.setInfoKeywords.contains(key)) {
             smtConfig.log.logWarning(smtConfig.defaultPrinter.toString(key) + " is not a standard set-info attribute", key.pos());
         }
@@ -1094,19 +1094,19 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             if (!(s instanceof IApplication)) return;
             IApplication a = (IApplication)s;
             String n = a.family().headSymbol().value();
-            if (n.equals(Utils.ARROW.value())) throw unsupported("higher-order functions", pos);
-            if (unsupportedSorts.contains(n)) throw unsupported("the " + n + " sort", pos);
+            if (n.equals(Utils.ARROW.value())) throw unsupported(pos, "higher-order functions");
+            if (unsupportedSorts.contains(n)) throw unsupported(pos, "the " + n + " sort");
             for (ISort p: a.parameters()) checkSort(p, pos);
         }
 
         /** Rejects div, mod, abs, ** and a product of two or more non-constants */
         private void checkIntOp(String name, List<IExpr> args, IPos pos) throws VisitorException {
             if (!allLogic) return;
-            if (unsupportedIntOps.contains(name)) throw unsupported(name, pos);
+            if (unsupportedIntOps.contains(name)) throw unsupported(pos, name);
             if (!name.equals("*")) return;
             int nonConstant = 0;
             for (IExpr a: args) if (!isConstant(a)) nonConstant++;
-            if (nonConstant > 1) throw unsupported("nonlinear multiplication", pos);
+            if (nonConstant > 1) throw unsupported(pos, "nonlinear multiplication");
         }
 
         /** A numeral or its negation */
@@ -1118,8 +1118,8 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
                     && f.args().size() == 1 && f.args().get(0) instanceof INumeral;
         }
 
-        private static VisitorException unsupported(String what, IPos pos) {
-            return new VisitorException("The simplify solver does not support " + what, pos);
+        private static VisitorException unsupported(IPos pos, String what) {
+            return new VisitorException(pos, "The simplify solver does not support " + what);
         }
 
         /** The constraint that term t, a Bool value, is |@true| or |@false| */
@@ -1168,12 +1168,12 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         @Override
         public String visit(IDecimal e) throws IVisitor.VisitorException {
-            throw unsupported("the Real sort",e.pos());
+            throw unsupported(e.pos(),"the Real sort");
         }
 
         @Override
         public String visit(IStringLiteral e) throws IVisitor.VisitorException {
-            throw unsupported("the String sort",e.pos());
+            throw unsupported(e.pos(),"the String sort");
         }
 
         @Override
@@ -1183,12 +1183,12 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         @Override
         public String visit(IBinaryLiteral e) throws IVisitor.VisitorException {
-            throw unsupported("the BitVec sort",e.pos());
+            throw unsupported(e.pos(),"the BitVec sort");
         }
 
         @Override
         public String visit(IHexLiteral e) throws IVisitor.VisitorException {
-            throw unsupported("the BitVec sort",e.pos());
+            throw unsupported(e.pos(),"the BitVec sort");
         }
 
         @Override
@@ -1197,17 +1197,17 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             StringBuilder sb = new StringBuilder();
             try {
                 Iterator<IExpr> iter = e.args().iterator();
-                if (!iter.hasNext()) throw new VisitorException("Did not expect an empty argument list",e.pos());
+                if (!iter.hasNext()) throw new VisitorException(e.pos(),"Did not expect an empty argument list");
                 ISort s = e.sort();
                 if (s == null) {
-                    throw new VisitorException("INTERNAL ERROR: Encountered an un-sorted expression node: " + smtConfig.defaultPrinter.toString(e),e.pos());
+                    throw new VisitorException(e.pos(),"INTERNAL ERROR: Encountered an un-sorted expression node: " + smtConfig.defaultPrinter.toString(e));
                 }
                 checkSort(s, e.pos());
                 // Simplify is unsorted, so a type-checked ((as f S) t ...) is just (f t ...)
                 IQualifiedIdentifier head = e.head();
                 if (head instanceof IAsIdentifier) head = ((IAsIdentifier)head).head();
                 if (!(head instanceof ISymbol)) {
-                    throw unsupported("indexed function symbols",e.pos());
+                    throw unsupported(e.pos(),"indexed function symbols");
                 }
                 ISymbol fcn = (ISymbol)head;
                 // The type checker sorts the head of (m t ...) only for a map m
@@ -1227,7 +1227,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
                         IExpr arg = e.args().get(e.args().size() - 1); // the last argument, for ite's sake
                         ISort sort = arg.sort();
                         if (sort == null) {
-                            throw new VisitorException("INTERNAL ERROR: Encountered an un-sorted expression node: " + smtConfig.defaultPrinter.toString(arg),arg.pos());
+                            throw new VisitorException(arg.pos(),"INTERNAL ERROR: Encountered an un-sorted expression node: " + smtConfig.defaultPrinter.toString(arg));
                         }
                         // These take both formulas and terms
                         this.isFormula = sort.isBool();
@@ -1258,7 +1258,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
                 } else if (newName.equals("IMPLIES")) {
                     // right-associative operators that need grouping
                     if (!iter.hasNext()) {
-                        throw new VisitorException("implies (=>) operation without arguments",e.pos());
+                        throw new VisitorException(e.pos(),"implies (=>) operation without arguments");
                     }
                     sb.append(rightassoc(newName,iter));
 
@@ -1287,7 +1287,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
                         sb.append(")");
                     } else {
                         // Unreached: a distinct in term position is a Bool term, translated by boolTerm
-                        throw new VisitorException("INTERNAL ERROR: distinct in a term position",e.pos());
+                        throw new VisitorException(e.pos(),"INTERNAL ERROR: distinct in a term position");
                     }
                 } else if (ite_term.equals(newName)) {
                     if (isFormula) {
@@ -1379,7 +1379,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
                         return leftFold("|@and|", ne);
                     }
                 default:
-                    throw new VisitorException("Use of " + op + " as a Bool term is not implemented in the Simplify adapter",args.get(0).pos());
+                    throw new VisitorException(args.get(0).pos(),"Use of " + op + " as a Bool term is not implemented in the Simplify adapter");
             }
         }
 
@@ -1519,12 +1519,12 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         @Override
         public String visit(IKeyword e) throws IVisitor.VisitorException {
-            throw new VisitorException("Did not expect a Keyword in an expression to be translated",e.pos());
+            throw new VisitorException(e.pos(),"Did not expect a Keyword in an expression to be translated");
         }
 
         @Override
         public String visit(IError e) throws IVisitor.VisitorException {
-            throw new VisitorException("Did not expect a Error token in an expression to be translated",e.pos());
+            throw new VisitorException(e.pos(),"Did not expect a Error token in an expression to be translated");
         }
 
         @Override
@@ -1535,7 +1535,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
             checkSort(e.sort(), e.pos());
             String v = name(e.headSymbol()); // This will come back with bars
             if (v.charAt(0) != '|') {
-                throw new VisitorException("INTERNAL ERROR: Do not expect to ever have a pre-defined name within a parameterized identifier",e.headSymbol().pos());
+                throw new VisitorException(e.headSymbol().pos(),"INTERNAL ERROR: Do not expect to ever have a pre-defined name within a parameterized identifier");
             }
             v = v.substring(0,v.length()-1);
             for (IExpr.IIndex n: e.indices()) {
@@ -1548,7 +1548,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         @Override
         public String visit(IForall e) throws IVisitor.VisitorException {
             if (!isFormula) {
-                throw new VisitorException("Use of forall as a Bool term is not implemented in the Simplify adapter",e.pos());
+                throw new VisitorException(e.pos(),"Use of forall as a Bool term is not implemented in the Simplify adapter");
             }
             return quantifier("FORALL", "IMPLIES", e.parameters(), e.expr());
         }
@@ -1556,7 +1556,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         @Override
         public String visit(IExists e) throws IVisitor.VisitorException {
             if (!isFormula) {
-                throw new VisitorException("Use of exists as a Bool term is not implemented in the Simplify adapter",e.pos());
+                throw new VisitorException(e.pos(),"Use of exists as a Bool term is not implemented in the Simplify adapter");
             }
             return quantifier("EXISTS", "AND", e.parameters(), e.expr());
         }
@@ -1568,27 +1568,27 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         @Override
         public String visit(IExpr.IFunctionDeclaration e) throws IVisitor.VisitorException {
-            throw unsupported("datatypes", e.pos());
+            throw unsupported(e.pos(), "datatypes");
         }
 
         @Override
         public String visit(IExpr.ISortDeclaration e) throws IVisitor.VisitorException {
-            throw unsupported("datatypes", e.pos());
+            throw unsupported(e.pos(), "datatypes");
         }
 
         @Override
         public String visit(IExpr.ISelector e) throws IVisitor.VisitorException {
-            throw unsupported("datatypes", e.pos());
+            throw unsupported(e.pos(), "datatypes");
         }
 
         @Override
         public String visit(IExpr.IConstructor e) throws IVisitor.VisitorException {
-            throw unsupported("datatypes", e.pos());
+            throw unsupported(e.pos(), "datatypes");
         }
 
         @Override
         public String visit(ILambda e) throws IVisitor.VisitorException {
-            throw unsupported("higher-order functions",e.pos());
+            throw unsupported(e.pos(),"higher-order functions");
         }
 
         @Override
@@ -1620,7 +1620,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 //            sb.append(e.parameter().accept(this));
 //            return sb.toString();
             // Unreached: visit(ILet) translates its bindings' values itself
-            throw new VisitorException("INTERNAL ERROR: a let binding translated outside its let",e.pos());
+            throw new VisitorException(e.pos(),"INTERNAL ERROR: a let binding translated outside its let");
         }
 
         @Override
@@ -1661,7 +1661,7 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
         public String visit(IAsIdentifier e) throws VisitorException {
             // Simplify is unsorted, so (as c S) is just c; S says whether c is Bool
             if (!(e.head() instanceof ISymbol)) {
-                throw new VisitorException("Have not yet implemented indexed identifiers",e.pos());
+                throw new VisitorException(e.pos(),"Have not yet implemented indexed identifiers");
             }
             checkSort(e.qualifier(), e.pos());
             return constant(e.headSymbol(), e.qualifier());
@@ -1783,22 +1783,22 @@ public class Solver_simplify extends AbstractSolver implements ISolver {
 
         @Override
         public String visit(ISort.IDatatype e) throws VisitorException {
-            throw unsupported("datatypes", e.pos());
+            throw unsupported(e.pos(), "datatypes");
         }
 
         @Override
         public String visit(IExpr.IMatch e) throws VisitorException {
-            throw unsupported("datatypes", e.pos());
+            throw unsupported(e.pos(), "datatypes");
         }
 
         @Override
         public String visit(IExpr.IMatchCase e) throws VisitorException {
-            throw unsupported("datatypes", e.pos());
+            throw unsupported(e.pos(), "datatypes");
         }
 
         @Override
         public String visit(IExpr.IPattern e) throws VisitorException {
-            throw unsupported("datatypes", e.pos());
+            throw unsupported(e.pos(), "datatypes");
         }
 
 

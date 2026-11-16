@@ -60,7 +60,7 @@ public abstract class Response {
         public IError error(String msg) { return new Error(msg); }
 
         @Override
-        public IError error(String msg, /*@Nullable*//*@ReadOnly*/ IPos pos) { return new Error(msg,pos); }
+        public IError error(/*@Nullable*//*@ReadOnly*/ IPos pos, String msg) { return new Error(pos,msg); }
 
         @Override
         public IResponse empty() { return EMPTY; }
@@ -161,10 +161,10 @@ public abstract class Response {
         private String msg;
 
         public Error(String errorMsg) {
-            this(errorMsg,null);
+            this(null,errorMsg);
         }
 
-        public Error(String errorMsg, /*@Nullable*//*@ReadOnly*/ IPos pos) {
+        public Error(/*@Nullable*//*@ReadOnly*/ IPos pos, String errorMsg) {
             setPos(pos);
             this.msg = errorMsg;
         }

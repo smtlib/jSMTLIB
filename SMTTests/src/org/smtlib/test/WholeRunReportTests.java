@@ -58,7 +58,7 @@ public class WholeRunReportTests {
                 + "<<sleep 300>>\n" + exitText + "<<exit 0>>\n";
         ISolver solver = startStub(config, solverName, replies);
         try {
-            Assert.assertEquals("set-logic", config.responseFactory.success(), solver.set_logic("QF_UF", null));
+            Assert.assertEquals("set-logic", config.responseFactory.success(), solver.set_logic(null, "QF_UF"));
             Thread.sleep(1500); // the stub exits meanwhile
             IResponse r = solver.check_sat();
             if (timedOut) {

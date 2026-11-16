@@ -234,7 +234,7 @@ public interface ISort extends INode, IPosable {
         IFcnSort createFcnSort(ISort[] args, ISort result);
 
         /** Creates an error-placeholder definition (suppresses cascading errors). */
-        IErrorDefinition createErrorDefinition(IIdentifier id, String errorMessage, IPos pos);
+        IErrorDefinition createErrorDefinition(IIdentifier id, IPos pos, String errorMessage);
 
         /** Returns the Bool sort. */
         IApplication Bool();

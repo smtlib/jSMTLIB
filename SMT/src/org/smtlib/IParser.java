@@ -165,8 +165,8 @@ public interface IParser extends ILexer {
         @SuppressWarnings("serial")
         protected /*@Nullable*//*@ReadOnly*/ IPos pos;
 
-        /** Creates a parse exception from the given error message and problem location */
-        public ParserException(String msg, /*@Nullable*//*@ReadOnly*/IPos pos) { 
+        /** Creates a parse exception from the given problem location and error message */
+        public ParserException(/*@Nullable*//*@ReadOnly*/IPos pos, String msg) { 
             super(msg); 
             this.pos = pos;
         }
@@ -179,8 +179,8 @@ public interface IParser extends ILexer {
     public static class SyntaxException extends ParserException {
         private static final long serialVersionUID = 1L;
 
-        /** Creates an exception from the given error message and problem location */
-        public SyntaxException(String msg, /*@Nullable*//*@ReadOnly*/IPos pos) { super(msg, pos); }
+        /** Creates an exception from the given problem location and error message */
+        public SyntaxException(/*@Nullable*//*@ReadOnly*/IPos pos, String msg) { super(pos, msg); }
     }
 
     /** An exception to be thrown if parsing is to be intentionally aborted (and restarted, ignoring

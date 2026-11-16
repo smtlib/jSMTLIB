@@ -24,7 +24,7 @@ public class LIA extends Logic {
     }
 
     public void validExpression(IExpr expression) throws IVisitor.VisitorException {
-        if (!isLinearInteger(expression)) throw new IVisitor.VisitorException("Integer expressions must be linear in this logic",expression.pos());
+        if (!isLinearInteger(expression)) throw new IVisitor.VisitorException(expression.pos(),"Integer expressions must be linear in this logic");
     }
 
     public void checkSortDeclaration(IIdentifier id, List<ISort.IParameter> params, ISort expr) throws IVisitor.VisitorException {

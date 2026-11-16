@@ -656,7 +656,7 @@ public class Utils {
                 for (String d : path.split(File.pathSeparator)) {
                     if (!new File(d).isDirectory()) {
                         throw new SMTLIBException(smtConfig.responseFactory.error(
-                                "Invalid logic path: \"" + d + "\" is not a directory", pos));
+                                pos, "Invalid logic path: \"" + d + "\" is not a directory"));
                     }
                 }
                 for (String d : path.split(File.pathSeparator)) {
@@ -681,13 +681,12 @@ public class Utils {
                 URL url = ClassLoader.getSystemResource(candidate);
                 if (url != null) return url.openStream();
             }
-            throw new SMTLIBException(smtConfig.responseFactory.error(
+            throw new SMTLIBException(smtConfig.responseFactory.error(pos,
                     path == null ? "No logic file found for " + name
-                            : "No logic file found for " + name + " on path \"" + path + "\"",
-                    pos));
+                            : "No logic file found for " + name + " on path \"" + path + "\""));
         } catch (IOException e) {
             throw new SMTLIBException(smtConfig.responseFactory.error(
-                    "Failed to open logic file for " + name + ": " + e, pos));
+                    pos, "Failed to open logic file for " + name + ": " + e));
         }
     }
 
@@ -719,12 +718,12 @@ public class Utils {
             return logic;
         } catch (IParser.ParserException e) {
             throw new SMTLIBException(smtConfig.responseFactory.error(
-                    "Failed to parse the logic file for " + name + ": " + e, e.pos()));
+                    e.pos(), "Failed to parse the logic file for " + name + ": " + e));
         } catch (SMTLIBException e) {
             throw e;
         } catch (Exception e) {
             throw new SMTLIBException(smtConfig.responseFactory.error(
-                    "Failed to read the logic file for " + name + ": " + e, null));
+                    null, "Failed to read the logic file for " + name + ": " + e));
         } finally {
         }
     }
@@ -790,14 +789,14 @@ public class Utils {
             return th;
         } catch (IParser.ParserException e) {
             throw new SMTLIBException(smtConfig.log.logError(smtConfig.responseFactory.error(
-                    "Failed to parse the theory file " + name + " in " + path
-                            + ": " + e, e.pos())));
+                    e.pos(), "Failed to parse the theory file " + name + " in " + path
+                            + ": " + e)));
         } catch (SMTLIBException e) {
             throw e;
         } catch (Exception e) {
             throw new SMTLIBException(smtConfig.log.logError(smtConfig.responseFactory.error(
-                    "Failed to read the theory file " + name + " in " + path
-                            + ": " + e, null)));
+                    null, "Failed to read the theory file " + name + " in " + path
+                            + ": " + e)));
         } finally {
         }
     }

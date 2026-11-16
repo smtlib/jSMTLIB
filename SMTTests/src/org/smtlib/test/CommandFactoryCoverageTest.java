@@ -50,7 +50,7 @@ public class CommandFactoryCoverageTest {
         config = new SMT.Configuration();
         solver = config.createSolver("test", null);
         solver.start();
-        solver.set_logic("QF_UF", null); // define-fun/declare-datatype etc. require a logic first
+        solver.set_logic(null, "QF_UF"); // define-fun/declare-datatype etc. require a logic first
     }
 
     private String print(ICommand c) throws Exception {
