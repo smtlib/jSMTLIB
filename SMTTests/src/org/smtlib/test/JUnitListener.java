@@ -33,7 +33,7 @@ import org.smtlib.impl.Response;
  *
  *  The two logError paths arise from different situations and are not quite interchangeable:
  *  - {@code logError(IResponse.IError)} is used once a full response object already exists --
- *    typically {@code responseFactory.error(msg, pos)} constructed with the offending source
+ *    typically {@code responseFactory.error(pos, msg)} constructed with the offending source
  *    position -- and is usually also the value returned to the caller as the command's actual
  *    result (e.g. SMT.java's parse/validation/type-check error handling, Utils.java's
  *    SMTLIBException sites). These almost always carry a non-null {@code pos()}.

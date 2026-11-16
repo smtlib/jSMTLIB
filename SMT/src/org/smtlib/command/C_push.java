@@ -58,7 +58,7 @@ public class C_push extends Command implements Ipush {
         // solver.push() a wrapped-around, possibly negative or huge, garbage value.
         if (numeral.value().bitLength() > 31) {
             return solver.smt().responseFactory.error(
-                    "The argument to a push command is too large: " + numeral.value(), numeral.pos());
+                    numeral.pos(), "The argument to a push command is too large: " + numeral.value());
         }
         return solver.push(number);
     }

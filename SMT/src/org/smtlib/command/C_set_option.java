@@ -53,7 +53,7 @@ public class C_set_option extends Command implements Iset_option {
         C_set_option c = new C_set_option(key,value);
         IResponse.IError r = c.checkOptionType(p.smt(), key, value);
         if (r != null) {
-            throw new ParserException(r.errorMsg(), r.pos());
+            throw new ParserException(r.pos(), r.errorMsg());
         }
         return c;
     }
@@ -88,13 +88,13 @@ public class C_set_option extends Command implements Iset_option {
             // a standard option from a later SMT-LIB version: unknown in this one
         } else if (smtConfig.utils.boolOptions.contains(key)) {
             if (t instanceof IExpr.ISymbol && (((IExpr.ISymbol)t).value().equals("true") || ((IExpr.ISymbol)t).value().equals("false"))) return null;
-            return smtConfig.responseFactory.error("Expected true or false as the value of " + keyword,t.pos());
+            return smtConfig.responseFactory.error(t.pos(),"Expected true or false as the value of " + keyword);
         } else if (smtConfig.utils.stringOptions.contains(key)) {
             if (t instanceof IExpr.IStringLiteral) return null;
-            return smtConfig.responseFactory.error("Expected a string as the value of " + keyword,t.pos());
+            return smtConfig.responseFactory.error(t.pos(),"Expected a string as the value of " + keyword);
         } else if (smtConfig.utils.numericOptions.contains(key)) {
             if (t instanceof IExpr.INumeral) return null;
-            return smtConfig.responseFactory.error("Expected a numeral as the value of " + keyword,t.pos());
+            return smtConfig.responseFactory.error(t.pos(),"Expected a numeral as the value of " + keyword);
 //        } else if (SMT.Configuration.atLeastVersion(SMTLIB.V25)) {
 //            return smtConfig.responseFactory.error("Keyword not supported in V2.5 and higher: " + keyword,t.pos());
         } else {

@@ -387,9 +387,9 @@ public class Solver_bitwuzla extends AbstractSolver implements ISolver {
      *  is reported here (--relax allows it). After one it accepts, it still answers the get- commands
      *  about its last check, so that check is dropped here, as for reset. */
     @Override
-    public IResponse set_logic(String logicName, /*@Nullable*/ IPos pos) {
+    public IResponse set_logic(/*@Nullable*/ IPos pos, String logicName) {
         if (logicSet && !smtConfig.relax) return smtConfig.responseFactory.error("Logic is already set");
-        IResponse r = super.set_logic(logicName, pos);
+        IResponse r = super.set_logic(pos, logicName);
         if (r instanceof Pending p) {
             readPipelined(true);
             if (p.response() == null || p.response().isError()) return r;

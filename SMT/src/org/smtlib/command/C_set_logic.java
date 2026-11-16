@@ -46,7 +46,7 @@ public class C_set_logic extends Command implements Iset_logic {
 
     @Override
     public IResponse execute(ISolver solver) {
-        return solver.set_logic(logicName.value(),logicName.pos());
+        return solver.set_logic(logicName.pos(),logicName.value());
     }
 
     @Override

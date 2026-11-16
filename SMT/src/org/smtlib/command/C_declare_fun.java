@@ -135,7 +135,7 @@ public class C_declare_fun extends Command implements Ideclare_fun {
                 sorts.add(p.parseSort(parameters));
             }
             if (sorts.isEmpty()) {
-                throw new ParserException("Expected at least a result sort", name.pos());
+                throw new ParserException(name.pos(), "Expected at least a result sort");
             }
             ISort result = sorts.remove(sorts.size()-1);
             List<IAttribute<?>> attrs = Collections.emptyList();

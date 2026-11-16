@@ -611,7 +611,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
         public void setPos(/*@Nullable*/ /*@ReadOnly*/IPos pos) { this.pos = pos; }
 
         /** Constructor for an exception */
-        public VisitorException(String msg, /*@Nullable*//*@ReadOnly*/IPos pos) { 
+        public VisitorException(/*@Nullable*//*@ReadOnly*/IPos pos, String msg) { 
             super(msg); 
             this.pos = pos; 
         }
@@ -623,7 +623,7 @@ public interface IVisitor</*@Nullable*/T extends /*@Nullable*/ Object> {
         }
 
         /** Constructor taking an exception */
-        public VisitorException(Throwable e, /*@Nullable*/IPos pos) {
+        public VisitorException(/*@Nullable*/IPos pos, Throwable e) {
             super(e);
             this.pos = pos;
         }

@@ -88,7 +88,7 @@ public class APIExample {
             ISort boolsort = sortfactory.createSortExpression(efactory.symbol("Bool"));
             solver = smt.smtConfig.createSolver("z3-5.1.0", z3exec);
             solver.start();
-            IResponse r = solver.set_logic("QF_UF",null);
+            IResponse r = solver.set_logic(null,"QF_UF");
             r = solver.declare_fun(new C_declare_fun(p,new java.util.LinkedList<ISort>(),boolsort));
             r = solver.assertExpr(and);
             r = solver.check_sat();
@@ -106,7 +106,7 @@ public class APIExample {
             solver = smt.smtConfig.createSolver("z3-5.1.0", z3exec);
             solver.start();
             solver.set_option(efactory.keyword(":produce-models"),efactory.symbol("true"));
-            r = solver.set_logic("QF_BV",null);
+            r = solver.set_logic(null,"QF_BV");
             r = solver.declare_fun(new C_declare_fun(efactory.symbol("pb"),new java.util.LinkedList<ISort>(),bv32));
             r = solver.declare_fun(new C_declare_fun(efactory.symbol("pc"),new java.util.LinkedList<ISort>(),bv32));
 

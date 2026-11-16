@@ -42,11 +42,11 @@ public class SolverSimplifySetLogicRollbackBugTest {
         SMT.Configuration config = new SMT.Configuration();
         Solver_simplify solver = new Solver_simplify(config, "simplify");
 
-        IResponse rejected = solver.set_logic("QF_BV", null);
+        IResponse rejected = solver.set_logic(null, "QF_BV");
         Assert.assertTrue("QF_BV must be rejected -- simplify doesn't support bit-vectors",
                 rejected.isError());
 
-        IResponse afterRejection = solver.set_logic("QF_UF", null);
+        IResponse afterRejection = solver.set_logic(null, "QF_UF");
         Assert.assertFalse(
                 "a rejected set-logic must not leave the solver thinking a logic is already set: "
                 + (afterRejection.isError() ? ((IResponse.IError) afterRejection).errorMsg() : ""),

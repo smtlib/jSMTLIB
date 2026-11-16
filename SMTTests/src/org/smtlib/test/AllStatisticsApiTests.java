@@ -74,7 +74,7 @@ public class AllStatisticsApiTests {
     public void allStatisticsIsAnAttributeList() throws Exception {
         IExpr.IFactory f = config.exprFactory;
         ISort bool = config.sortFactory.createSortExpression(f.symbol("Bool"));
-        ok(solver.set_logic("QF_UF", null), "set-logic");
+        ok(solver.set_logic(null, "QF_UF"), "set-logic");
         ok(solver.declare_fun(new C_declare_fun(f.symbol("p"), new ArrayList<ISort>(), bool)), "declare-fun");
         ok(solver.assertExpr(f.symbol("p")), "assert");
         ok(solver.check_sat(), "check-sat");

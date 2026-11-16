@@ -638,7 +638,7 @@ public class Lexer implements ILexer {
                 token = setPos(new LexError(matched),pos);
                 matcher.region(end,csr.length());
                 // FIXME - decide whether to throw exceptions or emit error messages and error tokens
-                throw new SyntaxException(("Invalid string: " + matched),token.pos());
+                throw new SyntaxException(token.pos(),("Invalid string: " + matched));
             } else if ((matched = matcher.group(k=19)) != null) {
                 matcher.region(end,csr.length());
                 throw new AbortInputException();
