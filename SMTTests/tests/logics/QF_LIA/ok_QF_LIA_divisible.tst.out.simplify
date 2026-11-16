@@ -1,0 +1,10 @@
+success
+success
+success
+(error "The simplify solver does not support indexed function symbols")
+success
+unknown
+success
+(error "The simplify solver does not support indexed function symbols")
+success
+unknown

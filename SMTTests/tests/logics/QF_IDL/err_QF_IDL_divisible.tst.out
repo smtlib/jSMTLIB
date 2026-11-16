@@ -1,0 +1,3 @@
+success
+success
+(error "Invalid operation in IDL logic: ((_ divisible 3) x)")

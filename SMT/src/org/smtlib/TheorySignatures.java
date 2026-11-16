@@ -15,20 +15,22 @@ import org.smtlib.IExpr.IParameterizedIdentifier;
 import org.smtlib.IExpr.ISymbol;
 import org.smtlib.SMT.Configuration.SMTLIB;
 
-/** The signatures of the bit-vector and floating-point functions and indexed constants. The theory
- *  files declare these only in prose, so they are tabulated here; TypeChecker applies them (#218). */
+/** The signatures of the bit-vector and floating-point functions and indexed constants, and of the
+ *  Ints theory's (_ divisible n). The theory files declare these only in prose, so they are tabulated
+ *  here; TypeChecker applies them (#218, #234). */
 final class TheorySignatures {
 
     private TheorySignatures() {}
 
     /** The theories a signature needs */
     enum Theories {
-        BV, FP, BV_INTS, FP_BV;
+        BV, FP, INTS, BV_INTS, FP_BV;
 
         boolean loaded(SymbolTable st) {
             return switch (this) {
                 case BV -> st.bitVectorTheorySet;
                 case FP -> st.floatingPointTheorySet;
+                case INTS -> st.intsTheorySet || st.realsIntsTheorySet;
                 case BV_INTS -> st.bitVectorTheorySet && (st.intsTheorySet || st.realsIntsTheorySet);
                 case FP_BV -> st.floatingPointTheorySet && st.bitVectorTheorySet;
             };
@@ -155,6 +157,11 @@ final class TheorySignatures {
                                 + new java.math.BigInteger(head.substring(2)).bitLength() + " vs. " + ix[0] + " bits)")
                         : null)
                 .returnsBitVec((w, ix) -> new long[]{ ix[0] }),
+
+        // Ints theory: (_ divisible n) for a positive numeral n
+        fn(Set.of("divisible"), Theories.INTS, Kind.INT).indexed(1)
+                .check((head, ix, w) -> ix[0] > 0 ? null : Problem.atIndex(0, "The index of divisible must be positive"))
+                .returns(Result.BOOL),
 
         // FloatingPoint theory
         fn(Set.of("fp"), Theories.FP, Kind.BV1, Kind.BV, Kind.BV)
