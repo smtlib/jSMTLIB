@@ -168,10 +168,16 @@ public class Pos implements IPos {
         @Override
         public int lineBeginning(int pos) {
             int p = pos;
+            char c;
+            if (p >= chars().length() && chars() instanceof CharSequenceInfinite) {
+                // The end of input: its line begins after the last line terminator
+                p = chars().length();
+                while (p > 0 && (c=charAt(p-1)) != '\n' && c != '\r') --p;
+                return p;
+            }
             if (p >= chars().length()) p = chars().length()-1; // If the length is indeterminate, length() should be INT_MAX
             if (p > 0 && charAt(p) == '\n' && charAt(p-1) == '\r') --p;
             if (p >= 0 && (charAt(p) == '\n' || charAt(p) == '\r')) --p;
-            char c;
             while (p >= 0 && (c=charAt(p)) != '\n' && c != '\r') --p;
             return p+1;
         }
@@ -195,12 +201,19 @@ public class Pos implements IPos {
             char c;
             int len = chars().length();
             if (pos >= len) return len-1; // If the length is indeterminate, length() should be INT_MAX
-            // A bounded sequence (e.g. a solver response) may end before any \n, \r, or
-            // endChar sentinel is found; stop at the last valid index rather than reading past it.
-            while (pos < len-1 && (c=charAt(pos)) != '\n' && c != '\r' && c != CharSequenceInfinite.endChar) ++pos;
-            c = charAt(pos);
-            if (c == '\r' && pos+1 < len && charAt(pos+1) == '\n') ++pos;
-            else if (c == CharSequenceInfinite.endChar) --pos;
+            // The sequence may end before any \n or \r is found; stop at its last index. An unbounded
+            // one (CharSequenceInfinite) throws EndOfInputException at its end.
+            try {
+                while (pos < len-1 && (c=charAt(pos)) != '\n' && c != '\r') ++pos;
+                c = charAt(pos);
+            } catch (CharSequenceInfinite.EndOfInputException e) {
+                return pos-1; // pos is the end of input
+            }
+            try {
+                if (c == '\r' && pos+1 < chars().length() && charAt(pos+1) == '\n') ++pos;
+            } catch (CharSequenceInfinite.EndOfInputException e) {
+                // the \r ends the input
+            }
             return pos;
         }
 

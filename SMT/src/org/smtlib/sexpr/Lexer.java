@@ -48,13 +48,15 @@ public class Lexer implements ILexer {
             // once) matters for a growing/interactive source (CharSequenceInfinite): its
             // length() reports Integer.MAX_VALUE until charAt() itself lazily discovers true
             // end-of-input, so the fresh check picks up that update on the very call that
-            // produces it. Checking for CharSequenceInfinite.endChar handles that same
-            // true-end-of-input case explicitly: once discovered, charAt() returns endChar for
-            // every subsequent index forever, which is otherwise indistinguishable from more
-            // ordinary characters still arriving.
+            // produces it, by throwing EndOfInputException.
             while (i < csr.length()) {
-                char c = csr.charAt(i);
-                if (c == '\r' || c == '\n' || c == CharSequenceInfinite.endChar) break;
+                char c;
+                try {
+                    c = csr.charAt(i);
+                } catch (CharSequenceInfinite.EndOfInputException e) {
+                    break;
+                }
+                if (c == '\r' || c == '\n') break;
                 ++i;
             }
             matcher.region(i,csr.length());
@@ -218,7 +220,7 @@ public class Lexer implements ILexer {
     /** Pattern regular expression for SMT-LIB sequence of non-white space */
     private final static String rgxAnyNonWS = "[\\S&&[^;\\(\\)]][\\S&&[^;\\(\\)]]*"; // Any sequence of non-whitespace, not beginning with ( ) ;
     /** Pattern regular expression for detecting the end of input */
-    private final static String rgxEndOfInput = "\\z|" + Pattern.quote(String.valueOf(CharSequenceInfinite.endChar)) + "|\\004";
+    private final static String rgxEndOfInput = "\\z|\\004";
     /** Pattern regular expression for checking that a sequence of digits is not followed by other non-white space, non-comment, non-parenthesis characters */
     private final static String trailer = "(?:[\\s\\(\\);]|$)";
 
@@ -359,9 +361,11 @@ public class Lexer implements ILexer {
         return token;
     }
 
-    /** Returns the position of the next character to be read */
+    /** Returns the position of the next character to be read; at the end of a CharSequenceInfinite input, one
+     *  past it, since the end of input counts as one position there (as did the end character it once held) */
     public int currentPos() {
-        return matcher.regionStart();
+        int p = matcher.regionStart();
+        return csr instanceof CharSequenceInfinite && p == csr.length() ? p + 1 : p;
     }
 
     /** Returns true if the next token is the end-of-data */
@@ -412,6 +416,15 @@ public class Lexer implements ILexer {
         return null;
     }
 
+    /** Whether the character at the given index is c; false at or beyond the end of input */
+    private boolean charIs(int index, char c) {
+        try {
+            return index < csr.length() && csr.charAt(index) == c;
+        } catch (CharSequenceInfinite.EndOfInputException e) {
+            return false;
+        }
+    }
+
     /** Returns the next lexical token, advancing the scanner.
      * @throws ParserException if something bad or an intentional abort happens
      */
@@ -452,7 +465,15 @@ public class Lexer implements ILexer {
      *  peekToken() add the lookahead */
     protected ILexToken getNextToken() throws ParserException {
         ILexToken token = null;
-        if (matcher.lookingAt()) {
+        boolean found;
+        try {
+            found = matcher.lookingAt();
+        } catch (CharSequenceInfinite.EndOfInputException e) {
+            // The match ran into the end of input, whose position is now known: match again, up to it
+            matcher.region(matcher.regionStart(), csr.length());
+            found = matcher.lookingAt();
+        }
+        if (found) {
             prefixCommentText = null;
             sameLineTrailingText = null;
             if (matcher.groupCount() >= 1 && matcher.end(1) != matcher.start(1)) {
@@ -541,7 +562,7 @@ public class Lexer implements ILexer {
                             p++;
                             char c = csr.charAt(p);
                             if (c == '"') {
-                                if (p+1 < csr.length() && csr.charAt(p+1) == '"') {
+                                if (charIs(p+1, '"')) {
                                     p++;
                                 } else {
                                     end = p+1;
@@ -555,13 +576,6 @@ public class Lexer implements ILexer {
                                 if (c >= ' ' && c <= '~') continue;
                                 if (c == '\t' || c == '\r' || c == '\n') continue;
                                 if (c >= 128) continue; // Version 2.5, but only within comments, string literals, quoted symbols
-                                if (c == 25) {
-                                    end = p;
-                                    matched = csr.subSequence(begin,end).toString();
-                                    pos = pos(begin,end);
-                                    token = setPos(new LexError("String literal is not terminated: " + matched),pos);
-                                    break; // End of data - no closing right paren
-                                }
                                 if (invalid == null) {
                                     invalid = "Invalid character: ASCII(decimal) = " + (int)c;
                                     invalidPos = pos(p,p+1);
@@ -592,13 +606,6 @@ public class Lexer implements ILexer {
                             } else {
                                 if (c >= ' ' && c <= '~') continue;
                                 if (c == '\t' || c == '\r' || c == '\n') continue;
-                                if (c == 25) {
-                                    end = p;
-                                    matched = csr.subSequence(begin,end).toString();
-                                    pos = pos(begin,end);
-                                    token = setPos(new LexError("String literal is not terminated: " + matched),pos);
-                                    break; // End of data - no closing right paren
-                                }
                                 if (invalid == null) {
                                     invalid = "Invalid character: ASCII(decimal) = " + (int)c;
                                     invalidPos = pos(p,p+1);
@@ -608,9 +615,7 @@ public class Lexer implements ILexer {
                         }
                     }
                 } catch (IndexOutOfBoundsException e) {
-                    // If the CharSequence does not expand itself and does not terminate 
-                    // itself with an end of data character, and does not end with a
-                    // quote character, we get this exception
+                    // The input ends (charAt throws at its end) before the closing quote
                     end = p;
                     matched = csr.subSequence(begin,end).toString();
                     pos = pos(begin,end);

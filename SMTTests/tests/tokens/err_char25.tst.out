@@ -1,0 +1,4 @@
+(error "Invalid character: ASCII(decimal) = 25")
+"x"
+(error "Invalid token: (ASCII char 25 (decimal))")
+"y"
