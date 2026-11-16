@@ -29,6 +29,8 @@ inputs:
       the per-leg artifact upload, the Windows -javaagent path fix) is already
       in place and working on every leg except that one, so flipping this back
       to 'true' is a one-line change whenever it's worth revisiting.
+      'by-test' records each test's coverage separately (make cov-test-by-test),
+      for build.yml's analyze-by-test job.
     required: false
     default: 'false'
 
@@ -145,10 +147,18 @@ runs:
     ## and the jsmtlib_ci_cross_platform_verification history for the full writeup). The
     ## job-level timeout-minutes in build.yml remains as a safety net regardless.
     - name: Run jSMTLIB tests
-      if: inputs.coverage != 'true'
+      if: inputs.coverage != 'true' && inputs.coverage != 'by-test'
       shell: bash
       run: |
         make -C jSMTLIB/SMTTests tests
+
+    ## Per-test coverage; also writes this leg's own analysis (cov/by-test-report*).
+    - name: Run jSMTLIB tests (with per-test coverage)
+      if: inputs.coverage == 'by-test'
+      shell: bash
+      run: |
+        make -C jSMTLIB/SMTTests cov-clean
+        make -C jSMTLIB/SMTTests cov-test-by-test
 
     ## Runs the exact same suite as `make tests` (cov-test's recipe is the identical
     ## `bash ./runjunits` call, just with COV set so the JaCoCo agent instruments both the
@@ -234,7 +244,7 @@ runs:
     ## always()): with coverage off, cov/ never gets created at all, so this would otherwise
     ## just be a guaranteed "no files found" warning on every single run.
     - name: Upload coverage artifact
-      if: always() && inputs.coverage == 'true'
+      if: always() && (inputs.coverage == 'true' || inputs.coverage == 'by-test')
       uses: actions/upload-artifact@v7
       with:
         name: coverage-${{ inputs.label != '' && inputs.label || format('{0}-{1}', runner.os, runner.arch) }}

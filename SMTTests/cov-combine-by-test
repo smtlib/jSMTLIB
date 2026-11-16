@@ -1,0 +1,35 @@
+#!/bin/bash
+## Combines the per-platform cov/by-test/index.tsv files that build.yml uploads with
+## coverage=by-test (DIR/coverage-<label>/cov/by-test/) into one DIR/index.tsv, so that
+## coverage-analyzer treats a test's runs on every platform as one test (rows with the same
+## test are merged).
+## Test names lose each platform's absolute SMTTests path and use / for \, so that the same
+## test has the same name everywhere.
+## Usage: cov-combine-by-test DIR
+
+set -euo pipefail
+dir=${1:?usage: cov-combine-by-test DIR}
+
+indexes=()
+for idx in "$dir"/coverage-*/cov/by-test/index.tsv; do
+    [ -f "$idx" ] && indexes+=("$idx")
+done
+if [ ${#indexes[@]} -eq 0 ]; then
+    echo "cov-combine-by-test: no $dir/coverage-*/cov/by-test/index.tsv found" >&2
+    exit 1
+fi
+
+{
+    printf 'file\tplatform\tclass\tdisplayName\tstatus\tmillis\n'
+    for idx in "${indexes[@]}"; do
+        leg=${idx#"$dir"/}
+        leg=${leg%%/*}
+        awk -F'\t' -v OFS='\t' -v leg="$leg" 'NR > 1 {
+            name = $3
+            gsub(/\\/, "/", name)
+            gsub(/"[^"]*\/SMTTests\//, "\"", name)
+            print leg "/cov/by-test/" $1, substr(leg, 10), $2, name, $4, $5
+        }' "$idx"
+        echo "cov-combine-by-test: $leg: $(($(wc -l < "$idx") - 1)) rows" >&2
+    done
+} > "$dir/index.tsv"
