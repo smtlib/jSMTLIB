@@ -1,2 +1,6 @@
+(set-info :x |     
+          ^^
 WARNING: :x is not a standard set-info attribute
+(set-info :x "     
+          ^^
 WARNING: :x is not a standard set-info attribute

@@ -1,2 +1,6 @@
+(set-info :all-statistics x)
+          ^^^^^^^^^^^^^^^
 WARNING: :all-statistics is not a standard set-info attribute
+(set-info :reason-unknown x)
+          ^^^^^^^^^^^^^^^
 WARNING: :reason-unknown is not a standard set-info attribute

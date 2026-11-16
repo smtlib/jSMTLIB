@@ -260,7 +260,7 @@ public class SMT {
          */
         /*@Nullable*/ public String text = null;
 
-        /** If true, then information about the position of an error is not shown */
+        /** If true, then the position of an error or warning is not shown */
         public boolean noshow = false;
 
         /** If non-zero, a seed to pass to the solver to initialize its random number generator (--seed, non-negative) */
@@ -710,8 +710,8 @@ public class SMT {
     /** Warns, with --pipeline, that it does not apply to the given input */
     private void warnPipelineIgnored(String input) {
         if (smtConfig.pipeline) {
-            smtConfig.log.logDiag("WARNING: --pipeline applies only to files (including - for standard input)"
-                    + " and --text input; it is ignored for " + input);
+            smtConfig.log.logWarning("--pipeline applies only to files (including - for standard input)"
+                    + " and --text input; it is ignored for " + input, null);
         }
     }
 
@@ -936,7 +936,8 @@ public class SMT {
                                 smtConfig.smtlib = SMT.Configuration.SMTLIB.find("V" + v);
                                 if (smtConfig.smtlib == null) {
                                     SMT.Configuration.SMTLIB[] all = SMT.Configuration.SMTLIB.values();
-                                    smtConfig.log.logDiag("WARNING: SMT-LIB version " + v + " is not one jSMTLIB knows; using " + all[all.length-1]);
+                                    smtConfig.log.logWarning("SMT-LIB version " + v + " is not one jSMTLIB knows; using " + all[all.length-1],
+                                            si.value().pos());
                                 }
                             }
                         }
@@ -1576,7 +1577,7 @@ public class SMT {
         new Option("--no-pipeline", null, OptionKind.FLAG, false, null, c -> !c.pipeline,
                 List.of("each command waits for its response before the next is sent (the default)")),
         new Option("--noshow", null, OptionKind.FLAG, false, null, c -> c.noshow,
-                List.of("if enabled, error location information is not shown")),
+                List.of("if enabled, the location of an error or warning is not shown")),
         new Option("--nosuccess", "-q", OptionKind.FLAG, false, null, c -> c.nosuccess,
                 List.of("if enabled, 'success' responses are suppressed")),
         new Option("--relax", "-r", OptionKind.FLAG, false, null, c -> c.relax,

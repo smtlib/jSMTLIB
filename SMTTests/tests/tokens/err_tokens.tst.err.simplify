@@ -28,6 +28,8 @@
                         ^^
 (assert (! true :named |a\b| )) ; FIXME - needs a better error message
                        ^^
+(set-info :x "as\d" ); OK
+          ^^
 WARNING: :x is not a standard set-info attribute
 (set-info :x 0a); 
              ^^

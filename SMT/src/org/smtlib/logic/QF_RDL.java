@@ -51,14 +51,15 @@ public class QF_RDL extends DifferenceLogic {
     /** True, after a warning, if --relax is set and c is a decimal d or (- d), which QF_RDL.smt2 does not allow */
     private boolean relaxedDecimal(IExpr.IFcnExpr atom, IExpr c) {
         if (!smtConfig.relax) return false;
-        if (c instanceof IExpr.IFcnExpr) {
-            IExpr.IFcnExpr f = (IExpr.IFcnExpr) c;
+        IExpr d = c;
+        if (d instanceof IExpr.IFcnExpr) {
+            IExpr.IFcnExpr f = (IExpr.IFcnExpr) d;
             if (!Utils.MINUS.equals(f.head()) || f.args().size() != 1) return false;
-            c = f.args().get(0);
+            d = f.args().get(0);
         }
-        if (!(c instanceof IExpr.IDecimal)) return false;
-        smtConfig.log.logDiag("WARNING: A QF_RDL constant should be a numeral or a negated numeral, not a decimal: "
-                + smtConfig.defaultPrinter.toString(atom));
+        if (!(d instanceof IExpr.IDecimal)) return false;
+        smtConfig.log.logWarning("A QF_RDL constant should be a numeral or a negated numeral, not a decimal: "
+                + smtConfig.defaultPrinter.toString(atom), c.pos());
         return true;
     }
 

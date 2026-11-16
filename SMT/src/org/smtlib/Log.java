@@ -57,6 +57,12 @@ public class Log {
         /** Called when a message is sent to the SMT-LIB diagnostic output (it is expected that a line termination will be added) */
         public void logDiag(String msg);
 
+        /** Called when a warning is logged; pos is the position of the text it concerns, or null. By default,
+         *  logs "WARNING: " + msg as a diagnostic. */
+        default public void logWarning(String msg, /*@Nullable*//*@ReadOnly*/ IPos pos) {
+            logDiag("WARNING: " + msg);
+        }
+
         /** Sets the indent prefix used when displaying error-location carets; typically the current prompt string. */
         public void indent(String chars);
     }
@@ -120,6 +126,16 @@ public class Log {
         @Override
         public void logDiag(String msg) {
             diag.println(msg);
+        }
+
+        /** Writes the location of the text concerned, as {@link #logError(IResponse.IError)} does, then the
+         *  warning, to the diag stream */
+        @Override
+        public void logWarning(String msg, /*@Nullable*//*@ReadOnly*/ IPos pos) {
+            if (pos != null && pos.source() != null && !smtConfig.noshow) {
+                diag.println(locationIndication(pos,prompt,smtConfig));
+            }
+            diag.println("WARNING: " + msg);
         }
 
     }
@@ -341,6 +357,14 @@ public class Log {
         if (hold(() -> logDiag(message))) return;
         for (IListener listener: listeners) {
             listener.logDiag(message);
+        }
+    }
+
+    /** Reports a warning to any listeners, with the position of the text it concerns (null if none) */
+    public void logWarning(/*@NonNull*/ String message, /*@Nullable*//*@ReadOnly*/ IPos pos) {
+        if (hold(() -> logWarning(message, pos))) return;
+        for (IListener listener: listeners) {
+            listener.logWarning(message, pos);
         }
     }
 

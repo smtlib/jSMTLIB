@@ -463,7 +463,7 @@ public class Solver_test implements ISolver {
         String invalid = Utils.invalidSetInfoValue(key, value);
         if (invalid != null) return smtConfig.responseFactory.error(invalid, value.pos());
         if (!Utils.setInfoKeywords.contains(key)) {
-            smtConfig.log.logDiag("WARNING: " + smtConfig.defaultPrinter.toString(key) + " is not a standard set-info attribute");
+            smtConfig.log.logWarning(smtConfig.defaultPrinter.toString(key) + " is not a standard set-info attribute", key.pos());
         }
         options.put(key.value(),value);
         return smtConfig.responseFactory.success();
