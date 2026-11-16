@@ -848,7 +848,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                 + ", or use (lambda (" + vars + ") " + app + "))";
     }
 
-    /** Checks an application of a bit-vector or floating-point function against its signatures
+    /** Checks an application of a function against its signatures
      *  (TheorySignatures), in this order: version, argument count, the sort of each argument,
      *  matching sorts, indices, the `as` qualifier's sort (asSort, if not null); returns the result
      *  sort, or null after reporting an error */

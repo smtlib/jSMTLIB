@@ -1,0 +1,10 @@
+success
+success
+success
+(error "line 5 column 27: invalid use of indexed indentifier, unknown builtin function divisible")
+success
+sat
+success
+(error "line 9 column 27: invalid use of indexed indentifier, unknown builtin function divisible")
+success
+sat
