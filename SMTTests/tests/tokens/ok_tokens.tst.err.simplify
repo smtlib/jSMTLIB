@@ -1,16 +1,48 @@
+(set-info :x 1234567890)
+          ^^
 WARNING: :x is not a standard set-info attribute
+(set-info :x 123456789.0123456789 )
+          ^^
 WARNING: :x is not a standard set-info attribute
+(set-info :abcdefghijklmnopqrstuvwxyz a)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING: :abcdefghijklmnopqrstuvwxyz is not a standard set-info attribute
+(set-info :ABCDEFGHIJKLMNOPQRSTUVWXYZ a)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING: :ABCDEFGHIJKLMNOPQRSTUVWXYZ is not a standard set-info attribute
+(set-info :A0123456789~!@$%^&*_-+=<>.?/ a)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING: :A0123456789~!@$%^&*_-+=<>.?/ is not a standard set-info attribute
+(set-info :x A0123456789~!@$%^&*_-+=<>.?/ )
+          ^^
 WARNING: :x is not a standard set-info attribute
+(set-info :x abcdefghijklmnopqrstuvwxyz )
+          ^^
 WARNING: :x is not a standard set-info attribute
+(set-info :x ABCDEFGHIJKLMNOPQRSTUVWXYZ )
+          ^^
 WARNING: :x is not a standard set-info attribute
+(set-info :x |0123456789~!@$%^&*_-+=<>.?/| )
+          ^^
 WARNING: :x is not a standard set-info attribute
+(set-info :x |abcdefghijklmnopqrstuvwxyz| )
+          ^^
 WARNING: :x is not a standard set-info attribute
+(set-info :x |ABCDEFGHIJKLMNOPQRSTUVWXYZ| )
+          ^^
 WARNING: :x is not a standard set-info attribute
+(set-info :x "0123456789~!@$%^&*_-+=<>.?/" )
+          ^^
 WARNING: :x is not a standard set-info attribute
+(set-info :x "abcdefghijklmnopqrstuvwxyz" )
+          ^^
 WARNING: :x is not a standard set-info attribute
+(set-info :x "ABCDEFGHIJKLMNOPQRSTUVWXYZ" )
+          ^^
 WARNING: :x is not a standard set-info attribute
+(set-info :x #b0101 )
+          ^^
 WARNING: :x is not a standard set-info attribute
+(set-info :x #xabcdefABCDEF0123456789 )
+          ^^
 WARNING: :x is not a standard set-info attribute

@@ -41,7 +41,7 @@ The recognized options are these:
     --pipeline : if enabled, commands in file (including -) or --text input are sent to the solver without
         waiting for each response where possible; the output is the same
     --no-pipeline : each command waits for its response before the next is sent (the default)
-    --noshow : if enabled, error location information is not shown
+    --noshow : if enabled, the location of an error or warning is not shown
     -q, --nosuccess : if enabled, 'success' responses are suppressed
     -r, --relax : if enabled, extensions to strict SMT-LIB are permitted
     --testing : if enabled, non-deterministic content in a solver's get-info response

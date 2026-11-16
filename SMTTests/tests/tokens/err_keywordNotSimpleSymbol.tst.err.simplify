@@ -4,4 +4,6 @@
           ^^^^^^^
 (get-info :_)
           ^^
+(set-info :a2 a)
+          ^^^
 WARNING: :a2 is not a standard set-info attribute

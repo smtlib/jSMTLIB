@@ -954,7 +954,8 @@ public class Utils {
                             return smtConfig.responseFactory.error("The :right-assoc attribute of sort " + name + " needs arity 2, in theory " + theoryName);
                         }
                     } else if (SymbolTable.ASSOC_ATTRIBUTES.contains(kw)) {
-                        smtConfig.log.logDiag("WARNING: The " + kw + " attribute has no meaning on a sort declaration and is ignored (sort "
+                        smtConfig.log.logWarning(a.keyword().pos(),
+                                "The " + kw + " attribute has no meaning on a sort declaration and is ignored (sort "
                                 + name + ", in theory " + theoryName + ")");
                     }
                 }

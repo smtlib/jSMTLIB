@@ -1313,7 +1313,7 @@ public class Parser extends Lexer implements IParser {
             // (c) is not a pattern; reported (a warning with --relax), then kept so that type checking
             // reports it too (or, with --relax, accepts it for a nullary constructor)
             if (smtConfig.relax) {
-                smtConfig.log.logDiag("WARNING: A parenthesized pattern should have at least one variable: ("
+                smtConfig.log.logWarning(pos, "A parenthesized pattern should have at least one variable: ("
                         + smtConfig.defaultPrinter.toString(constructor) + ")");
             } else {
                 recoverableError(pos, "A parenthesized pattern must have at least one variable");
