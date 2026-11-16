@@ -68,8 +68,11 @@ public class Solver_test implements ISolver {
     @Override
     public /*@Nullable*/IResponse checkSatStatus() { return checkSatStatus; }
 
-    /** The data structure that maintains the current values of options and info items for this solver. */
+    /** The current values of the options for this solver. */
     protected Map<String,IAttributeValue> options = new HashMap<String,IAttributeValue>();
+
+    /** The values given by set-info, kept apart from options (#233) */
+    protected Map<String,IAttributeValue> infos = new HashMap<String,IAttributeValue>();
 
 
 
@@ -126,6 +129,7 @@ public class Solver_test implements ISolver {
         logicSet = null;
         // Set all options and info to default values
         putDefaults(options, smtConfig.utils);
+        infos.clear();
         checkSatStatus = null;
         IResponse r = applyStartupSettings();
         return r != null ? r : smtConfig.responseFactory.success();
@@ -257,7 +261,7 @@ public class Solver_test implements ISolver {
      * get-proof/get-unsat-core/get-unsat-assumptions/get-assignment preconditions (which all
      * depend on the check-sat result) without a real proving solver. */
     private IResponse statusResult() {
-        IAttributeValue status = options.get(Utils.STATUS.value());
+        IAttributeValue status = infos.get(Utils.STATUS.value());
         if (smtConfig.responseFactory.sat().equals(status)) return smtConfig.responseFactory.sat();
         if (smtConfig.responseFactory.unsat().equals(status)) return smtConfig.responseFactory.unsat();
         return smtConfig.responseFactory.unknown();
@@ -469,7 +473,7 @@ public class Solver_test implements ISolver {
         if (!Utils.setInfoKeywords.contains(key)) {
             smtConfig.log.logWarning(key.pos(), smtConfig.defaultPrinter.toString(key) + " is not a standard set-info attribute");
         }
-        options.put(key.value(),value);
+        infos.put(key.value(),value);
         return smtConfig.responseFactory.success();
     }
 

@@ -1,0 +1,7 @@
+; set-info :global-declarations does not make declarations global: y is gone after the pop (#233)
+(set-logic QF_UF)
+(set-info :global-declarations true)
+(push 1)
+(declare-const y Bool)
+(pop 1)
+(assert y)

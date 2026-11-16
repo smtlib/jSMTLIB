@@ -1,0 +1,5 @@
+; set-info does not set the option of the same name (#233)
+(set-info :produce-models true)
+(get-option :produce-models)
+(set-info :global-declarations true)
+(get-option :global-declarations)

@@ -1,0 +1,5 @@
+(set-info :produce-models true)
+          ^^^^^^^^^^^^^^^
+WARNING: :produce-models is not a standard set-info attribute
+(get-value (p))
+^^^^^^^^^^^^^^^

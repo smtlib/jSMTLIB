@@ -1,0 +1,5 @@
+(set-info :global-declarations true)
+          ^^^^^^^^^^^^^^^^^^^^
+WARNING: :global-declarations is not a standard set-info attribute
+(assert y)
+        ^
