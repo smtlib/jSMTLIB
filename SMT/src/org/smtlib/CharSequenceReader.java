@@ -56,10 +56,12 @@ public class CharSequenceReader extends CharSequenceInfinite implements CharSequ
         if (!rdr.ready() && prompter != null) {
             prompter.prompt();
         }
+        int start = amountRead;
         do {
             nread = rdr.read(buf,amountRead,buf.length-amountRead);
             if (nread == -1) {
-                return false;
+                // false only if this call read nothing: the caller then takes the input to have ended
+                return amountRead > start;
             }
             amountRead += nread;
         } while (amountRead < buf.length && rdr.ready());

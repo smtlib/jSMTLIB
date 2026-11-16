@@ -1,0 +1,5 @@
+"a"
+"a"
+(error "Expected a command (beginning with '(') or a comment (beginning with ';') here, not a numeral")
+"a"
+(error "Invalid token: #zz")

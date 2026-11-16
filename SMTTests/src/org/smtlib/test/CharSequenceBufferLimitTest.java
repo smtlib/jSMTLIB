@@ -80,8 +80,29 @@ public class CharSequenceBufferLimitTest {
     @Test
     public void endOfInputWithinTheLimit() {
         Limited r = new Limited(chars(30), 2, 50);
-        Assert.assertEquals(CharSequenceInfinite.endChar, r.charAt(40));
-        Assert.assertEquals(31, r.length());
+        try {
+            r.charAt(40);
+            Assert.fail("expected the end of input");
+        } catch (CharSequenceInfinite.EndOfInputException e) {
+            // expected
+        }
+        Assert.assertEquals(30, r.length());
+        Assert.assertEquals('a', r.charAt(29));
+    }
+
+    /** Every character is data, 0x19 included, and the first read returns the first character (#240) */
+    @Test
+    public void everyCharacterIsData() {
+        CharSequenceReader r = new CharSequenceReader(new StringReader("a\u0019b"));
+        Assert.assertEquals('a', r.charAt(0));
+        Assert.assertEquals('\u0019', r.charAt(1));
+        Assert.assertEquals('b', r.charAt(2));
+        try {
+            r.charAt(3);
+            Assert.fail("expected the end of input");
+        } catch (CharSequenceInfinite.EndOfInputException e) {
+            Assert.assertEquals(3, r.length());
+        }
     }
 
     @Test

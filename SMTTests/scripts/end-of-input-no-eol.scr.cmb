@@ -1,0 +1,9 @@
+"a"
+"a"
+(echo "a") 123
+           ^^^
+(error "Expected a command (beginning with '(') or a comment (beginning with ';') here, not a numeral")
+"a"
+(echo "a") #zz
+           ^^^
+(error "Invalid token: #zz")

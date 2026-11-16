@@ -82,35 +82,47 @@ public abstract class CharSequenceInfinite implements CharSequence {
     //@ invariant length >= 0 && length >= amountRead;
     protected int length;
 
-    /** The character to use to mark the end of input */
-    final public static char endChar = (char)25;
+    /** Whether the end of input has been reached; length is then the number of characters in the input */
+    protected boolean atEnd = false;
+
+    /** Thrown by charAt for an index at or beyond the end of input, once it is known; every character of the
+     *  input, whatever its value, is data (#240) */
+    public static class EndOfInputException extends IndexOutOfBoundsException {
+        private static final long serialVersionUID = 1L;
+
+        public EndOfInputException(int index) {
+            super("Index " + index + " is at or beyond the end of input");
+        }
+    }
 
     //@ constraint (\forall int i; 0 <= i < \old(amountRead); \old(buf[i]) == buf[i]);
     //@ constraint amountRead >= \old(amountRead);
 
     /** Returns the char at the given index; this may block while input is read if the char has
      * not been read before.  An IOException that occurs while reading input is converted to an
-     * undeclared RuntimeException. 
+     * undeclared RuntimeException. An index at or beyond the end of input throws EndOfInputException;
+     * length() is then the length of the input.
      */
     //@ requires index >= 0;
-    //@ assigns buf, buf[amountRead..], amountRead, length;
+    //@ assigns buf, buf[amountRead..], amountRead, length, atEnd;
     //@ ensures index < amountRead;
+    //@ signals (EndOfInputException) atEnd && index >= length;
     @Override
     public char charAt(int index) {
         if (index >= amountRead) {
+            if (atEnd) throw new EndOfInputException(index);
             if (index >= buf.length) {
                 // We need +1 because one needs a buffer of at least size 2 to include index=1
-                // We add an additional +1 so that there is room to hold an End-of-input character if necessary
+                // We add an additional +1 for slack
                 // (in long, as index + 2 can exceed Integer.MAX_VALUE)
                 expandBuffer(index + 2L);
             }
             try {
                 while (amountRead <= index) {
                     if (!readChars()){
-                        //SMT.out.println("END OF INPUT READ");
-                        buf[amountRead++] = endChar;
+                        atEnd = true;
                         length = amountRead;
-                        return endChar;
+                        throw new EndOfInputException(index);
                     }
                 }
             } catch (IOException e) {

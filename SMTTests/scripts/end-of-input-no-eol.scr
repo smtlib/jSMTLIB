@@ -1,0 +1,9 @@
+### A file whose last token or comment runs to the end of the input, with no line terminator after it, is read
+### to its end: the end of the input used to be read as more characters of that token, forever (#240)
+##EXITCODE 1
+_F="$HOME/noeol.smt2"
+trap 'rm -f "$_F"' EXIT
+for t in '; a comment' '123' '#zz'; do
+    printf '(echo "a") %s' "$t" > "$_F"
+    $SMT_CMD --solver test "$_F"
+done
