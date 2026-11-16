@@ -1,0 +1,4 @@
+success
+success
+success
+(error "Argument 2 of r has sort Bool, expected Int")

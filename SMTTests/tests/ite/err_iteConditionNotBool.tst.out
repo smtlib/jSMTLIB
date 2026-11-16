@@ -1,4 +1,4 @@
 success
 success
 success
-(error "Argument 1 of ite has sort X, expected sort family Bool")
+(error "Argument 1 of ite has sort X, expected Bool")
