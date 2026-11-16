@@ -904,8 +904,8 @@ public class SMT {
                             && Utils.SMTLIB_VERSION.equals(((ICommand.Iset_info) command).infoflag());
                     if (isSmtlibVersionInfo && !smtlibVersionAllowed) {
                         result = smtConfig.responseFactory.error(
-                            "The :smt-lib-version attribute may only be set as the first command of a script, or immediately after a reset command",
-                            command.pos());
+                            command.pos(),
+                            "The :smt-lib-version attribute may only be set as the first command of a script, or immediately after a reset command");
                     } else {
                         try {
                             solver.setSourceLine(Utils.sourceLine(command));
@@ -926,8 +926,8 @@ public class SMT {
                             }
                         } catch (UnsupportedOperationException e) {
                             result = smtConfig.responseFactory.error(
-                                "The " + smtConfig.solvername + " solver does not support this operation: " + e.getMessage(),
-                                command.pos());
+                                command.pos(),
+                                "The " + smtConfig.solvername + " solver does not support this operation: " + e.getMessage());
                         }
                         if (!result.isError() && isSmtlibVersionInfo) {
                             ICommand.Iset_info si = (ICommand.Iset_info) command;

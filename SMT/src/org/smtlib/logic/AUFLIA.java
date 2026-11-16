@@ -26,7 +26,7 @@ public class AUFLIA extends Logic {
     @Override
     public void validExpression(IExpr expression) throws IVisitor.VisitorException {
         if (!isLinearInteger(expression)) {
-            throw new IVisitor.VisitorException("Integer expressions must be linear in this logic",expression.pos());
+            throw new IVisitor.VisitorException(expression.pos(),"Integer expressions must be linear in this logic");
         }
         checkBoundArraySorts(expression);
     }

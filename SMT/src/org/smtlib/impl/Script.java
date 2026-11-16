@@ -70,18 +70,18 @@ public class Script extends Pos.Printable implements IScript {
         if (filename != null) {
             String filename = this.filename.value();
             if (!new File(filename).isFile()) {
-                return smtConfig.responseFactory.error("The script file " + filename + " does not exist",this.filename.pos());
+                return smtConfig.responseFactory.error(this.filename.pos(),"The script file " + filename + " does not exist");
             }
             try (FileReader fileReader = new FileReader(new File(filename))) {
                 ISource source = smtConfig.smtFactory.createSource(new CharSequenceReader(fileReader),filename);
                 IParser p = smtConfig.smtFactory.createParser(smtConfig,source);
                 IScript script = p.parseScript();
-                if (script == null) return smtConfig.responseFactory.error("Failed to parse the command script: " + filename,this.filename.pos());
+                if (script == null) return smtConfig.responseFactory.error(this.filename.pos(),"Failed to parse the command script: " + filename);
                 commands = script.commands();
             } catch (IOException e) {
-                return smtConfig.responseFactory.error("Could not read the script file " + filename + ": " + e.getMessage(),this.filename.pos());
+                return smtConfig.responseFactory.error(this.filename.pos(),"Could not read the script file " + filename + ": " + e.getMessage());
             } catch (ParserException e) {
-                return smtConfig.responseFactory.error(e.getMessage(),e.pos());
+                return smtConfig.responseFactory.error(e.pos(),e.getMessage());
             }
         }
         if (commands == null) {

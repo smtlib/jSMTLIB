@@ -26,7 +26,7 @@ public class AUFLIRA extends Logic {
     @Override
     public void validExpression(IExpr expression) throws IVisitor.VisitorException {
         if (!isLinearReal(expression))
-            throw new IVisitor.VisitorException("Arithmetic expressions must be linear in the " + logicName + " logic", expression.pos());
+            throw new IVisitor.VisitorException(expression.pos(), "Arithmetic expressions must be linear in the " + logicName + " logic");
         checkBoundArraySorts(expression);
     }
 

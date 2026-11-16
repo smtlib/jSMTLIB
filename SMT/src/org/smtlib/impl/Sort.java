@@ -476,8 +476,8 @@ public abstract class Sort extends Pos.Printable implements ISort {
         protected IIdentifier id;
         protected String error;
 
-        /** Creates an error placeholder for the given identifier, error message, and source position. */
-        public ErrorDefinition(IIdentifier id, String error, IPos pos) {
+        /** Creates an error placeholder for the given identifier, source position, and error message. */
+        public ErrorDefinition(IIdentifier id, IPos pos, String error) {
             this.id = id;
             this.error = error;
             setPos(pos);

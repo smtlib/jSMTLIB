@@ -44,7 +44,7 @@ public class SortFactoryCoverageTest {
         config = new SMT.Configuration();
         solver = config.createSolver("test", null);
         solver.start();
-        solver.set_logic("QF_UF", null);
+        solver.set_logic(null, "QF_UF");
     }
 
     /** The nullary convenience constructor: equivalent to the 2-arg form with an empty

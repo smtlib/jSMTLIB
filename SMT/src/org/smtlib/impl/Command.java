@@ -51,9 +51,9 @@ public abstract class Command extends Pos.Printable implements ICommand {
         if (trailingText != null) p.writer().append(trailingText);
     }
 
-    /** Creates a ParserException with the given message and position. */
-    static public IParser.ParserException error(SMT.Configuration smt, String msg, IPos pos) {
-        return new IParser.ParserException(msg, pos);
+    /** Creates a ParserException with the given position and message. */
+    static public IParser.ParserException error(SMT.Configuration smt, IPos pos, String msg) {
+        return new IParser.ParserException(pos, msg);
     }
 
 }

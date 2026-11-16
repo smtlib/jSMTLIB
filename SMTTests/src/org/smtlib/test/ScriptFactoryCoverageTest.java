@@ -35,7 +35,7 @@ public class ScriptFactoryCoverageTest {
         config = new SMT.Configuration();
         solver = config.createSolver("test", null);
         solver.start();
-        solver.set_logic("QF_UF", null);
+        solver.set_logic(null, "QF_UF");
     }
 
     @Test

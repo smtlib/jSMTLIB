@@ -96,8 +96,8 @@ public class Factory implements IExpr.IFactory, ISort.IFactory, ICommand.IFactor
     }
 
     @Override
-    public ISort.IErrorDefinition createErrorDefinition(IIdentifier id, String errorMessage, IPos pos) {
-        return new Sort.ErrorDefinition(id, errorMessage, pos);
+    public ISort.IErrorDefinition createErrorDefinition(IIdentifier id, IPos pos, String errorMessage) {
+        return new Sort.ErrorDefinition(id, pos, errorMessage);
     }
 
     @Override

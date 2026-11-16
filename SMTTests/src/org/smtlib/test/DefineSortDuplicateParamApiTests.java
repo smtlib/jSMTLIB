@@ -24,7 +24,7 @@ public class DefineSortDuplicateParamApiTests {
         IExpr.IFactory f = config.exprFactory;
         ISort.IFactory sf = config.sortFactory;
         ICommand.IFactory cf = config.commandFactory;
-        Assert.assertTrue(solver.set_logic("ALL", null).isOK());
+        Assert.assertTrue(solver.set_logic(null, "ALL").isOK());
 
         ISort.IParameter x1 = sf.createSortParameter(f.symbol("X"));
         ISort.IParameter x2 = sf.createSortParameter(f.symbol("X"));
@@ -46,7 +46,7 @@ public class DefineSortDuplicateParamApiTests {
         IExpr.IFactory f = config.exprFactory;
         ISort.IFactory sf = config.sortFactory;
         ICommand.IFactory cf = config.commandFactory;
-        Assert.assertTrue(solver.set_logic("ALL", null).isOK());
+        Assert.assertTrue(solver.set_logic(null, "ALL").isOK());
 
         ISort.IParameter x = sf.createSortParameter(f.symbol("X"));
         ISort.IParameter y = sf.createSortParameter(f.symbol("Y"));

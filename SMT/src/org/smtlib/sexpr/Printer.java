@@ -522,14 +522,14 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
             Method m = clazz.getMethod("write", Printer.class);
             m.invoke(e, this);
         } catch (IllegalAccessException ex) {
-            throw new IVisitor.VisitorException(ex,
-                    e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null);
+            throw new IVisitor.VisitorException(e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null,
+                    ex);
         } catch (InvocationTargetException ex) {
-            throw new IVisitor.VisitorException(ex.getTargetException(),
-                    e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null);
+            throw new IVisitor.VisitorException(e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null,
+                    ex.getTargetException());
         } catch (NoSuchMethodException ex) {
             throw new IVisitor.VisitorException(
-                    "No write method for " + clazz + " and " + this.getClass(), null);
+                    null, "No write method for " + clazz + " and " + this.getClass());
         }
         return null;
     }
@@ -702,7 +702,7 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
             }
             if (!text.endsWith("\n")) writer().append("\n");
         } catch (java.io.IOException ex) {
-            throw new IVisitor.VisitorException(ex, e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null);
+            throw new IVisitor.VisitorException(e instanceof IPos.IPosable ? ((IPos.IPosable)e).pos() : null, ex);
         }
         return null;
     }
@@ -891,15 +891,15 @@ public class Printer implements IPrinter, org.smtlib.IVisitor</*@Nullable*/ Void
     public Void visit(IResponse e) throws IVisitor.VisitorException {
         // ISexpr.ISeq/IToken now dispatch directly to their own visit() overloads below;
         // anything reaching here is a genuinely unexpected kind of IResponse.
-        throw new VisitorException("Undelegated IResponse in Printer for " + e.getClass(),null);
+        throw new VisitorException(null,"Undelegated IResponse in Printer for " + e.getClass());
     }
 
     /** Utility function to create an exception using the message from the first argument and the
      * position from the second, if it is IPosable.
      */
     public IVisitor.VisitorException exc(Exception ex, Object possiblePos) {
-        return new IVisitor.VisitorException(ex,
-            possiblePos instanceof IPos.IPosable ? ((IPos.IPosable)possiblePos).pos() : null);
+        return new IVisitor.VisitorException(possiblePos instanceof IPos.IPosable ? ((IPos.IPosable)possiblePos).pos() : null,
+            ex);
     }
 
     /** Utility function to print error messages in this printer's format */

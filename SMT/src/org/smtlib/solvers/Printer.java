@@ -122,7 +122,7 @@ public class Printer extends org.smtlib.sexpr.Printer {
             boolParam.parameter().accept(this);
             w.append(" true)) ");
         } catch (IOException ex) {
-            throw new IVisitor.VisitorException(ex,pos);
+            throw new IVisitor.VisitorException(pos,ex);
         }
         printQuantifierUnfoldingBoolParams(keyword, rest, body, pos);
         try {
@@ -130,13 +130,13 @@ public class Printer extends org.smtlib.sexpr.Printer {
             boolParam.parameter().accept(this);
             w.append(" false)) ");
         } catch (IOException ex) {
-            throw new IVisitor.VisitorException(ex,pos);
+            throw new IVisitor.VisitorException(pos,ex);
         }
         printQuantifierUnfoldingBoolParams(keyword, rest, body, pos);
         try {
             w.append("))");
         } catch (IOException ex) {
-            throw new IVisitor.VisitorException(ex,pos);
+            throw new IVisitor.VisitorException(pos,ex);
         }
     }
 }

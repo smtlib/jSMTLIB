@@ -47,7 +47,7 @@ public abstract class DifferenceLogic extends Logic {
                     checkAtom(e, e.args().get(0), e.args().get(1));
                     return null;
                 }
-                throw restrictionError("Invalid operation in " + kind() + " logic", e);
+                throw restrictionError(e, "Invalid operation in " + kind() + " logic");
             }
         };
         expression.accept(visitor);

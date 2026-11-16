@@ -34,13 +34,13 @@ public class QF_UFIDL extends Logic {
                 ISymbol head = e.head().headSymbol();
                 if (Utils.PLUS.equals(head) || Utils.MINUS.equals(head)) {
                     List<IExpr> args = e.args();
-                    if (args.size() < 2) throw restrictionError("Negation is not allowed in the QF_UFIDL logic", e);
+                    if (args.size() < 2) throw restrictionError(e, "Negation is not allowed in the QF_UFIDL logic");
                     // (op t1 t2 ... tn) is (op ... (op t1 t2) ... tn) (:left-assoc)
                     boolean ok = args.get(0) instanceof INumeral || args.get(1) instanceof INumeral;
                     for (int i = 2; i < args.size(); i++) ok &= args.get(i) instanceof INumeral;
-                    if (!ok) throw restrictionError("In each (+ t1 t2) or (- t1 t2), t1 or t2 must be a numeral in the QF_UFIDL logic", e);
+                    if (!ok) throw restrictionError(e, "In each (+ t1 t2) or (- t1 t2), t1 or t2 must be a numeral in the QF_UFIDL logic");
                 } else if (NOT_ALLOWED.contains(head.value())) {
-                    throw restrictionError("The function symbol " + head.value() + " is not allowed in the QF_UFIDL logic", e);
+                    throw restrictionError(e, "The function symbol " + head.value() + " is not allowed in the QF_UFIDL logic");
                 }
                 return super.visit(e);
             }
