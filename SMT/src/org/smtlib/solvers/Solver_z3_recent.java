@@ -97,6 +97,20 @@ public class Solver_z3_recent extends AbstractSolver implements ISolver {
         return super.echo(arg);
     }
 
+    /** Whether this z3 is version 4.6; null until first needed */
+    private /*@Nullable*/ Boolean is4_6 = null;
+
+    /** z3 4.6 answers declare-datatype only after the next command and never declares the datatype
+     *  (#176), though it handles declare-datatypes; so declare-datatype is sent as that equivalent.
+     *  z3's error columns for it then count in the longer text sent. */
+    @Override
+    public IResponse declare_datatype(ICommand.Ideclare_datatype cmd) {
+        if (is4_6 == null) is4_6 = versionBefore(cmds[0], 4, 7) && !versionBefore(cmds[0], 4, 6);
+        if (!is4_6) return super.declare_datatype(cmd);
+        return sendChange(StackChange.DECLARE_DATATYPE, new org.smtlib.command.C_declare_datatypes(
+                List.of(cmd.sortDeclaration()), List.of(cmd.datatype())));
+    }
+
     /** Whether the z3 executable's version (from "z3 -version", e.g. "Z3 version 4.16.0 - 64 bit") is
      *  before major.minor; false if it cannot be told */
     static boolean versionBefore(String executable, int major, int minor) {

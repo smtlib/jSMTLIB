@@ -1,0 +1,8 @@
+unsupported
+success
+success
+success
+sat
+(error "Symbol x is already defined")
+(error "The get-value command is only valid if :produce-models has been enabled")
+(error "The get-model command is only valid if :produce-models has been enabled")

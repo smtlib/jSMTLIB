@@ -1,0 +1,8 @@
+(get-value (x))
+^^^^^^^^^^^^^^^
+(get-assignment)
+^^^^^^^^^^^^^^^^
+(get-unsat-core)
+^^^^^^^^^^^^^^^^
+(get-value (x))
+^^^^^^^^^^^^^^^

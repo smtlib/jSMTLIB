@@ -1,0 +1,2 @@
+success
+(error "line 4 column 63: invalid declaration, function 'ctor' (with the given signature) already declared")

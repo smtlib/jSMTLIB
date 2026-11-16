@@ -1,0 +1,7 @@
+success
+success
+success
+success
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:7:10: undefined symbol '<'
+")
+(error "The solver process has exited")
