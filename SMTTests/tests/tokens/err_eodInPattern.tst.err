@@ -1,0 +1,2 @@
+(assert (forall ((x Bool)) (! (f x) :pattern ((f x) 
+                                                    ^
