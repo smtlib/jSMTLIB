@@ -1002,7 +1002,7 @@ public final class SymbolTable {
     private boolean unifiable(ISort a, ISort b, Map<ISort.IParameter,ISort> s) {
         a = resolve(a, s);
         b = resolve(b, s);
-        if (a instanceof ISort.IParameter) return a == b || bind((ISort.IParameter) a, b, s);
+        if (a instanceof ISort.IParameter) return a.equals(b) || bind((ISort.IParameter) a, b, s);
         if (b instanceof ISort.IParameter) return bind((ISort.IParameter) b, a, s);
         if (a instanceof ISort.IApplication && b instanceof ISort.IApplication) {
             ISort.IApplication aa = (ISort.IApplication) a;
@@ -1032,7 +1032,7 @@ public final class SymbolTable {
 
     private static boolean occurs(ISort.IParameter p, ISort t, Map<ISort.IParameter,ISort> s) {
         t = resolve(t, s);
-        if (t == p) return true;
+        if (t.equals(p)) return true;   // a parameter, or a use of it (#231)
         if (t instanceof ISort.IApplication) {
             for (ISort c: ((ISort.IApplication) t).parameters()) if (occurs(p, c, s)) return true;
         }

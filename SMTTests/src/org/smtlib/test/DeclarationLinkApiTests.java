@@ -99,7 +99,9 @@ public class DeclarationLinkApiTests {
 
     /** Looks for the sort name at the offset in the sort */
     private static void sortAt(ISort s, int offset, IExpr.IIdentifier[] found) {
-        if (s instanceof ISort.IApplication a) {
+        if (s instanceof ISort.IParameter p) {
+            if (p.symbol().pos() != null && p.symbol().pos().charStart() == offset) found[0] = p.symbol();
+        } else if (s instanceof ISort.IApplication a) {
             if (a.family().pos() != null && a.family().pos().charStart() == offset) found[0] = a.family();
             for (ISort p : a.parameters()) sortAt(p, offset, found);
         }
@@ -116,6 +118,13 @@ public class DeclarationLinkApiTests {
         if (cmd instanceof ICommand.Idefine_fun f) {
             for (IExpr.IDeclaration d : f.parameters()) list.add(d.sort());
             list.add(f.resultSort());
+        }
+        if (cmd instanceof ICommand.Ideclare_datatypes d) {
+            for (ISort.IDatatype dt : d.datatypes()) {
+                for (IExpr.IConstructor c : dt.constructors()) {
+                    for (IExpr.ISelector sel : c.selectors()) list.add(sel.sort());
+                }
+            }
         }
         return list;
     }
@@ -192,8 +201,16 @@ public class DeclarationLinkApiTests {
                 + "(declare-const c «V:1»)(assert (forall ((x «U:0»)) (= (f x) c)))");
     }
 
-    // Sort parameters are not linked: the parser replaces each use of a parameter with the declared
-    // parameter itself, so a use has no node (or position) of its own.
+    @Test
+    public void sortParameter() throws Exception {
+        links("(set-logic ALL)(define-sort ‹M (‹X) (Array «X:1» «X:1»))(declare-const m («M:0» Int))");
+    }
+
+    @Test
+    public void datatypeParameter() throws Exception {
+        links("(set-logic ALL)(declare-datatypes ((‹Pair 1)) ((par (‹T) ((pair (first «T:1») (second «T:1»))))))"
+                + "(declare-const p («Pair:0» Int))(assert (= (first p) (second p)))");
+    }
 
     @Test
     public void datatypeSort() throws Exception {

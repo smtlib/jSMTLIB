@@ -273,9 +273,9 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
          *  the theories state only in prose, a shared identifier with no position); for a sort name, the
          *  declaring identifier of the sort (for an indexed sort such as (_ BitVec 8), likewise a shared
          *  identifier with no position); for a constructor in a match pattern, the constructor's.
-         *  Null if none was recorded (e.g. not yet checked). Sort parameters are not linked: each use is
-         *  the declared parameter itself. A sort name's link is not cleared on pop, unlike an
-         *  expression's. */
+         *  For a use of a sort parameter, the parameter's symbol, set when the use is parsed (#231).
+         *  Null if none was recorded (e.g. not yet checked). A sort name's link is not cleared on pop,
+         *  unlike an expression's. */
         /*@Nullable*/ IIdentifier declaration();
 
         /** Records the identifier that declares what this one names (see {@link #declaration()}) */

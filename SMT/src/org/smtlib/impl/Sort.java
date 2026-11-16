@@ -433,14 +433,19 @@ public abstract class Sort extends Pos.Printable implements ISort {
 
         @Override
         public boolean equals(Object o) {
-            // Parameters are equal only under object equality
+            // Parameters are equal only under object equality (a use of this parameter counts as it)
             // Two parameters with the same name in different scopes are not equal
-            return this == o;
+            return this == declared(o);
         }
 
         @Override
         public boolean equalsNoExpand(ISort sort) {
-            return this == sort;
+            return this == declared(sort);
+        }
+
+        /** The parameter that o uses, if o is a use of one (#231); else o */
+        static Object declared(Object o) {
+            return o instanceof ParameterUse u ? u.declared : o;
         }
 
         @Override
@@ -469,6 +474,66 @@ public abstract class Sort extends Pos.Printable implements ISort {
         public int intArity() {
             return 0;
         }
+    }
+
+    /** A use of a sort parameter (#231): it has the symbol written at the use, and so the use's position,
+     *  linked to the parameter's own symbol; in every other respect (equality, hashing, substitution) it is
+     *  the parameter it uses */
+    static public final class ParameterUse extends Sort implements IParameter {
+        final Parameter declared;
+        private final IExpr.ISymbol symbol;
+
+        /** A use, written as the given symbol, of the given parameter */
+        public ParameterUse(Parameter declared, IExpr.ISymbol symbol) {
+            this.declared = declared;
+            this.symbol = symbol;
+            setPos(symbol.pos());
+            symbol.setDeclaration(declared.symbol());
+        }
+
+        /** The parameter used */
+        public Parameter declared() { return declared; }
+
+        @Override
+        public IExpr.ISymbol symbol() { return symbol; }
+
+        @Override
+        public ISort substitute(Map<IParameter,ISort> map) {
+            ISort s = map.get(declared);
+            return s == null ? this : s;
+        }
+
+        @Override
+        public ISort expand() { return this; }
+
+        @Override
+        public boolean equals(Object o) {
+            return declared == Parameter.declared(o);
+        }
+
+        @Override
+        public boolean equalsNoExpand(ISort sort) {
+            return declared == Parameter.declared(sort);
+        }
+
+        @Override
+        public int hashCode() {
+            return System.identityHashCode(declared);
+        }
+
+        @Override
+        public </*@Nullable*/T> /*@Nullable*/T accept(IVisitor</*@Nullable*/T> v) throws IVisitor.VisitorException {
+            return v.visit(this);
+        }
+
+        @Override
+        public IIdentifier identifier() { return declared.identifier(); }
+
+        @Override
+        public ISort eval(List<ISort> sorts) { return declared.eval(sorts); }
+
+        @Override
+        public int intArity() { return 0; }
     }
 
     /** A placeholder sort definition used when a sort declaration is ill-formed, to suppress cascading errors. */
