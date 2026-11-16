@@ -121,6 +121,28 @@ public class CommandFactoryCoverageTest {
     }
 
     @Test
+    public void defineFun() throws Exception {
+        ISymbol f = config.exprFactory.symbol("f");
+        ISort boolSort = org.smtlib.impl.Sort.Bool();
+        IExpr trueLit = config.exprFactory.symbol("true");
+        List<IDeclaration> params = Collections.emptyList();
+        ICommand.Idefine_fun c = config.commandFactory.define_fun(f, params, boolSort, trueLit);
+        Assert.assertEquals("define-fun", c.commandName());
+        Assert.assertEquals(f, c.symbol());
+        Assert.assertEquals("(define-fun f () Bool true)", print(c));
+        IResponse r = c.execute(solver);
+        Assert.assertFalse(r.isError());
+    }
+
+    @Test
+    public void comment() throws Exception {
+        ICommand.Icomment c = config.commandFactory.comment("; note");
+        Assert.assertEquals("; note", c.text());
+        IResponse r = c.execute(solver);
+        Assert.assertFalse(r.isError());
+    }
+
+    @Test
     public void defineFunRec() throws Exception {
         ISymbol f = config.exprFactory.symbol("f");
         ISort boolSort = org.smtlib.impl.Sort.Bool();
