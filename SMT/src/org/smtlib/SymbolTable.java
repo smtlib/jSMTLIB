@@ -710,7 +710,9 @@ public final class SymbolTable {
             try {
                 bindings = unify(entry.sort.resultSort(), resultSort, bindings);
             } catch (NoMatch nm) {
-                // lookup() reports the result sort mismatch
+                throw new NoMatch(smtConfig.defaultPrinter.toString(entry.name) + " has result sort "
+                        + smtConfig.defaultPrinter.toString(entry.sort.resultSort().substitute(bindings))
+                        + ", expected " + smtConfig.defaultPrinter.toString(resultSort) + " (from the `as` qualifier)");
             }
         }
         ISort result = entry.sort.resultSort().substitute(bindings);
