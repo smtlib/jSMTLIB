@@ -11,6 +11,15 @@ name: Build jSMTLIB
 ## Branch behaviour:
 ##   dev    — build + test only
 ##   master — build + test + create draft release + upload jSMTLIB.jar
+##
+## Run manually with coverage=by-test (on dev; on master it also makes the draft release) for
+## per-test coverage on every platform and an analysis of all platforms as one suite: coverage,
+## and tests that add nothing to it (empty, duplicate, subsumed; the minimum cover). Download the
+## coverage-by-test-<run id> artifact for the analysis (report.txt, report/*.csv), the merged
+## line/branch report (html/, coverage.xml), and the data behind them: the combined index.tsv,
+## each platform's per-test .exec files and own analysis (coverage-<label>/cov/), and the
+## jSMTLIB.jar they were recorded against (jar/). To reanalyze it, e.g. with other options:
+##   make -C SMTTests cov-analyze-ci-by-test CI_BY_TEST_DIR=<unzipped artifact> COV_ANALYZER_ARGS=...
 
 on:
   workflow_dispatch:
@@ -20,7 +29,7 @@ on:
         required: false
         default: ''
       coverage:
-        description: 'Run with JaCoCo coverage instrumentation and upload a per-leg coverage artifact. Off by default -- see jsmtlib-test/action.yml for why.'
+        description: 'false, true (JaCoCo coverage, a per-leg coverage artifact) or by-test (per-test coverage and the redundancy analysis of all platforms; see the top of this file). Off by default -- see jsmtlib-test/action.yml for why.'
         required: false
         default: 'false'
   push:
@@ -127,8 +136,8 @@ jobs:
     # Raised to keep real headroom over the new, coverage-instrumented normal runtime
     # rather than shrinking that headroom to nothing. Raised from 35 when the windows leg,
     # then ~34.5 minutes, crossed it (run 40435920011), and from 45 when it, then ~44
-    # minutes, crossed that (run 43463155515).
-    timeout-minutes: 60
+    # minutes, crossed that (run 43463155515). Per-test coverage (coverage=by-test) is slower.
+    timeout-minutes: ${{ inputs.coverage == 'by-test' && 180 || 60 }}
     strategy:
       matrix:
         include:
@@ -204,6 +213,63 @@ jobs:
         echo "Review the **Test jSMTLIB** step above." >> $GITHUB_STEP_SUMMARY
         echo "::error::Tests failed on ${{ matrix.label }} — job is marked failed"
         exit 1
+
+  ## coverage=by-test only: analyzes every platform's per-test coverage as one suite (see the
+  ## top of this file). Runs even if some platform's tests failed or timed out, on whatever
+  ## coverage-<label> artifacts exist.
+  analyze-by-test:
+    needs: [ build, test ]
+    if: always() && inputs.coverage == 'by-test' && needs.build.result == 'success'
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v6
+      with:
+        sparse-checkout: ./.github
+        path: ACTIONS
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v5
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: Checkout jSMTLIB
+      uses: ./ACTIONS/.github/actions/jsmtlib-checkout/
+      with:
+        branch: ${{ env.BRANCH }}
+
+    - name: Download coverage data
+      uses: actions/download-artifact@v8
+      with:
+        pattern: coverage-*
+        path: jSMTLIB/SMTTests/cov/ci-by-test
+
+    - name: Download jar
+      uses: actions/download-artifact@v8
+      with:
+        name: jsmtlib-release-${{ github.run_id }}
+        path: jSMTLIB/SMTTests/cov/ci-by-test/jar
+
+    - name: Analyze all platforms together
+      shell: bash
+      run: |
+        make -C jSMTLIB/SMTTests cov-analyze-ci-by-test
+        {
+          echo '### Coverage by test (all platforms)'
+          echo '```'
+          sed -n '1,/^Minimum cover/p' jSMTLIB/SMTTests/cov/ci-by-test/report.txt
+          echo '```'
+        } >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload analysis and data
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: coverage-by-test-${{ github.run_id }}
+        path: jSMTLIB/SMTTests/cov/ci-by-test
+        if-no-files-found: warn
+        retention-days: 30
 
   ## Generate javadoc and publish to the gh-pages site under api/ (master only)
   javadoc:

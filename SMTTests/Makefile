@@ -197,6 +197,41 @@ cov-report-by-test: cov/report-classes
 		--html cov/html-by-test \
 		--xml cov/coverage-by-test.xml
 
+## Analyzes the data of a build.yml run with coverage=by-test (its analyze-by-test job)
+## as one suite across all platforms: CI_BY_TEST_DIR holds each platform's coverage-<label>
+## artifact and, in jar/, the jSMTLIB.jar that run tested. Writes index.tsv, report.txt and
+## report/*.csv (as cov-analyze-by-test), and a line/branch report of all platforms' merged
+## coverage (merged.exec, html/, coverage.xml), all in CI_BY_TEST_DIR. That job runs it;
+## to rerun on a downloaded coverage-by-test-<run id> artifact, point CI_BY_TEST_DIR at it.
+## A platform's ~11000 files are too many for one command line, so they are merged in batches
+## into part files (in a temporary directory), which are then merged. Every merge writes a new
+## file, moved into place afterwards: jacococli merge appends to an existing destfile, and it
+## copies every session record, so a rerun or a merge with its own output would grow the file.
+CI_BY_TEST_DIR ?= cov/ci-by-test
+CI_BY_TEST_JAR ?= $(CI_BY_TEST_DIR)/jar/jSMTLIB.jar
+cov-analyze-ci-by-test:
+	bash ./cov-combine-by-test $(CI_BY_TEST_DIR)
+	set -o pipefail; java -cp "$(COV_ANALYZER_CP)" com.sigillogic.coverage.analyzer.Main \
+		--index $(CI_BY_TEST_DIR)/index.tsv --classfiles $(CI_BY_TEST_JAR) \
+		$(COV_ANALYZER_ARGS) --out $(CI_BY_TEST_DIR)/report | tee $(CI_BY_TEST_DIR)/report.txt
+	for d in $(CI_BY_TEST_DIR)/coverage-*/cov/by-test; do \
+		parts=$$(mktemp -d) && \
+		(cd $$d && find . -maxdepth 1 -name '*.exec' -print0 | PARTS=$$parts xargs -0 -n 1000 sh -c \
+			'java -jar "$$0" merge --quiet "$$@" --destfile "$$(mktemp "$$PARTS/part-XXXXXX")"' \
+			$(CURDIR)/jacoco/lib/jacococli.jar) && \
+		java -jar jacoco/lib/jacococli.jar merge --quiet $$parts/part-* --destfile $$parts/merged.exec && \
+		mv -f $$parts/merged.exec $$d/../by-test-merged.exec || exit 1; \
+	done
+	parts=$$(mktemp -d) && \
+	java -jar jacoco/lib/jacococli.jar merge --quiet $(CI_BY_TEST_DIR)/coverage-*/cov/by-test-merged.exec \
+		--destfile $$parts/merged.exec && \
+	mv -f $$parts/merged.exec $(CI_BY_TEST_DIR)/merged.exec
+	java -jar jacoco/lib/jacococli.jar report $(CI_BY_TEST_DIR)/merged.exec \
+		--classfiles $(CI_BY_TEST_JAR) \
+		--sourcefiles ../SMT/src \
+		--html $(CI_BY_TEST_DIR)/html \
+		--xml $(CI_BY_TEST_DIR)/coverage.xml
+
 ## The helper processes that tests launch as stand-in solvers run in their own JVMs, without
 ## the JaCoCo agent, so they would always show 0%; reports leave them out by reading the test
 ## classes from a copy without them (jacococli report has no exclude option).
