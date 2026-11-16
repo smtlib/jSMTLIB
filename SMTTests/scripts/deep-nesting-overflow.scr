@@ -1,0 +1,7 @@
+### Input nested too deeply for the parser reports only the stack-overflow error, with no stack trace,
+### and the following command still runs (#239). A small thread stack (-Xss) makes the overflow
+### certain at a depth that is quick to run.
+##EXITCODE 1
+O=$(printf '(not %.0s' $(seq 5000))
+C=$(printf ')%.0s' $(seq 5000))
+${SMT_CMD/#java /java -Xss512k } --solver test --text "(set-logic ALL)(assert $O true $C)(echo \"after\")"
