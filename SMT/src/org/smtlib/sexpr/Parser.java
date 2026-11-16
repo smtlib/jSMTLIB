@@ -865,7 +865,10 @@ public class Parser extends Lexer implements IParser {
             Symbol sym = parseSymbol();
             if (parameters != null) {
                 for (ISort.IParameter p: parameters) {
-                    if (p.identifier().equals(sym)) return (Sort)p;
+                    // a use of the parameter: its own node, with the use's position (#231)
+                    if (p.identifier().equals(sym)) {
+                        return p instanceof Sort.Parameter d ? new Sort.ParameterUse(d, sym) : (Sort)p;
+                    }
                 }
             }
             return setPos(new Sort.Application(sym),sym.pos());
@@ -1119,7 +1122,7 @@ public class Parser extends Lexer implements IParser {
             throw error(pos(lp.pos().charStart(),currentPos()),
                     "An exception occurred when instantiating class " + clazzName + ": " + e);
         }
-        return new SMTExpr.Logic(smtConfig,name,attributes);
+        return smtConfig.exprFactory.logic(name, attributes);
     }
 
     /** Parses a theory definition (including beginning and ending parentheses, returning null
@@ -1141,7 +1144,7 @@ public class Parser extends Lexer implements IParser {
             throw new ParserException(pos(lp.pos().charStart(),currentPos()),
                     "Expected the end of file after the right parenthesis");
         }
-        return new SMTExpr.Theory(name,attributes);
+        return smtConfig.exprFactory.theory(name, attributes);
     }
 
     /** Parses a parenthesized list of terms, as returned by a get-assertions response. */

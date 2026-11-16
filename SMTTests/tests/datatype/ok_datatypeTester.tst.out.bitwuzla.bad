@@ -1,0 +1,10 @@
+success
+unsupported
+unsupported
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:6:19: invalid sort 'Color'
+")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

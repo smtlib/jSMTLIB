@@ -50,6 +50,11 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
         IAttribute<?> attribute(IKeyword k);
         /** Creates an attribute with a keyword and a value. */
         <T extends IAttributeValue> IAttribute<T> attribute(IKeyword k, T value);
+        /** Creates a logic definition, (logic name attributes...), as the parser makes one for a logic
+         *  without a class of its own (#163 item 3) */
+        ILogic logic(ISymbol name, java.util.Collection<IAttribute<?>> attributes);
+        /** Creates a theory definition, (theory name attributes...) (#163 item 3) */
+        ITheory theory(ISymbol name, java.util.Collection<IAttribute<?>> attributes);
         /** Creates an attributed expression (an expression with a positive number of attributes). */
         //@ requires attributes.size() > 0;
         IAttributedExpr attributedExpr(IExpr e, List<IAttribute<?>> attributes);
@@ -267,10 +272,15 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
         @Override
         ISymbol headSymbol();
 
-        /** The identifier that declares the function or constant this one names, as type checking found
-         *  it (#226): the symbol of a declaring command, a binder's variable, a function parameter, or a
-         *  theory's declaration; null if none was recorded (e.g. not yet checked, a sort name, or a
-         *  theory symbol checked by TheorySignatures) */
+        /** The identifier that declares what this one names, as type checking found it (#226, #230): for
+         *  a function or constant, the symbol of its declaring command, a binder's variable, a function
+         *  parameter, or a theory's declaration (for the bit-vector and floating-point operators, which
+         *  the theories state only in prose, a shared identifier with no position); for a sort name, the
+         *  declaring identifier of the sort (for an indexed sort such as (_ BitVec 8), likewise a shared
+         *  identifier with no position); for a constructor in a match pattern, the constructor's.
+         *  For a use of a sort parameter, the parameter's symbol, set when the use is parsed (#231).
+         *  Null if none was recorded (e.g. not yet checked). A sort name's link is not cleared on pop,
+         *  unlike an expression's. */
         /*@Nullable*/ IIdentifier declaration();
 
         /** Records the identifier that declares what this one names (see {@link #declaration()}) */

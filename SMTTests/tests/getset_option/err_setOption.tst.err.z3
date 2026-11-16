@@ -6,8 +6,6 @@
                                     ^^^^
 (set-option :diagnostic-output-channel false)
                                        ^^^^^
-(set-option :expand-definitions 0)
-                                ^
 (set-option :produce-proofs 0)
                             ^
 (set-option :produce-models 0)

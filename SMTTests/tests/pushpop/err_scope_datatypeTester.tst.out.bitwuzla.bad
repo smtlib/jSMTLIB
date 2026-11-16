@@ -1,0 +1,13 @@
+success
+success
+unsupported
+(error "Unexpected (non-SMT-LIB) response from bitwuzla: [error] <stdin>:5:19: invalid sort 'Shape'
+")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")
+(error "The solver process has exited")

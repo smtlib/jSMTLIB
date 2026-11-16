@@ -1,4 +1,0 @@
-z3-4.6.0 mishandles the singular declare-datatype: its reply arrives only after the next input, and the
-datatype is never declared (later uses report an unknown sort). declare-datatypes and match work.
-Checked directly 2026-11-13.
-Also, with :global-declarations true, a pop after any declare-datatypes ends the solver without a reply.

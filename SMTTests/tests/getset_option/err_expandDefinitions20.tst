@@ -1,0 +1,8 @@
+; :expand-definitions is an SMT-LIB 2.0 option: a boolean, false by default (#163 item 10)
+(set-info :smt-lib-version 2.0)
+(get-option :expand-definitions)
+(set-option :expand-definitions 0)
+(set-option :expand-definitions true)
+(get-option :expand-definitions)
+(set-option :expand-definitions false)
+(get-option :expand-definitions)

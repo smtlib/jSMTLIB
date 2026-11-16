@@ -1,0 +1,4 @@
+(assert (> x undeclared))
+             ^^^^^^^^^^
+(get-value (y))
+^^^^^^^^^^^^^^^

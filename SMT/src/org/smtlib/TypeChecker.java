@@ -489,7 +489,11 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         // SymbolTable.lookup()'s `reason` output giving as specific a message as these
         // hardcoded branches used to (see its doc comment).
         List<TheorySignatures.Sig> sigs = TheorySignatures.lookup(head, false, symTable);
-        if (sigs != null) return checkTheoryApplication(e, head, name, sigs, argSorts, resultSort);
+        if (sigs != null) {
+            ISort sort = checkTheoryApplication(e, head, name, sigs, argSorts, resultSort);
+            if (sort != null && head.pos() != null) head.setDeclaration(signatureDeclaration(head));
+            return sort;
+        }
 
         // (m t ...) for a map m abbreviates (@ m t ...) (SMT-LIB 2.7 Sec. 3.9)
         ISort mapSort = mapSort(head);
@@ -531,6 +535,22 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         } else {
             return save(e,matchedResultSort);
         }
+    }
+
+    /** Links a constructor in a match pattern to the constructor's declaration (#230) */
+    private void linkConstructor(ISymbol c, int arity) {
+        SymbolTable.Entry entry = symTable.lookupEntry(arity, c);
+        if (entry != null) c.setDeclaration(entry.name);
+    }
+
+    /** One declaration per name for the symbols whose signatures TheorySignatures gives, and for the
+     *  indexed sorts: the theories state them only in prose, so the declaration has no source position;
+     *  shared, so that all uses of a name link to the same node (#230) */
+    private static final java.util.Map<String, IIdentifier> SIGNATURE_DECLARATIONS =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static IIdentifier signatureDeclaration(IIdentifier head) {
+        return SIGNATURE_DECLARATIONS.computeIfAbsent(head.headSymbol().value(), n -> new SMTExpr.Symbol(n));
     }
 
     /** The number of selectors of constructor c of the datatype sort delta, or -1 if c is not one */
@@ -1373,6 +1393,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                             hasVariableOrWildcard = true;
                         } else {
                             coveredCtors.add(pat.constructor().value());
+                            linkConstructor(pat.constructor(), 0);
                         }
                     }
                 } else {
@@ -1406,6 +1427,7 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
                         anyErrors = true;
                     } else {
                         coveredCtors.add(pat.constructor().value());
+                        linkConstructor(pat.constructor(), arity);
                         ISort[] argSorts = instance.argSorts();
                         List<IExpr.ISymbol> params = pat.params();
                         Set<String> patternVarsSeen = new HashSet<>();
@@ -1485,6 +1507,13 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         if (def == null) {
             error(f.pos(),"No such sort symbol declared: " + pr(f));
             return null;
+        }
+        // a sort name written in the source is linked to its declaration (#230); a sort built in code
+        // shares its nodes, which are left alone. An indexed sort, (_ BitVec 8), is instantiated on first
+        // use (that use becomes the definition's identifier) and its theory states it only in prose, so it
+        // links, as the signature-table operators do, to a shared declaration with no position.
+        if (f.pos() != null) {
+            f.setDeclaration(f instanceof IExpr.IParameterizedIdentifier ? signatureDeclaration(f) : def.identifier());
         }
         if (args.size() != def.intArity()) {
             // A 2-ary sort declared :right-assoc (as -> is in HO-Core) takes the n-ary sugar

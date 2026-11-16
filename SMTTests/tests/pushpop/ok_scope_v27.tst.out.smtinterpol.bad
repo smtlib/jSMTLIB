@@ -1,0 +1,22 @@
+success
+success
+success
+success
+(error "<stdin>:7:2: Syntax Error")
+(error "<stdin>:8:17: Undeclared sort (X 0)")
+success
+success
+success
+success
+success
+success
+(error "<stdin>:15:2: Syntax Error")
+(error "<stdin>:16:17: Undeclared sort (X 0)")
+success
+success
+success
+success
+success
+success
+success
+success

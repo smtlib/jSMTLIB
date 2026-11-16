@@ -12,6 +12,7 @@ import org.smtlib.IExpr;
 import org.smtlib.IParser;
 import org.smtlib.IResponse;
 import org.smtlib.ISolver;
+import org.smtlib.ISort;
 import org.smtlib.IVisitor;
 import org.smtlib.SMT;
 
@@ -70,7 +71,7 @@ public class DeclarationLinkApiTests {
         return commands;
     }
 
-    /** The identifiers in the commands' expressions that start at the given offset */
+    /** The identifier in the commands' expressions or sorts that starts at the given offset */
     private static IExpr.IIdentifier identifierAt(List<ICommand> commands, int offset) throws Exception {
         IExpr.IIdentifier[] found = new IExpr.IIdentifier[1];
         IVisitor.TreeVisitor<Void> v = new IVisitor.TreeVisitor<Void>() {
@@ -78,12 +79,54 @@ public class DeclarationLinkApiTests {
                 if (e.pos() != null && e.pos().charStart() == offset) found[0] = e;
                 return null;
             }
+            @Override public Void visit(IExpr.IDeclaration d) throws IVisitor.VisitorException {
+                d.parameter().accept(this);
+                sortAt(d.sort(), offset, found);
+                return null;
+            }
+            @Override public Void visit(IExpr.IPattern p) throws IVisitor.VisitorException {
+                p.constructor().accept(this);
+                return null;
+            }
         };
         for (ICommand cmd : commands) {
             for (IExpr e : expressions(cmd)) e.accept(v);
+            for (ISort srt : sorts(cmd)) sortAt(srt, offset, found);
         }
         Assert.assertNotNull("no identifier at " + offset, found[0]);
         return found[0];
+    }
+
+    /** Looks for the sort name at the offset in the sort */
+    private static void sortAt(ISort s, int offset, IExpr.IIdentifier[] found) {
+        if (s instanceof ISort.IParameter p) {
+            if (p.symbol().pos() != null && p.symbol().pos().charStart() == offset) found[0] = p.symbol();
+        } else if (s instanceof ISort.IApplication a) {
+            if (a.family().pos() != null && a.family().pos().charStart() == offset) found[0] = a.family();
+            for (ISort p : a.parameters()) sortAt(p, offset, found);
+        }
+    }
+
+    private static List<ISort> sorts(ICommand cmd) {
+        List<ISort> list = new ArrayList<>();
+        if (cmd instanceof ICommand.Ideclare_fun f) {
+            list.addAll(f.argSorts());
+            list.add(f.resultSort());
+        }
+        if (cmd instanceof ICommand.Ideclare_const c) list.add(c.resultSort());
+        if (cmd instanceof ICommand.Idefine_sort d) list.add(d.expression());
+        if (cmd instanceof ICommand.Idefine_fun f) {
+            for (IExpr.IDeclaration d : f.parameters()) list.add(d.sort());
+            list.add(f.resultSort());
+        }
+        if (cmd instanceof ICommand.Ideclare_datatypes d) {
+            for (ISort.IDatatype dt : d.datatypes()) {
+                for (IExpr.IConstructor c : dt.constructors()) {
+                    for (IExpr.ISelector sel : c.selectors()) list.add(sel.sort());
+                }
+            }
+        }
+        return list;
     }
 
     private static List<IExpr> expressions(ICommand cmd) {
@@ -150,6 +193,69 @@ public class DeclarationLinkApiTests {
         Assert.assertNotNull(binary);
         Assert.assertNotEquals("unary and binary - are different declarations",
                 unary.pos().charStart(), binary.pos().charStart());
+    }
+
+    @Test
+    public void declaredAndDefinedSorts() throws Exception {
+        links("(set-logic ALL)(declare-sort ‹U 0)(define-sort ‹V () «U:0»)(declare-fun f («U:0») «V:1»)"
+                + "(declare-const c «V:1»)(assert (forall ((x «U:0»)) (= (f x) c)))");
+    }
+
+    @Test
+    public void sortParameter() throws Exception {
+        links("(set-logic ALL)(define-sort ‹M (‹X) (Array «X:1» «X:1»))(declare-const m («M:0» Int))");
+    }
+
+    @Test
+    public void datatypeParameter() throws Exception {
+        links("(set-logic ALL)(declare-datatypes ((‹Pair 1)) ((par (‹T) ((pair (first «T:1») (second «T:1»))))))"
+                + "(declare-const p («Pair:0» Int))(assert (= (first p) (second p)))");
+    }
+
+    @Test
+    public void datatypeSort() throws Exception {
+        links("(set-logic ALL)(declare-datatypes ((‹Pair 1)) ((par (T) ((pair (first T) (second T))))))"
+                + "(declare-const p («Pair:0» Int))");
+    }
+
+    @Test
+    public void matchConstructors() throws Exception {
+        links("(set-logic ALL)(declare-datatypes ((L 0)) (((‹nil) (‹cons (hd Int) (tl L)))))(declare-const l L)"
+                + "(assert (match l ((«nil:0» true) ((«cons:1» h t) false))))");
+    }
+
+    @Test
+    public void signatureTableSymbolsShareADeclarationWithoutPosition() throws Exception {
+        Marked m = mark("(set-logic QF_BV)(declare-const a (_ BitVec 8))(assert (= («bvadd» a a) («bvadd» a a)))");
+        List<ICommand> commands = check(m.text(), false);
+        IExpr.IIdentifier first = identifierAt(commands, m.uses().get(0)[0]).declaration();
+        IExpr.IIdentifier second = identifierAt(commands, m.uses().get(1)[0]).declaration();
+        Assert.assertNotNull(first);
+        Assert.assertSame("one declaration for every use of bvadd", first, second);
+        Assert.assertNull("the theory states bvadd only in prose", first.pos());
+    }
+
+    @Test
+    public void indexedSortsShareADeclarationWithoutPosition() throws Exception {
+        Marked m = mark("(set-logic QF_BV)(declare-const a (_ «BitVec» 8))(declare-const b (_ «BitVec» 8))");
+        List<ICommand> commands = check(m.text(), false);
+        IExpr.IIdentifier first = indexedSortAt(commands, m.uses().get(0)[0]);
+        IExpr.IIdentifier second = indexedSortAt(commands, m.uses().get(1)[0]);
+        Assert.assertNotNull(first.declaration());
+        Assert.assertSame("one declaration for every use of BitVec", first.declaration(), second.declaration());
+        Assert.assertNull("the theory states BitVec only in prose", first.declaration().pos());
+    }
+
+    /** The indexed sort (_ S ...) of a declare-const whose head symbol S starts at the offset */
+    private static IExpr.IIdentifier indexedSortAt(List<ICommand> commands, int offset) {
+        for (ICommand cmd : commands) {
+            if (cmd instanceof ICommand.Ideclare_const c && c.resultSort() instanceof ISort.IApplication a
+                    && a.family() instanceof IExpr.IParameterizedIdentifier p
+                    && p.headSymbol().pos() != null && p.headSymbol().pos().charStart() == offset) {
+                return a.family();
+            }
+        }
+        throw new AssertionError("no indexed sort at " + offset);
     }
 
     @Test
