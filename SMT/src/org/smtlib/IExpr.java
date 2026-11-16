@@ -271,7 +271,8 @@ public interface IExpr extends INode, IPosable, IAttributeValue {
          *  a function or constant, the symbol of its declaring command, a binder's variable, a function
          *  parameter, or a theory's declaration (for the bit-vector and floating-point operators, which
          *  the theories state only in prose, a shared identifier with no position); for a sort name, the
-         *  declaring identifier of the sort; for a constructor in a match pattern, the constructor's.
+         *  declaring identifier of the sort (for an indexed sort such as (_ BitVec 8), likewise a shared
+         *  identifier with no position); for a constructor in a match pattern, the constructor's.
          *  Null if none was recorded (e.g. not yet checked). Sort parameters are not linked: each use is
          *  the declared parameter itself. A sort name's link is not cleared on pop, unlike an
          *  expression's. */

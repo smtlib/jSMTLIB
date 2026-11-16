@@ -219,6 +219,29 @@ public class DeclarationLinkApiTests {
     }
 
     @Test
+    public void indexedSortsShareADeclarationWithoutPosition() throws Exception {
+        Marked m = mark("(set-logic QF_BV)(declare-const a (_ «BitVec» 8))(declare-const b (_ «BitVec» 8))");
+        List<ICommand> commands = check(m.text(), false);
+        IExpr.IIdentifier first = indexedSortAt(commands, m.uses().get(0)[0]);
+        IExpr.IIdentifier second = indexedSortAt(commands, m.uses().get(1)[0]);
+        Assert.assertNotNull(first.declaration());
+        Assert.assertSame("one declaration for every use of BitVec", first.declaration(), second.declaration());
+        Assert.assertNull("the theory states BitVec only in prose", first.declaration().pos());
+    }
+
+    /** The indexed sort (_ S ...) of a declare-const whose head symbol S starts at the offset */
+    private static IExpr.IIdentifier indexedSortAt(List<ICommand> commands, int offset) {
+        for (ICommand cmd : commands) {
+            if (cmd instanceof ICommand.Ideclare_const c && c.resultSort() instanceof ISort.IApplication a
+                    && a.family() instanceof IExpr.IParameterizedIdentifier p
+                    && p.headSymbol().pos() != null && p.headSymbol().pos().charStart() == offset) {
+                return a.family();
+            }
+        }
+        throw new AssertionError("no indexed sort at " + offset);
+    }
+
+    @Test
     public void theorySymbolLinksIntoTheTheory() throws Exception {
         Marked m = mark("(set-logic QF_LIA)(declare-const x Int)(assert («>» x 0))");
         List<ICommand> commands = check(m.text(), false);

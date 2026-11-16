@@ -543,9 +543,9 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
         if (entry != null) c.setDeclaration(entry.name);
     }
 
-    /** One declaration per name for the symbols whose signatures TheorySignatures gives: the theories state
-     *  them only in prose, so the declaration has no source position; shared, so that all uses of a name
-     *  link to the same node (#230) */
+    /** One declaration per name for the symbols whose signatures TheorySignatures gives, and for the
+     *  indexed sorts: the theories state them only in prose, so the declaration has no source position;
+     *  shared, so that all uses of a name link to the same node (#230) */
     private static final java.util.Map<String, IIdentifier> SIGNATURE_DECLARATIONS =
             new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -1508,8 +1508,12 @@ public class TypeChecker implements IVisitor</*@Nullable*/ ISort> {
             return null;
         }
         // a sort name written in the source is linked to its declaration (#230); a sort built in code
-        // shares its nodes, which are left alone
-        if (f.pos() != null) f.setDeclaration(def.identifier());
+        // shares its nodes, which are left alone. An indexed sort, (_ BitVec 8), is instantiated on first
+        // use (that use becomes the definition's identifier) and its theory states it only in prose, so it
+        // links, as the signature-table operators do, to a shared declaration with no position.
+        if (f.pos() != null) {
+            f.setDeclaration(f instanceof IExpr.IParameterizedIdentifier ? signatureDeclaration(f) : def.identifier());
+        }
         if (args.size() != def.intArity()) {
             // A 2-ary sort declared :right-assoc (as -> is in HO-Core) takes the n-ary sugar
             // (s t1 t2 t3) = (s t1 (s t2 t3)) (#203)
