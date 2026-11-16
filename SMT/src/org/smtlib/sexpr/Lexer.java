@@ -342,7 +342,7 @@ public class Lexer implements ILexer {
      * @throws ParserException if something bad or an intentional abort happens
      */
     public ILexToken peekToken() throws IOException, ParserException {
-        if (nextToken == null) nextToken = getToken();
+        if (nextToken == null) nextToken = scanToken();
         return nextToken;
     }
 
@@ -416,17 +416,29 @@ public class Lexer implements ILexer {
      * @throws ParserException if something bad or an intentional abort happens
      */
     public ILexToken getToken() throws IOException, ParserException {
-        ILexToken token = null;
-        if (nextToken != null) {
-            token = nextToken;
-            nextToken = null;
-            return token;
-        }
+        ILexToken token = nextToken != null ? nextToken : scanToken();
+        nextToken = null;
+        if (token.isLP()) ++depth;
+        else if (token.isRP()) --depth;
+        return token;
+    }
+
+    /** Scans the next token, without consuming it */
+    private ILexToken scanToken() throws ParserException, IOException {
         try {
             return getNextToken();
         } catch (RuntimeException e) {
             throw readFailure(e);
         }
+    }
+
+    /** The number of left parentheses consumed less the number of right parentheses */
+    protected int depth = 0;
+
+    /** Reads and discards tokens until depth is at most the given value (the right parenthesis that brings it
+     *  there is consumed) or the next token is the end of input */
+    public void skipToDepth(int d) throws IOException, ParserException {
+        while (depth > d && !isEOD()) getToken();
     }
 
     /** The IOException a CharSequenceInfinite wraps (CharSequence.charAt cannot throw a checked

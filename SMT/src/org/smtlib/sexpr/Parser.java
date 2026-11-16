@@ -149,18 +149,6 @@ public class Parser extends Lexer implements IParser {
      *  consulted during execution. */
     private Command lastReturnedCommand;
 
-    /** Set at each of parseCommand()'s own skipThruRP() call sites, right after an error
-     *  elsewhere in the command was already reported and skipThruRP() was used to resync,
-     *  when that resync may have left a stray, already-accounted-for token behind --
-     *  skipThruRP() closes exactly one level of nesting, so an error from a sub-expression
-     *  nested two or more parens deep inside the command (e.g. the "(as)" in
-     *  "(assert (as))") leaves the command's own outer ")" unconsumed even though the real
-     *  problem was already reported once. Checked and reset at the top of the next
-     *  parseCommand() attempt (see there): when set, a failed parseLP() is this same
-     *  leftover, not a fresh problem, so it is skipped silently as before rather than
-     *  reported a confusing second time. */
-    private boolean recoveringFromNestedError = false;
-
     /** Whether the caller discards the rest of the line after an error (with --abort on interactive
      *  standard input, SMT.doParser calls abortLine), so the parser does not skip ahead itself:
      *  that could consume, or wait for, lines typed after the error */
@@ -188,6 +176,9 @@ public class Parser extends Lexer implements IParser {
         Command command = null;
         try {
             while (true) { // The while loop is just so that AbortInputException can cause a retry
+                // After an error, the rest of the command is skipped, back to this depth: through the
+                // command's closing parenthesis, however deeply nested the error is (#238)
+                int commandDepth = depth;
                 try {
                     ILexToken rp = null;
                     boolean atEnd = isEOD();
@@ -230,34 +221,24 @@ public class Parser extends Lexer implements IParser {
                     }
                     prefixCommentText = null;
                     if (atEnd) return null;
-                    // Captured and reset here, before the attempt below, so it reflects only
-                    // whether the OUTER catch's skipThruRP() (further down) just ran, on the
-                    // immediately preceding parseCommand() call -- see the field's own javadoc.
-                    boolean wasRecoveringFromNestedError = recoveringFromNestedError;
-                    recoveringFromNestedError = false;
                     try {
                         savedlp = parseLP();
                     } catch (ParserException e) {
-                        // Stray token at command level: either a genuinely fresh problem (e.g.
-                        // a bare identifier, or a comment missing its leading ';' so its words
-                        // are lexed as bare tokens instead), or a single already-accounted-for
-                        // leftover token from the outer catch's imperfect skipThruRP() resync
-                        // (see recoveringFromNestedError's javadoc) -- only the former should be
-                        // reported: reporting the latter too would be a confusing second message
-                        // for one problem already described. A fresh problem previously wasn't
+                        // Stray token at command level (e.g. a bare identifier, or a comment
+                        // missing its leading ';' so its words are lexed as bare tokens instead);
+                        // an earlier bad command was skipped through its end, so this is a fresh
+                        // problem, not a leftover of that one. A fresh problem previously wasn't
                         // reported at all unless --verbose was on, which in interactive mode
                         // looked like the parser was just hanging (it was actually blocking on
                         // getToken(), below, waiting for a '(' that was never coming), and in a
                         // file could silently discard everything after the stray token if no
                         // further '(' ever appeared.
-                        if (!wasRecoveringFromNestedError) {
-                            // peekToken() re-examines the same token parseLP() just failed on
-                            // (parseLP() never consumes on failure), so this is safe to call here.
-                            ParserException reported = error(
-                                    peekToken(),
-                                    "Expected a command (beginning with '(') or a comment (beginning with ';') here, not a #");
-                            if (reported.getMessage() != null) smtConfig.log.logError(smtConfig.responseFactory.error(reported.pos(), reported.getMessage()));
-                        }
+                        // peekToken() re-examines the same token parseLP() just failed on
+                        // (parseLP() never consumes on failure), so this is safe to call here.
+                        ParserException reported = error(
+                                peekToken(),
+                                "Expected a command (beginning with '(') or a comment (beginning with ';') here, not a #");
+                        if (reported.getMessage() != null) smtConfig.log.logError(smtConfig.responseFactory.error(reported.pos(), reported.getMessage()));
                         if (recoverByLine()) return null;
                         // Skip to the next LP, matching old null-return behavior -- but log
                         // how many tokens were skipped, for debuggability.
@@ -269,10 +250,7 @@ public class Parser extends Lexer implements IParser {
                     smtConfig.topLevel = false;
                     Symbol sym = parseSymbolOrReservedWord("Expected a symbol here, not a #");
                     if (sym == null) {
-                        if (!recoverByLine()) {
-                            skipThruRP();
-                            recoveringFromNestedError = true;
-                        }
+                        if (!recoverByLine()) skipToDepth(commandDepth);
                         return null;
                     }
                     commandName = sym;
@@ -336,10 +314,7 @@ public class Parser extends Lexer implements IParser {
                     }
                     if (command == null || rp == null) {
                         command = null;
-                        if (!recoverByLine()) {
-                            skipThruRP();
-                            recoveringFromNestedError = true;
-                        }
+                        if (!recoverByLine()) skipToDepth(commandDepth);
                     }
                     if (command != null) {
                         setPos(command,pos(savedlp.pos(),rp.pos()));
@@ -362,8 +337,7 @@ public class Parser extends Lexer implements IParser {
                     // FIXME - is an RP a good recovery token? -- used to be end of line
                     if (e.getMessage() != null) lastError = smtConfig.log.logError(smtConfig.responseFactory.error(e.pos(),e.getMessage()));
                     if (!recoverByLine()) {
-                        try { skipThruRP(); } catch (ParserException ex) { /* already recovering */ }
-                        recoveringFromNestedError = true;
+                        try { skipToDepth(commandDepth); } catch (ParserException ex) { /* already recovering */ }
                     }
                 }
                 break;

@@ -1,0 +1,10 @@
+; #238: a parse error nested inside a command is reported once; parsing resumes after the end of that
+; top-level command, not inside it (which gave a second, spurious error)
+(assert (match x ((par true) (B false))))
+(echo "after 1")
+(assert (and (as) (or (B) true)))
+(echo "after 2")
+(assert (and true (or (not (as)) false)))
+(echo "after 3")
+(define-fun f ((a Int) (b (Array Int (_ BitVec)))) Int a)
+(echo "after 4")

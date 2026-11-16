@@ -1,0 +1,8 @@
+(assert (match x ((par true) (B false))))
+                   ^^^
+(assert (and (as) (or (B) true)))
+                ^
+(assert (and true (or (not (as)) false)))
+                              ^
+(define-fun f ((a Int) (b (Array Int (_ BitVec)))) Int a)
+                                              ^
