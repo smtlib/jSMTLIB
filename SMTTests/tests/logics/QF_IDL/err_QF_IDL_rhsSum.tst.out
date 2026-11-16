@@ -1,0 +1,4 @@
+success
+success
+success
+(error "The rhs must be a numeral or negation of numeral: (< (- x y) (+ 1 2))")

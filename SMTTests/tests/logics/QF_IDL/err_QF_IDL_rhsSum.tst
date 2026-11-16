@@ -1,0 +1,5 @@
+; QF_IDL: the rhs of a difference atom must be a numeral or negated numeral, not (+ 1 2)
+(set-logic QF_IDL)
+(declare-const x Int)
+(declare-const y Int)
+(assert (< (- x y) (+ 1 2)))
