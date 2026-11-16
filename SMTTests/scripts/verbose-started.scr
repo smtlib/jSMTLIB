@@ -1,0 +1,5 @@
+### -v names the started solver: yices2's adapter by its own name, z3's by the solver name given
+### (coverage 2026-11-16)
+##EXITCODE 0
+$SMT_CMD -v -s yices2 --text "(set-logic QF_UF)(check-sat)" 2>&1
+$SMT_CMD -v -s z3 --text "(set-logic QF_UF)(check-sat)" 2>&1

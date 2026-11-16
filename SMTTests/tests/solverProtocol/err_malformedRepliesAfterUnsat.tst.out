@@ -1,0 +1,7 @@
+success
+success
+success
+unsat
+(error "Unexpected output from the solver: (#)")
+(error "Unexpected output from the solver: (#)")
+(error "Unexpected output from the solver: ((and a b))")

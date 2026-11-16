@@ -1,0 +1,7 @@
+### The relaxed-mode what command: only the test solver can execute it (z3 reports so), and --print
+### prints it through the printer's fallback for extension commands (coverage 2026-11-16)
+##EXITCODE 0
+$SMT_CMD -r --solver z3 --text "(set-logic QF_UF)(what x)" 2>&1
+echo " [exit $?]"
+$SMT_CMD -r --print --solver test --text "(set-logic QF_UF)(declare-fun x () Bool)(what x)" 2>&1
+echo " [exit $?]"

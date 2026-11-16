@@ -1,0 +1,6 @@
+### yices2 and SMTInterpol have only a per-query timeout: --timeout-total alone is applied per query,
+### and with --timeout it is ignored (yices2 with both: yices2-timeouts.scr) (coverage 2026-11-16)
+##EXITCODE 0
+$SMT_CMD --solver yices2 -T 600 --text "(set-logic QF_UF)(check-sat)" 2>&1
+$SMT_CMD --solver smtinterpol -T 600 --text "(set-logic QF_UF)(check-sat)" 2>&1
+$SMT_CMD --solver smtinterpol -t 1 -T 600 --text "(set-logic QF_UF)(check-sat)" 2>&1

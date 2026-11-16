@@ -1,0 +1,6 @@
+success
+success
+<<sleep 1000>>
+<<print-part (model (define-fun p>>
+<<eprint (error "out of memory")>>
+<<exit 3>>

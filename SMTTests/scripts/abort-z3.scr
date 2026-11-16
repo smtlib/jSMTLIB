@@ -1,0 +1,11 @@
+### --abort with a real solver: a command with a recovered syntax error (here an empty application)
+### is not sent to it; on interactive standard input the rest of the line is discarded, otherwise
+### the run ends (coverage 2026-11-16)
+##EXITCODE 0
+run() {
+    echo "== $1"
+    printf "(set-logic QF_UF)\n(declare-fun p () Bool)\n$2" | $SMT_CMD --abort --solver z3 $3 2>&1
+    echo " [exit $?]"
+}
+run "interactive" '(assert (p)) (check-sat)\n(check-sat)\n'
+run "standard input as a file" '(assert (p))\n(check-sat)\n' -

@@ -1,0 +1,4 @@
+(assert (distinct #b01 #b10))
+                  ^^^^
+(assert (= #x1 #x2))
+           ^^^

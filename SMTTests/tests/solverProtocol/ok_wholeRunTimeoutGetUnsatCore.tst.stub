@@ -1,0 +1,7 @@
+<<success-for (set-option :print-success true)>>
+success
+success
+success
+unsat
+timeout
+<<exit 0>>

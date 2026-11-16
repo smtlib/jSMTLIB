@@ -84,6 +84,20 @@ public class KeepSolverApiTests {
     }
 
     @Test
+    public void secondExecStartsAFreshSolver() {
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        SMT smt = capturing(buf, "--solver", "test", "-q");
+        smt.keepSolver = true;
+        smt.smtConfig.text = "(set-logic QF_UF)(declare-fun p () Bool)";
+        Assert.assertEquals(0, smt.exec());
+        // The kept solver is ended: p is no longer declared, and no logic is set
+        smt.smtConfig.text = "(set-logic QF_UF)(assert p)";
+        Assert.assertEquals(1, smt.exec());
+        Assert.assertTrue(text(buf), text(buf).contains("Unknown constant symbol p"));
+        smt.cleanup();
+    }
+
+    @Test
     public void realSolverGivesModelValues() {
         String dir = System.getenv("SMT_SOLVER_DIR");
         Assume.assumeTrue("z3-4.16.0 not present", dir != null && new File(dir, "z3-4.16.0").exists());

@@ -1,0 +1,2 @@
+success
+(error "Parse Error: <shell>:5.12: Only one set-logic is allowed.")

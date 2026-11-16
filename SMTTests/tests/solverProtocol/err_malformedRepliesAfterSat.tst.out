@@ -1,0 +1,9 @@
+success
+success
+success
+success
+success
+sat
+(error "Unexpected output from the solver: (#)")
+(error "Unexpected output from the solver: ((p))")
+(error "Unexpected output from the solver: ((p))")

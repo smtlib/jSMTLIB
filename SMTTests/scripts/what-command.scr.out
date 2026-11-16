@@ -1,0 +1,10 @@
+success
+(set-logic QF_UF)(what x)
+                 ^^^^^^^^
+(error "This kind of solver (class org.smtlib.solvers.Solver_z3_recent) is not able to execute a what command")
+ [exit 1]
+(set-logic QF_UF)
+(declare-fun x () Bool)
+x : Bool
+(what x)
+ [exit 0]

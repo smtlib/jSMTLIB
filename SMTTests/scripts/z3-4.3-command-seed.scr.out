@@ -1,0 +1,12 @@
+#reading properties (own jar) from jar:file:$INSTALL/jSMTLIB.jar!/jsmtlib.properties
+#reading properties (jar sibling) from $INSTALL/jsmtlib.properties
+#reading properties (user home) from $HOME/jsmtlib.properties
+#Start parsing text input
+#Started z3-4.3 
+#Command to execute: (get-option :random-seed)
+5
+#Command to execute: (exit)
+#Ended Z3 
+success
+#Ended Z3 forcibly
+#Exiting program
